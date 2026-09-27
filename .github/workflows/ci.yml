@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 24 matches local development; Vitest 5 requires Node 22.12+ or 24.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+      # Decision 0002: labelled dev fixtures must never reach the production bundle.
+      - name: Check dist has no dev fixtures
+        run: |
+          if grep -rl "DEV FIXTURE" dist; then
+            echo "::error::Dev fixture code found in dist/"
+            exit 1
+          fi
