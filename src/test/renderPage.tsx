@@ -13,15 +13,15 @@ function LocationProbe() {
 /**
  * Renders a page at `path` inside the app providers. Any navigation away lands on a probe that shows the
  * new pathname (read it with `screen.findByTestId('location')`). StrictMode matches src/main.tsx so tests see the
- * same double mount as the dev server.
+ * same double mount as the dev server. `initialEntry` (e.g. with a query string) defaults to `path`.
  */
-export function renderPage(element: ReactElement, path = '/') {
+export function renderPage(element: ReactElement, path = '/', initialEntry = path) {
   const router = createMemoryRouter(
     [
       { path, element },
       { path: '*', element: <LocationProbe /> },
     ],
-    { initialEntries: [path] },
+    { initialEntries: [initialEntry] },
   )
   return render(
     <StrictMode>

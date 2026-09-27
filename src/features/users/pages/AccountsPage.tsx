@@ -1,7 +1,8 @@
 import { UserAddOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Card, Flex, Typography } from 'antd'
 import { useMemo, useState } from 'react'
-import type { SystemRole } from '@/shared/types/account'
+import { useSearchParams } from 'react-router'
+import { accountStatusLabels, type AccountStatus, type SystemRole } from '@/shared/types/account'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { emptyAccountFilters, filterAccounts } from '../accountFilters'
@@ -23,6 +24,7 @@ import type { Account, AccountFilters, CreateAccountValues } from '../types'
  * Admin: user accounts (FE-47) with the self-registration review flow (DECIDED 2026-09-26):
  * pending accounts are found through the "Chờ xác nhận" filter, then confirmed with a role or rejected;
  * rejected accounts can be reopened. Deactivation is a conceptual status only – no action is defined (TBD).
+ * `?status=pending` opens the page pre-filtered (used by the Admin dashboard's pending-accounts card).
  */
 export function AccountsPage() {
   const { message, modal } = App.useApp()
@@ -32,7 +34,13 @@ export function AccountsPage() {
   const reject = useRejectAccount()
   const reopen = useReopenAccount()
 
-  const [filters, setFilters] = useState<AccountFilters>(emptyAccountFilters)
+  const [searchParams] = useSearchParams()
+  const [filters, setFilters] = useState<AccountFilters>(() => {
+    const status = searchParams.get('status')
+    return status && status in accountStatusLabels
+      ? { ...emptyAccountFilters, status: status as AccountStatus }
+      : emptyAccountFilters
+  })
   const [creating, setCreating] = useState(false)
   const [confirming, setConfirming] = useState<Account>()
   const [rejecting, setRejecting] = useState<Account>()
