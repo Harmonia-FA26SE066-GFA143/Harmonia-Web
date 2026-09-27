@@ -42,8 +42,8 @@ export async function writeFixture<T extends object>(apply: () => T): Promise<T>
 
 let sequence = 0
 
-/** Identifier for items created in the browser session; resets on reload. */
+/** Identifier for items created in the browser session (never clashes with seeded ids); resets on reload. */
 export function nextFixtureId(prefix: string): string {
   sequence += 1
-  return `dev-${prefix}-${sequence}`
+  return `dev-${prefix}-new-${sequence}`
 }
