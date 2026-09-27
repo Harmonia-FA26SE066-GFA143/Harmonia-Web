@@ -1,11 +1,16 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
-import { afterEach } from 'vitest'
+import { afterAll, afterEach } from 'vitest'
 
 // Vitest runs without globals, so Testing Library cannot register its automatic unmount between tests.
 afterEach(() => {
   cleanup()
 })
+
+// Ant Design schedules state updates with uncancelled timers (Form error list: up to 10 ms via
+// @rc-component/util useDelayState). If one fires after jsdom is torn down, React throws
+// "window is not defined" and Vitest fails the run. Let them settle before the file's environment closes.
+afterAll(() => new Promise<void>((resolve) => setTimeout(resolve, 50)))
 
 // Ant Design responsive components (Grid, Layout.Sider breakpoint) need matchMedia, which jsdom lacks.
 if (!window.matchMedia) {
