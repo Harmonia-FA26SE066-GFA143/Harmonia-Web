@@ -2,6 +2,8 @@
 
 Reconnaissance date: 2026-09-26
 
+> **Update (2026-09-26):** after this reconnaissance, a web scaffold was added (Vite + React 19 + TypeScript + Ant Design 6, React Router, TanStack Query, Vitest). Sections below describing an empty checkout are historical. For the current stack, structure, and commands see `AGENTS.md`. No business feature is implemented yet.
+
 ## Evidence Boundary
 
 The Git root inspected for this document is `Harmonia-Web/`. Before this documentation change, it contained only Git metadata: no commits, application source, package manifests, tests, API contracts, database schemas, or README. The branch is an unborn `main`; `origin/main` is absent. No feature implementation was found, so features below are **NOT FOUND in this checkout**; whether they exist elsewhere is **UNKNOWN**. Requirements stated in the surrounding notes are labeled **PLANNED**, not implemented.

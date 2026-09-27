@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+dist-ssr/
+build/
+coverage/
+*.tsbuildinfo
+
+# Environment (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Vite / tooling caches
+.vite/
+.cache/
+.eslintcache
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local Claude settings and MCP config (may contain Stitch/Playwright keys)
+.claude/settings.local.json
+.mcp.json

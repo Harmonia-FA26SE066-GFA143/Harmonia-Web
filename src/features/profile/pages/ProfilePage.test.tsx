@@ -1,0 +1,41 @@
+import { fireEvent, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { renderPage } from '@/test/renderPage'
+import * as profileApi from '../api/profileApi'
+import { ProfilePage } from './ProfilePage'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe('ProfilePage', () => {
+  it('shows a recoverable error while the profile API contract is missing', async () => {
+    renderPage(<ProfilePage />, '/profile')
+
+    expect(screen.getByRole('status', { name: 'Đang tải hồ sơ cá nhân' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Không thể tải hồ sơ cá nhân' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Thử lại/ })).toBeInTheDocument()
+  })
+
+  it('renders the loaded profile', async () => {
+    vi.spyOn(profileApi, 'getMyProfile').mockResolvedValue({
+      fullName: 'Nguyễn Văn An',
+      email: 'an@giaoxu.org',
+      accountStatus: 'active',
+      role: 'priest',
+    })
+    renderPage(<ProfilePage />, '/profile')
+
+    expect(await screen.findByText('Nguyễn Văn An')).toBeInTheDocument()
+    expect(screen.getByText('Cha xứ / Ban phụng vụ')).toBeInTheDocument()
+  })
+
+  it('asks for confirmation before signing out', async () => {
+    renderPage(<ProfilePage />, '/profile')
+
+    fireEvent.click(screen.getByRole('button', { name: /Đăng xuất/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Đăng xuất khỏi Harmonia?')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Ở lại' })).toBeInTheDocument()
+  })
+})
