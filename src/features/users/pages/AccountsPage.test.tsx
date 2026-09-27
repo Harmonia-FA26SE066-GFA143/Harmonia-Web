@@ -68,6 +68,15 @@ describe('AccountsPage', () => {
     expect(screen.getByText('1 tài khoản')).toBeInTheDocument()
   })
 
+  it('opens pre-filtered to pending accounts from ?status=pending', async () => {
+    vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue(accounts)
+    renderPage(<AccountsPage />, '/admin/accounts', '/admin/accounts?status=pending')
+
+    expect(await screen.findByText('Maria Nguyễn Thu Hướng')).toBeInTheDocument()
+    expect(screen.queryByText('Giuse Trần Minh Tâm')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Xem tài khoản chờ xác nhận' })).toBeNull()
+  })
+
   it('shows no-results for a search without matches and clears it', async () => {
     renderAccounts()
 

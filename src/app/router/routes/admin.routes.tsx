@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { paths } from '../paths'
-import { pageRoute, placeholderRoute } from '../placeholderRoute'
+import { pageRoute } from '../placeholderRoute'
 
 const area = 'Quản trị hệ thống'
 
@@ -10,7 +10,11 @@ const area = 'Quản trị hệ thống'
  * role values are available; see docs/decisions and the workspace open-business-decisions.md.
  */
 export const adminRoutes: RouteObject[] = [
-  placeholderRoute(paths.admin.dashboard, { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'], phase: 3 }),
+  pageRoute(
+    paths.admin.dashboard,
+    { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'], phase: 3 },
+    async () => (await import('@/features/dashboard')).AdminDashboardPage,
+  ),
   pageRoute(
     paths.admin.accounts,
     { title: 'Tài khoản', breadcrumb: [area, 'Tài khoản'], phase: 2 },
@@ -36,10 +40,14 @@ export const adminRoutes: RouteObject[] = [
     { title: 'Cấu hình chung', breadcrumb: [area, 'Cấu hình chung'], phase: 2 },
     async () => (await import('@/features/settings')).SettingsPage,
   ),
-  placeholderRoute(paths.admin.reports, { title: 'Báo cáo', breadcrumb: [area, 'Báo cáo'], phase: 3 }),
-  placeholderRoute(paths.admin.activityLog, {
-    title: 'Lịch sử hoạt động',
-    breadcrumb: [area, 'Lịch sử hoạt động'],
-    phase: 3,
-  }),
+  pageRoute(
+    paths.admin.reports,
+    { title: 'Báo cáo', breadcrumb: [area, 'Báo cáo'], phase: 3 },
+    async () => (await import('@/features/reports')).AdminReportsPage,
+  ),
+  pageRoute(
+    paths.admin.activityLog,
+    { title: 'Lịch sử hoạt động', breadcrumb: [area, 'Lịch sử hoạt động'], phase: 3 },
+    async () => (await import('@/features/activity-log')).ActivityLogPage,
+  ),
 ]
