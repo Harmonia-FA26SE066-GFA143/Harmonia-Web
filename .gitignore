@@ -41,3 +41,9 @@ Thumbs.db
 # Local Claude settings and MCP config (may contain Stitch/Playwright keys)
 .claude/settings.local.json
 .mcp.json
+
+# AI agent instructions (kept locally, not tracked)
+AGENTS.md
+agents/
+.agents/
+docs/AI-CONTEXT.md
