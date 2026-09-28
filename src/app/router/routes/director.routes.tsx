@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { paths } from '../paths'
-import { placeholderRoute } from '../placeholderRoute'
+import { pageRoute, placeholderRoute } from '../placeholderRoute'
 
 const area = 'Ca trưởng'
 const programs = 'Chương trình phụng vụ'
@@ -28,12 +28,16 @@ export const directorRoutes: RouteObject[] = [
     breadcrumb: [area, programs, 'Đề xuất danh sách bài hát'],
     phase: 5,
   }),
-  placeholderRoute(paths.director.library, { title: 'Kho bài hát', breadcrumb: [area, 'Kho bài hát'], phase: 5 }),
-  placeholderRoute(paths.director.songDetail, {
-    title: 'Chi tiết bài hát',
-    breadcrumb: [area, 'Kho bài hát', 'Chi tiết bài hát'],
-    phase: 5,
-  }),
+  pageRoute(
+    paths.director.library,
+    { title: 'Kho bài hát', breadcrumb: [area, 'Kho bài hát'], phase: 5 },
+    async () => (await import('@/features/music-library')).MusicLibraryPage,
+  ),
+  pageRoute(
+    paths.director.songDetail,
+    { title: 'Chi tiết bài hát', breadcrumb: [area, 'Kho bài hát', 'Chi tiết bài hát'], phase: 5 },
+    async () => (await import('@/features/music-library')).SongDetailPage,
+  ),
   placeholderRoute(paths.director.rehearsals, { title: 'Lịch tập', breadcrumb: [area, 'Lịch tập'], phase: 6 }),
   placeholderRoute(paths.director.attendance, { title: 'Điểm danh', breadcrumb: [area, 'Điểm danh'], phase: 6 }),
   placeholderRoute(paths.director.participation, {
