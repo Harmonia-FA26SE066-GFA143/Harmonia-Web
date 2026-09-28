@@ -13,21 +13,21 @@ const programs = 'Chương trình phụng vụ'
 export const directorRoutes: RouteObject[] = [
   placeholderRoute(paths.director.dashboard, { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'], phase: 6 }),
   // Director variants of the program list/detail feed the song-list loop, so they are built in phase 5.
-  placeholderRoute(paths.director.programs, {
-    title: 'Danh sách chương trình phụng vụ',
-    breadcrumb: [area, programs],
-    phase: 5,
-  }),
-  placeholderRoute(paths.director.programDetail, {
-    title: 'Chi tiết chương trình phụng vụ',
-    breadcrumb: [area, programs, 'Chi tiết chương trình'],
-    phase: 5,
-  }),
-  placeholderRoute(paths.director.songListProposal, {
-    title: 'Đề xuất danh sách bài hát',
-    breadcrumb: [area, programs, 'Đề xuất danh sách bài hát'],
-    phase: 5,
-  }),
+  pageRoute(
+    paths.director.programs,
+    { title: 'Danh sách chương trình phụng vụ', breadcrumb: [area, programs], phase: 5 },
+    async () => (await import('@/features/liturgical-programs')).DirectorProgramListPage,
+  ),
+  pageRoute(
+    paths.director.programDetail,
+    { title: 'Chi tiết chương trình phụng vụ', breadcrumb: [area, programs, 'Chi tiết chương trình'], phase: 5 },
+    async () => (await import('@/features/liturgical-programs')).DirectorProgramDetailPage,
+  ),
+  pageRoute(
+    paths.director.songListProposal,
+    { title: 'Đề xuất danh sách bài hát', breadcrumb: [area, programs, 'Đề xuất danh sách bài hát'], phase: 5 },
+    async () => (await import('@/features/song-lists')).SongListProposalPage,
+  ),
   pageRoute(
     paths.director.library,
     { title: 'Kho bài hát', breadcrumb: [area, 'Kho bài hát'], phase: 5 },

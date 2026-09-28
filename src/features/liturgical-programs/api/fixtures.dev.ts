@@ -3,12 +3,13 @@
  * Decision 0002 option B (approved by Daniel 2026-09-27): UI review without a backend. Loaded only through the
  * dynamic import in `programsApi.ts` when `import.meta.env.DEV && VITE_USE_DEV_FIXTURES=true`.
  * Fictional programs dated around today so the calendar and "upcoming" views have data. Catalog ids match the
- * system-categories fixtures; program ids match the report fixtures. Song-list statuses are the conceptual
- * labels from song-approval.md (INTERPRETATION).
+ * system-categories fixtures; program ids match the report and song-list fixtures. The song-list status and
+ * songs come from the song-lists fixture so every page shows the same state.
  */
 import dayjs from 'dayjs'
 import { nextFixtureId, readFixture, writeFixture } from '@/lib/api/fixtureRuntime.dev'
-import type { CatalogRef, LiturgicalProgram, LiturgicalProgramDetail, ProgramFormValues, ProgramSong } from '../types'
+import { songListSnapshot } from '@/features/song-lists/api/fixtures.dev'
+import type { CatalogRef, LiturgicalProgram, LiturgicalProgramDetail, ProgramFormValues } from '../types'
 
 const catalogNames: Record<string, string> = {
   'dev-season-1': 'Mùa Vọng',
@@ -29,31 +30,16 @@ const catalogNames: Record<string, string> = {
 const ref = (id?: string): CatalogRef | undefined => (id ? { id, name: catalogNames[id] ?? id } : undefined)
 const day = (offset: number) => dayjs().add(offset, 'day').format('YYYY-MM-DD')
 
-const sundaySongs: ProgramSong[] = [
-  { id: 's1', liturgicalPart: 'Ca nhập lễ', title: 'Con Bước Lên Bàn Thờ' },
-  { id: 's2', liturgicalPart: 'Đáp ca', title: 'Thánh vịnh 18B' },
-  { id: 's3', liturgicalPart: 'Ca dâng lễ', title: 'Lễ Vật Tâm Tình' },
-  { id: 's4', liturgicalPart: 'Ca hiệp lễ', title: 'Linh Hồn Tôi Tán Tụng Chúa' },
-]
+type ProgramRecord = Omit<LiturgicalProgram, 'songListStatus'>
 
-let programs: LiturgicalProgramDetail[] = [
-  {
-    id: 'dev-program-1',
-    eventName: 'Lễ Chúa Nhật Thường Niên',
-    date: day(-3),
-    season: ref('dev-season-5'),
-    massType: ref('dev-mass-1'),
-    songListStatus: 'approved',
-    songs: sundaySongs,
-  },
+let programs: ProgramRecord[] = [
+  { id: 'dev-program-1', eventName: 'Lễ Chúa Nhật Thường Niên', date: day(-3), season: ref('dev-season-5'), massType: ref('dev-mass-1') },
   {
     id: 'dev-program-2',
     eventName: 'Giờ Chầu Thánh Thể đầu tháng',
     date: day(-6),
     season: ref('dev-season-5'),
     ceremonyType: ref('dev-ceremony-1'),
-    songListStatus: 'approved',
-    songs: [{ id: 's5', liturgicalPart: 'Chầu Thánh Thể', title: 'Trầm Hương Đốt' }],
   },
   {
     id: 'dev-program-3',
@@ -62,8 +48,6 @@ let programs: LiturgicalProgramDetail[] = [
     season: ref('dev-season-5'),
     massType: ref('dev-mass-1'),
     specialRequirements: 'Ưu tiên bài hát phù hợp chủ đề Lời Chúa của ngày lễ.',
-    songListStatus: 'submitted',
-    songs: sundaySongs,
   },
   {
     id: 'dev-program-4',
@@ -72,32 +56,34 @@ let programs: LiturgicalProgramDetail[] = [
     season: ref('dev-season-5'),
     massType: ref('dev-mass-2'),
     specialRequirements: 'Có rước kiệu sau Thánh lễ.',
-    songListStatus: 'revisionRequested',
-    songs: sundaySongs.slice(0, 2),
   },
-  {
-    id: 'dev-program-5',
-    eventName: 'Thánh lễ Hôn Phối',
-    date: day(16),
-    season: ref('dev-season-5'),
-    ceremonyType: ref('dev-ceremony-3'),
-    songs: [],
-  },
+  { id: 'dev-program-5', eventName: 'Thánh lễ Hôn Phối', date: day(16), season: ref('dev-season-5'), ceremonyType: ref('dev-ceremony-3') },
 ]
 
-const summary = ({ songs: _songs, ...program }: LiturgicalProgramDetail): LiturgicalProgram => program
+function withSongList(program: ProgramRecord): LiturgicalProgramDetail {
+  const list = songListSnapshot(program.id)
+  return {
+    ...program,
+    songListStatus: list.status,
+    songs: list.items.map(({ id, liturgicalPart, title }) => ({ id, liturgicalPart, title })),
+  }
+}
 
-export const listProgramsFixture = () =>
-  readFixture([...programs].sort((a, b) => a.date.localeCompare(b.date)).map(summary))
+const summary = (program: ProgramRecord): LiturgicalProgram => {
+  const { songs: _songs, ...rest } = withSongList(program)
+  return rest
+}
+
+export const listProgramsFixture = () => readFixture([...programs].sort((a, b) => a.date.localeCompare(b.date)).map(summary))
 
 export async function getProgramFixture(id: string): Promise<LiturgicalProgramDetail | null> {
-  const [found] = await readFixture(programs.filter((program) => program.id === id))
+  const [found] = await readFixture(programs.filter((program) => program.id === id).map(withSongList))
   return found ?? null
 }
 
 export const createProgramFixture = (values: ProgramFormValues) =>
   writeFixture(() => {
-    const program: LiturgicalProgramDetail = {
+    const program: ProgramRecord = {
       id: nextFixtureId('program'),
       eventName: values.eventName,
       date: values.date,
@@ -105,7 +91,6 @@ export const createProgramFixture = (values: ProgramFormValues) =>
       massType: ref(values.massTypeId),
       ceremonyType: ref(values.ceremonyTypeId),
       specialRequirements: values.specialRequirements,
-      songs: [],
     }
     programs = [...programs, program]
     return summary(program)

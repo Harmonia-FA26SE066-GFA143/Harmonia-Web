@@ -18,6 +18,14 @@ export const songListStatusLabels: Record<SongListStatus, string> = {
 }
 
 /**
+ * The Choir Director can edit the song list except while it waits for review and after approval
+ * (owner decision 2026-09-28, song-approval.md DECIDED).
+ */
+export function canEditSongList(status?: SongListStatus): boolean {
+  return status !== 'submitted' && status !== 'approved'
+}
+
+/**
  * A liturgical program with the FE-16 event fields. Treating one program as one event is an interpretation:
  * how weekly programs (FE-15) group events is UNRESOLVED. No Draft/Published state (not decided).
  * TBD: Backend API missing – identifiers and field names come with the contract.
@@ -43,7 +51,7 @@ export interface ProgramSong {
 }
 
 export interface LiturgicalProgramDetail extends LiturgicalProgram {
-  /** Songs of the current song list, in order. Per-song review decisions are UNRESOLVED and not shown. */
+  /** Songs of the current song list, in order. Per-song review decisions are shown on the song-list pages. */
   songs: ProgramSong[]
 }
 

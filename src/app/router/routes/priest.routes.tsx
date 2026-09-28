@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { paths } from '../paths'
-import { pageRoute, placeholderRoute } from '../placeholderRoute'
+import { pageRoute } from '../placeholderRoute'
 
 const area = 'Cha xứ'
 const programs = 'Chương trình phụng vụ'
@@ -37,11 +37,11 @@ export const priestRoutes: RouteObject[] = [
     { title: 'Chi tiết chương trình phụng vụ', breadcrumb: [area, programs, 'Chi tiết chương trình'], phase: 4 },
     async () => (await loadPrograms()).PriestProgramDetailPage,
   ),
-  placeholderRoute(paths.priest.songListReview, {
-    title: 'Duyệt danh sách bài hát',
-    breadcrumb: [area, programs, 'Duyệt danh sách bài hát'],
-    phase: 5,
-  }),
+  pageRoute(
+    paths.priest.songListReview,
+    { title: 'Duyệt danh sách bài hát', breadcrumb: [area, programs, 'Duyệt danh sách bài hát'], phase: 5 },
+    async () => (await import('@/features/song-list-review')).SongListReviewPage,
+  ),
   pageRoute(
     paths.priest.reports,
     { title: 'Báo cáo', breadcrumb: [area, 'Báo cáo'], phase: 3 },
