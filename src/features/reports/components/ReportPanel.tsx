@@ -1,12 +1,11 @@
 import { Card, Typography } from 'antd'
 import { useMemo } from 'react'
-import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, MetricSummary, NoFilterResults, SectionSkeleton } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing } from '@/styles/tokens'
 import { useReport } from '../hooks/useReports'
 import { reportDefinitions } from '../reportDefinitions'
 import type { ReportFilters, ReportKind } from '../types'
-import { MetricSummary } from './MetricSummary'
 import { ReportTable } from './ReportTable'
 
 export interface ReportPanelProps {

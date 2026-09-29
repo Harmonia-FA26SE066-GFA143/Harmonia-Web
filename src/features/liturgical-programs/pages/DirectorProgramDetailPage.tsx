@@ -18,12 +18,13 @@ function songListAction(status?: SongListStatus): string {
   return canEditSongList(status) ? 'Chỉnh sửa danh sách bài hát' : 'Xem danh sách đề xuất'
 }
 
-/** Operational areas built in Phase 6 (FE-26, FE-35–FE-46); shown as reserved space for now. */
-const upcomingAreas = ['Lịch tập', 'Yêu cầu nhân sự & phân công', 'Bài tập luyện tập']
+/** Operational areas still to build in Phase 6 (FE-35–FE-46); rehearsals and confirmation are linked. */
+const upcomingAreas = ['Yêu cầu nhân sự & phân công', 'Bài tập luyện tập']
 
 /**
- * Choir Director: one program with its FE-16 information and song list (FE-20, FE-30). Rehearsals, staffing,
- * roster and practice blocks arrive in Phase 6. Not built: the five-step progress bar (team decision 2026-09-26).
+ * Choir Director: one program with its FE-16 information and song list (FE-20, FE-30), with links to its rehearsals
+ * and confirmation round. Staffing, roster and practice blocks arrive later in Phase 6. Not built: the five-step
+ * progress bar (team decision 2026-09-26).
  */
 export function DirectorProgramDetailPage() {
   const navigate = useNavigate()
@@ -90,6 +91,12 @@ export function DirectorProgramDetailPage() {
         </Card>
         <Card title="Chuẩn bị phục vụ">
           <Flex vertical gap={spacing.xs}>
+            <Flex wrap gap={spacing.sm} style={{ marginBottom: spacing.xs }}>
+              <Button onClick={() => navigate(`${paths.director.rehearsals}?programId=${data.id}`)}>Lịch tập</Button>
+              <Button onClick={() => navigate(`${paths.director.participation}?programId=${data.id}`)}>
+                Xác nhận tham gia
+              </Button>
+            </Flex>
             {upcomingAreas.map((area) => (
               <Typography.Text key={area}>
                 {area}: <span style={{ color: colors.textMuted }}>sẽ được bổ sung.</span>
