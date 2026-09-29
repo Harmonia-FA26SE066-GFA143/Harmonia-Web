@@ -8,8 +8,8 @@ const retry = (failureCount: number, error: Error) => !(error instanceof ApiCont
 
 const songListKey = (programId: string) => ['song-lists', programId] as const
 
-export function useSongList(programId: string) {
-  return useQuery({ queryKey: songListKey(programId), queryFn: () => getSongList(programId), retry })
+export function useSongList(programId: string, { enabled = true } = {}) {
+  return useQuery({ queryKey: songListKey(programId), queryFn: () => getSongList(programId), retry, enabled })
 }
 
 /** Refreshes the list and the programs (which show the list's status). */

@@ -38,13 +38,21 @@ export const directorRoutes: RouteObject[] = [
     { title: 'Chi tiết bài hát', breadcrumb: [area, 'Kho bài hát', 'Chi tiết bài hát'], phase: 5 },
     async () => (await import('@/features/music-library')).SongDetailPage,
   ),
-  placeholderRoute(paths.director.rehearsals, { title: 'Lịch tập', breadcrumb: [area, 'Lịch tập'], phase: 6 }),
-  placeholderRoute(paths.director.attendance, { title: 'Điểm danh', breadcrumb: [area, 'Điểm danh'], phase: 6 }),
-  placeholderRoute(paths.director.participation, {
-    title: 'Xác nhận tham gia',
-    breadcrumb: [area, 'Xác nhận tham gia'],
-    phase: 6,
-  }),
+  pageRoute(
+    paths.director.rehearsals,
+    { title: 'Lịch tập', breadcrumb: [area, 'Lịch tập'], phase: 6 },
+    async () => (await import('@/features/rehearsals')).RehearsalsPage,
+  ),
+  pageRoute(
+    paths.director.attendance,
+    { title: 'Điểm danh', breadcrumb: [area, 'Điểm danh'], phase: 6 },
+    async () => (await import('@/features/attendance')).AttendancePage,
+  ),
+  pageRoute(
+    paths.director.participation,
+    { title: 'Xác nhận tham gia', breadcrumb: [area, 'Xác nhận tham gia'], phase: 6 },
+    async () => (await import('@/features/participation')).ParticipationPage,
+  ),
   placeholderRoute(paths.director.roster, {
     title: 'Yêu cầu nhân sự & Phân công',
     breadcrumb: [area, 'Phân công phục vụ'],
