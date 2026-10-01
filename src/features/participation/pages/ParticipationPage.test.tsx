@@ -57,7 +57,7 @@ describe('ParticipationPage', () => {
       { memberId: 'm3', fullName: 'Anna Đặng Thị Mai', skills: [], sentAt },
     ])
     const send = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue([])
-    renderParticipation('/director/participation?programId=p1')
+    renderParticipation('/director/participation?programId=p2')
 
     expect(await screen.findByText('Maria Nguyễn Thu Hướng')).toBeInTheDocument()
     fireEvent.click(screen.getByText('Chưa phản hồi (1)'))
@@ -68,6 +68,17 @@ describe('ParticipationPage', () => {
     const confirm = await screen.findByRole('dialog')
     fireEvent.click(within(confirm).getByRole('button', { name: 'Gửi lại' }))
 
-    await waitFor(() => expect(send).toHaveBeenCalledWith('p1', ['m3']))
+    await waitFor(() => expect(send).toHaveBeenCalledWith('p2', ['m3']))
+  })
+
+  it('does not send or resend for a program that is already past', async () => {
+    vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([
+      { memberId: 'm3', fullName: 'Anna Đặng Thị Mai', skills: [], sentAt },
+    ])
+    renderParticipation('/director/participation?programId=p1')
+
+    expect(await screen.findByText('Chương trình đã qua: không gửi hoặc gửi lại yêu cầu xác nhận được.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Gửi lại cho 1 thành viên chưa phản hồi/ })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /Gửi yêu cầu xác nhận/ })).toBeNull()
   })
 })

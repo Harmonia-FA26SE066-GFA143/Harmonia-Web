@@ -27,7 +27,7 @@ interface FormValues {
   name: string
   date: Dayjs
   time: [Dayjs, Dayjs]
-  location?: string
+  location: string
   songs?: SongOption[]
   note?: string
 }
@@ -35,18 +35,36 @@ interface FormValues {
 const clean = (value?: string) => value?.trim() || undefined
 const withTime = (date: Dayjs, time: Dayjs) => date.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
 
-/** Changing the program clears the songs, which belong to the previous program's list. */
+const notApprovedMessage = 'Chương trình chưa có danh sách bài hát đã duyệt.'
+
+/**
+ * Only programs with an approved song list can have rehearsals (decision 2026-09-30, 6a.2). Changing the program
+ * clears the songs, which belong to the previous program's list.
+ */
 function ProgramField({ programs }: { programs: LiturgicalProgram[] }) {
   const form = Form.useFormInstance<FormValues>()
+  const isApproved = (programId?: string) => programs.find((program) => program.id === programId)?.songListStatus === 'approved'
   return (
-    <Form.Item label="Chương trình phụng vụ" name="programId" rules={[{ required: true, message: 'Vui lòng chọn chương trình.' }]}>
+    <Form.Item
+      label="Chương trình phụng vụ"
+      name="programId"
+      extra="Chỉ chọn được chương trình đã có danh sách bài hát được duyệt."
+      rules={[
+        { required: true, message: 'Vui lòng chọn chương trình.' },
+        {
+          validator: (_, programId?: string) =>
+            !programId || isApproved(programId) ? Promise.resolve() : Promise.reject(new Error(notApprovedMessage)),
+        },
+      ]}
+    >
       <Select
         showSearch
         optionFilterProp="label"
         placeholder="Chọn chương trình"
         options={programs.map((program) => ({
           value: program.id,
-          label: `${program.eventName} · ${formatProgramDate(program.date)}`,
+          label: `${program.eventName} · ${formatProgramDate(program.date)}${program.songListStatus === 'approved' ? '' : ' (chưa duyệt bài hát)'}`,
+          disabled: program.songListStatus !== 'approved',
         }))}
         onChange={() => form.setFieldValue('songs', [])}
       />
@@ -54,18 +72,19 @@ function ProgramField({ programs }: { programs: LiturgicalProgram[] }) {
   )
 }
 
-/** Song choices come from the selected program's song list. */
+/** Song choices come from the selected program's approved song list. */
 function SongsField() {
   const programId: string = Form.useWatch('programId', Form.useFormInstance()) ?? ''
   const songList = useSongList(programId, { enabled: Boolean(programId) })
-  const options = (songList.data?.items ?? []).map((item) => ({ value: item.songId, label: item.title }))
-  const noSongs = songList.isSuccess && options.length === 0
+  const approved = songList.data?.status === 'approved'
+  const options = approved ? (songList.data?.items ?? []).map((item) => ({ value: item.songId, label: item.title })) : []
 
   return (
     <Form.Item
       label="Bài hát tập"
       name="songs"
-      extra={noSongs ? 'Chương trình chưa có danh sách bài hát; có thể thêm bài sau.' : undefined}
+      extra={songList.isSuccess && !approved ? notApprovedMessage : undefined}
+      rules={[{ required: true, type: 'array', min: 1, message: 'Vui lòng chọn ít nhất một bài hát tập.' }]}
     >
       <Select
         mode="multiple"
@@ -73,7 +92,7 @@ function SongsField() {
         allowClear
         disabled={!programId}
         loading={songList.isFetching}
-        placeholder={programId ? 'Chọn bài hát từ danh sách của chương trình' : 'Chọn chương trình trước'}
+        placeholder={programId ? 'Chọn bài hát từ danh sách đã duyệt của chương trình' : 'Chọn chương trình trước'}
         options={options}
         optionFilterProp="label"
       />
@@ -82,8 +101,8 @@ function SongsField() {
 }
 
 /**
- * Create or edit a rehearsal (FE-26) with the fields decided on 2026-09-29. Only program, name, date and time are
- * required; requiredness of the rest is not specified. Songs come from the chosen program's song list.
+ * Create or edit a rehearsal (FE-26). Required: program, name, date, time, location and at least one song
+ * (decisions 2026-09-29 and 2026-09-30); the note is optional. Songs come from the program's approved song list.
  */
 export function RehearsalFormModal({
   open,
@@ -125,7 +144,7 @@ export function RehearsalFormModal({
               name: values.name.trim(),
               startAt: withTime(values.date, values.time[0]).toISOString(),
               endAt: withTime(values.date, values.time[1]).toISOString(),
-              location: clean(values.location),
+              location: values.location.trim(),
               songs: (values.songs ?? []).map((song) => ({ songId: song.value, title: song.label })),
               note: clean(values.note),
             })
@@ -160,7 +179,7 @@ export function RehearsalFormModal({
           <TimePicker.RangePicker format="HH:mm" minuteStep={5} placeholder={['Bắt đầu', 'Kết thúc']} style={{ width: '100%' }} />
         </Form.Item>
       </Flex>
-      <Form.Item label="Địa điểm" name="location">
+      <Form.Item label="Địa điểm" name="location" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập địa điểm.' }]}>
         <Input placeholder="Ví dụ: Phòng tập nhà xứ" />
       </Form.Item>
       <SongsField />

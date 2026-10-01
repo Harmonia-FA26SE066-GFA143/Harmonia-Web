@@ -1,10 +1,11 @@
 import { CalendarOutlined } from '@ant-design/icons'
-import { Button, Card, Flex, Select, Typography } from 'antd'
+import { Alert, Button, Card, Flex, Select, Typography } from 'antd'
+import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, usePrograms } from '@/features/liturgical-programs'
-import { formatRehearsalTime, rehearsalLabel, useRehearsals, type Rehearsal } from '@/features/rehearsals'
+import { formatRehearsalTime, isRehearsalDay, isUpcoming, rehearsalLabel, useRehearsals, type Rehearsal } from '@/features/rehearsals'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { AttendanceSheet } from '../components/AttendanceSheet'
@@ -12,11 +13,11 @@ import { useAttendance } from '../hooks/useAttendance'
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Điểm danh' }]
 
-/** The latest session that has started, otherwise the next one. */
+/** Today's session, otherwise the latest one that has started, otherwise the next one. */
 function defaultSession(rehearsals: Rehearsal[]): Rehearsal | undefined {
   const now = Date.now()
   const started = rehearsals.filter((rehearsal) => Date.parse(rehearsal.startAt) <= now)
-  return started.at(-1) ?? rehearsals[0]
+  return rehearsals.find((rehearsal) => isRehearsalDay(rehearsal)) ?? started.at(-1) ?? rehearsals[0]
 }
 
 /**
@@ -98,12 +99,24 @@ export function AttendancePage() {
           {attendance.isSuccess && attendance.data.length === 0 && (
             <EmptyState title="Chưa có thành viên trong danh sách điểm danh" />
           )}
+          {attendance.isSuccess && !isRehearsalDay(selected) && (
+            <Alert
+              type="info"
+              showIcon
+              title={
+                isUpcoming(selected)
+                  ? `Chỉ điểm danh được trong ngày tập (${dayjs(selected.startAt).format('DD/MM/YYYY')}).`
+                  : 'Đã qua ngày tập: điểm danh chỉ xem, không sửa được.'
+              }
+            />
+          )}
           {attendance.isSuccess && attendance.data.length > 0 && (
             // Remount after a save or a session change so the draft starts from the saved values.
             <AttendanceSheet
               key={`${selected.id}-${attendance.dataUpdatedAt}`}
               rehearsalId={selected.id}
               records={attendance.data}
+              editable={isRehearsalDay(selected)}
             />
           )}
         </Flex>

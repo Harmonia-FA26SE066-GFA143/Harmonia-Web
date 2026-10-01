@@ -21,6 +21,10 @@ export function useSaveAttendance(rehearsalId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (values: Record<string, AttendanceValue>) => saveAttendance(rehearsalId, values),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: attendanceKey(rehearsalId) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKey(rehearsalId) })
+      // A session with attendance can no longer be deleted (decision 2026-09-30, 6a.7).
+      queryClient.invalidateQueries({ queryKey: ['rehearsals'] })
+    },
   })
 }

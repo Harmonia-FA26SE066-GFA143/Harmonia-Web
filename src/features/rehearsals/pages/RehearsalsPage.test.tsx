@@ -10,7 +10,16 @@ import { RehearsalsPage } from './RehearsalsPage'
 const at = (days: number, hour: number) => dayjs().add(days, 'day').hour(hour).minute(0).second(0).millisecond(0).toISOString()
 
 const rehearsals: Rehearsal[] = [
-  { id: 'r1', programId: 'p1', name: 'Tập toàn ca đoàn', startAt: at(-3, 19), endAt: at(-3, 21), songs: [] },
+  {
+    id: 'r1',
+    programId: 'p1',
+    name: 'Tập toàn ca đoàn',
+    startAt: at(-3, 19),
+    endAt: at(-3, 21),
+    location: 'Nhà thờ',
+    songs: [],
+    hasAttendance: true,
+  },
   {
     id: 'r2',
     programId: 'p2',
@@ -20,7 +29,7 @@ const rehearsals: Rehearsal[] = [
     location: 'Phòng tập nhà xứ',
     songs: [{ songId: 's1', title: 'Con Bước Lên Bàn Thờ' }],
   },
-  { id: 'r3', programId: 'p1', name: 'Chuẩn bị phục vụ', startAt: at(5, 18), endAt: at(5, 20), songs: [] },
+  { id: 'r3', programId: 'p1', name: 'Chuẩn bị phục vụ', startAt: at(5, 18), endAt: at(5, 20), location: 'Nhà thờ', songs: [] },
 ]
 
 const renderRehearsals = (initialEntry = '/director/rehearsals') =>
@@ -28,8 +37,9 @@ const renderRehearsals = (initialEntry = '/director/rehearsals') =>
 
 beforeEach(() => {
   vi.spyOn(programsApi, 'listPrograms').mockResolvedValue([
-    { id: 'p1', eventName: 'Lễ Chúa Nhật', date: '2026-10-04' },
-    { id: 'p2', eventName: 'Lễ Bổn mạng', date: '2026-10-11' },
+    { id: 'p1', eventName: 'Lễ Chúa Nhật', date: '2026-10-04', songListStatus: 'approved' },
+    { id: 'p2', eventName: 'Lễ Bổn mạng', date: '2026-10-11', songListStatus: 'approved' },
+    { id: 'p3', eventName: 'Lễ Mân Côi', date: '2026-10-18', songListStatus: 'submitted' },
   ])
 })
 
@@ -101,5 +111,28 @@ describe('RehearsalsPage', () => {
     fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá buổi tập' }))
 
     await waitFor(() => expect(remove).toHaveBeenCalledWith('r2'))
+  })
+
+  it('cannot delete a rehearsal that already has attendance', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(rehearsals)
+    renderRehearsals()
+
+    fireEvent.click(await screen.findByText('Đã qua (1)'))
+    expect(await screen.findByRole('button', { name: 'Xoá Tập toàn ca đoàn' })).toBeDisabled()
+  })
+
+  it('requires location and songs, and rejects a program without an approved song list', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(rehearsals)
+    const save = vi.spyOn(rehearsalsApi, 'saveRehearsal')
+    renderRehearsals('/director/rehearsals?programId=p3')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Tạo buổi tập/ }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo buổi tập' }))
+
+    expect(await within(dialog).findByText('Chương trình chưa có danh sách bài hát đã duyệt.')).toBeInTheDocument()
+    expect(within(dialog).getByText('Vui lòng nhập địa điểm.')).toBeInTheDocument()
+    expect(within(dialog).getByText('Vui lòng chọn ít nhất một bài hát tập.')).toBeInTheDocument()
+    expect(save).not.toHaveBeenCalled()
   })
 })

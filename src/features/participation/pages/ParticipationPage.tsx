@@ -1,5 +1,5 @@
 import { ReloadOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Input, Segmented, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Alert, App, Button, Card, Flex, Input, Segmented, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { generatePath, Link, useSearchParams } from 'react-router'
@@ -69,6 +69,8 @@ export function ParticipationPage() {
   const allPrograms = useMemo(() => programs.data ?? [], [programs.data])
   const program =
     allPrograms.find((item) => item.id === searchParams.get('programId')) ?? upcomingPrograms(allPrograms)[0] ?? allPrograms[0]
+  // No request for a program that is already past (decision 2026-09-30, 6a.3).
+  const isPast = program !== undefined && program.date < dayjs().format('YYYY-MM-DD')
   const participation = useParticipation(program?.id)
   const send = useSendParticipationRequests(program?.id ?? '')
   const [picking, setPicking] = useState(false)
@@ -122,7 +124,7 @@ export function ParticipationPage() {
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Xác nhận tham gia' }]}
         description="Gửi yêu cầu xác nhận tham gia phục vụ và theo dõi phản hồi."
         // One round per program (decision 2026-09-29): after it is sent, only resending to non-responders.
-        extra={program && participation.isSuccess && requests.length === 0 && sendButton}
+        extra={program && !isPast && participation.isSuccess && requests.length === 0 && sendButton}
       />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
       {programs.isError && (
@@ -147,6 +149,9 @@ export function ParticipationPage() {
               <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>Xem chi tiết chương trình</Link>
             </Flex>
           </Card>
+          {isPast && requests.length > 0 && (
+            <Alert type="info" showIcon title="Chương trình đã qua: không gửi hoặc gửi lại yêu cầu xác nhận được." />
+          )}
           {participation.isPending && <SectionSkeleton rows={8} label="Đang tải phản hồi" />}
           {participation.isError && (
             <ErrorState
@@ -158,8 +163,12 @@ export function ParticipationPage() {
           {participation.isSuccess && requests.length === 0 && (
             <EmptyState
               title="Chưa gửi yêu cầu xác nhận"
-              description="Chọn thành viên để gửi yêu cầu xác nhận tham gia phục vụ chương trình này."
-              action={sendButton}
+              description={
+                isPast
+                  ? 'Chương trình đã qua nên không gửi được yêu cầu xác nhận.'
+                  : 'Chọn thành viên để gửi yêu cầu xác nhận tham gia phục vụ chương trình này.'
+              }
+              action={isPast ? undefined : sendButton}
             />
           )}
           {participation.isSuccess && requests.length > 0 && (
@@ -185,7 +194,7 @@ export function ParticipationPage() {
                       >
                         Làm mới
                       </Button>
-                      <Button icon={<SendOutlined />} onClick={handleResend} disabled={pending.length === 0 || send.isPending}>
+                      <Button icon={<SendOutlined />} onClick={handleResend} disabled={isPast || pending.length === 0 || send.isPending}>
                         Gửi lại cho {pending.length} thành viên chưa phản hồi
                       </Button>
                     </Flex>
