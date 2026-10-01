@@ -65,6 +65,21 @@ const lists = new Map<string, SongList>([
       priestNote: 'Nhìn chung phù hợp, chỉ cần đổi bài dâng lễ.',
     },
   ],
+  [
+    // Upcoming program with an approved list, so the rehearsal fixtures can plan sessions for it.
+    'dev-program-5',
+    {
+      programId: 'dev-program-5',
+      status: 'approved',
+      items: [
+        item('dev-song-1', 'Con Bước Lên Bàn Thờ', 'Ca nhập lễ', { review: { decision: 'accepted' } }),
+        item('dev-song-8', 'Xin Vâng', 'Ca dâng lễ', { review: { decision: 'accepted' } }),
+        item('dev-song-3', 'Linh Hồn Tôi Tán Tụng Chúa', 'Ca hiệp lễ', { review: { decision: 'accepted' } }),
+      ],
+      submittedAt: dayjs().subtract(4, 'day').toISOString(),
+      reviewedAt: dayjs().subtract(3, 'day').toISOString(),
+    },
+  ],
 ])
 
 const empty = (programId: string): SongList => ({ programId, items: [] })

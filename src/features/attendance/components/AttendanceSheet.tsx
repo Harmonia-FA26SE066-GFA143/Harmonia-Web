@@ -17,7 +17,14 @@ const metrics = [
 ]
 
 /** Marks Present/Absent per member; changes stay on the page until saved (leaving asks first). */
-export function AttendanceSheet({ rehearsalId, records }: { rehearsalId: string; records: AttendanceRecord[] }) {
+export interface AttendanceSheetProps {
+  rehearsalId: string
+  records: AttendanceRecord[]
+  /** False outside the day of the session (decision 2026-09-30, 6a.6): recorded values are shown read-only. */
+  editable: boolean
+}
+
+export function AttendanceSheet({ rehearsalId, records, editable }: AttendanceSheetProps) {
   const { message } = App.useApp()
   const save = useSaveAttendance(rehearsalId)
   const [draft, setDraft] = useState<Record<string, AttendanceValue | undefined>>(() =>
@@ -79,6 +86,7 @@ export function AttendanceSheet({ rehearsalId, records }: { rehearsalId: string;
       title: 'Điểm danh',
       render: (_, record) => (
         <Radio.Group
+          disabled={!editable}
           optionType="button"
           buttonStyle="solid"
           aria-label={`Điểm danh ${record.fullName}`}
@@ -122,17 +130,19 @@ export function AttendanceSheet({ rehearsalId, records }: { rehearsalId: string;
             onChange={(event) => setSearch(event.target.value)}
             style={{ flex: '1 1 240px', maxWidth: 380 }}
           />
-          <Flex wrap gap={spacing.sm}>
-            <Button icon={<CheckOutlined />} onClick={markAllPresent} disabled={save.isPending}>
-              Đánh dấu tất cả có mặt
-            </Button>
-            <Button onClick={discard} disabled={changeCount === 0 || save.isPending}>
-              Hủy thay đổi
-            </Button>
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} disabled={changeCount === 0} loading={save.isPending}>
-              {changeCount > 0 ? `Lưu điểm danh (${changeCount} thay đổi)` : 'Lưu điểm danh'}
-            </Button>
-          </Flex>
+          {editable && (
+            <Flex wrap gap={spacing.sm}>
+              <Button icon={<CheckOutlined />} onClick={markAllPresent} disabled={save.isPending}>
+                Đánh dấu tất cả có mặt
+              </Button>
+              <Button onClick={discard} disabled={changeCount === 0 || save.isPending}>
+                Hủy thay đổi
+              </Button>
+              <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} disabled={changeCount === 0} loading={save.isPending}>
+                {changeCount > 0 ? `Lưu điểm danh (${changeCount} thay đổi)` : 'Lưu điểm danh'}
+              </Button>
+            </Flex>
+          )}
         </Flex>
         {visible.length === 0 ? (
           <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>

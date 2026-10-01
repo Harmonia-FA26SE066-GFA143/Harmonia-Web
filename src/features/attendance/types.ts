@@ -11,8 +11,8 @@ export const attendanceLabels: Record<AttendanceValue, string> = {
 }
 
 /**
- * One member on a session's attendance list; `value` is absent until marked. Who appears on the list (whole
- * choir, confirmed members, assigned roster) is UNRESOLVED, so the list is whatever the backend returns.
+ * One member on a session's attendance list; `value` is absent until marked. The list holds the choir members
+ * (decision 2026-09-30, 6a.8); the backend returns it.
  */
 export interface AttendanceRecord {
   memberId: string

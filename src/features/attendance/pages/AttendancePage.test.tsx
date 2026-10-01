@@ -7,6 +7,8 @@ import { renderPage } from '@/test/renderPage'
 import * as attendanceApi from '../api/attendanceApi'
 import { AttendancePage } from './AttendancePage'
 
+const today = { startAt: dayjs().startOf('day').toISOString(), endAt: dayjs().endOf('day').toISOString() }
+
 const at = (days: number, hour: number) => dayjs().add(days, 'day').hour(hour).minute(0).second(0).millisecond(0).toISOString()
 
 const renderAttendance = (initialEntry = '/director/attendance') =>
@@ -36,8 +38,9 @@ describe('AttendancePage', () => {
 
   it('marks members and saves only the changes', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
-      { id: 'r1', programId: 'p1', name: 'Tập toàn ca đoàn', startAt: at(-1, 19), endAt: at(-1, 21), songs: [] },
-      { id: 'r2', programId: 'p1', name: 'Tập riêng bè Nam', startAt: at(3, 19), endAt: at(3, 21), songs: [] },
+      { id: 'r0', programId: 'p1', name: 'Tập hôm qua', startAt: at(-1, 19), endAt: at(-1, 21), location: 'Nhà thờ', songs: [] },
+      { id: 'r1', programId: 'p1', name: 'Tập toàn ca đoàn', ...today, location: 'Nhà thờ', songs: [] },
+      { id: 'r2', programId: 'p1', name: 'Tập riêng bè Nam', startAt: at(3, 19), endAt: at(3, 21), location: 'Nhà thờ', songs: [] },
     ])
     const get = vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
       { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: ['Organ'], value: 'present' },
@@ -47,7 +50,7 @@ describe('AttendancePage', () => {
     const save = vi.spyOn(attendanceApi, 'saveAttendance').mockResolvedValue([])
     renderAttendance()
 
-    // The session that already started is chosen by default.
+    // Today's session is chosen by default.
     const simon = await screen.findByRole('radiogroup', { name: 'Điểm danh Simon Phan Văn Đức' })
     expect(get).toHaveBeenCalledWith('r1')
     expect(screen.getByRole('button', { name: /Lưu điểm danh/ })).toBeDisabled()
@@ -61,7 +64,7 @@ describe('AttendancePage', () => {
 
   it('marks everyone present at once', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
-      { id: 'r1', programId: 'p1', name: 'Tập toàn ca đoàn', startAt: at(-1, 19), endAt: at(-1, 21), songs: [] },
+      { id: 'r1', programId: 'p1', name: 'Tập toàn ca đoàn', ...today, location: 'Nhà thờ', songs: [] },
     ])
     vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
       { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: [], value: 'absent' },
@@ -71,5 +74,20 @@ describe('AttendancePage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Đánh dấu tất cả có mặt/ }))
     expect(screen.getByRole('button', { name: /Lưu điểm danh \(2 thay đổi\)/ })).toBeEnabled()
+  })
+
+  it('shows other days read-only', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
+      { id: 'r0', programId: 'p1', name: 'Tập hôm qua', startAt: at(-1, 19), endAt: at(-1, 21), location: 'Nhà thờ', songs: [] },
+    ])
+    vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
+      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: [], value: 'present' },
+    ])
+    renderAttendance('/director/attendance?rehearsalId=r0')
+
+    expect(await screen.findByText('Đã qua ngày tập: điểm danh chỉ xem, không sửa được.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Lưu điểm danh/ })).toBeNull()
+    const radios = within(screen.getByRole('radiogroup', { name: 'Điểm danh Maria Nguyễn Thu Hướng' })).getAllByRole('radio')
+    radios.forEach((radio) => expect(radio).toBeDisabled())
   })
 })

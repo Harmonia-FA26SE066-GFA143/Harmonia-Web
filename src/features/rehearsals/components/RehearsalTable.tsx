@@ -1,11 +1,11 @@
 import { CheckSquareOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Flex, Table, Typography, type TableColumnsType } from 'antd'
+import { Button, Flex, Table, Tooltip, Typography, type TableColumnsType } from 'antd'
 import { generatePath, Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { colors, typography } from '@/styles/tokens'
 import { formatRehearsalTime } from '../rehearsalFormat'
-import type { Rehearsal } from '../types'
+import { isRehearsalDay, type Rehearsal } from '../types'
 
 export interface RehearsalTableProps {
   rehearsals: Rehearsal[]
@@ -78,16 +78,19 @@ export function RehearsalTable({ rehearsals, programs, onTakeAttendance, onEdit,
       render: (_, rehearsal) => (
         <Flex justify="flex-end" gap={4}>
           <Button type="link" icon={<CheckSquareOutlined />} onClick={() => onTakeAttendance(rehearsal)}>
-            Điểm danh
+            {isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
           </Button>
           <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa ${rehearsal.name}`} />
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => onDelete(rehearsal)}
-            aria-label={`Xoá ${rehearsal.name}`}
-          />
+          <Tooltip title={rehearsal.hasAttendance ? 'Buổi tập đã có điểm danh nên không thể xoá.' : undefined}>
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              disabled={rehearsal.hasAttendance}
+              onClick={() => onDelete(rehearsal)}
+              aria-label={`Xoá ${rehearsal.name}`}
+            />
+          </Tooltip>
         </Flex>
       ),
     },
