@@ -18,8 +18,8 @@ function songListAction(status?: SongListStatus): string {
   return canEditSongList(status) ? 'Chỉnh sửa danh sách bài hát' : 'Xem danh sách đề xuất'
 }
 
-/** Operational areas still to build in Phase 6 (FE-35–FE-46); rehearsals and confirmation are linked. */
-const upcomingAreas = ['Yêu cầu nhân sự & phân công', 'Bài tập luyện tập']
+/** Operational areas still to build in Phase 6 (FE-41–FE-46); rehearsals, confirmation and roster are linked. */
+const upcomingAreas = ['Bài tập luyện tập']
 
 /**
  * Choir Director: one program with its FE-16 information and song list (FE-20, FE-30), with links to its rehearsals
@@ -96,6 +96,7 @@ export function DirectorProgramDetailPage() {
               <Button onClick={() => navigate(`${paths.director.participation}?programId=${data.id}`)}>
                 Xác nhận tham gia
               </Button>
+              <Button onClick={() => navigate(`${paths.director.roster}?programId=${data.id}`)}>Phân công phục vụ</Button>
             </Flex>
             {upcomingAreas.map((area) => (
               <Typography.Text key={area}>

@@ -1,4 +1,4 @@
-export { useLiturgicalCategories } from './hooks/useCatalogs'
+export { useLiturgicalCategories, useSkillCategories } from './hooks/useCatalogs'
 export { useCatalogOptions, type CatalogOption } from './hooks/useCatalogOptions'
 export { LiturgicalCategoriesPage } from './pages/LiturgicalCategoriesPage'
 export { SkillCategoriesPage } from './pages/SkillCategoriesPage'

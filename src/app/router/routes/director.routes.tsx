@@ -53,11 +53,11 @@ export const directorRoutes: RouteObject[] = [
     { title: 'Xác nhận tham gia', breadcrumb: [area, 'Xác nhận tham gia'], phase: 6 },
     async () => (await import('@/features/participation')).ParticipationPage,
   ),
-  placeholderRoute(paths.director.roster, {
-    title: 'Yêu cầu nhân sự & Phân công',
-    breadcrumb: [area, 'Phân công phục vụ'],
-    phase: 6,
-  }),
+  pageRoute(
+    paths.director.roster,
+    { title: 'Yêu cầu nhân sự & Phân công', breadcrumb: [area, 'Phân công phục vụ'], phase: 6 },
+    async () => (await import('@/features/roster')).RosterPage,
+  ),
   placeholderRoute(paths.director.practice, {
     title: 'Bài tập & Tiến độ luyện tập',
     breadcrumb: [area, 'Luyện tập'],
