@@ -58,10 +58,10 @@ export const directorRoutes: RouteObject[] = [
     { title: 'Yêu cầu nhân sự & Phân công', breadcrumb: [area, 'Phân công phục vụ'], phase: 6 },
     async () => (await import('@/features/roster')).RosterPage,
   ),
-  placeholderRoute(paths.director.practice, {
-    title: 'Bài tập & Tiến độ luyện tập',
-    breadcrumb: [area, 'Luyện tập'],
-    phase: 6,
-  }),
+  pageRoute(
+    paths.director.practice,
+    { title: 'Bài tập & Tiến độ luyện tập', breadcrumb: [area, 'Luyện tập'], phase: 6 },
+    async () => (await import('@/features/practice')).PracticePage,
+  ),
   placeholderRoute(paths.director.reports, { title: 'Báo cáo ca đoàn', breadcrumb: [area, 'Báo cáo'], phase: 6 }),
 ]
