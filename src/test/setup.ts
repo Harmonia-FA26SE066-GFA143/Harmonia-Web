@@ -1,6 +1,10 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterAll, afterEach } from 'vitest'
+
+// Pages chain several queries (program → song list → roster…) behind lazy Ant Design chunks; with every test file
+// running in parallel the default 1 s for findBy*/waitFor was too short and tests failed at random.
+configure({ asyncUtilTimeout: 3000 })
 
 // Vitest runs without globals, so Testing Library cannot register its automatic unmount between tests.
 afterEach(() => {

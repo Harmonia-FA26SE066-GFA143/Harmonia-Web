@@ -18,12 +18,9 @@ function songListAction(status?: SongListStatus): string {
   return canEditSongList(status) ? 'Chỉnh sửa danh sách bài hát' : 'Xem danh sách đề xuất'
 }
 
-/** Operational areas still to build in Phase 6 (FE-41–FE-46); rehearsals, confirmation and roster are linked. */
-const upcomingAreas = ['Bài tập luyện tập']
-
 /**
- * Choir Director: one program with its FE-16 information and song list (FE-20, FE-30), with links to its rehearsals
- * and confirmation round. Staffing, roster and practice blocks arrive later in Phase 6. Not built: the five-step
+ * Choir Director: one program with its FE-16 information and song list (FE-20, FE-30), with links to its rehearsals,
+ * confirmation round, roster and practice assignments. Finalize and readiness arrive in Phase 6d. Not built: the five-step
  * progress bar (team decision 2026-09-26).
  */
 export function DirectorProgramDetailPage() {
@@ -90,19 +87,11 @@ export function DirectorProgramDetailPage() {
           )}
         </Card>
         <Card title="Chuẩn bị phục vụ">
-          <Flex vertical gap={spacing.xs}>
-            <Flex wrap gap={spacing.sm} style={{ marginBottom: spacing.xs }}>
-              <Button onClick={() => navigate(`${paths.director.rehearsals}?programId=${data.id}`)}>Lịch tập</Button>
-              <Button onClick={() => navigate(`${paths.director.participation}?programId=${data.id}`)}>
-                Xác nhận tham gia
-              </Button>
-              <Button onClick={() => navigate(`${paths.director.roster}?programId=${data.id}`)}>Phân công phục vụ</Button>
-            </Flex>
-            {upcomingAreas.map((area) => (
-              <Typography.Text key={area}>
-                {area}: <span style={{ color: colors.textMuted }}>sẽ được bổ sung.</span>
-              </Typography.Text>
-            ))}
+          <Flex wrap gap={spacing.sm}>
+            <Button onClick={() => navigate(`${paths.director.rehearsals}?programId=${data.id}`)}>Lịch tập</Button>
+            <Button onClick={() => navigate(`${paths.director.participation}?programId=${data.id}`)}>Xác nhận tham gia</Button>
+            <Button onClick={() => navigate(`${paths.director.roster}?programId=${data.id}`)}>Phân công phục vụ</Button>
+            <Button onClick={() => navigate(`${paths.director.practice}?programId=${data.id}`)}>Bài tập luyện tập</Button>
           </Flex>
         </Card>
       </Flex>
