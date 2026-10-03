@@ -1,21 +1,44 @@
+import { apiRequest } from '@/lib/api/client'
 import { ApiContractMissingError } from '@/lib/api/errors'
-import type { PasswordResetRequestValues, RegistrationValues, SignInResult, SignInValues } from '../types'
+import { clearSession, getSession, setSession, type ApiRoleName, type Session } from '@/lib/auth/session'
+import type { SystemRole } from '@/shared/types/account'
+import type { PasswordResetRequestValues, SignInResult, SignInValues } from '../types'
 
-// TBD: Backend API missing – authentication contract (sign-in, registration, password reset, sign-out,
-// token storage). Decision 0002: no endpoint is guessed; each call fails until the contract is supplied.
-
-export async function signIn(_values: SignInValues): Promise<SignInResult> {
-  throw new ApiContractMissingError('Đăng nhập')
+const roleByApiName: Record<ApiRoleName, SystemRole> = {
+  Admin: 'admin',
+  ParishPriest: 'priest',
+  ChoirDirector: 'director',
+  ChoirMember: 'member',
 }
 
-export async function register(_values: Omit<RegistrationValues, 'confirmPassword'>): Promise<void> {
-  throw new ApiContractMissingError('Đăng ký tài khoản')
+export async function signIn(values: SignInValues): Promise<SignInResult> {
+  const session = await apiRequest<Session>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ ...values, platform: 'Web' }),
+  })
+  setSession(session)
+  return { role: roleByApiName[session.user.roleName] }
 }
 
+// TBD: issue #21 covers sign-in only; POST /api/auth/forgot-password is wired in a separate issue.
 export async function requestPasswordReset(_values: PasswordResetRequestValues): Promise<void> {
   throw new ApiContractMissingError('Yêu cầu đặt lại mật khẩu')
 }
 
+/**
+ * Revokes the refresh token on the server, then forgets the session on this device. The local session is
+ * cleared even when the server call fails, so the user is never stuck signed in.
+ */
 export async function signOut(): Promise<void> {
-  throw new ApiContractMissingError('Đăng xuất')
+  const refreshToken = getSession()?.refreshToken
+  try {
+    if (refreshToken) {
+      await apiRequest<void>('/api/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken }) })
+    }
+  } catch {
+    // ponytail: a failed revoke leaves the refresh token valid on the server until it expires; retrying
+    // or calling /api/auth/logout-all would close that gap if it matters.
+  } finally {
+    clearSession()
+  }
 }

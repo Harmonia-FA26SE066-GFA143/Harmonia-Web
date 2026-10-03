@@ -16,10 +16,11 @@ describe('LandingPage', () => {
     ])
   })
 
-  it('leads to sign-in and registration', async () => {
+  it('leads to sign-in only, as accounts are created by an Admin', async () => {
     renderPage(<LandingPage />)
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Đăng ký' })[0])
-    expect(await screen.findByTestId('location')).toHaveTextContent('/register')
+    expect(screen.queryByRole('button', { name: 'Đăng ký' })).toBeNull()
+    fireEvent.click(screen.getAllByRole('button', { name: 'Đăng nhập' })[0])
+    expect(await screen.findByTestId('location')).toHaveTextContent('/login')
   })
 })

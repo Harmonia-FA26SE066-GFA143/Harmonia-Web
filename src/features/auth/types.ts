@@ -1,33 +1,17 @@
-import type { RequestableRole, SystemRole } from '@/shared/types/account'
+import type { SystemRole } from '@/shared/types/account'
 
 export interface SignInValues {
   email: string
   password: string
 }
 
-/**
- * UI model of a sign-in outcome (docs/local/business/roles-permissions.md, DECIDED 2026-09-26).
- * TBD: Backend API missing – the mapping from the real auth response is defined when the contract exists.
- */
-export type SignInResult =
-  | { status: 'active'; role: SystemRole }
-  | { status: 'pending' }
-  | { status: 'rejected'; reason?: string }
-
-/** Failures the sign-in form can display. */
-export type SignInError = { kind: 'invalid-credentials' } | { kind: 'unavailable' }
-
-export interface RegistrationValues {
-  fullName: string
-  email: string
-  phone?: string
-  requestedRole: RequestableRole
-  password: string
-  confirmPassword: string
+/** Outcome of a successful sign-in: the role decides which workspace opens. */
+export interface SignInResult {
+  role: SystemRole
 }
 
-/** Failures the registration form can display. */
-export type RegistrationError = { kind: 'email-taken' } | { kind: 'unavailable' }
+/** Failures the sign-in form can display (by backend error code, see LoginPage). */
+export type SignInError = { kind: 'invalid-credentials' } | { kind: 'inactive' } | { kind: 'unavailable' }
 
 export interface PasswordResetRequestValues {
   email: string

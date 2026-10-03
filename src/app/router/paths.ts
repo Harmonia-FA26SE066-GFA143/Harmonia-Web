@@ -6,10 +6,7 @@
 export const paths = {
   home: '/',
   login: '/login',
-  register: '/register',
   forgotPassword: '/forgot-password',
-  /** Signed-in account whose role an Admin has not confirmed yet (no Stitch screen). */
-  pendingConfirmation: '/pending-confirmation',
   profile: '/profile',
 
   admin: {
