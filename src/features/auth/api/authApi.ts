@@ -30,10 +30,14 @@ export async function requestPasswordReset(_values: PasswordResetRequestValues):
  * cleared even when the server call fails, so the user is never stuck signed in.
  */
 export async function signOut(): Promise<void> {
-  const refreshToken = getSession()?.refreshToken
   try {
-    if (refreshToken) {
-      await apiRequest<void>('/api/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken }) })
+    if (getSession()?.refreshToken) {
+      // Built per attempt: logout requires a valid access token, so an expired one is refreshed first and the
+      // retry must revoke the rotated refresh token, not the one the refresh already revoked.
+      await apiRequest<void>('/api/auth/logout', () => ({
+        method: 'POST',
+        body: JSON.stringify({ refreshToken: getSession()?.refreshToken }),
+      }))
     }
   } catch {
     // ponytail: a failed revoke leaves the refresh token valid on the server until it expires; retrying

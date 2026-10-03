@@ -1,20 +1,16 @@
 import { LogoutOutlined } from '@ant-design/icons'
-import { App, Button, Modal } from 'antd'
+import { App, Button } from 'antd'
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import { paths } from '@/app/router/paths'
-import { useSignOut } from '@/features/auth'
+import { SignOutModal } from '@/features/auth'
 import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { ProfileDetails } from '../components/ProfileDetails'
 import { useMyProfile, useUpdateMyProfile } from '../hooks/useMyProfile'
 import type { ProfileUpdateValues } from '../types'
 
 export function ProfilePage() {
-  const navigate = useNavigate()
   const { message } = App.useApp()
   const profile = useMyProfile()
   const update = useUpdateMyProfile()
-  const signOut = useSignOut()
   const [editing, setEditing] = useState(false)
   const [confirmingSignOut, setConfirmingSignOut] = useState(false)
 
@@ -26,9 +22,6 @@ export function ProfilePage() {
       },
       onError: () => message.error('Không thể lưu thay đổi. Vui lòng thử lại.'),
     })
-
-  // signOut always ends the local session, so it does not fail.
-  const handleSignOut = () => signOut.mutate(undefined, { onSuccess: () => navigate(paths.login) })
 
   return (
     <>
@@ -61,17 +54,7 @@ export function ProfilePage() {
         />
       )}
 
-      <Modal
-        open={confirmingSignOut}
-        title="Đăng xuất khỏi Harmonia?"
-        okText="Đăng xuất"
-        cancelText="Ở lại"
-        confirmLoading={signOut.isPending}
-        onOk={handleSignOut}
-        onCancel={() => setConfirmingSignOut(false)}
-      >
-        Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng Harmonia.
-      </Modal>
+      <SignOutModal open={confirmingSignOut} onClose={() => setConfirmingSignOut(false)} />
     </>
   )
 }
