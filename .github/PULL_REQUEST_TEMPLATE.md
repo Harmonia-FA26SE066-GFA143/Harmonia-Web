@@ -26,6 +26,8 @@ Closes #
 
 - [ ] No backend, database schema, or API contract changes
 - [ ] Frontend dependency on a missing API is marked `TBD` and reported
+- BE commit verified against: <!-- short SHA of Harmonia-BE, or "N/A" -->
+- Endpoints used: <!-- METHOD /api/route — BE path:line; or "None" -->
 
 ## Review checklist
 
