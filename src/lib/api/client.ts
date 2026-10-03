@@ -6,13 +6,16 @@ import { ApiError } from './errors'
  * Thin fetch wrapper. Feature `api/` modules call this; UI components never call fetch directly.
  * Sends the stored access token and, when the backend reports it expired, refreshes the session once and
  * retries (Harmonia_API_Doc: 401 AUTH_TOKEN_EXPIRED → POST /api/auth/refresh).
+ * Pass `init` as a function when the request itself carries session data: it is rebuilt for the retry, after
+ * the refresh token has rotated.
  */
-export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  let { response, body } = await send(path, init)
+export async function apiRequest<T>(path: string, init: RequestInit | (() => RequestInit) = {}): Promise<T> {
+  const build = typeof init === 'function' ? init : () => init
+  let { response, body } = await send(path, build())
 
   if (response.status === 401 && new ApiError(401, body).code === 'AUTH_TOKEN_EXPIRED') {
     if (await refreshSessionOnce()) {
-      ;({ response, body } = await send(path, init))
+      ;({ response, body } = await send(path, build()))
     } else {
       // The refresh token was rejected: start over at sign-in. The full reload also drops cached data of
       // the previous session.

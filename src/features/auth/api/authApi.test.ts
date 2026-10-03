@@ -47,6 +47,21 @@ describe('signOut', () => {
     expect(getSession()).toBeUndefined()
   })
 
+  it('revokes the rotated refresh token when the access token had expired', async () => {
+    setSession(session)
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 'AUTH_TOKEN_EXPIRED' }), { status: 401 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ...session, accessToken: 'access-2', refreshToken: 'refresh-2' }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+    await signOut()
+    expect(fetchMock.mock.calls[1][0]).toMatch(/\/api\/auth\/refresh$/)
+    expect(fetchMock.mock.calls[2][1]?.body).toBe(JSON.stringify({ refreshToken: 'refresh-2' }))
+    expect(getSession()).toBeUndefined()
+  })
+
   it('forgets the session even when the server cannot be reached', async () => {
     setSession(session)
     fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'))

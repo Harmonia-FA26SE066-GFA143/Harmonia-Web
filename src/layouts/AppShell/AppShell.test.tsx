@@ -68,4 +68,14 @@ describe('AppShell', () => {
     const nav = await screen.findByRole('navigation', { name: 'Điều hướng chính' })
     expect(within(nav).getByText('Tài khoản')).toBeInTheDocument()
   })
+
+  it('asks for confirmation before signing out from the user menu', async () => {
+    setViewportWidth(1280)
+    renderShellAt('/admin')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Menu người dùng' }))
+    fireEvent.click(await screen.findByText('Đăng xuất'))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Đăng xuất khỏi Harmonia?')).toBeInTheDocument()
+  })
 })
