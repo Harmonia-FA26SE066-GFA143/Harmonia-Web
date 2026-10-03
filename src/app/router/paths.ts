@@ -1,7 +1,7 @@
 /**
  * Route paths for every page in docs/design/stitch-screen-map.md (workspace root).
  * Paths are proposals from phase 0; role prefixes separate the per-role Stitch variants of the same page.
- * Role-based access control is TBD until the auth contract is available.
+ * Each prefix is admitted only to its role by RoleGuard.
  */
 export const paths = {
   home: '/',

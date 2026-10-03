@@ -8,8 +8,7 @@ const loadPrograms = () => import('@/features/liturgical-programs')
 
 /**
  * Parish Priest / Liturgy Committee routes (Report 1 FE-15–FE-23).
- * Route protection (ProtectedRoute/RoleGuard) is TBD until the auth API contract and
- * role values are available; see docs/decisions and the workspace open-business-decisions.md.
+ * Only the matching signed-in role is admitted (RoleGuard).
  */
 export const priestRoutes: RouteObject[] = [
   pageRoute(
