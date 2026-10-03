@@ -27,14 +27,8 @@ export function ProfilePage() {
       onError: () => message.error('Không thể lưu thay đổi. Vui lòng thử lại.'),
     })
 
-  const handleSignOut = () =>
-    signOut.mutate(undefined, {
-      onSuccess: () => navigate(paths.login),
-      onError: () => {
-        setConfirmingSignOut(false)
-        message.error('Chưa thể đăng xuất: hệ thống chưa kết nối được máy chủ.')
-      },
-    })
+  // signOut always ends the local session, so it does not fail.
+  const handleSignOut = () => signOut.mutate(undefined, { onSuccess: () => navigate(paths.login) })
 
   return (
     <>

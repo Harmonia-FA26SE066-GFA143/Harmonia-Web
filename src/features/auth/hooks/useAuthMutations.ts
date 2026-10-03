@@ -1,12 +1,8 @@
-import { useMutation } from '@tanstack/react-query'
-import { register, requestPasswordReset, signIn, signOut } from '../api/authApi'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { requestPasswordReset, signIn, signOut } from '../api/authApi'
 
 export function useSignIn() {
   return useMutation({ mutationFn: signIn })
-}
-
-export function useRegister() {
-  return useMutation({ mutationFn: register })
 }
 
 export function useRequestPasswordReset() {
@@ -14,5 +10,7 @@ export function useRequestPasswordReset() {
 }
 
 export function useSignOut() {
-  return useMutation({ mutationFn: signOut })
+  const queryClient = useQueryClient()
+  // Cached data belongs to the signed-out user; the next account must not see it.
+  return useMutation({ mutationFn: signOut, onSuccess: () => queryClient.clear() })
 }

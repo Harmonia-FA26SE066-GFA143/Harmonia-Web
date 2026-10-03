@@ -30,17 +30,11 @@ describe('LoginForm', () => {
 
   it.each([
     [{ kind: 'invalid-credentials' } as const, 'Email hoặc mật khẩu không chính xác.'],
+    [{ kind: 'inactive' } as const, 'Tài khoản đã bị vô hiệu hoá'],
     [{ kind: 'unavailable' } as const, 'Không thể đăng nhập lúc này'],
     [{ kind: 'member-web' } as const, 'Tài khoản Ca viên sử dụng ứng dụng di động Harmonia'],
   ])('shows feedback for %o', (feedback, text) => {
     renderPage(<LoginForm onSubmit={vi.fn()} feedback={feedback} />)
     expect(screen.getByText(text)).toBeInTheDocument()
-  })
-
-  it('shows the rejection with its reason', () => {
-    renderPage(<LoginForm onSubmit={vi.fn()} feedback={{ kind: 'rejected', reason: 'Không thuộc giáo xứ' }} />)
-
-    expect(screen.getByText('Tài khoản của bạn đã bị từ chối')).toBeInTheDocument()
-    expect(screen.getByText('Lý do: Không thuộc giáo xứ')).toBeInTheDocument()
   })
 })

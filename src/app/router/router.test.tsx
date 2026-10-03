@@ -27,7 +27,7 @@ const implemented = pages.filter((page) => !page.handle.placeholder)
 
 describe('router', () => {
   it('registers a page route for every screen-map page', () => {
-    expect(pages).toHaveLength(33)
+    expect(pages).toHaveLength(31)
     expect(new Set(pages.map((page) => page.path)).size).toBe(pages.length)
   })
 

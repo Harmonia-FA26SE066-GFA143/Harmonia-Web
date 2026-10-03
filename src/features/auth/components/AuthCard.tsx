@@ -10,11 +10,11 @@ export interface AuthCardProps {
   /** Decorative icon above the title (e.g. on result screens). */
   icon?: ReactNode
   children?: ReactNode
-  /** Secondary links below the card (e.g. "Chưa có tài khoản? Đăng ký"). */
+  /** Secondary links below the card (e.g. "Quay lại đăng nhập"). */
   footer?: ReactNode
 }
 
-/** Centered card frame shared by the sign-in, registration, password and pending-confirmation screens. */
+/** Centered card frame shared by the sign-in and password screens. */
 export function AuthCard({ title, description, icon, children, footer }: AuthCardProps) {
   return (
     <Flex vertical align="center" gap={spacing.lg} style={{ paddingBlock: spacing.xl }}>

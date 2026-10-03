@@ -5,7 +5,7 @@ import { spacing } from '@/styles/tokens'
 import type { SignInError, SignInValues } from '../types'
 
 /** Feedback shown above the sign-in form. */
-export type LoginFeedback = SignInError | { kind: 'rejected'; reason?: string } | { kind: 'member-web' }
+export type LoginFeedback = SignInError | { kind: 'member-web' }
 
 export interface LoginFormProps {
   onSubmit: (values: SignInValues) => void
@@ -24,18 +24,13 @@ function FeedbackAlert({ feedback }: { feedback: LoginFeedback }) {
           description="Vui lòng kiểm tra lại thông tin đăng nhập."
         />
       )
-    case 'rejected':
+    case 'inactive':
       return (
         <Alert
           type="error"
           showIcon
-          title="Tài khoản của bạn đã bị từ chối"
-          description={
-            <>
-              {feedback.reason && <div>Lý do: {feedback.reason}</div>}
-              <div>Vui lòng liên hệ Quản trị viên giáo xứ để được hỗ trợ.</div>
-            </>
-          }
+          title="Tài khoản đã bị vô hiệu hoá"
+          description="Vui lòng liên hệ Quản trị viên giáo xứ để được hỗ trợ."
         />
       )
     case 'member-web':
@@ -58,7 +53,7 @@ function FeedbackAlert({ feedback }: { feedback: LoginFeedback }) {
           type="error"
           showIcon
           title="Không thể đăng nhập lúc này"
-          description="Hệ thống chưa kết nối được máy chủ. Vui lòng thử lại sau."
+          description="Đã xảy ra lỗi khi kết nối máy chủ. Vui lòng thử lại sau."
         />
       )
   }

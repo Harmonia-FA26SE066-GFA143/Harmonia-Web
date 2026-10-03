@@ -12,15 +12,26 @@ export class ApiContractMissingError extends Error {
   }
 }
 
-/** Error thrown for non-2xx API responses. The backend error body format is TBD (no API contract yet). */
+/**
+ * Error thrown for non-2xx API responses. Body format (Harmonia_API_Doc, sheet "Quy ước"):
+ * `{ code, message }`, plus `errors: { <field>: [<CODE>] }` for 400 VALIDATION_FAILED; 403 has an empty body.
+ * The UI shows feedback by `code` and never displays the backend `message`.
+ */
 export class ApiError extends Error {
   readonly status: number
   readonly body: unknown
+  readonly code?: string
+  readonly errors?: Record<string, string[]>
 
-  constructor(status: number, message: string, body: unknown) {
-    super(message)
+  constructor(status: number, body: unknown) {
+    super(`Request failed with status ${status}`)
     this.name = 'ApiError'
     this.status = status
     this.body = body
+    if (body && typeof body === 'object') {
+      const { code, errors } = body as { code?: unknown; errors?: Record<string, string[]> }
+      if (typeof code === 'string') this.code = code
+      this.errors = errors
+    }
   }
 }

@@ -65,7 +65,6 @@ export function LandingPage() {
       <Button type="primary" onClick={() => navigate(paths.login)}>
         Đăng nhập
       </Button>
-      <Button onClick={() => navigate(paths.register)}>Đăng ký</Button>
     </Flex>
   )
 

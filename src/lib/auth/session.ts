@@ -1,0 +1,31 @@
+/** Role names sent by the backend (Harmonia_API_Doc, sheet "Quy ước"). */
+export type ApiRoleName = 'Admin' | 'ParishPriest' | 'ChoirDirector' | 'ChoirMember'
+
+/** LoginResponse of POST /api/auth/login and /api/auth/refresh, stored as received. */
+export interface Session {
+  accessToken: string
+  accessTokenExpiresAt: string
+  refreshToken: string
+  user: { id: string; email: string; roleName: ApiRoleName }
+}
+
+// localStorage keeps the session across reloads (owner decision 2026-10-03). The backend returns the refresh
+// token in the body, so an httpOnly cookie is not available.
+const storageKey = 'harmonia.session'
+
+export function getSession(): Session | undefined {
+  try {
+    const stored = localStorage.getItem(storageKey)
+    return stored ? (JSON.parse(stored) as Session) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function setSession(session: Session) {
+  localStorage.setItem(storageKey, JSON.stringify(session))
+}
+
+export function clearSession() {
+  localStorage.removeItem(storageKey)
+}
