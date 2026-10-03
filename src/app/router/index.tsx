@@ -3,6 +3,7 @@ import { NotFoundPage } from '@/app/pages/NotFoundPage'
 import { AppShell } from '@/layouts/AppShell/AppShell'
 import { BlankLayout } from '@/layouts/BlankLayout/BlankLayout'
 import { PageSkeleton } from '@/shared/ui'
+import { RoleGuard } from './RoleGuard'
 import { adminRoutes } from './routes/admin.routes'
 import { authRoutes } from './routes/auth.routes'
 import { directorRoutes } from './routes/director.routes'
@@ -15,7 +16,12 @@ export const routes: RouteObject[] = [
     hydrateFallbackElement: <PageSkeleton />,
     children: [
       { element: <BlankLayout />, children: [...publicRoutes, ...authRoutes] },
-      { element: <AppShell />, children: [...sharedRoutes, ...priestRoutes, ...directorRoutes, ...adminRoutes] },
+      {
+        element: <RoleGuard />,
+        children: [
+          { element: <AppShell />, children: [...sharedRoutes, ...priestRoutes, ...directorRoutes, ...adminRoutes] },
+        ],
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -7,8 +7,7 @@ const programs = 'Chương trình phụng vụ'
 
 /**
  * Choir Director routes (Report 1 FE-24–FE-46).
- * Route protection (ProtectedRoute/RoleGuard) is TBD until the auth API contract and
- * role values are available; see docs/decisions and the workspace open-business-decisions.md.
+ * Only the matching signed-in role is admitted (RoleGuard).
  */
 export const directorRoutes: RouteObject[] = [
   placeholderRoute(paths.director.dashboard, { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'], phase: 6 }),
