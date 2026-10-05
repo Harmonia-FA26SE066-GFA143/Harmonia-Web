@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getSession, setSession, type Session } from '@/lib/auth/session'
-import { signIn, signOut } from './authApi'
+import { requestPasswordReset, resetPassword, signIn, signOut } from './authApi'
 
 const session: Session = {
   accessToken: 'access-1',
@@ -33,6 +33,26 @@ describe('signIn', () => {
       platform: 'Web',
     })
     expect(getSession()).toEqual(session)
+  })
+})
+
+describe('password reset', () => {
+  it('asks for a web reset link', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+    await requestPasswordReset({ email: 'an@giaoxu.org' })
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/auth\/forgot-password$/)
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ email: 'an@giaoxu.org', platform: 'Web' })
+  })
+
+  it('sets the new password and forgets the session the backend just ended', async () => {
+    setSession(session)
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+    await resetPassword({ token: 'link-token', newPassword: 'Matkhau123' })
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/auth\/reset-password$/)
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ token: 'link-token', newPassword: 'Matkhau123' })
+    expect(getSession()).toBeUndefined()
   })
 })
 

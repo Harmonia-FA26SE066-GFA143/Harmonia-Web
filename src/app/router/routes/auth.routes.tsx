@@ -15,4 +15,9 @@ export const authRoutes: RouteObject[] = [
     { title: 'Quên mật khẩu?', phase: 1 },
     async () => (await loadAuth()).ForgotPasswordPage,
   ),
+  pageRoute(
+    paths.resetPassword,
+    { title: 'Đặt lại mật khẩu', phase: 1 },
+    async () => (await loadAuth()).ResetPasswordPage,
+  ),
 ]

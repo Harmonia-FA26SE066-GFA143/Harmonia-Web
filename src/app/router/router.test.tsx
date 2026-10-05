@@ -50,7 +50,8 @@ const implemented = pages.filter((page) => !page.handle.placeholder)
 
 describe('router', () => {
   it('registers a page route for every screen-map page', () => {
-    expect(pages).toHaveLength(31)
+    // 31 screen-map pages plus the target of the emailed reset link (/reset-password).
+    expect(pages).toHaveLength(32)
     expect(new Set(pages.map((page) => page.path)).size).toBe(pages.length)
   })
 
@@ -63,7 +64,8 @@ describe('router', () => {
 
   it.each(implemented)('renders the implemented page for $path', async ({ path, handle }) => {
     signInAs(roleFor(path))
-    renderAt(path.replace(/:\w+/g, 'demo'))
+    // ?token= opens the reset-password form; the other pages ignore it.
+    renderAt(`${path.replace(/:\w+/g, 'demo')}?token=demo`)
     expect(await screen.findByRole('heading', { level: 1, name: handle.title })).toBeInTheDocument()
     expect(screen.queryByText('Đang phát triển')).toBeNull()
   })

@@ -16,3 +16,15 @@ export type SignInError = { kind: 'invalid-credentials' } | { kind: 'inactive' }
 export interface PasswordResetRequestValues {
   email: string
 }
+
+/** Body of POST /api/auth/reset-password; `token` comes from the `?token=` of the emailed link. */
+export interface PasswordResetValues {
+  token: string
+  newPassword: string
+}
+
+/** Fields of the reset form; the confirmation is checked on the web only. */
+export interface NewPasswordFormValues {
+  newPassword: string
+  confirmPassword: string
+}
