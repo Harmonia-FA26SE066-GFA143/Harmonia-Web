@@ -13,12 +13,13 @@ export async function apiRequest<T>(path: string, init: RequestInit | (() => Req
   const build = typeof init === 'function' ? init : () => init
   let { response, body } = await send(path, build())
 
-  if (response.status === 401 && new ApiError(401, body).code === 'AUTH_TOKEN_EXPIRED') {
-    if (await refreshSessionOnce()) {
+  if (response.status === 401) {
+    const code = new ApiError(401, body).code
+    if (code === 'AUTH_TOKEN_EXPIRED' && (await refreshSessionOnce())) {
       ;({ response, body } = await send(path, build()))
-    } else {
-      // The refresh token was rejected: start over at sign-in. The full reload also drops cached data of
-      // the previous session.
+    } else if (code === 'AUTH_TOKEN_EXPIRED' || code === 'AUTH_TOKEN_INVALID') {
+      // The refresh was rejected, or there is no valid token at all: start over at sign-in. The full reload also
+      // drops cached data of the previous session.
       clearSession()
       location.assign('/login')
     }
@@ -38,8 +39,12 @@ async function send(path: string, init: RequestInit) {
       ...init.headers,
     },
   })
+  return { response, body: await readBody(response) }
+}
+
+async function readBody(response: Response) {
   const text = await response.text()
-  return { response, body: text ? safeJson(text) : undefined }
+  return text ? safeJson(text) : undefined
 }
 
 let refreshing: Promise<boolean> | undefined
@@ -52,6 +57,16 @@ function refreshSessionOnce(): Promise<boolean> {
   return refreshing
 }
 
+/**
+ * Refresh answers that end the session (Harmonia-BE ErrorStatusMap): 400 VALIDATION_FAILED,
+ * 401 AUTH_REFRESH_TOKEN_NOT_FOUND / _REVOKED / _EXPIRED, 403 AUTH_ACCOUNT_INACTIVE.
+ */
+const sessionEndingStatuses = [400, 401, 403]
+
+/**
+ * True when a usable session is stored afterwards. Resolves false only when the backend rejects the refresh
+ * token; a server or network failure rejects instead, so the user keeps the session and sees an error.
+ */
 async function refreshSession(): Promise<boolean> {
   const refreshToken = getSession()?.refreshToken
   if (!refreshToken) return false
@@ -61,9 +76,16 @@ async function refreshSession(): Promise<boolean> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
   })
-  if (!response.ok) return false
-  setSession((await response.json()) as Session)
-  return true
+  if (response.ok) {
+    setSession((await response.json()) as Session)
+    return true
+  }
+  if (!sessionEndingStatuses.includes(response.status)) throw new ApiError(response.status, await readBody(response))
+  // Another tab may have refreshed first: rotation revoked the token sent here, but its new session is stored.
+  // ponytail: if this answer arrives before the other tab stores its session, the user is still signed out;
+  // serializing refreshes across tabs with navigator.locks would close that window.
+  const current = getSession()?.refreshToken
+  return current !== undefined && current !== refreshToken
 }
 
 function safeJson(text: string): unknown {

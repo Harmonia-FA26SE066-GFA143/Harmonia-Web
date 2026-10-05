@@ -4,13 +4,22 @@ import viVN from 'antd/locale/vi_VN'
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import { useState, type ReactNode } from 'react'
+import { ApiError } from '@/lib/api/errors'
 import { theme } from './theme'
 
 // Vietnamese month/day names for Ant Design date pickers and dayjs formatting.
 dayjs.locale('vi')
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient())
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        // A 4xx answer (validation, permission, not found) would fail the same way again; retry only the rest.
+        defaultOptions: {
+          queries: { retry: (failures, error) => failures < 3 && !(error instanceof ApiError && error.status < 500) },
+        },
+      }),
+  )
 
   return (
     <ConfigProvider theme={theme} locale={viVN}>

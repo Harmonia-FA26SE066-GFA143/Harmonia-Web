@@ -74,11 +74,61 @@ describe('apiRequest', () => {
     expect(assign).toHaveBeenCalledWith('/login')
   })
 
-  it('does not refresh for an invalid token', async () => {
+  it('ends the session for a deactivated account', async () => {
+    setSession(session('1'))
+    fetchMock
+      .mockResolvedValueOnce(reply(401, { code: 'AUTH_TOKEN_EXPIRED' }))
+      .mockResolvedValueOnce(reply(403, { code: 'AUTH_ACCOUNT_INACTIVE' }))
+
+    await expect(apiRequest('/api/songs')).rejects.toMatchObject({ status: 401 })
+    expect(getSession()).toBeUndefined()
+    expect(assign).toHaveBeenCalledWith('/login')
+  })
+
+  it('keeps the session when the refresh fails on the server', async () => {
+    setSession(session('1'))
+    fetchMock
+      .mockResolvedValueOnce(reply(401, { code: 'AUTH_TOKEN_EXPIRED' }))
+      .mockResolvedValueOnce(reply(500, { code: 'INTERNAL_ERROR' }))
+
+    await expect(apiRequest('/api/songs')).rejects.toMatchObject({ status: 500, code: 'INTERNAL_ERROR' })
+    expect(getSession()?.refreshToken).toBe('refresh-1')
+    expect(assign).not.toHaveBeenCalled()
+  })
+
+  it('keeps the session when the refresh cannot reach the server', async () => {
+    setSession(session('1'))
+    fetchMock
+      .mockResolvedValueOnce(reply(401, { code: 'AUTH_TOKEN_EXPIRED' }))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+
+    await expect(apiRequest('/api/songs')).rejects.toBeInstanceOf(TypeError)
+    expect(getSession()?.refreshToken).toBe('refresh-1')
+    expect(assign).not.toHaveBeenCalled()
+  })
+
+  it('uses the session another tab refreshed when its own refresh token was rotated away', async () => {
+    setSession(session('1'))
+    fetchMock
+      .mockResolvedValueOnce(reply(401, { code: 'AUTH_TOKEN_EXPIRED' }))
+      .mockImplementationOnce(async () => {
+        setSession(session('2')) // the other tab won the race and stored the rotated session
+        return reply(401, { code: 'AUTH_REFRESH_TOKEN_REVOKED' })
+      })
+      .mockResolvedValueOnce(reply(200, { ok: true }))
+
+    await expect(apiRequest('/api/songs')).resolves.toEqual({ ok: true })
+    expect(authorization(2)).toBe('Bearer access-2')
+    expect(assign).not.toHaveBeenCalled()
+  })
+
+  it('returns to sign-in without refreshing when the token is invalid', async () => {
     setSession(session('1'))
     fetchMock.mockResolvedValueOnce(reply(401, { code: 'AUTH_TOKEN_INVALID' }))
 
     await expect(apiRequest('/api/songs')).rejects.toMatchObject({ code: 'AUTH_TOKEN_INVALID' })
     expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(getSession()).toBeUndefined()
+    expect(assign).toHaveBeenCalledWith('/login')
   })
 })
