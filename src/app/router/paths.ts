@@ -7,6 +7,8 @@ export const paths = {
   home: '/',
   login: '/login',
   forgotPassword: '/forgot-password',
+  /** Target of the emailed reset link; the backend's PasswordReset__WebUrl must point here. */
+  resetPassword: '/reset-password',
   profile: '/profile',
 
   admin: {

@@ -7,8 +7,8 @@ import { AuthCard } from '../components/AuthCard'
 import { ForgotPasswordForm } from '../components/ForgotPasswordForm'
 import { useRequestPasswordReset } from '../hooks/useAuthMutations'
 
-// TBD: the reset mechanism (email link, code, expiry) is not specified; copy stays generic and does not
-// reveal whether an email is registered.
+// The backend answers 204 for every email, so the copy stays generic and does not reveal whether an email is
+// registered. The emailed link opens /reset-password and works once, for 1 hour.
 export function ForgotPasswordPage() {
   const navigate = useNavigate()
   const resetRequest = useRequestPasswordReset()
@@ -18,7 +18,7 @@ export function ForgotPasswordPage() {
       <AuthCard
         icon={<MailOutlined />}
         title="Yêu cầu đã được gửi"
-        description="Nếu email đã được đăng ký, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu. Vui lòng kiểm tra cả thư mục thư rác."
+        description="Nếu email đã được đăng ký, bạn sẽ nhận được liên kết đặt lại mật khẩu, có hiệu lực trong 1 giờ. Vui lòng kiểm tra cả thư mục thư rác."
       >
         <Flex vertical gap={spacing.sm}>
           <Button type="primary" block onClick={() => navigate(paths.login)}>
