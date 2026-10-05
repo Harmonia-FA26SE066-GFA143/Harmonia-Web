@@ -16,6 +16,9 @@ export async function signIn(values: SignInValues): Promise<SignInResult> {
     body: JSON.stringify({ ...values, platform: 'Web' }),
   })
   setSession(session)
+  // Choir Members use the mobile app and have no web workspace (RoleGuard): revoke the session they just got
+  // instead of leaving a valid refresh token behind. signOut needs it stored to authorize the logout call.
+  if (session.user.roleName === 'ChoirMember') await signOut()
   return { role: roleByApiName[session.user.roleName] }
 }
 

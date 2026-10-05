@@ -34,6 +34,18 @@ describe('signIn', () => {
     })
     expect(getSession()).toEqual(session)
   })
+
+  it('revokes and forgets the session of a Choir Member, who has no web workspace', async () => {
+    const memberSession: Session = { ...session, user: { ...session.user, roleName: 'ChoirMember' } }
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify(memberSession), { status: 200 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+    await expect(signIn({ email: 'an@giaoxu.org', password: 'Secret123' })).resolves.toEqual({ role: 'member' })
+    expect(fetchMock.mock.calls[1][0]).toMatch(/\/api\/auth\/logout$/)
+    expect(fetchMock.mock.calls[1][1]?.body).toBe(JSON.stringify({ refreshToken: 'refresh-1' }))
+    expect(getSession()).toBeUndefined()
+  })
 })
 
 describe('password reset', () => {

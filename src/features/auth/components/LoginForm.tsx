@@ -34,17 +34,13 @@ function FeedbackAlert({ feedback }: { feedback: LoginFeedback }) {
         />
       )
     case 'member-web':
-      // TBD: web access for the Choir Member role is not specified; members use the mobile app (FE-01–FE-14).
+      // Choir Members have no web workspace (RoleGuard, #25); they use the mobile app (FE-01–FE-14).
       return (
         <Alert
           type="info"
           showIcon
           title="Tài khoản Ca viên sử dụng ứng dụng di động Harmonia"
-          description={
-            <>
-              Trên web, bạn có thể xem <Link to={paths.profile}>hồ sơ cá nhân</Link>.
-            </>
-          }
+          description="Vui lòng đăng nhập trên ứng dụng di động để tiếp tục."
         />
       )
     case 'unavailable':
