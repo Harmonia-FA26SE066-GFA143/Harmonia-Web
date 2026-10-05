@@ -3,7 +3,8 @@ import type { AccountStatus, RequestableRole, SystemRole } from '@/shared/types/
 /**
  * An account as the Admin sees it in User Accounts (FE-47) and role assignment (FE-48).
  * Fields follow the registration decision (docs/local/business/roles-permissions.md, DECIDED 2026-09-26).
- * TBD: Backend API missing – identifiers, field names and stored status values come with the contract.
+ * Not yet mapped to the backend UserDto (id, email, fullName, roleName, isActive): the backend has no pending or
+ * rejected status, so the status model waits for decision D1.
  * Stitch fields not adopted: account code, affiliated choir/unit, notes, initial password mode.
  */
 export interface Account {

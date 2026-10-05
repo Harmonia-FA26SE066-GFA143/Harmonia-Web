@@ -2,7 +2,9 @@ import { env } from '@/config/env'
 import { ApiContractMissingError } from '@/lib/api/errors'
 import type { CatalogItem, CatalogItemValues, LiturgicalCatalog } from '../types'
 
-// TBD: Backend API missing – skill (FE-49) and liturgical (FE-50) catalogs. Decision 0002: no endpoint is guessed.
+// Reads exist, not wired yet: `GET /api/lookups/skill-categories`, `skills?categoryId=`,
+// `liturgical-seasons`, `mass-types`, `ceremony-types`, `event-categories` (active rows only, any signed-in role).
+// TBD: Backend API missing – creating and editing catalog entries for the Admin (tbd-backlog B11).
 // Each function checks `import.meta.env.DEV` at the call site so the fixture import is dropped from dist/.
 
 export async function listSkillCategories(): Promise<CatalogItem[]> {
