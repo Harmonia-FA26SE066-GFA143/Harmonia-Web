@@ -3,9 +3,11 @@ import { ApiContractMissingError } from '@/lib/api/errors'
 import type { SystemRole } from '@/shared/types/account'
 import type { Account, CreateAccountValues } from '../types'
 
-// TBD: Backend API missing – Admin account management (FE-47) and role assignment (FE-48).
-// Decision 0002: no endpoint is guessed. Filtering is done client-side until server-side filters are defined.
-// Each function checks `import.meta.env.DEV` at the call site so the fixture import is dropped from dist/.
+// Backend contract exists, not wired yet: Admin-only `/api/users` with GET (paged, keyword/roleName/
+// isActive filters), GET {id}, POST, PUT {id}, PATCH {id}/activate, PATCH {id}/deactivate, PUT {id}/role.
+// Not wired because the Web model follows the pending/confirm/reject lifecycle while the backend has Admin-created
+// accounts with isActive: decision D1 is open. confirmAccount and rejectAccount have no backend counterpart.
+// Until then each function checks `import.meta.env.DEV` at the call site so the fixture import is dropped from dist/.
 
 export async function listAccounts(): Promise<Account[]> {
   if (import.meta.env.DEV && env.useDevFixtures) {

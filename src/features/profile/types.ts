@@ -3,7 +3,7 @@ import type { AccountStatus, RequestableRole, SystemRole } from '@/shared/types/
 /**
  * UI model of the signed-in user's profile. Fields follow the registration decision
  * (docs/local/business/roles-permissions.md, DECIDED 2026-09-26).
- * TBD: Backend API missing – field names and mapping are defined when the contract exists.
+ * TBD: Backend API missing – no current-user profile for the web roles yet (see profileApi); mapping follows it.
  */
 export interface Profile {
   fullName: string

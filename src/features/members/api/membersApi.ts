@@ -2,7 +2,9 @@ import { env } from '@/config/env'
 import { ApiContractMissingError } from '@/lib/api/errors'
 import type { ChoirMember } from '../types'
 
-// TBD: Backend API missing – the Choir Director's member list (FE-24). Decision 0002: no endpoint is guessed.
+// Backend contract exists, not wired yet: ChoirDirector-only `GET /api/member-profiles` (paged,
+// keyword/status/skillId filters, rows with approvedSkills), GET and PUT {id}. Not wired: needs the shared paging
+// helper and the MemberStatus mapper (audit W5).
 
 export async function listChoirMembers(): Promise<ChoirMember[]> {
   if (import.meta.env.DEV && env.useDevFixtures) {

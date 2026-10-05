@@ -2,9 +2,11 @@ import { env } from '@/config/env'
 import { ApiContractMissingError } from '@/lib/api/errors'
 import type { MaterialKind, Song, SongDetail, SongMaterial, SongValues } from '../types'
 
-// TBD: Backend API missing – music library (FE-27–FE-29) and song materials (FE-08, FE-28).
-// Decision 0002: no endpoint is guessed. Each function checks `import.meta.env.DEV` at the call site so the
-// fixture import is dropped from dist/.
+// Backend contract exists, not wired yet: `/api/songs` (paged list, get, create, update, delete,
+// GET/PUT {id}/classification) and `/api/music-materials` (multipart upload, list, update, delete). Not wired
+// because the Web types differ from the DTOs (paging, multi-value classification, composer, material title and
+// target skill, PascalCase enums) and apiRequest cannot send FormData yet (audit W4–W6). Until then each function
+// checks `import.meta.env.DEV` at the call site so the fixture import is dropped from dist/.
 
 export async function listSongs(): Promise<Song[]> {
   if (import.meta.env.DEV && env.useDevFixtures) {

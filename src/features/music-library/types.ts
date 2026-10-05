@@ -31,7 +31,7 @@ export interface SongClassification {
 
 /**
  * A song of the choir's music library (FE-27). No status, author or usage count: Report 1 defines none.
- * TBD: Backend API missing – identifiers and field names come with the contract.
+ * Not yet mapped to the backend SongDto: rework these types from the DTOs when the music library is wired.
  */
 export interface Song extends SongClassification {
   id: string
