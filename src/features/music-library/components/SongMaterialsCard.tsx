@@ -6,18 +6,25 @@ import {
   ReadOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
-import { Button, Card, Divider, Flex, Tooltip, Typography, Upload } from 'antd'
+import { Button, Card, Divider, Flex, Tag, Typography, Upload } from 'antd'
 import dayjs from 'dayjs'
 import { Fragment, type ComponentType } from 'react'
+import { parseUtc } from '@/lib/api/dates'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
-import { materialKindLabels, materialKinds, type MaterialKind, type SongMaterial } from '../types'
+import { materialExtensions, materialKindLabels, materialKinds, type MaterialKind, type SongMaterial } from '../types'
 
 export interface SongMaterialsCardProps {
   materials: SongMaterial[]
   /** Kind currently being uploaded, to show progress on its button. */
   uploadingKind?: MaterialKind
-  onUpload: (kind: MaterialKind, file: File) => void
+  /** A file was picked for a kind; the page checks it and asks for a title before uploading. */
+  onPick: (kind: MaterialKind, file: File) => void
   onDelete: (material: SongMaterial) => void
+}
+
+function formatSize(bytes: number | null): string | undefined {
+  if (!bytes) return undefined
+  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
 }
 
 const kindIcons: Record<MaterialKind, ComponentType> = {
@@ -27,18 +34,18 @@ const kindIcons: Record<MaterialKind, ComponentType> = {
   rehearsalMaterial: FolderOpenOutlined,
 }
 
-function UploadButton({ kind, loading, label, onUpload }: {
+function UploadButton({ kind, loading, label, onPick }: {
   kind: MaterialKind
   loading: boolean
   label: string
-  onUpload: (kind: MaterialKind, file: File) => void
+  onPick: (kind: MaterialKind, file: File) => void
 }) {
-  // No format or size restriction: both are TBD (FE-28).
   return (
     <Upload
       showUploadList={false}
+      accept={materialExtensions[kind].join(',')}
       beforeUpload={(file) => {
-        onUpload(kind, file)
+        onPick(kind, file)
         return false
       }}
     >
@@ -63,40 +70,41 @@ function MaterialRow({ material, onDelete }: { material: SongMaterial; onDelete:
         <Icon />
       </span>
       <Flex vertical style={{ flex: '1 1 200px', minWidth: 0 }}>
-        <Typography.Text strong ellipsis={{ tooltip: material.fileName }}>
-          {material.fileName}
-        </Typography.Text>
-        <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
-          Tải lên {dayjs(material.uploadedAt).format('DD/MM/YYYY')}
+        <Flex wrap align="center" gap={spacing.xs}>
+          <Typography.Text strong ellipsis={{ tooltip: material.title }}>
+            {material.title}
+          </Typography.Text>
+          {material.targetSkillName && <Tag style={{ marginInlineEnd: 0 }}>{material.targetSkillName}</Tag>}
+        </Flex>
+        <Typography.Text
+          ellipsis={{ tooltip: material.fileName }}
+          style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}
+        >
+          {[material.fileName, formatSize(material.fileSizeBytes), `tải lên ${dayjs(parseUtc(material.createdAt)).format('DD/MM/YYYY')}`]
+            .filter(Boolean)
+            .join(' · ')}
         </Typography.Text>
       </Flex>
-      {material.kind === 'sampleAudio' && material.url && (
-        <audio controls preload="none" src={material.url} aria-label={`Nghe ${material.fileName}`} style={{ height: 36 }} />
+      {material.kind === 'sampleAudio' && (
+        <audio controls preload="none" src={material.url} aria-label={`Nghe ${material.title}`} style={{ height: 36 }} />
       )}
-      {material.url ? (
-        <Button type="link" href={material.url} target="_blank" rel="noopener noreferrer" download={material.fileName}>
-          Xem/Tải xuống
-        </Button>
-      ) : (
-        <Tooltip title="Chưa có đường dẫn tệp (chờ API)">
-          <Button type="link" disabled>
-            Xem/Tải xuống
-          </Button>
-        </Tooltip>
-      )}
+      {/* Signed URLs expire; the list is refetched when the window regains focus, which renews them. */}
+      <Button type="link" href={material.url} target="_blank" rel="noopener noreferrer">
+        Xem/Tải xuống
+      </Button>
       <Button
         type="text"
         danger
         icon={<DeleteOutlined />}
         onClick={() => onDelete(material)}
-        aria-label={`Xoá ${material.fileName}`}
+        aria-label={`Xoá ${material.title}`}
       />
     </Flex>
   )
 }
 
 /** Materials grouped by the four FE-08/FE-28 kinds, each with its own upload action. */
-export function SongMaterialsCard({ materials, uploadingKind, onUpload, onDelete }: SongMaterialsCardProps) {
+export function SongMaterialsCard({ materials, uploadingKind, onPick, onDelete }: SongMaterialsCardProps) {
   return (
     <Card title="Tài liệu">
       {materialKinds.map((kind, index) => {
@@ -110,7 +118,7 @@ export function SongMaterialsCard({ materials, uploadingKind, onUpload, onDelete
                 <Typography.Title id={headingId} level={3} style={{ margin: 0 }}>
                   {materialKindLabels[kind]}
                 </Typography.Title>
-                <UploadButton kind={kind} label="Tải lên" loading={uploadingKind === kind} onUpload={onUpload} />
+                <UploadButton kind={kind} label="Tải lên" loading={uploadingKind === kind} onPick={onPick} />
               </Flex>
               {items.length > 0 ? (
                 <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>

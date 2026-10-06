@@ -1,4 +1,4 @@
-/** Material kinds named in Report 1 FE-08 and FE-28. Wired to the backend in issue #41. */
+/** Material kinds named in Report 1 FE-08 and FE-28 (backend `MaterialType`, mapped in songsApi). */
 export type MaterialKind = 'sheetMusic' | 'lyrics' | 'sampleAudio' | 'rehearsalMaterial'
 
 export const materialKinds: MaterialKind[] = ['sheetMusic', 'lyrics', 'sampleAudio', 'rehearsalMaterial']
@@ -9,6 +9,20 @@ export const materialKindLabels: Record<MaterialKind, string> = {
   sampleAudio: 'Audio mẫu',
   rehearsalMaterial: 'Tài liệu tập luyện',
 }
+
+const documentExtensions = ['.pdf', '.png', '.jpg']
+const audioExtensions = ['.mp3', '.m4a', '.wav']
+
+/** Accepted file extensions per kind (Harmonia-BE MusicMaterialService); the backend checks them again. */
+export const materialExtensions: Record<MaterialKind, string[]> = {
+  sheetMusic: documentExtensions,
+  lyrics: documentExtensions,
+  sampleAudio: audioExtensions,
+  rehearsalMaterial: [...documentExtensions, ...audioExtensions],
+}
+
+/** 20 MiB, the backend limit (MusicMaterialService.MaxFileSizeBytes). */
+export const maxMaterialBytes = 20 * 1024 * 1024
 
 /** A song of the choir's music library (FE-27), as `SongDto` of GET /api/songs. Missing texts arrive as null. */
 export interface Song {
@@ -68,14 +82,28 @@ export interface SongClassificationValues {
   instrumentRequirements: SkillRequirementValue[]
 }
 
+/** A material of a song, as `MusicMaterialDto` of GET /api/music-materials. */
 export interface SongMaterial {
   id: string
   kind: MaterialKind
+  title: string
+  /** Original name, for display only. */
   fileName: string
-  /** ISO 8601 timestamp. */
-  uploadedAt: string
-  /** Where the file can be viewed or downloaded. */
-  url?: string
+  fileSizeBytes: number | null
+  targetSkillId: string | null
+  targetSkillName: string | null
+  /** Short-lived signed URL: never stored, the list is fetched again instead. */
+  url: string
+  /** Backend `DateTime`; read it with `parseUtc`. */
+  createdAt: string
+}
+
+/** Form fields of the multipart upload; the song comes from the page. */
+export interface UploadMaterialValues {
+  kind: MaterialKind
+  title: string
+  targetSkillId?: string
+  file: File
 }
 
 /** Search and classification filters of GET /api/songs; they combine with AND on the server. */

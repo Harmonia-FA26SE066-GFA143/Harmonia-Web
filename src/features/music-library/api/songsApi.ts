@@ -1,6 +1,5 @@
-import { env } from '@/config/env'
 import { apiRequest } from '@/lib/api/client'
-import { ApiContractMissingError, ApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type {
   MaterialKind,
@@ -10,6 +9,7 @@ import type {
   SongFilters,
   SongMaterial,
   SongValues,
+  UploadMaterialValues,
 } from '../types'
 
 // Songs: `/api/songs` (Harmonia-BE SongsController). Every role reads; only the Choir Director writes.
@@ -63,30 +63,53 @@ export function updateSong(id: string, values: SongValues): Promise<Song> {
   return apiRequest<Song>(`/api/songs/${id}`, { method: 'PUT', body: JSON.stringify(values) })
 }
 
-// Materials: `/api/music-materials` exists but is wired in issue #41 (multipart upload, paging, PascalCase types).
-// Until then each function checks `import.meta.env.DEV` at the call site so the fixture import is dropped from dist/.
+// Materials: `/api/music-materials` (Harmonia-BE MusicMaterialsController). The backend sends and expects the
+// PascalCase `MaterialType` names; the Web kinds are mapped here and nowhere else.
 
-export async function listMaterials(songId: string): Promise<SongMaterial[]> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { listMaterialsFixture } = await import('./fixtures.dev')
-    return listMaterialsFixture(songId)
-  }
-  throw new ApiContractMissingError('Xem tài liệu bài hát')
+type ApiMaterialType = 'SheetMusic' | 'Lyrics' | 'SampleAudio' | 'RehearsalMaterial'
+
+const typeByKind: Record<MaterialKind, ApiMaterialType> = {
+  sheetMusic: 'SheetMusic',
+  lyrics: 'Lyrics',
+  sampleAudio: 'SampleAudio',
+  rehearsalMaterial: 'RehearsalMaterial',
 }
 
-export async function uploadMaterial(songId: string, kind: MaterialKind, file: File): Promise<SongMaterial> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { uploadMaterialFixture } = await import('./fixtures.dev')
-    return uploadMaterialFixture(songId, kind, file)
-  }
-  throw new ApiContractMissingError('Tải lên tài liệu bài hát')
+const kindByType = Object.fromEntries(Object.entries(typeByKind).map(([kind, type]) => [type, kind])) as Record<
+  ApiMaterialType,
+  MaterialKind
+>
+
+interface MusicMaterialDto extends Omit<SongMaterial, 'kind' | 'url'> {
+  materialType: ApiMaterialType
+  fileUrl: string
+}
+
+const toMaterial = ({ materialType, fileUrl, ...rest }: MusicMaterialDto): SongMaterial => ({
+  ...rest,
+  kind: kindByType[materialType],
+  url: fileUrl,
+})
+
+export async function listMaterials(songId: string): Promise<SongMaterial[]> {
+  // ponytail: one page of 100, the backend maximum; a song with more materials would need paging here.
+  const page = await apiRequest<PagedList<MusicMaterialDto>>(
+    `/api/music-materials${toQuery({ songId, pageNumber: 1, pageSize: 100 })}`,
+  )
+  return page.items.map(toMaterial)
+}
+
+export async function uploadMaterial(songId: string, values: UploadMaterialValues): Promise<SongMaterial> {
+  const form = new FormData()
+  form.append('songId', songId)
+  form.append('title', values.title)
+  form.append('materialType', typeByKind[values.kind])
+  if (values.targetSkillId) form.append('targetSkillId', values.targetSkillId)
+  form.append('file', values.file)
+  return toMaterial(await apiRequest<MusicMaterialDto>('/api/music-materials', { method: 'POST', body: form }))
 }
 
 /** Deletes a material; FE-54 records deleted materials in the activity history. */
-export async function deleteMaterial(songId: string, materialId: string): Promise<void> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { deleteMaterialFixture } = await import('./fixtures.dev')
-    return deleteMaterialFixture(songId, materialId)
-  }
-  throw new ApiContractMissingError('Xoá tài liệu bài hát')
+export function deleteMaterial(materialId: string): Promise<void> {
+  return apiRequest<void>(`/api/music-materials/${materialId}`, { method: 'DELETE' })
 }

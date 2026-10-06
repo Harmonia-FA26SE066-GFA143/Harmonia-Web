@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api/errors'
-import { createSong, getSong, listSongs, updateSongClassification } from './songsApi'
+import { createSong, deleteMaterial, getSong, listMaterials, listSongs, updateSongClassification, uploadMaterial } from './songsApi'
 
 const fetchMock = vi.fn<typeof fetch>()
 const reply = (status: number, body?: unknown) =>
@@ -54,6 +54,45 @@ describe('songsApi', () => {
     await updateSongClassification('s1', values)
     expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/songs\/s1\/classification$/)
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'PUT', body: JSON.stringify(values) })
+  })
+
+  it('lists the materials of a song and maps the PascalCase material type', async () => {
+    fetchMock.mockResolvedValueOnce(
+      reply(200, {
+        items: [{ id: 'm1', songId: 's1', materialType: 'SampleAudio', title: 'Audio', fileName: 'a.mp3', fileUrl: 'https://x/a.mp3' }],
+        pageNumber: 1,
+        pageSize: 100,
+        totalCount: 1,
+        totalPages: 1,
+      }),
+    )
+
+    const [material] = await listMaterials('s1')
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/music-materials\?songId=s1&pageNumber=1&pageSize=100$/)
+    expect(material).toMatchObject({ id: 'm1', kind: 'sampleAudio', url: 'https://x/a.mp3' })
+  })
+
+  it('uploads the file and its fields as multipart form data', async () => {
+    fetchMock.mockResolvedValueOnce(reply(200, { id: 'm2', materialType: 'Lyrics', fileUrl: 'https://x/l.pdf' }))
+    const file = new File(['lời'], 'loi.pdf', { type: 'application/pdf' })
+
+    await uploadMaterial('s1', { kind: 'lyrics', title: 'Lời', targetSkillId: 'sk1', file })
+    const body = fetchMock.mock.calls[0][1]?.body as FormData
+    expect(Object.fromEntries([...body.entries()].filter(([key]) => key !== 'file'))).toEqual({
+      songId: 's1',
+      title: 'Lời',
+      materialType: 'Lyrics',
+      targetSkillId: 'sk1',
+    })
+    expect(body.get('file')).toBeInstanceOf(File)
+  })
+
+  it('deletes a material', async () => {
+    fetchMock.mockResolvedValueOnce(reply(204))
+
+    await deleteMaterial('m1')
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/music-materials\/m1$/)
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'DELETE' })
   })
 
   it('posts the song fields', async () => {
