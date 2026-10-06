@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { parseUtc } from '@/lib/api/dates'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { SongClassificationCard } from '../components/SongClassificationCard'
@@ -11,6 +12,7 @@ import { SongClassificationModal } from '../components/SongClassificationModal'
 import { SongFormModal } from '../components/SongFormModal'
 import { SongInfoCard } from '../components/SongInfoCard'
 import { SongMaterialsCard } from '../components/SongMaterialsCard'
+import { UploadMaterialModal } from '../components/UploadMaterialModal'
 import {
   useDeleteMaterial,
   useSaveSong,
@@ -20,7 +22,13 @@ import {
   useSongMaterials,
   useUploadMaterial,
 } from '../hooks/useSongs'
-import { classificationErrorMessage, duplicateTitleMessage, isDuplicateTitle } from '../songErrors'
+import {
+  classificationErrorMessage,
+  duplicateTitleMessage,
+  isDuplicateTitle,
+  materialFileProblem,
+  uploadErrorMessage,
+} from '../songErrors'
 import {
   materialKindLabels,
   type MaterialKind,
@@ -47,7 +55,7 @@ export function SongDetailPage() {
   const [classifying, setClassifying] = useState(false)
   const [titleError, setTitleError] = useState<string>()
   const [deleting, setDeleting] = useState<SongMaterial>()
-  const [uploadingKind, setUploadingKind] = useState<MaterialKind>()
+  const [picked, setPicked] = useState<{ kind: MaterialKind; file: File }>()
 
   const backButton = (
     <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(paths.director.library)}>
@@ -105,14 +113,23 @@ export function SongDetailPage() {
       onError: (error) => message.error(classificationErrorMessage(error)),
     })
 
-  const handleUpload = (kind: MaterialKind, file: File) => {
-    setUploadingKind(kind)
+  const handlePick = (kind: MaterialKind, file: File) => {
+    const problem = materialFileProblem(kind, file)
+    if (problem) message.error(problem)
+    else setPicked({ kind, file })
+  }
+
+  const handleUpload = (values: { title: string; targetSkillId?: string }) => {
+    if (!picked) return
+    const { kind, file } = picked
     upload.mutate(
-      { kind, file },
+      { kind, file, ...values },
       {
-        onSuccess: () => message.success(`Đã tải lên ${materialKindLabels[kind].toLowerCase()}.`),
-        onError: () => message.error('Không thể tải lên tài liệu. Vui lòng thử lại.'),
-        onSettled: () => setUploadingKind(undefined),
+        onSuccess: () => {
+          message.success(`Đã tải lên ${materialKindLabels[kind].toLowerCase()}.`)
+          setPicked(undefined)
+        },
+        onError: (error) => message.error(uploadErrorMessage(error)),
       },
     )
   }
@@ -160,8 +177,8 @@ export function SongDetailPage() {
         {materials.isSuccess && (
           <SongMaterialsCard
             materials={materials.data}
-            uploadingKind={uploadingKind}
-            onUpload={handleUpload}
+            uploadingKind={upload.isPending ? picked?.kind : undefined}
+            onPick={handlePick}
             onDelete={setDeleting}
           />
         )}
@@ -174,6 +191,12 @@ export function SongDetailPage() {
         titleError={titleError}
         onSubmit={handleSave}
         onCancel={closeForm}
+      />
+      <UploadMaterialModal
+        pending={picked}
+        saving={upload.isPending}
+        onSubmit={handleUpload}
+        onCancel={() => setPicked(undefined)}
       />
       {classification.data && (
         <SongClassificationModal
@@ -196,8 +219,8 @@ export function SongDetailPage() {
       >
         {deleting && (
           <Typography.Paragraph style={{ margin: 0 }}>
-            Tài liệu <strong>{deleting.fileName}</strong> ({materialKindLabels[deleting.kind]}, tải lên{' '}
-            {dayjs(deleting.uploadedAt).format('DD/MM/YYYY')}) sẽ bị xoá khỏi bài hát “{data.title}”.
+            Tài liệu <strong>{deleting.title}</strong> ({materialKindLabels[deleting.kind]}, tải lên{' '}
+            {dayjs(parseUtc(deleting.createdAt)).format('DD/MM/YYYY')}) sẽ bị xoá khỏi bài hát “{data.title}”.
           </Typography.Paragraph>
         )}
       </Modal>

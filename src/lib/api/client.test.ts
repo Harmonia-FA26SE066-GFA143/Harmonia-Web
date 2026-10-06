@@ -39,6 +39,16 @@ describe('apiRequest', () => {
     expect(authorization(0)).toBe('Bearer access-1')
   })
 
+  it('lets the browser set the multipart content type of form data', async () => {
+    setSession(session('1'))
+    fetchMock.mockResolvedValueOnce(reply(200, { ok: true }))
+
+    await apiRequest('/api/music-materials', { method: 'POST', body: new FormData() })
+    const headers = new Headers(fetchMock.mock.calls[0][1]?.headers)
+    expect(headers.has('Content-Type')).toBe(false)
+    expect(headers.get('Authorization')).toBe('Bearer access-1')
+  })
+
   it('exposes the backend error code and field errors', async () => {
     fetchMock.mockResolvedValueOnce(
       reply(400, { code: 'VALIDATION_FAILED', message: 'x', errors: { title: ['SONG_TITLE_REQUIRED'] } }),

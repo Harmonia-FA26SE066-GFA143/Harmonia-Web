@@ -11,7 +11,7 @@ import {
   uploadMaterial,
   type SongPage,
 } from '../api/songsApi'
-import type { MaterialKind, SongClassificationValues, SongFilters, SongValues } from '../types'
+import type { SongClassificationValues, SongFilters, SongValues, UploadMaterialValues } from '../types'
 
 const songsKey = ['music-library'] as const
 const materialsKey = (songId: string) => ['music-library', 'materials', songId] as const
@@ -61,7 +61,7 @@ export function useSongMaterials(songId: string) {
 export function useUploadMaterial(songId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ kind, file }: { kind: MaterialKind; file: File }) => uploadMaterial(songId, kind, file),
+    mutationFn: (values: UploadMaterialValues) => uploadMaterial(songId, values),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
   })
 }
@@ -69,7 +69,7 @@ export function useUploadMaterial(songId: string) {
 export function useDeleteMaterial(songId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (materialId: string) => deleteMaterial(songId, materialId),
+    mutationFn: (materialId: string) => deleteMaterial(materialId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
   })
 }

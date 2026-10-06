@@ -29,9 +29,19 @@ const classification: SongClassification = {
   instrumentRequirements: [],
 }
 
+const material = (fields: Partial<SongMaterial> & Pick<SongMaterial, 'id' | 'kind' | 'title' | 'fileName'>): SongMaterial => ({
+  fileSizeBytes: null,
+  targetSkillId: null,
+  targetSkillName: null,
+  url: `https://files.example/${fields.fileName}`,
+  // Read back from the database without the Z suffix (tbd-backlog B7).
+  createdAt: '2026-08-12T08:00:00',
+  ...fields,
+})
+
 const materials: SongMaterial[] = [
-  { id: 'm1', kind: 'sheetMusic', fileName: 'con-buoc_SATB.pdf', uploadedAt: '2026-08-12T08:00:00.000Z' },
-  { id: 'm2', kind: 'sampleAudio', fileName: 'audio-mau.mp3', uploadedAt: '2026-08-15T08:00:00.000Z', url: 'blob:x' },
+  material({ id: 'm1', kind: 'sheetMusic', title: 'Bản nhạc SATB', fileName: 'con-buoc_SATB.pdf', fileSizeBytes: 2_516_582 }),
+  material({ id: 'm2', kind: 'sampleAudio', title: 'Audio mẫu bè Tenor', fileName: 'audio-mau.mp3', targetSkillName: 'Tenor' }),
 ]
 
 const renderDetail = () => renderPage(<SongDetailPage />, '/director/library/:songId', '/director/library/s1')
@@ -75,8 +85,10 @@ describe('SongDetailPage', () => {
     for (const kind of ['Bản nhạc', 'Lời bài hát', 'Audio mẫu', 'Tài liệu tập luyện']) {
       expect(await screen.findByRole('heading', { level: 3, name: kind })).toBeInTheDocument()
     }
-    expect(screen.getByText('con-buoc_SATB.pdf')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nghe audio-mau.mp3')).toBeInTheDocument()
+    expect(screen.getByText('Bản nhạc SATB')).toBeInTheDocument()
+    expect(screen.getByText('con-buoc_SATB.pdf · 2.4 MB · tải lên 12/08/2026')).toBeInTheDocument()
+    expect(screen.getByText('Tenor')).toBeInTheDocument()
+    expect(screen.getByLabelText('Nghe Audio mẫu bè Tenor')).toBeInTheDocument()
   })
 
   it('keeps the song visible when its materials cannot be loaded', async () => {
@@ -174,19 +186,57 @@ describe('SongDetailPage', () => {
     })
   })
 
-  it('uploads a file into the chosen material kind', async () => {
+  it('asks for a title, then uploads the file into the chosen material kind', async () => {
     withSong()
     const upload = vi
       .spyOn(songsApi, 'uploadMaterial')
-      .mockResolvedValue({ id: 'm3', kind: 'lyrics', fileName: 'loi.pdf', uploadedAt: '2026-09-28T00:00:00.000Z' })
+      .mockResolvedValue(material({ id: 'm3', kind: 'lyrics', title: 'Lời 2 bè', fileName: 'loi.pdf' }))
     renderDetail()
 
     const lyrics = (await screen.findByRole('heading', { level: 3, name: 'Lời bài hát' })).closest('section')!
     const input = lyrics.querySelector('input[type="file"]') as HTMLInputElement
+    expect(input.accept).toBe('.pdf,.png,.jpg')
     const file = new File(['lời'], 'loi.pdf', { type: 'application/pdf' })
     fireEvent.change(input, { target: { files: [file] } })
 
-    await waitFor(() => expect(upload).toHaveBeenCalledWith('s1', 'lyrics', file))
+    const dialog = await screen.findByRole('dialog')
+    const title = within(dialog).getByRole('textbox', { name: 'Tiêu đề' })
+    expect(title).toHaveValue('loi')
+    fireEvent.change(title, { target: { value: 'Lời 2 bè' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tải lên' }))
+
+    await waitFor(() =>
+      expect(upload).toHaveBeenCalledWith('s1', { kind: 'lyrics', file, title: 'Lời 2 bè', targetSkillId: undefined }),
+    )
+  })
+
+  it('refuses a file the backend would reject without uploading it', async () => {
+    withSong()
+    const upload = vi.spyOn(songsApi, 'uploadMaterial')
+    renderDetail()
+
+    const audio = (await screen.findByRole('heading', { level: 3, name: 'Audio mẫu' })).closest('section')!
+    const input = audio.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [new File(['x'], 'ban-nhac.pdf', { type: 'application/pdf' })] } })
+
+    expect(await screen.findByText('Audio mẫu chỉ nhận tệp .mp3, .m4a, .wav.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(upload).not.toHaveBeenCalled()
+  })
+
+  it('explains an upload the backend refuses and keeps the dialog open', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'uploadMaterial').mockRejectedValue(new ApiError(413, { code: 'MATERIAL_FILE_TOO_LARGE' }))
+    renderDetail()
+
+    const sheet = (await screen.findByRole('heading', { level: 3, name: 'Bản nhạc' })).closest('section')!
+    const input = sheet.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [new File(['x'], 'ban-nhac.pdf', { type: 'application/pdf' })] } })
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tải lên' }))
+
+    expect(await screen.findByText('Tệp vượt quá 20 MB.')).toBeInTheDocument()
+    expect(within(dialog).getByRole('textbox', { name: 'Tiêu đề' })).toHaveValue('ban-nhac')
   })
 
   it('deletes a material only after confirmation', async () => {
@@ -194,12 +244,12 @@ describe('SongDetailPage', () => {
     const remove = vi.spyOn(songsApi, 'deleteMaterial').mockResolvedValue()
     renderDetail()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Xoá con-buoc_SATB.pdf' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Xoá Bản nhạc SATB' }))
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText('Xoá tài liệu này?')).toBeInTheDocument()
     expect(remove).not.toHaveBeenCalled()
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Xoá' }))
-    await waitFor(() => expect(remove).toHaveBeenCalledWith('s1', 'm1'))
+    await waitFor(() => expect(remove).toHaveBeenCalledWith('m1'))
   })
 })

@@ -34,7 +34,8 @@ async function send(path: string, init: RequestInit) {
   const response = await fetch(`${env.apiBaseUrl}${path}`, {
     ...init,
     headers: {
-      'Content-Type': 'application/json',
+      // FormData needs the browser to set multipart/form-data with its boundary.
+      ...(!(init.body instanceof FormData) && { 'Content-Type': 'application/json' }),
       ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
       ...init.headers,
     },
