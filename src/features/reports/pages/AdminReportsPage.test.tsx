@@ -45,7 +45,7 @@ describe('AdminReportsPage', () => {
 
   it('exports by liturgical season using the season catalog', async () => {
     vi.spyOn(reportsApi, 'getReport').mockResolvedValue({ metrics: {}, rows: [] })
-    vi.spyOn(categoriesApi, 'listLiturgicalCategories').mockResolvedValue([{ id: 's5', name: 'Mùa Thường Niên' }])
+    vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([{ id: 's5', name: 'Mùa Thường Niên' }])
     const exportReport = vi.spyOn(reportsApi, 'exportReport').mockResolvedValue()
     renderPage(<AdminReportsPage />, '/admin/reports')
 

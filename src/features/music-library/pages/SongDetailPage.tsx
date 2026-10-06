@@ -1,42 +1,43 @@
 import { ArrowLeftOutlined, EditOutlined, FileSearchOutlined } from '@ant-design/icons'
-import { App, Button, Flex, Modal, Typography } from 'antd'
+import { App, Button, Card, Flex, Modal, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { SongClassificationCard } from '../components/SongClassificationCard'
 import { SongFormModal } from '../components/SongFormModal'
+import { SongInfoCard } from '../components/SongInfoCard'
 import { SongMaterialsCard } from '../components/SongMaterialsCard'
-import { useDeleteMaterial, useSaveSong, useSong, useSongs, useUploadMaterial } from '../hooks/useSongs'
-import { distinctValues } from '../songFilters'
+import {
+  useDeleteMaterial,
+  useSaveSong,
+  useSong,
+  useSongClassification,
+  useSongMaterials,
+  useUploadMaterial,
+} from '../hooks/useSongs'
+import { duplicateTitleMessage, isDuplicateTitle } from '../songErrors'
 import { materialKindLabels, type MaterialKind, type SongMaterial, type SongValues } from '../types'
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { title: 'Chi tiết bài hát' }]
 
-/** Choir Director: one song with its FE-29 classification and FE-08/FE-28 materials. */
+/** Choir Director: one song with its fields, FE-29 classification and FE-08/FE-28 materials. */
 export function SongDetailPage() {
   const navigate = useNavigate()
   const { message } = App.useApp()
   const { songId = '' } = useParams()
   const song = useSong(songId)
-  const library = useSongs()
+  const classification = useSongClassification(songId)
+  const materials = useSongMaterials(songId)
   const save = useSaveSong()
   const upload = useUploadMaterial(songId)
   const remove = useDeleteMaterial(songId)
   const [editing, setEditing] = useState(false)
+  const [titleError, setTitleError] = useState<string>()
   const [deleting, setDeleting] = useState<SongMaterial>()
   const [uploadingKind, setUploadingKind] = useState<MaterialKind>()
-
-  const suggestions = useMemo(() => {
-    const all = library.data ?? []
-    return {
-      theme: distinctValues(all, 'theme'),
-      vocalRequirements: distinctValues(all, 'vocalRequirements'),
-      instrumentRequirements: distinctValues(all, 'instrumentRequirements'),
-    }
-  }, [library.data])
 
   const backButton = (
     <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(paths.director.library)}>
@@ -44,7 +45,7 @@ export function SongDetailPage() {
     </Button>
   )
 
-  if (song.isPending) return <PageSkeleton sections={2} />
+  if (song.isPending) return <PageSkeleton sections={3} />
   if (song.isError || !song.data) {
     return (
       <>
@@ -55,7 +56,7 @@ export function SongDetailPage() {
           <EmptyState
             icon={<FileSearchOutlined />}
             title="Không tìm thấy bài hát"
-            description="Bài hát không tồn tại hoặc đường dẫn không đúng."
+            description="Bài hát không tồn tại, đã bị xoá hoặc đường dẫn không đúng."
             action={backButton}
           />
         )}
@@ -65,17 +66,25 @@ export function SongDetailPage() {
 
   const { data } = song
 
-  const handleSave = (values: SongValues) =>
+  const closeForm = () => {
+    setEditing(false)
+    setTitleError(undefined)
+  }
+
+  const handleSave = (values: SongValues) => {
+    setTitleError(undefined)
     save.mutate(
       { id: data.id, values },
       {
         onSuccess: () => {
           message.success('Đã lưu thay đổi.')
-          setEditing(false)
+          closeForm()
         },
-        onError: () => message.error('Không thể lưu bài hát. Vui lòng thử lại.'),
+        onError: (error) =>
+          isDuplicateTitle(error) ? setTitleError(duplicateTitleMessage) : message.error('Không thể lưu bài hát. Vui lòng thử lại.'),
       },
     )
+  }
 
   const handleUpload = (kind: MaterialKind, file: File) => {
     setUploadingKind(kind)
@@ -115,22 +124,36 @@ export function SongDetailPage() {
         }
       />
       <Flex vertical gap={spacing.lg}>
-        <SongClassificationCard song={data} />
-        <SongMaterialsCard
-          materials={data.materials}
-          uploadingKind={uploadingKind}
-          onUpload={handleUpload}
-          onDelete={setDeleting}
+        <SongInfoCard song={data} />
+        <SongClassificationCard
+          classification={classification.data}
+          loading={classification.isPending}
+          failed={classification.isError}
+          onRetry={() => classification.refetch()}
         />
+        {materials.isPending && <SectionSkeleton rows={3} label="Đang tải tài liệu" />}
+        {materials.isError && (
+          <Card title="Tài liệu">
+            <ErrorState title="Không thể tải tài liệu" onRetry={() => materials.refetch()} retrying={materials.isFetching} />
+          </Card>
+        )}
+        {materials.isSuccess && (
+          <SongMaterialsCard
+            materials={materials.data}
+            uploadingKind={uploadingKind}
+            onUpload={handleUpload}
+            onDelete={setDeleting}
+          />
+        )}
       </Flex>
 
       <SongFormModal
         open={editing}
         song={data}
-        suggestions={suggestions}
         saving={save.isPending}
+        titleError={titleError}
         onSubmit={handleSave}
-        onCancel={() => setEditing(false)}
+        onCancel={closeForm}
       />
       <Modal
         open={Boolean(deleting)}

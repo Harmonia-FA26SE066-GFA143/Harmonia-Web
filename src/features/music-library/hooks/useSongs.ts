@@ -1,19 +1,35 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiContractMissingError } from '@/lib/api/errors'
-import { createSong, deleteMaterial, getSong, listSongs, updateSong, uploadMaterial } from '../api/songsApi'
-import type { MaterialKind, SongValues } from '../types'
-
-// Retrying cannot help while the API contract is missing.
-const retry = (failureCount: number, error: Error) => !(error instanceof ApiContractMissingError) && failureCount < 3
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  createSong,
+  deleteMaterial,
+  getSong,
+  getSongClassification,
+  listMaterials,
+  listSongs,
+  updateSong,
+  uploadMaterial,
+  type SongPage,
+} from '../api/songsApi'
+import type { MaterialKind, SongFilters, SongValues } from '../types'
 
 const songsKey = ['music-library'] as const
+const materialsKey = (songId: string) => ['music-library', 'materials', songId] as const
 
-export function useSongs() {
-  return useQuery({ queryKey: songsKey, queryFn: listSongs, retry })
+/** One page of the library; the previous page stays visible while the next one loads. */
+export function useSongs(filters: SongFilters, page: SongPage) {
+  return useQuery({
+    queryKey: [...songsKey, 'list', filters, page],
+    queryFn: () => listSongs(filters, page),
+    placeholderData: keepPreviousData,
+  })
 }
 
 export function useSong(id: string) {
-  return useQuery({ queryKey: [...songsKey, id], queryFn: () => getSong(id), retry })
+  return useQuery({ queryKey: [...songsKey, 'song', id], queryFn: () => getSong(id) })
+}
+
+export function useSongClassification(id: string) {
+  return useQuery({ queryKey: [...songsKey, 'classification', id], queryFn: () => getSongClassification(id) })
 }
 
 /** Creates a song when `id` is absent, otherwise updates it. */
@@ -25,11 +41,15 @@ export function useSaveSong() {
   })
 }
 
+export function useSongMaterials(songId: string) {
+  return useQuery({ queryKey: materialsKey(songId), queryFn: () => listMaterials(songId) })
+}
+
 export function useUploadMaterial(songId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ kind, file }: { kind: MaterialKind; file: File }) => uploadMaterial(songId, kind, file),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: songsKey }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
   })
 }
 
@@ -37,6 +57,6 @@ export function useDeleteMaterial(songId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (materialId: string) => deleteMaterial(songId, materialId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: songsKey }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
   })
 }

@@ -35,10 +35,14 @@ describe('SongListProposalPage', () => {
 
   it('composes a list from the library and submits it', async () => {
     withList({})
-    vi.spyOn(songsApi, 'listSongs').mockResolvedValue([
-      { id: 'song-1', title: 'Con Bước Lên Bàn Thờ', availableMaterials: [] },
-      { id: 'song-2', title: 'Lễ Vật Tâm Tình', availableMaterials: [] },
-    ])
+    const song = (id: string, title: string) => ({ id, title, composer: null, lyricist: null, musicalKey: null, tempo: null, notes: null })
+    vi.spyOn(songsApi, 'listSongs').mockResolvedValue({
+      items: [song('song-1', 'Con Bước Lên Bàn Thờ'), song('song-2', 'Lễ Vật Tâm Tình')],
+      pageNumber: 1,
+      pageSize: 100,
+      totalCount: 2,
+      totalPages: 1,
+    })
     const submit = vi.spyOn(songListsApi, 'submitSongList').mockResolvedValue({ programId: 'p1', status: 'submitted', items: [] })
     renderProposal()
 
