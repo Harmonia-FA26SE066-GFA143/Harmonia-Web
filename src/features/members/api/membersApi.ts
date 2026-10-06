@@ -1,15 +1,24 @@
-import { env } from '@/config/env'
-import { ApiContractMissingError } from '@/lib/api/errors'
+import { apiRequest } from '@/lib/api/client'
+import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { ChoirMember } from '../types'
 
-// Backend contract exists, not wired yet: ChoirDirector-only `GET /api/member-profiles` (paged,
-// keyword/status/skillId filters, rows with approvedSkills), GET and PUT {id}. Not wired: needs the shared paging
-// helper and the MemberStatus mapper (audit W5).
+// `GET /api/member-profiles` (Harmonia-BE MemberProfilesController), Choir Director only, sorted by name.
 
+interface MemberProfileSummaryDto {
+  id: string
+  fullName: string
+  approvedSkills: { skillId: string; skillName: string }[]
+}
+
+/** Active members only (owner decision 2026-10-06): the lists that use them invite members to serve. */
 export async function listChoirMembers(): Promise<ChoirMember[]> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { listChoirMembersFixture } = await import('./fixtures.dev')
-    return listChoirMembersFixture()
-  }
-  throw new ApiContractMissingError('Xem danh sách thành viên ca đoàn')
+  // ponytail: one page of 100, the backend maximum; a larger choir would need paging or a search here.
+  const page = await apiRequest<PagedList<MemberProfileSummaryDto>>(
+    `/api/member-profiles${toQuery({ status: 'Active', pageNumber: 1, pageSize: 100 })}`,
+  )
+  return page.items.map(({ id, fullName, approvedSkills }) => ({
+    id,
+    fullName,
+    skills: approvedSkills.map((skill) => skill.skillName),
+  }))
 }

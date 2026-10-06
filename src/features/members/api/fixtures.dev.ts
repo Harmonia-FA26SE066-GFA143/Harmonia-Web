@@ -1,11 +1,10 @@
 /**
  * DEV FIXTURE – không phải API contract.
- * Decision 0002 option B (approved by Daniel 2026-09-27): UI review without a backend. Loaded only through the
- * dynamic import in `membersApi.ts` when `import.meta.env.DEV && VITE_USE_DEV_FIXTURES=true`.
- * Fictional members; skill names are the FE-03 examples. The participation and attendance fixtures read
- * `choirMembers` so every page shows the same people.
+ * Decision 0002 option B (approved by Daniel 2026-09-27): UI review without a backend.
+ * The member list itself comes from the API (issue #45); these fictional members remain only as sample people
+ * imported by the participation and attendance fixtures (themselves loaded dynamically), until those features are
+ * wired. Skill names are the FE-03 examples.
  */
-import { readFixture } from '@/lib/api/fixtureRuntime.dev'
 import type { ChoirMember } from '../types'
 
 export const choirMembers: ChoirMember[] = [
@@ -22,5 +21,3 @@ export const choirMembers: ChoirMember[] = [
   { id: 'dev-member-11', fullName: 'Anna Đặng Thị Mai', skills: ['Soprano', 'Solo Singing'] },
   { id: 'dev-member-12', fullName: 'Maria Vũ Thị Ngọc', skills: ['Alto'] },
 ]
-
-export const listChoirMembersFixture = () => readFixture(choirMembers)
