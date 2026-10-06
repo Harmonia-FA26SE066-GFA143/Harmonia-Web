@@ -7,10 +7,11 @@ import {
   listMaterials,
   listSongs,
   updateSong,
+  updateSongClassification,
   uploadMaterial,
   type SongPage,
 } from '../api/songsApi'
-import type { MaterialKind, SongFilters, SongValues } from '../types'
+import type { MaterialKind, SongClassificationValues, SongFilters, SongValues } from '../types'
 
 const songsKey = ['music-library'] as const
 const materialsKey = (songId: string) => ['music-library', 'materials', songId] as const
@@ -38,6 +39,18 @@ export function useSaveSong() {
   return useMutation({
     mutationFn: ({ id, values }: { id?: string; values: SongValues }) => (id ? updateSong(id, values) : createSong(values)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: songsKey }),
+  })
+}
+
+export function useSaveSongClassification(songId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (values: SongClassificationValues) => updateSongClassification(songId, values),
+    onSuccess: (classification) => {
+      queryClient.setQueryData([...songsKey, 'classification', songId], classification)
+      // Library filters match on classification, so cached pages may now be wrong.
+      return queryClient.invalidateQueries({ queryKey: [...songsKey, 'list'] })
+    },
   })
 }
 

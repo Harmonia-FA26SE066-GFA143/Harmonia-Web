@@ -7,19 +7,27 @@ import { paths } from '@/app/router/paths'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { SongClassificationCard } from '../components/SongClassificationCard'
+import { SongClassificationModal } from '../components/SongClassificationModal'
 import { SongFormModal } from '../components/SongFormModal'
 import { SongInfoCard } from '../components/SongInfoCard'
 import { SongMaterialsCard } from '../components/SongMaterialsCard'
 import {
   useDeleteMaterial,
   useSaveSong,
+  useSaveSongClassification,
   useSong,
   useSongClassification,
   useSongMaterials,
   useUploadMaterial,
 } from '../hooks/useSongs'
-import { duplicateTitleMessage, isDuplicateTitle } from '../songErrors'
-import { materialKindLabels, type MaterialKind, type SongMaterial, type SongValues } from '../types'
+import { classificationErrorMessage, duplicateTitleMessage, isDuplicateTitle } from '../songErrors'
+import {
+  materialKindLabels,
+  type MaterialKind,
+  type SongClassificationValues,
+  type SongMaterial,
+  type SongValues,
+} from '../types'
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { title: 'Chi tiết bài hát' }]
 
@@ -32,9 +40,11 @@ export function SongDetailPage() {
   const classification = useSongClassification(songId)
   const materials = useSongMaterials(songId)
   const save = useSaveSong()
+  const saveClassification = useSaveSongClassification(songId)
   const upload = useUploadMaterial(songId)
   const remove = useDeleteMaterial(songId)
   const [editing, setEditing] = useState(false)
+  const [classifying, setClassifying] = useState(false)
   const [titleError, setTitleError] = useState<string>()
   const [deleting, setDeleting] = useState<SongMaterial>()
   const [uploadingKind, setUploadingKind] = useState<MaterialKind>()
@@ -86,6 +96,15 @@ export function SongDetailPage() {
     )
   }
 
+  const handleClassify = (values: SongClassificationValues) =>
+    saveClassification.mutate(values, {
+      onSuccess: () => {
+        message.success('Đã lưu phân loại.')
+        setClassifying(false)
+      },
+      onError: (error) => message.error(classificationErrorMessage(error)),
+    })
+
   const handleUpload = (kind: MaterialKind, file: File) => {
     setUploadingKind(kind)
     upload.mutate(
@@ -130,6 +149,7 @@ export function SongDetailPage() {
           loading={classification.isPending}
           failed={classification.isError}
           onRetry={() => classification.refetch()}
+          onEdit={() => setClassifying(true)}
         />
         {materials.isPending && <SectionSkeleton rows={3} label="Đang tải tài liệu" />}
         {materials.isError && (
@@ -155,6 +175,15 @@ export function SongDetailPage() {
         onSubmit={handleSave}
         onCancel={closeForm}
       />
+      {classification.data && (
+        <SongClassificationModal
+          open={classifying}
+          classification={classification.data}
+          saving={saveClassification.isPending}
+          onSubmit={handleClassify}
+          onCancel={() => setClassifying(false)}
+        />
+      )}
       <Modal
         open={Boolean(deleting)}
         title="Xoá tài liệu này?"
