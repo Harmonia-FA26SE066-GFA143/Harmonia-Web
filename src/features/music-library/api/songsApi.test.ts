@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api/errors'
-import { createSong, getSong, listSongs } from './songsApi'
+import { createSong, getSong, listSongs, updateSongClassification } from './songsApi'
 
 const fetchMock = vi.fn<typeof fetch>()
 const reply = (status: number, body?: unknown) =>
@@ -38,6 +38,22 @@ describe('songsApi', () => {
 
     fetchMock.mockResolvedValueOnce(reply(403))
     await expect(getSong('s1')).rejects.toBeInstanceOf(ApiError)
+  })
+
+  it('replaces the whole classification with PUT', async () => {
+    fetchMock.mockResolvedValueOnce(reply(200, {}))
+    const values = {
+      liturgicalSeasonIds: ['season-1'],
+      massTypeIds: [],
+      ceremonyTypeIds: [],
+      songThemeIds: [],
+      vocalRequirements: [{ skillId: 'sk1', isMandatory: true }],
+      instrumentRequirements: [],
+    }
+
+    await updateSongClassification('s1', values)
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/songs\/s1\/classification$/)
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'PUT', body: JSON.stringify(values) })
   })
 
   it('posts the song fields', async () => {

@@ -53,6 +53,21 @@ export interface SongClassification {
   instrumentRequirements: SkillRequirement[]
 }
 
+export interface SkillRequirementValue {
+  skillId: string
+  isMandatory: boolean
+}
+
+/** Body of PUT /api/songs/{id}/classification: the full desired set; anything left out is removed from the song. */
+export interface SongClassificationValues {
+  liturgicalSeasonIds: string[]
+  massTypeIds: string[]
+  ceremonyTypeIds: string[]
+  songThemeIds: string[]
+  vocalRequirements: SkillRequirementValue[]
+  instrumentRequirements: SkillRequirementValue[]
+}
+
 export interface SongMaterial {
   id: string
   kind: MaterialKind

@@ -20,3 +20,11 @@ export type LiturgicalCatalog = 'seasons' | 'massTypes' | 'ceremonyTypes' | 'eve
 
 /** Backend lookups offered as select options: the liturgical catalogs plus song themes and skills. */
 export type LookupKind = LiturgicalCatalog | 'songThemes' | 'skills'
+
+/** A lookup row; skills also carry their category. */
+export interface LookupItem extends CatalogItem {
+  categoryId?: string
+}
+
+/** Fixed on every environment (Harmonia-BE doc/api.md, Lookups); instrument requirements accept only this category. */
+export const instrumentSkillCategoryId = '0904ad8b-87f2-46c5-9938-f6cfbf0fa70b'

@@ -2,7 +2,15 @@ import { env } from '@/config/env'
 import { apiRequest } from '@/lib/api/client'
 import { ApiContractMissingError, ApiError } from '@/lib/api/errors'
 import { toQuery, type PagedList } from '@/lib/api/paging'
-import type { MaterialKind, Song, SongClassification, SongFilters, SongMaterial, SongValues } from '../types'
+import type {
+  MaterialKind,
+  Song,
+  SongClassification,
+  SongClassificationValues,
+  SongFilters,
+  SongMaterial,
+  SongValues,
+} from '../types'
 
 // Songs: `/api/songs` (Harmonia-BE SongsController). Every role reads; only the Choir Director writes.
 
@@ -41,6 +49,10 @@ export function getSong(id: string): Promise<Song | null> {
 
 export function getSongClassification(id: string): Promise<SongClassification | null> {
   return orNullWhenMissing(apiRequest<SongClassification>(`/api/songs/${id}/classification`))
+}
+
+export function updateSongClassification(id: string, values: SongClassificationValues): Promise<SongClassification> {
+  return apiRequest<SongClassification>(`/api/songs/${id}/classification`, { method: 'PUT', body: JSON.stringify(values) })
 }
 
 export function createSong(values: SongValues): Promise<Song> {

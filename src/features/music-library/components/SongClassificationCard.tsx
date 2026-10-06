@@ -1,4 +1,5 @@
-import { Card, Descriptions, Flex, Tag, Typography } from 'antd'
+import { EditOutlined } from '@ant-design/icons'
+import { Button, Card, Descriptions, Flex, Tag, Typography } from 'antd'
 import type { ReactNode } from 'react'
 import { ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
@@ -30,12 +31,22 @@ export interface SongClassificationCardProps {
   loading?: boolean
   failed?: boolean
   onRetry?: () => void
+  onEdit?: () => void
 }
 
 /** The FE-29 dimensions of one song, each with any number of values (GET /api/songs/{id}/classification). */
-export function SongClassificationCard({ classification, loading, failed, onRetry }: SongClassificationCardProps) {
+export function SongClassificationCard({ classification, loading, failed, onRetry, onEdit }: SongClassificationCardProps) {
   return (
-    <Card title="Phân loại">
+    <Card
+      title="Phân loại"
+      extra={
+        onEdit && (
+          <Button icon={<EditOutlined />} onClick={onEdit} disabled={!classification}>
+            Chỉnh sửa phân loại
+          </Button>
+        )
+      }
+    >
       {loading && <SectionSkeleton rows={2} label="Đang tải phân loại" />}
       {failed && <ErrorState title="Không thể tải phân loại" onRetry={onRetry} />}
       {classification && (

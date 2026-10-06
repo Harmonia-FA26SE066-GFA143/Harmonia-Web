@@ -1,7 +1,7 @@
 import { env } from '@/config/env'
 import { apiRequest } from '@/lib/api/client'
 import { ApiContractMissingError } from '@/lib/api/errors'
-import type { CatalogItem, CatalogItemValues, LiturgicalCatalog, LookupKind } from '../types'
+import type { CatalogItem, CatalogItemValues, LiturgicalCatalog, LookupItem, LookupKind } from '../types'
 
 const lookupPaths: Record<LookupKind, string> = {
   seasons: 'liturgical-seasons',
@@ -13,8 +13,8 @@ const lookupPaths: Record<LookupKind, string> = {
 }
 
 /** Active entries of one backend lookup (GET /api/lookups/*, any signed-in role), for selects and filters. */
-export function listLookup(kind: LookupKind): Promise<CatalogItem[]> {
-  return apiRequest<CatalogItem[]>(`/api/lookups/${lookupPaths[kind]}`)
+export function listLookup(kind: LookupKind): Promise<LookupItem[]> {
+  return apiRequest<LookupItem[]>(`/api/lookups/${lookupPaths[kind]}`)
 }
 
 // The Admin catalog pages below stay on fixtures: they edit entries, and the backend has no write endpoints yet.
