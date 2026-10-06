@@ -1,9 +1,23 @@
 import { env } from '@/config/env'
+import { apiRequest } from '@/lib/api/client'
 import { ApiContractMissingError } from '@/lib/api/errors'
-import type { CatalogItem, CatalogItemValues, LiturgicalCatalog } from '../types'
+import type { CatalogItem, CatalogItemValues, LiturgicalCatalog, LookupKind } from '../types'
 
-// Reads exist, not wired yet: `GET /api/lookups/skill-categories`, `skills?categoryId=`,
-// `liturgical-seasons`, `mass-types`, `ceremony-types`, `event-categories` (active rows only, any signed-in role).
+const lookupPaths: Record<LookupKind, string> = {
+  seasons: 'liturgical-seasons',
+  massTypes: 'mass-types',
+  ceremonyTypes: 'ceremony-types',
+  eventCategories: 'event-categories',
+  songThemes: 'song-themes',
+  skills: 'skills',
+}
+
+/** Active entries of one backend lookup (GET /api/lookups/*, any signed-in role), for selects and filters. */
+export function listLookup(kind: LookupKind): Promise<CatalogItem[]> {
+  return apiRequest<CatalogItem[]>(`/api/lookups/${lookupPaths[kind]}`)
+}
+
+// The Admin catalog pages below stay on fixtures: they edit entries, and the backend has no write endpoints yet.
 // TBD: Backend API missing – creating and editing catalog entries for the Admin (tbd-backlog B11).
 // Each function checks `import.meta.env.DEV` at the call site so the fixture import is dropped from dist/.
 

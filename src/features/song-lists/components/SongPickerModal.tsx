@@ -1,10 +1,13 @@
 import { SearchOutlined } from '@ant-design/icons'
-import { Checkbox, Flex, Input, Modal, Tag, Typography } from 'antd'
+import { Checkbox, Flex, Input, Modal, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { useSongs, type Song } from '@/features/music-library'
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { ErrorState, SectionSkeleton } from '@/shared/ui'
-import { matchesSearch } from '@/shared/utils/search'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
+
+// One page of the largest size the backend allows; a longer library is narrowed by searching.
+const pickerPage = { pageNumber: 1, pageSize: 100 }
 
 export interface SongPickerModalProps {
   open: boolean
@@ -16,39 +19,44 @@ export interface SongPickerModalProps {
 
 /** Choose songs from the music library (FE-27) to add to a program's proposed list (FE-30). */
 export function SongPickerModal({ open, excludedSongIds, onAdd, onCancel }: SongPickerModalProps) {
-  const songs = useSongs()
   const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState<string[]>([])
+  const keyword = useDebouncedValue(search)
+  const songs = useSongs({ search: keyword }, pickerPage)
+  // Picked songs survive a new search, which replaces the listed page.
+  const [picked, setPicked] = useState<Song[]>([])
 
-  const available = useMemo(
-    () =>
-      (songs.data ?? []).filter(
-        (song) =>
-          !excludedSongIds.includes(song.id) &&
-          matchesSearch(search, song.title, song.theme, song.season?.name, song.massType?.name),
-      ),
-    [songs.data, excludedSongIds, search],
-  )
+  const listed = useMemo(() => songs.data?.items ?? [], [songs.data])
+  const available = useMemo(() => listed.filter((song) => !excludedSongIds.includes(song.id)), [listed, excludedSongIds])
+  const more = (songs.data?.totalCount ?? 0) - listed.length
+
+  const toggle = (ids: string[]) =>
+    setPicked([
+      ...picked.filter((song) => !available.some((item) => item.id === song.id)),
+      ...available.filter((song) => ids.includes(song.id)),
+    ])
+
+  const reset = () => {
+    setPicked([])
+    setSearch('')
+  }
 
   const close = () => {
-    setSelected([])
-    setSearch('')
+    reset()
     onCancel()
   }
 
   const confirm = () => {
-    onAdd((songs.data ?? []).filter((song) => selected.includes(song.id)))
-    setSelected([])
-    setSearch('')
+    onAdd(picked)
+    reset()
   }
 
   return (
     <Modal
       open={open}
       title="Thêm bài hát từ kho"
-      okText={selected.length ? `Thêm ${selected.length} bài hát` : 'Thêm bài hát'}
+      okText={picked.length ? `Thêm ${picked.length} bài hát` : 'Thêm bài hát'}
       cancelText="Hủy"
-      okButtonProps={{ disabled: selected.length === 0 }}
+      okButtonProps={{ disabled: picked.length === 0 }}
       onOk={confirm}
       onCancel={close}
       width={640}
@@ -57,7 +65,7 @@ export function SongPickerModal({ open, excludedSongIds, onAdd, onCancel }: Song
       <Input
         allowClear
         prefix={<SearchOutlined aria-hidden />}
-        placeholder="Tìm theo tên, chủ đề, mùa phụng vụ…"
+        placeholder="Tìm theo tên bài hát, nhạc sĩ, người viết lời"
         aria-label="Tìm bài hát trong kho"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
@@ -73,7 +81,7 @@ export function SongPickerModal({ open, excludedSongIds, onAdd, onCancel }: Song
         </Typography.Paragraph>
       )}
       {songs.isSuccess && available.length > 0 && (
-        <Checkbox.Group value={selected} onChange={setSelected} style={{ width: '100%' }}>
+        <Checkbox.Group value={picked.map((song) => song.id)} onChange={toggle} style={{ width: '100%' }}>
           <Flex vertical gap={spacing.xs} style={{ width: '100%', maxHeight: 360, overflowY: 'auto' }}>
             {available.map((song) => (
               <Checkbox
@@ -83,18 +91,21 @@ export function SongPickerModal({ open, excludedSongIds, onAdd, onCancel }: Song
               >
                 <Flex vertical>
                   <Typography.Text strong>{song.title}</Typography.Text>
-                  <Flex wrap gap={4}>
-                    {[song.season?.name, song.massType?.name, song.theme].filter(Boolean).map((label) => (
-                      <Tag key={label} style={{ marginInlineEnd: 0, fontSize: typography.metadata.fontSize }}>
-                        {label}
-                      </Tag>
-                    ))}
-                  </Flex>
+                  {song.composer && (
+                    <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
+                      {song.composer}
+                    </Typography.Text>
+                  )}
                 </Flex>
               </Checkbox>
             ))}
           </Flex>
         </Checkbox.Group>
+      )}
+      {songs.isSuccess && more > 0 && (
+        <Typography.Paragraph style={{ color: colors.textMuted, margin: `${spacing.sm}px 0 0` }}>
+          Còn {more} bài hát khác, hãy tìm theo tên để thu hẹp danh sách.
+        </Typography.Paragraph>
       )}
     </Modal>
   )

@@ -1,31 +1,25 @@
-import { AutoComplete, Flex, Form, Input, Modal, Select } from 'antd'
-import { useCatalogOptions } from '@/features/system-categories'
+import { Flex, Form, Input, Modal } from 'antd'
 import { spacing } from '@/styles/tokens'
-import type { SongDetail, SongValues } from '../types'
+import type { Song, SongValues } from '../types'
 
 export interface SongFormModalProps {
   open: boolean
   /** Song being edited; absent when adding. */
-  song?: Pick<SongDetail, 'title' | 'season' | 'massType' | 'ceremonyType' | 'theme' | 'vocalRequirements' | 'instrumentRequirements'>
-  /** Values already used in the library, offered as suggestions for the free-text dimensions. */
-  suggestions: { theme: string[]; vocalRequirements: string[]; instrumentRequirements: string[] }
+  song?: Song
   saving?: boolean
+  /** Shown under the title, e.g. when the backend reports a duplicate. */
+  titleError?: string
   onSubmit: (values: SongValues) => void
   onCancel: () => void
 }
 
-const toOptions = (values: string[]) => values.map((value) => ({ value }))
 const clean = (value?: string) => value?.trim() || undefined
 
 /**
- * Add/edit a song with the six FE-29 dimensions. Only the title is required: requiredness of the dimensions is
- * UNRESOLVED (FE-29), and their vocabularies are too, so theme and requirements are free text with suggestions.
+ * Add/edit the song fields of POST/PUT /api/songs. Only the title is required; maximum lengths follow the backend
+ * validator. Classification is edited on the song page.
  */
-export function SongFormModal({ open, song, suggestions, saving = false, onSubmit, onCancel }: SongFormModalProps) {
-  const seasons = useCatalogOptions('seasons')
-  const massTypes = useCatalogOptions('massTypes')
-  const ceremonyTypes = useCatalogOptions('ceremonyTypes')
-
+export function SongFormModal({ open, song, saving = false, titleError, onSubmit, onCancel }: SongFormModalProps) {
   return (
     <Modal
       open={open}
@@ -44,20 +38,20 @@ export function SongFormModal({ open, song, suggestions, saving = false, onSubmi
           disabled={saving}
           initialValues={{
             title: song?.title,
-            seasonId: song?.season?.id,
-            massTypeId: song?.massType?.id,
-            ceremonyTypeId: song?.ceremonyType?.id,
-            theme: song?.theme,
-            vocalRequirements: song?.vocalRequirements,
-            instrumentRequirements: song?.instrumentRequirements,
+            composer: song?.composer ?? undefined,
+            lyricist: song?.lyricist ?? undefined,
+            musicalKey: song?.musicalKey ?? undefined,
+            tempo: song?.tempo ?? undefined,
+            notes: song?.notes ?? undefined,
           }}
           onFinish={(values) =>
             onSubmit({
-              ...values,
               title: values.title.trim(),
-              theme: clean(values.theme),
-              vocalRequirements: clean(values.vocalRequirements),
-              instrumentRequirements: clean(values.instrumentRequirements),
+              composer: clean(values.composer),
+              lyricist: clean(values.lyricist),
+              musicalKey: clean(values.musicalKey),
+              tempo: clean(values.tempo),
+              notes: clean(values.notes),
             })
           }
         >
@@ -68,36 +62,34 @@ export function SongFormModal({ open, song, suggestions, saving = false, onSubmi
       <Form.Item
         label="Tên bài hát"
         name="title"
-        rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập tên bài hát.' }]}
+        validateStatus={titleError ? 'error' : undefined}
+        help={titleError}
+        rules={[
+          { required: true, whitespace: true, message: 'Vui lòng nhập tên bài hát.' },
+          { max: 200, message: 'Tên bài hát tối đa 200 ký tự.' },
+        ]}
       >
         <Input placeholder="Ví dụ: Con Bước Lên Bàn Thờ" />
       </Form.Item>
       <Flex wrap gap={spacing.md}>
-        <Form.Item label="Mùa phụng vụ" name="seasonId" style={{ flex: '1 1 180px' }}>
-          <Select allowClear placeholder="Chọn mùa phụng vụ" options={seasons} />
+        <Form.Item label="Nhạc sĩ" name="composer" rules={[{ max: 150, message: 'Tối đa 150 ký tự.' }]} style={{ flex: '1 1 260px' }}>
+          <Input placeholder="Ví dụ: Lm. Kim Long" />
         </Form.Item>
-        <Form.Item label="Loại Thánh lễ" name="massTypeId" style={{ flex: '1 1 180px' }}>
-          <Select allowClear placeholder="Chọn loại Thánh lễ" options={massTypes} />
-        </Form.Item>
-        <Form.Item label="Loại nghi thức" name="ceremonyTypeId" style={{ flex: '1 1 180px' }}>
-          <Select allowClear placeholder="Chọn loại nghi thức" options={ceremonyTypes} />
+        <Form.Item label="Người viết lời" name="lyricist" rules={[{ max: 150, message: 'Tối đa 150 ký tự.' }]} style={{ flex: '1 1 260px' }}>
+          <Input />
         </Form.Item>
       </Flex>
-      <Form.Item label="Chủ đề" name="theme">
-        <AutoComplete options={toOptions(suggestions.theme)} placeholder="Ví dụ: Đức Mẹ" filterOption />
-      </Form.Item>
       <Flex wrap gap={spacing.md}>
-        <Form.Item label="Yêu cầu bè giọng" name="vocalRequirements" style={{ flex: '1 1 260px' }}>
-          <AutoComplete
-            options={toOptions(suggestions.vocalRequirements)}
-            placeholder="Ví dụ: Soprano, Alto, Tenor, Bass"
-            filterOption
-          />
+        <Form.Item label="Giọng (tone)" name="musicalKey" rules={[{ max: 10, message: 'Tối đa 10 ký tự.' }]} style={{ flex: '1 1 180px' }}>
+          <Input placeholder="Ví dụ: Rê trưởng" />
         </Form.Item>
-        <Form.Item label="Yêu cầu nhạc cụ" name="instrumentRequirements" style={{ flex: '1 1 260px' }}>
-          <AutoComplete options={toOptions(suggestions.instrumentRequirements)} placeholder="Ví dụ: Organ" filterOption />
+        <Form.Item label="Nhịp độ" name="tempo" rules={[{ max: 50, message: 'Tối đa 50 ký tự.' }]} style={{ flex: '1 1 180px' }}>
+          <Input placeholder="Ví dụ: Andante" />
         </Form.Item>
       </Flex>
+      <Form.Item label="Ghi chú" name="notes" rules={[{ max: 1000, message: 'Tối đa 1000 ký tự.' }]}>
+        <Input.TextArea rows={3} showCount maxLength={1000} />
+      </Form.Item>
     </Modal>
   )
 }

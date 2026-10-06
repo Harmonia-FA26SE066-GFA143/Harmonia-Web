@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
 import { clearSession, setSession, type ApiRoleName } from '@/lib/auth/session'
 import { routes } from '.'
@@ -26,7 +26,16 @@ function signInAs(roleName: ApiRoleName) {
   })
 }
 
-afterEach(() => clearSession())
+// Routing tests must not reach a network: every API call answers 404 at once, so wired pages settle on their
+// not-found or error state instead of retrying a failed connection.
+beforeEach(() => {
+  vi.stubGlobal('fetch', () => Promise.resolve(new Response(null, { status: 404 })))
+})
+
+afterEach(() => {
+  clearSession()
+  vi.unstubAllGlobals()
+})
 
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })

@@ -1,47 +1,67 @@
 import { env } from '@/config/env'
-import { ApiContractMissingError } from '@/lib/api/errors'
-import type { MaterialKind, Song, SongDetail, SongMaterial, SongValues } from '../types'
+import { apiRequest } from '@/lib/api/client'
+import { ApiContractMissingError, ApiError } from '@/lib/api/errors'
+import { toQuery, type PagedList } from '@/lib/api/paging'
+import type { MaterialKind, Song, SongClassification, SongFilters, SongMaterial, SongValues } from '../types'
 
-// Backend contract exists, not wired yet: `/api/songs` (paged list, get, create, update, delete,
-// GET/PUT {id}/classification) and `/api/music-materials` (multipart upload, list, update, delete). Not wired
-// because the Web types differ from the DTOs (paging, multi-value classification, composer, material title and
-// target skill, PascalCase enums) and apiRequest cannot send FormData yet (audit W4–W6). Until then each function
-// checks `import.meta.env.DEV` at the call site so the fixture import is dropped from dist/.
+// Songs: `/api/songs` (Harmonia-BE SongsController). Every role reads; only the Choir Director writes.
 
-export async function listSongs(): Promise<Song[]> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { listSongsFixture } = await import('./fixtures.dev')
-    return listSongsFixture()
-  }
-  throw new ApiContractMissingError('Xem kho bài hát')
+export interface SongPage {
+  pageNumber: number
+  pageSize: number
 }
 
-/** One song with its materials, or `null` when it does not exist (how the backend reports this is TBD). */
-export async function getSong(id: string): Promise<SongDetail | null> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { getSongFixture } = await import('./fixtures.dev')
-    return getSongFixture(id)
-  }
-  throw new ApiContractMissingError('Xem chi tiết bài hát')
+export function listSongs(filters: SongFilters, page: SongPage): Promise<PagedList<Song>> {
+  return apiRequest<PagedList<Song>>(
+    `/api/songs${toQuery({
+      keyword: filters.search.trim(),
+      liturgicalSeasonId: filters.seasonId,
+      massTypeId: filters.massTypeId,
+      ceremonyTypeId: filters.ceremonyTypeId,
+      songThemeId: filters.themeId,
+      skillId: filters.skillId,
+      ...page,
+    })}`,
+  )
 }
 
-export async function createSong(values: SongValues): Promise<Song> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { saveSongFixture } = await import('./fixtures.dev')
-    return saveSongFixture(undefined, values)
+/** `null` for SONG_NOT_FOUND (404), so the page can show its not-found state. */
+async function orNullWhenMissing<T>(request: Promise<T>): Promise<T | null> {
+  try {
+    return await request
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null
+    throw error
   }
-  throw new ApiContractMissingError('Thêm bài hát')
 }
 
-export async function updateSong(id: string, values: SongValues): Promise<Song> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { saveSongFixture } = await import('./fixtures.dev')
-    return saveSongFixture(id, values)
-  }
-  throw new ApiContractMissingError('Chỉnh sửa bài hát')
+export function getSong(id: string): Promise<Song | null> {
+  return orNullWhenMissing(apiRequest<Song>(`/api/songs/${id}`))
 }
 
-/** Uploads one material file. Accepted formats and size limits are TBD, so none are enforced here. */
+export function getSongClassification(id: string): Promise<SongClassification | null> {
+  return orNullWhenMissing(apiRequest<SongClassification>(`/api/songs/${id}/classification`))
+}
+
+export function createSong(values: SongValues): Promise<Song> {
+  return apiRequest<Song>('/api/songs', { method: 'POST', body: JSON.stringify(values) })
+}
+
+export function updateSong(id: string, values: SongValues): Promise<Song> {
+  return apiRequest<Song>(`/api/songs/${id}`, { method: 'PUT', body: JSON.stringify(values) })
+}
+
+// Materials: `/api/music-materials` exists but is wired in issue #41 (multipart upload, paging, PascalCase types).
+// Until then each function checks `import.meta.env.DEV` at the call site so the fixture import is dropped from dist/.
+
+export async function listMaterials(songId: string): Promise<SongMaterial[]> {
+  if (import.meta.env.DEV && env.useDevFixtures) {
+    const { listMaterialsFixture } = await import('./fixtures.dev')
+    return listMaterialsFixture(songId)
+  }
+  throw new ApiContractMissingError('Xem tài liệu bài hát')
+}
+
 export async function uploadMaterial(songId: string, kind: MaterialKind, file: File): Promise<SongMaterial> {
   if (import.meta.env.DEV && env.useDevFixtures) {
     const { uploadMaterialFixture } = await import('./fixtures.dev')

@@ -1,9 +1,4 @@
-import type { CatalogItem } from '@/features/system-categories'
-
-/** Reference to an FE-50 catalog entry (liturgical season, Mass type, ceremony type). */
-export type CatalogRef = Pick<CatalogItem, 'id' | 'name'>
-
-/** Material kinds named in Report 1 FE-08 and FE-28. File formats and size limits are TBD. */
+/** Material kinds named in Report 1 FE-08 and FE-28. Wired to the backend in issue #41. */
 export type MaterialKind = 'sheetMusic' | 'lyrics' | 'sampleAudio' | 'rehearsalMaterial'
 
 export const materialKinds: MaterialKind[] = ['sheetMusic', 'lyrics', 'sampleAudio', 'rehearsalMaterial']
@@ -15,29 +10,47 @@ export const materialKindLabels: Record<MaterialKind, string> = {
   rehearsalMaterial: 'Tài liệu tập luyện',
 }
 
-/**
- * The six FE-29 classification dimensions. Season, Mass type and ceremony type reuse the FE-50 catalogs
- * (interpretation: the dimensions share their names). Theme, vocal and instrument requirements are free text:
- * their vocabularies, requiredness and cardinality are UNRESOLVED (domain.md), so one value each is assumed.
- */
-export interface SongClassification {
-  season?: CatalogRef
-  massType?: CatalogRef
-  ceremonyType?: CatalogRef
-  theme?: string
-  vocalRequirements?: string
-  instrumentRequirements?: string
-}
-
-/**
- * A song of the choir's music library (FE-27). No status, author or usage count: Report 1 defines none.
- * Not yet mapped to the backend SongDto: rework these types from the DTOs when the music library is wired.
- */
-export interface Song extends SongClassification {
+/** A song of the choir's music library (FE-27), as `SongDto` of GET /api/songs. Missing texts arrive as null. */
+export interface Song {
   id: string
   title: string
-  /** Material kinds that have at least one file, for the library overview. */
-  availableMaterials: MaterialKind[]
+  composer: string | null
+  lyricist: string | null
+  musicalKey: string | null
+  tempo: string | null
+  notes: string | null
+}
+
+/** Body of POST /api/songs and PUT /api/songs/{id}. PUT replaces every field, so the form always sends all of them. */
+export interface SongValues {
+  title: string
+  composer?: string
+  lyricist?: string
+  musicalKey?: string
+  tempo?: string
+  notes?: string
+}
+
+/** A lookup entry a song is classified under (season, Mass type, ceremony type, theme). */
+export interface NamedRef {
+  id: string
+  name: string
+}
+
+export interface SkillRequirement {
+  skillId: string
+  skillName: string
+  isMandatory: boolean
+}
+
+/** GET /api/songs/{id}/classification: the FE-29 dimensions, each with any number of values. */
+export interface SongClassification {
+  liturgicalSeasons: NamedRef[]
+  massTypes: NamedRef[]
+  ceremonyTypes: NamedRef[]
+  songThemes: NamedRef[]
+  vocalRequirements: SkillRequirement[]
+  instrumentRequirements: SkillRequirement[]
 }
 
 export interface SongMaterial {
@@ -46,33 +59,18 @@ export interface SongMaterial {
   fileName: string
   /** ISO 8601 timestamp. */
   uploadedAt: string
-  /** Where the file can be viewed or downloaded. TBD: how files are served comes with the contract. */
+  /** Where the file can be viewed or downloaded. */
   url?: string
 }
 
-export interface SongDetail extends SongClassification {
-  id: string
-  title: string
-  materials: SongMaterial[]
-}
-
-/** Values of the add/edit form. No field except the title is required (FE-29 requiredness UNRESOLVED). */
-export interface SongValues {
-  title: string
-  seasonId?: string
-  massTypeId?: string
-  ceremonyTypeId?: string
-  theme?: string
-  vocalRequirements?: string
-  instrumentRequirements?: string
-}
-
+/** Search and classification filters of GET /api/songs; they combine with AND on the server. */
 export interface SongFilters {
+  /** Matches title, composer and lyricist. */
   search: string
   seasonId?: string
   massTypeId?: string
   ceremonyTypeId?: string
-  theme?: string
-  vocalRequirements?: string
-  instrumentRequirements?: string
+  themeId?: string
+  /** Matches a vocal or an instrument requirement. */
+  skillId?: string
 }

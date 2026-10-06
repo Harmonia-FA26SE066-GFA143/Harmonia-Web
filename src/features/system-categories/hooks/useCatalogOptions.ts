@@ -1,5 +1,6 @@
-import type { LiturgicalCatalog } from '../types'
-import { useLiturgicalCategories } from './useCatalogs'
+import { useQuery } from '@tanstack/react-query'
+import { listLookup } from '../api/categoriesApi'
+import type { LookupKind } from '../types'
 
 /** Select option built from a catalog entry. */
 export interface CatalogOption {
@@ -8,10 +9,11 @@ export interface CatalogOption {
 }
 
 /**
- * Options for filters and forms from an FE-50 liturgical catalog. While the catalog is loading or unavailable
- * the list is empty, so the page using it still works without those choices.
+ * Options for filters and forms from a backend lookup. While it is loading or unavailable the list is empty, so
+ * the page using it still works without those choices.
  */
-export function useCatalogOptions(catalog: LiturgicalCatalog): CatalogOption[] {
-  const query = useLiturgicalCategories(catalog)
+export function useCatalogOptions(kind: LookupKind): CatalogOption[] {
+  // Lookups change rarely; five minutes keeps every filter bar from refetching on mount.
+  const query = useQuery({ queryKey: ['lookups', kind], queryFn: () => listLookup(kind), staleTime: 5 * 60_000 })
   return (query.data ?? []).map((item) => ({ value: item.id, label: item.name }))
 }
