@@ -62,14 +62,14 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
             disabled={saving}
             style={{ maxWidth: 560 }}
           >
-            <Form.Item
-              label="Họ và tên"
-              name="fullName"
-              rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập họ và tên.' }]}
-            >
+            <Form.Item label="Họ và tên" name="fullName" rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}>
               <Input autoComplete="name" />
             </Form.Item>
-            <Form.Item label="Số điện thoại (không bắt buộc)" name="phone">
+            <Form.Item
+              label="Số điện thoại (không bắt buộc)"
+              name="phone"
+              rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}
+            >
               <Input type="tel" autoComplete="tel" />
             </Form.Item>
           </Form>
@@ -82,7 +82,7 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
         <Descriptions
           column={1}
           items={[
-            { key: 'fullName', label: 'Họ và tên', children: profile.fullName },
+            { key: 'fullName', label: 'Họ và tên', children: profile.fullName || 'Chưa cập nhật' },
             readOnlyItems[0],
             { key: 'phone', label: 'Số điện thoại', children: profile.phone || 'Chưa cập nhật' },
             ...readOnlyItems.slice(1),

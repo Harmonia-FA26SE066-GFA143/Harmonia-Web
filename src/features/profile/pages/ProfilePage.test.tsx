@@ -1,5 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as profileApi from '../api/profileApi'
 import { ProfilePage } from './ProfilePage'
@@ -9,7 +10,8 @@ afterEach(() => {
 })
 
 describe('ProfilePage', () => {
-  it('shows a recoverable error while the profile API contract is missing', async () => {
+  it('shows a recoverable error when the profile cannot be loaded', async () => {
+    vi.spyOn(profileApi, 'getMyProfile').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<ProfilePage />, '/profile')
 
     expect(screen.getByRole('status', { name: 'Đang tải hồ sơ cá nhân' })).toBeInTheDocument()
@@ -30,6 +32,7 @@ describe('ProfilePage', () => {
   })
 
   it('asks for confirmation before signing out', async () => {
+    vi.spyOn(profileApi, 'getMyProfile').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<ProfilePage />, '/profile')
 
     fireEvent.click(screen.getByRole('button', { name: /Đăng xuất/ }))
