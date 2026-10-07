@@ -37,13 +37,24 @@ describe('ProfileDetails', () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledWith({ fullName: 'Nguyễn Văn An', phone: '0901234567' }))
   })
 
-  it('does not save an empty name', async () => {
+  it('keeps name and phone within the backend limits', async () => {
     const { onSave } = renderDetails({ editing: true })
 
-    fireEvent.change(screen.getByLabelText('Họ và tên'), { target: { value: '  ' } })
+    fireEvent.change(screen.getByLabelText('Họ và tên'), { target: { value: 'a'.repeat(101) } })
+    fireEvent.change(screen.getByLabelText('Số điện thoại (không bắt buộc)'), { target: { value: '0'.repeat(21) } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
 
-    expect(await screen.findByText('Vui lòng nhập họ và tên.')).toBeInTheDocument()
+    expect(await screen.findByText('Họ và tên tối đa 100 ký tự.')).toBeInTheDocument()
+    expect(screen.getByText('Số điện thoại tối đa 20 ký tự.')).toBeInTheDocument()
     expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('allows an empty name, as the backend does', async () => {
+    const { onSave } = renderDetails({ editing: true })
+
+    fireEvent.change(screen.getByLabelText('Họ và tên'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ fullName: '' })))
   })
 })
