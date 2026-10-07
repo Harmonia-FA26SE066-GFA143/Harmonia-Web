@@ -1,6 +1,6 @@
 import { EditOutlined } from '@ant-design/icons'
 import { Button, Descriptions, Flex, Form, Input, Tag, Typography } from 'antd'
-import { accountStatusLabels, roleLabels } from '@/shared/types/account'
+import { roleLabels } from '@/shared/types/account'
 import { colors, radius, spacing } from '@/styles/tokens'
 import type { Profile, ProfileUpdateValues } from '../types'
 
@@ -13,24 +13,13 @@ export interface ProfileDetailsProps {
   onSave: (values: ProfileUpdateValues) => void
 }
 
-function RoleValue({ profile }: { profile: Profile }) {
-  if (profile.role) return <Tag>{roleLabels[profile.role]}</Tag>
-  return (
-    <Typography.Text style={{ color: colors.textMuted }}>
-      Chưa được xác nhận
-      {profile.requestedRole && ` (đề nghị: ${roleLabels[profile.requestedRole]})`}
-    </Typography.Text>
-  )
-}
-
 /** Personal information panel with view and edit modes. Email and role are read-only here. */
 export function ProfileDetails({ profile, editing, saving = false, onEdit, onCancel, onSave }: ProfileDetailsProps) {
   const [form] = Form.useForm<ProfileUpdateValues>()
 
   const readOnlyItems = [
     { key: 'email', label: 'Email', children: profile.email },
-    { key: 'role', label: 'Vai trò', children: <RoleValue profile={profile} /> },
-    { key: 'status', label: 'Trạng thái tài khoản', children: accountStatusLabels[profile.accountStatus] },
+    { key: 'role', label: 'Vai trò', children: <Tag>{roleLabels[profile.role]}</Tag> },
   ]
 
   return (

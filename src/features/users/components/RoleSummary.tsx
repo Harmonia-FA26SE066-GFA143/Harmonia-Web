@@ -4,8 +4,8 @@ import { colors, spacing, typography } from '@/styles/tokens'
 import { assignableRoles, roleDescriptions } from '../roles'
 
 export interface RoleSummaryProps {
-  /** Number of accounts currently holding each role. */
-  counts: Record<SystemRole, number>
+  /** Number of accounts currently holding each role; undefined while loading or unavailable. */
+  counts?: Record<SystemRole, number>
 }
 
 /** The fixed FE-48 roles with their responsibilities. Roles are not created or edited here. */
@@ -22,7 +22,7 @@ export function RoleSummary({ counts }: RoleSummaryProps) {
               {roleDescriptions[role]}
             </Typography.Paragraph>
             <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textBody }}>
-              Đang gán: <strong>{counts[role]}</strong> tài khoản
+              Đang gán: <strong>{counts?.[role] ?? '–'}</strong> tài khoản
             </Typography.Text>
           </Card>
         </Col>

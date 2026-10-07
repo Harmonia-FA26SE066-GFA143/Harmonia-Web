@@ -7,7 +7,6 @@ import { ProfileDetails } from './ProfileDetails'
 const activeProfile: Profile = {
   fullName: 'Nguyễn Văn An',
   email: 'an@giaoxu.org',
-  accountStatus: 'active',
   role: 'director',
 }
 
@@ -26,15 +25,6 @@ describe('ProfileDetails', () => {
     expect(screen.getByText('Chưa cập nhật')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Chỉnh sửa/ }))
     expect(onEdit).toHaveBeenCalled()
-  })
-
-  it('shows the requested role while the account awaits confirmation', () => {
-    renderDetails({
-      profile: { ...activeProfile, accountStatus: 'pending', role: undefined, requestedRole: 'member' },
-    })
-
-    expect(screen.getByText('Chưa được xác nhận (đề nghị: Ca viên)')).toBeInTheDocument()
-    expect(screen.getByText('Chờ xác nhận')).toBeInTheDocument()
   })
 
   it('edits only the full name and phone', async () => {

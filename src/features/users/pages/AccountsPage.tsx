@@ -1,131 +1,109 @@
 import { UserAddOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Card, Flex, Typography } from 'antd'
+import { App, Button, Card, Flex } from 'antd'
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router'
-import { accountStatusLabels, type AccountStatus, type SystemRole } from '@/shared/types/account'
+import { getSession } from '@/lib/auth/session'
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
-import { emptyAccountFilters, filterAccounts } from '../accountFilters'
+import { spacing } from '@/styles/tokens'
+import { accountErrorMessage, duplicateEmailMessage, isDuplicateEmail } from '../accountErrors'
+import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
 import { AccountFilterBar } from '../components/AccountFilterBar'
+import { AccountFormModal } from '../components/AccountFormModal'
 import { AccountTable } from '../components/AccountTable'
-import { AssignRoleModal } from '../components/AssignRoleModal'
-import { CreateAccountModal } from '../components/CreateAccountModal'
-import { RejectAccountModal } from '../components/RejectAccountModal'
-import {
-  useAccounts,
-  useConfirmAccount,
-  useCreateAccount,
-  useRejectAccount,
-  useReopenAccount,
-} from '../hooks/useAccounts'
-import type { Account, AccountFilters, CreateAccountValues } from '../types'
+import { useAccounts, useCreateAccount, useSetAccountActive, useUpdateAccount } from '../hooks/useAccounts'
+import type { Account, AccountFilters, CreateAccountValues, UpdateAccountValues } from '../types'
+
+const pageSize = 20
 
 /**
- * Admin: user accounts (FE-47) with the self-registration review flow (DECIDED 2026-09-26):
- * pending accounts are found through the "Chờ xác nhận" filter, then confirmed with a role or rejected;
- * rejected accounts can be reopened. Deactivation is a conceptual status only – no action is defined (TBD).
- * `?status=pending` opens the page pre-filtered (used by the Admin dashboard's pending-accounts card).
+ * Admin: user accounts (FE-47) on `/api/users`. The Admin creates accounts with an initial password and a role,
+ * edits name and email, and deactivates or reactivates them (owner decision D1, 2026-10-07: follow the BE).
+ * Roles are changed on the Roles page.
  */
 export function AccountsPage() {
   const { message, modal } = App.useApp()
-  const accounts = useAccounts()
+  const [filters, setFilters] = useState<AccountFilters>(emptyAccountFilters)
+  const [page, setPage] = useState(1)
+  const search = useDebouncedValue(filters.search)
+  const query = useMemo(() => ({ ...filters, search }), [filters, search])
+  const accounts = useAccounts(query, { pageNumber: page, pageSize })
   const create = useCreateAccount()
-  const confirm = useConfirmAccount()
-  const reject = useRejectAccount()
-  const reopen = useReopenAccount()
+  const update = useUpdateAccount()
+  const setActive = useSetAccountActive()
 
-  const [searchParams] = useSearchParams()
-  const [filters, setFilters] = useState<AccountFilters>(() => {
-    const status = searchParams.get('status')
-    return status && status in accountStatusLabels
-      ? { ...emptyAccountFilters, status: status as AccountStatus }
-      : emptyAccountFilters
-  })
-  const [creating, setCreating] = useState(false)
-  const [confirming, setConfirming] = useState<Account>()
-  const [rejecting, setRejecting] = useState<Account>()
+  // `account` is set while editing; `open` without it means creating.
+  const [form, setForm] = useState<{ open: boolean; account?: Account }>({ open: false })
+  const [emailError, setEmailError] = useState<string>()
+  const ownId = getSession()?.user.id
 
-  const all = accounts.data ?? []
-  const visible = useMemo(() => filterAccounts(accounts.data ?? [], filters), [accounts.data, filters])
-  const pendingCount = all.filter((account) => account.status === 'pending').length
-  const resetFilters = () => setFilters(emptyAccountFilters)
+  const total = accounts.data?.totalCount ?? 0
+  const filtered = hasActiveFilters(query)
+  const changeFilters = (next: AccountFilters) => {
+    setFilters(next)
+    setPage(1)
+  }
+  const resetFilters = () => changeFilters(emptyAccountFilters)
+  const closeForm = () => {
+    setForm({ open: false })
+    setEmailError(undefined)
+  }
 
-  const handleCreate = (values: CreateAccountValues) =>
-    create.mutate(values, {
+  const handleSubmit = (values: CreateAccountValues | UpdateAccountValues) => {
+    setEmailError(undefined)
+    const callbacks = {
       onSuccess: () => {
-        message.success('Đã tạo tài khoản.')
-        setCreating(false)
+        message.success(form.account ? 'Đã lưu thay đổi.' : 'Đã tạo tài khoản.')
+        closeForm()
       },
-      // TBD: a duplicate email cannot be told apart until the backend error format is known.
-      onError: () => message.error('Không thể tạo tài khoản. Vui lòng thử lại.'),
-    })
-
-  const handleConfirm = (role: SystemRole) => {
-    if (!confirming) return
-    confirm.mutate(
-      { id: confirming.id, role },
-      {
-        onSuccess: () => {
-          message.success(`Đã xác nhận tài khoản của ${confirming.fullName}.`)
-          setConfirming(undefined)
-        },
-        onError: () => message.error('Không thể xác nhận tài khoản. Vui lòng thử lại.'),
-      },
-    )
+      onError: (error: Error) =>
+        isDuplicateEmail(error)
+          ? setEmailError(duplicateEmailMessage)
+          : message.error(accountErrorMessage(error, 'Không thể lưu tài khoản. Vui lòng thử lại.')),
+    }
+    if (form.account) update.mutate({ id: form.account.id, values }, callbacks)
+    else create.mutate(values as CreateAccountValues, callbacks)
   }
 
-  const handleReject = (reason?: string) => {
-    if (!rejecting) return
-    reject.mutate(
-      { id: rejecting.id, reason },
-      {
-        onSuccess: () => {
-          message.success(`Đã từ chối tài khoản của ${rejecting.fullName}.`)
-          setRejecting(undefined)
-        },
-        onError: () => message.error('Không thể từ chối tài khoản. Vui lòng thử lại.'),
-      },
-    )
-  }
-
-  const handleReopen = (account: Account) =>
+  const handleToggleActive = (account: Account) => {
+    const active = !account.isActive
     modal.confirm({
-      title: 'Mở lại tài khoản?',
-      content: `Tài khoản của ${account.fullName} (${account.email}) sẽ được mở lại.`,
-      okText: 'Mở lại',
+      title: active ? 'Kích hoạt lại tài khoản?' : 'Ngừng hoạt động tài khoản?',
+      content: active
+        ? `${account.fullName} (${account.email}) sẽ đăng nhập lại được.`
+        : `${account.fullName} (${account.email}) sẽ bị đăng xuất và không đăng nhập được cho tới khi được kích hoạt lại.`,
+      okText: active ? 'Kích hoạt' : 'Ngừng hoạt động',
+      okButtonProps: { danger: !active },
       cancelText: 'Hủy',
       onOk: () =>
-        reopen
-          .mutateAsync(account.id)
-          .then(() => message.success(`Đã mở lại tài khoản của ${account.fullName}.`))
-          .catch(() => message.error('Không thể mở lại tài khoản. Vui lòng thử lại.')),
+        setActive
+          .mutateAsync({ id: account.id, active })
+          .then(() => message.success(active ? 'Đã kích hoạt tài khoản.' : 'Đã ngừng hoạt động tài khoản.'))
+          .catch((error: Error) =>
+            message.error(accountErrorMessage(error, 'Không thể cập nhật trạng thái. Vui lòng thử lại.')),
+          ),
     })
-
-  const renderActions = (account: Account) => {
-    if (account.status === 'pending') {
-      return (
-        <Flex gap={spacing.xs} justify="flex-end">
-          <Button type="primary" onClick={() => setConfirming(account)} aria-label={`Xác nhận ${account.fullName}`}>
-            Xác nhận
-          </Button>
-          <Button danger onClick={() => setRejecting(account)} aria-label={`Từ chối ${account.fullName}`}>
-            Từ chối
-          </Button>
-        </Flex>
-      )
-    }
-    if (account.status === 'rejected') {
-      return (
-        <Button onClick={() => handleReopen(account)} aria-label={`Mở lại ${account.fullName}`}>
-          Mở lại
-        </Button>
-      )
-    }
-    return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
   }
 
+  const renderActions = (account: Account) => (
+    <Flex gap={spacing.xs} justify="flex-end">
+      <Button onClick={() => setForm({ open: true, account })} aria-label={`Sửa ${account.fullName}`}>
+        Sửa
+      </Button>
+      {/* The backend refuses to deactivate the Admin's own account (USER_CANNOT_MODIFY_SELF). */}
+      {account.id !== ownId && (
+        <Button
+          danger={account.isActive}
+          onClick={() => handleToggleActive(account)}
+          aria-label={`${account.isActive ? 'Ngừng hoạt động' : 'Kích hoạt'} ${account.fullName}`}
+        >
+          {account.isActive ? 'Ngừng hoạt động' : 'Kích hoạt'}
+        </Button>
+      )}
+    </Flex>
+  )
+
   const createButton = (
-    <Button type="primary" icon={<UserAddOutlined />} onClick={() => setCreating(true)}>
+    <Button type="primary" icon={<UserAddOutlined />} onClick={() => setForm({ open: true })}>
       Tạo tài khoản
     </Button>
   )
@@ -135,7 +113,7 @@ export function AccountsPage() {
       <PageHeader
         title="Tài khoản"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Tài khoản' }]}
-        description="Quản lý tài khoản người dùng và xác nhận vai trò cho tài khoản tự đăng ký."
+        description="Tạo và quản lý tài khoản người dùng của hệ thống."
         extra={createButton}
       />
 
@@ -147,63 +125,41 @@ export function AccountsPage() {
           retrying={accounts.isFetching}
         />
       )}
-      {accounts.isSuccess && all.length === 0 && (
+      {accounts.isSuccess && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có tài khoản nào"
-          description="Tài khoản tự đăng ký và tài khoản do bạn tạo sẽ xuất hiện tại đây."
+          description="Tài khoản bạn tạo sẽ xuất hiện tại đây."
           action={createButton}
         />
       )}
-      {accounts.isSuccess && all.length > 0 && (
-        <Flex vertical gap={spacing.md}>
-          {pendingCount > 0 && filters.status !== 'pending' && (
-            <Alert
-              type="warning"
-              showIcon
-              title={`Có ${pendingCount} tài khoản đang chờ xác nhận vai trò.`}
-              action={
-                <Button size="small" onClick={() => setFilters({ ...emptyAccountFilters, status: 'pending' })}>
-                  Xem tài khoản chờ xác nhận
-                </Button>
-              }
+      {accounts.isSuccess && (total > 0 || filtered) && (
+        <Card styles={{ body: { padding: 0 } }}>
+          <AccountFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
+          {total === 0 ? (
+            <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+              <NoFilterResults onClearFilters={resetFilters} />
+            </div>
+          ) : (
+            <AccountTable
+              accounts={accounts.data.items}
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              loading={accounts.isPlaceholderData}
+              onPageChange={setPage}
+              renderActions={renderActions}
             />
           )}
-          <Card styles={{ body: { padding: 0 } }}>
-            <AccountFilterBar
-              value={filters}
-              onChange={setFilters}
-              onReset={resetFilters}
-              resultCount={visible.length}
-            />
-            {visible.length === 0 ? (
-              <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
-                <NoFilterResults onClearFilters={resetFilters} />
-              </div>
-            ) : (
-              <AccountTable accounts={visible} renderActions={renderActions} />
-            )}
-          </Card>
-        </Flex>
+        </Card>
       )}
 
-      <CreateAccountModal
-        open={creating}
-        saving={create.isPending}
-        onSubmit={handleCreate}
-        onCancel={() => setCreating(false)}
-      />
-      <AssignRoleModal
-        mode="confirm"
-        account={confirming}
-        saving={confirm.isPending}
-        onSubmit={handleConfirm}
-        onCancel={() => setConfirming(undefined)}
-      />
-      <RejectAccountModal
-        account={rejecting}
-        saving={reject.isPending}
-        onSubmit={handleReject}
-        onCancel={() => setRejecting(undefined)}
+      <AccountFormModal
+        open={form.open}
+        account={form.account}
+        saving={create.isPending || update.isPending}
+        emailError={emailError}
+        onSubmit={handleSubmit}
+        onCancel={closeForm}
       />
     </>
   )

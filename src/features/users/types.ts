@@ -1,43 +1,38 @@
-import type { AccountStatus, RequestableRole, SystemRole } from '@/shared/types/account'
+import type { SystemRole } from '@/shared/types/account'
 
 /**
- * An account as the Admin sees it in User Accounts (FE-47) and role assignment (FE-48).
- * Fields follow the registration decision (docs/local/business/roles-permissions.md, DECIDED 2026-09-26).
- * Not yet mapped to the backend UserDto (id, email, fullName, roleName, isActive): the backend has no pending or
- * rejected status, so the status model waits for decision D1.
- * Stitch fields not adopted: account code, affiliated choir/unit, notes, initial password mode.
+ * An account as the Admin sees it in User Accounts (FE-47) and role assignment (FE-48): `UserDto` of `/api/users`
+ * (Harmonia-BE). Admin-created, one role, active or not (owner decision D1, 2026-10-07: follow the BE).
  */
 export interface Account {
   id: string
   fullName: string
   email: string
-  phone?: string
-  status: AccountStatus
-  /**
-   * Confirmed role; absent while pending confirmation or after rejection.
-   * One role per account is an assumption: multiple roles per account is UNRESOLVED (roles-permissions.md).
-   */
-  role?: SystemRole
-  /** Role chosen at self-registration; informational only. */
-  requestedRole?: RequestableRole
-  /** Optional reason given when the Admin rejected the account. */
-  rejectionReason?: string
+  role: SystemRole
+  isActive: boolean
 }
 
-/**
- * Admin-created account (owner decision 2026-09-27: Admin creates accounts directly, any FE-48 role incl. Admin).
- * How the new user gets a password (invitation, temporary password) and the initial status are TBD,
- * so no password field is collected.
- */
+export const accountStatusLabels = { active: 'Đang hoạt động', inactive: 'Ngừng hoạt động' }
+
+/** Body of POST /api/users (CreateUserRequestValidator: fullName ≤ 100, password ≥ 8). */
 export interface CreateAccountValues {
   fullName: string
   email: string
-  phone?: string
+  /** Initial password chosen by the Admin. */
+  password: string
   role: SystemRole
 }
 
+/** Body of PUT /api/users/{id}. */
+export interface UpdateAccountValues {
+  fullName: string
+  email: string
+}
+
+/** Query filters of GET /api/users; they combine with AND on the server. */
 export interface AccountFilters {
+  /** The backend matches the email only. */
   search: string
   role?: SystemRole
-  status?: AccountStatus
+  isActive?: boolean
 }

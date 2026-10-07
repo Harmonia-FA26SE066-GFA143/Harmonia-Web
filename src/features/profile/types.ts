@@ -1,18 +1,14 @@
-import type { AccountStatus, RequestableRole, SystemRole } from '@/shared/types/account'
+import type { SystemRole } from '@/shared/types/account'
 
 /**
- * UI model of the signed-in user's profile. Fields follow the registration decision
- * (docs/local/business/roles-permissions.md, DECIDED 2026-09-26).
+ * UI model of the signed-in user's profile. Every account is Admin-created with one role (D1, 2026-10-07).
  * TBD: Backend API missing – no current-user profile for the web roles yet (see profileApi); mapping follows it.
  */
 export interface Profile {
   fullName: string
   email: string
   phone?: string
-  accountStatus: AccountStatus
-  /** Confirmed role; absent while the account awaits Admin confirmation. */
-  role?: SystemRole
-  requestedRole?: RequestableRole
+  role: SystemRole
 }
 
 /** Fields the user may edit (owner decision 2026-09-27: full name and phone only). */

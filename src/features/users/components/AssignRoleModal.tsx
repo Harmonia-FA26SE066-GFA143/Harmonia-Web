@@ -5,32 +5,21 @@ import { assignableRoles, roleDescriptions } from '../roles'
 import type { Account } from '../types'
 
 export interface AssignRoleModalProps {
-  /** Account being confirmed or changed; the modal is open while set. */
+  /** Account whose role is changed; the modal is open while set. */
   account?: Account
-  /**
-   * `confirm`: pending account, preselects the requested role (DECIDED 2026-09-26).
-   * `change`: account with a role; saving is blocked until a different role is chosen.
-   */
-  mode: 'confirm' | 'change'
   saving?: boolean
   onSubmit: (role: SystemRole) => void
   onCancel: () => void
 }
 
-const copy = {
-  confirm: { title: 'Xác nhận vai trò', ok: 'Xác nhận' },
-  change: { title: 'Thay đổi vai trò', ok: 'Lưu thay đổi' },
-}
-
 interface FooterProps {
-  okText: string
   current?: SystemRole
   saving: boolean
   onCancel: () => void
 }
 
 /** Rendered inside the modal's Form (see modalRender), so it can watch the selected role. */
-function AssignRoleFooter({ okText, current, saving, onCancel }: FooterProps) {
+function AssignRoleFooter({ current, saving, onCancel }: FooterProps) {
   const selected = Form.useWatch<SystemRole | undefined>('role', Form.useFormInstance())
   return (
     <Flex justify="flex-end" gap={spacing.sm}>
@@ -38,24 +27,24 @@ function AssignRoleFooter({ okText, current, saving, onCancel }: FooterProps) {
         Hủy
       </Button>
       <Button type="primary" htmlType="submit" loading={saving} disabled={!selected || selected === current}>
-        {okText}
+        Lưu thay đổi
       </Button>
     </Flex>
   )
 }
 
 /**
- * Picks one FE-48 role (single role per account is an assumption; multiple roles is UNRESOLVED).
- * Guards such as keeping at least one Admin are backend rules (TBD).
+ * Picks one FE-48 role (`PUT /api/users/{id}/role`: one role per account). Saving is blocked until a different role
+ * is chosen. The backend refuses the Admin's own account and removing the last active Admin.
  */
-export function AssignRoleModal({ account, mode, saving = false, onSubmit, onCancel }: AssignRoleModalProps) {
-  const current = mode === 'change' ? account?.role : undefined
+export function AssignRoleModal({ account, saving = false, onSubmit, onCancel }: AssignRoleModalProps) {
+  const current = account?.role
 
   return (
     <Modal
       open={Boolean(account)}
-      title={copy[mode].title}
-      footer={<AssignRoleFooter okText={copy[mode].ok} current={current} saving={saving} onCancel={onCancel} />}
+      title="Thay đổi vai trò"
+      footer={<AssignRoleFooter current={current} saving={saving} onCancel={onCancel} />}
       onCancel={onCancel}
       mask={{ closable: !saving }}
       destroyOnHidden
@@ -63,7 +52,7 @@ export function AssignRoleModal({ account, mode, saving = false, onSubmit, onCan
         <Form<{ role: SystemRole }>
           layout="vertical"
           disabled={saving}
-          initialValues={{ role: mode === 'confirm' ? account?.requestedRole : account?.role }}
+          initialValues={{ role: current }}
           onFinish={(values) => onSubmit(values.role)}
         >
           {dom}
@@ -77,21 +66,15 @@ export function AssignRoleModal({ account, mode, saving = false, onSubmit, onCan
           style={{ marginBottom: spacing.md }}
           items={[
             { key: 'name', label: 'Tài khoản', children: `${account.fullName} (${account.email})` },
-            mode === 'confirm'
-              ? {
-                  key: 'requested',
-                  label: 'Vai trò đề nghị',
-                  children: account.requestedRole ? roleLabels[account.requestedRole] : 'Không có',
-                }
-              : { key: 'current', label: 'Vai trò hiện tại', children: account.role ? roleLabels[account.role] : '—' },
+            { key: 'current', label: 'Vai trò hiện tại', children: roleLabels[account.role] },
           ]}
         />
       )}
       <Form.Item
-        label={mode === 'confirm' ? 'Vai trò được xác nhận' : 'Vai trò mới'}
+        label="Vai trò mới"
         name="role"
         rules={[{ required: true, message: 'Vui lòng chọn vai trò.' }]}
-        extra={mode === 'confirm' ? 'Vai trò đề nghị chỉ để tham khảo; bạn có thể chọn vai trò khác.' : undefined}
+        extra="Người dùng sẽ phải đăng nhập lại sau khi đổi vai trò."
       >
         <Radio.Group style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
           {assignableRoles.map((role) => (

@@ -21,7 +21,6 @@ describe('ProfilePage', () => {
     vi.spyOn(profileApi, 'getMyProfile').mockResolvedValue({
       fullName: 'Nguyễn Văn An',
       email: 'an@giaoxu.org',
-      accountStatus: 'active',
       role: 'priest',
     })
     renderPage(<ProfilePage />, '/profile')
