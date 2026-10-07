@@ -1,14 +1,35 @@
-import { ApiContractMissingError } from '@/lib/api/errors'
+import { apiRequest } from '@/lib/api/client'
+import type { ApiRoleName } from '@/lib/auth/session'
+import { roleByApiName } from '@/shared/types/account'
 import type { Profile, ProfileUpdateValues } from '../types'
 
-// TBD: Backend API missing – current-user profile for the web roles (Admin, ParishPriest, ChoirDirector).
-// `GET/PUT /api/member-profiles/me` exists for ChoirMember only; where name and phone live is decision D2
-// (tbd-backlog B5). Decision 0002: no endpoint is guessed.
+// `GET/PUT /api/auth/me` (Harmonia-BE AuthController): every signed-in role reads its own account and edits its own
+// name and phone. Allowed while the first password still has to be changed.
 
-export async function getMyProfile(): Promise<Profile> {
-  throw new ApiContractMissingError('Xem hồ sơ cá nhân')
+interface UserDto {
+  email: string
+  fullName: string
+  phone: string | null
+  roleName: ApiRoleName
 }
 
-export async function updateMyProfile(_values: ProfileUpdateValues): Promise<Profile> {
-  throw new ApiContractMissingError('Cập nhật hồ sơ cá nhân')
+const toProfile = ({ email, fullName, phone, roleName }: UserDto): Profile => ({
+  email,
+  fullName,
+  phone: phone ?? undefined,
+  role: roleByApiName[roleName],
+})
+
+export async function getMyProfile(): Promise<Profile> {
+  return toProfile(await apiRequest<UserDto>('/api/auth/me'))
+}
+
+/** Both fields are replaced: an empty name or phone clears it (UpdateMyUserRequestValidator: ≤ 100 / ≤ 20). */
+export async function updateMyProfile({ fullName, phone }: ProfileUpdateValues): Promise<Profile> {
+  return toProfile(
+    await apiRequest<UserDto>('/api/auth/me', {
+      method: 'PUT',
+      body: JSON.stringify({ fullName: fullName?.trim() || undefined, phone: phone?.trim() || undefined }),
+    }),
+  )
 }

@@ -16,9 +16,23 @@ export interface ResetPasswordFormProps {
   failed?: boolean
   /** The backend rejected the new password. */
   passwordError?: string
+  /** Change form: also asks for the current password. */
+  askCurrentPassword?: boolean
+  /** The backend rejected the current password. */
+  currentPasswordError?: string
+  submitText?: string
 }
 
-export function ResetPasswordForm({ onSubmit, submitting = false, failed = false, passwordError }: ResetPasswordFormProps) {
+/** New password with confirmation, for the reset link and for changing the password while signed in. */
+export function ResetPasswordForm({
+  onSubmit,
+  submitting = false,
+  failed = false,
+  passwordError,
+  askCurrentPassword = false,
+  currentPasswordError,
+  submitText = 'Đặt lại mật khẩu',
+}: ResetPasswordFormProps) {
   const [form] = Form.useForm<NewPasswordFormValues>()
 
   return (
@@ -27,7 +41,7 @@ export function ResetPasswordForm({ onSubmit, submitting = false, failed = false
         <Alert
           type="error"
           showIcon
-          title="Không thể đặt lại mật khẩu"
+          title={askCurrentPassword ? 'Không thể đổi mật khẩu' : 'Không thể đặt lại mật khẩu'}
           description="Đã xảy ra lỗi khi kết nối máy chủ. Vui lòng thử lại sau giây lát."
           action={
             <Button size="small" onClick={() => form.submit()}>
@@ -37,6 +51,17 @@ export function ResetPasswordForm({ onSubmit, submitting = false, failed = false
         />
       )}
       <Form<NewPasswordFormValues> form={form} layout="vertical" requiredMark={false} onFinish={onSubmit} disabled={submitting}>
+        {askCurrentPassword && (
+          <Form.Item
+            label="Mật khẩu hiện tại"
+            name="currentPassword"
+            validateStatus={currentPasswordError ? 'error' : undefined}
+            help={currentPasswordError}
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại.' }]}
+          >
+            <Input.Password autoComplete="current-password" autoFocus />
+          </Form.Item>
+        )}
         <Form.Item
           label="Mật khẩu mới"
           name="newPassword"
@@ -69,7 +94,7 @@ export function ResetPasswordForm({ onSubmit, submitting = false, failed = false
           <Input.Password autoComplete="new-password" placeholder="Nhập lại mật khẩu mới" />
         </Form.Item>
         <Button type="primary" htmlType="submit" block loading={submitting}>
-          Đặt lại mật khẩu
+          {submitText}
         </Button>
       </Form>
     </Flex>
