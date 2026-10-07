@@ -8,10 +8,21 @@ import * as accountsApi from '../api/accountsApi'
 import type { Account } from '../types'
 import { AccountsPage } from './AccountsPage'
 
+const account = (id: string, fullName: string, email: string, role: Account['role'], isActive = true): Account => ({
+  id,
+  fullName,
+  email,
+  phone: null,
+  role,
+  isActive,
+  isPasswordChangeRequired: false,
+})
+
 const accounts: Account[] = [
-  { id: 'a1', fullName: 'Quản trị viên', email: 'admin@giaoxu.org', role: 'admin', isActive: true },
-  { id: 'a2', fullName: 'Giuse Trần Minh Tâm', email: 'tam@giaoxu.org', role: 'director', isActive: true },
-  { id: 'a3', fullName: 'Phêrô Lê Văn Bình', email: 'binh@giaoxu.org', role: 'member', isActive: false },
+  account('a1', 'Quản trị viên', 'admin@giaoxu.org', 'admin'),
+  { ...account('a2', 'Giuse Trần Minh Tâm', 'tam@giaoxu.org', 'director'), phone: '0901 234 567' },
+  account('a3', 'Phêrô Lê Văn Bình', 'binh@giaoxu.org', 'member', false),
+  { ...account('a4', '', 'moi@giaoxu.org', 'member'), isPasswordChangeRequired: true },
 ]
 
 const page = (items: Account[]): PagedList<Account> => ({
@@ -56,14 +67,23 @@ describe('AccountsPage', () => {
     expect(screen.getAllByRole('button', { name: /Tạo tài khoản/ }).length).toBeGreaterThan(0)
   })
 
-  it('lists accounts with role, status and the total count', async () => {
+  it('lists accounts with role, phone, status and the total count', async () => {
     renderAccounts()
 
     expect(await screen.findByText('Giuse Trần Minh Tâm')).toBeInTheDocument()
     expect(screen.getByText('Ca trưởng')).toBeInTheDocument()
+    expect(screen.getByText('0901 234 567')).toBeInTheDocument()
     expect(screen.getByText('Ngừng hoạt động', { selector: '.ant-tag' })).toBeInTheDocument()
-    expect(screen.getByText('3 tài khoản')).toBeInTheDocument()
+    expect(screen.getByText('4 tài khoản')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Ngừng hoạt động Quản trị viên' })).toBeNull()
+  })
+
+  it('names an account by email while its name is empty and flags the pending first password', async () => {
+    renderAccounts()
+
+    expect(await screen.findByText('Chưa có họ tên')).toBeInTheDocument()
+    expect(screen.getByText('Chưa đổi mật khẩu lần đầu')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sửa moi@giaoxu.org' })).toBeInTheDocument()
   })
 
   it('searches by email on the server and distinguishes no results', async () => {
@@ -82,47 +102,45 @@ describe('AccountsPage', () => {
     )
   })
 
-  it('creates an account with an initial password and a role', async () => {
+  it('creates an account with only email and role required; the backend emails the first password', async () => {
     renderAccounts()
     const create = vi.spyOn(accountsApi, 'createAccount').mockResolvedValue(accounts[1])
 
     fireEvent.click(await screen.findByRole('button', { name: /Tạo tài khoản/ }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Họ và tên' }), { target: { value: ' Anna Mai ' } })
+    expect(within(dialog).queryByLabelText(/Mật khẩu/)).toBeNull()
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Email' }), { target: { value: 'mai@giaoxu.org' } })
-    fireEvent.change(within(dialog).getByLabelText('Mật khẩu ban đầu'), { target: { value: 'matkhau123' } })
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Họ và tên (không bắt buộc)' }), {
+      target: { value: ' Anna Mai ' },
+    })
     fireEvent.mouseDown(within(dialog).getByRole('combobox'))
     fireEvent.click(await screen.findByTitle('Ca viên'))
     fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo tài khoản' }))
 
     await waitFor(() =>
-      expect(create).toHaveBeenCalledWith({
-        fullName: 'Anna Mai',
-        email: 'mai@giaoxu.org',
-        password: 'matkhau123',
-        role: 'member',
-      }),
+      expect(create).toHaveBeenCalledWith({ email: 'mai@giaoxu.org', fullName: 'Anna Mai', phone: undefined, role: 'member' }),
     )
   })
 
-  it('validates required fields and the password length when creating an account', async () => {
+  it('validates email and role when creating an account', async () => {
     renderAccounts()
     const create = vi.spyOn(accountsApi, 'createAccount')
 
     fireEvent.click(await screen.findByRole('button', { name: /Tạo tài khoản/ }))
     const dialog = await screen.findByRole('dialog')
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Email' }), { target: { value: 'sai-email' } })
-    fireEvent.change(within(dialog).getByLabelText('Mật khẩu ban đầu'), { target: { value: 'ngan' } })
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Số điện thoại (không bắt buộc)' }), {
+      target: { value: '0'.repeat(21) },
+    })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo tài khoản' }))
 
-    expect(await within(dialog).findByText('Vui lòng nhập họ và tên.')).toBeInTheDocument()
-    expect(within(dialog).getByText('Email không hợp lệ.')).toBeInTheDocument()
-    expect(within(dialog).getByText('Mật khẩu cần ít nhất 8 ký tự.')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Email không hợp lệ.')).toBeInTheDocument()
+    expect(within(dialog).getByText('Số điện thoại tối đa 20 ký tự.')).toBeInTheDocument()
     expect(within(dialog).getByText('Vui lòng chọn vai trò.')).toBeInTheDocument()
     expect(create).not.toHaveBeenCalled()
   })
 
-  it('edits name and email and explains a taken email under the field', async () => {
+  it('edits email, name and phone and explains a taken email under the field', async () => {
     renderAccounts()
     const update = vi
       .spyOn(accountsApi, 'updateAccount')
@@ -130,12 +148,17 @@ describe('AccountsPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Sửa Giuse Trần Minh Tâm' }))
     const dialog = await screen.findByRole('dialog')
-    expect(within(dialog).queryByLabelText('Mật khẩu ban đầu')).toBeNull()
+    expect(within(dialog).queryByRole('combobox')).toBeNull()
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Email' }), { target: { value: 'binh@giaoxu.org' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu thay đổi' }))
 
+    // PUT replaces every field, so the current phone is sent back unchanged.
     await waitFor(() =>
-      expect(update).toHaveBeenCalledWith('a2', { fullName: 'Giuse Trần Minh Tâm', email: 'binh@giaoxu.org' }),
+      expect(update).toHaveBeenCalledWith('a2', {
+        email: 'binh@giaoxu.org',
+        fullName: 'Giuse Trần Minh Tâm',
+        phone: '0901 234 567',
+      }),
     )
     expect(await within(dialog).findByText('Email này đã được dùng cho tài khoản khác.')).toBeInTheDocument()
   })
@@ -156,7 +179,7 @@ describe('AccountsPage', () => {
   })
 
   it('explains why the last Admin cannot be deactivated', async () => {
-    renderAccounts([...accounts, { id: 'a4', fullName: 'Admin Hai', email: 'hai@giaoxu.org', role: 'admin', isActive: true }])
+    renderAccounts([...accounts, account('a5', 'Admin Hai', 'hai@giaoxu.org', 'admin')])
     vi.spyOn(accountsApi, 'setAccountActive').mockRejectedValue(new ApiError(409, { code: 'USER_LAST_ADMIN' }))
 
     fireEvent.click(await screen.findByRole('button', { name: 'Ngừng hoạt động Admin Hai' }))

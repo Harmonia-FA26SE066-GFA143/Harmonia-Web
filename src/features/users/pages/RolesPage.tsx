@@ -15,7 +15,7 @@ import { AccountTable } from '../components/AccountTable'
 import { AssignRoleModal } from '../components/AssignRoleModal'
 import { RoleSummary } from '../components/RoleSummary'
 import { useAccounts, useChangeAccountRole, useRoleCounts } from '../hooks/useAccounts'
-import type { Account, AccountFilters } from '../types'
+import { accountName, type Account, type AccountFilters } from '../types'
 
 const pageSize = 20
 
@@ -50,7 +50,7 @@ export function RolesPage() {
       { id: changing.id, role },
       {
         onSuccess: () => {
-          message.success(`Đã thay đổi vai trò của ${changing.fullName}.`)
+          message.success(`Đã thay đổi vai trò của ${accountName(changing)}.`)
           setChanging(undefined)
         },
         onError: (error) => message.error(accountErrorMessage(error, 'Không thể thay đổi vai trò. Vui lòng thử lại.')),
@@ -108,7 +108,7 @@ export function RolesPage() {
                         <Button
                           icon={<SwapOutlined />}
                           onClick={() => setChanging(account)}
-                          aria-label={`Thay đổi vai trò của ${account.fullName}`}
+                          aria-label={`Thay đổi vai trò của ${accountName(account)}`}
                         >
                           Thay đổi vai trò
                         </Button>

@@ -15,8 +15,10 @@ interface UserDto {
   id: string
   email: string
   fullName: string
+  phone: string | null
   roleName: ApiRoleName
   isActive: boolean
+  isPasswordChangeRequired: boolean
 }
 
 const toAccount = ({ roleName, ...rest }: UserDto): Account => ({ ...rest, role: roleByApiName[roleName] })
@@ -41,7 +43,10 @@ export async function countAccounts(role: SystemRole): Promise<number> {
   return result.totalCount
 }
 
-/** The account starts active (Harmonia-BE UserService.CreateAsync). */
+/**
+ * The account starts active; the backend emails a generated first password the user must change
+ * (Harmonia-BE UserService.CreateAsync).
+ */
 export async function createAccount({ role, ...values }: CreateAccountValues): Promise<Account> {
   return toAccount(
     await apiRequest<UserDto>('/api/users', {

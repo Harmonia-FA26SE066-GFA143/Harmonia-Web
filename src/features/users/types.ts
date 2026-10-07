@@ -6,27 +6,37 @@ import type { SystemRole } from '@/shared/types/account'
  */
 export interface Account {
   id: string
+  /** Optional on the backend: empty until someone fills it in. */
   fullName: string
   email: string
+  phone: string | null
   role: SystemRole
   isActive: boolean
+  /** True until the user replaces the first password the backend emailed. */
+  isPasswordChangeRequired: boolean
 }
 
 export const accountStatusLabels = { active: 'Đang hoạt động', inactive: 'Ngừng hoạt động' }
 
-/** Body of POST /api/users (CreateUserRequestValidator: fullName ≤ 100, password ≥ 8). */
+/** How an account is named in messages: its full name, or its email while the name is empty. */
+export const accountName = (account: Pick<Account, 'fullName' | 'email'>) => account.fullName || account.email
+
+/**
+ * Body of POST /api/users (CreateUserRequestValidator: fullName ≤ 100, phone ≤ 20). The backend generates the first
+ * password and emails it to the user.
+ */
 export interface CreateAccountValues {
-  fullName: string
+  fullName?: string
   email: string
-  /** Initial password chosen by the Admin. */
-  password: string
+  phone?: string
   role: SystemRole
 }
 
-/** Body of PUT /api/users/{id}. */
+/** Body of PUT /api/users/{id}: every field is replaced, so an empty name or phone clears it. */
 export interface UpdateAccountValues {
-  fullName: string
+  fullName?: string
   email: string
+  phone?: string
 }
 
 /** Query filters of GET /api/users; they combine with AND on the server. */

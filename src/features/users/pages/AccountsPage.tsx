@@ -11,14 +11,14 @@ import { AccountFilterBar } from '../components/AccountFilterBar'
 import { AccountFormModal } from '../components/AccountFormModal'
 import { AccountTable } from '../components/AccountTable'
 import { useAccounts, useCreateAccount, useSetAccountActive, useUpdateAccount } from '../hooks/useAccounts'
-import type { Account, AccountFilters, CreateAccountValues, UpdateAccountValues } from '../types'
+import { accountName, type Account, type AccountFilters, type CreateAccountValues, type UpdateAccountValues } from '../types'
 
 const pageSize = 20
 
 /**
- * Admin: user accounts (FE-47) on `/api/users`. The Admin creates accounts with an initial password and a role,
- * edits name and email, and deactivates or reactivates them (owner decision D1, 2026-10-07: follow the BE).
- * Roles are changed on the Roles page.
+ * Admin: user accounts (FE-47) on `/api/users`. The Admin creates accounts with a role (the backend emails a
+ * generated first password), edits email, name and phone, and deactivates or reactivates them (owner decision D1,
+ * 2026-10-07: follow the BE). Roles are changed on the Roles page.
  */
 export function AccountsPage() {
   const { message, modal } = App.useApp()
@@ -69,8 +69,8 @@ export function AccountsPage() {
     modal.confirm({
       title: active ? 'Kích hoạt lại tài khoản?' : 'Ngừng hoạt động tài khoản?',
       content: active
-        ? `${account.fullName} (${account.email}) sẽ đăng nhập lại được.`
-        : `${account.fullName} (${account.email}) sẽ bị đăng xuất và không đăng nhập được cho tới khi được kích hoạt lại.`,
+        ? `${accountName(account)} sẽ đăng nhập lại được.`
+        : `${accountName(account)} sẽ bị đăng xuất và không đăng nhập được cho tới khi được kích hoạt lại.`,
       okText: active ? 'Kích hoạt' : 'Ngừng hoạt động',
       okButtonProps: { danger: !active },
       cancelText: 'Hủy',
@@ -86,7 +86,7 @@ export function AccountsPage() {
 
   const renderActions = (account: Account) => (
     <Flex gap={spacing.xs} justify="flex-end">
-      <Button onClick={() => setForm({ open: true, account })} aria-label={`Sửa ${account.fullName}`}>
+      <Button onClick={() => setForm({ open: true, account })} aria-label={`Sửa ${accountName(account)}`}>
         Sửa
       </Button>
       {/* The backend refuses to deactivate the Admin's own account (USER_CANNOT_MODIFY_SELF). */}
@@ -94,7 +94,7 @@ export function AccountsPage() {
         <Button
           danger={account.isActive}
           onClick={() => handleToggleActive(account)}
-          aria-label={`${account.isActive ? 'Ngừng hoạt động' : 'Kích hoạt'} ${account.fullName}`}
+          aria-label={`${account.isActive ? 'Ngừng hoạt động' : 'Kích hoạt'} ${accountName(account)}`}
         >
           {account.isActive ? 'Ngừng hoạt động' : 'Kích hoạt'}
         </Button>

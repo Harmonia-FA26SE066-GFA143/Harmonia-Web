@@ -9,9 +9,9 @@ import type { Account } from '../types'
 import { RolesPage } from './RolesPage'
 
 const accounts: Account[] = [
-  { id: 'a1', fullName: 'Giuse Trần Minh Tâm', email: 'tam@giaoxu.org', role: 'director', isActive: true },
-  { id: 'a2', fullName: 'Têrêsa Lê Hoàng Vy', email: 'vy@giaoxu.org', role: 'member', isActive: true },
-  { id: 'a3', fullName: 'Simon Phan Văn Đức', email: 'duc@giaoxu.org', role: 'member', isActive: false },
+  { id: 'a1', fullName: 'Giuse Trần Minh Tâm', email: 'tam@giaoxu.org', phone: null, role: 'director', isActive: true, isPasswordChangeRequired: false },
+  { id: 'a2', fullName: 'Têrêsa Lê Hoàng Vy', email: 'vy@giaoxu.org', phone: null, role: 'member', isActive: true, isPasswordChangeRequired: false },
+  { id: 'a3', fullName: 'Simon Phan Văn Đức', email: 'duc@giaoxu.org', phone: null, role: 'member', isActive: false, isPasswordChangeRequired: false },
 ]
 
 const page = (items: Account[]): PagedList<Account> => ({

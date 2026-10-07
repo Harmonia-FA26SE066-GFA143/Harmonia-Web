@@ -65,7 +65,7 @@ export function AssignRoleModal({ account, saving = false, onSubmit, onCancel }:
           column={1}
           style={{ marginBottom: spacing.md }}
           items={[
-            { key: 'name', label: 'Tài khoản', children: `${account.fullName} (${account.email})` },
+            { key: 'name', label: 'Tài khoản', children: account.fullName ? `${account.fullName} (${account.email})` : account.email },
             { key: 'current', label: 'Vai trò hiện tại', children: roleLabels[account.role] },
           ]}
         />
