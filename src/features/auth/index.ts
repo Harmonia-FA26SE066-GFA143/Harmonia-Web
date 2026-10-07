@@ -1,4 +1,5 @@
 export { SignOutModal } from './components/SignOutModal'
+export { ChangePasswordPage } from './pages/ChangePasswordPage'
 export { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 export { LoginPage } from './pages/LoginPage'
 export { ResetPasswordPage } from './pages/ResetPasswordPage'

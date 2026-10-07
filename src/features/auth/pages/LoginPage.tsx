@@ -31,10 +31,10 @@ export function LoginPage() {
   const handleSubmit = (values: SignInValues) => {
     setFeedback(undefined)
     signIn.mutate(values, {
-      onSuccess: ({ role }) => {
+      onSuccess: ({ role, mustChangePassword }) => {
         const home = roleHomePaths[role]
-        if (home) navigate(home)
-        else setFeedback({ kind: 'member-web' })
+        if (!home) setFeedback({ kind: 'member-web' })
+        else navigate(mustChangePassword ? paths.changePassword : home)
       },
       onError: (error) => setFeedback(feedbackFor(error)),
     })

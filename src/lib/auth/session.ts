@@ -6,7 +6,13 @@ export interface Session {
   accessToken: string
   accessTokenExpiresAt: string
   refreshToken: string
-  user: { id: string; email: string; roleName: ApiRoleName }
+  user: {
+    id: string
+    email: string
+    roleName: ApiRoleName
+    /** True until an Admin-created user replaces the emailed first password (Harmonia-BE `ad0fa37`). */
+    isPasswordChangeRequired?: boolean
+  }
 }
 
 // localStorage keeps the session across reloads (owner decision 2026-10-03). The backend returns the refresh

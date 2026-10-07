@@ -17,15 +17,23 @@ afterEach(() => {
 
 describe('LoginPage', () => {
   it('opens the workspace of the signed-in role', async () => {
-    vi.spyOn(authApi, 'signIn').mockResolvedValue({ role: 'director' })
+    vi.spyOn(authApi, 'signIn').mockResolvedValue({ role: 'director', mustChangePassword: false })
     renderPage(<LoginPage />, '/login')
 
     submitCredentials()
     expect(await screen.findByTestId('location')).toHaveTextContent('/director')
   })
 
+  it('sends an account with the emailed first password to change it', async () => {
+    vi.spyOn(authApi, 'signIn').mockResolvedValue({ role: 'director', mustChangePassword: true })
+    renderPage(<LoginPage />, '/login')
+
+    submitCredentials()
+    expect(await screen.findByTestId('location')).toHaveTextContent('/change-password')
+  })
+
   it('points a Choir Member to the mobile app', async () => {
-    vi.spyOn(authApi, 'signIn').mockResolvedValue({ role: 'member' })
+    vi.spyOn(authApi, 'signIn').mockResolvedValue({ role: 'member', mustChangePassword: false })
     renderPage(<LoginPage />, '/login')
 
     submitCredentials()

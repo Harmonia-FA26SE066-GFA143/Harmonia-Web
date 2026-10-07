@@ -25,7 +25,7 @@ describe('signIn', () => {
   it('signs in from the web, keeps the session and maps the role', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(session), { status: 200 }))
 
-    await expect(signIn({ email: 'an@giaoxu.org', password: 'Secret123' })).resolves.toEqual({ role: 'priest' })
+    await expect(signIn({ email: 'an@giaoxu.org', password: 'Secret123' })).resolves.toEqual({ role: 'priest', mustChangePassword: false })
     expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/auth\/login$/)
     expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({
       email: 'an@giaoxu.org',
@@ -41,7 +41,7 @@ describe('signIn', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify(memberSession), { status: 200 }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
 
-    await expect(signIn({ email: 'an@giaoxu.org', password: 'Secret123' })).resolves.toEqual({ role: 'member' })
+    await expect(signIn({ email: 'an@giaoxu.org', password: 'Secret123' })).resolves.toEqual({ role: 'member', mustChangePassword: false })
     expect(fetchMock.mock.calls[1][0]).toMatch(/\/api\/auth\/logout$/)
     expect(fetchMock.mock.calls[1][1]?.body).toBe(JSON.stringify({ refreshToken: 'refresh-1' }))
     expect(getSession()).toBeUndefined()
