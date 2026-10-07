@@ -15,18 +15,19 @@ export interface AccountFormModalProps {
   onCancel: () => void
 }
 
+type FormValues = { fullName?: string; email: string; phone?: string; role?: CreateAccountValues['role'] }
+
 /**
- * Admin creates an account with an initial password and one role, or edits its name and email
- * (Harmonia-BE CreateUserRequestValidator / UpdateUserRequestValidator). The role is changed on the Roles page.
+ * Admin creates an account (email and one role required, name and phone optional) or edits its email, name and
+ * phone (Harmonia-BE CreateUserRequestValidator / UpdateUserRequestValidator). The backend generates the first
+ * password and emails it. The role is changed on the Roles page.
  */
 export function AccountFormModal({ open, account, saving = false, emailError, onSubmit, onCancel }: AccountFormModalProps) {
-  const okText = account ? 'Lưu thay đổi' : 'Tạo tài khoản'
-
   return (
     <Modal
       open={open}
       title={account ? 'Sửa tài khoản' : 'Tạo tài khoản'}
-      okText={okText}
+      okText={account ? 'Lưu thay đổi' : 'Tạo tài khoản'}
       cancelText="Hủy"
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
@@ -34,30 +35,27 @@ export function AccountFormModal({ open, account, saving = false, emailError, on
       mask={{ closable: !saving }}
       destroyOnHidden
       modalRender={(dom) => (
-        <Form<CreateAccountValues>
+        <Form<FormValues>
           layout="vertical"
           disabled={saving}
-          initialValues={account && { fullName: account.fullName, email: account.email }}
-          onFinish={(values) => onSubmit({ ...values, fullName: values.fullName.trim(), email: values.email.trim() })}
+          initialValues={account && { fullName: account.fullName, email: account.email, phone: account.phone ?? undefined }}
+          onFinish={({ fullName, email, phone, role }) =>
+            onSubmit({
+              email: email.trim(),
+              fullName: fullName?.trim() || undefined,
+              phone: phone?.trim() || undefined,
+              ...(role && { role }),
+            } as CreateAccountValues | UpdateAccountValues)
+          }
         >
           {dom}
         </Form>
       )}
     >
       <Form.Item
-        label="Họ và tên"
-        name="fullName"
-        rules={[
-          { required: true, whitespace: true, message: 'Vui lòng nhập họ và tên.' },
-          { max: 100, message: 'Họ và tên tối đa 100 ký tự.' },
-        ]}
-      >
-        <Input autoFocus autoComplete="off" />
-      </Form.Item>
-      <Form.Item
         label="Email"
         name="email"
-        extra="Dùng làm tên đăng nhập."
+        extra={account ? 'Dùng làm tên đăng nhập.' : 'Dùng làm tên đăng nhập. Mật khẩu đầu tiên được tạo tự động và gửi tới email này.'}
         validateStatus={emailError ? 'error' : undefined}
         help={emailError}
         rules={[
@@ -65,28 +63,29 @@ export function AccountFormModal({ open, account, saving = false, emailError, on
           { type: 'email', message: 'Email không hợp lệ.' },
         ]}
       >
-        <Input inputMode="email" autoComplete="off" placeholder="ten@giaoxu.org" />
+        <Input autoFocus inputMode="email" autoComplete="off" placeholder="ten@giaoxu.org" />
+      </Form.Item>
+      <Form.Item
+        label="Họ và tên (không bắt buộc)"
+        name="fullName"
+        rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}
+      >
+        <Input autoComplete="off" />
+      </Form.Item>
+      <Form.Item
+        label="Số điện thoại (không bắt buộc)"
+        name="phone"
+        rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}
+      >
+        <Input type="tel" autoComplete="off" />
       </Form.Item>
       {!account && (
-        <>
-          <Form.Item
-            label="Mật khẩu ban đầu"
-            name="password"
-            extra="Tối thiểu 8 ký tự. Hãy gửi mật khẩu này cho người dùng."
-            rules={[
-              { required: true, message: 'Vui lòng nhập mật khẩu.' },
-              { min: 8, message: 'Mật khẩu cần ít nhất 8 ký tự.' },
-            ]}
-          >
-            <Input.Password autoComplete="new-password" />
-          </Form.Item>
-          <Form.Item label="Vai trò" name="role" rules={[{ required: true, message: 'Vui lòng chọn vai trò.' }]}>
-            <Select
-              placeholder="Chọn vai trò"
-              options={assignableRoles.map((role) => ({ value: role, label: roleLabels[role] }))}
-            />
-          </Form.Item>
-        </>
+        <Form.Item label="Vai trò" name="role" rules={[{ required: true, message: 'Vui lòng chọn vai trò.' }]}>
+          <Select
+            placeholder="Chọn vai trò"
+            options={assignableRoles.map((role) => ({ value: role, label: roleLabels[role] }))}
+          />
+        </Form.Item>
       )}
     </Modal>
   )

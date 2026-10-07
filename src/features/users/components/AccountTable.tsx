@@ -25,8 +25,13 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
       title: 'Tài khoản',
       render: (_, account) => (
         <Flex vertical>
-          <Typography.Text strong>{account.fullName}</Typography.Text>
+          {account.fullName ? (
+            <Typography.Text strong>{account.fullName}</Typography.Text>
+          ) : (
+            <Typography.Text style={{ color: colors.textMuted }}>Chưa có họ tên</Typography.Text>
+          )}
           <Typography.Text style={muted}>{account.email}</Typography.Text>
+          {account.phone && <Typography.Text style={muted}>{account.phone}</Typography.Text>}
         </Flex>
       ),
     },
@@ -38,7 +43,14 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
     {
       key: 'status',
       title: 'Trạng thái',
-      render: (_, account) => <AccountStatusTag isActive={account.isActive} />,
+      render: (_, account) => (
+        <Flex vertical align="flex-start" gap={2}>
+          <AccountStatusTag isActive={account.isActive} />
+          {account.isPasswordChangeRequired && (
+            <Typography.Text style={muted}>Chưa đổi mật khẩu lần đầu</Typography.Text>
+          )}
+        </Flex>
+      ),
     },
     {
       key: 'actions',
