@@ -37,4 +37,12 @@ describe('LoginForm', () => {
     renderPage(<LoginForm onSubmit={vi.fn()} feedback={feedback} />)
     expect(screen.getByText(text)).toBeInTheDocument()
   })
+
+  it('gives a deactivated account the administrators’ email', () => {
+    renderPage(<LoginForm onSubmit={vi.fn()} feedback={{ kind: 'inactive' }} />)
+    expect(screen.getByRole('link', { name: 'harmoniafall26@gmail.com' })).toHaveAttribute(
+      'href',
+      'mailto:harmoniafall26@gmail.com',
+    )
+  })
 })

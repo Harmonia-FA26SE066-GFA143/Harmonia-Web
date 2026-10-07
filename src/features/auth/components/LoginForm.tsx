@@ -1,6 +1,7 @@
-import { Alert, Button, Flex, Form, Input } from 'antd'
+import { Alert, Button, Flex, Form, Input, Typography } from 'antd'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { contactEmail } from '@/config/contact'
 import { spacing } from '@/styles/tokens'
 import type { SignInError, SignInValues } from '../types'
 
@@ -30,7 +31,12 @@ function FeedbackAlert({ feedback }: { feedback: LoginFeedback }) {
           type="error"
           showIcon
           title="Tài khoản đã bị vô hiệu hoá"
-          description="Vui lòng liên hệ Quản trị viên giáo xứ để được hỗ trợ."
+          description={
+            <>
+              Vui lòng liên hệ Quản trị viên giáo xứ để được hỗ trợ:{' '}
+              <Typography.Link href={`mailto:${contactEmail}`}>{contactEmail}</Typography.Link>
+            </>
+          }
         />
       )
     case 'member-web':
