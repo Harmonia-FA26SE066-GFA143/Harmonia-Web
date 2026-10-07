@@ -10,6 +10,7 @@ const lookupPaths: Record<LookupKind, string> = {
   eventCategories: 'event-categories',
   songThemes: 'song-themes',
   skills: 'skills',
+  worshipLocations: 'worship-locations',
 }
 
 /** Active entries of one backend lookup (GET /api/lookups/*, any signed-in role), for selects and filters. */

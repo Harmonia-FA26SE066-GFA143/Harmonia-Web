@@ -1,45 +1,63 @@
 import { fireEvent, screen } from '@testing-library/react'
-import dayjs from 'dayjs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import * as eventsApi from '@/features/liturgical-programs/api/eventsApi'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
+import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import { PriestDashboardPage } from './PriestDashboardPage'
 
-const inDays = (days: number) => dayjs().add(days, 'day').format('YYYY-MM-DD')
+const emptyPage = { items: [], pageNumber: 1, pageSize: 5, totalCount: 0, totalPages: 0 }
 
 afterEach(() => {
   vi.restoreAllMocks()
 })
 
 describe('PriestDashboardPage', () => {
-  it('shows a recoverable error while the programs API contract is missing', async () => {
+  it('loads each section on its own: song lists still have no API', async () => {
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(emptyPage)
     renderPage(<PriestDashboardPage />, '/priest')
 
-    expect(await screen.findByRole('heading', { name: 'Không thể tải tổng quan' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Chưa có sự kiện sắp tới' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Không thể tải danh sách bài hát chờ xem xét' })).toBeInTheDocument()
   })
 
-  it('shows empty sections when there are no programs', async () => {
+  it('shows a recoverable error when the events cannot be loaded', async () => {
+    vi.spyOn(eventsApi, 'listEvents').mockRejectedValue(new ApiError(403, undefined))
     vi.spyOn(programsApi, 'listPrograms').mockResolvedValue([])
     renderPage(<PriestDashboardPage />, '/priest')
 
-    expect(await screen.findByRole('heading', { name: 'Chưa có chương trình sắp tới' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Không thể tải sự kiện sắp tới' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Không có danh sách bài hát nào chờ xem xét' })).toBeInTheDocument()
   })
 
-  it('counts upcoming programs and song lists waiting for review', async () => {
+  it('counts upcoming events and song lists waiting for review', async () => {
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue({
+      ...emptyPage,
+      totalCount: 7,
+      totalPages: 2,
+      items: [
+        {
+          id: 'e1',
+          date: '2099-10-04',
+          time: '07:00',
+          title: 'Lễ Chúa Nhật tới',
+          locationId: 'loc-1',
+          locationName: 'Nhà thờ chính',
+          status: 'published',
+        },
+      ],
+    })
     vi.spyOn(programsApi, 'listPrograms').mockResolvedValue([
-      { id: 'past', eventName: 'Lễ tuần trước', date: inDays(-7), songListStatus: 'submitted' },
-      { id: 'next', eventName: 'Lễ Chúa Nhật tới', date: inDays(3), songListStatus: 'submitted' },
-      { id: 'later', eventName: 'Lễ Bổn mạng', date: inDays(10) },
+      { id: 'p1', eventName: 'Lễ Bổn mạng', date: '2099-10-11', songListStatus: 'submitted' },
+      { id: 'p2', eventName: 'Lễ Chúa Nhật', date: '2099-10-04' },
     ])
     renderPage(<PriestDashboardPage />, '/priest')
 
-    const upcoming = await screen.findByText('Chương trình sắp tới', { selector: 'span' })
-    expect(upcoming.closest('.ant-card')).toHaveTextContent('2')
-    expect(screen.getByText('Danh sách bài hát chờ xem xét').closest('.ant-card')).toHaveTextContent('2')
-    expect(screen.queryByRole('button', { name: 'Xem chi tiết Lễ tuần trước' })).toBeNull()
+    expect(await screen.findByText('Lễ Chúa Nhật tới')).toBeInTheDocument()
+    expect(screen.getByText('Sự kiện sắp tới', { selector: 'span' }).closest('.ant-card')).toHaveTextContent('7')
+    expect(screen.getByText('Danh sách bài hát chờ xem xét').closest('.ant-card')).toHaveTextContent('1')
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Xem danh sách bài hát' })[0])
-    expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/past/song-review')
+    fireEvent.click(screen.getByRole('button', { name: 'Xem danh sách bài hát' }))
+    expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/p1/song-review')
   })
 })

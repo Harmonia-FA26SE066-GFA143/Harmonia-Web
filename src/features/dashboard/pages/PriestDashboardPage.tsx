@@ -3,80 +3,76 @@ import { Button, Card, Flex, Typography } from 'antd'
 import { useMemo } from 'react'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { ProgramTable, upcomingPrograms, usePrograms, type LiturgicalProgram } from '@/features/liturgical-programs'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
+import { EventTable, useEvents, usePrograms, vietnamToday } from '@/features/liturgical-programs'
+import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 
 const upcomingLimit = 5
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({ label, value }: { label: string; value?: number }) {
   return (
     <Card style={{ flex: '1 1 200px' }} styles={{ body: { padding: spacing.md } }}>
       <Typography.Text style={{ color: colors.textMuted }}>{label}</Typography.Text>
       <div style={{ marginTop: spacing.xs, fontFamily: typography.fontFamilyNumeric, fontSize: 28, fontWeight: 700 }}>
-        {value}
+        {value ?? '–'}
       </div>
     </Card>
   )
 }
 
 /**
- * Priest dashboard: upcoming programs and song lists waiting for review (FE-15, FE-17), with a link to reports
- * (FE-22). Counts are plain filters of the program list. "Preparation status" from Stitch is not shown: its
- * values are not defined (TBD).
+ * Priest dashboard: upcoming liturgical events from `GET /api/liturgical-events` and song lists waiting for review
+ * (FE-15, FE-17), with a link to reports (FE-22). Song lists have no backend yet (TBD, tbd-backlog B14), so that
+ * section loads and fails on its own. "Preparation status" from Stitch is not shown: its values are not defined.
  */
 export function PriestDashboardPage() {
   const navigate = useNavigate()
+  const upcoming = useEvents({ fromDate: vietnamToday() }, { pageNumber: 1, pageSize: upcomingLimit })
   const programs = usePrograms()
-  const all = useMemo(() => programs.data ?? [], [programs.data])
-  const upcoming = useMemo(() => upcomingPrograms(all), [all])
-  const toReview = useMemo(() => all.filter((program) => program.songListStatus === 'submitted'), [all])
+  const toReview = useMemo(
+    () => (programs.data ?? []).filter((program) => program.songListStatus === 'submitted'),
+    [programs.data],
+  )
 
-  const openProgram = (program: LiturgicalProgram) =>
-    navigate(generatePath(paths.priest.programDetail, { programId: program.id }))
   const createButton = (
     <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
       Tạo chương trình
     </Button>
   )
-  const header = (
-    <PageHeader
-      title="Tổng quan"
-      breadcrumb={[{ title: 'Cha xứ' }, { title: 'Tổng quan' }]}
-      description="Theo dõi các chương trình phụng vụ sắp tới và danh sách bài hát cần xem xét."
-      extra={createButton}
-    />
-  )
-
-  if (programs.isPending) return <PageSkeleton sections={2} />
-  if (programs.isError) {
-    return (
-      <>
-        {header}
-        <ErrorState title="Không thể tải tổng quan" onRetry={() => programs.refetch()} retrying={programs.isFetching} />
-      </>
-    )
-  }
 
   return (
     <>
-      {header}
+      <PageHeader
+        title="Tổng quan"
+        breadcrumb={[{ title: 'Cha xứ' }, { title: 'Tổng quan' }]}
+        description="Theo dõi các sự kiện phụng vụ sắp tới và danh sách bài hát cần xem xét."
+        extra={createButton}
+      />
       <Flex vertical gap={spacing.xl}>
         <Flex wrap gap={spacing.md}>
-          <Metric label="Chương trình sắp tới" value={upcoming.length} />
-          <Metric label="Danh sách bài hát chờ xem xét" value={toReview.length} />
+          <Metric label="Sự kiện sắp tới" value={upcoming.data?.totalCount} />
+          <Metric label="Danh sách bài hát chờ xem xét" value={programs.isSuccess ? toReview.length : undefined} />
         </Flex>
 
         <section aria-labelledby="to-review-heading">
           <Typography.Title id="to-review-heading" level={2} style={{ marginBottom: spacing.md }}>
             Cần xem xét
           </Typography.Title>
-          {toReview.length === 0 ? (
+          {programs.isPending && <SectionSkeleton rows={2} label="Đang tải danh sách bài hát chờ xem xét" />}
+          {programs.isError && (
+            <ErrorState
+              title="Không thể tải danh sách bài hát chờ xem xét"
+              onRetry={() => programs.refetch()}
+              retrying={programs.isFetching}
+            />
+          )}
+          {programs.isSuccess && toReview.length === 0 && (
             <EmptyState
               title="Không có danh sách bài hát nào chờ xem xét"
               description="Khi Ca trưởng gửi danh sách bài hát, chương trình sẽ xuất hiện tại đây."
             />
-          ) : (
+          )}
+          {toReview.length > 0 && (
             <Flex vertical gap={spacing.sm}>
               {toReview.map((program) => (
                 <Card key={program.id} styles={{ body: { padding: spacing.md } }}>
@@ -103,19 +99,27 @@ export function PriestDashboardPage() {
         <section aria-labelledby="upcoming-heading">
           <Flex wrap align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
             <Typography.Title id="upcoming-heading" level={2} style={{ margin: 0 }}>
-              Chương trình sắp tới
+              Sự kiện sắp tới
             </Typography.Title>
             <Button onClick={() => navigate(paths.priest.programs)}>Xem tất cả</Button>
           </Flex>
-          {upcoming.length === 0 ? (
+          {upcoming.isPending && <SectionSkeleton rows={upcomingLimit} label="Đang tải sự kiện sắp tới" />}
+          {upcoming.isError && (
+            <ErrorState title="Không thể tải sự kiện sắp tới" onRetry={() => upcoming.refetch()} retrying={upcoming.isFetching} />
+          )}
+          {upcoming.isSuccess && upcoming.data.totalCount === 0 && (
             <EmptyState
-              title="Chưa có chương trình sắp tới"
-              description="Tạo chương trình phụng vụ để Ca trưởng bắt đầu chuẩn bị."
+              title="Chưa có sự kiện sắp tới"
+              description="Tạo và công bố sự kiện phụng vụ để Ca trưởng bắt đầu chuẩn bị."
               action={createButton}
             />
-          ) : (
+          )}
+          {upcoming.isSuccess && upcoming.data.totalCount > 0 && (
             <Card styles={{ body: { padding: 0 } }}>
-              <ProgramTable programs={upcoming.slice(0, upcomingLimit)} onOpen={openProgram} pageSize={upcomingLimit} />
+              <EventTable
+                events={upcoming.data.items}
+                onOpen={(event) => navigate(generatePath(paths.priest.programDetail, { programId: event.id }))}
+              />
             </Card>
           )}
         </section>

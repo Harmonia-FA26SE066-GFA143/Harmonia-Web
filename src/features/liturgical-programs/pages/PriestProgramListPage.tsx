@@ -1,24 +1,32 @@
 import { PlusOutlined } from '@ant-design/icons'
 import { Button, Card } from 'antd'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
-import { ProgramFilterBar } from '../components/ProgramFilterBar'
-import { ProgramTable } from '../components/ProgramTable'
-import { usePrograms } from '../hooks/usePrograms'
-import { emptyProgramFilters, filterPrograms } from '../programFilters'
-import type { ProgramFilters } from '../types'
+import { EventFilterBar } from '../components/EventFilterBar'
+import { EventTable } from '../components/EventTable'
+import { useEvents } from '../hooks/useEvents'
+import { hasActiveEventFilters } from '../programFilters'
+import type { EventFilters } from '../types'
 
-/** Priest: liturgical programs of the parish with filters (FE-15). */
+const pageSize = 20
+
+/** Priest: liturgical events of the parish (FE-15) on `GET /api/liturgical-events`, filtered on the server. */
 export function PriestProgramListPage() {
   const navigate = useNavigate()
-  const programs = usePrograms()
-  const [filters, setFilters] = useState<ProgramFilters>(emptyProgramFilters)
-  const all = useMemo(() => programs.data ?? [], [programs.data])
-  const visible = useMemo(() => filterPrograms(all, filters), [all, filters])
-  const resetFilters = () => setFilters(emptyProgramFilters)
+  const [filters, setFilters] = useState<EventFilters>({})
+  const [page, setPage] = useState(1)
+  const events = useEvents(filters, { pageNumber: page, pageSize })
+
+  const total = events.data?.totalCount ?? 0
+  const filtered = hasActiveEventFilters(filters)
+  const changeFilters = (next: EventFilters) => {
+    setFilters(next)
+    setPage(1)
+  }
+  const resetFilters = () => changeFilters({})
 
   const createButton = (
     <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
@@ -31,35 +39,33 @@ export function PriestProgramListPage() {
       <PageHeader
         title="Danh sách chương trình phụng vụ"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }]}
-        description="Theo dõi các chương trình phụng vụ và tình trạng danh sách bài hát của từng chương trình."
+        description="Theo dõi các sự kiện phụng vụ, tạo bản nháp và công bố cho ca đoàn."
         extra={createButton}
       />
-      {programs.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách chương trình" />}
-      {programs.isError && (
-        <ErrorState
-          title="Không thể tải danh sách chương trình"
-          onRetry={() => programs.refetch()}
-          retrying={programs.isFetching}
-        />
+      {events.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách chương trình" />}
+      {events.isError && (
+        <ErrorState title="Không thể tải danh sách chương trình" onRetry={() => events.refetch()} retrying={events.isFetching} />
       )}
-      {programs.isSuccess && all.length === 0 && (
+      {events.isSuccess && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có chương trình phụng vụ nào"
-          description="Tạo chương trình đầu tiên để Ca trưởng chuẩn bị danh sách bài hát."
+          description="Tạo sự kiện đầu tiên, rồi công bố để Ca trưởng bắt đầu chuẩn bị."
           action={createButton}
         />
       )}
-      {programs.isSuccess && all.length > 0 && (
+      {events.isSuccess && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
-          <ProgramFilterBar value={filters} onChange={setFilters} onReset={resetFilters} resultCount={visible.length} />
-          {visible.length === 0 ? (
+          <EventFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
+          {total === 0 ? (
             <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
               <NoFilterResults onClearFilters={resetFilters} />
             </div>
           ) : (
-            <ProgramTable
-              programs={visible}
-              onOpen={(program) => navigate(generatePath(paths.priest.programDetail, { programId: program.id }))}
+            <EventTable
+              events={events.data.items}
+              loading={events.isPlaceholderData}
+              pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
+              onOpen={(event) => navigate(generatePath(paths.priest.programDetail, { programId: event.id }))}
             />
           )}
         </Card>

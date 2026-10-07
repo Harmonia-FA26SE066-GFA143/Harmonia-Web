@@ -1,8 +1,9 @@
 import { env } from '@/config/env'
 import { ApiContractMissingError } from '@/lib/api/errors'
-import type { LiturgicalProgram, LiturgicalProgramDetail, ProgramFormValues } from '../types'
+import type { LiturgicalProgram, LiturgicalProgramDetail } from '../types'
 
-// TBD: Backend API missing – liturgical programs (FE-15–FE-16) and their song lists (FE-17–FE-20).
+// TBD: Backend API missing – programs with their song lists (FE-17–FE-20), for the Choir Director and song-list
+// pages. The events themselves are on `/api/liturgical-events` (eventsApi), used by the Priest pages.
 // Decision 0002: no endpoint is guessed. Each function checks `import.meta.env.DEV` at the call site so the
 // fixture import is dropped from dist/.
 
@@ -27,10 +28,3 @@ export async function getProgram(id: string): Promise<LiturgicalProgramDetail | 
   throw new ApiContractMissingError('Xem chi tiết chương trình phụng vụ')
 }
 
-export async function createProgram(values: ProgramFormValues): Promise<LiturgicalProgram> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { createProgramFixture } = await import('./fixtures.dev')
-    return createProgramFixture(values)
-  }
-  throw new ApiContractMissingError('Tạo chương trình phụng vụ')
-}

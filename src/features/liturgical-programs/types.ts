@@ -26,9 +26,9 @@ export function canEditSongList(status?: SongListStatus): boolean {
 }
 
 /**
- * A liturgical program with the FE-16 event fields. Treating one program as one event is an interpretation:
- * how weekly programs (FE-15) group events is UNRESOLVED. No Draft/Published state (not decided).
- * TBD: Backend API missing – identifiers and field names come with the contract.
+ * A program as the Choir Director pages and the song-list pages use it: an event together with its song list.
+ * TBD: Backend API missing – song lists have no controller yet, so these pages stay on dev fixtures. The Priest
+ * pages use `LiturgicalEvent` (below), which follows `/api/liturgical-events`.
  */
 export interface LiturgicalProgram {
   id: string
@@ -55,20 +55,66 @@ export interface LiturgicalProgramDetail extends LiturgicalProgram {
   songs: ProgramSong[]
 }
 
-/** FE-16 fields entered by the Priest. Requiredness and validation rules are UNRESOLVED (TBD). */
-export interface ProgramFormValues {
-  eventName: string
-  /** YYYY-MM-DD. */
-  date: string
-  seasonId?: string
-  massTypeId?: string
-  ceremonyTypeId?: string
-  specialRequirements?: string
-}
 
 export interface ProgramFilters {
   search: string
   seasonId?: string
   massTypeId?: string
   ceremonyTypeId?: string
+}
+
+/** `EventStatus` of Harmonia-BE (decision D3, 2026-10-07): Draft → Published, either may become Cancelled. */
+export type EventStatus = 'draft' | 'published' | 'cancelled'
+
+export const eventStatusLabels: Record<EventStatus, string> = {
+  draft: 'Bản nháp',
+  published: 'Đã công bố',
+  cancelled: 'Đã hủy',
+}
+
+/**
+ * A liturgical event as the Priest manages it: `LiturgicalEventDto` of `/api/liturgical-events` (Harmonia-BE).
+ * Catalog entries arrive as ids; their names come from the lookups.
+ */
+export interface LiturgicalEvent {
+  id: string
+  /** Calendar date in Vietnam, YYYY-MM-DD. */
+  date: string
+  /** Local time, HH:mm. */
+  time: string
+  title?: string
+  locationId: string
+  locationName: string
+  seasonId?: string
+  massTypeId?: string
+  ceremonyTypeId?: string
+  categoryId?: string
+  specialRequirements?: string
+  status: EventStatus
+  /** UTC timestamp; read with `parseUtc`. */
+  publishedAt?: string
+}
+
+/**
+ * Body of POST and PUT /api/liturgical-events (Create/UpdateLiturgicalEventRequestValidator): date, time and
+ * location required, a Mass type or a ceremony type required, title ≤ 200, special requirements ≤ 1000.
+ */
+export interface EventFormValues {
+  date: string
+  time: string
+  locationId: string
+  seasonId?: string
+  massTypeId?: string
+  ceremonyTypeId?: string
+  categoryId?: string
+  title?: string
+  specialRequirements?: string
+}
+
+/** Query filters of GET /api/liturgical-events; they combine with AND on the server. */
+export interface EventFilters {
+  status?: EventStatus
+  /** YYYY-MM-DD, inclusive. */
+  fromDate?: string
+  toDate?: string
 }
