@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { matchesSearch } from '@/shared/utils/search'
-import type { LiturgicalProgram, ProgramFilters } from './types'
+import type { EventFilters, LiturgicalProgram, ProgramFilters } from './types'
 
 export const emptyProgramFilters: ProgramFilters = { search: '' }
 
@@ -26,3 +26,9 @@ export function upcomingPrograms(programs: LiturgicalProgram[], today = dayjs())
 }
 
 export const formatProgramDate = (date: string) => dayjs(date).format('DD/MM/YYYY')
+
+export const hasActiveEventFilters = (filters: EventFilters) =>
+  Boolean(filters.status || filters.fromDate || filters.toDate)
+
+/** Today in Vietnam (UTC+7, no daylight saving), the date the backend compares event dates with (VietnamTime). */
+export const vietnamToday = (now = Date.now()) => new Date(now + 7 * 3_600_000).toISOString().slice(0, 10)

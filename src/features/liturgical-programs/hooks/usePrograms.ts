@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { ApiContractMissingError } from '@/lib/api/errors'
-import { createProgram, getProgram, listPrograms } from '../api/programsApi'
-import type { ProgramFormValues } from '../types'
+import { getProgram, listPrograms } from '../api/programsApi'
 
+// Programs with their song lists, for the Choir Director and song-list pages: song lists have no backend yet.
 // Retrying cannot help while the API contract is missing.
 const retry = (failureCount: number, error: Error) => !(error instanceof ApiContractMissingError) && failureCount < 3
 
@@ -14,12 +14,4 @@ export function usePrograms() {
 
 export function useProgram(id: string) {
   return useQuery({ queryKey: [...programsKey, id], queryFn: () => getProgram(id), retry })
-}
-
-export function useCreateProgram() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (values: ProgramFormValues) => createProgram(values),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: programsKey }),
-  })
 }

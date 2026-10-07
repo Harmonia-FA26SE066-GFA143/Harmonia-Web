@@ -18,8 +18,8 @@ export interface CatalogItemValues {
 /** The four liturgical catalogs listed in FE-50. */
 export type LiturgicalCatalog = 'seasons' | 'massTypes' | 'ceremonyTypes' | 'eventCategories'
 
-/** Backend lookups offered as select options: the liturgical catalogs plus song themes and skills. */
-export type LookupKind = LiturgicalCatalog | 'songThemes' | 'skills'
+/** Backend lookups offered as select options: the liturgical catalogs plus song themes, skills and worship locations. */
+export type LookupKind = LiturgicalCatalog | 'songThemes' | 'skills' | 'worshipLocations'
 
 /** A lookup row; skills also carry their category. */
 export interface LookupItem extends CatalogItem {

@@ -7,9 +7,9 @@
  * songs come from the song-lists fixture so every page shows the same state.
  */
 import dayjs from 'dayjs'
-import { nextFixtureId, readFixture, writeFixture } from '@/lib/api/fixtureRuntime.dev'
+import { readFixture } from '@/lib/api/fixtureRuntime.dev'
 import { songListSnapshot } from '@/features/song-lists/api/fixtures.dev'
-import type { CatalogRef, LiturgicalProgram, LiturgicalProgramDetail, ProgramFormValues } from '../types'
+import type { CatalogRef, LiturgicalProgram, LiturgicalProgramDetail } from '../types'
 
 const catalogNames: Record<string, string> = {
   'dev-season-1': 'Mùa Vọng',
@@ -81,17 +81,3 @@ export async function getProgramFixture(id: string): Promise<LiturgicalProgramDe
   return found ?? null
 }
 
-export const createProgramFixture = (values: ProgramFormValues) =>
-  writeFixture(() => {
-    const program: ProgramRecord = {
-      id: nextFixtureId('program'),
-      eventName: values.eventName,
-      date: values.date,
-      season: ref(values.seasonId),
-      massType: ref(values.massTypeId),
-      ceremonyType: ref(values.ceremonyTypeId),
-      specialRequirements: values.specialRequirements,
-    }
-    programs = [...programs, program]
-    return summary(program)
-  })
