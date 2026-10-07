@@ -17,12 +17,12 @@ function roleFor(path: string): ApiRoleName {
   return roleByPrefix.find(([prefix]) => path === prefix || path.startsWith(`${prefix}/`))?.[1] ?? 'Admin'
 }
 
-function signInAs(roleName: ApiRoleName) {
+function signInAs(roleName: ApiRoleName, isPasswordChangeRequired = false) {
   setSession({
     accessToken: 'access',
     accessTokenExpiresAt: '2099-01-01T00:00:00Z',
     refreshToken: 'refresh',
-    user: { id: 'user-1', email: 'user@example.com', roleName },
+    user: { id: 'user-1', email: 'user@example.com', roleName, isPasswordChangeRequired },
   })
 }
 
@@ -59,8 +59,8 @@ const implemented = pages.filter((page) => !page.handle.placeholder)
 
 describe('router', () => {
   it('registers a page route for every screen-map page', () => {
-    // 31 screen-map pages plus the target of the emailed reset link (/reset-password).
-    expect(pages).toHaveLength(32)
+    // 31 screen-map pages plus the target of the emailed reset link (/reset-password) and /change-password.
+    expect(pages).toHaveLength(33)
     expect(new Set(pages.map((page) => page.path)).size).toBe(pages.length)
   })
 
@@ -101,6 +101,13 @@ describe('route guard', () => {
   it('sends a visitor without a session to sign-in', async () => {
     renderAt('/admin/accounts')
     expect(await screen.findByRole('heading', { level: 1, name: 'Đăng nhập' })).toBeInTheDocument()
+  })
+
+  it('sends a user who still has the emailed first password to change it', async () => {
+    signInAs('ParishPriest', true)
+    renderAt('/priest/programs')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Đổi mật khẩu' })).toBeInTheDocument()
+    expect(screen.getByText(/mật khẩu được gửi qua email/)).toBeInTheDocument()
   })
 
   it('sends a Choir Member to sign-in, since members use the mobile app', async () => {

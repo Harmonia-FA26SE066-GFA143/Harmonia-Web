@@ -9,6 +9,8 @@ export const paths = {
   forgotPassword: '/forgot-password',
   /** Target of the emailed reset link; the backend's PasswordReset__WebUrl must point here. */
   resetPassword: '/reset-password',
+  /** Signed-in users; Admin-created accounts are sent here until they replace the emailed first password. */
+  changePassword: '/change-password',
   profile: '/profile',
 
   admin: {

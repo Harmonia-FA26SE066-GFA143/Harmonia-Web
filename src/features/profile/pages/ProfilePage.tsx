@@ -1,14 +1,18 @@
-import { LogoutOutlined } from '@ant-design/icons'
-import { App, Button } from 'antd'
+import { KeyOutlined, LogoutOutlined } from '@ant-design/icons'
+import { App, Button, Flex } from 'antd'
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
+import { paths } from '@/app/router/paths'
 import { SignOutModal } from '@/features/auth'
 import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { spacing } from '@/styles/tokens'
 import { ProfileDetails } from '../components/ProfileDetails'
 import { useMyProfile, useUpdateMyProfile } from '../hooks/useMyProfile'
 import type { ProfileUpdateValues } from '../types'
 
 export function ProfilePage() {
   const { message } = App.useApp()
+  const navigate = useNavigate()
   const profile = useMyProfile()
   const update = useUpdateMyProfile()
   const [editing, setEditing] = useState(false)
@@ -29,9 +33,14 @@ export function ProfilePage() {
         title="Hồ sơ cá nhân"
         description="Xem và cập nhật thông tin cá nhân của tài khoản."
         extra={
-          <Button icon={<LogoutOutlined />} onClick={() => setConfirmingSignOut(true)}>
-            Đăng xuất
-          </Button>
+          <Flex wrap gap={spacing.sm}>
+            <Button icon={<KeyOutlined />} onClick={() => navigate(paths.changePassword)}>
+              Đổi mật khẩu
+            </Button>
+            <Button icon={<LogoutOutlined />} onClick={() => setConfirmingSignOut(true)}>
+              Đăng xuất
+            </Button>
+          </Flex>
         }
       />
 

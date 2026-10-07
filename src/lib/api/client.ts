@@ -25,6 +25,12 @@ export async function apiRequest<T>(path: string, init: RequestInit | (() => Req
     }
   }
 
+  if (response.status === 403 && new ApiError(403, body).code === 'AUTH_PASSWORD_CHANGE_REQUIRED') {
+    // The first password must be replaced before anything else works (Harmonia-BE PasswordChangeRequiredFilter).
+    // RoleGuard sends such a user there already; this covers sessions stored before the flag existed.
+    location.assign('/change-password')
+  }
+
   if (!response.ok) throw new ApiError(response.status, body)
   return body as T
 }

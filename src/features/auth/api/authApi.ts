@@ -1,7 +1,13 @@
 import { apiRequest } from '@/lib/api/client'
 import { clearSession, getSession, setSession, type Session } from '@/lib/auth/session'
 import { roleByApiName } from '@/shared/types/account'
-import type { PasswordResetRequestValues, PasswordResetValues, SignInResult, SignInValues } from '../types'
+import type {
+  ChangePasswordValues,
+  PasswordResetRequestValues,
+  PasswordResetValues,
+  SignInResult,
+  SignInValues,
+} from '../types'
 
 export async function signIn(values: SignInValues): Promise<SignInResult> {
   const session = await apiRequest<Session>('/api/auth/login', {
@@ -12,7 +18,19 @@ export async function signIn(values: SignInValues): Promise<SignInResult> {
   // Choir Members use the mobile app and have no web workspace (RoleGuard): revoke the session they just got
   // instead of leaving a valid refresh token behind. signOut needs it stored to authorize the logout call.
   if (session.user.roleName === 'ChoirMember') await signOut()
-  return { role: roleByApiName[session.user.roleName] }
+  return {
+    role: roleByApiName[session.user.roleName],
+    mustChangePassword: Boolean(session.user.isPasswordChangeRequired),
+  }
+}
+
+/**
+ * Replaces the password of the signed-in user. The backend then revokes every session and clears
+ * `isPasswordChangeRequired`, so the user signs in again with the new password.
+ */
+export async function changePassword(values: ChangePasswordValues): Promise<void> {
+  await apiRequest<void>('/api/auth/change-password', { method: 'POST', body: JSON.stringify(values) })
+  clearSession()
 }
 
 /** Always 204, whether or not the email has an account, so the screen cannot reveal which emails exist. */
