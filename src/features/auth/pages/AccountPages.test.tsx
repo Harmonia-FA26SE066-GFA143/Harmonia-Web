@@ -82,12 +82,15 @@ describe('ResetPasswordPage', () => {
   })
 
   it('shows a password the backend rejects under the field and keeps the input', async () => {
-    vi.spyOn(authApi, 'resetPassword').mockRejectedValue(new ApiError(400, { code: 'AUTH_PASSWORD_TOO_WEAK' }))
+    vi.spyOn(authApi, 'resetPassword').mockRejectedValue(
+      new ApiError(400, { code: 'VALIDATION_FAILED', errors: { newPassword: ['AUTH_PASSWORD_TOO_WEAK'] } }),
+    )
     renderReset()
 
     submit('Matkhau123')
     expect(await screen.findByText('Mật khẩu cần ít nhất 8 ký tự, gồm cả chữ và số.')).toBeInTheDocument()
     expect(screen.getByLabelText('Mật khẩu mới')).toHaveValue('Matkhau123')
+    expect(screen.queryByText('Không thể đặt lại mật khẩu')).toBeNull()
   })
 
   it('offers a retry when the server cannot be reached', async () => {

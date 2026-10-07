@@ -7,9 +7,8 @@ import { AuthCard } from '../components/AuthCard'
 import { passwordRuleMessage, ResetPasswordForm } from '../components/ResetPasswordForm'
 import { useResetPassword } from '../hooks/useAuthMutations'
 
-/** Error codes of POST /api/auth/reset-password (Harmonia-BE doc/api.md, section 2). */
+/** Error codes of POST /api/auth/reset-password (Harmonia-BE AuthService.ResetPasswordAsync). */
 const unusableLinkCodes = ['AUTH_RESET_TOKEN_INVALID', 'AUTH_RESET_TOKEN_EXPIRED', 'AUTH_RESET_TOKEN_USED']
-const rejectedPasswordCodes = ['AUTH_PASSWORD_REQUIRED', 'AUTH_PASSWORD_TOO_WEAK']
 
 /** Opened from the link in the reset email: `/reset-password?token=…`. */
 export function ResetPasswordPage() {
@@ -17,8 +16,11 @@ export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
   const reset = useResetPassword()
-  const code = reset.error instanceof ApiError ? reset.error.code : undefined
-  const passwordRejected = code !== undefined && rejectedPasswordCodes.includes(code)
+  const error = reset.error instanceof ApiError ? reset.error : undefined
+  const code = error?.code
+  // A weak or empty password fails validation: 400 VALIDATION_FAILED with the code under `errors.newPassword`
+  // (Harmonia-BE ValidationFilter, PasswordRuleExtensions), never as the top-level code.
+  const passwordRejected = Boolean(error?.errors?.newPassword)
 
   if (!token || (code !== undefined && unusableLinkCodes.includes(code))) {
     return (
