@@ -23,4 +23,15 @@ describe('LandingPage', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Đăng nhập' })[0])
     expect(await screen.findByTestId('location')).toHaveTextContent('/login')
   })
+
+  it('offers the administrators’ email for account requests and support', () => {
+    renderPage(<LandingPage />)
+
+    expect(screen.getByRole('link', { name: /Liên hệ/ })).toHaveAttribute('href', 'mailto:harmoniafall26@gmail.com')
+    expect(screen.getByRole('heading', { level: 2, name: 'Liên hệ' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'harmoniafall26@gmail.com' })).toHaveAttribute(
+      'href',
+      'mailto:harmoniafall26@gmail.com',
+    )
+  })
 })

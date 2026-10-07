@@ -1,6 +1,8 @@
+import { MailOutlined } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { contactEmail } from '@/config/contact'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 
 interface RoleSummary {
@@ -60,12 +62,17 @@ const roleSummaries: RoleSummary[] = [
 export function LandingPage() {
   const navigate = useNavigate()
 
-  const actions = (
-    <Flex wrap gap={spacing.sm}>
-      <Button type="primary" onClick={() => navigate(paths.login)}>
-        Đăng nhập
-      </Button>
-    </Flex>
+  const signIn = (
+    <Button type="primary" onClick={() => navigate(paths.login)}>
+      Đăng nhập
+    </Button>
+  )
+
+  // Accounts are created by an Admin, so writing to the administrators is how a newcomer gets one.
+  const contact = (
+    <Button icon={<MailOutlined />} href={`mailto:${contactEmail}`}>
+      Liên hệ
+    </Button>
   )
 
   return (
@@ -74,7 +81,7 @@ export function LandingPage() {
         <Typography.Text strong style={{ fontSize: typography.sectionHeading.fontSize, color: colors.primary }}>
           Harmonia
         </Typography.Text>
-        {actions}
+        {signIn}
       </Flex>
 
       <section style={{ maxWidth: 720 }}>
@@ -85,7 +92,10 @@ export function LandingPage() {
           Harmonia giúp Cha xứ / Hội đồng Phụng vụ, Ca trưởng và thành viên ca đoàn cùng chuẩn bị chương trình phụng vụ,
           danh sách bài hát, lịch tập và phân công phục vụ trên một hệ thống chung.
         </Typography.Paragraph>
-        {actions}
+        <Flex wrap gap={spacing.sm}>
+          {signIn}
+          {contact}
+        </Flex>
       </section>
 
       <section aria-labelledby="roles-heading">
@@ -125,6 +135,16 @@ export function LandingPage() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section aria-labelledby="contact-heading">
+        <Typography.Title id="contact-heading" level={2} style={{ margin: `0 0 ${spacing.sm}px` }}>
+          Liên hệ
+        </Typography.Title>
+        <Typography.Paragraph style={{ margin: 0, color: colors.textBody }}>
+          Cần tài khoản hoặc hỗ trợ? Gửi email cho quản trị viên Harmonia:{' '}
+          <Typography.Link href={`mailto:${contactEmail}`}>{contactEmail}</Typography.Link>
+        </Typography.Paragraph>
       </section>
 
       <footer style={{ borderTop: `1px solid ${colors.border}`, paddingTop: spacing.md }}>
