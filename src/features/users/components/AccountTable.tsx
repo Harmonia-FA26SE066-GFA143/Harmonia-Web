@@ -7,27 +7,18 @@ import { AccountStatusTag } from './AccountStatusTag'
 
 export interface AccountTableProps {
   accounts: Account[]
+  /** Server-side paging of GET /api/users. */
+  page: number
+  pageSize: number
+  total: number
+  loading?: boolean
+  onPageChange: (page: number) => void
   renderActions: (account: Account) => ReactNode
-  showStatus?: boolean
 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
 
-function RoleCell({ account }: { account: Account }) {
-  if (account.role) return <Tag style={{ marginInlineEnd: 0 }}>{roleLabels[account.role]}</Tag>
-  return (
-    <Flex vertical>
-      <Typography.Text style={{ color: colors.textMuted }}>
-        {account.status === 'pending' ? 'Chưa xác nhận' : 'Chưa có vai trò'}
-      </Typography.Text>
-      {account.requestedRole && (
-        <Typography.Text style={muted}>Đề nghị: {roleLabels[account.requestedRole]}</Typography.Text>
-      )}
-    </Flex>
-  )
-}
-
-export function AccountTable({ accounts, renderActions, showStatus = true }: AccountTableProps) {
+export function AccountTable({ accounts, page, pageSize, total, loading, onPageChange, renderActions }: AccountTableProps) {
   const columns: TableColumnsType<Account> = [
     {
       key: 'account',
@@ -39,23 +30,16 @@ export function AccountTable({ accounts, renderActions, showStatus = true }: Acc
         </Flex>
       ),
     },
-    { key: 'role', title: 'Vai trò', render: (_, account) => <RoleCell account={account} /> },
-    ...(showStatus
-      ? [
-          {
-            key: 'status',
-            title: 'Trạng thái',
-            render: (_: unknown, account: Account) => (
-              <Flex vertical align="flex-start" gap={2}>
-                <AccountStatusTag status={account.status} />
-                {account.status === 'rejected' && account.rejectionReason && (
-                  <Typography.Text style={muted}>Lý do: {account.rejectionReason}</Typography.Text>
-                )}
-              </Flex>
-            ),
-          },
-        ]
-      : []),
+    {
+      key: 'role',
+      title: 'Vai trò',
+      render: (_, account) => <Tag style={{ marginInlineEnd: 0 }}>{roleLabels[account.role]}</Tag>,
+    },
+    {
+      key: 'status',
+      title: 'Trạng thái',
+      render: (_, account) => <AccountStatusTag isActive={account.isActive} />,
+    },
     {
       key: 'actions',
       title: 'Thao tác',
@@ -69,7 +53,8 @@ export function AccountTable({ accounts, renderActions, showStatus = true }: Acc
       rowKey="id"
       columns={columns}
       dataSource={accounts}
-      pagination={{ pageSize: 10, hideOnSinglePage: true }}
+      loading={loading}
+      pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: onPageChange }}
       scroll={{ x: 'max-content' }}
     />
   )

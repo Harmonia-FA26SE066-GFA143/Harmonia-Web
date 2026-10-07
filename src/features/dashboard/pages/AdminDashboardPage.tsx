@@ -3,11 +3,9 @@ import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { ActivityTable, useActivityLog } from '@/features/activity-log'
-import { useAccounts } from '@/features/users'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AdminShortcuts } from '../components/AdminShortcuts'
-import { PendingAccountsCard } from '../components/PendingAccountsCard'
 
 const recentLimit = 5
 
@@ -23,14 +21,13 @@ function SectionTitle({ id, children, extra }: { id: string; children: string; e
 }
 
 /**
- * Admin dashboard: pending accounts, shortcuts to each Admin area and the latest activity (FE-47–FE-54).
+ * Admin dashboard: shortcuts to each Admin area and the latest activity (FE-47–FE-54).
  * Each section loads and fails independently. Dashboard-wide metrics are not shown: none are defined (TBD).
+ * No pending-accounts card: accounts are created by the Admin and never wait for confirmation (D1, 2026-10-07).
  */
 export function AdminDashboardPage() {
   const navigate = useNavigate()
-  const accounts = useAccounts()
   const log = useActivityLog()
-  const pendingCount = accounts.data?.filter((account) => account.status === 'pending').length
   const recent = (log.data ?? []).slice(0, recentLimit)
 
   return (
@@ -41,14 +38,6 @@ export function AdminDashboardPage() {
         description="Quản lý tài khoản, cấu hình và theo dõi hoạt động của hệ thống Harmonia."
       />
       <Flex vertical gap={spacing.xl}>
-        <PendingAccountsCard
-          count={pendingCount}
-          loading={accounts.isPending}
-          error={accounts.isError}
-          onRetry={() => accounts.refetch()}
-          onOpen={() => navigate(`${paths.admin.accounts}?status=pending`)}
-        />
-
         <section aria-labelledby="admin-shortcuts-heading">
           <SectionTitle id="admin-shortcuts-heading">Truy cập nhanh</SectionTitle>
           <AdminShortcuts />

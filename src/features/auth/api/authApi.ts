@@ -1,14 +1,7 @@
 import { apiRequest } from '@/lib/api/client'
-import { clearSession, getSession, setSession, type ApiRoleName, type Session } from '@/lib/auth/session'
-import type { SystemRole } from '@/shared/types/account'
+import { clearSession, getSession, setSession, type Session } from '@/lib/auth/session'
+import { roleByApiName } from '@/shared/types/account'
 import type { PasswordResetRequestValues, PasswordResetValues, SignInResult, SignInValues } from '../types'
-
-const roleByApiName: Record<ApiRoleName, SystemRole> = {
-  Admin: 'admin',
-  ParishPriest: 'priest',
-  ChoirDirector: 'director',
-  ChoirMember: 'member',
-}
 
 export async function signIn(values: SignInValues): Promise<SignInResult> {
   const session = await apiRequest<Session>('/api/auth/login', {

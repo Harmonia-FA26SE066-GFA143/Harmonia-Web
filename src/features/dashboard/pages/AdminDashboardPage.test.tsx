@@ -1,7 +1,6 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as activityLogApi from '@/features/activity-log/api/activityLogApi'
-import * as accountsApi from '@/features/users/api/accountsApi'
 import { renderPage } from '@/test/renderPage'
 import { AdminDashboardPage } from './AdminDashboardPage'
 
@@ -14,21 +13,7 @@ describe('AdminDashboardPage', () => {
     renderPage(<AdminDashboardPage />, '/admin')
 
     expect(screen.getByRole('link', { name: /Danh mục phụng vụ/ })).toHaveAttribute('href', '/admin/liturgical-categories')
-    expect(await screen.findByText('Không thể tải số tài khoản chờ xác nhận.')).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Không thể tải hoạt động gần đây' })).toBeInTheDocument()
-  })
-
-  it('counts pending accounts and opens the Accounts page filtered to them', async () => {
-    vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue([
-      { id: 'a1', fullName: 'An', email: 'an@giaoxu.org', status: 'pending', requestedRole: 'member' },
-      { id: 'a2', fullName: 'Bình', email: 'binh@giaoxu.org', status: 'pending', requestedRole: 'director' },
-      { id: 'a3', fullName: 'Chi', email: 'chi@giaoxu.org', status: 'active', role: 'member' },
-    ])
-    renderPage(<AdminDashboardPage />, '/admin')
-
-    expect(await screen.findByText('2')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Xem và xác nhận' }))
-    expect(await screen.findByTestId('location')).toHaveTextContent('/admin/accounts')
   })
 
   it('shows the latest five activities', async () => {

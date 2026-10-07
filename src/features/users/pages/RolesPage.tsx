@@ -3,41 +3,46 @@ import { App, Button, Card, Flex, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { getSession } from '@/lib/auth/session'
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import type { SystemRole } from '@/shared/types/account'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
-import { emptyAccountFilters, filterAccounts } from '../accountFilters'
+import { accountErrorMessage } from '../accountErrors'
+import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
 import { AccountFilterBar } from '../components/AccountFilterBar'
 import { AccountTable } from '../components/AccountTable'
 import { AssignRoleModal } from '../components/AssignRoleModal'
 import { RoleSummary } from '../components/RoleSummary'
-import { useAccounts, useChangeAccountRole } from '../hooks/useAccounts'
-import { assignableRoles } from '../roles'
+import { useAccounts, useChangeAccountRole, useRoleCounts } from '../hooks/useAccounts'
 import type { Account, AccountFilters } from '../types'
 
+const pageSize = 20
+
 /**
- * Admin: role assignment (FE-48). Lists accounts that already hold a role; pending accounts get their
- * first role through confirmation on the Accounts page. Fine-grained permissions are not configurable
- * (Report 1 does not define them; UNRESOLVED).
+ * Admin: role assignment (FE-48) on `PUT /api/users/{id}/role`. Every account holds exactly one role. Fine-grained
+ * permissions are not configurable (Report 1 does not define them; UNRESOLVED).
  */
 export function RolesPage() {
   const navigate = useNavigate()
   const { message } = App.useApp()
-  const accounts = useAccounts()
-  const changeRole = useChangeAccountRole()
   const [filters, setFilters] = useState<AccountFilters>(emptyAccountFilters)
+  const [page, setPage] = useState(1)
+  const search = useDebouncedValue(filters.search)
+  const query = useMemo(() => ({ ...filters, search }), [filters, search])
+  const accounts = useAccounts(query, { pageNumber: page, pageSize })
+  const counts = useRoleCounts()
+  const changeRole = useChangeAccountRole()
   const [changing, setChanging] = useState<Account>()
+  const ownId = getSession()?.user.id
 
-  const withRole = useMemo(() => (accounts.data ?? []).filter((account) => account.role), [accounts.data])
-  const visible = useMemo(() => filterAccounts(withRole, filters), [withRole, filters])
-  const counts = useMemo(
-    () =>
-      Object.fromEntries(
-        assignableRoles.map((role) => [role, withRole.filter((account) => account.role === role).length]),
-      ) as Record<SystemRole, number>,
-    [withRole],
-  )
-  const resetFilters = () => setFilters(emptyAccountFilters)
+  const total = accounts.data?.totalCount ?? 0
+  const filtered = hasActiveFilters(query)
+  const changeFilters = (next: AccountFilters) => {
+    setFilters(next)
+    setPage(1)
+  }
+  const resetFilters = () => changeFilters(emptyAccountFilters)
 
   const handleChangeRole = (role: SystemRole) => {
     if (!changing) return
@@ -48,14 +53,10 @@ export function RolesPage() {
           message.success(`Đã thay đổi vai trò của ${changing.fullName}.`)
           setChanging(undefined)
         },
-        onError: () => message.error('Không thể thay đổi vai trò. Vui lòng thử lại.'),
+        onError: (error) => message.error(accountErrorMessage(error, 'Không thể thay đổi vai trò. Vui lòng thử lại.')),
       },
     )
   }
-
-  const goToAccounts = (
-    <Button onClick={() => navigate(paths.admin.accounts)}>Đến trang Tài khoản</Button>
-  )
 
   return (
     <>
@@ -80,37 +81,39 @@ export function RolesPage() {
             <Typography.Title id="role-assignment-heading" level={2} style={{ margin: `0 0 ${spacing.md}px` }}>
               Gán vai trò cho tài khoản
             </Typography.Title>
-            {withRole.length === 0 ? (
+            {total === 0 && !filtered ? (
               <EmptyState
-                title="Chưa có tài khoản nào được gán vai trò"
-                description="Tài khoản tự đăng ký cần được xác nhận vai trò ở trang Tài khoản trước."
-                action={goToAccounts}
+                title="Chưa có tài khoản nào"
+                description="Tạo tài khoản ở trang Tài khoản trước."
+                action={<Button onClick={() => navigate(paths.admin.accounts)}>Đến trang Tài khoản</Button>}
               />
             ) : (
               <Card styles={{ body: { padding: 0 } }}>
-                <AccountFilterBar
-                  value={filters}
-                  onChange={setFilters}
-                  onReset={resetFilters}
-                  resultCount={visible.length}
-                  showStatusFilter={false}
-                />
-                {visible.length === 0 ? (
+                <AccountFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
+                {total === 0 ? (
                   <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
                     <NoFilterResults onClearFilters={resetFilters} />
                   </div>
                 ) : (
                   <AccountTable
-                    accounts={visible}
-                    renderActions={(account) => (
-                      <Button
-                        icon={<SwapOutlined />}
-                        onClick={() => setChanging(account)}
-                        aria-label={`Thay đổi vai trò của ${account.fullName}`}
-                      >
-                        Thay đổi vai trò
-                      </Button>
-                    )}
+                    accounts={accounts.data.items}
+                    page={page}
+                    pageSize={pageSize}
+                    total={total}
+                    loading={accounts.isPlaceholderData}
+                    onPageChange={setPage}
+                    // The backend refuses to change the Admin's own role (USER_CANNOT_MODIFY_SELF).
+                    renderActions={(account) =>
+                      account.id !== ownId && (
+                        <Button
+                          icon={<SwapOutlined />}
+                          onClick={() => setChanging(account)}
+                          aria-label={`Thay đổi vai trò của ${account.fullName}`}
+                        >
+                          Thay đổi vai trò
+                        </Button>
+                      )
+                    }
                   />
                 )}
               </Card>
@@ -120,7 +123,6 @@ export function RolesPage() {
       )}
 
       <AssignRoleModal
-        mode="change"
         account={changing}
         saving={changeRole.isPending}
         onSubmit={handleChangeRole}

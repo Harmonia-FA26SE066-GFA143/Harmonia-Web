@@ -1,62 +1,71 @@
-import { env } from '@/config/env'
-import { ApiContractMissingError } from '@/lib/api/errors'
-import type { SystemRole } from '@/shared/types/account'
-import type { Account, CreateAccountValues } from '../types'
+import { apiRequest } from '@/lib/api/client'
+import { toQuery, type PagedList } from '@/lib/api/paging'
+import type { ApiRoleName } from '@/lib/auth/session'
+import { apiNameByRole, roleByApiName, type SystemRole } from '@/shared/types/account'
+import type { Account, AccountFilters, CreateAccountValues, UpdateAccountValues } from '../types'
 
-// Backend contract exists, not wired yet: Admin-only `/api/users` with GET (paged, keyword/roleName/
-// isActive filters), GET {id}, POST, PUT {id}, PATCH {id}/activate, PATCH {id}/deactivate, PUT {id}/role.
-// Not wired because the Web model follows the pending/confirm/reject lifecycle while the backend has Admin-created
-// accounts with isActive: decision D1 is open. confirmAccount and rejectAccount have no backend counterpart.
-// Until then each function checks `import.meta.env.DEV` at the call site so the fixture import is dropped from dist/.
+// `/api/users` (Harmonia-BE UsersController), Admin only.
 
-export async function listAccounts(): Promise<Account[]> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { listAccountsFixture } = await import('./fixtures.dev')
-    return listAccountsFixture()
-  }
-  throw new ApiContractMissingError('Xem danh sách tài khoản')
+export interface AccountPage {
+  pageNumber: number
+  pageSize: number
 }
 
-/** Admin creates an account directly (owner decision 2026-09-27); any FE-48 role, including Admin. */
-export async function createAccount(values: CreateAccountValues): Promise<Account> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { createAccountFixture } = await import('./fixtures.dev')
-    return createAccountFixture(values)
-  }
-  throw new ApiContractMissingError('Tạo tài khoản')
+interface UserDto {
+  id: string
+  email: string
+  fullName: string
+  roleName: ApiRoleName
+  isActive: boolean
 }
 
-/** Confirms a pending account with the requested role or a different one (DECIDED 2026-09-26). */
-export async function confirmAccount(id: string, role: SystemRole): Promise<Account> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { confirmAccountFixture } = await import('./fixtures.dev')
-    return confirmAccountFixture(id, role)
-  }
-  throw new ApiContractMissingError('Xác nhận vai trò tài khoản')
+const toAccount = ({ roleName, ...rest }: UserDto): Account => ({ ...rest, role: roleByApiName[roleName] })
+
+export async function listAccounts(filters: AccountFilters, page: AccountPage): Promise<PagedList<Account>> {
+  const result = await apiRequest<PagedList<UserDto>>(
+    `/api/users${toQuery({
+      keyword: filters.search.trim(),
+      roleName: filters.role && apiNameByRole[filters.role],
+      isActive: filters.isActive,
+      ...page,
+    })}`,
+  )
+  return { ...result, items: result.items.map(toAccount) }
 }
 
-/** Rejects a pending account; the account is kept with a rejected status (DECIDED 2026-09-26). */
-export async function rejectAccount(id: string, reason?: string): Promise<Account> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { rejectAccountFixture } = await import('./fixtures.dev')
-    return rejectAccountFixture(id, reason)
-  }
-  throw new ApiContractMissingError('Từ chối tài khoản')
+/** Number of accounts holding a role, read from the paging envelope. */
+export async function countAccounts(role: SystemRole): Promise<number> {
+  const result = await apiRequest<PagedList<UserDto>>(
+    `/api/users${toQuery({ roleName: apiNameByRole[role], pageNumber: 1, pageSize: 1 })}`,
+  )
+  return result.totalCount
 }
 
-/** Reopens a rejected account. The resulting status is defined by the backend (TBD). */
-export async function reopenAccount(id: string): Promise<Account> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { reopenAccountFixture } = await import('./fixtures.dev')
-    return reopenAccountFixture(id)
-  }
-  throw new ApiContractMissingError('Mở lại tài khoản')
+/** The account starts active (Harmonia-BE UserService.CreateAsync). */
+export async function createAccount({ role, ...values }: CreateAccountValues): Promise<Account> {
+  return toAccount(
+    await apiRequest<UserDto>('/api/users', {
+      method: 'POST',
+      body: JSON.stringify({ ...values, roleName: apiNameByRole[role] }),
+    }),
+  )
 }
 
+export async function updateAccount(id: string, values: UpdateAccountValues): Promise<Account> {
+  return toAccount(await apiRequest<UserDto>(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify(values) }))
+}
+
+/** Deactivating also revokes the user's sessions; the backend refuses the caller's own account and the last Admin. */
+export function setAccountActive(id: string, active: boolean): Promise<void> {
+  return apiRequest<void>(`/api/users/${id}/${active ? 'activate' : 'deactivate'}`, { method: 'PATCH' })
+}
+
+/** The user must sign in again afterwards: the backend revokes their sessions. */
 export async function changeAccountRole(id: string, role: SystemRole): Promise<Account> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { changeAccountRoleFixture } = await import('./fixtures.dev')
-    return changeAccountRoleFixture(id, role)
-  }
-  throw new ApiContractMissingError('Thay đổi vai trò tài khoản')
+  return toAccount(
+    await apiRequest<UserDto>(`/api/users/${id}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ roleName: apiNameByRole[role] }),
+    }),
+  )
 }
