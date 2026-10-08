@@ -29,7 +29,7 @@ beforeEach(() => {
   vi.spyOn(programsApi, 'listPrograms').mockResolvedValue([
     { id: 'p1', eventName: 'Thánh lễ Hôn Phối', date: dayjs().add(5, 'day').format('YYYY-MM-DD'), songListStatus: 'approved' },
   ])
-  vi.spyOn(categoriesApi, 'listSkillCategories').mockResolvedValue([
+  vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([
     { id: 'k-tenor', name: 'Tenor' },
     { id: 'k-organ', name: 'Organ' },
   ])

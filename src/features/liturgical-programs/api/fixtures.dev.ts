@@ -2,8 +2,8 @@
  * DEV FIXTURE – không phải API contract.
  * Decision 0002 option B (approved by Daniel 2026-09-27): UI review without a backend. Loaded only through the
  * dynamic import in `programsApi.ts` when `import.meta.env.DEV && VITE_USE_DEV_FIXTURES=true`.
- * Fictional programs dated around today so the calendar and "upcoming" views have data. Catalog ids match the
- * system-categories fixtures; program ids match the report and song-list fixtures. The song-list status and
+ * Fictional programs dated around today so the calendar and "upcoming" views have data. Catalog entries are
+ * samples, not backend lookups; program ids match the report and song-list fixtures. The song-list status and
  * songs come from the song-lists fixture so every page shows the same state.
  */
 import dayjs from 'dayjs'

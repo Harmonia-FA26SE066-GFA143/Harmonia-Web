@@ -1,28 +1,56 @@
 /**
- * One entry of an Admin-configured catalog: skill categories (Report 1 FE-49) or liturgical categories (FE-50).
- * Report 1 names the catalogs but not their fields; name + optional description follow the base Stitch modals.
- * The backend lookups return id, name and an optional description; liturgical seasons return start and end dates
- * and a colour instead of a description. Uniqueness and the deactivate lifecycle stay TBD until catalog writes exist.
+ * Admin catalogs (Report 1 FE-49, FE-50) as `/api/lookups` returns them to the Admin (Harmonia-BE LookupsController).
+ * Entries are never deleted: other records reference them, so `isActive = false` switches one off and hides it from
+ * the selects of other pages (LookupService). This supersedes "the Admin deletes catalog entries"
+ * (choir-skills.md, decision 2026-09-30).
  */
-export interface CatalogItem {
+export interface CatalogEntry {
   id: string
   name: string
-  description?: string
+  description?: string | null
+  isActive: boolean
 }
 
-export interface CatalogItemValues {
-  name: string
-  description?: string
+/** Mass types, ceremony types, event categories and skill categories: a name and a description (`SaveCatalogItemRequest`). */
+export interface CatalogItem extends CatalogEntry {
+  description: string | null
 }
+
+export type CatalogItemValues = Omit<CatalogItem, 'id'>
+
+/** A skill belongs to one skill category; its name is unique within the category (`SaveSkillRequest`). */
+export interface Skill extends CatalogItem {
+  categoryId: string
+}
+
+export type SkillValues = Omit<Skill, 'id'>
+
+/**
+ * A liturgical season (`SaveLiturgicalSeasonRequest`): dates (`DateOnly`, YYYY-MM-DD) and a colour instead of a
+ * description. Names repeat every year; the dates must not overlap another active season.
+ */
+export interface LiturgicalSeason extends CatalogEntry {
+  startDate: string
+  endDate: string
+  /** `#RRGGBB`. */
+  colorHex: string | null
+}
+
+export type LiturgicalSeasonValues = Omit<LiturgicalSeason, 'id'>
 
 /** The four liturgical catalogs listed in FE-50. */
 export type LiturgicalCatalog = 'seasons' | 'massTypes' | 'ceremonyTypes' | 'eventCategories'
 
-/** Backend lookups offered as select options: the liturgical catalogs plus song themes, skills and worship locations. */
-export type LookupKind = LiturgicalCatalog | 'songThemes' | 'skills' | 'worshipLocations'
+/** Catalogs whose entries have only a name and a description. */
+export type BasicCatalog = Exclude<LiturgicalCatalog, 'seasons'> | 'skillCategories'
 
-/** A lookup row; skills also carry their category. */
-export interface LookupItem extends CatalogItem {
+/** Backend lookups: the Admin catalogs plus the read-only song themes and worship locations. */
+export type LookupKind = LiturgicalCatalog | 'skillCategories' | 'skills' | 'songThemes' | 'worshipLocations'
+
+/** An active lookup row, as offered in selects; skills also carry their category. */
+export interface LookupItem {
+  id: string
+  name: string
   categoryId?: string
 }
 

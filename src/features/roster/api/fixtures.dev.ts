@@ -2,8 +2,8 @@
  * DEV FIXTURE – không phải API contract.
  * Decision 0002 option B (approved by Daniel 2026-09-27): UI review without a backend. Loaded only through the
  * dynamic import in `rosterApi.ts` when `import.meta.env.DEV && VITE_USE_DEV_FIXTURES=true`.
- * dev-program-5 (approved song list, confirmation round) has requirements and a few assignments; skill ids match
- * the system-categories fixture, song ids the song-lists fixture. The "suggestions" below are a naive stand-in so
+ * dev-program-5 (approved song list, confirmation round) has requirements and a few assignments; skills are samples
+ * (the skill select reads the backend lookup), song ids match the song-lists fixture. The "suggestions" below are a naive stand-in so
  * the screen can be reviewed — they are NOT a suggestion rule (FE-36 matching is UNRESOLVED, owned by the backend).
  */
 import { participationSnapshot } from '@/features/participation/api/fixtures.dev'
