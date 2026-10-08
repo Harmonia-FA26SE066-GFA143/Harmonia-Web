@@ -5,3 +5,6 @@
 export function parseUtc(value: string): Date {
   return new Date(/(Z|[+-]\d{2}:?\d{2})$/i.test(value) ? value : `${value}Z`)
 }
+
+/** Today in Vietnam (UTC+7, no daylight saving) as `YYYY-MM-DD`: the date the backend compares `DateOnly` values with (VietnamTime). */
+export const vietnamToday = (now = Date.now()) => new Date(now + 7 * 3_600_000).toISOString().slice(0, 10)

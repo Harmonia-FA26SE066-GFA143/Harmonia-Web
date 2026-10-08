@@ -1,7 +1,8 @@
 import { ColorPicker, DatePicker, Flex, Form, Tabs, Typography } from 'antd'
-import dayjs, { type Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
 import { PageHeader } from '@/shared/ui'
+import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { colors, radius, spacing } from '@/styles/tokens'
 import { CatalogManager } from '../components/CatalogManager'
 import { descriptionColumn, descriptionField } from '../components/description'
@@ -10,19 +11,13 @@ import type { BasicCatalog, LiturgicalCatalog, LiturgicalSeason } from '../types
 
 const formatDate = (value: string) => dayjs(value).format('DD/MM/YYYY')
 
-// The form keeps `DateOnly` strings (YYYY-MM-DD), the pickers work on dayjs values.
-const dateProps = {
-  getValueProps: (value?: string) => ({ value: value ? dayjs(value) : undefined }),
-  normalize: (date?: Dayjs | null) => date?.format('YYYY-MM-DD'),
-}
-
 const seasonFields = (
   <>
     <Flex gap={spacing.md} wrap>
       <Form.Item
         label="Ngày bắt đầu"
         name="startDate"
-        {...dateProps}
+        {...dateOnlyFieldProps}
         rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu.' }]}
         style={{ flex: '1 1 160px' }}
       >
@@ -31,7 +26,7 @@ const seasonFields = (
       <Form.Item
         label="Ngày kết thúc"
         name="endDate"
-        {...dateProps}
+        {...dateOnlyFieldProps}
         dependencies={['startDate']}
         rules={[
           { required: true, message: 'Vui lòng chọn ngày kết thúc.' },
