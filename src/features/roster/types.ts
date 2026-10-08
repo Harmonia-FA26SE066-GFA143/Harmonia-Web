@@ -1,65 +1,67 @@
-/** A skill from the skill catalog (FE-49) as used by a requirement. */
-export interface RosterSkill {
-  id: string
-  name: string
-}
-
 /**
- * A staffing requirement (FE-35): a skill and a number of people, for one song of the approved list or, when
- * `songId` is absent, for the whole program (decision 2026-10-01, roster.md).
- * TBD: Backend API missing – identifiers and field names come with the contract.
+ * Service roster of a program (FE-35–FE-40) as Harmonia-BE models it (`ServiceRostersController`,
+ * `SongListItemsController`, owner decision 2026-10-07: follow the BE). This supersedes roster.md (2026-10-01) on
+ * three points: requirements exist per song of the approved list only (no whole-program positions), lines are
+ * added, replaced and removed one at a time, and finalizing with shortages needs no reason.
  */
-export interface RosterRequirement {
-  id: string
-  songId?: string
-  skill: RosterSkill
-  count: number
+
+/** `RosterStatus` of Harmonia-BE: a manual line starts a Draft, a suggestion makes it Suggested, finalizing locks it. */
+export type RosterStatus = 'draft' | 'suggested' | 'finalized'
+
+export const rosterStatusLabels: Record<RosterStatus, string> = {
+  draft: 'Bản nháp',
+  suggested: 'Đã gợi ý',
+  finalized: 'Đã chốt',
 }
 
+/** People needed for one song of the approved list (`SongPersonnelRequirementDto`, FE-35). */
+export interface PersonnelRequirement {
+  skillId: string
+  skillName: string
+  /** 1–50 (UpdateSongPersonnelRequirementsRequestValidator). */
+  requiredCount: number
+}
+
+/** One row of `PUT /api/song-list-items/{id}/personnel-requirements`; one row per skill. */
+export type PersonnelRequirementValue = Pick<PersonnelRequirement, 'skillId' | 'requiredCount'>
+
+export const maxRequiredCount = 50
+
+/** An active line of the roster (`RosterAssignmentDto`); replaced lines are history and are not returned. */
 export interface RosterAssignment {
-  requirementId: string
+  id: string
   memberId: string
-  fullName: string
+  memberName: string
+  skillId: string
+  skillName: string
+  songListItemId: string | null
+  /** Suggested by the backend (FE-36) or added by the Choir Director (FE-38). */
+  source: 'suggested' | 'manual'
 }
 
-export interface Roster {
-  programId: string
-  requirements: RosterRequirement[]
+/** A song / skill pair not fully staffed, computed by the backend (`RosterShortageDto`, FE-37). */
+export interface RosterShortage {
+  songListItemId: string
+  songTitle: string
+  skillId: string
+  skillName: string
+  requiredCount: number
+  assignedCount: number
+}
+
+/** `ServiceRosterDto`; an event has none until its first suggestion or manual line. */
+export interface ServiceRoster {
+  id: string
+  status: RosterStatus
   assignments: RosterAssignment[]
 }
 
-export type RosterValues = Omit<Roster, 'programId'>
-
-/** A suggested member for a requirement; the suggestion logic belongs to the backend (FE-36, UNRESOLVED). */
-export type RosterSuggestion = RosterAssignment
-
 /**
- * A member who can be assigned: confirmed for the program (decision 2026-10-01) with their skills.
- * TBD: the API must return approved skills only (FE-02/FE-25 distinguish declared and approved skills); skills are
- * matched by name until members carry skill ids.
+ * A member offered for a line: confirmed for the program, with approved skills (the backend checks both again).
+ * ponytail: skills are matched by name while participation is a dev fixture; use skill ids when it has an API (B15).
  */
 export interface EligibleMember {
   memberId: string
   fullName: string
   skills: string[]
-}
-
-/** An assignment still meets the rule: the member is confirmed and holds the required skill. */
-export const isEligible = (eligible: EligibleMember[], memberId: string, requirement: RosterRequirement) =>
-  eligible.some((member) => member.memberId === memberId && member.skills.includes(requirement.skill.name))
-
-/**
- * Missing people per requirement (FE-37): the count minus the assignments that are still eligible. An assignment
- * whose member declined or lost the skill is kept (what should happen to it is TBD) but does not fill the position.
- */
-export function shortages(values: RosterValues, eligible: EligibleMember[]): { requirement: RosterRequirement; missing: number }[] {
-  return values.requirements
-    .map((requirement) => ({
-      requirement,
-      missing:
-        requirement.count -
-        values.assignments.filter((item) => item.requirementId === requirement.id && isEligible(eligible, item.memberId, requirement))
-          .length,
-    }))
-    .filter((entry) => entry.missing > 0)
 }

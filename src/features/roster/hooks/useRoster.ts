@@ -1,41 +1,73 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiContractMissingError } from '@/lib/api/errors'
-import { getRoster, getRosterSuggestions, saveRoster, sendAssignmentNotifications } from '../api/rosterApi'
-import type { RosterValues } from '../types'
+import {
+  addAssignment,
+  finalizeRoster,
+  getPersonnelRequirements,
+  getRoster,
+  getShortages,
+  removeAssignment,
+  replaceAssignment,
+  savePersonnelRequirements,
+  sendRosterNotifications,
+  suggestRoster,
+  type NewAssignment,
+} from '../api/rosterApi'
+import type { PersonnelRequirement } from '../types'
 
-// Retrying cannot help while the API contract is missing.
-const retry = (failureCount: number, error: Error) => !(error instanceof ApiContractMissingError) && failureCount < 3
-
+// Everything of a program sits under one key, so any change reloads its roster, shortages and requirements.
 const rosterKey = (programId: string) => ['roster', programId] as const
 
+/** `null` while the program has no roster yet. */
 export function useRoster(programId?: string) {
   return useQuery({
     queryKey: rosterKey(programId ?? ''),
     queryFn: () => getRoster(programId ?? ''),
     enabled: Boolean(programId),
-    retry,
   })
 }
 
-/** Suggestions are fetched on demand, when the Director asks for them. */
-export function useRosterSuggestions(programId: string, enabled: boolean) {
+export function useShortages(programId?: string) {
   return useQuery({
-    queryKey: [...rosterKey(programId), 'suggestions'],
-    queryFn: () => getRosterSuggestions(programId),
-    enabled,
-    retry,
-    gcTime: 0,
+    queryKey: [...rosterKey(programId ?? ''), 'shortages'],
+    queryFn: () => getShortages(programId ?? ''),
+    enabled: Boolean(programId),
   })
 }
 
-export function useSaveRoster(programId: string) {
+export function usePersonnelRequirements(programId: string, songListItemId: string) {
+  return useQuery({
+    queryKey: [...rosterKey(programId), 'requirements', songListItemId],
+    queryFn: () => getPersonnelRequirements(songListItemId),
+  })
+}
+
+function useRosterChange<TVariables, TResult>(programId: string, mutationFn: (variables: TVariables) => Promise<TResult>) {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (values: RosterValues) => saveRoster(programId, values),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: rosterKey(programId) }),
-  })
+  return useMutation({ mutationFn, onSuccess: () => queryClient.invalidateQueries({ queryKey: rosterKey(programId) }) })
 }
 
-export function useSendAssignmentNotifications(programId: string) {
-  return useMutation({ mutationFn: (memberIds: string[]) => sendAssignmentNotifications(programId, memberIds) })
+export const useSavePersonnelRequirements = (programId: string, songListItemId: string) =>
+  useRosterChange(programId, (rows: PersonnelRequirement[]) => savePersonnelRequirements(songListItemId, rows))
+
+export const useSuggestRoster = (programId: string) => useRosterChange(programId, () => suggestRoster(programId))
+
+export const useAddAssignment = (programId: string) =>
+  useRosterChange(programId, (values: Omit<NewAssignment, 'eventId'>) => addAssignment({ eventId: programId, ...values }))
+
+export const useReplaceAssignment = (programId: string) =>
+  useRosterChange(programId, ({ assignmentId, memberId }: { assignmentId: string; memberId: string }) =>
+    replaceAssignment(assignmentId, memberId),
+  )
+
+export const useRemoveAssignment = (programId: string) =>
+  useRosterChange(programId, (assignmentId: string) => removeAssignment(assignmentId))
+
+export const useFinalizeRoster = (programId: string) =>
+  useRosterChange(programId, (rosterId: string) => finalizeRoster(rosterId))
+
+export function useSendRosterNotifications() {
+  return useMutation({
+    mutationFn: ({ rosterId, memberIds }: { rosterId: string; memberIds: string[] }) =>
+      sendRosterNotifications(rosterId, memberIds),
+  })
 }
