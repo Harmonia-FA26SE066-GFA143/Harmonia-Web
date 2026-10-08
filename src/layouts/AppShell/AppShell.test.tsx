@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
+import * as notificationsApi from '@/features/notifications/api/notificationsApi'
 import { AppShell } from './AppShell'
 
 /** Emulates a viewport width for Ant Design's breakpoint queries. */
@@ -77,5 +78,35 @@ describe('AppShell', () => {
     fireEvent.click(await screen.findByText('Đăng xuất'))
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText('Đăng xuất khỏi Harmonia?')).toBeInTheDocument()
+  })
+
+  it('shows unread notifications with Vietnamese titles and marks one read when opened', async () => {
+    setViewportWidth(1280)
+    vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(2)
+    vi.spyOn(notificationsApi, 'listNotifications').mockResolvedValue({
+      items: [
+        {
+          id: 'n1',
+          type: 'eventPublished',
+          title: 'New event published',
+          content: 'The event on 24/10/2026 at 18:00 has been published.',
+          createdAt: '2026-10-08T02:00:00Z',
+          isRead: false,
+        },
+      ],
+      pageNumber: 1,
+      pageSize: 10,
+      totalCount: 1,
+      totalPages: 1,
+    })
+    const markRead = vi.spyOn(notificationsApi, 'markNotificationRead').mockResolvedValue()
+    renderShellAt('/director')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo, 2 chưa đọc' }))
+    const item = await screen.findByText('Sự kiện mới được công bố')
+    expect(screen.getByText('Mới')).toBeInTheDocument()
+    fireEvent.click(item)
+
+    await waitFor(() => expect(markRead).toHaveBeenCalledWith('n1'))
   })
 })
