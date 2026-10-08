@@ -59,8 +59,9 @@ const implemented = pages.filter((page) => !page.handle.placeholder)
 
 describe('router', () => {
   it('registers a page route for every screen-map page', () => {
-    // 31 screen-map pages plus the target of the emailed reset link (/reset-password) and /change-password.
-    expect(pages).toHaveLength(33)
+    // 31 screen-map pages, the target of the emailed reset link (/reset-password), /change-password and the Choir
+    // Director's skill approval (FE-25).
+    expect(pages).toHaveLength(34)
     expect(new Set(pages.map((page) => page.path)).size).toBe(pages.length)
   })
 
