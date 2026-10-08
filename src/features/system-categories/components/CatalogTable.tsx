@@ -1,10 +1,10 @@
 import { EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Card, Flex, Input, Table, Typography, type TableColumnsType } from 'antd'
+import { Button, Card, Flex, Input, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import { useMemo, useState } from 'react'
 import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
-import type { CatalogItem } from '../types'
+import type { CatalogEntry } from '../types'
 
 /** Wording for one catalog, e.g. skills or liturgical seasons. */
 export interface CatalogLabels {
@@ -17,23 +17,38 @@ export interface CatalogLabels {
   errorTitle: string
 }
 
-export interface CatalogTableProps {
+export interface CatalogTableProps<T extends CatalogEntry> {
   labels: CatalogLabels
-  items?: CatalogItem[]
+  /** Columns between the name and the status, e.g. the description or the season dates. */
+  columns: TableColumnsType<T>
+  items?: T[]
   loading?: boolean
   error?: boolean
   retrying?: boolean
   onRetry: () => void
   onAdd: () => void
-  onEdit: (item: CatalogItem) => void
+  onEdit: (item: T) => void
+}
+
+// Semantic colors keep Ant Design defaults (no approved values yet); the label always carries the meaning.
+const statusColumn = {
+  key: 'status',
+  title: 'Trạng thái',
+  dataIndex: 'isActive',
+  render: (isActive: boolean) => (
+    <Tag color={isActive ? 'green' : 'default'} style={{ marginInlineEnd: 0 }}>
+      {isActive ? 'Đang dùng' : 'Ngừng dùng'}
+    </Tag>
+  ),
 }
 
 /**
- * Searchable list of catalog entries with add/edit actions.
- * Delete is not offered: Report 1 FE-49/FE-50 do not define the catalog lifecycle (TBD).
+ * Searchable list of catalog entries with add/edit actions. Entries are switched off from the edit form, never
+ * deleted (Harmonia-BE LookupService).
  */
-export function CatalogTable({
+export function CatalogTable<T extends CatalogEntry>({
   labels,
+  columns,
   items,
   loading = false,
   error = false,
@@ -41,10 +56,10 @@ export function CatalogTable({
   onRetry,
   onAdd,
   onEdit,
-}: CatalogTableProps) {
+}: CatalogTableProps<T>) {
   const [search, setSearch] = useState('')
   const visible = useMemo(
-    () => (items ?? []).filter((item) => matchesSearch(search, item.name, item.description)),
+    () => (items ?? []).filter((item) => matchesSearch(search, item.name, item.description ?? undefined)),
     [items, search],
   )
 
@@ -64,7 +79,7 @@ export function CatalogTable({
     )
   }
 
-  const columns: TableColumnsType<CatalogItem> = [
+  const allColumns: TableColumnsType<T> = [
     {
       key: 'index',
       title: 'STT',
@@ -81,13 +96,8 @@ export function CatalogTable({
       dataIndex: 'name',
       render: (name: string) => <Typography.Text strong>{name}</Typography.Text>,
     },
-    {
-      key: 'description',
-      title: 'Mô tả',
-      dataIndex: 'description',
-      render: (description?: string) =>
-        description || <Typography.Text style={{ color: colors.textMuted }}>Chưa có mô tả</Typography.Text>,
-    },
+    ...columns,
+    statusColumn,
     {
       key: 'actions',
       title: 'Thao tác',
@@ -127,9 +137,9 @@ export function CatalogTable({
           <NoFilterResults onClearFilters={() => setSearch('')} />
         </div>
       ) : (
-        <Table<CatalogItem>
+        <Table<T>
           rowKey="id"
-          columns={columns}
+          columns={allColumns}
           dataSource={visible}
           pagination={{ pageSize: 10, hideOnSinglePage: true }}
           scroll={{ x: 'max-content' }}

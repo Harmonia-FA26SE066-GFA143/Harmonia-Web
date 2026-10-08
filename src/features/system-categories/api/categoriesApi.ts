@@ -1,13 +1,23 @@
-import { env } from '@/config/env'
 import { apiRequest } from '@/lib/api/client'
-import { ApiContractMissingError } from '@/lib/api/errors'
-import type { CatalogItem, CatalogItemValues, LiturgicalCatalog, LookupItem, LookupKind } from '../types'
+import { toQuery } from '@/lib/api/paging'
+import type {
+  BasicCatalog,
+  CatalogItem,
+  CatalogItemValues,
+  LiturgicalSeason,
+  LiturgicalSeasonValues,
+  LookupItem,
+  LookupKind,
+  Skill,
+  SkillValues,
+} from '../types'
 
 const lookupPaths: Record<LookupKind, string> = {
   seasons: 'liturgical-seasons',
   massTypes: 'mass-types',
   ceremonyTypes: 'ceremony-types',
   eventCategories: 'event-categories',
+  skillCategories: 'skill-categories',
   songThemes: 'song-themes',
   skills: 'skills',
   worshipLocations: 'worship-locations',
@@ -18,61 +28,48 @@ export function listLookup(kind: LookupKind): Promise<LookupItem[]> {
   return apiRequest<LookupItem[]>(`/api/lookups/${lookupPaths[kind]}`)
 }
 
-// The Admin catalog pages below stay on fixtures: they edit entries, and the backend has no write endpoints yet.
-// TBD: Backend API missing – creating and editing catalog entries for the Admin (tbd-backlog B11).
-// Each function checks `import.meta.env.DEV` at the call site so the fixture import is dropped from dist/.
+// Admin catalog pages (Harmonia-BE LookupsController): every entry including switched-off ones, and POST / PUT {id}
+// for the Admin only. PUT replaces every field, so the forms always send all of them.
 
-export async function listSkillCategories(): Promise<CatalogItem[]> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { listSkillCategoriesFixture } = await import('./fixtures.dev')
-    return listSkillCategoriesFixture()
-  }
-  throw new ApiContractMissingError('Xem danh mục kỹ năng')
+function listAll<T>(kind: LookupKind): Promise<T[]> {
+  return apiRequest<T[]>(`/api/lookups/${lookupPaths[kind]}${toQuery({ includeInactive: true })}`)
 }
 
-export async function createSkillCategory(values: CatalogItemValues): Promise<CatalogItem> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { saveSkillCategoryFixture } = await import('./fixtures.dev')
-    return saveSkillCategoryFixture(undefined, values)
-  }
-  throw new ApiContractMissingError('Thêm kỹ năng vào danh mục')
+function save<T>(kind: LookupKind, id: string | undefined, body: object): Promise<T> {
+  return apiRequest<T>(`/api/lookups/${lookupPaths[kind]}${id ? `/${id}` : ''}`, {
+    method: id ? 'PUT' : 'POST',
+    body: JSON.stringify(body),
+  })
 }
 
-export async function updateSkillCategory(id: string, values: CatalogItemValues): Promise<CatalogItem> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { saveSkillCategoryFixture } = await import('./fixtures.dev')
-    return saveSkillCategoryFixture(id, values)
-  }
-  throw new ApiContractMissingError('Chỉnh sửa kỹ năng trong danh mục')
+const withDescription = <V extends CatalogItemValues>(values: V): V => ({
+  ...values,
+  description: values.description?.trim() || null,
+})
+
+/** Sorted by name on the server. */
+export function listCatalogItems(kind: BasicCatalog): Promise<CatalogItem[]> {
+  return listAll(kind)
 }
 
-export async function listLiturgicalCategories(catalog: LiturgicalCatalog): Promise<CatalogItem[]> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { listLiturgicalCategoriesFixture } = await import('./fixtures.dev')
-    return listLiturgicalCategoriesFixture(catalog)
-  }
-  throw new ApiContractMissingError('Xem danh mục phụng vụ')
+export function saveCatalogItem(kind: BasicCatalog, id: string | undefined, values: CatalogItemValues): Promise<CatalogItem> {
+  return save(kind, id, withDescription(values))
 }
 
-export async function createLiturgicalCategory(
-  catalog: LiturgicalCatalog,
-  values: CatalogItemValues,
-): Promise<CatalogItem> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { saveLiturgicalCategoryFixture } = await import('./fixtures.dev')
-    return saveLiturgicalCategoryFixture(catalog, undefined, values)
-  }
-  throw new ApiContractMissingError('Thêm mục vào danh mục phụng vụ')
+/** Sorted by name on the server. */
+export function listSkills(): Promise<Skill[]> {
+  return listAll('skills')
 }
 
-export async function updateLiturgicalCategory(
-  catalog: LiturgicalCatalog,
-  id: string,
-  values: CatalogItemValues,
-): Promise<CatalogItem> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { saveLiturgicalCategoryFixture } = await import('./fixtures.dev')
-    return saveLiturgicalCategoryFixture(catalog, id, values)
-  }
-  throw new ApiContractMissingError('Chỉnh sửa mục trong danh mục phụng vụ')
+export function saveSkill(id: string | undefined, values: SkillValues): Promise<Skill> {
+  return save('skills', id, withDescription(values))
+}
+
+/** Sorted by start date on the server. */
+export function listSeasons(): Promise<LiturgicalSeason[]> {
+  return listAll('seasons')
+}
+
+export function saveSeason(id: string | undefined, values: LiturgicalSeasonValues): Promise<LiturgicalSeason> {
+  return save('seasons', id, values)
 }

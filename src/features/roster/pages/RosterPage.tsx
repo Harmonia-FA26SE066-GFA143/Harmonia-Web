@@ -5,7 +5,7 @@ import { paths } from '@/app/router/paths'
 import { formatProgramDate, SongListStatusTag, upcomingPrograms, usePrograms } from '@/features/liturgical-programs'
 import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
-import { useSkillCategories } from '@/features/system-categories'
+import { useLookup } from '@/features/system-categories'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { RosterEditor } from '../components/RosterEditor'
@@ -30,7 +30,7 @@ export function RosterPage() {
   const approved = songList.data?.status === 'approved'
   const roster = useRoster(approved ? programId : undefined)
   const participation = useParticipation(approved ? programId : undefined)
-  const skills = useSkillCategories()
+  const skills = useLookup('skills')
 
   const loading = songList.isPending || (approved && (roster.isPending || participation.isPending || skills.isPending))
   const failed = [songList, roster, participation, skills].find((query) => query.isError)

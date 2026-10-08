@@ -1,49 +1,55 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiContractMissingError } from '@/lib/api/errors'
 import {
-  createLiturgicalCategory,
-  createSkillCategory,
-  listLiturgicalCategories,
-  listSkillCategories,
-  updateLiturgicalCategory,
-  updateSkillCategory,
+  listCatalogItems,
+  listSeasons,
+  listSkills,
+  saveCatalogItem,
+  saveSeason,
+  saveSkill,
 } from '../api/categoriesApi'
-import type { CatalogItemValues, LiturgicalCatalog } from '../types'
-
-// Retrying cannot help while the API contract is missing.
-const retry = (failureCount: number, error: Error) => !(error instanceof ApiContractMissingError) && failureCount < 3
+import type { BasicCatalog, CatalogItemValues, LookupKind } from '../types'
 
 /** Values for the add/edit modal; `id` is present when editing an existing entry. */
-export interface SaveCatalogItem {
+export interface SaveCatalogEntry<V> {
   id?: string
-  values: CatalogItemValues
+  values: V
 }
 
-const skillKey = ['system-categories', 'skills'] as const
-const liturgicalKey = (catalog: LiturgicalCatalog) => ['system-categories', 'liturgical', catalog] as const
+const catalogKey = (kind: LookupKind) => ['system-categories', kind] as const
 
-export function useSkillCategories() {
-  return useQuery({ queryKey: skillKey, queryFn: listSkillCategories, retry })
+export function useCatalogItems(kind: BasicCatalog) {
+  return useQuery({ queryKey: catalogKey(kind), queryFn: () => listCatalogItems(kind) })
 }
 
-export function useSaveSkillCategory() {
+export function useSkills() {
+  return useQuery({ queryKey: catalogKey('skills'), queryFn: listSkills })
+}
+
+export function useSeasons() {
+  return useQuery({ queryKey: catalogKey('seasons'), queryFn: listSeasons })
+}
+
+function useSave<T, V>(kind: LookupKind, save: (id: string | undefined, values: V) => Promise<T>) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, values }: SaveCatalogItem) =>
-      id ? updateSkillCategory(id, values) : createSkillCategory(values),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: skillKey }),
+    mutationFn: ({ id, values }: SaveCatalogEntry<V>) => save(id, values),
+    // The selects of other pages read the active lookups; a skill category also decides which skills they offer.
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: catalogKey(kind) }),
+        queryClient.invalidateQueries({ queryKey: ['lookups'] }),
+      ]),
   })
 }
 
-export function useLiturgicalCategories(catalog: LiturgicalCatalog) {
-  return useQuery({ queryKey: liturgicalKey(catalog), queryFn: () => listLiturgicalCategories(catalog), retry })
+export function useSaveCatalogItem(kind: BasicCatalog) {
+  return useSave(kind, (id, values: CatalogItemValues) => saveCatalogItem(kind, id, values))
 }
 
-export function useSaveLiturgicalCategory(catalog: LiturgicalCatalog) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, values }: SaveCatalogItem) =>
-      id ? updateLiturgicalCategory(catalog, id, values) : createLiturgicalCategory(catalog, values),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: liturgicalKey(catalog) }),
-  })
+export function useSaveSkill() {
+  return useSave('skills', saveSkill)
+}
+
+export function useSaveSeason() {
+  return useSave('seasons', saveSeason)
 }
