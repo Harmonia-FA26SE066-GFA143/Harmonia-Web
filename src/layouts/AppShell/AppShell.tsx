@@ -4,6 +4,7 @@ import { createElement, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { colors, layout, sizes, spacing, typography } from '@/styles/tokens'
 import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection } from './navigation'
+import { NotificationBell } from '@/features/notifications'
 import { UserMenu } from './UserMenu'
 
 const { Header, Sider, Content } = Layout
@@ -111,9 +112,10 @@ export function AppShell() {
               </>
             )}
           </Flex>
-          <div style={{ marginInlineStart: 'auto' }}>
+          <Flex align="center" gap={spacing.xs} style={{ marginInlineStart: 'auto' }}>
+            <NotificationBell />
             <UserMenu surface={surface} />
-          </div>
+          </Flex>
         </Header>
         <Content
           style={{
