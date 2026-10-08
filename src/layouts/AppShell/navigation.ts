@@ -7,6 +7,7 @@ import {
   CheckSquareOutlined,
   FileTextOutlined,
   HistoryOutlined,
+  IdcardOutlined,
   SafetyCertificateOutlined,
   ScheduleOutlined,
   SettingOutlined,
@@ -67,7 +68,10 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
       { label: 'Tổng quan', items: [{ path: paths.director.dashboard, label: 'Tổng quan', icon: AppstoreOutlined }] },
       {
         label: 'Ca viên',
-        items: [{ path: paths.director.skillApproval, label: 'Duyệt kỹ năng', icon: SafetyCertificateOutlined }],
+        items: [
+          { path: paths.director.members, label: 'Danh sách ca viên', icon: IdcardOutlined },
+          { path: paths.director.skillApproval, label: 'Duyệt kỹ năng', icon: SafetyCertificateOutlined },
+        ],
       },
       {
         label: 'Phụng vụ & âm nhạc',

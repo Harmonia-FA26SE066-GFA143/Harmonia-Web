@@ -12,6 +12,11 @@ const programs = 'Chương trình phụng vụ'
 export const directorRoutes: RouteObject[] = [
   placeholderRoute(paths.director.dashboard, { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'], phase: 6 }),
   pageRoute(
+    paths.director.members,
+    { title: 'Danh sách ca viên', breadcrumb: [area, 'Danh sách ca viên'], phase: 6 },
+    async () => (await import('@/features/members')).MembersPage,
+  ),
+  pageRoute(
     paths.director.skillApproval,
     { title: 'Duyệt kỹ năng', breadcrumb: [area, 'Duyệt kỹ năng'], phase: 6 },
     async () => (await import('@/features/skill-approval')).SkillApprovalPage,
