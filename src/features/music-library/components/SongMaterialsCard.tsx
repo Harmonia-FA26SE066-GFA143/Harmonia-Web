@@ -1,6 +1,8 @@
 import {
+  BarChartOutlined,
   CustomerServiceOutlined,
   DeleteOutlined,
+  EditOutlined,
   FileTextOutlined,
   FolderOpenOutlined,
   ReadOutlined,
@@ -20,6 +22,9 @@ export interface SongMaterialsCardProps {
   /** A file was picked for a kind; the page checks it and asks for a title before uploading. */
   onPick: (kind: MaterialKind, file: File) => void
   onDelete: (material: SongMaterial) => void
+  onEdit: (material: SongMaterial) => void
+  /** Opens who has learned the material (FE-09). */
+  onProgress: (material: SongMaterial) => void
 }
 
 function formatSize(bytes: number | null): string | undefined {
@@ -56,7 +61,9 @@ function UploadButton({ kind, loading, label, onPick }: {
   )
 }
 
-function MaterialRow({ material, onDelete }: { material: SongMaterial; onDelete: (material: SongMaterial) => void }) {
+type MaterialActions = Pick<SongMaterialsCardProps, 'onDelete' | 'onEdit' | 'onProgress'>
+
+function MaterialRow({ material, onDelete, onEdit, onProgress }: { material: SongMaterial } & MaterialActions) {
   const Icon = kindIcons[material.kind]
   return (
     <Flex
@@ -92,6 +99,10 @@ function MaterialRow({ material, onDelete }: { material: SongMaterial; onDelete:
       <Button type="link" href={material.url} target="_blank" rel="noopener noreferrer">
         Xem/Tải xuống
       </Button>
+      <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Tiến độ học ${material.title}`}>
+        Tiến độ học
+      </Button>
+      <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
       <Button
         type="text"
         danger
@@ -104,7 +115,7 @@ function MaterialRow({ material, onDelete }: { material: SongMaterial; onDelete:
 }
 
 /** Materials grouped by the four FE-08/FE-28 kinds, each with its own upload action. */
-export function SongMaterialsCard({ materials, uploadingKind, onPick, onDelete }: SongMaterialsCardProps) {
+export function SongMaterialsCard({ materials, uploadingKind, onPick, ...actions }: SongMaterialsCardProps) {
   return (
     <Card title="Tài liệu">
       {materialKinds.map((kind, index) => {
@@ -123,7 +134,7 @@ export function SongMaterialsCard({ materials, uploadingKind, onPick, onDelete }
               {items.length > 0 ? (
                 <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                   {items.map((material) => (
-                    <MaterialRow key={material.id} material={material} onDelete={onDelete} />
+                    <MaterialRow key={material.id} material={material} {...actions} />
                   ))}
                 </Flex>
               ) : (

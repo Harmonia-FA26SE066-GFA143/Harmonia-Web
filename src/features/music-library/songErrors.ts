@@ -50,3 +50,16 @@ export function classificationErrorMessage(error: Error): string {
     ? 'Một số mục vừa chọn đã bị tắt hoặc không còn tồn tại. Vui lòng tải lại trang rồi chọn lại.'
     : 'Không thể lưu phân loại. Vui lòng thử lại.'
 }
+
+/** PUT /api/music-materials/{id} (Harmonia-BE MusicMaterialService.UpdateAsync). */
+export function materialUpdateErrorMessage(error: Error): string {
+  switch (error instanceof ApiError ? error.code : undefined) {
+    case 'MATERIAL_NOT_FOUND':
+      return 'Tài liệu không còn tồn tại. Vui lòng tải lại trang.'
+    case 'SKILL_INACTIVE':
+    case 'SKILL_NOT_FOUND':
+      return 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại.'
+    default:
+      return 'Không thể lưu tài liệu. Vui lòng thử lại.'
+  }
+}

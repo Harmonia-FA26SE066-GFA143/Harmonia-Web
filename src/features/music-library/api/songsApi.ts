@@ -2,7 +2,10 @@ import { apiRequest } from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type {
+  LearningProgress,
+  LearningStatus,
   MaterialKind,
+  MaterialValues,
   Song,
   SongClassification,
   SongClassificationValues,
@@ -112,4 +115,46 @@ export async function uploadMaterial(songId: string, values: UploadMaterialValue
 /** Deletes a material; FE-54 records deleted materials in the activity history. */
 export function deleteMaterial(materialId: string): Promise<void> {
   return apiRequest<void>(`/api/music-materials/${materialId}`, { method: 'DELETE' })
+}
+
+/** Replaces title and target skill; leaving the skill out makes the material for the whole choir. */
+export async function updateMaterial(materialId: string, values: MaterialValues): Promise<void> {
+  await apiRequest<unknown>(`/api/music-materials/${materialId}`, { method: 'PUT', body: JSON.stringify(values) })
+}
+
+/**
+ * Removes the song from the library (Harmonia-BE SongService.DeleteAsync sets `IsActive = false`): it is no longer
+ * listed or opened, while programs that used it keep it.
+ */
+export function deleteSong(id: string): Promise<void> {
+  return apiRequest<void>(`/api/songs/${id}`, { method: 'DELETE' })
+}
+
+type ApiLearningStatus = 'NotStarted' | 'NeedsPractice' | 'Learned'
+
+const learningByApi: Record<ApiLearningStatus, LearningStatus> = {
+  NotStarted: 'notStarted',
+  NeedsPractice: 'needsPractice',
+  Learned: 'learned',
+}
+
+const apiLearning = Object.fromEntries(Object.entries(learningByApi).map(([api, status]) => [status, api])) as Record<
+  LearningStatus,
+  ApiLearningStatus
+>
+
+interface LearningProgressDto extends Omit<LearningProgress, 'status'> {
+  status: ApiLearningStatus
+}
+
+/** Members expected to learn a material, by name, optionally only those with one status (FE-09). */
+export async function listLearningProgress(
+  materialId: string,
+  status: LearningStatus | undefined,
+  page: SongPage,
+): Promise<PagedList<LearningProgress>> {
+  const result = await apiRequest<PagedList<LearningProgressDto>>(
+    `/api/music-materials/${materialId}/learning-progress${toQuery({ status: status && apiLearning[status], ...page })}`,
+  )
+  return { ...result, items: result.items.map((item) => ({ ...item, status: learningByApi[item.status] })) }
 }

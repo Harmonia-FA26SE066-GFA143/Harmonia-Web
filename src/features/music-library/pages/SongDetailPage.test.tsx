@@ -252,4 +252,56 @@ describe('SongDetailPage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Xoá' }))
     await waitFor(() => expect(remove).toHaveBeenCalledWith('m1'))
   })
+
+  it('edits the title of a material and makes it for the whole choir', async () => {
+    withSong()
+    const update = vi.spyOn(songsApi, 'updateMaterial').mockResolvedValue()
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Sửa Audio mẫu bè Tenor' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText(/Tệp: audio-mau.mp3/)).toBeInTheDocument()
+    const title = within(dialog).getByRole('textbox', { name: 'Tiêu đề' })
+    expect(title).toHaveValue('Audio mẫu bè Tenor')
+    fireEvent.change(title, { target: { value: ' Audio mẫu cả ca đoàn ' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu thay đổi' }))
+
+    await waitFor(() => expect(update).toHaveBeenCalledWith('m2', { title: 'Audio mẫu cả ca đoàn', targetSkillId: undefined }))
+  })
+
+  it('shows who has learned a material, filtered by status', async () => {
+    withSong()
+    const progress = vi.spyOn(songsApi, 'listLearningProgress').mockResolvedValue({
+      items: [{ memberId: 'u1', fullName: 'Giuse Vũ Đình Khôi', status: 'learned', updatedAt: '2026-10-01T02:00:00Z' }],
+      pageNumber: 1,
+      pageSize: 20,
+      totalCount: 1,
+      totalPages: 1,
+    })
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Tiến độ học Bản nhạc SATB' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(await within(dialog).findByText('Giuse Vũ Đình Khôi')).toBeInTheDocument()
+    expect(within(dialog).getAllByText('Đã thuộc').length).toBeGreaterThan(0)
+    expect(progress).toHaveBeenCalledWith('m1', undefined, { pageNumber: 1, pageSize: 20 })
+
+    fireEvent.click(within(dialog).getByText('Cần tập thêm'))
+    await waitFor(() => expect(progress).toHaveBeenCalledWith('m1', 'needsPractice', { pageNumber: 1, pageSize: 20 }))
+  })
+
+  it('deletes the song after confirmation and returns to the library', async () => {
+    withSong()
+    const remove = vi.spyOn(songsApi, 'deleteSong').mockResolvedValue()
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Xoá bài hát/ }))
+    // Ant Design renders a confirm title twice; the first one sits in the visible dialog.
+    const confirm = (await screen.findAllByText('Xoá bài hát?'))[0].closest('.ant-modal') as HTMLElement
+    expect(remove).not.toHaveBeenCalled()
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá bài hát' }))
+
+    await waitFor(() => expect(remove).toHaveBeenCalledWith('s1'))
+    expect(await screen.findByTestId('location')).toHaveTextContent('/director/library')
+  })
 })

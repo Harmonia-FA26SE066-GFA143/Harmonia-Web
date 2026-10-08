@@ -117,3 +117,33 @@ export interface SongFilters {
   /** Matches a vocal or an instrument requirement. */
   skillId?: string
 }
+
+/** Body of PUT /api/music-materials/{id}: metadata only; the file and the kind stay as uploaded. */
+export interface MaterialValues {
+  title: string
+  /** Absent: the material is for the whole choir. */
+  targetSkillId?: string
+}
+
+/** `LearningStatus` of Harmonia-BE; the wording follows the mobile app. NotStarted: the member never marked it. */
+export type LearningStatus = 'notStarted' | 'needsPractice' | 'learned'
+
+export const learningStatuses: LearningStatus[] = ['notStarted', 'needsPractice', 'learned']
+
+export const learningStatusLabels: Record<LearningStatus, string> = {
+  notStarted: 'Chưa học',
+  needsPractice: 'Cần tập thêm',
+  learned: 'Đã thuộc',
+}
+
+/**
+ * One member expected to learn a material (FE-09), as `MaterialLearningProgressDetailDto`: every active member, or
+ * only those with the target skill approved.
+ */
+export interface LearningProgress {
+  memberId: string
+  fullName: string
+  status: LearningStatus
+  /** Backend `DateTime`, absent while NotStarted; read it with `parseUtc`. */
+  updatedAt: string | null
+}
