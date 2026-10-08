@@ -44,8 +44,14 @@ export type LiturgicalCatalog = 'seasons' | 'massTypes' | 'ceremonyTypes' | 'eve
 /** Catalogs whose entries have only a name and a description. */
 export type BasicCatalog = Exclude<LiturgicalCatalog, 'seasons'> | 'skillCategories'
 
-/** Backend lookups: the Admin catalogs plus the read-only song themes and worship locations. */
-export type LookupKind = LiturgicalCatalog | 'skillCategories' | 'skills' | 'songThemes' | 'worshipLocations'
+/** Backend lookups: the Admin catalogs plus the read-only song themes, liturgical slots and worship locations. */
+export type LookupKind =
+  | LiturgicalCatalog
+  | 'skillCategories'
+  | 'skills'
+  | 'songThemes'
+  | 'liturgicalSlots'
+  | 'worshipLocations'
 
 /** An active lookup row, as offered in selects; skills also carry their category. */
 export interface LookupItem {

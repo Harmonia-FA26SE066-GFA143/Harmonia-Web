@@ -10,7 +10,7 @@ const program: LiturgicalProgramDetail = {
   id: 'p1',
   eventName: 'Lễ Chúa Nhật XXVI',
   date: '2026-09-27',
-  songListStatus: 'revisionRequested',
+  songListStatus: 'needsRevision',
   songs: [{ id: 'a', liturgicalPart: 'Ca nhập lễ', title: 'Con Bước Lên Bàn Thờ' }],
 }
 

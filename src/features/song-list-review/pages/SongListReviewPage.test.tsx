@@ -62,7 +62,7 @@ describe('SongListReviewPage', () => {
 
   it('requires a note for a song that needs revision and then requests revision', async () => {
     vi.spyOn(songListsApi, 'getSongList').mockResolvedValue(submitted)
-    const review = vi.spyOn(songListsApi, 'submitSongReview').mockResolvedValue({ ...submitted, status: 'revisionRequested' })
+    const review = vi.spyOn(songListsApi, 'submitSongReview').mockResolvedValue({ ...submitted, status: 'needsRevision' })
     renderReview()
 
     decide(await screen.findByText('Con Bước Lên Bàn Thờ').then(() => 'Con Bước Lên Bàn Thờ'), 'Chấp thuận')

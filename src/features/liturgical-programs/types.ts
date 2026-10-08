@@ -4,17 +4,18 @@ import type { CatalogItem } from '@/features/system-categories'
 export type CatalogRef = Pick<CatalogItem, 'id' | 'name'>
 
 /**
- * Conceptual song-list conditions derived from Report 1 FE-17–FE-18 and FE-30–FE-32 (song-approval.md,
- * INTERPRETATION). They are display labels only: official status values and transitions are UNRESOLVED.
- * Declared once here so the Choir Director pages (Phase 5) reuse the same wording.
+ * Song-list status: `SongListStatus` of Harmonia-BE (Draft, Submitted, Approved, Rejected, NeedsRevision), which
+ * replaces the conceptual labels of song-approval.md. Transitions stay as decided on 2026-09-28 until song lists
+ * have a controller. Declared once here so the Choir Director pages (Phase 5) reuse the same wording.
  */
-export type SongListStatus = 'submitted' | 'approved' | 'rejected' | 'revisionRequested'
+export type SongListStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'needsRevision'
 
 export const songListStatusLabels: Record<SongListStatus, string> = {
+  draft: 'Bản nháp',
   submitted: 'Chờ xem xét',
   approved: 'Đã phê duyệt',
   rejected: 'Bị từ chối',
-  revisionRequested: 'Yêu cầu chỉnh sửa',
+  needsRevision: 'Yêu cầu chỉnh sửa',
 }
 
 /**
@@ -45,7 +46,7 @@ export interface LiturgicalProgram {
 
 export interface ProgramSong {
   id: string
-  /** Liturgical part (e.g. entrance, offertory); free text until the contract defines it. */
+  /** Name of a liturgical slot (`GET /api/lookups/liturgical-slots`); see `SongListItem` of song-lists. */
   liturgicalPart?: string
   title: string
 }

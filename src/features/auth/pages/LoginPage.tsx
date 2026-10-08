@@ -15,7 +15,7 @@ const roleHomePaths: Partial<Record<SystemRole, string>> = {
   admin: paths.admin.dashboard,
 }
 
-/** Backend error codes of POST /api/auth/login (Harmonia_API_Doc, F1) the form explains on its own. */
+/** Backend error codes of POST /api/auth/login (Harmonia-BE AuthService, ErrorStatusMap) the form explains on its own. */
 function feedbackFor(error: Error): LoginFeedback {
   const code = error instanceof ApiError ? error.code : undefined
   if (code === 'AUTH_INVALID_CREDENTIALS') return { kind: 'invalid-credentials' }

@@ -53,7 +53,7 @@ const lists = new Map<string, SongList>([
     'dev-program-4',
     {
       programId: 'dev-program-4',
-      status: 'revisionRequested',
+      status: 'needsRevision',
       items: [
         item('dev-song-1', 'Con Bước Lên Bàn Thờ', 'Ca nhập lễ', { review: { decision: 'accepted' } }),
         item('dev-song-5', 'Hãy Trở Về', 'Ca dâng lễ', {
@@ -102,7 +102,7 @@ function expectStatus(list: SongList, allowed: (SongList['status'] | undefined)[
 export const submitSongListFixture = (programId: string, items: SongListItemInput[]) =>
   writeFixture(() => {
     const previous = songListSnapshot(programId)
-    expectStatus(previous, [undefined, 'revisionRequested', 'rejected'])
+    expectStatus(previous, [undefined, 'draft', 'needsRevision', 'rejected'])
     const list: SongList = {
       programId,
       status: 'submitted',
@@ -128,7 +128,7 @@ export const submitSongReviewFixture = (
     const list: SongList = {
       ...previous,
       items,
-      status: allAccepted ? 'approved' : 'revisionRequested',
+      status: allAccepted ? 'approved' : 'needsRevision',
       priestNote: review.note,
       reviewedAt: new Date().toISOString(),
     }

@@ -1,7 +1,13 @@
-/** Admin reports listed in Report 1 FE-52: user activity, attendance, participation confirmation, assignment completion. */
-export type AdminReportKind = 'attendance' | 'userActivity' | 'participation' | 'practiceCompletion'
+/**
+ * Admin reports listed in Report 1 FE-52: user activity, attendance, participation confirmation, assignment completion.
+ * Names follow `ReportType` of Harmonia-BE (modelled, no controller yet).
+ */
+export type AdminReportKind = 'rehearsalAttendance' | 'userActivity' | 'participation' | 'assignmentCompletion'
 
-/** Priest reports listed in Report 1 FE-22: service history, song usage, event preparation. */
+/**
+ * Priest reports listed in Report 1 FE-22: service history, song usage, event preparation. `ReportType` of
+ * Harmonia-BE has no event preparation; it stays as FE-22 describes it until a reports API decides.
+ */
 export type PriestReportKind = 'serviceHistory' | 'songUsage' | 'eventPreparation'
 
 export type ReportKind = AdminReportKind | PriestReportKind

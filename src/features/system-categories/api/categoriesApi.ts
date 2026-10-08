@@ -19,6 +19,7 @@ const lookupPaths: Record<LookupKind, string> = {
   eventCategories: 'event-categories',
   skillCategories: 'skill-categories',
   songThemes: 'song-themes',
+  liturgicalSlots: 'liturgical-slots',
   skills: 'skills',
   worshipLocations: 'worship-locations',
 }

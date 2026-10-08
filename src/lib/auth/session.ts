@@ -1,4 +1,4 @@
-/** Role names sent by the backend (Harmonia_API_Doc, sheet "Quy ước"). */
+/** Role names sent by the backend (Harmonia-BE `RoleNames`). */
 export type ApiRoleName = 'Admin' | 'ParishPriest' | 'ChoirDirector' | 'ChoirMember'
 
 /** LoginResponse of POST /api/auth/login and /api/auth/refresh, stored as received. */

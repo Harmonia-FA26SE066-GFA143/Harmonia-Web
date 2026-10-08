@@ -20,7 +20,10 @@ export interface SongListItem {
   /** Song of the music library. */
   songId: string
   title: string
-  /** Liturgical part (e.g. Ca nhập lễ); free text until its vocabulary is defined (TBD). */
+  /**
+   * Name of a liturgical slot (`GET /api/lookups/liturgical-slots`, e.g. Ca nhập lễ). The backend stores
+   * `SongListItem.SlotId`; the name is kept until song lists have a controller.
+   */
   liturgicalPart?: string
   /**
    * Choir Director's note on this song, shown to the Priest. Follows the Stitch screens; not stated in Report 1
