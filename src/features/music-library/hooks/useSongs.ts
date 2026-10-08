@@ -2,16 +2,26 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import {
   createSong,
   deleteMaterial,
+  deleteSong,
   getSong,
   getSongClassification,
+  listLearningProgress,
   listMaterials,
   listSongs,
+  updateMaterial,
   updateSong,
   updateSongClassification,
   uploadMaterial,
   type SongPage,
 } from '../api/songsApi'
-import type { SongClassificationValues, SongFilters, SongValues, UploadMaterialValues } from '../types'
+import type {
+  LearningStatus,
+  MaterialValues,
+  SongClassificationValues,
+  SongFilters,
+  SongValues,
+  UploadMaterialValues,
+} from '../types'
 
 const songsKey = ['music-library'] as const
 const materialsKey = (songId: string) => ['music-library', 'materials', songId] as const
@@ -71,5 +81,31 @@ export function useDeleteMaterial(songId: string) {
   return useMutation({
     mutationFn: (materialId: string) => deleteMaterial(materialId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
+  })
+}
+
+export function useUpdateMaterial(songId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, values }: { id: string; values: MaterialValues }) => updateMaterial(id, values),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
+  })
+}
+
+/** Refreshes the library lists; the deleted song's own queries are left to the page, which leaves. */
+export function useDeleteSong() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => deleteSong(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [...songsKey, 'list'] }),
+  })
+}
+
+/** One page of a material's learning progress; the previous page stays visible while the next one loads. */
+export function useLearningProgress(materialId: string, status: LearningStatus | undefined, page: SongPage) {
+  return useQuery({
+    queryKey: [...songsKey, 'learning-progress', materialId, status, page],
+    queryFn: () => listLearningProgress(materialId, status, page),
+    placeholderData: keepPreviousData,
   })
 }

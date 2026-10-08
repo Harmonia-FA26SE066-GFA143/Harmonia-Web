@@ -1,27 +1,38 @@
 import { Form, Input, Modal, Select, Typography } from 'antd'
 import { useCatalogOptions } from '@/features/system-categories'
-import { materialKindLabels, type MaterialKind } from '../types'
+import { materialKindLabels, type MaterialKind, type MaterialValues, type SongMaterial } from '../types'
 
 export interface UploadMaterialModalProps {
-  /** The file picked for this kind; the modal is open while one is set. */
+  /** The file picked for this kind: the modal asks for the details before uploading. */
   pending?: { kind: MaterialKind; file: File }
+  /** A material being edited (PUT /api/music-materials/{id}); used when no file is pending. */
+  material?: SongMaterial
   saving?: boolean
-  onSubmit: (values: { title: string; targetSkillId?: string }) => void
+  onSubmit: (values: MaterialValues) => void
   onCancel: () => void
 }
 
 /** File name without its extension, cut to the backend title limit, as a starting title. */
 const titleFrom = (fileName: string) => fileName.replace(/\.[^.]+$/, '').slice(0, 200)
 
-/** Title (required by the backend) and optional target skill of a material before it is uploaded. */
-export function UploadMaterialModal({ pending, saving = false, onSubmit, onCancel }: UploadMaterialModalProps) {
-  const skills = useCatalogOptions('skills')
+/**
+ * Title (required by the backend) and optional target skill of a material, before it is uploaded or when it is
+ * edited. The file and the kind cannot change: another file is a new material.
+ */
+export function UploadMaterialModal({ pending, material, saving = false, onSubmit, onCancel }: UploadMaterialModalProps) {
+  const activeSkills = useCatalogOptions('skills')
+  // A material may target a skill switched off since; keep it selectable so saving does not drop it silently.
+  const skills =
+    material?.targetSkillId && !activeSkills.some((skill) => skill.value === material.targetSkillId)
+      ? [...activeSkills, { value: material.targetSkillId, label: material.targetSkillName ?? material.targetSkillId }]
+      : activeSkills
+  const editing = pending ? undefined : material
 
   return (
     <Modal
-      open={Boolean(pending)}
-      title={pending ? `Tải lên ${materialKindLabels[pending.kind].toLowerCase()}` : undefined}
-      okText="Tải lên"
+      open={Boolean(pending || material)}
+      title={pending ? `Tải lên ${materialKindLabels[pending.kind].toLowerCase()}` : 'Sửa tài liệu'}
+      okText={editing ? 'Lưu thay đổi' : 'Tải lên'}
       cancelText="Hủy"
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
@@ -29,19 +40,24 @@ export function UploadMaterialModal({ pending, saving = false, onSubmit, onCance
       mask={{ closable: !saving }}
       destroyOnHidden
       modalRender={(dom) => (
-        <Form<{ title: string; targetSkillId?: string }>
+        <Form<MaterialValues>
           layout="vertical"
           disabled={saving}
-          initialValues={{ title: pending ? titleFrom(pending.file.name) : undefined }}
+          initialValues={
+            editing
+              ? { title: editing.title, targetSkillId: editing.targetSkillId ?? undefined }
+              : { title: pending ? titleFrom(pending.file.name) : undefined }
+          }
           onFinish={(values) => onSubmit({ title: values.title.trim(), targetSkillId: values.targetSkillId })}
         >
           {dom}
         </Form>
       )}
     >
-      {pending && (
-        <Typography.Paragraph type="secondary" ellipsis={{ tooltip: pending.file.name }}>
-          Tệp: {pending.file.name}
+      {(pending || editing) && (
+        <Typography.Paragraph type="secondary" ellipsis={{ tooltip: pending?.file.name ?? editing?.fileName }}>
+          Tệp: {pending?.file.name ?? editing?.fileName}
+          {editing && ` (${materialKindLabels[editing.kind]}; muốn đổi tệp thì xoá rồi tải lên lại)`}
         </Typography.Paragraph>
       )}
       <Form.Item

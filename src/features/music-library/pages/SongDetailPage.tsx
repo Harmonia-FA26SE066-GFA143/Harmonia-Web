@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, EditOutlined, FileSearchOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { App, Button, Card, Flex, Modal, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
@@ -7,6 +7,7 @@ import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
+import { LearningProgressModal } from '../components/LearningProgressModal'
 import { SongClassificationCard } from '../components/SongClassificationCard'
 import { SongClassificationModal } from '../components/SongClassificationModal'
 import { SongFormModal } from '../components/SongFormModal'
@@ -15,11 +16,13 @@ import { SongMaterialsCard } from '../components/SongMaterialsCard'
 import { UploadMaterialModal } from '../components/UploadMaterialModal'
 import {
   useDeleteMaterial,
+  useDeleteSong,
   useSaveSong,
   useSaveSongClassification,
   useSong,
   useSongClassification,
   useSongMaterials,
+  useUpdateMaterial,
   useUploadMaterial,
 } from '../hooks/useSongs'
 import {
@@ -27,11 +30,13 @@ import {
   duplicateTitleMessage,
   isDuplicateTitle,
   materialFileProblem,
+  materialUpdateErrorMessage,
   uploadErrorMessage,
 } from '../songErrors'
 import {
   materialKindLabels,
   type MaterialKind,
+  type MaterialValues,
   type SongClassificationValues,
   type SongMaterial,
   type SongValues,
@@ -39,10 +44,14 @@ import {
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { title: 'Chi tiết bài hát' }]
 
-/** Choir Director: one song with its fields, FE-29 classification and FE-08/FE-28 materials. */
+/**
+ * Choir Director: one song with its fields, FE-29 classification and FE-08/FE-28 materials, their learning progress
+ * (FE-09) and deletion of the song. The backend deletes a song even when programs used it (it is only hidden from the
+ * library), which supersedes "only if never selected for a Mass" (song-approval.md, 5a.5).
+ */
 export function SongDetailPage() {
   const navigate = useNavigate()
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
   const { songId = '' } = useParams()
   const song = useSong(songId)
   const classification = useSongClassification(songId)
@@ -51,6 +60,10 @@ export function SongDetailPage() {
   const saveClassification = useSaveSongClassification(songId)
   const upload = useUploadMaterial(songId)
   const remove = useDeleteMaterial(songId)
+  const updateMaterial = useUpdateMaterial(songId)
+  const deleteSong = useDeleteSong()
+  const [editingMaterial, setEditingMaterial] = useState<SongMaterial>()
+  const [progressOf, setProgressOf] = useState<SongMaterial>()
   const [editing, setEditing] = useState(false)
   const [classifying, setClassifying] = useState(false)
   const [titleError, setTitleError] = useState<string>()
@@ -134,6 +147,38 @@ export function SongDetailPage() {
     )
   }
 
+  const handleUpdateMaterial = (values: MaterialValues) => {
+    if (!editingMaterial) return
+    updateMaterial.mutate(
+      { id: editingMaterial.id, values },
+      {
+        onSuccess: () => {
+          message.success('Đã lưu tài liệu.')
+          setEditingMaterial(undefined)
+        },
+        onError: (error) => message.error(materialUpdateErrorMessage(error)),
+      },
+    )
+  }
+
+  const handleDeleteSong = () =>
+    modal.confirm({
+      title: 'Xoá bài hát?',
+      content: `“${data.title}” sẽ không còn trong kho bài hát. Các chương trình đã dùng bài vẫn giữ bài này.`,
+      okText: 'Xoá bài hát',
+      okButtonProps: { danger: true },
+      cancelText: 'Hủy',
+      onOk: () =>
+        deleteSong
+          .mutateAsync(data.id)
+          .then(() => {
+            message.success(`Đã xoá “${data.title}” khỏi kho bài hát.`)
+            navigate(paths.director.library)
+          })
+          // 404 SONG_NOT_FOUND: someone deleted it already.
+          .catch(() => message.error('Không thể xoá bài hát. Vui lòng tải lại trang rồi thử lại.')),
+    })
+
   const handleDelete = () => {
     if (!deleting) return
     remove.mutate(deleting.id, {
@@ -153,6 +198,9 @@ export function SongDetailPage() {
         extra={
           <>
             {backButton}
+            <Button danger icon={<DeleteOutlined />} onClick={handleDeleteSong}>
+              Xoá bài hát
+            </Button>
             <Button type="primary" icon={<EditOutlined />} onClick={() => setEditing(true)}>
               Chỉnh sửa
             </Button>
@@ -180,6 +228,8 @@ export function SongDetailPage() {
             uploadingKind={upload.isPending ? picked?.kind : undefined}
             onPick={handlePick}
             onDelete={setDeleting}
+            onEdit={setEditingMaterial}
+            onProgress={setProgressOf}
           />
         )}
       </Flex>
@@ -198,6 +248,13 @@ export function SongDetailPage() {
         onSubmit={handleUpload}
         onCancel={() => setPicked(undefined)}
       />
+      <UploadMaterialModal
+        material={editingMaterial}
+        saving={updateMaterial.isPending}
+        onSubmit={handleUpdateMaterial}
+        onCancel={() => setEditingMaterial(undefined)}
+      />
+      <LearningProgressModal material={progressOf} onClose={() => setProgressOf(undefined)} />
       {classification.data && (
         <SongClassificationModal
           open={classifying}
