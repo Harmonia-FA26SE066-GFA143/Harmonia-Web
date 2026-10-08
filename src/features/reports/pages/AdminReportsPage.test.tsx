@@ -57,7 +57,7 @@ describe('AdminReportsPage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Xuất báo cáo' }))
 
     await waitFor(() =>
-      expect(exportReport).toHaveBeenCalledWith({ kind: 'attendance', scope: { type: 'season', seasonId: 's5' } }),
+      expect(exportReport).toHaveBeenCalledWith({ kind: 'rehearsalAttendance', scope: { type: 'season', seasonId: 's5' } }),
     )
   })
 

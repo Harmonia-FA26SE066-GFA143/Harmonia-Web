@@ -17,7 +17,7 @@ const time = (offset: number, hour: number) => day(offset).hour(hour).minute(45)
 const sundayMass = 'Thánh lễ Chúa Nhật tuần này'
 
 const data: Record<ReportKind, ReportResult> = {
-  attendance: {
+  rehearsalAttendance: {
     metrics: { total: 32, present: 28, absent: 3, notRecorded: 1 },
     rows: [
       ['Maria Nguyễn Thu Hướng', 'Có mặt', time(5, 5)],
@@ -49,7 +49,7 @@ const data: Record<ReportKind, ReportResult> = {
       cells: { member, event: sundayMass, date: date(5), response, note },
     })),
   },
-  practiceCompletion: {
+  assignmentCompletion: {
     metrics: { assigned: 19, passed: 11, needsRevision: 2, awaitingReview: 5, overdue: 1 },
     rows: [
       ['Simon Phan Văn Đức', 'Luyện bè trầm', 'Kinh Vinh Danh', 'Đạt', time(2, 21)],

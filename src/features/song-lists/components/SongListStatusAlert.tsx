@@ -6,12 +6,16 @@ import type { SongList } from '../types'
 const at = (iso?: string) => (iso ? ` lúc ${dayjs(iso).format('HH:mm DD/MM/YYYY')}` : '')
 
 /**
- * Where the list stands in the review loop, from the point of view of `viewer`. Status names are conceptual
- * labels (song-approval.md); the wording explains the editing lock decided on 2026-09-28.
+ * Where the list stands in the review loop, from the point of view of `viewer`. Statuses follow Harmonia-BE
+ * `SongListStatus`; the wording explains the editing lock decided on 2026-09-28.
  */
 export function SongListStatusAlert({ list, viewer, action }: { list: SongList; viewer: 'director' | 'priest'; action?: ReactNode }) {
   const note = list.priestNote ? `Ghi chú của Cha xứ / Ban phụng vụ: “${list.priestNote}”` : undefined
   switch (list.status) {
+    case 'draft':
+      return viewer === 'director' ? (
+        <Alert type="info" showIcon title="Danh sách đang là bản nháp, chưa gửi duyệt." action={action} />
+      ) : null
     case 'submitted':
       return (
         <Alert
@@ -21,7 +25,7 @@ export function SongListStatusAlert({ list, viewer, action }: { list: SongList; 
           description={viewer === 'director' ? 'Danh sách chỉ xem trong lúc chờ duyệt.' : 'Xem xét từng bài hát rồi gửi quyết định.'}
         />
       )
-    case 'revisionRequested':
+    case 'needsRevision':
       return (
         <Alert
           type="warning"

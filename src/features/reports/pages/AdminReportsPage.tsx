@@ -16,7 +16,7 @@ export function AdminReportsPage() {
   const { message } = App.useApp()
   const seasons = useCatalogOptions('seasons')
   const exportReport = useExportReport()
-  const [kind, setKind] = useState<AdminReportKind>('attendance')
+  const [kind, setKind] = useState<AdminReportKind>('rehearsalAttendance')
   const [filters, setFilters] = useState<ReportFilters>({})
   const [exporting, setExporting] = useState(false)
 

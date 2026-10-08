@@ -1,12 +1,24 @@
 /**
- * Actual attendance at a rehearsal session (FE-45). Values decided by the owner on 2026-09-29
- * (rehearsal-attendance.md, DECIDED): Present / Absent. Late or excused absence is UNRESOLVED.
- * TBD: Backend API missing – persisted values come with the contract.
+ * Actual attendance at a rehearsal session (FE-45): `AttendanceStatus` of Harmonia-BE (Present, Absent, Late,
+ * Excused), which settles the late / excused question left open on 2026-09-29 (rehearsal-attendance.md).
+ * TBD: Backend API missing – the entity has no controller yet.
  */
-export type AttendanceValue = 'present' | 'absent'
+export type AttendanceValue = 'present' | 'absent' | 'late' | 'excused'
+
+export const attendanceValues: AttendanceValue[] = ['present', 'late', 'excused', 'absent']
 
 export const attendanceLabels: Record<AttendanceValue, string> = {
   present: 'Có mặt',
+  late: 'Đi muộn',
+  excused: 'Vắng có phép',
+  absent: 'Vắng không phép',
+}
+
+/** Button labels of the attendance sheet, short enough to keep the four choices on one line. */
+export const attendanceShortLabels: Record<AttendanceValue, string> = {
+  present: 'Có mặt',
+  late: 'Muộn',
+  excused: 'Có phép',
   absent: 'Vắng',
 }
 

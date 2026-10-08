@@ -28,7 +28,7 @@ const season: ReportColumnDefinition = { key: 'season', title: 'Mùa phụng v�
 const celebrationDate: ReportColumnDefinition = { key: 'date', title: 'Ngày cử hành', numeric: true }
 
 export const reportDefinitions: Record<ReportKind, ReportDefinition> = {
-  attendance: {
+  rehearsalAttendance: {
     label: 'Điểm danh',
     description: 'Có mặt thực tế tại buổi tập hoặc buổi phục vụ, khác với xác nhận tham gia trước sự kiện.',
     metrics: [
@@ -65,7 +65,7 @@ export const reportDefinitions: Record<ReportKind, ReportDefinition> = {
     columns: [member, event, celebrationDate, { key: 'response', title: 'Phản hồi' }, { key: 'note', title: 'Ghi chú' }],
     emptyTitle: 'Chưa có dữ liệu xác nhận tham gia',
   },
-  practiceCompletion: {
+  assignmentCompletion: {
     label: 'Hoàn thành bài tập',
     description: 'Tiến độ nộp và đánh giá bài tập luyện tập.',
     metrics: [
@@ -113,11 +113,11 @@ export const reportDefinitions: Record<ReportKind, ReportDefinition> = {
     label: 'Tình trạng chuẩn bị',
     description: 'Tình trạng chuẩn bị của ca đoàn cho các sự kiện sắp tới.',
     metrics: [],
-    // "Trạng thái công bố" from Stitch is not shown: Draft/Published is UNRESOLVED.
+    // "Trạng thái công bố" from Stitch is not shown: the report contract is TBD (event status is BE `EventStatus`).
     columns: [program, celebrationDate, { key: 'preparation', title: 'Tình trạng chuẩn bị' }],
     emptyTitle: 'Chưa có sự kiện cần chuẩn bị',
   },
 }
 
-export const adminReportKinds: AdminReportKind[] = ['attendance', 'userActivity', 'participation', 'practiceCompletion']
+export const adminReportKinds: AdminReportKind[] = ['rehearsalAttendance', 'userActivity', 'participation', 'assignmentCompletion']
 export const priestReportKinds: PriestReportKind[] = ['serviceHistory', 'songUsage', 'eventPreparation']

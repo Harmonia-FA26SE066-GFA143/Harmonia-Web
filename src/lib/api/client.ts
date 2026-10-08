@@ -5,7 +5,7 @@ import { ApiError } from './errors'
 /**
  * Thin fetch wrapper. Feature `api/` modules call this; UI components never call fetch directly.
  * Sends the stored access token and, when the backend reports it expired, refreshes the session once and
- * retries (Harmonia_API_Doc: 401 AUTH_TOKEN_EXPIRED → POST /api/auth/refresh).
+ * retries (Harmonia-BE JwtAuthenticationExtensions: 401 AUTH_TOKEN_EXPIRED → POST /api/auth/refresh).
  * Pass `init` as a function when the request itself carries session data: it is rebuilt for the retry, after
  * the refresh token has rotated.
  */

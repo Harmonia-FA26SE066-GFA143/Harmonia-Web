@@ -1,5 +1,6 @@
 import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined } from '@ant-design/icons'
-import { Button, Flex, Input, Table, Typography, type TableColumnsType } from 'antd'
+import { Button, Flex, Input, Select, Table, Typography, type TableColumnsType } from 'antd'
+import { useLookup } from '@/features/system-categories'
 import { colors, typography } from '@/styles/tokens'
 import type { SongListItemInput, SongReview } from '../types'
 import { SongReviewNote } from './SongReviewNote'
@@ -20,6 +21,9 @@ const muted = (text: string) => <Typography.Text style={{ color: colors.textMute
 
 /** Ordered songs of the proposal: liturgical part and note per song, reordering and removal while editable. */
 export function ProposalTable({ items, editable, onChange }: ProposalTableProps) {
+  // Slots arrive in liturgical order (DefaultOrder). ponytail: the slot name is stored, not its id, until song lists
+  // have a controller; the backend will expect `slotId`.
+  const slotOptions = (useLookup('liturgicalSlots').data ?? []).map(({ name }) => ({ value: name, label: name }))
   const update = (key: string, patch: Partial<DraftItem>) =>
     onChange(items.map((item) => (item.key === key ? { ...item, ...patch } : item)))
   const move = (index: number, offset: -1 | 1) => {
@@ -69,11 +73,15 @@ export function ProposalTable({ items, editable, onChange }: ProposalTableProps)
       title: 'Phần phụng vụ',
       render: (_, item) =>
         editable ? (
-          <Input
+          <Select
+            allowClear
+            showSearch
             value={item.liturgicalPart}
-            placeholder="Ví dụ: Ca nhập lễ"
+            placeholder="Chọn phần phụng vụ"
             aria-label={`Phần phụng vụ của ${item.title}`}
-            onChange={(event) => update(item.key, { liturgicalPart: event.target.value })}
+            options={slotOptions}
+            onChange={(liturgicalPart?: string) => update(item.key, { liturgicalPart })}
+            style={{ minWidth: 180 }}
           />
         ) : (
           item.liturgicalPart || muted('—')

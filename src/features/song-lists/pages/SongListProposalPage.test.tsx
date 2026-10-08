@@ -2,6 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as songsApi from '@/features/music-library/api/songsApi'
+import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { renderPage } from '@/test/renderPage'
 import * as songListsApi from '../api/songListsApi'
 import type { SongList } from '../types'
@@ -43,6 +44,7 @@ describe('SongListProposalPage', () => {
       totalCount: 2,
       totalPages: 1,
     })
+    vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([{ id: 'slot-3', name: 'Ca dâng lễ' }])
     const submit = vi.spyOn(songListsApi, 'submitSongList').mockResolvedValue({ programId: 'p1', status: 'submitted', items: [] })
     renderProposal()
 
@@ -54,9 +56,8 @@ describe('SongListProposalPage', () => {
     fireEvent.click(await within(picker).findByRole('checkbox', { name: /Lễ Vật Tâm Tình/ }))
     fireEvent.click(within(picker).getByRole('button', { name: 'Thêm 1 bài hát' }))
 
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Phần phụng vụ của Lễ Vật Tâm Tình' }), {
-      target: { value: 'Ca dâng lễ ' },
-    })
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Phần phụng vụ của Lễ Vật Tâm Tình' }))
+    fireEvent.click(await screen.findByTitle('Ca dâng lễ'))
     fireEvent.click(screen.getByRole('button', { name: /Gửi duyệt/ }))
     // Ant Design gives every modal title the same id in tests, so the dialog is found by its visible title.
     const confirm = (await screen.findByText('Gửi danh sách bài hát để duyệt?')).closest('[role="dialog"]') as HTMLElement
@@ -75,7 +76,7 @@ describe('SongListProposalPage', () => {
 
     expect(await screen.findByText(/Đang chờ Cha xứ \/ Ban phụng vụ xem xét/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Gửi duyệt/ })).toBeNull()
-    expect(screen.queryByRole('textbox', { name: /Phần phụng vụ/ })).toBeNull()
+    expect(screen.queryByRole('combobox', { name: /Phần phụng vụ/ })).toBeNull()
   })
 
   it('is read-only after approval', async () => {
@@ -90,7 +91,7 @@ describe('SongListProposalPage', () => {
 
   it('shows the Priest notes and allows resubmitting after a revision request', async () => {
     withList({
-      status: 'revisionRequested',
+      status: 'needsRevision',
       priestNote: 'Đổi bài dâng lễ.',
       items: [
         { id: 'i1', songId: 'song-1', title: 'Con Bước Lên Bàn Thờ', review: { decision: 'accepted' } },

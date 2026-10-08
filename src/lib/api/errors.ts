@@ -13,8 +13,9 @@ export class ApiContractMissingError extends Error {
 }
 
 /**
- * Error thrown for non-2xx API responses. Body format (Harmonia_API_Doc, sheet "Quy ước"):
- * `{ code, message }`, plus `errors: { <field>: [<CODE>] }` for 400 VALIDATION_FAILED; 403 has an empty body.
+ * Error thrown for non-2xx API responses. Body format (Harmonia-BE `ErrorResponse`):
+ * `{ code, message }`, plus `errors: { <field>: [<CODE>] }` for 400 VALIDATION_FAILED. A 403 from the
+ * authorization layer and a routing 404 can have no body.
  * The UI shows feedback by `code` and never displays the backend `message`.
  */
 export class ApiError extends Error {

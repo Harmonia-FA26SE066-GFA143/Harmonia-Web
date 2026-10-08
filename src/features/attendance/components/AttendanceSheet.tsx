@@ -7,16 +7,21 @@ import { MetricSummary, NoFilterResults } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, layout, radius, spacing, typography } from '@/styles/tokens'
 import { useSaveAttendance } from '../hooks/useAttendance'
-import { attendanceLabels, type AttendanceRecord, type AttendanceValue } from '../types'
+import { attendanceLabels, attendanceShortLabels, attendanceValues, type AttendanceRecord, type AttendanceValue } from '../types'
 
 const metrics = [
   { key: 'total', label: 'Trong danh sách' },
-  { key: 'present', label: attendanceLabels.present },
-  { key: 'absent', label: attendanceLabels.absent },
+  ...attendanceValues.map((value) => ({ key: value, label: attendanceLabels[value] })),
   { key: 'unmarked', label: 'Chưa điểm danh' },
 ]
 
-/** Marks Present/Absent per member; changes stay on the page until saved (leaving asks first). */
+const options = attendanceValues.map((value) => ({
+  value,
+  label: attendanceShortLabels[value],
+  title: attendanceLabels[value],
+}))
+
+/** Marks each member's attendance; changes stay on the page until saved (leaving asks first). */
 export interface AttendanceSheetProps {
   rehearsalId: string
   records: AttendanceRecord[]
@@ -53,9 +58,10 @@ export function AttendanceSheet({ rehearsalId, records, editable }: AttendanceSh
 
   const counts = useMemo(() => {
     const values = Object.values(draft)
-    const present = values.filter((value) => value === 'present').length
-    const absent = values.filter((value) => value === 'absent').length
-    return { total: records.length, present, absent, unmarked: records.length - present - absent }
+    const marked = Object.fromEntries(
+      attendanceValues.map((value) => [value, values.filter((item) => item === value).length]),
+    ) as Record<AttendanceValue, number>
+    return { total: records.length, ...marked, unmarked: values.filter((value) => !value).length }
   }, [draft, records.length])
   const visible = records.filter((record) => matchesSearch(search, record.fullName, ...record.skills))
 
@@ -89,13 +95,11 @@ export function AttendanceSheet({ rehearsalId, records, editable }: AttendanceSh
           disabled={!editable}
           optionType="button"
           buttonStyle="solid"
+          style={{ whiteSpace: 'nowrap' }}
           aria-label={`Điểm danh ${record.fullName}`}
           value={draft[record.memberId]}
           onChange={(event) => mark(record.memberId, event.target.value)}
-          options={[
-            { value: 'present', label: attendanceLabels.present },
-            { value: 'absent', label: attendanceLabels.absent },
-          ]}
+          options={options}
         />
       ),
     },

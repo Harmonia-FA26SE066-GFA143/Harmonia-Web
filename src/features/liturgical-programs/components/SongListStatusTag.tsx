@@ -4,10 +4,11 @@ import { songListStatusLabels, type SongListStatus } from '../types'
 
 // Semantic colors keep Ant Design defaults; the label always carries the meaning.
 const statusColors: Record<SongListStatus, string> = {
+  draft: 'default',
   submitted: 'gold',
   approved: 'green',
   rejected: 'red',
-  revisionRequested: 'orange',
+  needsRevision: 'orange',
 }
 
 /** Song-list condition of a program (conceptual label, see types.ts); "Chưa có" when none was submitted. */
