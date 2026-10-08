@@ -87,6 +87,10 @@ const empty = (programId: string): SongList => ({ programId, items: [] })
 /** Current list of a program, for the liturgical-programs fixture (dev only). */
 export const songListSnapshot = (programId: string): SongList => lists.get(programId) ?? empty(programId)
 
+/** The list holding a song list item, for fixtures that receive only the item id (as the backend does). */
+export const songListOfItem = (songListItemId: string): SongList | undefined =>
+  [...lists.values()].find((list) => list.items.some((item) => item.id === songListItemId))
+
 export async function getSongListFixture(programId: string): Promise<SongList> {
   const [list] = await readFixture([songListSnapshot(programId)])
   return list ?? empty(programId)

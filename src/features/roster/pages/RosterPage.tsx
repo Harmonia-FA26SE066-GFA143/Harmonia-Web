@@ -8,13 +8,12 @@ import { useSongList } from '@/features/song-lists'
 import { useLookup } from '@/features/system-categories'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
-import { RosterEditor } from '../components/RosterEditor'
-import { useRoster } from '../hooks/useRoster'
+import { RosterPanel } from '../components/RosterPanel'
 
 /**
- * Choir Director: staffing requirements and service roster of a program (FE-35–FE-38, FE-40), decisions of
- * 2026-10-01 in roster.md. INTERPRETATION – chờ xác nhận: requirements are set on the approved song list, so the
- * page waits for an approved list (FE-35 per song, FE-39 after approval, like rehearsals in 6a.2).
+ * Choir Director: staffing requirements and service roster of a program (FE-35–FE-40), as Harmonia-BE builds them
+ * (see types.ts). The backend works on the approved song list only (ROSTER_SONG_LIST_NOT_APPROVED), so the page waits
+ * for one.
  * `?programId=` selects the program (link from the program detail); otherwise the next upcoming program.
  * TBD: assigned-program filtering for the Director (C4) comes with the auth/assignment contract.
  */
@@ -28,19 +27,18 @@ export function RosterPage() {
   const programId = program?.id ?? ''
   const songList = useSongList(programId, { enabled: Boolean(programId) })
   const approved = songList.data?.status === 'approved'
-  const roster = useRoster(approved ? programId : undefined)
   const participation = useParticipation(approved ? programId : undefined)
   const skills = useLookup('skills')
 
-  const loading = songList.isPending || (approved && (roster.isPending || participation.isPending || skills.isPending))
-  const failed = [songList, roster, participation, skills].find((query) => query.isError)
+  const loading = songList.isPending || (approved && (participation.isPending || skills.isPending))
+  const failed = [songList, participation, skills].find((query) => query.isError)
 
   return (
     <>
       <PageHeader
         title="Yêu cầu nhân sự & Phân công"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Phân công phục vụ' }]}
-        description="Thiết lập yêu cầu kỹ năng theo từng bài hát và cho cả chương trình, xem gợi ý, phát hiện thiếu người và điều chỉnh danh sách phục vụ."
+        description="Thiết lập yêu cầu kỹ năng theo từng bài hát, gợi ý và điều chỉnh phân công, chốt rồi gửi thông báo cho ca viên."
       />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
       {programs.isError && (
@@ -69,7 +67,7 @@ export function RosterPage() {
           {failed && (
             <ErrorState
               title="Không thể tải dữ liệu phân công"
-              onRetry={() => [songList, roster, participation, skills].forEach((query) => query.isError && query.refetch())}
+              onRetry={() => [songList, participation, skills].forEach((query) => query.isError && query.refetch())}
             />
           )}
           {!failed && loading && <SectionSkeleton rows={8} label="Đang tải phân công" />}
@@ -97,12 +95,12 @@ export function RosterPage() {
               }
             />
           )}
-          {!failed && !loading && approved && roster.data && (
-            <RosterEditor
-              // Remount after a save or a program change so the draft starts from the saved roster.
-              key={`${program.id}-${roster.dataUpdatedAt}`}
-              roster={roster.data}
-              songs={(songList.data?.items ?? []).map(({ songId, title, liturgicalPart }) => ({ songId, title, liturgicalPart }))}
+          {!failed && !loading && approved && (
+            <RosterPanel
+              // A program change starts from that program's saved requirements.
+              key={program.id}
+              programId={program.id}
+              songs={(songList.data?.items ?? []).map(({ id, title, liturgicalPart }) => ({ id, title, liturgicalPart }))}
               eligible={(participation.data ?? []).filter((request) => request.response === 'confirmed')}
               skills={(skills.data ?? []).map(({ id, name }) => ({ id, name }))}
             />
