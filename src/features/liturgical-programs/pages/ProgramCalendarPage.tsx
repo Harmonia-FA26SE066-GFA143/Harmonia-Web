@@ -7,6 +7,7 @@ import { paths } from '@/app/router/paths'
 import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
+import { ImportCalendarButton, LiturgicalDayInfo } from '../components/LiturgicalDayInfo'
 import { useEventNames } from '../hooks/useEventNames'
 import { useEvents } from '../hooks/useEvents'
 import type { LiturgicalEvent } from '../types'
@@ -17,7 +18,9 @@ const monthPage = { pageNumber: 1, pageSize: 100 }
 
 /**
  * Priest: month calendar of the liturgical events (FE-15), loaded per month with the date filters of
- * `GET /api/liturgical-events`. It shows only events: liturgical days, ranks and colors are not calculated here.
+ * `GET /api/liturgical-events`. The selected day also shows its liturgical day from `GET /api/liturgical-days/{date}`,
+ * which the Priest fills by importing a calendar feed; the backend reads one day at a time, so the month cells show
+ * events only.
  */
 export function ProgramCalendarPage() {
   const navigate = useNavigate()
@@ -69,11 +72,14 @@ export function ProgramCalendarPage() {
       <PageHeader
         title="Lịch phụng vụ"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Lịch phụng vụ' }]}
-        description="Xem các sự kiện phụng vụ theo tháng và tạo sự kiện cho một ngày."
+        description="Xem các sự kiện phụng vụ theo tháng, ngày phụng vụ của ngày đang chọn, và tạo sự kiện cho một ngày."
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
-            Tạo chương trình
-          </Button>
+          <Flex wrap gap={spacing.sm}>
+            <ImportCalendarButton />
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
+              Tạo chương trình
+            </Button>
+          </Flex>
         }
       />
       {events.isPending && <SectionSkeleton rows={8} label="Đang tải lịch phụng vụ" />}
@@ -99,6 +105,9 @@ export function ProgramCalendarPage() {
             />
           </Card>
           <Card title={`Ngày ${selected.format('DD/MM/YYYY')}`}>
+            <div style={{ marginBottom: spacing.md }}>
+              <LiturgicalDayInfo date={selectedKey} />
+            </div>
             <Button icon={<PlusOutlined />} onClick={createForDate} style={{ marginBottom: spacing.md }}>
               Tạo chương trình cho ngày này
             </Button>

@@ -152,3 +152,30 @@ export interface PreparationStatus {
   practicePassed: number
   practiceOverdue: number
 }
+
+/**
+ * The liturgical day of a date (`LiturgicalDayDto`), imported from a Catholic calendar feed. `rank` and `seasonName`
+ * are the backend's English words (CatholicCalendarParser), shown through the labels below.
+ */
+export interface LiturgicalDay {
+  date: string
+  /** As written in the feed, e.g. "Chúa Nhật XXIX Mùa Quanh Năm". */
+  celebrationName: string
+  rank?: string
+  seasonName?: string
+}
+
+export const liturgicalRankLabels: Record<string, string> = {
+  Solemnity: 'Lễ trọng',
+  Feast: 'Lễ kính',
+  'Obligatory Memorial': 'Lễ nhớ buộc',
+  'Optional Memorial': 'Lễ nhớ tự do',
+}
+
+export const liturgicalSeasonLabels: Record<string, string> = {
+  Advent: 'Mùa Vọng',
+  Christmas: 'Mùa Giáng Sinh',
+  Lent: 'Mùa Chay',
+  Easter: 'Mùa Phục Sinh',
+  OrdinaryTime: 'Mùa Thường Niên',
+}
