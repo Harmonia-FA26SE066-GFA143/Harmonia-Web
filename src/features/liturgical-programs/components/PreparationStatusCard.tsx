@@ -1,6 +1,8 @@
-import { Card, Descriptions, Flex, Typography } from 'antd'
+import { Button, Card, Descriptions, Flex, Typography } from 'antd'
+import { generatePath, useNavigate } from 'react-router'
+import { paths } from '@/app/router/paths'
 import { ErrorState, SectionSkeleton } from '@/shared/ui'
-import { colors, typography } from '@/styles/tokens'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { usePreparationStatus } from '../hooks/useEvents'
 import type { PreparationStatus } from '../types'
 import { SongListStatusTag } from './SongListStatusTag'
@@ -49,7 +51,12 @@ function roster({ rosterFinalized, rosterActiveAssignments, rosterShortages }: P
  * The backend gives raw counts; each line shows them as they are.
  */
 export function PreparationStatusCard({ eventId }: { eventId: string }) {
+  const navigate = useNavigate()
   const status = usePreparationStatus(eventId)
+  const songListStatus = status.data?.songListStatus
+  // Only a submitted or an approved list can be read by event (tbd-backlog B14).
+  const songListAction =
+    songListStatus === 'submitted' ? 'Duyệt danh sách' : songListStatus === 'approved' ? 'Xem danh sách' : undefined
 
   return (
     <Card title="Tình hình chuẩn bị">
@@ -61,7 +68,24 @@ export function PreparationStatusCard({ eventId }: { eventId: string }) {
         <Descriptions
           column={1}
           items={[
-            { key: 'songList', label: 'Danh sách bài hát', children: <SongListStatusTag status={status.data.songListStatus} /> },
+            {
+              key: 'songList',
+              label: 'Danh sách bài hát',
+              children: (
+                <Flex wrap align="center" gap={spacing.sm}>
+                  <SongListStatusTag status={songListStatus} />
+                  {songListAction && (
+                    <Button
+                      size="small"
+                      type={songListStatus === 'submitted' ? 'primary' : 'default'}
+                      onClick={() => navigate(generatePath(paths.priest.songListReview, { programId: eventId }))}
+                    >
+                      {songListAction}
+                    </Button>
+                  )}
+                </Flex>
+              ),
+            },
             { key: 'participation', label: 'Xác nhận tham gia', children: participation(status.data.participation) },
             { key: 'roster', label: 'Phân công phục vụ', children: roster(status.data) },
             {

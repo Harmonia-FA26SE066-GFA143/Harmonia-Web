@@ -1,9 +1,11 @@
 import { BarChartOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Typography } from 'antd'
-import { useMemo } from 'react'
+import dayjs from 'dayjs'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { EventTable, useEvents, usePrograms, vietnamToday } from '@/features/liturgical-programs'
+import { EventTable, formatProgramDate, useEvent, useEventNames, useEvents, vietnamToday } from '@/features/liturgical-programs'
+import { usePendingSongLists } from '@/features/song-list-review'
+import { parseUtc } from '@/lib/api/dates'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 
@@ -20,19 +22,41 @@ function Metric({ label, value }: { label: string; value?: number }) {
   )
 }
 
+/** A submitted list, named after its event (the pending lists carry only the event id). */
+function PendingSongList({ eventId, version, submittedAt }: { eventId: string; version: number; submittedAt?: string }) {
+  const navigate = useNavigate()
+  const event = useEvent(eventId)
+  const { eventName } = useEventNames()
+
+  return (
+    <Card styles={{ body: { padding: spacing.md } }}>
+      <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
+        <div>
+          <Typography.Text strong>
+            {event.data ? `${eventName(event.data)} · ${formatProgramDate(event.data.date)}` : 'Sự kiện phụng vụ'}
+          </Typography.Text>
+          <Typography.Paragraph style={{ margin: 0, color: colors.textMuted }}>
+            Ca trưởng đã gửi danh sách bài hát (phiên bản {version})
+            {submittedAt && ` lúc ${dayjs(parseUtc(submittedAt)).format('HH:mm DD/MM/YYYY')}`}.
+          </Typography.Paragraph>
+        </div>
+        <Button type="primary" onClick={() => navigate(generatePath(paths.priest.songListReview, { programId: eventId }))}>
+          Xem danh sách bài hát
+        </Button>
+      </Flex>
+    </Card>
+  )
+}
+
 /**
- * Priest dashboard: upcoming liturgical events from `GET /api/liturgical-events` and song lists waiting for review
- * (FE-15, FE-17), with a link to reports (FE-22). Song lists have no backend yet (TBD, tbd-backlog B14), so that
- * section loads and fails on its own. "Preparation status" from Stitch is not shown: its values are not defined.
+ * Priest dashboard: upcoming liturgical events from `GET /api/liturgical-events` and the song lists waiting for review
+ * from `GET /api/song-lists/pending` (FE-15, FE-17), with a link to reports (FE-22). Each section loads and fails on
+ * its own. "Preparation status" from Stitch is not shown here; a published event shows it on its page.
  */
 export function PriestDashboardPage() {
   const navigate = useNavigate()
   const upcoming = useEvents({ fromDate: vietnamToday() }, { pageNumber: 1, pageSize: upcomingLimit })
-  const programs = usePrograms()
-  const toReview = useMemo(
-    () => (programs.data ?? []).filter((program) => program.songListStatus === 'submitted'),
-    [programs.data],
-  )
+  const pending = usePendingSongLists()
 
   const createButton = (
     <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
@@ -51,46 +75,31 @@ export function PriestDashboardPage() {
       <Flex vertical gap={spacing.xl}>
         <Flex wrap gap={spacing.md}>
           <Metric label="Sự kiện sắp tới" value={upcoming.data?.totalCount} />
-          <Metric label="Danh sách bài hát chờ xem xét" value={programs.isSuccess ? toReview.length : undefined} />
+          <Metric label="Danh sách bài hát chờ xem xét" value={pending.data?.length} />
         </Flex>
 
         <section aria-labelledby="to-review-heading">
           <Typography.Title id="to-review-heading" level={2} style={{ marginBottom: spacing.md }}>
             Cần xem xét
           </Typography.Title>
-          {programs.isPending && <SectionSkeleton rows={2} label="Đang tải danh sách bài hát chờ xem xét" />}
-          {programs.isError && (
+          {pending.isPending && <SectionSkeleton rows={2} label="Đang tải danh sách bài hát chờ xem xét" />}
+          {pending.isError && (
             <ErrorState
               title="Không thể tải danh sách bài hát chờ xem xét"
-              onRetry={() => programs.refetch()}
-              retrying={programs.isFetching}
+              onRetry={() => pending.refetch()}
+              retrying={pending.isFetching}
             />
           )}
-          {programs.isSuccess && toReview.length === 0 && (
+          {pending.isSuccess && pending.data.length === 0 && (
             <EmptyState
               title="Không có danh sách bài hát nào chờ xem xét"
-              description="Khi Ca trưởng gửi danh sách bài hát, chương trình sẽ xuất hiện tại đây."
+              description="Khi Ca trưởng gửi danh sách bài hát, danh sách sẽ xuất hiện tại đây."
             />
           )}
-          {toReview.length > 0 && (
+          {pending.isSuccess && pending.data.length > 0 && (
             <Flex vertical gap={spacing.sm}>
-              {toReview.map((program) => (
-                <Card key={program.id} styles={{ body: { padding: spacing.md } }}>
-                  <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
-                    <div>
-                      <Typography.Text strong>{program.eventName}</Typography.Text>
-                      <Typography.Paragraph style={{ margin: 0, color: colors.textMuted }}>
-                        Ca trưởng đã gửi danh sách bài hát để xem xét.
-                      </Typography.Paragraph>
-                    </div>
-                    <Button
-                      type="primary"
-                      onClick={() => navigate(generatePath(paths.priest.songListReview, { programId: program.id }))}
-                    >
-                      Xem danh sách bài hát
-                    </Button>
-                  </Flex>
-                </Card>
+              {pending.data.map((list) => (
+                <PendingSongList key={list.id} eventId={list.eventId} version={list.version} submittedAt={list.submittedAt} />
               ))}
             </Flex>
           )}

@@ -1,20 +1,17 @@
 import { ArrowLeftOutlined, FileSearchOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Form, Input, Modal, Typography } from 'antd'
-import { useState } from 'react'
+import { Alert, App, Button, Card, Flex } from 'antd'
+import dayjs from 'dayjs'
 import { generatePath, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { ProgramInfo, useProgram, type LiturgicalProgram } from '@/features/liturgical-programs'
-import {
-  SongListStatusAlert,
-  useRejectSongList,
-  useSongList,
-  useSubmitSongReview,
-  type SongList,
-  type SongReview,
-} from '@/features/song-lists'
+import { formatProgramDate, useEvent, useEventNames } from '@/features/liturgical-programs'
+import { parseUtc } from '@/lib/api/dates'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
-import { ReviewTable, type ReviewDraft } from '../components/ReviewTable'
+import { ReviewForm } from '../components/ReviewForm'
+import { SongListItemsTable } from '../components/SongListItemsTable'
+import { useApprovedSongList, usePendingSongLists, useReviewSongList, useSongList } from '../hooks/useSongListReview'
+import { reviewErrorMessage } from '../songListReviewErrors'
+import type { ReviewDecision, ReviewValues, SongList } from '../types'
 
 const breadcrumb = [
   { title: 'Cha xứ' },
@@ -23,198 +20,138 @@ const breadcrumb = [
   { title: 'Duyệt danh sách bài hát' },
 ]
 
-/** Per-song review of a submitted list, whole-list rejection, and the decision summary (decided 2026-09-28). */
-function ReviewPanel({ program, list }: { program: LiturgicalProgram; list: SongList }) {
-  const { message } = App.useApp()
-  const submitReview = useSubmitSongReview(program.id)
-  const reject = useRejectSongList(program.id)
-  const reviewing = list.status === 'submitted'
-  const [draft, setDraft] = useState<ReviewDraft>({})
-  const [missingNotes, setMissingNotes] = useState<string[]>([])
-  const [generalNote, setGeneralNote] = useState('')
-  const [confirming, setConfirming] = useState(false)
-  const [rejecting, setRejecting] = useState(false)
+const at = (value?: string) => (value ? ` lúc ${dayjs(parseUtc(value)).format('HH:mm DD/MM/YYYY')}` : '')
 
-  const undecided = list.items.filter((item) => !draft[item.id]?.decision).length
-  const needsRevision = list.items.filter((item) => draft[item.id]?.decision === 'revisionRequested').length
+const confirmations: Record<ReviewDecision, { title: string; content: string; done: string }> = {
+  approve: {
+    title: 'Phê duyệt danh sách bài hát?',
+    content: 'Danh sách được khoá sau khi phê duyệt. Ca trưởng sẽ nhận thông báo.',
+    done: 'Đã phê duyệt danh sách bài hát.',
+  },
+  requestRevision: {
+    title: 'Yêu cầu Ca trưởng chỉnh sửa?',
+    content: 'Ca trưởng sẽ nhận thông báo kèm ghi chú và gửi lại một phiên bản mới.',
+    done: 'Đã gửi yêu cầu chỉnh sửa cho Ca trưởng.',
+  },
+  reject: {
+    title: 'Từ chối danh sách bài hát?',
+    content: 'Ca trưởng sẽ nhận thông báo kèm lý do và biên soạn một phiên bản mới.',
+    done: 'Đã từ chối danh sách bài hát.',
+  },
+}
 
-  const openConfirm = () => {
-    if (undecided > 0) {
-      message.warning(`Còn ${undecided} bài hát chưa có quyết định.`)
-      return
-    }
-    const missing = list.items
-      .filter((item) => draft[item.id]?.decision === 'revisionRequested' && !draft[item.id]?.note?.trim())
-      .map((item) => item.id)
-    setMissingNotes(missing)
-    if (missing.length === 0) setConfirming(true)
-  }
-
-  const handleSubmit = () => {
-    // Every song must carry an explicit decision (checked in openConfirm); nothing is accepted by default.
-    const decisions: Record<string, SongReview> = {}
-    for (const item of list.items) {
-      const entry = draft[item.id]
-      if (!entry?.decision) return
-      decisions[item.id] = { decision: entry.decision, note: entry.note?.trim() || undefined }
-    }
-    submitReview.mutate(
-      { decisions, note: generalNote.trim() || undefined },
-      {
-        onSuccess: () => {
-          setConfirming(false)
-          message.success(needsRevision ? 'Đã gửi yêu cầu chỉnh sửa cho Ca trưởng.' : 'Đã phê duyệt danh sách bài hát.')
-        },
-        onError: () => message.error('Không thể gửi quyết định. Vui lòng thử lại.'),
-      },
+function ListStatus({ list }: { list: SongList }) {
+  if (list.status === 'approved') {
+    return (
+      <Alert
+        type="success"
+        showIcon
+        title={`Danh sách đã được phê duyệt${at(list.decidedAt)}.`}
+        description={list.reviews.at(-1)?.notes && `Ghi chú: “${list.reviews.at(-1)?.notes}”`}
+      />
     )
   }
-
-  const handleReject = ({ note }: { note: string }) =>
-    reject.mutate(note.trim(), {
-      onSuccess: () => {
-        setRejecting(false)
-        message.success('Đã từ chối danh sách bài hát.')
-      },
-      onError: () => message.error('Không thể từ chối danh sách. Vui lòng thử lại.'),
-    })
-
   return (
-    <>
-      <Flex vertical gap={spacing.lg}>
-        <SongListStatusAlert list={list} viewer="priest" />
-        <ProgramInfo program={program} />
-        <Card title={`Danh sách bài hát đề xuất (${list.items.length})`} styles={{ body: { padding: 0 } }}>
-          <ReviewTable
-            items={list.items}
-            draft={reviewing ? draft : undefined}
-            missingNotes={missingNotes}
-            onChange={(itemId, review) => setDraft((current) => ({ ...current, [itemId]: review }))}
-          />
-        </Card>
-        {reviewing && (
-          <Card title="Quyết định">
-            <Typography.Paragraph>
-              Tất cả bài được chấp thuận thì danh sách được phê duyệt; có bài cần chỉnh sửa thì danh sách được trả về
-              Ca trưởng để sửa.
-            </Typography.Paragraph>
-            <Input.TextArea
-              rows={3}
-              value={generalNote}
-              onChange={(event) => setGeneralNote(event.target.value)}
-              placeholder="Nhận xét chung gửi Ca trưởng (không bắt buộc)"
-              aria-label="Nhận xét chung"
-              style={{ marginBottom: spacing.md }}
-            />
-            <Flex wrap justify="flex-end" gap={spacing.sm}>
-              <Button danger onClick={() => setRejecting(true)}>
-                Từ chối toàn bộ danh sách
-              </Button>
-              <Button type="primary" onClick={openConfirm}>
-                Gửi quyết định
-              </Button>
-            </Flex>
-          </Card>
-        )}
-      </Flex>
-
-      <Modal
-        open={confirming}
-        title={needsRevision ? 'Yêu cầu Ca trưởng chỉnh sửa?' : 'Phê duyệt danh sách bài hát?'}
-        okText={needsRevision ? 'Gửi yêu cầu chỉnh sửa' : 'Phê duyệt'}
-        cancelText="Hủy"
-        okButtonProps={{ loading: submitReview.isPending }}
-        cancelButtonProps={{ disabled: submitReview.isPending }}
-        onOk={handleSubmit}
-        onCancel={() => setConfirming(false)}
-      >
-        {needsRevision
-          ? `${needsRevision}/${list.items.length} bài hát cần chỉnh sửa. Danh sách sẽ được trả về Ca trưởng kèm ghi chú.`
-          : `Cả ${list.items.length} bài hát được chấp thuận. Danh sách sẽ được phê duyệt và khoá chỉnh sửa.`}
-      </Modal>
-      <Modal
-        open={rejecting}
-        title="Từ chối toàn bộ danh sách?"
-        okText="Từ chối"
-        cancelText="Hủy"
-        okButtonProps={{ danger: true, htmlType: 'submit', loading: reject.isPending }}
-        cancelButtonProps={{ disabled: reject.isPending }}
-        onCancel={() => setRejecting(false)}
-        destroyOnHidden
-        modalRender={(dom) => (
-          <Form<{ note: string }> layout="vertical" disabled={reject.isPending} onFinish={handleReject}>
-            {dom}
-          </Form>
-        )}
-      >
-        <Typography.Paragraph>Ca trưởng sẽ biên soạn lại danh sách và gửi duyệt lần mới.</Typography.Paragraph>
-        <Form.Item
-          label="Lý do từ chối"
-          name="note"
-          rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập lý do từ chối.' }]}
-        >
-          <Input.TextArea rows={3} />
-        </Form.Item>
-      </Modal>
-    </>
+    <Alert
+      type="info"
+      showIcon
+      title={`Ca trưởng đã gửi danh sách (phiên bản ${list.version})${at(list.submittedAt)}.`}
+      description={
+        list.version > 1
+          ? 'Bản gửi lại sau lần xem xét trước. Xem cả danh sách rồi chọn một quyết định.'
+          : 'Xem cả danh sách rồi chọn một quyết định.'
+      }
+    />
   )
 }
 
 /**
- * Priest / Liturgy Committee: review the song list the Choir Director submitted (FE-17–FE-20). The Priest cannot
- * edit the list; the Choir Director cannot review (separate pages).
+ * Priest / Liturgy Committee: the song list the Choir Director submitted for an event, decided as a whole (FE-17–FE-20,
+ * `/api/song-lists`): approve, request a revision or reject, with a note the Choir Director reads. An approved list is
+ * shown read-only. A list being drafted or revised cannot be read by event yet (tbd-backlog B14).
  */
 export function SongListReviewPage() {
   const navigate = useNavigate()
+  const { message, modal } = App.useApp()
   const { programId = '' } = useParams()
-  const program = useProgram(programId)
-  const list = useSongList(programId)
+  const event = useEvent(programId)
+  const pending = usePendingSongLists()
+  const pendingId = pending.data?.find((list) => list.eventId === programId)?.id
+  const submitted = useSongList(pendingId)
+  const approved = useApprovedSongList(programId)
+  const review = useReviewSongList()
+  const { eventName } = useEventNames()
+
+  const toProgram = () => navigate(generatePath(paths.priest.programDetail, { programId }))
   const backButton = (
-    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(generatePath(paths.priest.programDetail, { programId }))}>
+    <Button icon={<ArrowLeftOutlined />} onClick={toProgram}>
       Về chương trình
     </Button>
   )
 
-  if (program.isPending || list.isPending) return <PageSkeleton sections={2} />
+  if (event.isPending || pending.isPending || approved.isPending || (pendingId && submitted.isPending)) {
+    return <PageSkeleton sections={2} />
+  }
+
+  const failed = event.isError || pending.isError || approved.isError || submitted.isError
+  const list = submitted.data ?? approved.data ?? undefined
+
+  const handleReview = (values: ReviewValues) => {
+    if (!list) return
+    const { title, content, done } = confirmations[values.decision]
+    modal.confirm({
+      title,
+      content,
+      okText: 'Gửi quyết định',
+      okButtonProps: { danger: values.decision === 'reject' },
+      cancelText: 'Hủy',
+      onOk: () =>
+        review
+          .mutateAsync({ id: list.id, values })
+          .then(() => {
+            message.success(done)
+            toProgram()
+          })
+          .catch((error: Error) => message.error(reviewErrorMessage(error, 'Không thể gửi quyết định. Vui lòng thử lại.'))),
+    })
+  }
 
   return (
     <>
       <PageHeader
         title="Duyệt danh sách bài hát"
         breadcrumb={breadcrumb}
-        description={program.data?.eventName}
+        description={event.data && `${eventName(event.data)} · ${formatProgramDate(event.data.date)} · ${event.data.time}`}
         extra={backButton}
       />
-      {(program.isError || list.isError) && (
+      {failed && (
         <ErrorState
           title="Không thể tải danh sách bài hát"
-          onRetry={() => {
-            program.refetch()
-            list.refetch()
-          }}
-          retrying={program.isFetching || list.isFetching}
+          onRetry={() => Promise.all([event.refetch(), pending.refetch(), approved.refetch(), submitted.refetch()])}
+          retrying={event.isFetching || pending.isFetching || approved.isFetching || submitted.isFetching}
         />
       )}
-      {program.isSuccess && !program.data && (
+      {!failed && !event.data && (
         <EmptyState
           icon={<FileSearchOutlined />}
           title="Không tìm thấy chương trình phụng vụ"
           description="Chương trình không tồn tại hoặc đường dẫn không đúng."
         />
       )}
-      {program.data && list.data && !list.data.status && (
+      {!failed && event.data && !list && (
         <EmptyState
-          title="Chưa có danh sách bài hát"
-          description="Ca trưởng chưa gửi danh sách bài hát cho chương trình này."
-          action={backButton}
+          title="Không có danh sách chờ duyệt"
+          description="Ca trưởng chưa gửi danh sách bài hát cho sự kiện này, hoặc đang chỉnh sửa theo yêu cầu."
         />
       )}
-      {program.data && list.data?.status && (
-        <ReviewPanel
-          key={`${list.data.status}-${list.data.submittedAt}-${list.data.reviewedAt}`}
-          program={program.data}
-          list={list.data}
-        />
+      {!failed && event.data && list && (
+        <Flex vertical gap={spacing.lg}>
+          <ListStatus list={list} />
+          <Card title={`Danh sách bài hát (${list.items.length})`} styles={{ body: { padding: 0 } }}>
+            <SongListItemsTable items={list.items} />
+          </Card>
+          {list.status === 'submitted' && <ReviewForm saving={review.isPending} onSubmit={handleReview} />}
+        </Flex>
       )}
     </>
   )
