@@ -7,6 +7,7 @@ import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
 import { EventInfo } from '../components/EventInfo'
+import { PreparationStatusCard } from '../components/PreparationStatusCard'
 import { eventErrorMessage } from '../eventErrors'
 import { useCancelEvent, useEvent, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
 import { useEventNames } from '../hooks/useEventNames'
@@ -18,7 +19,8 @@ const breadcrumb = [{ title: 'Cha xứ' }, { title: 'Chương trình phụng v�
 /**
  * Priest: one liturgical event (FE-15–FE-16) with the actions the backend allows (LiturgicalEventService): edit
  * unless cancelled, publish a Draft, cancel unless already cancelled or past. Publishing and cancelling a published
- * event notify Choir Directors and members. The song list has no backend yet (TBD, tbd-backlog B14).
+ * event notify Choir Directors and members. A published event shows how ready the choir is (FE-21). The song list has
+ * no backend yet (TBD, tbd-backlog B14).
  */
 export function PriestProgramDetailPage() {
   const navigate = useNavigate()
@@ -131,6 +133,7 @@ export function PriestProgramDetailPage() {
       />
       <Flex vertical gap={spacing.lg}>
         <EventInfo event={data} />
+        {data.status === 'published' && <PreparationStatusCard eventId={data.id} />}
         <Card title="Danh sách bài hát">
           <Typography.Text style={{ color: colors.textMuted }}>
             Chưa có danh sách bài hát. Ca trưởng sẽ đề xuất danh sách bài hát cho chương trình này.

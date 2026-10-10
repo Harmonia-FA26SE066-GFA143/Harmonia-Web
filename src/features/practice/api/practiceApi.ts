@@ -1,6 +1,14 @@
 import { apiRequest } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
-import type { AssignmentScope, AssignmentValues, PracticeStatus, PracticeSubmission, ReviewResult } from '../types'
+import type {
+  AssignmentScope,
+  AssignmentValues,
+  MemberProgress,
+  ParticipationStatus,
+  PracticeStatus,
+  PracticeSubmission,
+  ReviewResult,
+} from '../types'
 
 // Practice for the Choir Director: `/api/practice-assignments` and `/api/practice-submissions` (Harmonia-BE). There is
 // no list of the assignments given (tbd-backlog B21): the page works from the review queue across assignments.
@@ -111,4 +119,32 @@ export interface UpcomingEvent {
 /** The only event list open to the Choir Director (`GET /api/schedule/events`): upcoming published events. */
 export function listUpcomingEvents(): Promise<UpcomingEvent[]> {
   return apiRequest<UpcomingEvent[]>('/api/schedule/events')
+}
+
+type ApiParticipationStatus = 'Invited' | 'Confirmed' | 'Declined' | 'Unsure'
+
+const participationByApi: Record<ApiParticipationStatus, ParticipationStatus> = {
+  Invited: 'invited',
+  Confirmed: 'confirmed',
+  Declined: 'declined',
+  Unsure: 'unsure',
+}
+
+interface EventPreparationProgressDto extends Omit<MemberProgress, 'participationStatus'> {
+  participationStatus: ApiParticipationStatus | null
+}
+
+/** Every active member, by name (`GET /api/liturgical-events/{id}/preparation-progress`, Choir Director only). */
+export async function listPreparationProgress(eventId: string): Promise<MemberProgress[]> {
+  const rows = await apiRequest<EventPreparationProgressDto[]>(`/api/liturgical-events/${eventId}/preparation-progress`)
+  return rows.map(({ participationStatus, ...row }) => ({
+    memberId: row.memberId,
+    fullName: row.fullName,
+    participationStatus: participationStatus ? participationByApi[participationStatus] : undefined,
+    rehearsalsHeld: row.rehearsalsHeld,
+    rehearsalsAttended: row.rehearsalsAttended,
+    assignmentsTotal: row.assignmentsTotal,
+    assignmentsPassed: row.assignmentsPassed,
+    assignmentsOverdue: row.assignmentsOverdue,
+  }))
 }

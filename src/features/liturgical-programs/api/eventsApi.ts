@@ -1,7 +1,7 @@
 import { apiRequest } from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import { toQuery, type PagedList } from '@/lib/api/paging'
-import type { EventFilters, EventFormValues, EventStatus, LiturgicalEvent } from '../types'
+import type { EventFilters, EventFormValues, EventStatus, LiturgicalEvent, PreparationStatus, SongListStatus } from '../types'
 
 // `/api/liturgical-events` (Harmonia-BE LiturgicalEventsController), Parish Priest only. `eventDate` is a DateOnly
 // (YYYY-MM-DD) and `time` a TimeOnly (HH:mm:ss): calendar values in Vietnam, never parsed with `new Date()`.
@@ -111,4 +111,61 @@ export async function publishEvent(id: string): Promise<void> {
 /** Refused once the date has passed (EVENT_ALREADY_PASSED); members are notified if it was published. */
 export async function cancelEvent(id: string): Promise<void> {
   await apiRequest<unknown>(`/api/liturgical-events/${id}/cancel`, { method: 'PATCH' })
+}
+
+type ApiSongListStatus = 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'NeedsRevision'
+
+const songListStatusByApi: Record<ApiSongListStatus, SongListStatus> = {
+  Draft: 'draft',
+  Submitted: 'submitted',
+  Approved: 'approved',
+  Rejected: 'rejected',
+  NeedsRevision: 'needsRevision',
+}
+
+interface EventPreparationStatusDto {
+  songListStatus: ApiSongListStatus | null
+  participationInvited: number
+  participationConfirmed: number
+  participationDeclined: number
+  participationUnsure: number
+  rosterStatus: 'Draft' | 'Suggested' | 'Finalized' | null
+  rosterActiveAssignments: number
+  rosterShortages: { songTitle: string; skillName: string; requiredCount: number; assignedCount: number }[] | null
+  rehearsalsTotal: number
+  rehearsalsHeld: number
+  attendanceExpected: number
+  attendancePresent: number
+  practiceExpected: number
+  practicePassed: number
+  practiceOverdue: number
+}
+
+/** Counts across the choir for one event (EventPreparationService.GetStatusAsync). */
+export async function getPreparationStatus(id: string): Promise<PreparationStatus> {
+  const dto = await apiRequest<EventPreparationStatusDto>(`/api/liturgical-events/${id}/preparation-status`)
+  return {
+    songListStatus: dto.songListStatus ? songListStatusByApi[dto.songListStatus] : undefined,
+    participation: {
+      invited: dto.participationInvited,
+      confirmed: dto.participationConfirmed,
+      declined: dto.participationDeclined,
+      unsure: dto.participationUnsure,
+    },
+    rosterFinalized: dto.rosterStatus ? dto.rosterStatus === 'Finalized' : undefined,
+    rosterActiveAssignments: dto.rosterActiveAssignments,
+    rosterShortages: dto.rosterShortages?.map(({ songTitle, skillName, requiredCount, assignedCount }) => ({
+      songTitle,
+      skillName,
+      requiredCount,
+      assignedCount,
+    })),
+    rehearsalsTotal: dto.rehearsalsTotal,
+    rehearsalsHeld: dto.rehearsalsHeld,
+    attendanceExpected: dto.attendanceExpected,
+    attendancePresent: dto.attendancePresent,
+    practiceExpected: dto.practiceExpected,
+    practicePassed: dto.practicePassed,
+    practiceOverdue: dto.practiceOverdue,
+  }
 }

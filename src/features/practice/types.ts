@@ -62,3 +62,27 @@ export interface PracticeSubmission {
   audioUrl: string
   feedbacks: PracticeFeedback[]
 }
+
+/** `ParticipationStatus` of Harmonia-BE: Invited until the member answers; a member never asked has none. */
+export type ParticipationStatus = 'invited' | 'confirmed' | 'declined' | 'unsure'
+
+export const participationStatusLabels: Record<ParticipationStatus, string> = {
+  invited: 'Chưa phản hồi',
+  confirmed: 'Xác nhận',
+  declined: 'Từ chối',
+  unsure: 'Chưa chắc chắn',
+}
+
+/** One active member's readiness for an event, as raw counts (`EventPreparationProgressDto`, FE-46). */
+export interface MemberProgress {
+  memberId: string
+  fullName: string
+  participationStatus?: ParticipationStatus
+  /** Rehearsals of the event that have started, and those the member was recorded Present or Late at. */
+  rehearsalsHeld: number
+  rehearsalsAttended: number
+  /** Assignments of the event the member receives; passed and overdue by the newest attempt. */
+  assignmentsTotal: number
+  assignmentsPassed: number
+  assignmentsOverdue: number
+}

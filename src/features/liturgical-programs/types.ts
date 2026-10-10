@@ -119,3 +119,36 @@ export interface EventFilters {
   fromDate?: string
   toDate?: string
 }
+
+/** A song / skill pair of the approved list still short of people (`RosterShortageDto`). */
+export interface StaffingShortage {
+  songTitle: string
+  skillName: string
+  requiredCount: number
+  assignedCount: number
+}
+
+/**
+ * How ready the choir is for an event, as raw counts (`EventPreparationStatusDto`, FE-21). This supersedes the
+ * seven-step preparation sequence of liturgical-program.md (owner decision 2026-10-07: follow the BE).
+ */
+export interface PreparationStatus {
+  /** Newest song-list version; absent when none was proposed. */
+  songListStatus?: SongListStatus
+  participation: { invited: number; confirmed: number; declined: number; unsure: number }
+  /** Absent while the event has no roster. */
+  rosterFinalized?: boolean
+  rosterActiveAssignments: number
+  /** Absent until the song list is approved: the staffing needs are not known before. */
+  rosterShortages?: StaffingShortage[]
+  rehearsalsTotal: number
+  /** Rehearsals that have already started. */
+  rehearsalsHeld: number
+  /** Rehearsals held × active members, and the Present or Late records among them. */
+  attendanceExpected: number
+  attendancePresent: number
+  /** Event assignments each active member receives, summed over members. */
+  practiceExpected: number
+  practicePassed: number
+  practiceOverdue: number
+}
