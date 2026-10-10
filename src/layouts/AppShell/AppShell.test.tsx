@@ -132,4 +132,23 @@ describe('AppShell', () => {
 
     await waitFor(() => expect(markRead).toHaveBeenCalledWith('n1'))
   })
+
+  it('marks every notification read at once', async () => {
+    setViewportWidth(1280)
+    vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(3)
+    vi.spyOn(notificationsApi, 'listNotifications').mockResolvedValue({
+      items: [],
+      pageNumber: 1,
+      pageSize: 10,
+      totalCount: 0,
+      totalPages: 0,
+    })
+    const markAll = vi.spyOn(notificationsApi, 'markAllNotificationsRead').mockResolvedValue()
+    renderShellAt('/director')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo, 3 chưa đọc' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Đánh dấu tất cả đã đọc' }))
+
+    await waitFor(() => expect(markAll).toHaveBeenCalled())
+  })
 })
