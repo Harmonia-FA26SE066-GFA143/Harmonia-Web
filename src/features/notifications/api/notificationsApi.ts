@@ -13,6 +13,7 @@ const typeByApi: Record<string, NotificationType> = {
   DirectorNote: 'directorNote',
   SkillReview: 'skillReview',
   EventCancelled: 'eventCancelled',
+  SongListSubmitted: 'songListSubmitted',
 }
 
 interface NotificationDto {
@@ -46,4 +47,8 @@ export function countUnreadNotifications(): Promise<number> {
 /** Marking an already read notification again is accepted (NotificationService.MarkAsReadAsync). */
 export async function markNotificationRead(id: string): Promise<void> {
   await apiRequest<unknown>(`/api/notifications/${id}/read`, { method: 'PUT' })
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await apiRequest<unknown>('/api/notifications/read-all', { method: 'PUT' })
 }

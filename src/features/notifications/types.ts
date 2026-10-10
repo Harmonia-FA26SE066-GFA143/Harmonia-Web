@@ -8,6 +8,7 @@ export type NotificationType =
   | 'directorNote'
   | 'skillReview'
   | 'eventCancelled'
+  | 'songListSubmitted'
 
 /**
  * Titles shown by type: the backend writes title and content in English (tbd-backlog B16), so the Web titles them
@@ -22,6 +23,7 @@ export const notificationTitles: Record<NotificationType, string> = {
   directorNote: 'Ghi chú cho Ca trưởng',
   skillReview: 'Kết quả duyệt kỹ năng',
   eventCancelled: 'Sự kiện đã bị hủy',
+  songListSubmitted: 'Danh sách bài hát chờ duyệt',
 }
 
 /** A notification of the signed-in user (`NotificationDto`). */

@@ -1,5 +1,10 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { countUnreadNotifications, listNotifications, markNotificationRead } from '../api/notificationsApi'
+import {
+  countUnreadNotifications,
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from '../api/notificationsApi'
 
 const notificationsKey = ['notifications'] as const
 const pageSize = 10
@@ -31,6 +36,14 @@ export function useMarkNotificationRead() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => markNotificationRead(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: notificationsKey }),
+  })
+}
+
+export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => markAllNotificationsRead(),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: notificationsKey }),
   })
 }

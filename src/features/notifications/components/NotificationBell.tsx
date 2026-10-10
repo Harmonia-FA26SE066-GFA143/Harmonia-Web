@@ -5,7 +5,12 @@ import { useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
 import { ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, radius, sizes, spacing, typography } from '@/styles/tokens'
-import { useMarkNotificationRead, useNotificationList, useUnreadNotificationCount } from '../hooks/useNotifications'
+import {
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+  useNotificationList,
+  useUnreadNotificationCount,
+} from '../hooks/useNotifications'
 import { notificationTitles, type AppNotification } from '../types'
 
 function NotificationItem({ notification, onOpen }: { notification: AppNotification; onOpen: (notification: AppNotification) => void }) {
@@ -81,11 +86,12 @@ function NotificationList({ open }: { open: boolean }) {
 
 /**
  * Header bell of every web workspace: unread count and the latest notifications (Harmonia-BE NotificationsController).
- * Opening an unread notification marks it read; there is no "mark all" endpoint.
+ * Opening an unread notification marks it read; "mark all" uses `PUT /api/notifications/read-all`.
  */
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const unread = useUnreadNotificationCount().data ?? 0
+  const markAll = useMarkAllNotificationsRead()
 
   return (
     <Popover
@@ -93,7 +99,16 @@ export function NotificationBell() {
       onOpenChange={setOpen}
       trigger="click"
       placement="bottomRight"
-      title="Thông báo"
+      title={
+        <Flex align="center" justify="space-between" gap={spacing.sm}>
+          <span>Thông báo</span>
+          {unread > 0 && (
+            <Button type="link" size="small" loading={markAll.isPending} onClick={() => markAll.mutate()}>
+              Đánh dấu tất cả đã đọc
+            </Button>
+          )}
+        </Flex>
+      }
       content={
         <div style={{ width: 'min(360px, calc(100vw - 32px))', maxHeight: 420, overflowY: 'auto' }}>
           <NotificationList open={open} />
