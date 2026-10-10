@@ -1,82 +1,84 @@
 import { Button, Flex, Table, Typography, type TableColumnsType } from 'antd'
-import { SkillTags } from '@/features/members'
 import { colors, typography } from '@/styles/tokens'
 import { formatDateTime, formatDuration } from '../practiceFormat'
-import type { PracticeAssignment, PracticeSubmission } from '../types'
+import type { PracticeSubmission } from '../types'
 import { PracticeStatusTag } from './PracticeStatusTag'
 
 export interface SubmissionTableProps {
   submissions: PracticeSubmission[]
-  assignments: Map<string, PracticeAssignment>
-  onReview: (submission: PracticeSubmission) => void
+  /** Server-side paging of GET /api/practice-submissions. */
+  page: number
+  pageSize: number
+  total: number
+  loading?: boolean
+  onPageChange: (page: number) => void
+  onOpen: (submission: PracticeSubmission) => void
 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
+const numeric = { fontFamily: typography.fontFamilyNumeric }
 
-/** Members of each assignment with their latest submission and review (FE-12, FE-42–FE-44). */
-export function SubmissionTable({ submissions, assignments, onReview }: SubmissionTableProps) {
+/** The review queue: each member's newest attempt, oldest first, across every assignment (FE-42). */
+export function SubmissionTable({ submissions, page, pageSize, total, loading, onPageChange, onOpen }: SubmissionTableProps) {
   const columns: TableColumnsType<PracticeSubmission> = [
     {
       key: 'member',
       title: 'Ca viên',
-      render: (_, item) => (
-        <Flex vertical gap={4}>
-          <Typography.Text strong>{item.fullName}</Typography.Text>
-          <SkillTags skills={item.skills} />
-        </Flex>
-      ),
+      dataIndex: 'memberName',
+      render: (name: string) => <Typography.Text strong>{name}</Typography.Text>,
     },
     {
       key: 'assignment',
       title: 'Bài tập',
-      render: (_, item) => {
-        const assignment = assignments.get(item.assignmentId)
-        return (
-          <Flex vertical gap={2}>
-            <Typography.Text>{assignment?.title ?? '—'}</Typography.Text>
-            {assignment && <Typography.Text style={muted}>{assignment.song.title}</Typography.Text>}
-          </Flex>
-        )
-      },
+      render: (_, submission) => (
+        <Flex vertical>
+          <Typography.Text>{submission.assignmentTitle}</Typography.Text>
+          <Typography.Text style={muted}>Hạn nộp {formatDateTime(submission.assignmentDueDate)}</Typography.Text>
+        </Flex>
+      ),
     },
     {
       key: 'submittedAt',
       title: 'Nộp lúc',
-      width: 150,
-      render: (_, item) => (
-        <Flex vertical gap={2}>
-          <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric }}>{formatDateTime(item.submittedAt)}</Typography.Text>
-          {item.submittedAt && <Typography.Text style={muted}>Thời lượng {formatDuration(item.durationSeconds)}</Typography.Text>}
+      render: (_, submission) => (
+        <Flex vertical>
+          <Typography.Text style={numeric}>{formatDateTime(submission.submittedAt)}</Typography.Text>
+          <Typography.Text style={muted}>
+            Lần {submission.attemptNo} · {formatDuration(submission.durationSeconds)}
+          </Typography.Text>
         </Flex>
       ),
     },
-    { key: 'status', title: 'Trạng thái', width: 130, render: (_, item) => <PracticeStatusTag status={item.status} /> },
     {
-      key: 'feedback',
-      title: 'Nhận xét gần nhất',
-      render: (_, item) =>
-        item.reviews[0]?.feedback ? (
-          <Typography.Text ellipsis={{ tooltip: item.reviews[0].feedback }} style={{ maxWidth: 260 }}>
-            {item.reviews[0].feedback}
-          </Typography.Text>
-        ) : (
-          <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
-        ),
+      key: 'status',
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      render: (status: PracticeSubmission['status']) => <PracticeStatusTag status={status} />,
     },
     {
       key: 'actions',
       title: 'Thao tác',
       align: 'right',
-      width: 130,
-      render: (_, item) =>
-        // Only a submission can be reviewed; members who have not submitted have nothing to listen to.
-        item.submittedAt ? (
-          <Button type="link" onClick={() => onReview(item)} aria-label={`Đánh giá bài nộp của ${item.fullName}`}>
-            {item.reviews[0]?.submittedAt === item.submittedAt ? 'Sửa đánh giá' : 'Đánh giá'}
-          </Button>
-        ) : null,
+      render: (_, submission) => (
+        <Button
+          type={submission.feedbacks.length === 0 ? 'primary' : 'default'}
+          onClick={() => onOpen(submission)}
+          aria-label={`${submission.feedbacks.length === 0 ? 'Nghe và chấm' : 'Xem và nhận xét'} bản thu của ${submission.memberName}`}
+        >
+          {submission.feedbacks.length === 0 ? 'Nghe & chấm' : 'Xem & nhận xét'}
+        </Button>
+      ),
     },
   ]
 
-  return <Table<PracticeSubmission> rowKey="id" columns={columns} dataSource={submissions} pagination={false} scroll={{ x: 960 }} />
+  return (
+    <Table<PracticeSubmission>
+      rowKey="id"
+      columns={columns}
+      dataSource={submissions}
+      loading={loading}
+      pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: onPageChange }}
+      scroll={{ x: 'max-content' }}
+    />
+  )
 }

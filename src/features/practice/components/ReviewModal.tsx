@@ -1,112 +1,135 @@
-import { Alert, Flex, Form, Input, Modal, Radio, Typography } from 'antd'
+import { App, Flex, Form, Input, Modal, Radio, Typography } from 'antd'
+import { ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
+import { useCommentSubmission, useReviewSubmission, useSubmission } from '../hooks/usePractice'
+import { practiceErrorMessage } from '../practiceErrors'
 import { formatDateTime, formatDuration } from '../practiceFormat'
-import { practiceStatusLabels, type PracticeSubmission, type ReviewResult } from '../types'
+import { practiceStatusLabels, type ReviewResult } from '../types'
 
 export interface ReviewModalProps {
-  /** The submission under review; the modal is closed when absent. */
-  submission?: PracticeSubmission
-  assignmentTitle?: string
-  saving?: boolean
-  onSubmit: (review: { result: ReviewResult; feedback?: string }) => void
-  onCancel: () => void
+  /** The submission to open; the modal is closed without one. */
+  submissionId?: string
+  onClose: () => void
 }
 
 interface FormValues {
-  result?: ReviewResult
-  feedback?: string
+  result?: ReviewResult | 'keep'
+  comment?: string
 }
 
+const resultOptions = [
+  { value: 'passed', label: practiceStatusLabels.passed },
+  { value: 'needsRevision', label: practiceStatusLabels.needsRevision },
+]
+
 /**
- * Listen to a submission and review it manually (FE-42–FE-44, LI-03, LI-05): "Đạt" or "Cần chỉnh sửa", feedback
- * required for "Cần chỉnh sửa". A later review replaces the current result; earlier ones stay as history
- * (decision 2026-10-01).
+ * Listen to a submission and review it manually (FE-42–FE-44, LI-03, LI-05). The first review sets "Đạt" or "Cần
+ * chỉnh sửa", a comment required for the latter (POST …/feedback); later comments may change the result on the
+ * member's newest attempt (POST …/comments). Earlier reviews stay as history.
  */
-export function ReviewModal({ submission, assignmentTitle, saving = false, onSubmit, onCancel }: ReviewModalProps) {
-  // Edit only the review of the current submission; a resubmission starts a new review (decision 2026-10-01).
-  const reviews = submission?.reviews ?? []
-  const current = reviews[0]?.submittedAt === submission?.submittedAt ? reviews[0] : undefined
-  const history = current ? reviews.slice(1) : reviews
+export function ReviewModal({ submissionId, onClose }: ReviewModalProps) {
+  const { message } = App.useApp()
+  const submission = useSubmission(submissionId)
+  const review = useReviewSubmission()
+  const comment = useCommentSubmission()
+  const data = submission.data
+  const reviewed = Boolean(data?.feedbacks.length)
+  const saving = review.isPending || comment.isPending
+
+  const handleFinish = ({ result, comment: text }: FormValues) => {
+    if (!data) return
+    const callbacks = {
+      onSuccess: () => {
+        message.success(reviewed ? 'Đã thêm nhận xét.' : 'Đã chấm bài.')
+        onClose()
+      },
+      onError: (error: Error) => message.error(practiceErrorMessage(error, 'Không thể lưu đánh giá. Vui lòng thử lại.')),
+    }
+    const trimmed = text?.trim() || undefined
+    if (reviewed) {
+      comment.mutate({ id: data.id, comment: trimmed ?? '', result: result === 'keep' ? undefined : result }, callbacks)
+    } else if (result && result !== 'keep') {
+      review.mutate({ id: data.id, result, comment: trimmed }, callbacks)
+    }
+  }
 
   return (
     <Modal
-      open={Boolean(submission)}
-      title={current ? 'Sửa đánh giá' : 'Đánh giá bài nộp'}
-      okText="Lưu đánh giá"
+      open={Boolean(submissionId)}
+      title={reviewed ? 'Nhận xét thêm' : 'Chấm bài nộp'}
+      okText={reviewed ? 'Gửi nhận xét' : 'Lưu kết quả'}
       cancelText="Hủy"
-      okButtonProps={{ htmlType: 'submit', loading: saving }}
+      okButtonProps={{ htmlType: 'submit', loading: saving, disabled: !data }}
       cancelButtonProps={{ disabled: saving }}
-      onCancel={onCancel}
+      onCancel={onClose}
       mask={{ closable: !saving }}
       width={600}
       destroyOnHidden
       modalRender={(dom) => (
-        <Form<FormValues>
-          layout="vertical"
-          disabled={saving}
-          initialValues={{ result: current?.result, feedback: current?.feedback }}
-          onFinish={(values) => values.result && onSubmit({ result: values.result, feedback: values.feedback?.trim() || undefined })}
-        >
+        <Form<FormValues> layout="vertical" disabled={saving} initialValues={{ result: undefined }} onFinish={handleFinish}>
           {dom}
         </Form>
       )}
     >
-      {submission && (
+      {submission.isPending && <SectionSkeleton rows={4} label="Đang tải bản thu" />}
+      {submission.isError && (
+        <ErrorState title="Không thể tải bản thu" onRetry={() => submission.refetch()} retrying={submission.isFetching} />
+      )}
+      {data && (
         <Flex vertical gap={spacing.md}>
           <div>
-            <Typography.Text strong>{submission.fullName}</Typography.Text>
+            <Typography.Text strong>{data.memberName}</Typography.Text>
             <Typography.Paragraph style={{ color: colors.textMuted, margin: 0 }}>
-              {assignmentTitle} · nộp lúc {formatDateTime(submission.submittedAt)} · {formatDuration(submission.durationSeconds)}
+              {data.assignmentTitle} · lần {data.attemptNo}, nộp lúc {formatDateTime(data.submittedAt)} ·{' '}
+              {formatDuration(data.durationSeconds)}
             </Typography.Paragraph>
           </div>
-          {submission.audioUrl ? (
-            <audio controls src={submission.audioUrl} style={{ width: '100%' }} aria-label={`Bản thu của ${submission.fullName}`} />
-          ) : (
-            <Alert type="info" showIcon title="Chưa nghe được bản thu: cách hệ thống cấp tệp âm thanh chưa được định nghĩa." />
-          )}
-          <div>
-            <Form.Item label="Đánh giá" name="result" rules={[{ required: true, message: 'Vui lòng chọn kết quả đánh giá.' }]}>
-              <Radio.Group
-                optionType="button"
-                buttonStyle="solid"
-                options={[
-                  { value: 'passed', label: practiceStatusLabels.passed },
-                  { value: 'needsRevision', label: practiceStatusLabels.needsRevision },
-                ]}
-              />
-            </Form.Item>
-            <Form.Item
-              label="Nhận xét"
-              name="feedback"
-              dependencies={['result']}
-              rules={[
-                ({ getFieldValue }) => ({
-                  validator: (_, value?: string) =>
-                    getFieldValue('result') !== 'needsRevision' || value?.trim()
-                      ? Promise.resolve()
-                      : Promise.reject(new Error('Vui lòng nhập nhận xét khi cần chỉnh sửa.')),
-                }),
-              ]}
-            >
-              <Input.TextArea rows={4} placeholder="Nhận xét và hướng dẫn cho ca viên" />
-            </Form.Item>
-          </div>
-          {history.length > 0 && (
+          <audio controls src={data.audioUrl} style={{ width: '100%' }} aria-label={`Bản thu của ${data.memberName}`} />
+          {data.feedbacks.length > 0 && (
             <div>
-              <Typography.Text strong>Đánh giá trước đây</Typography.Text>
+              <Typography.Text strong>Đánh giá đã có</Typography.Text>
               <ul style={{ margin: `${spacing.xs}px 0 0`, paddingInlineStart: 18 }}>
-                {history.map((review) => (
-                  <li key={review.reviewedAt}>
+                {data.feedbacks.map((feedback) => (
+                  <li key={feedback.id}>
                     <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
-                      {formatDateTime(review.reviewedAt)} · {practiceStatusLabels[review.result]} (bài nộp lúc{' '}
-                      {formatDateTime(review.submittedAt)})
+                      {formatDateTime(feedback.reviewedAt)} · {practiceStatusLabels[feedback.result]}
+                      {feedback.reviewerName && ` · ${feedback.reviewerName}`}
                     </Typography.Text>
-                    {review.feedback && <div>{review.feedback}</div>}
+                    {feedback.comment && <div>{feedback.comment}</div>}
                   </li>
                 ))}
               </ul>
             </div>
           )}
+          <Form.Item
+            label={reviewed ? 'Đổi kết quả' : 'Kết quả'}
+            name="result"
+            rules={reviewed ? [] : [{ required: true, message: 'Vui lòng chọn kết quả.' }]}
+          >
+            <Radio.Group
+              optionType="button"
+              buttonStyle="solid"
+              options={reviewed ? [{ value: 'keep', label: 'Giữ nguyên' }, ...resultOptions] : resultOptions}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Nhận xét"
+            name="comment"
+            dependencies={['result']}
+            rules={[
+              { max: 1000, message: 'Nhận xét tối đa 1000 ký tự.' },
+              ({ getFieldValue }) => ({
+                validator: (_, value?: string) =>
+                  value?.trim() || (!reviewed && getFieldValue('result') !== 'needsRevision')
+                    ? Promise.resolve()
+                    : Promise.reject(
+                        new Error(reviewed ? 'Vui lòng nhập nhận xét.' : 'Vui lòng nhập nhận xét khi cần chỉnh sửa.'),
+                      ),
+              }),
+            ]}
+          >
+            <Input.TextArea rows={4} showCount maxLength={1000} placeholder="Nhận xét và hướng dẫn cho ca viên" />
+          </Form.Item>
         </Flex>
       )}
     </Modal>

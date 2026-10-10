@@ -65,7 +65,7 @@ export function useSaveSongClassification(songId: string) {
 }
 
 export function useSongMaterials(songId: string) {
-  return useQuery({ queryKey: materialsKey(songId), queryFn: () => listMaterials(songId) })
+  return useQuery({ queryKey: materialsKey(songId), queryFn: () => listMaterials(songId), enabled: Boolean(songId) })
 }
 
 export function useUploadMaterial(songId: string) {
