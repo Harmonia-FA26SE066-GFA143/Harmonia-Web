@@ -1,44 +1,56 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiContractMissingError } from '@/lib/api/errors'
-import { createAssignment, listAssignments, listSubmissions, reviewSubmission } from '../api/practiceApi'
-import type { PracticeAssignmentValues, ReviewResult } from '../types'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  commentSubmission,
+  createAssignment,
+  getSubmission,
+  listSubmissions,
+  listUpcomingEvents,
+  reviewSubmission,
+  type SubmissionPage,
+} from '../api/practiceApi'
+import type { AssignmentValues, PracticeStatus, ReviewResult } from '../types'
 
-// Retrying cannot help while the API contract is missing.
-const retry = (failureCount: number, error: Error) => !(error instanceof ApiContractMissingError) && failureCount < 3
+const practiceKey = ['practice'] as const
 
-const practiceKey = (programId: string) => ['practice', programId] as const
-
-export function usePracticeAssignments(programId?: string) {
+/** One page of the review queue; the previous page stays visible while the next one loads. */
+export function useSubmissions(status: PracticeStatus | undefined, page: SubmissionPage) {
   return useQuery({
-    queryKey: [...practiceKey(programId ?? ''), 'assignments'],
-    queryFn: () => listAssignments(programId ?? ''),
-    enabled: Boolean(programId),
-    retry,
+    queryKey: [...practiceKey, 'submissions', status, page],
+    queryFn: () => listSubmissions(status, page),
+    placeholderData: keepPreviousData,
   })
 }
 
-export function usePracticeSubmissions(programId?: string) {
+/** Fetched when the review opens: the signed audio URL of the list may have expired. */
+export function useSubmission(id?: string) {
   return useQuery({
-    queryKey: [...practiceKey(programId ?? ''), 'submissions'],
-    queryFn: () => listSubmissions(programId ?? ''),
-    enabled: Boolean(programId),
-    retry,
+    queryKey: [...practiceKey, 'submission', id],
+    queryFn: () => getSubmission(id ?? ''),
+    enabled: Boolean(id),
+    staleTime: 0,
   })
 }
 
-export function useCreateAssignment(programId: string) {
+/** Reloads the queue and the open submission after every attempt: a refusal usually means it changed meanwhile. */
+function usePracticeChange<TVariables>(mutationFn: (variables: TVariables) => Promise<void>) {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (values: PracticeAssignmentValues) => createAssignment(programId, values),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: practiceKey(programId) }),
-  })
+  return useMutation({ mutationFn, onSettled: () => queryClient.invalidateQueries({ queryKey: practiceKey }) })
 }
 
-export function useReviewSubmission(programId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ submissionId, ...review }: { submissionId: string; result: ReviewResult; feedback?: string }) =>
-      reviewSubmission(submissionId, review),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: practiceKey(programId) }),
-  })
+export const useReviewSubmission = () =>
+  usePracticeChange(({ id, result, comment }: { id: string; result: ReviewResult; comment?: string }) =>
+    reviewSubmission(id, { result, comment }),
+  )
+
+export const useCommentSubmission = () =>
+  usePracticeChange(({ id, comment, result }: { id: string; comment: string; result?: ReviewResult }) =>
+    commentSubmission(id, { comment, result }),
+  )
+
+export function useCreateAssignment() {
+  return useMutation({ mutationFn: (values: AssignmentValues) => createAssignment(values) })
+}
+
+export function useUpcomingEvents() {
+  return useQuery({ queryKey: [...practiceKey, 'upcoming-events'], queryFn: listUpcomingEvents })
 }

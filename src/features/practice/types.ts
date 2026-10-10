@@ -1,12 +1,13 @@
 /**
- * Practice submission statuses named by Report 1 FE-12 (EXPLICIT). The persisted values come with the contract.
- * "Overdue" = the deadline passed without a "Passed" result (decision 2026-10-01); whether the backend or the client
- * computes it is TBD with the contract.
+ * Practice as Harmonia-BE models it (`PracticeAssignmentsController`, `PracticeSubmissionsController`; owner choice
+ * 2026-10-10: follow the BE). `SubmissionStatus` of Harmonia-BE; Overdue is set by the backend.
  */
 export type PracticeStatus = 'submitted' | 'passed' | 'needsRevision' | 'overdue'
 
+export const practiceStatuses: PracticeStatus[] = ['submitted', 'needsRevision', 'passed', 'overdue']
+
 export const practiceStatusLabels: Record<PracticeStatus, string> = {
-  submitted: 'Đã nộp',
+  submitted: 'Chờ chấm',
   passed: 'Đạt',
   needsRevision: 'Cần chỉnh sửa',
   overdue: 'Quá hạn',
@@ -15,58 +16,49 @@ export const practiceStatusLabels: Record<PracticeStatus, string> = {
 /** Manual review result (FE-43, LI-03, LI-05): never automatic. */
 export type ReviewResult = 'passed' | 'needsRevision'
 
-/** Who receives the assignment, among the members who confirmed the program (FE-41, decision 2026-10-01). */
-export type PracticeAudience =
-  | { kind: 'all' }
-  | { kind: 'skills'; skills: string[] }
-  | { kind: 'members'; members: { memberId: string; fullName: string }[] }
+/** `AssignmentScope` of Harmonia-BE: the whole choir, members with given skills, or chosen members. */
+export type AssignmentScope = 'all' | 'skillGroup' | 'individual'
 
-/**
- * A practice assignment of one program and one song of its approved list (decision 2026-10-01).
- * TBD: Backend API missing – identifiers and field names come with the contract.
- */
-export interface PracticeAssignment {
-  id: string
-  programId: string
+/** Body of POST /api/practice-assignments (CreatePracticeAssignmentRequestValidator). */
+export interface AssignmentValues {
   title: string
-  instructions?: string
-  song: { songId: string; title: string }
-  /** ISO date-time. */
-  dueAt: string
-  audience: PracticeAudience
+  instruction?: string
+  eventId?: string
+  songId?: string
+  /** Must belong to the song. */
+  materialId?: string
+  /** UTC ISO-8601, not in the past. */
+  dueDate: string
+  scope: AssignmentScope
+  /** Required for `skillGroup`. */
+  skillIds?: string[]
+  /** Member profile ids, required for `individual`. */
+  memberIds?: string[]
 }
 
-export type PracticeAssignmentValues = Omit<PracticeAssignment, 'id' | 'programId'>
-
-export interface PracticeReview {
-  /**
-   * The submission this review judges (its `submittedAt`), so a resubmission gets a new review instead of editing
-   * the earlier one. TBD: chờ API contract – how a review references its submission.
-   */
-  submittedAt: string
-  result: ReviewResult
-  feedback?: string
-  /** ISO date-time. */
+/** One review of a submission (`PracticeFeedbackDto`), oldest first; the last one carries the current result. */
+export interface PracticeFeedback {
+  id: string
+  result: PracticeStatus
+  comment: string | null
+  reviewerName: string | null
+  /** Backend `DateTime`; read it with `parseUtc`. */
   reviewedAt: string
 }
 
-/**
- * One member of an assignment's audience with their latest submission. Without `submittedAt` the member has not
- * submitted yet. Earlier submissions after "Needs Revision" are kept by the backend (decision 2026-10-01).
- */
+/** A member's recorded attempt (`PracticeSubmissionDetailDto`). */
 export interface PracticeSubmission {
   id: string
   assignmentId: string
-  memberId: string
-  fullName: string
-  skills: string[]
-  /** Absent until the member submits; then the backend sets it. */
-  status?: PracticeStatus
-  /** ISO date-time of the latest submission. */
-  submittedAt?: string
-  /** TBD: how audio files are served comes with the contract. */
-  audioUrl?: string
-  durationSeconds?: number
-  /** Latest review first; earlier reviews are history (FE-44, decision 2026-10-01). */
-  reviews: PracticeReview[]
+  assignmentTitle: string
+  /** Backend `DateTime`; read it with `parseUtc`. */
+  assignmentDueDate: string
+  memberName: string
+  attemptNo: number
+  submittedAt: string
+  status: PracticeStatus
+  durationSeconds: number | null
+  /** Short-lived signed URL: fetch the submission again right before playback. */
+  audioUrl: string
+  feedbacks: PracticeFeedback[]
 }
