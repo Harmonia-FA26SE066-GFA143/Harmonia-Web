@@ -8,7 +8,7 @@
  */
 import dayjs from 'dayjs'
 import { nextFixtureId, readFixture, writeFixture } from '@/lib/api/fixtureRuntime.dev'
-import type { SongList, SongListItem, SongListItemInput, SongReview } from '../types'
+import type { SongList, SongListItem, SongListItemInput } from '../types'
 
 const item = (songId: string, title: string, liturgicalPart: string, extra: Partial<SongListItem> = {}): SongListItem => ({
   id: nextFixtureId('list-item'),
@@ -115,39 +115,6 @@ export const submitSongListFixture = (programId: string, items: SongListItemInpu
       submittedAt: new Date().toISOString(),
       priestNote: undefined,
       reviewedAt: previous.reviewedAt,
-    }
-    lists.set(programId, list)
-    return list
-  })
-
-export const submitSongReviewFixture = (
-  programId: string,
-  review: { decisions: Record<string, SongReview>; note?: string },
-) =>
-  writeFixture(() => {
-    const previous = songListSnapshot(programId)
-    expectStatus(previous, ['submitted'])
-    const items = previous.items.map((entry) => ({ ...entry, review: review.decisions[entry.id] }))
-    const allAccepted = items.every((entry) => entry.review?.decision === 'accepted')
-    const list: SongList = {
-      ...previous,
-      items,
-      status: allAccepted ? 'approved' : 'needsRevision',
-      priestNote: review.note,
-      reviewedAt: new Date().toISOString(),
-    }
-    lists.set(programId, list)
-    return list
-  })
-
-export const rejectSongListFixture = (programId: string, note: string) =>
-  writeFixture(() => {
-    expectStatus(songListSnapshot(programId), ['submitted'])
-    const list: SongList = {
-      ...songListSnapshot(programId),
-      status: 'rejected',
-      priestNote: note,
-      reviewedAt: new Date().toISOString(),
     }
     lists.set(programId, list)
     return list

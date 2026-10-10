@@ -83,7 +83,6 @@ describe('PriestProgramDetailPage', () => {
     expect(await screen.findByText('Mùa Thường Niên')).toBeInTheDocument()
     expect(screen.getByText('Thánh lễ Chúa Nhật')).toBeInTheDocument()
     expect(screen.getByText('Ưu tiên bài hát theo chủ đề Lời Chúa.')).toBeInTheDocument()
-    expect(screen.getByText(/Chưa có danh sách bài hát/)).toBeInTheDocument()
   })
 
   it('publishes a draft after confirmation', async () => {
@@ -119,6 +118,7 @@ describe('PriestProgramDetailPage', () => {
 
     expect(await screen.findByText('5 xác nhận · 1 từ chối · 0 chưa chắc chắn · 2 chưa phản hồi')).toBeInTheDocument()
     expect(eventsApi.getPreparationStatus).toHaveBeenCalledWith('e1')
+    expect(screen.getByRole('button', { name: 'Xem danh sách' })).toBeInTheDocument()
     expect(screen.getByText('Đang phân công · 4 lượt phân công')).toBeInTheDocument()
     expect(screen.getByText('Thiếu Tenor cho Con Bước Lên Bàn Thờ: 1/2 người')).toBeInTheDocument()
     expect(screen.getByText((_, element) => element?.textContent === '2/3 buổi đã diễn ra')).toBeInTheDocument()

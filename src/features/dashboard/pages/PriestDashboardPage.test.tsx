@@ -1,7 +1,8 @@
 import { fireEvent, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as eventsApi from '@/features/liturgical-programs/api/eventsApi'
-import * as programsApi from '@/features/liturgical-programs/api/programsApi'
+import * as reviewApi from '@/features/song-list-review/api/songListReviewApi'
+import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import { PriestDashboardPage } from './PriestDashboardPage'
@@ -13,8 +14,9 @@ afterEach(() => {
 })
 
 describe('PriestDashboardPage', () => {
-  it('loads each section on its own: song lists still have no API', async () => {
+  it('loads each section on its own', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(emptyPage)
+    vi.spyOn(reviewApi, 'listPendingSongLists').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<PriestDashboardPage />, '/priest')
 
     expect(await screen.findByRole('heading', { name: 'Chưa có sự kiện sắp tới' })).toBeInTheDocument()
@@ -23,7 +25,7 @@ describe('PriestDashboardPage', () => {
 
   it('shows a recoverable error when the events cannot be loaded', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockRejectedValue(new ApiError(403, undefined))
-    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue([])
+    vi.spyOn(reviewApi, 'listPendingSongLists').mockResolvedValue([])
     renderPage(<PriestDashboardPage />, '/priest')
 
     expect(await screen.findByRole('heading', { name: 'Không thể tải sự kiện sắp tới' })).toBeInTheDocument()
@@ -47,16 +49,26 @@ describe('PriestDashboardPage', () => {
         },
       ],
     })
-    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue([
-      { id: 'p1', eventName: 'Lễ Bổn mạng', date: '2099-10-11', songListStatus: 'submitted' },
-      { id: 'p2', eventName: 'Lễ Chúa Nhật', date: '2099-10-04' },
+    vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([])
+    vi.spyOn(reviewApi, 'listPendingSongLists').mockResolvedValue([
+      { id: 'sl-1', eventId: 'p1', version: 1, status: 'submitted', submittedAt: '2026-10-09T02:00:00Z', items: [], reviews: [] },
     ])
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({
+      id: 'p1',
+      date: '2099-10-11',
+      time: '08:00',
+      title: 'Lễ Bổn mạng',
+      locationId: 'loc-1',
+      locationName: 'Nhà thờ chính',
+      status: 'published',
+    })
     renderPage(<PriestDashboardPage />, '/priest')
 
     expect(await screen.findByText('Lễ Chúa Nhật tới')).toBeInTheDocument()
     expect(screen.getByText('Sự kiện sắp tới', { selector: 'span' }).closest('.ant-card')).toHaveTextContent('7')
     expect(screen.getByText('Danh sách bài hát chờ xem xét').closest('.ant-card')).toHaveTextContent('1')
 
+    expect(await screen.findByText('Lễ Bổn mạng · 11/10/2099')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Xem danh sách bài hát' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/p1/song-review')
   })

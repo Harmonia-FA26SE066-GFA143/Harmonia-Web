@@ -1,10 +1,10 @@
 import { ArrowLeftOutlined, EditOutlined, FileSearchOutlined, StopOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Modal, Typography } from 'antd'
+import { App, Button, Flex, Modal } from 'antd'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
 import { EventInfo } from '../components/EventInfo'
 import { PreparationStatusCard } from '../components/PreparationStatusCard'
@@ -19,8 +19,8 @@ const breadcrumb = [{ title: 'Cha xứ' }, { title: 'Chương trình phụng v�
 /**
  * Priest: one liturgical event (FE-15–FE-16) with the actions the backend allows (LiturgicalEventService): edit
  * unless cancelled, publish a Draft, cancel unless already cancelled or past. Publishing and cancelling a published
- * event notify Choir Directors and members. A published event shows how ready the choir is (FE-21). The song list has
- * no backend yet (TBD, tbd-backlog B14).
+ * event notify Choir Directors and members. A published event shows how ready the choir is (FE-21), with its song
+ * list status and a link to the review page; the Choir Director proposes a list once the event is published.
  */
 export function PriestProgramDetailPage() {
   const navigate = useNavigate()
@@ -134,11 +134,6 @@ export function PriestProgramDetailPage() {
       <Flex vertical gap={spacing.lg}>
         <EventInfo event={data} />
         {data.status === 'published' && <PreparationStatusCard eventId={data.id} />}
-        <Card title="Danh sách bài hát">
-          <Typography.Text style={{ color: colors.textMuted }}>
-            Chưa có danh sách bài hát. Ca trưởng sẽ đề xuất danh sách bài hát cho chương trình này.
-          </Typography.Text>
-        </Card>
       </Flex>
       <Modal
         open={editing}
