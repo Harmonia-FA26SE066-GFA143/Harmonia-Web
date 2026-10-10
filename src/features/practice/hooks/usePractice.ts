@@ -3,6 +3,7 @@ import {
   commentSubmission,
   createAssignment,
   getSubmission,
+  listPreparationProgress,
   listSubmissions,
   listUpcomingEvents,
   reviewSubmission,
@@ -53,4 +54,12 @@ export function useCreateAssignment() {
 
 export function useUpcomingEvents() {
   return useQuery({ queryKey: [...practiceKey, 'upcoming-events'], queryFn: listUpcomingEvents })
+}
+
+export function usePreparationProgress(eventId?: string) {
+  return useQuery({
+    queryKey: [...practiceKey, 'preparation-progress', eventId],
+    queryFn: () => listPreparationProgress(eventId ?? ''),
+    enabled: Boolean(eventId),
+  })
 }

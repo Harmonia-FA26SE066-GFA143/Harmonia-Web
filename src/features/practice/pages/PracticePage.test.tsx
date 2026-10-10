@@ -118,4 +118,34 @@ describe('PracticePage', () => {
     expect(await screen.findByText('Chọn ít nhất một kỹ năng.')).toBeInTheDocument()
     expect(create).not.toHaveBeenCalled()
   })
+
+  it('shows the readiness of each member for the chosen upcoming event', async () => {
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
+    vi.spyOn(practiceApi, 'listUpcomingEvents').mockResolvedValue([
+      { id: 'ev-1', eventDate: '2026-10-18', time: '08:00:00', title: 'Lễ Chúa Nhật', locationName: 'Nhà thờ chính' },
+    ])
+    const progress = vi.spyOn(practiceApi, 'listPreparationProgress').mockResolvedValue([
+      {
+        memberId: 'm1',
+        fullName: 'Maria Trần Thị Lan',
+        participationStatus: 'confirmed',
+        rehearsalsHeld: 3,
+        rehearsalsAttended: 2,
+        assignmentsTotal: 0,
+        assignmentsPassed: 0,
+        assignmentsOverdue: 0,
+      },
+    ])
+    renderPractice()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Tiến độ' }))
+    expect(await screen.findByText('Chọn một sự kiện')).toBeInTheDocument()
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Sự kiện' }))
+    fireEvent.click(await screen.findByTitle('Lễ Chúa Nhật · 18/10/2026 08:00 · Nhà thờ chính'))
+
+    expect(await screen.findByText('Maria Trần Thị Lan')).toBeInTheDocument()
+    expect(progress).toHaveBeenCalledWith('ev-1')
+    expect(screen.getByText('Xác nhận')).toBeInTheDocument()
+    expect(screen.getByText('2/3')).toBeInTheDocument()
+  })
 })

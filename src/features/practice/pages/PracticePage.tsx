@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AssignmentForm } from '../components/AssignmentForm'
+import { ProgressTab } from '../components/ProgressTab'
 import { ReviewModal } from '../components/ReviewModal'
 import { SubmissionTable } from '../components/SubmissionTable'
 import { useSubmissions } from '../hooks/usePractice'
@@ -61,9 +62,9 @@ function ReviewQueue() {
 
 /**
  * Choir Director: practice (FE-41–FE-44) as Harmonia-BE offers it (owner choice 2026-10-10). "Chấm bài" is the review
- * queue across every assignment, each member's newest attempt; "Giao bài" gives a new assignment. The backend has no
- * list of the assignments given (tbd-backlog B21), which supersedes the per-program assignment list of the
- * 2026-10-01 decisions.
+ * queue across every assignment, each member's newest attempt; "Giao bài" gives a new assignment; "Tiến độ" shows each
+ * member's readiness for an upcoming event (FE-46). The backend has no list of the assignments given (tbd-backlog
+ * B21), which supersedes the per-program assignment list of the 2026-10-01 decisions.
  */
 export function PracticePage() {
   return (
@@ -71,13 +72,14 @@ export function PracticePage() {
       <PageHeader
         title="Bài tập & Tiến độ luyện tập"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Luyện tập' }]}
-        description="Nghe và chấm bản thu ca viên nộp trên ứng dụng di động, hoặc giao bài tập mới."
+        description="Nghe và chấm bản thu ca viên nộp trên ứng dụng di động, giao bài tập mới và theo dõi tiến độ chuẩn bị của ca viên."
       />
       <Tabs
         destroyOnHidden
         items={[
           { key: 'review', label: 'Chấm bài', children: <ReviewQueue /> },
           { key: 'assign', label: 'Giao bài', children: <AssignmentForm /> },
+          { key: 'progress', label: 'Tiến độ', children: <ProgressTab /> },
         ]}
       />
     </>

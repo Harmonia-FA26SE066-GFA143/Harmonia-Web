@@ -7,6 +7,7 @@ import { useCatalogOptions } from '@/features/system-categories'
 import { colors, spacing } from '@/styles/tokens'
 import { useCreateAssignment, useUpcomingEvents } from '../hooks/usePractice'
 import { practiceErrorMessage } from '../practiceErrors'
+import { formatEventOption } from '../practiceFormat'
 import type { AssignmentScope, AssignmentValues } from '../types'
 
 interface FormValues extends Omit<AssignmentValues, 'dueDate'> {
@@ -88,7 +89,7 @@ export function AssignmentForm() {
             loading={events.isPending}
             options={(events.data ?? []).map((event) => ({
               value: event.id,
-              label: [event.title || 'Sự kiện', dayjs(`${event.eventDate}T${event.time}`).format('DD/MM/YYYY HH:mm'), event.locationName].join(' · '),
+              label: formatEventOption(event),
             }))}
           />
         </Form.Item>

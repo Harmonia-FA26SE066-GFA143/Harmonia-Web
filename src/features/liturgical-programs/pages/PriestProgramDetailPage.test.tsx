@@ -4,7 +4,7 @@ import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as eventsApi from '../api/eventsApi'
-import type { LiturgicalEvent } from '../types'
+import type { LiturgicalEvent, PreparationStatus } from '../types'
 import { PriestProgramDetailPage } from './PriestProgramDetailPage'
 
 const draft: LiturgicalEvent = {
@@ -20,6 +20,21 @@ const draft: LiturgicalEvent = {
   status: 'draft',
 }
 
+const preparation: PreparationStatus = {
+  songListStatus: 'approved',
+  participation: { invited: 2, confirmed: 5, declined: 1, unsure: 0 },
+  rosterFinalized: false,
+  rosterActiveAssignments: 4,
+  rosterShortages: [{ songTitle: 'Con Bước Lên Bàn Thờ', skillName: 'Tenor', requiredCount: 2, assignedCount: 1 }],
+  rehearsalsTotal: 3,
+  rehearsalsHeld: 2,
+  attendanceExpected: 16,
+  attendancePresent: 12,
+  practiceExpected: 8,
+  practicePassed: 6,
+  practiceOverdue: 1,
+}
+
 // The page reads :programId, so it is rendered under the parameterised route.
 const renderDetail = () => renderPage(<PriestProgramDetailPage />, '/priest/programs/:programId', '/priest/programs/e1')
 
@@ -27,6 +42,7 @@ const confirmDialog = async (title: string) =>
   (await screen.findAllByText(title))[0].closest('.ant-modal') as HTMLElement
 
 beforeEach(() => {
+  vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue(preparation)
   vi.spyOn(categoriesApi, 'listLookup').mockImplementation(async (kind) =>
     kind === 'seasons'
       ? [{ id: 'season-5', name: 'Mùa Thường Niên' }]
@@ -95,6 +111,23 @@ describe('PriestProgramDetailPage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Hủy sự kiện' }))
 
     await waitFor(() => expect(cancel.mock.calls[0]?.[0]).toBe('e1'))
+  })
+
+  it('shows how ready the choir is for a published event only', async () => {
+    const get = vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({ ...draft, status: 'published' })
+    const { unmount } = renderDetail()
+
+    expect(await screen.findByText('5 xác nhận · 1 từ chối · 0 chưa chắc chắn · 2 chưa phản hồi')).toBeInTheDocument()
+    expect(eventsApi.getPreparationStatus).toHaveBeenCalledWith('e1')
+    expect(screen.getByText('Đang phân công · 4 lượt phân công')).toBeInTheDocument()
+    expect(screen.getByText('Thiếu Tenor cho Con Bước Lên Bàn Thờ: 1/2 người')).toBeInTheDocument()
+    expect(screen.getByText((_, element) => element?.textContent === '2/3 buổi đã diễn ra')).toBeInTheDocument()
+    unmount()
+
+    get.mockResolvedValue(draft)
+    renderDetail()
+    expect(await screen.findByText('Lễ Chúa Nhật XXVI', { selector: 'h1' })).toBeInTheDocument()
+    expect(screen.queryByText('Tình hình chuẩn bị')).toBeNull()
   })
 
   it('offers no action on a cancelled event and no cancel on a past one', async () => {

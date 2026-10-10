@@ -3,6 +3,7 @@ import {
   cancelEvent,
   createEvent,
   getEvent,
+  getPreparationStatus,
   listEvents,
   publishEvent,
   updateEvent,
@@ -23,6 +24,10 @@ export function useEvents(filters: EventFilters, page: EventPage) {
 
 export function useEvent(id: string) {
   return useQuery({ queryKey: [...eventsKey, 'event', id], queryFn: () => getEvent(id) })
+}
+
+export function usePreparationStatus(id: string) {
+  return useQuery({ queryKey: [...eventsKey, 'preparation', id], queryFn: () => getPreparationStatus(id) })
 }
 
 /** Every change reloads lists and the event: status, dates and location names come from the backend. */
