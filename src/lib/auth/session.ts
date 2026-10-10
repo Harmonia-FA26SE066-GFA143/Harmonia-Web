@@ -9,6 +9,8 @@ export interface Session {
   user: {
     id: string
     email: string
+    /** May be empty: the Admin can create an account without a name. Absent in sessions stored before it was read. */
+    fullName?: string
     roleName: ApiRoleName
     /** True until an Admin-created user replaces the emailed first password (Harmonia-BE `ad0fa37`). */
     isPasswordChangeRequired?: boolean

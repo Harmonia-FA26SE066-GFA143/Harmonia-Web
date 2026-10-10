@@ -3,6 +3,8 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
 import * as notificationsApi from '@/features/notifications/api/notificationsApi'
+import * as profileApi from '@/features/profile/api/profileApi'
+import { clearSession, setSession } from '@/lib/auth/session'
 import { AppShell } from './AppShell'
 
 /** Emulates a viewport width for Ant Design's breakpoint queries. */
@@ -38,6 +40,7 @@ function renderShellAt(path: string) {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  clearSession()
 })
 
 describe('AppShell', () => {
@@ -78,6 +81,26 @@ describe('AppShell', () => {
     fireEvent.click(await screen.findByText('Đăng xuất'))
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText('Đăng xuất khỏi Harmonia?')).toBeInTheDocument()
+  })
+
+  it('shows the signed-in name from the profile and the role from the session', async () => {
+    setViewportWidth(1280)
+    setSession({
+      accessToken: 'access',
+      accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+      refreshToken: 'refresh',
+      user: { id: 'u1', email: 'cathy@giaoxu.org', fullName: 'Tên cũ', roleName: 'ChoirDirector' },
+    })
+    vi.spyOn(profileApi, 'getMyProfile').mockResolvedValue({
+      fullName: 'Cecilia Trần Thu Hà',
+      email: 'cathy@giaoxu.org',
+      role: 'director',
+    })
+    renderShellAt('/profile')
+
+    const menu = await screen.findByRole('button', { name: 'Menu người dùng' })
+    expect(await within(menu).findByText('Cecilia Trần Thu Hà')).toBeInTheDocument()
+    expect(within(menu).getByText('Ca trưởng')).toBeInTheDocument()
   })
 
   it('shows unread notifications with Vietnamese titles and marks one read when opened', async () => {

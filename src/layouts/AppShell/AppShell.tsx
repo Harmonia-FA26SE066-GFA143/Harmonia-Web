@@ -114,7 +114,7 @@ export function AppShell() {
           </Flex>
           <Flex align="center" gap={spacing.xs} style={{ marginInlineStart: 'auto' }}>
             <NotificationBell />
-            <UserMenu surface={surface} />
+            <UserMenu compact={isMobile} />
           </Flex>
         </Header>
         <Content
