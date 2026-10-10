@@ -23,12 +23,11 @@ export const attendanceShortLabels: Record<AttendanceValue, string> = {
 }
 
 /**
- * One member on a session's attendance list; `value` is absent until marked. The list holds the choir members
- * (decision 2026-09-30, 6a.8); the backend returns it.
+ * One member on a session's attendance list (`RehearsalAttendanceDto`); `value` is absent until marked. The backend
+ * lists the choir members (decision 2026-09-30, 6a.8) by name only, without their skills.
  */
 export interface AttendanceRecord {
   memberId: string
   fullName: string
-  skills: string[]
   value?: AttendanceValue
 }

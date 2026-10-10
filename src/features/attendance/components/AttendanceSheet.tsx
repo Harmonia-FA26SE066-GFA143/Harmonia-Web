@@ -2,10 +2,10 @@ import { CheckOutlined, SaveOutlined, SearchOutlined } from '@ant-design/icons'
 import { App, Button, Card, Flex, Input, Modal, Radio, Table, Typography, type TableColumnsType } from 'antd'
 import { useMemo, useState } from 'react'
 import { useBeforeUnload, useBlocker } from 'react-router'
-import { SkillTags } from '@/features/members'
 import { MetricSummary, NoFilterResults } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, layout, radius, spacing, typography } from '@/styles/tokens'
+import { attendanceErrorMessage } from '../attendanceErrors'
 import { useSaveAttendance } from '../hooks/useAttendance'
 import { attendanceLabels, attendanceShortLabels, attendanceValues, type AttendanceRecord, type AttendanceValue } from '../types'
 
@@ -25,7 +25,7 @@ const options = attendanceValues.map((value) => ({
 export interface AttendanceSheetProps {
   rehearsalId: string
   records: AttendanceRecord[]
-  /** False outside the day of the session (decision 2026-09-30, 6a.6): recorded values are shown read-only. */
+  /** False before the session starts (REHEARSAL_NOT_STARTED): the sheet is shown read-only. */
   editable: boolean
 }
 
@@ -63,7 +63,7 @@ export function AttendanceSheet({ rehearsalId, records, editable }: AttendanceSh
     ) as Record<AttendanceValue, number>
     return { total: records.length, ...marked, unmarked: values.filter((value) => !value).length }
   }, [draft, records.length])
-  const visible = records.filter((record) => matchesSearch(search, record.fullName, ...record.skills))
+  const visible = records.filter((record) => matchesSearch(search, record.fullName))
 
   const mark = (memberId: string, value: AttendanceValue) => setDraft((current) => ({ ...current, [memberId]: value }))
   const markAllPresent = () => setDraft(Object.fromEntries(records.map((record) => [record.memberId, 'present'])))
@@ -71,7 +71,7 @@ export function AttendanceSheet({ rehearsalId, records, editable }: AttendanceSh
   const handleSave = () =>
     save.mutate(changes, {
       onSuccess: () => message.success('Đã lưu điểm danh.'),
-      onError: () => message.error('Không thể lưu điểm danh. Vui lòng thử lại.'),
+      onError: (error) => message.error(attendanceErrorMessage(error)),
     })
 
   const columns: TableColumnsType<AttendanceRecord> = [
@@ -86,7 +86,6 @@ export function AttendanceSheet({ rehearsalId, records, editable }: AttendanceSh
       ),
     },
     { key: 'name', title: 'Thành viên', render: (_, record) => <Typography.Text strong>{record.fullName}</Typography.Text> },
-    { key: 'skills', title: 'Kỹ năng', render: (_, record) => <SkillTags skills={record.skills} /> },
     {
       key: 'value',
       title: 'Điểm danh',
@@ -128,7 +127,7 @@ export function AttendanceSheet({ rehearsalId, records, editable }: AttendanceSh
           <Input
             allowClear
             prefix={<SearchOutlined aria-hidden />}
-            placeholder="Tìm theo tên hoặc kỹ năng"
+            placeholder="Tìm theo tên"
             aria-label="Tìm thành viên"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
