@@ -23,7 +23,7 @@ afterEach(() => {
 })
 
 describe('AttendancePage', () => {
-  it('shows a recoverable error while the API contract is missing', async () => {
+  it('shows a recoverable error while the rehearsal list has no API', async () => {
     renderAttendance()
 
     expect(await screen.findByRole('heading', { name: 'Không thể tải buổi tập' })).toBeInTheDocument()
@@ -43,11 +43,11 @@ describe('AttendancePage', () => {
       { id: 'r2', programId: 'p1', name: 'Tập riêng bè Nam', startAt: at(3, 19), endAt: at(3, 21), location: 'Nhà thờ', songs: [] },
     ])
     const get = vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
-      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: ['Organ'], value: 'present' },
-      { memberId: 'm2', fullName: 'Simon Phan Văn Đức', skills: ['Bass'] },
-      { memberId: 'm3', fullName: 'Anna Đặng Thị Mai', skills: [] },
+      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' },
+      { memberId: 'm2', fullName: 'Simon Phan Văn Đức' },
+      { memberId: 'm3', fullName: 'Anna Đặng Thị Mai' },
     ])
-    const save = vi.spyOn(attendanceApi, 'saveAttendance').mockResolvedValue([])
+    const save = vi.spyOn(attendanceApi, 'saveAttendance').mockResolvedValue()
     renderAttendance()
 
     // Today's session is chosen by default.
@@ -67,8 +67,8 @@ describe('AttendancePage', () => {
       { id: 'r1', programId: 'p1', name: 'Tập toàn ca đoàn', ...today, location: 'Nhà thờ', songs: [] },
     ])
     vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
-      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: [], value: 'absent' },
-      { memberId: 'm2', fullName: 'Simon Phan Văn Đức', skills: [] },
+      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'absent' },
+      { memberId: 'm2', fullName: 'Simon Phan Văn Đức' },
     ])
     renderAttendance('/director/attendance?rehearsalId=r1')
 
@@ -76,16 +76,31 @@ describe('AttendancePage', () => {
     expect(screen.getByRole('button', { name: /Lưu điểm danh \(2 thay đổi\)/ })).toBeEnabled()
   })
 
-  it('shows other days read-only', async () => {
+  it('corrects a past session, as the backend allows any time after the start', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
       { id: 'r0', programId: 'p1', name: 'Tập hôm qua', startAt: at(-1, 19), endAt: at(-1, 21), location: 'Nhà thờ', songs: [] },
     ])
+    vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([{ memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' }])
+    const save = vi.spyOn(attendanceApi, 'saveAttendance').mockResolvedValue()
+    renderAttendance('/director/attendance?rehearsalId=r0')
+
+    const maria = await screen.findByRole('radiogroup', { name: 'Điểm danh Maria Nguyễn Thu Hướng' })
+    fireEvent.click(within(maria).getByText('Muộn'))
+    fireEvent.click(screen.getByRole('button', { name: /Lưu điểm danh \(1 thay đổi\)/ }))
+
+    await waitFor(() => expect(save).toHaveBeenCalledWith('r0', { m1: 'late' }))
+  })
+
+  it('shows a session read-only until it starts', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
+      { id: 'r0', programId: 'p1', name: 'Tập tuần sau', startAt: at(7, 19), endAt: at(7, 21), location: 'Nhà thờ', songs: [] },
+    ])
     vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
-      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: [], value: 'present' },
+      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' },
     ])
     renderAttendance('/director/attendance?rehearsalId=r0')
 
-    expect(await screen.findByText('Đã qua ngày tập: điểm danh chỉ xem, không sửa được.')).toBeInTheDocument()
+    expect(await screen.findByText(/Điểm danh được từ khi buổi tập bắt đầu/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Lưu điểm danh/ })).toBeNull()
     const radios = within(screen.getByRole('radiogroup', { name: 'Điểm danh Maria Nguyễn Thu Hướng' })).getAllByRole('radio')
     radios.forEach((radio) => expect(radio).toBeDisabled())

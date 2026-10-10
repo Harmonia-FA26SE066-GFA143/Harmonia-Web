@@ -28,7 +28,7 @@ const marked = new Map<string, Record<string, AttendanceValue>>([
 
 const records = (rehearsalId: string): AttendanceRecord[] => {
   const values = marked.get(rehearsalId) ?? {}
-  return choirMembers.map(({ id, fullName, skills }) => ({ memberId: id, fullName, skills, value: values[id] }))
+  return choirMembers.map(({ id, fullName }) => ({ memberId: id, fullName, value: values[id] }))
 }
 
 export const getAttendanceFixture = (rehearsalId: string) => readFixture(records(rehearsalId))
@@ -36,8 +36,8 @@ export const getAttendanceFixture = (rehearsalId: string) => readFixture(records
 export const saveAttendanceFixture = (rehearsalId: string, values: Record<string, AttendanceValue>) =>
   writeFixture(() => {
     marked.set(rehearsalId, { ...marked.get(rehearsalId), ...values })
-    return { records: records(rehearsalId) }
-  }).then((result) => result.records)
+    return {}
+  }).then(() => undefined)
 
 /** Whether any value was recorded for the session; the rehearsals fixture uses it for the delete lock. */
 export const hasAttendanceFixture = (rehearsalId: string) => Object.keys(marked.get(rehearsalId) ?? {}).length > 0
