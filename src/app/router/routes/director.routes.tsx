@@ -72,5 +72,10 @@ export const directorRoutes: RouteObject[] = [
     { title: 'Bài tập & Tiến độ luyện tập', breadcrumb: [area, 'Luyện tập'], phase: 6 },
     async () => (await import('@/features/practice')).PracticePage,
   ),
+  pageRoute(
+    paths.director.notes,
+    { title: 'Ghi chú từ Cha xứ', breadcrumb: [area, 'Ghi chú'], phase: 'TBD' },
+    async () => (await import('@/features/notes')).DirectorNotesPage,
+  ),
   placeholderRoute(paths.director.reports, { title: 'Báo cáo ca đoàn', breadcrumb: [area, 'Báo cáo'], phase: 6 }),
 ]

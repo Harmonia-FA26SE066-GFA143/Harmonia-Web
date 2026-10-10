@@ -46,4 +46,9 @@ export const priestRoutes: RouteObject[] = [
     { title: 'Báo cáo', breadcrumb: [area, 'Báo cáo'], phase: 3 },
     async () => (await import('@/features/reports')).PriestReportsPage,
   ),
+  pageRoute(
+    paths.priest.notes,
+    { title: 'Ghi chú cho Ca trưởng', breadcrumb: [area, 'Ghi chú'], phase: 'TBD' },
+    async () => (await import('@/features/notes')).PriestNotesPage,
+  ),
 ]

@@ -32,6 +32,7 @@ export const paths = {
     programDetail: '/priest/programs/:programId',
     songListReview: '/priest/programs/:programId/song-review',
     reports: '/priest/reports',
+    notes: '/priest/notes',
   },
 
   director: {
@@ -49,5 +50,6 @@ export const paths = {
     roster: '/director/roster',
     practice: '/director/practice',
     reports: '/director/reports',
+    notes: '/director/notes',
   },
 } as const
