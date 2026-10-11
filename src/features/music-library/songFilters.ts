@@ -2,6 +2,16 @@ import type { SongFilters } from './types'
 
 export const emptySongFilters: SongFilters = { search: '' }
 
+/** Router state of a song opened from the list: the list's query string, for "Về kho bài hát". */
+export interface SongListState {
+  listSearch: string
+}
+
+export const songListState = (listSearch: string): SongListState => ({ listSearch })
+
+export const listSearchOf = (state: unknown): string =>
+  typeof state === 'object' && state !== null && 'listSearch' in state && typeof state.listSearch === 'string' ? state.listSearch : ''
+
 const selectKeys = ['seasonId', 'massTypeId', 'ceremonyTypeId', 'themeId', 'skillId'] as const
 
 /** The list's filters and page live in the query string, so Back from a song shows the list as it was left. */

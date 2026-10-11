@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons'
 import { App, Button, Card } from 'antd'
 import { useMemo, useState } from 'react'
-import { generatePath, useNavigate, useSearchParams } from 'react-router'
+import { generatePath, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
@@ -11,7 +11,7 @@ import { SongFormModal } from '../components/SongFormModal'
 import { SongTable } from '../components/SongTable'
 import { useSaveSong, useSongs } from '../hooks/useSongs'
 import { duplicateTitleMessage, isDuplicateTitle } from '../songErrors'
-import { emptySongFilters, hasActiveSongFilters, readSongListState, writeSongListState } from '../songFilters'
+import { emptySongFilters, hasActiveSongFilters, readSongListState, songListState, writeSongListState } from '../songFilters'
 import type { SongFilters, SongValues } from '../types'
 
 const pageSize = 20
@@ -19,6 +19,7 @@ const pageSize = 20
 /** Choir Director: the choir's music library with FE-29 classification filters and song creation (FE-27–FE-29). */
 export function MusicLibraryPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { message } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
   const { filters, page } = useMemo(() => readSongListState(searchParams), [searchParams])
@@ -35,7 +36,8 @@ export function MusicLibraryPage() {
   const changeFilters = (next: SongFilters) => setSearchParams(writeSongListState(next, 1), { replace: true })
   const setPage = (next: number) => setSearchParams(writeSongListState(filters, next), { replace: true })
   const resetFilters = () => changeFilters(emptySongFilters)
-  const openSong = (songId: string) => navigate(generatePath(paths.director.songDetail, { songId }))
+  const openSong = (songId: string) =>
+    navigate(generatePath(paths.director.songDetail, { songId }), { state: songListState(location.search) })
   const closeForm = () => {
     setAdding(false)
     setTitleError(undefined)

@@ -42,7 +42,6 @@ export function UploadMaterialModal({ pending, material, saving = false, onSubmi
       modalRender={(dom) => (
         <Form<MaterialValues>
           layout="vertical"
-          disabled={saving}
           initialValues={
             editing
               ? { title: editing.title, targetSkillId: editing.targetSkillId ?? undefined }

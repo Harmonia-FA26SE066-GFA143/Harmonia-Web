@@ -1,6 +1,7 @@
 import { Card, Descriptions, Typography } from 'antd'
 import { colors } from '@/styles/tokens'
 import type { Song } from '../types'
+import { CardTitle } from './CardTitle'
 
 const orNone = (value: string | null) =>
   value || <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
@@ -8,7 +9,7 @@ const orNone = (value: string | null) =>
 /** Song fields of GET /api/songs/{id}. */
 export function SongInfoCard({ song }: { song: Song }) {
   return (
-    <Card title="Thông tin bài hát">
+    <Card title={<CardTitle>Thông tin bài hát</CardTitle>}>
       <Descriptions
         layout="vertical"
         colon={false}

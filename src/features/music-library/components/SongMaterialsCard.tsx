@@ -3,6 +3,7 @@ import {
   CustomerServiceOutlined,
   DeleteOutlined,
   EditOutlined,
+  ExportOutlined,
   FileTextOutlined,
   FolderOpenOutlined,
   ReadOutlined,
@@ -13,7 +14,15 @@ import dayjs from 'dayjs'
 import { Fragment, type ComponentType } from 'react'
 import { parseUtc } from '@/lib/api/dates'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
-import { materialExtensions, materialKindLabels, materialKinds, type MaterialKind, type SongMaterial } from '../types'
+import {
+  materialExtensions,
+  materialKindLabels,
+  materialKinds,
+  maxMaterialBytes,
+  type MaterialKind,
+  type SongMaterial,
+} from '../types'
+import { CardTitle } from './CardTitle'
 
 export interface SongMaterialsCardProps {
   materials: SongMaterial[]
@@ -39,10 +48,12 @@ const kindIcons: Record<MaterialKind, ComponentType> = {
   rehearsalMaterial: FolderOpenOutlined,
 }
 
-function UploadButton({ kind, loading, label, onPick }: {
+function UploadButton({ kind, loading, label, hintId, onPick }: {
   kind: MaterialKind
   loading: boolean
   label: string
+  /** Element that tells which files are accepted. */
+  hintId: string
   onPick: (kind: MaterialKind, file: File) => void
 }) {
   return (
@@ -54,7 +65,12 @@ function UploadButton({ kind, loading, label, onPick }: {
         return false
       }}
     >
-      <Button icon={<UploadOutlined />} loading={loading} aria-label={`${label}: ${materialKindLabels[kind]}`}>
+      <Button
+        icon={<UploadOutlined />}
+        loading={loading}
+        aria-label={`${label}: ${materialKindLabels[kind]}`}
+        aria-describedby={hintId}
+      >
         {label}
       </Button>
     </Upload>
@@ -96,7 +112,14 @@ function MaterialRow({ material, onDelete, onEdit, onProgress }: { material: Son
         <audio controls preload="none" src={material.url} aria-label={`Nghe ${material.title}`} style={{ height: 36 }} />
       )}
       {/* Signed URLs expire; the list is refetched when the window regains focus, which renews them. */}
-      <Button type="link" href={material.url} target="_blank" rel="noopener noreferrer">
+      <Button
+        type="link"
+        icon={<ExportOutlined />}
+        href={material.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Xem/Tải xuống ${material.title} (mở tab mới)`}
+      >
         Xem/Tải xuống
       </Button>
       <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Tiến độ học ${material.title}`}>
@@ -117,20 +140,28 @@ function MaterialRow({ material, onDelete, onEdit, onProgress }: { material: Son
 /** Materials grouped by the four FE-08/FE-28 kinds, each with its own upload action. */
 export function SongMaterialsCard({ materials, uploadingKind, onPick, ...actions }: SongMaterialsCardProps) {
   return (
-    <Card title="Tài liệu">
+    <Card title={<CardTitle>Tài liệu</CardTitle>}>
       {materialKinds.map((kind, index) => {
         const items = materials.filter((material) => material.kind === kind)
         const headingId = `materials-${kind}`
+        const hintId = `materials-${kind}-hint`
         return (
           <Fragment key={kind}>
             {index > 0 && <Divider />}
             <section aria-labelledby={headingId}>
-              <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
+              <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.xs }}>
                 <Typography.Title id={headingId} level={3} style={{ margin: 0 }}>
                   {materialKindLabels[kind]}
                 </Typography.Title>
-                <UploadButton kind={kind} label="Tải lên" loading={uploadingKind === kind} onPick={onPick} />
+                <UploadButton kind={kind} label="Tải lên" hintId={hintId} loading={uploadingKind === kind} onPick={onPick} />
               </Flex>
+              {/* The limits are known before a file is picked, not only when a wrong one is refused. */}
+              <Typography.Paragraph
+                id={hintId}
+                style={{ margin: `0 0 ${spacing.sm}px`, color: colors.textMuted, fontSize: typography.metadata.fontSize }}
+              >
+                Nhận tệp {materialExtensions[kind].join(', ')}, tối đa {maxMaterialBytes / 1024 / 1024} MB.
+              </Typography.Paragraph>
               {items.length > 0 ? (
                 <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                   {items.map((material) => (

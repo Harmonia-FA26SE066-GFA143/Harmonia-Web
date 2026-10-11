@@ -89,6 +89,14 @@ describe('SongDetailPage', () => {
     expect(screen.getByText('con-buoc_SATB.pdf · 2.4 MB · tải lên 12/08/2026')).toBeInTheDocument()
     expect(screen.getByText('Tenor')).toBeInTheDocument()
     expect(screen.getByLabelText('Nghe Audio mẫu bè Tenor')).toBeInTheDocument()
+
+    // The cards are sections of the page (h2), the kinds of material sit under Tài liệu (h3).
+    for (const name of ['Thông tin bài hát', 'Phân loại', 'Tài liệu']) {
+      expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument()
+    }
+    // Each file link names its material and says it opens a new tab; the accepted files are told before picking one.
+    expect(screen.getByRole('link', { name: 'Xem/Tải xuống Bản nhạc SATB (mở tab mới)' })).toHaveAttribute('target', '_blank')
+    expect(screen.getAllByText(/tối đa 20 MB/)).toHaveLength(4)
   })
 
   it('keeps the song visible when its materials cannot be loaded', async () => {

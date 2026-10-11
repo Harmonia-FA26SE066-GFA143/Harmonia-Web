@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import type { NamedRef, SkillRequirement, SongClassification } from '../types'
+import { CardTitle } from './CardTitle'
 
 const unclassified = (
   <Typography.Text style={{ color: colors.textMuted, fontStyle: 'italic' }}>Chưa phân loại</Typography.Text>
@@ -38,7 +39,7 @@ export interface SongClassificationCardProps {
 export function SongClassificationCard({ classification, loading, failed, onRetry, onEdit }: SongClassificationCardProps) {
   return (
     <Card
-      title="Phân loại"
+      title={<CardTitle>Phân loại</CardTitle>}
       extra={
         onEdit && (
           <Button icon={<EditOutlined />} onClick={onEdit} disabled={!classification}>
