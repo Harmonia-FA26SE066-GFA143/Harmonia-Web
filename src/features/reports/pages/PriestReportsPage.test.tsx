@@ -41,8 +41,18 @@ describe('PriestReportsPage', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Tìm trong báo cáo' }), { target: { value: 'chau' } })
     expect(screen.queryByText('Lễ Chúa Nhật XX')).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Xem chương trình' }))
+    // The program is part of the button's name, as every row has one.
+    fireEvent.click(screen.getByRole('button', { name: 'Xem chương trình Giờ Chầu Thánh Thể' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/p2')
+  })
+
+  it('restores the report, filters and search from the address, as after Back from a program', async () => {
+    const getReport = vi.spyOn(reportsApi, 'getReport').mockResolvedValue({ metrics: {}, rows: [] })
+    renderPage(<PriestReportsPage />, '/priest/reports', '/priest/reports?kind=songUsage&seasonId=s5&search=xin')
+
+    expect(await screen.findByRole('tab', { name: 'Sử dụng bài hát', selected: true })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Tìm trong báo cáo' })).toHaveValue('xin')
+    expect(getReport).toHaveBeenCalledWith('songUsage', expect.objectContaining({ seasonId: 's5' }))
   })
 
   it('distinguishes no search results from no data', async () => {
