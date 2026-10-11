@@ -3,6 +3,7 @@ import { NotFoundPage } from '@/app/pages/NotFoundPage'
 import { AppShell } from '@/layouts/AppShell/AppShell'
 import { BlankLayout } from '@/layouts/BlankLayout/BlankLayout'
 import { PageSkeleton } from '@/shared/ui'
+import { PageTitle } from './PageTitle'
 import { RoleGuard } from './RoleGuard'
 import { adminRoutes } from './routes/admin.routes'
 import { authRoutes } from './routes/auth.routes'
@@ -12,6 +13,7 @@ import { publicRoutes, sharedRoutes } from './routes/shared.routes'
 
 export const routes: RouteObject[] = [
   {
+    element: <PageTitle />,
     // Shown while the first lazily loaded page resolves.
     hydrateFallbackElement: <PageSkeleton />,
     children: [
