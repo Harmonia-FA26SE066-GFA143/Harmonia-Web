@@ -1,7 +1,7 @@
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Flex, Input, Select, Typography } from 'antd'
 import { useCatalogOptions, type CatalogOption } from '@/features/system-categories'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { hasActiveSongFilters } from '../songFilters'
 import type { SongFilters } from '../types'
 
@@ -42,18 +42,23 @@ export function SongFilterBar({ value, onChange, onReset, resultCount }: SongFil
       />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: spacing.sm }}>
         {selects.map((select) => (
-          <Select
-            key={select.key}
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            aria-label={`Lọc theo ${select.label.toLowerCase()}`}
-            placeholder={select.placeholder}
-            value={value[select.key]}
-            onChange={(selected?: string) => onChange({ ...value, [select.key]: selected })}
-            options={select.options}
-            style={{ width: '100%' }}
-          />
+          // A visible label: once a value is chosen the placeholder is gone and the five selects would look alike.
+          <Flex key={select.key} vertical gap={4}>
+            <label htmlFor={`song-filter-${select.key}`} style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+              {select.label}
+            </label>
+            <Select
+              id={`song-filter-${select.key}`}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder={select.placeholder}
+              value={value[select.key]}
+              onChange={(selected?: string) => onChange({ ...value, [select.key]: selected })}
+              options={select.options}
+              style={{ width: '100%' }}
+            />
+          </Flex>
         ))}
       </div>
       <Flex align="center" justify="space-between" wrap gap={spacing.sm}>

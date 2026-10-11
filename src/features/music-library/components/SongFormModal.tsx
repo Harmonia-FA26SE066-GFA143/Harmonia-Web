@@ -35,7 +35,6 @@ export function SongFormModal({ open, song, saving = false, titleError, onSubmit
       modalRender={(dom) => (
         <Form<SongValues>
           layout="vertical"
-          disabled={saving}
           initialValues={{
             title: song?.title,
             composer: song?.composer ?? undefined,
