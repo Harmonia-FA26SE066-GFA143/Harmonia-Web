@@ -1,5 +1,6 @@
 import { MailOutlined } from '@ant-design/icons'
-import { Button, Flex, Typography } from 'antd'
+import { Button, Flex, Tag, Typography } from 'antd'
+import type { MouseEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { contactEmail } from '@/config/contact'
@@ -62,8 +63,14 @@ const roleSummaries: RoleSummary[] = [
 export function LandingPage() {
   const navigate = useNavigate()
 
+  // A real link (open in a new tab, visible URL); a plain click still navigates inside the app.
+  const goToSignIn = (event: MouseEvent) => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    navigate(paths.login)
+  }
   const signIn = (
-    <Button type="primary" onClick={() => navigate(paths.login)}>
+    <Button type="primary" href={paths.login} onClick={goToSignIn}>
       Đăng nhập
     </Button>
   )
@@ -71,7 +78,7 @@ export function LandingPage() {
   // Accounts are created by an Admin, so writing to the administrators is how a newcomer gets one.
   const contact = (
     <Button icon={<MailOutlined />} href={`mailto:${contactEmail}`}>
-      Liên hệ
+      Liên hệ quản trị viên
     </Button>
   )
 
@@ -84,11 +91,12 @@ export function LandingPage() {
         {signIn}
       </Flex>
 
-      <section style={{ maxWidth: 720 }}>
-        <Typography.Title level={1} style={{ margin: 0, fontWeight: typography.pageTitle.fontWeight }}>
+      <section>
+        <Typography.Title level={1} style={{ margin: 0, maxWidth: 720, fontWeight: typography.pageTitle.fontWeight }}>
           Điều phối ca đoàn và quản lý âm nhạc phụng vụ
         </Typography.Title>
-        <Typography.Paragraph style={{ margin: `${spacing.md}px 0 ${spacing.lg}px`, color: colors.textBody }}>
+        {/* 65ch keeps lines at a readable 65-75 characters. */}
+        <Typography.Paragraph style={{ margin: `${spacing.md}px 0 ${spacing.lg}px`, maxWidth: '65ch', color: colors.textBody }}>
           Harmonia giúp Cha xứ / Hội đồng Phụng vụ, Ca trưởng và thành viên ca đoàn cùng chuẩn bị chương trình phụng vụ,
           danh sách bài hát, lịch tập và phân công phục vụ trên một hệ thống chung.
         </Typography.Paragraph>
@@ -122,9 +130,7 @@ export function LandingPage() {
               <Typography.Title level={3} style={{ margin: 0 }}>
                 {role.title}
               </Typography.Title>
-              <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
-                {role.platform}
-              </Typography.Text>
+              <Tag style={{ marginTop: spacing.xs, marginInlineEnd: 0 }}>{role.platform}</Tag>
               <ul style={{ margin: `${spacing.md}px 0 0`, paddingInlineStart: spacing.lg, color: colors.textBody }}>
                 {role.duties.map((duty) => (
                   <li key={duty} style={{ marginBottom: spacing.xs }}>
