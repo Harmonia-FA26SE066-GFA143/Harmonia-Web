@@ -69,7 +69,7 @@ describe('PriestDashboardPage', () => {
     expect(screen.getByText('Danh sách bài hát chờ xem xét').closest('.ant-card')).toHaveTextContent('1')
 
     expect(await screen.findByText('Lễ Bổn mạng · 11/10/2099')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Xem danh sách bài hát' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Xem danh sách bài hát: Lễ Bổn mạng · 11/10/2099' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/p1/song-review')
   })
 })

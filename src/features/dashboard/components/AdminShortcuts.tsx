@@ -22,7 +22,7 @@ interface Shortcut {
 
 /** Admin areas with their responsibilities as stated in Report 1 FE-47–FE-54 (docs/local/business/actors.md). */
 const shortcuts: Shortcut[] = [
-  { path: paths.admin.accounts, title: 'Tài khoản', description: 'Quản lý tài khoản người dùng và xác nhận tài khoản tự đăng ký.', icon: TeamOutlined },
+  { path: paths.admin.accounts, title: 'Tài khoản', description: 'Tạo và quản lý tài khoản người dùng.', icon: TeamOutlined },
   { path: paths.admin.roles, title: 'Vai trò & Phân quyền', description: 'Gán vai trò hệ thống cho tài khoản.', icon: UserSwitchOutlined },
   { path: paths.admin.skillCategories, title: 'Danh mục kỹ năng', description: 'Cấu hình các kỹ năng thanh nhạc và nhạc cụ.', icon: TagsOutlined },
   { path: paths.admin.liturgicalCategories, title: 'Danh mục phụng vụ', description: 'Mùa phụng vụ, loại Thánh lễ, loại nghi thức và danh mục sự kiện.', icon: FileTextOutlined },
