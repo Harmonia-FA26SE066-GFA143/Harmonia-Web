@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
@@ -29,6 +29,26 @@ describe('ProfilePage', () => {
 
     expect(await screen.findByText('Nguyễn Văn An')).toBeInTheDocument()
     expect(screen.getByText('Cha xứ / Ban phụng vụ')).toBeInTheDocument()
+  })
+
+  it('moves the focus into the form when editing and back to the edit button when leaving it', async () => {
+    vi.spyOn(profileApi, 'getMyProfile').mockResolvedValue({ fullName: 'Nguyễn Văn An', email: 'an@giaoxu.org', role: 'priest' })
+    const save = vi
+      .spyOn(profileApi, 'updateMyProfile')
+      .mockResolvedValue({ fullName: 'An Nguyễn', email: 'an@giaoxu.org', role: 'priest' })
+    renderPage(<ProfilePage />, '/profile')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Chỉnh sửa/ }))
+    expect(screen.getByLabelText('Họ và tên (không bắt buộc)')).toHaveFocus()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hủy' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /Chỉnh sửa/ })).toHaveFocus())
+
+    fireEvent.click(screen.getByRole('button', { name: /Chỉnh sửa/ }))
+    fireEvent.change(screen.getByLabelText('Họ và tên (không bắt buộc)'), { target: { value: 'An Nguyễn' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(screen.getByRole('button', { name: /Chỉnh sửa/ })).toHaveFocus())
   })
 
   it('asks for confirmation before signing out', async () => {

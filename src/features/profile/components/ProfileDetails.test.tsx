@@ -40,7 +40,7 @@ describe('ProfileDetails', () => {
   it('keeps name and phone within the backend limits', async () => {
     const { onSave } = renderDetails({ editing: true })
 
-    fireEvent.change(screen.getByLabelText('Họ và tên'), { target: { value: 'a'.repeat(101) } })
+    fireEvent.change(screen.getByLabelText('Họ và tên (không bắt buộc)'), { target: { value: 'a'.repeat(101) } })
     fireEvent.change(screen.getByLabelText('Số điện thoại (không bắt buộc)'), { target: { value: '0'.repeat(21) } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
 
@@ -52,7 +52,7 @@ describe('ProfileDetails', () => {
   it('allows an empty name, as the backend does', async () => {
     const { onSave } = renderDetails({ editing: true })
 
-    fireEvent.change(screen.getByLabelText('Họ và tên'), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText('Họ và tên (không bắt buộc)'), { target: { value: '' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
 
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ fullName: '' })))
