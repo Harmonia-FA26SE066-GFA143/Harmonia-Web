@@ -6,7 +6,7 @@ import { spacing } from '@/styles/tokens'
 import type { SignInError, SignInValues } from '../types'
 
 /** Feedback shown above the sign-in form. */
-export type LoginFeedback = SignInError | { kind: 'member-web' }
+export type LoginFeedback = SignInError | { kind: 'member-web' } | { kind: 'session-ended' }
 
 export interface LoginFormProps {
   onSubmit: (values: SignInValues) => void
@@ -49,6 +49,16 @@ function FeedbackAlert({ feedback }: { feedback: LoginFeedback }) {
           description="Vui lòng đăng nhập trên ứng dụng di động để tiếp tục."
         />
       )
+    case 'session-ended':
+      // apiRequest sends the user here after an expired, revoked or deactivated session.
+      return (
+        <Alert
+          type="info"
+          showIcon
+          title="Phiên đăng nhập đã kết thúc"
+          description="Vui lòng đăng nhập lại để tiếp tục."
+        />
+      )
     case 'unavailable':
       return (
         <Alert
@@ -65,7 +75,9 @@ export function LoginForm({ onSubmit, submitting = false, feedback }: LoginFormP
   return (
     <Flex vertical gap={spacing.md}>
       {feedback && <FeedbackAlert feedback={feedback} />}
-      <Form<SignInValues> layout="vertical" requiredMark={false} onFinish={onSubmit} disabled={submitting}>
+      {/* Not `disabled` while submitting: that would drop the focus of the field in use. The button's loading state and
+          the page's pending guard stop a second submit. `noValidate` leaves the messages to Ant Design, in Vietnamese. */}
+      <Form<SignInValues> layout="vertical" requiredMark={false} onFinish={onSubmit} noValidate>
         <Form.Item
           label="Email"
           name="email"
@@ -74,7 +86,7 @@ export function LoginForm({ onSubmit, submitting = false, feedback }: LoginFormP
             { type: 'email', message: 'Email không hợp lệ.' },
           ]}
         >
-          <Input type="email" autoComplete="email" placeholder="ten@giaoxu.org" />
+          <Input type="email" autoComplete="email" placeholder="ten@giaoxu.org" autoFocus />
         </Form.Item>
         <Form.Item
           label="Mật khẩu"

@@ -21,7 +21,7 @@ export async function apiRequest<T>(path: string, init: RequestInit | (() => Req
       // The refresh was rejected, or there is no valid token at all: start over at sign-in. The full reload also
       // drops cached data of the previous session.
       clearSession()
-      location.assign('/login')
+      location.assign('/login?reason=session-ended')
     }
   }
 

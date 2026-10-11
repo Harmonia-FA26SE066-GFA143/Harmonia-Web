@@ -77,7 +77,7 @@ describe('AppShell', () => {
     setViewportWidth(1280)
     renderShellAt('/admin')
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Menu người dùng' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Menu người dùng/ }))
     fireEvent.click(await screen.findByText('Đăng xuất'))
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText('Đăng xuất khỏi Harmonia?')).toBeInTheDocument()
@@ -98,7 +98,7 @@ describe('AppShell', () => {
     })
     renderShellAt('/profile')
 
-    const menu = await screen.findByRole('button', { name: 'Menu người dùng' })
+    const menu = await screen.findByRole('button', { name: /Menu người dùng/ })
     expect(await within(menu).findByText('Cecilia Trần Thu Hà')).toBeInTheDocument()
     expect(within(menu).getByText('Ca trưởng')).toBeInTheDocument()
   })

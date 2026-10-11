@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { ApiError } from '@/lib/api/errors'
 import type { SystemRole } from '@/shared/types/account'
@@ -26,9 +26,14 @@ function feedbackFor(error: Error): LoginFeedback {
 export function LoginPage() {
   const navigate = useNavigate()
   const signIn = useSignIn()
-  const [feedback, setFeedback] = useState<LoginFeedback>()
+  const [params] = useSearchParams()
+  // apiRequest ends a dead session with a redirect to /login?reason=session-ended.
+  const [feedback, setFeedback] = useState<LoginFeedback | undefined>(() =>
+    params.get('reason') === 'session-ended' ? { kind: 'session-ended' } : undefined,
+  )
 
   const handleSubmit = (values: SignInValues) => {
+    if (signIn.isPending) return
     setFeedback(undefined)
     signIn.mutate(values, {
       onSuccess: ({ role, mustChangePassword }) => {
