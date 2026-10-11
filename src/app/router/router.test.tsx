@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
@@ -90,6 +90,7 @@ describe('router', () => {
     renderAt('/login')
     expect(await screen.findByRole('heading', { level: 1, name: 'Đăng nhập' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
+    await waitFor(() => expect(document.title).toBe('Đăng nhập · Harmonia'))
   })
 
   it('renders the not-found page for unknown routes', async () => {
