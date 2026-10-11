@@ -1,7 +1,8 @@
 import { Button, Table, Typography, type TableColumnsType } from 'antd'
-import { generatePath, Link } from 'react-router'
+import { generatePath, Link, useLocation } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { colors } from '@/styles/tokens'
+import { songListState } from '../songFilters'
 import type { Song } from '../types'
 
 export interface SongTableProps {
@@ -22,13 +23,18 @@ const muted = <Typography.Text style={{ color: colors.textMuted }}>—</Typograp
  * song page rather than here.
  */
 export function SongTable({ songs, page, pageSize, total, loading, onPageChange, onOpen }: SongTableProps) {
+  const { search } = useLocation()
   const columns: TableColumnsType<Song> = [
     {
       key: 'title',
       title: 'Tên bài hát',
       // A link as well as the button: it opens in a new tab and shows where it goes.
       render: (_, song) => (
-        <Link to={generatePath(paths.director.songDetail, { songId: song.id })} style={{ fontWeight: 600 }}>
+        <Link
+          to={generatePath(paths.director.songDetail, { songId: song.id })}
+          state={songListState(search)}
+          style={{ fontWeight: 600 }}
+        >
           {song.title}
         </Link>
       ),

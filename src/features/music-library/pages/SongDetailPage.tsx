@@ -2,11 +2,12 @@ import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, FileSearchOutlined } f
 import { App, Button, Card, Flex, Modal, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
+import { CardTitle } from '../components/CardTitle'
 import { LearningProgressModal } from '../components/LearningProgressModal'
 import { SongClassificationCard } from '../components/SongClassificationCard'
 import { SongClassificationModal } from '../components/SongClassificationModal'
@@ -25,6 +26,7 @@ import {
   useUpdateMaterial,
   useUploadMaterial,
 } from '../hooks/useSongs'
+import { listSearchOf } from '../songFilters'
 import {
   classificationErrorMessage,
   duplicateTitleMessage,
@@ -51,6 +53,7 @@ const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { tit
  */
 export function SongDetailPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { message, modal } = App.useApp()
   const { songId = '' } = useParams()
   const song = useSong(songId)
@@ -71,7 +74,8 @@ export function SongDetailPage() {
   const [picked, setPicked] = useState<{ kind: MaterialKind; file: File }>()
 
   const backButton = (
-    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(paths.director.library)}>
+    // The list's filters and page travel with the song (router state), so coming back shows the list as it was.
+    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`${paths.director.library}${listSearchOf(location.state)}`)}>
       Về kho bài hát
     </Button>
   )
@@ -103,6 +107,7 @@ export function SongDetailPage() {
   }
 
   const handleSave = (values: SongValues) => {
+    if (save.isPending) return
     setTitleError(undefined)
     save.mutate(
       { id: data.id, values },
@@ -117,7 +122,8 @@ export function SongDetailPage() {
     )
   }
 
-  const handleClassify = (values: SongClassificationValues) =>
+  const handleClassify = (values: SongClassificationValues) => {
+    if (saveClassification.isPending) return
     saveClassification.mutate(values, {
       onSuccess: () => {
         message.success('Đã lưu phân loại.')
@@ -125,6 +131,7 @@ export function SongDetailPage() {
       },
       onError: (error) => message.error(classificationErrorMessage(error)),
     })
+  }
 
   const handlePick = (kind: MaterialKind, file: File) => {
     const problem = materialFileProblem(kind, file)
@@ -133,7 +140,7 @@ export function SongDetailPage() {
   }
 
   const handleUpload = (values: { title: string; targetSkillId?: string }) => {
-    if (!picked) return
+    if (!picked || upload.isPending) return
     const { kind, file } = picked
     upload.mutate(
       { kind, file, ...values },
@@ -148,7 +155,7 @@ export function SongDetailPage() {
   }
 
   const handleUpdateMaterial = (values: MaterialValues) => {
-    if (!editingMaterial) return
+    if (!editingMaterial || updateMaterial.isPending) return
     updateMaterial.mutate(
       { id: editingMaterial.id, values },
       {
@@ -218,7 +225,7 @@ export function SongDetailPage() {
         />
         {materials.isPending && <SectionSkeleton rows={3} label="Đang tải tài liệu" />}
         {materials.isError && (
-          <Card title="Tài liệu">
+          <Card title={<CardTitle>Tài liệu</CardTitle>}>
             <ErrorState title="Không thể tải tài liệu" onRetry={() => materials.refetch()} retrying={materials.isFetching} />
           </Card>
         )}

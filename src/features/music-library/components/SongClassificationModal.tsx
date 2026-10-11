@@ -114,7 +114,6 @@ export function SongClassificationModal({ open, classification, saving = false, 
       modalRender={(dom) => (
         <Form<SongClassificationValues>
           layout="vertical"
-          disabled={saving}
           initialValues={{
             liturgicalSeasonIds: classification.liturgicalSeasons.map((ref) => ref.id),
             massTypeIds: classification.massTypes.map((ref) => ref.id),
