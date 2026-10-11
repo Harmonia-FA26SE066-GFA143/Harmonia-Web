@@ -5,6 +5,7 @@ import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as rehearsalsApi from '@/features/rehearsals/api/rehearsalsApi'
 import { renderPage } from '@/test/renderPage'
 import * as attendanceApi from '../api/attendanceApi'
+import type { AttendanceRecord } from '../types'
 import { AttendancePage } from './AttendancePage'
 
 const today = { startAt: dayjs().startOf('day').toISOString(), endAt: dayjs().endOf('day').toISOString() }
@@ -60,6 +61,37 @@ describe('AttendancePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Lưu điểm danh \(2 thay đổi\)/ }))
 
     await waitFor(() => expect(save).toHaveBeenCalledWith('r1', { m2: 'absent', m3: 'present' }))
+  })
+
+  it('keeps unsaved marks through a reload of the list, and shows saved ones as saved', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
+      { id: 'r1', programId: 'p1', name: 'Tập toàn ca đoàn', ...today, location: 'Nhà thờ', songs: [] },
+    ])
+    // A backend that remembers what is saved.
+    let stored: AttendanceRecord[] = [
+      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' },
+      { memberId: 'm2', fullName: 'Simon Phan Văn Đức' },
+    ]
+    const get = vi.spyOn(attendanceApi, 'getAttendance').mockImplementation(async () => stored.map((record) => ({ ...record })))
+    const save = vi.spyOn(attendanceApi, 'saveAttendance').mockImplementation(async (_, values) => {
+      stored = stored.map((record) => (values[record.memberId] ? { ...record, value: values[record.memberId] } : record))
+    })
+    renderAttendance('/director/attendance?rehearsalId=r1')
+
+    const simon = await screen.findByRole('radiogroup', { name: 'Điểm danh Simon Phan Văn Đức' })
+    fireEvent.click(within(simon).getByText('Vắng'))
+    expect(screen.getByRole('button', { name: /Lưu điểm danh \(1 thay đổi\)/ })).toBeEnabled()
+
+    // Coming back to the window reloads the list; the mark is not lost.
+    const calls = get.mock.calls.length
+    window.dispatchEvent(new Event('visibilitychange'))
+    await waitFor(() => expect(get.mock.calls.length).toBeGreaterThan(calls))
+    expect(screen.getByRole('button', { name: /Lưu điểm danh \(1 thay đổi\)/ })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole('button', { name: /Lưu điểm danh/ }))
+    await waitFor(() => expect(save).toHaveBeenCalledWith('r1', { m2: 'absent' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /Lưu điểm danh$/ })).toBeDisabled())
+    expect(within(screen.getByRole('radiogroup', { name: 'Điểm danh Simon Phan Văn Đức' })).getByRole('radio', { name: 'Vắng' })).toBeChecked()
   })
 
   it('marks everyone present at once', async () => {
