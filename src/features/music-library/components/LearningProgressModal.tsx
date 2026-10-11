@@ -1,8 +1,8 @@
-import { Flex, Modal, Segmented, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Flex, Modal, Segmented, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
-import { EmptyState, ErrorState } from '@/shared/ui'
+import { EmptyState, ErrorState, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { useLearningProgress } from '../hooks/useSongs'
 import { learningStatusLabels, learningStatuses, type LearningProgress, type LearningStatus, type SongMaterial } from '../types'
@@ -15,8 +15,8 @@ export interface LearningProgressModalProps {
 
 const pageSize = 20
 
-// Semantic colors keep Ant Design defaults (no approved values yet); the label always carries the meaning.
-const statusColors: Record<LearningStatus, string> = { notStarted: 'default', needsPractice: 'gold', learned: 'green' }
+// Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
+const statusColors: Record<LearningStatus, StatusTagColor> = { notStarted: 'default', needsPractice: 'gold', learned: 'green' }
 
 function ProgressList({ material }: { material: SongMaterial }) {
   const [status, setStatus] = useState<LearningStatus | 'all'>('all')
@@ -30,9 +30,9 @@ function ProgressList({ material }: { material: SongMaterial }) {
       title: 'Tình trạng',
       dataIndex: 'status',
       render: (value: LearningStatus) => (
-        <Tag color={statusColors[value]} style={{ marginInlineEnd: 0 }}>
+        <StatusTag color={statusColors[value]} style={{ marginInlineEnd: 0 }}>
           {learningStatusLabels[value]}
-        </Tag>
+        </StatusTag>
       ),
     },
     {

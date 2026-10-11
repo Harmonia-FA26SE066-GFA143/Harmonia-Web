@@ -1,8 +1,8 @@
-import { Tag } from 'antd'
+import { StatusTag, type StatusTagColor } from '@/shared/ui'
 import { eventStatusLabels, type EventStatus } from '../types'
 
-// Semantic colors keep Ant Design defaults; the label always carries the meaning.
-const statusColors: Record<EventStatus, string> = {
+// Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
+const statusColors: Record<EventStatus, StatusTagColor> = {
   draft: 'default',
   published: 'green',
   cancelled: 'red',
@@ -10,8 +10,8 @@ const statusColors: Record<EventStatus, string> = {
 
 export function EventStatusTag({ status }: { status: EventStatus }) {
   return (
-    <Tag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
+    <StatusTag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
       {eventStatusLabels[status]}
-    </Tag>
+    </StatusTag>
   )
 }
