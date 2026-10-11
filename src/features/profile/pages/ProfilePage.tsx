@@ -18,7 +18,8 @@ export function ProfilePage() {
   const [editing, setEditing] = useState(false)
   const [confirmingSignOut, setConfirmingSignOut] = useState(false)
 
-  const handleSave = (values: ProfileUpdateValues) =>
+  const handleSave = (values: ProfileUpdateValues) => {
+    if (update.isPending) return
     update.mutate(values, {
       onSuccess: () => {
         message.success('Đã lưu thay đổi.')
@@ -26,6 +27,7 @@ export function ProfilePage() {
       },
       onError: () => message.error('Không thể lưu thay đổi. Vui lòng thử lại.'),
     })
+  }
 
   return (
     <>
