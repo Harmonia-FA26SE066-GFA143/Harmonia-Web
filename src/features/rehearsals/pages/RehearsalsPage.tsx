@@ -1,5 +1,5 @@
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Input, Segmented, Select } from 'antd'
+import { Alert, App, Button, Card, Flex, Input, Segmented, Select } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -35,27 +35,33 @@ export function RehearsalsPage() {
 
   const programMap = useMemo(() => new Map((programs.data ?? []).map((program) => [program.id, program])), [programs.data])
   const all = useMemo(() => rehearsals.data ?? [], [rehearsals.data])
+  // The tab counts follow the program and search filters, so a tab that shows nothing says whether the other one has matches.
+  const filtered = useMemo(
+    () =>
+      all.filter(
+        (rehearsal) =>
+          (!programId || rehearsal.programId === programId) &&
+          matchesSearch(search, rehearsal.name, rehearsal.location, programMap.get(rehearsal.programId)?.eventName),
+      ),
+    [all, programId, search, programMap],
+  )
   const counts = useMemo(() => {
-    const upcoming = all.filter((rehearsal) => isUpcoming(rehearsal)).length
-    return { upcoming, past: all.length - upcoming }
-  }, [all])
+    const upcoming = filtered.filter((rehearsal) => isUpcoming(rehearsal)).length
+    return { upcoming, past: filtered.length - upcoming }
+  }, [filtered])
   const visible = useMemo(() => {
-    const matching = all.filter(
-      (rehearsal) =>
-        isUpcoming(rehearsal) === (period === 'upcoming') &&
-        (!programId || rehearsal.programId === programId) &&
-        matchesSearch(search, rehearsal.name, rehearsal.location, programMap.get(rehearsal.programId)?.eventName),
-    )
+    const matching = filtered.filter((rehearsal) => isUpcoming(rehearsal) === (period === 'upcoming'))
     // Past sessions: most recent first.
     return period === 'past' ? matching.reverse() : matching
-  }, [all, period, programId, search, programMap])
+  }, [filtered, period])
 
   const resetFilters = () => {
     setProgramId(undefined)
     setSearch('')
   }
 
-  const handleSave = (values: RehearsalValues) =>
+  const handleSave = (values: RehearsalValues) => {
+    if (save.isPending) return
     save.mutate(
       { id: editing?.id, values },
       {
@@ -66,6 +72,7 @@ export function RehearsalsPage() {
         onError: () => message.error('Không thể lưu buổi tập. Vui lòng thử lại.'),
       },
     )
+  }
 
   const handleDelete = (rehearsal: Rehearsal) =>
     modal.confirm({
@@ -95,6 +102,20 @@ export function RehearsalsPage() {
         description="Tạo và quản lý các buổi tập để chuẩn bị cho từng chương trình phụng vụ."
         extra={createButton}
       />
+      {programs.isError && (
+        <Alert
+          type="warning"
+          showIcon
+          title="Không thể tải danh sách chương trình phụng vụ"
+          description="Cột chương trình, bộ lọc và form tạo buổi tập cần danh sách này."
+          action={
+            <Button size="small" onClick={() => programs.refetch()} loading={programs.isFetching}>
+              Thử lại
+            </Button>
+          }
+          style={{ marginBottom: spacing.md }}
+        />
+      )}
       {rehearsals.isPending && <SectionSkeleton rows={6} label="Đang tải lịch tập" />}
       {rehearsals.isError && (
         <ErrorState title="Không thể tải lịch tập" onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
@@ -156,6 +177,7 @@ export function RehearsalsPage() {
             <RehearsalTable
               rehearsals={visible}
               programs={programMap}
+              programsStatus={programs.status}
               onTakeAttendance={(rehearsal) => navigate(`${paths.director.attendance}?rehearsalId=${rehearsal.id}`)}
               onEdit={setEditing}
               onDelete={handleDelete}

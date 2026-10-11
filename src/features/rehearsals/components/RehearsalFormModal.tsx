@@ -128,7 +128,6 @@ export function RehearsalFormModal({
       modalRender={(dom) => (
         <Form<FormValues>
           layout="vertical"
-          disabled={saving}
           initialValues={{
             programId: rehearsal?.programId ?? defaultProgramId,
             name: rehearsal?.name,
@@ -183,8 +182,8 @@ export function RehearsalFormModal({
         <Input placeholder="Ví dụ: Phòng tập nhà xứ" />
       </Form.Item>
       <SongsField />
-      <Form.Item label="Ghi chú" name="note">
-        <Input.TextArea rows={3} placeholder="Nội dung chính của buổi tập (không bắt buộc)" />
+      <Form.Item label="Ghi chú (không bắt buộc)" name="note">
+        <Input.TextArea rows={3} placeholder="Nội dung chính của buổi tập" />
       </Form.Item>
     </Modal>
   )

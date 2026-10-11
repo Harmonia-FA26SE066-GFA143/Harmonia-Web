@@ -2,6 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
+import { ApiContractMissingError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as rehearsalsApi from '../api/rehearsalsApi'
 import type { Rehearsal } from '../types'
@@ -113,12 +114,33 @@ describe('RehearsalsPage', () => {
     await waitFor(() => expect(remove).toHaveBeenCalledWith('r2'))
   })
 
+  it('counts the tabs within the program filter', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(rehearsals)
+    renderRehearsals('/director/rehearsals?programId=p2')
+
+    expect(await screen.findByText('Sắp tới (1)')).toBeInTheDocument()
+    expect(screen.getByText('Đã qua (0)')).toBeInTheDocument()
+  })
+
+  it('says so when the programs cannot be loaded instead of showing "no program"', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(rehearsals)
+    vi.spyOn(programsApi, 'listPrograms').mockRejectedValue(new ApiContractMissingError('liturgical programs'))
+    renderRehearsals()
+
+    expect(await screen.findByText('Không thể tải danh sách chương trình phụng vụ')).toBeInTheDocument()
+    expect(screen.getAllByText('Chưa tải được').length).toBeGreaterThan(0)
+  })
+
   it('cannot delete a rehearsal that already has attendance', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(rehearsals)
     renderRehearsals()
 
     fireEvent.click(await screen.findByText('Đã qua (1)'))
-    expect(await screen.findByRole('button', { name: 'Xoá Tập toàn ca đoàn' })).toBeDisabled()
+    const button = await screen.findByRole('button', { name: /Xoá Tập toàn ca đoàn/ })
+    expect(button).toHaveAttribute('aria-disabled', 'true')
+    expect(button).toHaveAccessibleName(/không thể xoá/)
+    fireEvent.click(button)
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('requires location and songs, and rejects a program without an approved song list', async () => {
