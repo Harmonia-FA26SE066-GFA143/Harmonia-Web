@@ -81,7 +81,7 @@ describe('apiRequest', () => {
 
     await expect(apiRequest('/api/songs')).rejects.toMatchObject({ status: 401, code: 'AUTH_TOKEN_EXPIRED' })
     expect(getSession()).toBeUndefined()
-    expect(assign).toHaveBeenCalledWith('/login')
+    expect(assign).toHaveBeenCalledWith('/login?reason=session-ended')
   })
 
   it('ends the session for a deactivated account', async () => {
@@ -92,7 +92,7 @@ describe('apiRequest', () => {
 
     await expect(apiRequest('/api/songs')).rejects.toMatchObject({ status: 401 })
     expect(getSession()).toBeUndefined()
-    expect(assign).toHaveBeenCalledWith('/login')
+    expect(assign).toHaveBeenCalledWith('/login?reason=session-ended')
   })
 
   it('keeps the session when the refresh fails on the server', async () => {
@@ -139,6 +139,6 @@ describe('apiRequest', () => {
     await expect(apiRequest('/api/songs')).rejects.toMatchObject({ code: 'AUTH_TOKEN_INVALID' })
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(getSession()).toBeUndefined()
-    expect(assign).toHaveBeenCalledWith('/login')
+    expect(assign).toHaveBeenCalledWith('/login?reason=session-ended')
   })
 })

@@ -21,6 +21,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
   const user = getSession()?.user
   const profile = useMyProfile()
   const name = profile.data?.fullName || user?.fullName || user?.email || 'Người dùng'
+  const role = user ? roleLabels[roleByApiName[user.roleName]] : 'Chưa xác định vai trò'
 
   const items: MenuProps['items'] = [
     { key: paths.profile, icon: <UserOutlined />, label: 'Hồ sơ cá nhân' },
@@ -48,7 +49,12 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
         trigger={['click']}
         menu={{ items, onClick: ({ key }) => (key === 'logout' ? setConfirmingSignOut(true) : navigate(key)) }}
       >
-        <Button type="text" aria-label="Menu người dùng" style={{ height: 'auto', paddingBlock: spacing.xs }}>
+        {/* The label repeats the visible name and role (WCAG 2.5.3) so voice control and screen readers match them. */}
+        <Button
+          type="text"
+          aria-label={`Menu người dùng: ${name}, ${role}`}
+          style={{ height: 'auto', paddingBlock: spacing.xs }}
+        >
           <Flex align="center" gap={spacing.sm}>
             <Avatar size={32} icon={<UserOutlined />} style={{ background: colors.primary }} />
             {/* Small screens keep the avatar only, so the brand still fits beside it. */}
@@ -58,7 +64,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
                   {name}
                 </Typography.Text>
                 <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
-                  {user ? roleLabels[roleByApiName[user.roleName]] : 'Chưa xác định vai trò'}
+                  {role}
                 </Typography.Text>
               </Flex>
             )}

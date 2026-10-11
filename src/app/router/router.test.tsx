@@ -83,13 +83,13 @@ describe('router', () => {
   it('wraps internal pages in the app shell', async () => {
     signInAs('Admin')
     renderAt('/admin/accounts')
-    expect(await screen.findByRole('button', { name: 'Menu người dùng' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Menu người dùng/ })).toBeInTheDocument()
   })
 
   it('renders public pages without the app shell', async () => {
     renderAt('/login')
     expect(await screen.findByRole('heading', { level: 1, name: 'Đăng nhập' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Menu người dùng' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
   })
 
   it('renders the not-found page for unknown routes', async () => {
@@ -125,6 +125,6 @@ describe('route guard', () => {
     signInAs(roleName)
     renderAt(path)
     expect(await screen.findByText('404')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Menu người dùng' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
   })
 })
