@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons'
 import { App, Button, Card } from 'antd'
 import { useMemo, useState } from 'react'
-import { generatePath, useNavigate } from 'react-router'
+import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
@@ -11,7 +11,7 @@ import { SongFormModal } from '../components/SongFormModal'
 import { SongTable } from '../components/SongTable'
 import { useSaveSong, useSongs } from '../hooks/useSongs'
 import { duplicateTitleMessage, isDuplicateTitle } from '../songErrors'
-import { emptySongFilters, hasActiveSongFilters } from '../songFilters'
+import { emptySongFilters, hasActiveSongFilters, readSongListState, writeSongListState } from '../songFilters'
 import type { SongFilters, SongValues } from '../types'
 
 const pageSize = 20
@@ -20,8 +20,8 @@ const pageSize = 20
 export function MusicLibraryPage() {
   const navigate = useNavigate()
   const { message } = App.useApp()
-  const [filters, setFilters] = useState<SongFilters>(emptySongFilters)
-  const [page, setPage] = useState(1)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { filters, page } = useMemo(() => readSongListState(searchParams), [searchParams])
   const search = useDebouncedValue(filters.search)
   const query = useMemo(() => ({ ...filters, search }), [filters, search])
   const songs = useSongs(query, { pageNumber: page, pageSize })
@@ -31,10 +31,9 @@ export function MusicLibraryPage() {
 
   const total = songs.data?.totalCount ?? 0
   const filtered = hasActiveSongFilters(query)
-  const changeFilters = (next: SongFilters) => {
-    setFilters(next)
-    setPage(1)
-  }
+  // `replace`: typing in the search box must not fill the history; Back leaves the list instead.
+  const changeFilters = (next: SongFilters) => setSearchParams(writeSongListState(next, 1), { replace: true })
+  const setPage = (next: number) => setSearchParams(writeSongListState(filters, next), { replace: true })
   const resetFilters = () => changeFilters(emptySongFilters)
   const openSong = (songId: string) => navigate(generatePath(paths.director.songDetail, { songId }))
   const closeForm = () => {
@@ -43,6 +42,7 @@ export function MusicLibraryPage() {
   }
 
   const handleAdd = (values: SongValues) => {
+    if (save.isPending) return
     setTitleError(undefined)
     save.mutate(
       { values },

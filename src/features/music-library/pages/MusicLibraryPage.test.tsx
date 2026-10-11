@@ -70,6 +70,25 @@ describe('MusicLibraryPage', () => {
     )
   })
 
+  it('restores the filters and the page from the address, as after Back from a song', async () => {
+    const list = vi.spyOn(songsApi, 'listSongs').mockResolvedValue({ ...page(songs), totalCount: 45, totalPages: 3, pageNumber: 2 })
+    renderPage(<MusicLibraryPage />, '/director/library', '/director/library?search=xin&seasonId=a1&page=2')
+
+    expect(await screen.findByText('Xin Vâng')).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Tìm bài hát' })).toHaveValue('xin')
+    expect(list).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: 'xin', seasonId: 'a1' }),
+      expect.objectContaining({ pageNumber: 2, pageSize: 20 }),
+    )
+  })
+
+  it('links each title to its song page', async () => {
+    vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page(songs))
+    renderPage(<MusicLibraryPage />, '/director/library')
+
+    expect(await screen.findByRole('link', { name: 'Con Bước Lên Bàn Thờ' })).toHaveAttribute('href', '/director/library/s1')
+  })
+
   it('adds a song with only the title required and opens it', async () => {
     vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page(songs))
     const create = vi.spyOn(songsApi, 'createSong').mockResolvedValue(song('new', 'Hãy Trở Về', 'Thái Nguyên'))
