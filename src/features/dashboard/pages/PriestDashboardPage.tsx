@@ -1,46 +1,51 @@
 import { BarChartOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Card, Flex, Typography } from 'antd'
+import { Button, Card, Flex, Skeleton, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { EventTable, formatProgramDate, useEvent, useEventNames, useEvents, vietnamToday } from '@/features/liturgical-programs'
 import { usePendingSongLists } from '@/features/song-list-review'
 import { parseUtc } from '@/lib/api/dates'
-import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { EmptyState, ErrorState, MetricSummary, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { colors, spacing } from '@/styles/tokens'
 
 const upcomingLimit = 5
 
-function Metric({ label, value }: { label: string; value?: number }) {
-  return (
-    <Card style={{ flex: '1 1 200px' }} styles={{ body: { padding: spacing.md } }}>
-      <Typography.Text style={{ color: colors.textMuted }}>{label}</Typography.Text>
-      <div style={{ marginTop: spacing.xs, fontFamily: typography.fontFamilyNumeric, fontSize: 28, fontWeight: 700 }}>
-        {value ?? '–'}
-      </div>
-    </Card>
-  )
-}
+const metrics = [
+  { key: 'upcoming', label: 'Sự kiện sắp tới' },
+  { key: 'pending', label: 'Danh sách bài hát chờ xem xét' },
+]
 
 /** A submitted list, named after its event (the pending lists carry only the event id). */
 function PendingSongList({ eventId, version, submittedAt }: { eventId: string; version: number; submittedAt?: string }) {
   const navigate = useNavigate()
   const event = useEvent(eventId)
   const { eventName } = useEventNames()
+  const label = event.data ? `${eventName(event.data)} · ${formatProgramDate(event.data.date)}` : 'Sự kiện phụng vụ'
 
   return (
     <Card styles={{ body: { padding: spacing.md } }}>
       <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
         <div>
-          <Typography.Text strong>
-            {event.data ? `${eventName(event.data)} · ${formatProgramDate(event.data.date)}` : 'Sự kiện phụng vụ'}
-          </Typography.Text>
+          {event.isPending ? (
+            // Keeps the title's place so the card does not jump when the event name arrives.
+            <div role="status" aria-label="Đang tải tên sự kiện">
+              <Skeleton.Input active size="small" />
+            </div>
+          ) : (
+            <Typography.Text strong>{label}</Typography.Text>
+          )}
           <Typography.Paragraph style={{ margin: 0, color: colors.textMuted }}>
             Ca trưởng đã gửi danh sách bài hát (phiên bản {version})
             {submittedAt && ` lúc ${dayjs(parseUtc(submittedAt)).format('HH:mm DD/MM/YYYY')}`}.
           </Typography.Paragraph>
         </div>
-        <Button type="primary" onClick={() => navigate(generatePath(paths.priest.songListReview, { programId: eventId }))}>
+        {/* Every card has this button, so the event is part of its name. */}
+        <Button
+          type="primary"
+          aria-label={`Xem danh sách bài hát: ${label}`}
+          onClick={() => navigate(generatePath(paths.priest.songListReview, { programId: eventId }))}
+        >
           Xem danh sách bài hát
         </Button>
       </Flex>
@@ -73,10 +78,10 @@ export function PriestDashboardPage() {
         extra={createButton}
       />
       <Flex vertical gap={spacing.xl}>
-        <Flex wrap gap={spacing.md}>
-          <Metric label="Sự kiện sắp tới" value={upcoming.data?.totalCount} />
-          <Metric label="Danh sách bài hát chờ xem xét" value={pending.data?.length} />
-        </Flex>
+        <MetricSummary
+          definitions={metrics}
+          values={{ upcoming: upcoming.data?.totalCount, pending: pending.data?.length }}
+        />
 
         <section aria-labelledby="to-review-heading">
           <Typography.Title id="to-review-heading" level={2} style={{ marginBottom: spacing.md }}>
@@ -97,9 +102,11 @@ export function PriestDashboardPage() {
             />
           )}
           {pending.isSuccess && pending.data.length > 0 && (
-            <Flex vertical gap={spacing.sm}>
+            <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {pending.data.map((list) => (
-                <PendingSongList key={list.id} eventId={list.eventId} version={list.version} submittedAt={list.submittedAt} />
+                <li key={list.id}>
+                  <PendingSongList eventId={list.eventId} version={list.version} submittedAt={list.submittedAt} />
+                </li>
               ))}
             </Flex>
           )}
