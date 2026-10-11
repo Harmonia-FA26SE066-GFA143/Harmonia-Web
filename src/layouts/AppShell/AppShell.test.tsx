@@ -133,6 +133,58 @@ describe('AppShell', () => {
     await waitFor(() => expect(markRead).toHaveBeenCalledWith('n1'))
   })
 
+  it('opens the notifications as a dialog next to the bell; only unread ones are buttons; Escape closes it', async () => {
+    setViewportWidth(1280)
+    vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(1)
+    vi.spyOn(notificationsApi, 'listNotifications').mockResolvedValue({
+      items: [
+        { id: 'n1', type: 'eventPublished', title: 'x', content: 'Chưa đọc', createdAt: '2026-10-08T02:00:00Z', isRead: false },
+        { id: 'n2', type: 'eventCancelled', title: 'y', content: 'Đã đọc', createdAt: '2026-10-07T02:00:00Z', isRead: true },
+      ],
+      pageNumber: 1,
+      pageSize: 10,
+      totalCount: 2,
+      totalPages: 1,
+    })
+    renderShellAt('/director')
+
+    const bell = await screen.findByRole('button', { name: 'Thông báo, 1 chưa đọc' })
+    expect(bell).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(bell)
+
+    const dialog = await screen.findByRole('dialog', { name: 'Thông báo' })
+    expect(bell).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    // Inside the bell's wrapper, so Tab goes from the bell into the panel.
+    expect(bell.parentElement).toContainElement(dialog)
+    expect(await within(dialog).findByRole('button', { name: /Sự kiện mới được công bố/ })).toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: /Sự kiện đã bị hủy/ })).toBeNull()
+    expect(within(dialog).getByText('Sự kiện đã bị hủy')).toBeInTheDocument()
+
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    expect(bell).toHaveAttribute('aria-expanded', 'false')
+    expect(bell).toHaveFocus()
+  })
+
+  it('says so when a notification cannot be marked read', async () => {
+    setViewportWidth(1280)
+    vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(1)
+    vi.spyOn(notificationsApi, 'listNotifications').mockResolvedValue({
+      items: [{ id: 'n1', type: 'eventPublished', title: 'x', content: 'Chưa đọc', createdAt: '2026-10-08T02:00:00Z', isRead: false }],
+      pageNumber: 1,
+      pageSize: 10,
+      totalCount: 1,
+      totalPages: 1,
+    })
+    vi.spyOn(notificationsApi, 'markNotificationRead').mockRejectedValue(new Error('x'))
+    renderShellAt('/director')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo, 1 chưa đọc' }))
+    fireEvent.click(await screen.findByText('Sự kiện mới được công bố'))
+
+    expect(await screen.findByText('Không thể đánh dấu đã đọc. Vui lòng thử lại.')).toBeInTheDocument()
+  })
+
   it('marks every notification read at once', async () => {
     setViewportWidth(1280)
     vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(3)
