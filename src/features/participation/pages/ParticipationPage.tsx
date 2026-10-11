@@ -6,7 +6,7 @@ import { generatePath, Link, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, upcomingPrograms, usePrograms } from '@/features/liturgical-programs'
 import { SkillTags } from '@/features/members'
-import { EmptyState, ErrorState, MetricSummary, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, MetricSummary, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { SendRequestModal } from '../components/SendRequestModal'
@@ -15,7 +15,7 @@ import { participationResponseLabels, type ParticipationRequest, type Participat
 
 type ResponseFilter = 'all' | ParticipationResponse | 'none'
 
-const responseColors: Record<ParticipationResponse, string> = { confirmed: 'green', unsure: 'gold', declined: 'red' }
+const responseColors: Record<ParticipationResponse, StatusTagColor> = { confirmed: 'green', unsure: 'gold', declined: 'red' }
 
 const metrics = [
   { key: 'sent', label: 'Đã gửi yêu cầu' },
@@ -43,9 +43,9 @@ const columns: TableColumnsType<ParticipationRequest> = [
     render: (_, request) =>
       request.response ? (
         <Flex vertical gap={2} align="flex-start">
-          <Tag color={responseColors[request.response]} style={{ marginInlineEnd: 0 }}>
+          <StatusTag color={responseColors[request.response]} style={{ marginInlineEnd: 0 }}>
             {participationResponseLabels[request.response]}
-          </Tag>
+          </StatusTag>
           <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
             {formatDateTime(request.respondedAt)}
           </Typography.Text>
@@ -69,8 +69,9 @@ export function ParticipationPage() {
   const allPrograms = useMemo(() => programs.data ?? [], [programs.data])
   const program =
     allPrograms.find((item) => item.id === searchParams.get('programId')) ?? upcomingPrograms(allPrograms)[0] ?? allPrograms[0]
+  const today = dayjs().format('YYYY-MM-DD')
   // No request for a program that is already past (decision 2026-09-30, 6a.3).
-  const isPast = program !== undefined && program.date < dayjs().format('YYYY-MM-DD')
+  const isPast = program !== undefined && program.date < today
   const participation = useParticipation(program?.id)
   const send = useSendParticipationRequests(program?.id ?? '')
   const [picking, setPicking] = useState(false)
@@ -78,15 +79,20 @@ export function ParticipationPage() {
   const [search, setSearch] = useState('')
 
   const requests = useMemo(() => participation.data ?? [], [participation.data])
-  const counts = useMemo(() => {
-    const count = (response?: ParticipationResponse) => requests.filter((request) => request.response === response).length
-    return { sent: requests.length, confirmed: count('confirmed'), unsure: count('unsure'), declined: count('declined'), none: count() }
-  }, [requests])
+  const countResponses = (list: ParticipationRequest[]) => {
+    const count = (response?: ParticipationResponse) => list.filter((request) => request.response === response).length
+    return { sent: list.length, confirmed: count('confirmed'), unsure: count('unsure'), declined: count('declined'), none: count() }
+  }
+  // The summary counts every request; the filter tabs count the ones that match the search, like the list below them.
+  const counts = useMemo(() => countResponses(requests), [requests])
+  const searched = useMemo(
+    () => requests.filter((request) => matchesSearch(search, request.fullName, ...request.skills)),
+    [requests, search],
+  )
+  const tabCounts = useMemo(() => countResponses(searched), [searched])
   const pending = requests.filter((request) => !request.response)
-  const visible = requests.filter(
-    (request) =>
-      (filter === 'all' || (filter === 'none' ? !request.response : request.response === filter)) &&
-      matchesSearch(search, request.fullName, ...request.skills),
+  const visible = searched.filter(
+    (request) => filter === 'all' || (filter === 'none' ? !request.response : request.response === filter),
   )
 
   const handleSend = (memberIds: string[]) =>
@@ -143,7 +149,10 @@ export function ParticipationPage() {
                 aria-label="Chọn chương trình phụng vụ"
                 value={program.id}
                 onChange={(programId: string) => setSearchParams({ programId })}
-                options={allPrograms.map((item) => ({ value: item.id, label: `${item.eventName} · ${formatProgramDate(item.date)}` }))}
+                options={allPrograms.map((item) => ({
+                  value: item.id,
+                  label: `${item.eventName} · ${formatProgramDate(item.date)}${item.date < today ? ' (đã qua)' : ''}`,
+                }))}
                 style={{ flex: '1 1 280px', maxWidth: 420, minWidth: 0 }}
               />
               <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>Xem chi tiết chương trình</Link>
@@ -186,7 +195,11 @@ export function ParticipationPage() {
                       onChange={(event) => setSearch(event.target.value)}
                       style={{ flex: '1 1 240px', maxWidth: 380 }}
                     />
-                    <Flex wrap gap={spacing.sm}>
+                    <Flex wrap gap={spacing.sm} align="center">
+                      {/* The list reloads when the window is focused again or on request, so say how old it is. */}
+                      <Typography.Text style={{ color: colors.textMuted }}>
+                        Cập nhật lúc {dayjs(participation.dataUpdatedAt).format('HH:mm')}
+                      </Typography.Text>
                       <Button
                         icon={<ReloadOutlined />}
                         onClick={() => participation.refetch()}
@@ -204,11 +217,11 @@ export function ParticipationPage() {
                     onChange={setFilter}
                     style={{ alignSelf: 'flex-start', maxWidth: '100%', overflowX: 'auto' }}
                     options={[
-                      { value: 'all', label: `Tất cả (${counts.sent})` },
-                      { value: 'confirmed', label: `${participationResponseLabels.confirmed} (${counts.confirmed})` },
-                      { value: 'unsure', label: `${participationResponseLabels.unsure} (${counts.unsure})` },
-                      { value: 'declined', label: `${participationResponseLabels.declined} (${counts.declined})` },
-                      { value: 'none', label: `Chưa phản hồi (${counts.none})` },
+                      { value: 'all', label: `Tất cả (${tabCounts.sent})` },
+                      { value: 'confirmed', label: `${participationResponseLabels.confirmed} (${tabCounts.confirmed})` },
+                      { value: 'unsure', label: `${participationResponseLabels.unsure} (${tabCounts.unsure})` },
+                      { value: 'declined', label: `${participationResponseLabels.declined} (${tabCounts.declined})` },
+                      { value: 'none', label: `Chưa phản hồi (${tabCounts.none})` },
                     ]}
                   />
                 </Flex>
