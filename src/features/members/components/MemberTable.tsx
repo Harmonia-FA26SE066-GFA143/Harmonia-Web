@@ -1,6 +1,7 @@
-import { Button, Flex, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Button, Flex, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { colors, typography } from '@/styles/tokens'
+import { StatusTag, type StatusTagColor } from '@/shared/ui'
 import { memberStatusLabels, type MemberProfile, type MemberStatus } from '../types'
 import { SkillTags } from './SkillTags'
 
@@ -17,8 +18,8 @@ export interface MemberTableProps {
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
 
-// Semantic colors keep Ant Design defaults (no approved values yet); the label always carries the meaning.
-const statusColors: Record<MemberStatus, string> = { active: 'green', inactive: 'gold', left: 'default' }
+// Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
+const statusColors: Record<MemberStatus, StatusTagColor> = { active: 'green', inactive: 'gold', left: 'default' }
 
 export function MemberTable({ members, page, pageSize, total, loading, onPageChange, onEdit }: MemberTableProps) {
   const columns: TableColumnsType<MemberProfile> = [
@@ -53,9 +54,9 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
       title: 'Trạng thái',
       dataIndex: 'status',
       render: (status: MemberStatus) => (
-        <Tag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
+        <StatusTag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
           {memberStatusLabels[status]}
-        </Tag>
+        </StatusTag>
       ),
     },
     {

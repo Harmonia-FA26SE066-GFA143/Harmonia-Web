@@ -1,7 +1,7 @@
 import { DeleteOutlined, DownOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import { App, Button, Card, Dropdown, Flex, InputNumber, Modal, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
-import { SectionSkeleton } from '@/shared/ui'
+import { SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { useAddAssignment, usePersonnelRequirements, useRemoveAssignment, useReplaceAssignment, useSavePersonnelRequirements } from '../hooks/useRoster'
 import { rosterErrorMessage } from '../rosterErrors'
@@ -198,9 +198,9 @@ export function SongStaffingCard({ programId, song, assignments, shortages, elig
         if (!saved.some((item) => item.skillId === row.skillId)) return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
         const shortage = shortages.find((item) => item.skillId === row.skillId)
         return shortage ? (
-          <Tag color="orange">Thiếu {shortage.requiredCount - shortage.assignedCount}</Tag>
+          <StatusTag color="orange">Thiếu {shortage.requiredCount - shortage.assignedCount}</StatusTag>
         ) : (
-          <Tag color="green">Đủ người</Tag>
+          <StatusTag color="green">Đủ người</StatusTag>
         )
       },
     },

@@ -1,7 +1,7 @@
 import { EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Card, Flex, Input, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Button, Card, Flex, Input, Table, Typography, type TableColumnsType } from 'antd'
 import { useMemo, useState } from 'react'
-import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
 import type { CatalogEntry } from '../types'
@@ -30,15 +30,15 @@ export interface CatalogTableProps<T extends CatalogEntry> {
   onEdit: (item: T) => void
 }
 
-// Semantic colors keep Ant Design defaults (no approved values yet); the label always carries the meaning.
+// Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
 const statusColumn = {
   key: 'status',
   title: 'Trạng thái',
   dataIndex: 'isActive',
   render: (isActive: boolean) => (
-    <Tag color={isActive ? 'green' : 'default'} style={{ marginInlineEnd: 0 }}>
+    <StatusTag color={isActive ? 'green' : 'default'} style={{ marginInlineEnd: 0 }}>
       {isActive ? 'Đang dùng' : 'Ngừng dùng'}
-    </Tag>
+    </StatusTag>
   ),
 }
 

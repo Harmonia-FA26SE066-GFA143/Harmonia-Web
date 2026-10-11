@@ -1,9 +1,9 @@
 import { BellOutlined } from '@ant-design/icons'
-import { Badge, Button, Flex, Popover, Tag, Typography } from 'antd'
+import { Badge, Button, Flex, Popover, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
-import { ErrorState, SectionSkeleton } from '@/shared/ui'
+import { ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, radius, sizes, spacing, typography } from '@/styles/tokens'
 import {
   useMarkAllNotificationsRead,
@@ -39,9 +39,9 @@ function NotificationItem({ notification, onOpen }: { notification: AppNotificat
               {notification.type ? notificationTitles[notification.type] : notification.title}
             </Typography.Text>
             {!isRead && (
-              <Tag color="processing" style={{ marginInlineEnd: 0 }}>
+              <StatusTag color="processing" style={{ marginInlineEnd: 0 }}>
                 Mới
-              </Tag>
+              </StatusTag>
             )}
           </Flex>
           <Typography.Text style={{ color: colors.textMuted }}>{notification.content}</Typography.Text>

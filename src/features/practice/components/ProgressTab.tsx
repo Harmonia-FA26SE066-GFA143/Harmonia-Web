@@ -1,6 +1,6 @@
-import { Card, Flex, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
-import { EmptyState, ErrorState, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { usePreparationProgress, useUpcomingEvents } from '../hooks/usePractice'
 import { formatEventOption } from '../practiceFormat'
@@ -9,8 +9,8 @@ import { participationStatusLabels, type MemberProgress, type ParticipationStatu
 const muted = { color: colors.textMuted }
 const numeric = { fontFamily: typography.fontFamilyNumeric }
 
-// Semantic colors keep Ant Design defaults; the label always carries the meaning.
-const participationColors: Record<ParticipationStatus, string> = {
+// Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
+const participationColors: Record<ParticipationStatus, StatusTagColor> = {
   invited: 'default',
   confirmed: 'green',
   declined: 'red',
@@ -33,9 +33,9 @@ const columns: TableColumnsType<MemberProgress> = [
     dataIndex: 'participationStatus',
     render: (status?: ParticipationStatus) =>
       status ? (
-        <Tag color={participationColors[status]} style={{ marginInlineEnd: 0 }}>
+        <StatusTag color={participationColors[status]} style={{ marginInlineEnd: 0 }}>
           {participationStatusLabels[status]}
-        </Tag>
+        </StatusTag>
       ) : (
         <Typography.Text style={muted}>Chưa gửi</Typography.Text>
       ),

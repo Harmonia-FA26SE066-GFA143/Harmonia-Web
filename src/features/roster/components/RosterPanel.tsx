@@ -1,7 +1,7 @@
 import { BulbOutlined, LockOutlined, NotificationOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Flex, Tag, Tooltip, Typography } from 'antd'
+import { Alert, App, Button, Flex, Tooltip, Typography } from 'antd'
 import { useState } from 'react'
-import { ErrorState, SectionSkeleton } from '@/shared/ui'
+import { ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { useFinalizeRoster, useRoster, useSendRosterNotifications, useShortages, useSuggestRoster } from '../hooks/useRoster'
 import { rosterErrorMessage } from '../rosterErrors'
@@ -103,9 +103,9 @@ export function RosterPanel({ programId, songs, eligible, skills }: RosterPanelP
         <Flex gap={spacing.xs} align="center">
           <Typography.Text style={{ color: colors.textMuted }}>Phân công:</Typography.Text>
           {current ? (
-            <Tag color={statusColors[current.status]} style={{ marginInlineEnd: 0 }}>
+            <StatusTag color={statusColors[current.status]} style={{ marginInlineEnd: 0 }}>
               {rosterStatusLabels[current.status]}
-            </Tag>
+            </StatusTag>
           ) : (
             <Typography.Text style={{ color: colors.textMuted }}>Chưa có</Typography.Text>
           )}

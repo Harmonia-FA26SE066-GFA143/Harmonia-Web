@@ -1,8 +1,8 @@
-import { Tag } from 'antd'
+import { StatusTag, type StatusTagColor } from '@/shared/ui'
 import { practiceStatusLabels, type PracticeStatus } from '../types'
 
-// Semantic colors keep Ant Design defaults (no approved values yet); the label always carries the meaning.
-const statusColors: Record<PracticeStatus, string> = {
+// Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
+const statusColors: Record<PracticeStatus, StatusTagColor> = {
   submitted: 'blue',
   passed: 'green',
   needsRevision: 'orange',
@@ -11,8 +11,8 @@ const statusColors: Record<PracticeStatus, string> = {
 
 export function PracticeStatusTag({ status }: { status: PracticeStatus }) {
   return (
-    <Tag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
+    <StatusTag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
       {practiceStatusLabels[status]}
-    </Tag>
+    </StatusTag>
   )
 }

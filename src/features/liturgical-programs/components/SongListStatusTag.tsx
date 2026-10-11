@@ -1,9 +1,10 @@
-import { Tag, Typography } from 'antd'
+import { Typography } from 'antd'
 import { colors } from '@/styles/tokens'
+import { StatusTag, type StatusTagColor } from '@/shared/ui'
 import { songListStatusLabels, type SongListStatus } from '../types'
 
-// Semantic colors keep Ant Design defaults; the label always carries the meaning.
-const statusColors: Record<SongListStatus, string> = {
+// Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
+const statusColors: Record<SongListStatus, StatusTagColor> = {
   draft: 'default',
   submitted: 'gold',
   approved: 'green',
@@ -15,8 +16,8 @@ const statusColors: Record<SongListStatus, string> = {
 export function SongListStatusTag({ status }: { status?: SongListStatus }) {
   if (!status) return <Typography.Text style={{ color: colors.textMuted }}>Chưa có</Typography.Text>
   return (
-    <Tag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
+    <StatusTag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
       {songListStatusLabels[status]}
-    </Tag>
+    </StatusTag>
   )
 }
