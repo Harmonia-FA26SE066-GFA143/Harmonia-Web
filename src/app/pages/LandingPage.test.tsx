@@ -20,7 +20,9 @@ describe('LandingPage', () => {
     renderPage(<LandingPage />)
 
     expect(screen.queryByRole('button', { name: 'Đăng ký' })).toBeNull()
-    fireEvent.click(screen.getAllByRole('button', { name: 'Đăng nhập' })[0])
+    const signIn = screen.getAllByRole('link', { name: 'Đăng nhập' })[0]
+    expect(signIn).toHaveAttribute('href', '/login')
+    fireEvent.click(signIn)
     expect(await screen.findByTestId('location')).toHaveTextContent('/login')
   })
 
