@@ -1,14 +1,14 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { Input, Tabs } from 'antd'
-import { useState } from 'react'
-import { generatePath, useNavigate } from 'react-router'
+import { useMemo } from 'react'
+import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { PageHeader } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { ReportFilterBar } from '../components/ReportFilterBar'
 import { ReportPanel } from '../components/ReportPanel'
 import { useCatalogOptions } from '@/features/system-categories'
-import { hasActiveReportFilters } from '../reportFilters'
+import { hasActiveReportFilters, readReportFilters, writeReportParams } from '../reportFilters'
 import { priestReportKinds, reportDefinitions } from '../reportDefinitions'
 import type { PriestReportKind, ReportFilters } from '../types'
 
@@ -18,14 +18,14 @@ export function PriestReportsPage() {
   const seasons = useCatalogOptions('seasons')
   const massTypes = useCatalogOptions('massTypes')
   const ceremonyTypes = useCatalogOptions('ceremonyTypes')
-  const [kind, setKind] = useState<PriestReportKind>('serviceHistory')
-  const [filters, setFilters] = useState<ReportFilters>({})
-  const [search, setSearch] = useState('')
-
-  const clearFilters = () => {
-    setFilters({})
-    setSearch('')
-  }
+  const [params, setParams] = useSearchParams()
+  const kind = priestReportKinds.find((item) => item === params.get('kind')) ?? 'serviceHistory'
+  const filters = useMemo(() => readReportFilters(params), [params])
+  const search = params.get('search') ?? ''
+  // `replace`: typing in the search box must not fill the history; Back leaves the page instead.
+  const show = (nextKind: PriestReportKind, nextFilters: ReportFilters, nextSearch: string) =>
+    setParams(writeReportParams(nextKind, nextFilters, nextSearch), { replace: true })
+  const clearFilters = () => show(kind, {}, '')
 
   return (
     <>
@@ -40,12 +40,12 @@ export function PriestReportsPage() {
         placeholder="Tìm chương trình, bài hát…"
         aria-label="Tìm trong báo cáo"
         value={search}
-        onChange={(event) => setSearch(event.target.value)}
+        onChange={(event) => show(kind, filters, event.target.value)}
         style={{ maxWidth: 360, marginBottom: spacing.sm }}
       />
       <ReportFilterBar
         value={filters}
-        onChange={setFilters}
+        onChange={(next) => show(kind, next, search)}
         onReset={clearFilters}
         seasons={seasons}
         massTypes={massTypes}
@@ -54,7 +54,7 @@ export function PriestReportsPage() {
       <Tabs
         destroyOnHidden
         activeKey={kind}
-        onChange={(key) => setKind(key as PriestReportKind)}
+        onChange={(key) => show(key as PriestReportKind, filters, search)}
         items={priestReportKinds.map((reportKind) => ({
           key: reportKind,
           label: reportDefinitions[reportKind].label,

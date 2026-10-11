@@ -1,13 +1,14 @@
 import { DownloadOutlined } from '@ant-design/icons'
 import { App, Button, Tabs } from 'antd'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { PageHeader } from '@/shared/ui'
 import { ReportFilterBar } from '../components/ReportFilterBar'
 import { ExportReportModal } from '../components/ExportReportModal'
 import { ReportPanel } from '../components/ReportPanel'
 import { useCatalogOptions } from '@/features/system-categories'
 import { useExportReport } from '../hooks/useReports'
-import { hasActiveReportFilters } from '../reportFilters'
+import { hasActiveReportFilters, readReportFilters, writeReportParams } from '../reportFilters'
 import { adminReportKinds, reportDefinitions } from '../reportDefinitions'
 import type { AdminReportKind, ReportExportRequest, ReportFilters } from '../types'
 
@@ -16,11 +17,15 @@ export function AdminReportsPage() {
   const { message } = App.useApp()
   const seasons = useCatalogOptions('seasons')
   const exportReport = useExportReport()
-  const [kind, setKind] = useState<AdminReportKind>('rehearsalAttendance')
-  const [filters, setFilters] = useState<ReportFilters>({})
+  const [params, setParams] = useSearchParams()
+  const kind = adminReportKinds.find((item) => item === params.get('kind')) ?? 'rehearsalAttendance'
+  const filters = useMemo(() => readReportFilters(params), [params])
+  const show = (nextKind: AdminReportKind, nextFilters: ReportFilters) =>
+    setParams(writeReportParams(nextKind, nextFilters), { replace: true })
   const [exporting, setExporting] = useState(false)
 
-  const handleExport = (request: ReportExportRequest) =>
+  const handleExport = (request: ReportExportRequest) => {
+    if (exportReport.isPending) return
     exportReport.mutate(request, {
       onSuccess: () => {
         message.success('Đã gửi yêu cầu xuất báo cáo.')
@@ -28,6 +33,7 @@ export function AdminReportsPage() {
       },
       onError: () => message.error('Không thể xuất báo cáo. Vui lòng thử lại.'),
     })
+  }
 
   return (
     <>
@@ -41,11 +47,11 @@ export function AdminReportsPage() {
           </Button>
         }
       />
-      <ReportFilterBar value={filters} onChange={setFilters} onReset={() => setFilters({})} showMonth seasons={seasons} />
+      <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={() => show(kind, {})} showMonth seasons={seasons} />
       <Tabs
         destroyOnHidden
         activeKey={kind}
-        onChange={(key) => setKind(key as AdminReportKind)}
+        onChange={(key) => show(key as AdminReportKind, filters)}
         items={adminReportKinds.map((reportKind) => ({
           key: reportKind,
           label: reportDefinitions[reportKind].label,
@@ -54,7 +60,7 @@ export function AdminReportsPage() {
               kind={reportKind}
               filters={filters}
               filtered={hasActiveReportFilters(filters)}
-              onClearFilters={() => setFilters({})}
+              onClearFilters={() => show(kind, {})}
             />
           ),
         }))}
@@ -62,6 +68,7 @@ export function AdminReportsPage() {
       <ExportReportModal
         open={exporting}
         initialKind={kind}
+        filters={filters}
         seasons={seasons}
         exporting={exportReport.isPending}
         onSubmit={handleExport}

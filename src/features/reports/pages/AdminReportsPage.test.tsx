@@ -61,6 +61,24 @@ describe('AdminReportsPage', () => {
     )
   })
 
+  it('starts the export from the month already chosen on the page', async () => {
+    vi.spyOn(reportsApi, 'getReport').mockResolvedValue({ metrics: {}, rows: [] })
+    const exportReport = vi.spyOn(reportsApi, 'exportReport').mockResolvedValue()
+    renderPage(<AdminReportsPage />, '/admin/reports', '/admin/reports?kind=participation&month=2026-09')
+
+    expect(await screen.findByRole('tab', { name: 'Xác nhận tham gia', selected: true })).toBeInTheDocument()
+    expect(screen.getByLabelText('Tháng')).toHaveValue('09/2026')
+
+    fireEvent.click(screen.getByRole('button', { name: /Xuất báo cáo/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('radio', { name: 'Theo tháng' })).toBeChecked()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Xuất báo cáo' }))
+
+    await waitFor(() =>
+      expect(exportReport).toHaveBeenCalledWith({ kind: 'participation', scope: { type: 'month', month: '2026-09' } }),
+    )
+  })
+
   it('requires a month before exporting by month', async () => {
     vi.spyOn(reportsApi, 'getReport').mockResolvedValue({ metrics: {}, rows: [] })
     const exportReport = vi.spyOn(reportsApi, 'exportReport')

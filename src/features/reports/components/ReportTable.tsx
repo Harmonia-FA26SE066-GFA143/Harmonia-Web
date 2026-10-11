@@ -34,8 +34,16 @@ export function ReportTable({ columns, rows, onOpenProgram }: ReportTableProps) 
             key: 'program-link',
             title: 'Thao tác',
             align: 'right' as const,
-            render: (_: unknown, { programId }: ReportRow) =>
-              programId && <Button onClick={() => onOpenProgram(programId)}>Xem chương trình</Button>,
+            render: (_: unknown, { programId, cells }: ReportRow) => {
+              if (!programId) return null
+              // Every row has this button, so the program is part of its name.
+              const name = cells.program ?? cells.event ?? cells.song
+              return (
+                <Button onClick={() => onOpenProgram(programId)} aria-label={name ? `Xem chương trình ${name}` : undefined}>
+                  Xem chương trình
+                </Button>
+              )
+            },
           },
         ]
       : []),

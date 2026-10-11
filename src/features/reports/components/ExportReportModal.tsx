@@ -1,13 +1,15 @@
 import { DatePicker, Form, Modal, Radio, Select, Typography } from 'antd'
-import type { Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import { colors } from '@/styles/tokens'
 import { adminReportKinds, reportDefinitions } from '../reportDefinitions'
-import type { AdminReportKind, ReportExportRequest } from '../types'
+import type { AdminReportKind, ReportExportRequest, ReportFilters } from '../types'
 import type { FilterOption } from './ReportFilterBar'
 
 export interface ExportReportModalProps {
   open: boolean
   initialKind: AdminReportKind
+  /** The page's filters: the export starts from the month or season already chosen there. */
+  filters?: ReportFilters
   seasons: FilterOption[]
   exporting?: boolean
   onSubmit: (request: ReportExportRequest) => void
@@ -28,6 +30,7 @@ interface ExportFormValues {
 export function ExportReportModal({
   open,
   initialKind,
+  filters = {},
   seasons,
   exporting = false,
   onSubmit,
@@ -47,8 +50,12 @@ export function ExportReportModal({
       modalRender={(dom) => (
         <Form<ExportFormValues>
           layout="vertical"
-          disabled={exporting}
-          initialValues={{ kind: initialKind, scopeType: 'month' }}
+          initialValues={{
+            kind: initialKind,
+            scopeType: filters.seasonId && !filters.month ? 'season' : 'month',
+            month: filters.month ? dayjs(`${filters.month}-01`) : undefined,
+            seasonId: filters.seasonId,
+          }}
           onFinish={(values) =>
             onSubmit({
               kind: values.kind,
