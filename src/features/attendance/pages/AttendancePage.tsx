@@ -113,9 +113,9 @@ export function AttendancePage() {
             />
           )}
           {attendance.isSuccess && attendance.data.length > 0 && (
-            // Remount after a save or a session change so the draft starts from the saved values.
+            // One sheet per session: its unsaved marks stay through a reload of the records.
             <AttendanceSheet
-              key={`${selected.id}-${attendance.dataUpdatedAt}`}
+              key={selected.id}
               rehearsalId={selected.id}
               records={attendance.data}
               editable={started}
