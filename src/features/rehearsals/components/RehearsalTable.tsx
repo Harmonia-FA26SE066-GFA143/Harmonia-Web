@@ -10,6 +10,8 @@ import { isRehearsalDay, type Rehearsal } from '../types'
 export interface RehearsalTableProps {
   rehearsals: Rehearsal[]
   programs: Map<string, LiturgicalProgram>
+  /** Load state of `programs`: a program that is missing while it loads or failed is not "no program". */
+  programsStatus: 'pending' | 'error' | 'success'
   onTakeAttendance: (rehearsal: Rehearsal) => void
   onEdit: (rehearsal: Rehearsal) => void
   onDelete: (rehearsal: Rehearsal) => void
@@ -17,7 +19,9 @@ export interface RehearsalTableProps {
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
 
-export function RehearsalTable({ rehearsals, programs, onTakeAttendance, onEdit, onDelete }: RehearsalTableProps) {
+const deleteBlockedReason = 'Buổi tập đã có điểm danh nên không thể xoá.'
+
+export function RehearsalTable({ rehearsals, programs, programsStatus, onTakeAttendance, onEdit, onDelete }: RehearsalTableProps) {
   const columns: TableColumnsType<Rehearsal> = [
     {
       key: 'name',
@@ -38,7 +42,10 @@ export function RehearsalTable({ rehearsals, programs, onTakeAttendance, onEdit,
       title: 'Chương trình phụng vụ',
       render: (_, rehearsal) => {
         const program = programs.get(rehearsal.programId)
-        if (!program) return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
+        if (!program) {
+          const text = { pending: 'Đang tải…', error: 'Chưa tải được', success: '—' }[programsStatus]
+          return <Typography.Text style={{ color: colors.textMuted }}>{text}</Typography.Text>
+        }
         return (
           <Flex vertical gap={2}>
             <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>{program.eventName}</Link>
@@ -81,14 +88,16 @@ export function RehearsalTable({ rehearsals, programs, onTakeAttendance, onEdit,
             {isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
           </Button>
           <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa ${rehearsal.name}`} />
-          <Tooltip title={rehearsal.hasAttendance ? 'Buổi tập đã có điểm danh nên không thể xoá.' : undefined}>
+          {/* aria-disabled, not disabled: the button keeps the focus, so the reason reaches keyboard and screen reader users. */}
+          <Tooltip title={rehearsal.hasAttendance ? deleteBlockedReason : undefined}>
             <Button
               type="text"
               danger
               icon={<DeleteOutlined />}
-              disabled={rehearsal.hasAttendance}
-              onClick={() => onDelete(rehearsal)}
-              aria-label={`Xoá ${rehearsal.name}`}
+              aria-disabled={rehearsal.hasAttendance}
+              style={rehearsal.hasAttendance ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
+              onClick={() => !rehearsal.hasAttendance && onDelete(rehearsal)}
+              aria-label={rehearsal.hasAttendance ? `Xoá ${rehearsal.name}. ${deleteBlockedReason}` : `Xoá ${rehearsal.name}`}
             />
           </Tooltip>
         </Flex>
