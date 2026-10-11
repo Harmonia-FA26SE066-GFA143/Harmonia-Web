@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons'
-import { Alert, Badge, Button, Calendar, Card, Flex, Grid, Typography } from 'antd'
+import { Alert, Badge, Button, Calendar, Card, Col, Flex, Grid, Row, Spin, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useMemo, useState } from 'react'
 import { generatePath, useNavigate } from 'react-router'
@@ -10,7 +10,7 @@ import { EventStatusTag } from '../components/EventStatusTag'
 import { ImportCalendarButton, LiturgicalDayInfo } from '../components/LiturgicalDayInfo'
 import { useEventNames } from '../hooks/useEventNames'
 import { useEvents } from '../hooks/useEvents'
-import type { LiturgicalEvent } from '../types'
+import { eventStatusLabels, type LiturgicalEvent } from '../types'
 
 const cellLimit = 2
 // ponytail: one page of 100 events per month (the backend maximum); a busier month would need a second page.
@@ -53,10 +53,12 @@ export function ProgramCalendarPage() {
         {items.slice(0, cellLimit).map((event) => (
           <Typography.Text
             key={event.id}
-            ellipsis
+            ellipsis={{ tooltip: true }}
             delete={event.status === 'cancelled'}
-            style={{ fontSize: 12, color: colors.primary }}
+            style={{ fontSize: 12, color: event.status === 'published' ? colors.primary : colors.textMuted }}
           >
+            {/* Published is the usual state; the others are named so the status does not rest on color alone. */}
+            {event.status !== 'published' && `${eventStatusLabels[event.status]} · `}
             {event.time} {eventName(event)}
           </Typography.Text>
         ))}
@@ -87,53 +89,69 @@ export function ProgramCalendarPage() {
         <ErrorState title="Không thể tải lịch phụng vụ" onRetry={() => events.refetch()} retrying={events.isFetching} />
       )}
       {events.isSuccess && (
-        <Flex vertical gap={spacing.lg}>
-          {events.data.totalCount === 0 && (
-            <Alert
-              type="info"
-              showIcon
-              title="Chưa có sự kiện nào trong tháng này."
-              description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình cho ngày này”."
-            />
-          )}
-          <Card styles={{ body: { padding: screens.md ? spacing.md : spacing.sm } }}>
-            <Calendar
-              fullscreen={Boolean(screens.md)}
-              value={selected}
-              onSelect={setSelected}
-              cellRender={(date, info) => (info.type === 'date' ? renderDate(date) : info.originNode)}
-            />
-          </Card>
-          <Card title={`Ngày ${selected.format('DD/MM/YYYY')}`}>
-            <div style={{ marginBottom: spacing.md }}>
-              <LiturgicalDayInfo date={selectedKey} />
-            </div>
-            <Button icon={<PlusOutlined />} onClick={createForDate} style={{ marginBottom: spacing.md }}>
-              Tạo chương trình cho ngày này
-            </Button>
-            {selectedEvents.length === 0 ? (
-              <Typography.Text style={{ color: colors.textMuted }}>Chưa có sự kiện nào trong ngày này.</Typography.Text>
-            ) : (
-              <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                {selectedEvents.map((event) => (
-                  <Flex component="li" key={event.id} wrap align="center" justify="space-between" gap={spacing.sm}>
-                    <Flex vertical>
-                      <Typography.Text strong>
-                        {event.time} · {eventName(event)}
-                      </Typography.Text>
-                      <Flex align="center" gap={spacing.xs} wrap style={{ color: colors.textMuted }}>
-                        {event.locationName} <EventStatusTag status={event.status} />
+        // From lg the day panel sits beside the calendar, so picking a day shows its events without scrolling.
+        <Row gutter={[spacing.lg, spacing.lg]}>
+          <Col xs={24} lg={16}>
+            <Card styles={{ body: { padding: screens.md ? spacing.md : spacing.sm } }}>
+              {/* The previous month stays on screen while the next one loads (keepPreviousData), so it is dimmed. */}
+              <Spin spinning={events.isPlaceholderData} description="Đang tải tháng…">
+                <Calendar
+                  fullscreen={Boolean(screens.md)}
+                  value={selected}
+                  onSelect={setSelected}
+                  cellRender={(date, info) => (info.type === 'date' ? renderDate(date) : info.originNode)}
+                />
+              </Spin>
+            </Card>
+          </Col>
+          <Col xs={24} lg={8}>
+            <Flex vertical gap={spacing.lg}>
+              {/* Kept out of the calendar column so switching between empty and busy months does not move the grid. */}
+              {!events.isPlaceholderData && events.data.totalCount === 0 && (
+                <Alert
+                  type="info"
+                  showIcon
+                  title="Chưa có sự kiện nào trong tháng này."
+                  description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình cho ngày này”."
+                />
+              )}
+              <Card title={`Ngày ${selected.format('DD/MM/YYYY')}`}>
+                <div style={{ marginBottom: spacing.md }}>
+                  <LiturgicalDayInfo date={selectedKey} />
+                </div>
+                <Button icon={<PlusOutlined />} onClick={createForDate} style={{ marginBottom: spacing.md }}>
+                  Tạo chương trình cho ngày này
+                </Button>
+                {events.isPlaceholderData ? (
+                  <Typography.Text style={{ color: colors.textMuted }}>Đang tải sự kiện…</Typography.Text>
+                ) : selectedEvents.length === 0 ? (
+                  <Typography.Text style={{ color: colors.textMuted }}>Chưa có sự kiện nào trong ngày này.</Typography.Text>
+                ) : (
+                  <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                    {selectedEvents.map((event) => (
+                      <Flex component="li" key={event.id} wrap align="center" justify="space-between" gap={spacing.sm}>
+                        <Flex vertical>
+                          <Typography.Text strong>
+                            {event.time} · {eventName(event)}
+                          </Typography.Text>
+                          <Flex align="center" gap={spacing.xs} wrap style={{ color: colors.textMuted }}>
+                            {event.locationName} <EventStatusTag status={event.status} />
+                          </Flex>
+                        </Flex>
+                        <Button
+                          onClick={() => openEvent(event)}
+                          aria-label={`Xem chi tiết ${eventName(event)} lúc ${event.time}`}
+                        >
+                          Xem chi tiết
+                        </Button>
                       </Flex>
-                    </Flex>
-                    <Button onClick={() => openEvent(event)} aria-label={`Xem chi tiết ${eventName(event)} lúc ${event.time}`}>
-                      Xem chi tiết
-                    </Button>
+                    ))}
                   </Flex>
-                ))}
-              </Flex>
-            )}
-          </Card>
-        </Flex>
+                )}
+              </Card>
+            </Flex>
+          </Col>
+        </Row>
       )}
     </>
   )
