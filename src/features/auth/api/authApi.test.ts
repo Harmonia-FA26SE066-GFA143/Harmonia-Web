@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getSession, setSession, type Session } from '@/lib/auth/session'
-import { requestPasswordReset, resetPassword, signIn, signOut } from './authApi'
+import { requestPasswordReset, resetPassword, signIn, signInWithGoogle, signOut } from './authApi'
 
 const session: Session = {
   accessToken: 'access-1',
@@ -19,6 +19,17 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals()
   fetchMock.mockReset()
+})
+
+describe('signInWithGoogle', () => {
+  it('sends the Google ID token from the web and keeps the session', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ ...session, user: { ...session.user, isPasswordChangeRequired: true } }), { status: 200 }))
+
+    await expect(signInWithGoogle('google-id-token')).resolves.toEqual({ role: 'priest', mustChangePassword: true })
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/auth\/google$/)
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ idToken: 'google-id-token', platform: 'Web' })
+    expect(getSession()?.accessToken).toBe('access-1')
+  })
 })
 
 describe('signIn', () => {

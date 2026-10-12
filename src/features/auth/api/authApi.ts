@@ -10,10 +10,22 @@ import type {
 } from '../types'
 
 export async function signIn(values: SignInValues): Promise<SignInResult> {
-  const session = await apiRequest<Session>('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ ...values, platform: 'Web' }),
-  })
+  return startSession(
+    await apiRequest<Session>('/api/auth/login', { method: 'POST', body: JSON.stringify({ ...values, platform: 'Web' }) }),
+  )
+}
+
+/**
+ * Signs in with the ID token Google Identity Services returned. The backend creates no account: an email without one
+ * answers AUTH_INVALID_CREDENTIALS, like a wrong password (AuthService.LoginWithGoogleAsync).
+ */
+export async function signInWithGoogle(idToken: string): Promise<SignInResult> {
+  return startSession(
+    await apiRequest<Session>('/api/auth/google', { method: 'POST', body: JSON.stringify({ idToken, platform: 'Web' }) }),
+  )
+}
+
+async function startSession(session: Session): Promise<SignInResult> {
   setSession(session)
   // Choir Members use the mobile app and have no web workspace (RoleGuard): revoke the session they just got
   // instead of leaving a valid refresh token behind. signOut needs it stored to authorize the logout call.

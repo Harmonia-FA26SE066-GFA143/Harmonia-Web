@@ -1,4 +1,5 @@
-import { Alert, Button, Flex, Form, Input, Typography } from 'antd'
+import { Alert, Button, Divider, Flex, Form, Input, Typography } from 'antd'
+import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { contactEmail } from '@/config/contact'
@@ -12,6 +13,8 @@ export interface LoginFormProps {
   onSubmit: (values: SignInValues) => void
   submitting?: boolean
   feedback?: LoginFeedback
+  /** Another way to sign in, shown under the form after "hoặc" (the Google button). */
+  alternative?: ReactNode
 }
 
 function FeedbackAlert({ feedback }: { feedback: LoginFeedback }) {
@@ -59,6 +62,29 @@ function FeedbackAlert({ feedback }: { feedback: LoginFeedback }) {
           description="Vui lòng đăng nhập lại để tiếp tục."
         />
       )
+    case 'google-not-registered':
+      return (
+        <Alert
+          type="error"
+          showIcon
+          title="Tài khoản Google này chưa được cấp quyền vào Harmonia."
+          description={
+            <>
+              Hãy đăng nhập bằng email Quản trị viên đã tạo cho bạn, hoặc liên hệ:{' '}
+              <Typography.Link href={`mailto:${contactEmail}`}>{contactEmail}</Typography.Link>
+            </>
+          }
+        />
+      )
+    case 'google-invalid':
+      return (
+        <Alert
+          type="error"
+          showIcon
+          title="Không xác thực được tài khoản Google."
+          description="Vui lòng thử lại, hoặc đăng nhập bằng email và mật khẩu."
+        />
+      )
     case 'unavailable':
       return (
         <Alert
@@ -71,7 +97,7 @@ function FeedbackAlert({ feedback }: { feedback: LoginFeedback }) {
   }
 }
 
-export function LoginForm({ onSubmit, submitting = false, feedback }: LoginFormProps) {
+export function LoginForm({ onSubmit, submitting = false, feedback, alternative }: LoginFormProps) {
   return (
     <Flex vertical gap={spacing.md}>
       {feedback && <FeedbackAlert feedback={feedback} />}
@@ -103,6 +129,14 @@ export function LoginForm({ onSubmit, submitting = false, feedback }: LoginFormP
           Đăng nhập
         </Button>
       </Form>
+      {alternative && (
+        <>
+          <Divider plain style={{ margin: 0 }}>
+            hoặc
+          </Divider>
+          {alternative}
+        </>
+      )}
     </Flex>
   )
 }
