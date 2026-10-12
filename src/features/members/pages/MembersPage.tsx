@@ -37,7 +37,7 @@ export function MembersPage() {
   const resetFilters = () => changeFilters(emptyMemberFilters)
 
   const handleSubmit = (values: MemberProfileValues) => {
-    if (!editing) return
+    if (!editing || update.isPending) return
     update.mutate(
       { id: editing.id, values },
       {
