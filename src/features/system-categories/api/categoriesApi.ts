@@ -6,10 +6,14 @@ import type {
   CatalogItemValues,
   LiturgicalSeason,
   LiturgicalSeasonValues,
+  LiturgicalSlot,
+  LiturgicalSlotValues,
   LookupItem,
   LookupKind,
   Skill,
   SkillValues,
+  WorshipLocation,
+  WorshipLocationValues,
 } from '../types'
 
 const lookupPaths: Record<LookupKind, string> = {
@@ -73,4 +77,22 @@ export function listSeasons(): Promise<LiturgicalSeason[]> {
 
 export function saveSeason(id: string | undefined, values: LiturgicalSeasonValues): Promise<LiturgicalSeason> {
   return save('seasons', id, values)
+}
+
+/** Sorted by default order, then name, on the server. */
+export function listSlots(): Promise<LiturgicalSlot[]> {
+  return listAll('liturgicalSlots')
+}
+
+export function saveSlot(id: string | undefined, values: LiturgicalSlotValues): Promise<LiturgicalSlot> {
+  return save('liturgicalSlots', id, values)
+}
+
+/** Sorted by name on the server. */
+export function listLocations(): Promise<WorshipLocation[]> {
+  return listAll('worshipLocations')
+}
+
+export function saveLocation(id: string | undefined, values: WorshipLocationValues): Promise<WorshipLocation> {
+  return save('worshipLocations', id, { ...values, address: values.address?.trim() || null })
 }

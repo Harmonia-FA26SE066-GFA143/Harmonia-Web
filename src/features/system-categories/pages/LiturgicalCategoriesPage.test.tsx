@@ -27,11 +27,19 @@ function enterDate(placeholderIndex: number, value: string) {
 }
 
 describe('LiturgicalCategoriesPage', () => {
-  it('offers the four FE-50 catalogs as tabs', async () => {
+  it('offers the FE-50 catalogs and the three the backend added as tabs', async () => {
     vi.spyOn(categoriesApi, 'listSeasons').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<LiturgicalCategoriesPage />, '/admin/liturgical-categories')
 
-    for (const name of ['Mùa phụng vụ', 'Loại Thánh lễ', 'Loại nghi thức', 'Danh mục sự kiện']) {
+    for (const name of [
+      'Mùa phụng vụ',
+      'Loại Thánh lễ',
+      'Loại nghi thức',
+      'Danh mục sự kiện',
+      'Chủ đề bài hát',
+      'Phần phụng vụ',
+      'Nơi cử hành',
+    ]) {
       expect(screen.getByRole('tab', { name })).toBeInTheDocument()
     }
     expect(await screen.findByRole('heading', { name: 'Không thể tải danh mục mùa phụng vụ' })).toBeInTheDocument()
@@ -94,5 +102,26 @@ describe('LiturgicalCategoriesPage', () => {
     )
     expect(await screen.findByText('Khoảng ngày này trùng với một mùa phụng vụ khác đang dùng.')).toBeInTheDocument()
     expect(within(dialog).getByRole('textbox', { name: 'Tên mùa phụng vụ' })).toHaveValue('Mùa Giáng Sinh')
+  })
+
+  it('adds a liturgical slot with its default order', async () => {
+    vi.spyOn(categoriesApi, 'listSeasons').mockResolvedValue([])
+    vi.spyOn(categoriesApi, 'listSlots').mockResolvedValue([{ id: 'sl1', name: 'Ca nhập lễ', defaultOrder: 1, isActive: true }])
+    const save = vi
+      .spyOn(categoriesApi, 'saveSlot')
+      .mockResolvedValue({ id: 'sl2', name: 'Đáp ca', defaultOrder: 2, isActive: true })
+    renderPage(<LiturgicalCategoriesPage />, '/admin/liturgical-categories')
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Phần phụng vụ' }))
+    expect(await screen.findByText('Ca nhập lễ')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Thêm phần phụng vụ/ }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Tên phần phụng vụ' }), { target: { value: ' Đáp ca ' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thêm' }))
+    expect(await within(dialog).findByText('Vui lòng nhập thứ tự mặc định.')).toBeInTheDocument()
+
+    fireEvent.change(within(dialog).getByRole('spinbutton', { name: 'Thứ tự mặc định' }), { target: { value: '2' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thêm' }))
+    await waitFor(() => expect(save).toHaveBeenCalledWith(undefined, { name: 'Đáp ca', defaultOrder: 2, isActive: true }))
   })
 })
