@@ -40,7 +40,6 @@ export function MemberFormModal({ member, saving = false, onSubmit, onCancel }: 
       modalRender={(dom) => (
         <Form<MemberProfileValues>
           layout="vertical"
-          disabled={saving}
           initialValues={
             member && {
               phone: member.phone ?? undefined,
