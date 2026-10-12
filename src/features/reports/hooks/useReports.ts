@@ -1,17 +1,29 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { ApiContractMissingError } from '@/lib/api/errors'
-import { exportReport, getReport } from '../api/reportsApi'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { exportReport, getReport, listExports, type ReportPage } from '../api/reportsApi'
 import type { ReportExportRequest, ReportFilters, ReportKind } from '../types'
 
-export function useReport(kind: ReportKind, filters: ReportFilters) {
+/** One page of a report; the previous page stays visible while the next one loads. */
+export function useReport(kind: ReportKind, filters: ReportFilters, page: ReportPage) {
   return useQuery({
-    queryKey: ['reports', kind, filters],
-    queryFn: () => getReport(kind, filters),
-    // Retrying cannot help while the API contract is missing.
-    retry: (failureCount, error) => !(error instanceof ApiContractMissingError) && failureCount < 3,
+    queryKey: ['reports', kind, filters, page],
+    queryFn: () => getReport(kind, filters, page),
+    placeholderData: keepPreviousData,
   })
 }
 
+export function useReportExports(page: ReportPage) {
+  return useQuery({
+    queryKey: ['reports', 'exports', page],
+    queryFn: () => listExports(page),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Each export is recorded by the backend, so the list of exports is reloaded. */
 export function useExportReport() {
-  return useMutation({ mutationFn: (request: ReportExportRequest) => exportReport(request) })
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (request: ReportExportRequest) => exportReport(request),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports', 'exports'] }),
+  })
 }

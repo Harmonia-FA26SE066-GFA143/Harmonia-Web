@@ -2,7 +2,7 @@ import { DatePicker, Form, Modal, Radio, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { colors } from '@/styles/tokens'
 import { adminReportKinds, reportDefinitions } from '../reportDefinitions'
-import type { AdminReportKind, ReportExportRequest, ReportFilters } from '../types'
+import { reportFormatLabels, type AdminReportKind, type ReportExportRequest, type ReportFilters, type ReportFormat } from '../types'
 import type { FilterOption } from './ReportFilterBar'
 
 export interface ExportReportModalProps {
@@ -18,14 +18,15 @@ export interface ExportReportModalProps {
 
 interface ExportFormValues {
   kind: AdminReportKind
+  format: ReportFormat
   scopeType: 'month' | 'season'
   month?: Dayjs
   seasonId?: string
 }
 
 /**
- * Export an Admin report by month or liturgical season (FE-53). By-event export needs a program list API and
- * file format/delivery are not defined yet (TBD), so neither is offered.
+ * Exports a report by month or liturgical season (FE-53) to a file (`GET /api/reports/export`): every matching row,
+ * in the chosen format. The backend records each export.
  */
 export function ExportReportModal({
   open,
@@ -50,19 +51,19 @@ export function ExportReportModal({
       modalRender={(dom) => (
         <Form<ExportFormValues>
           layout="vertical"
+          disabled={exporting}
           initialValues={{
             kind: initialKind,
+            format: 'xlsx',
             scopeType: filters.seasonId && !filters.month ? 'season' : 'month',
             month: filters.month ? dayjs(`${filters.month}-01`) : undefined,
             seasonId: filters.seasonId,
           }}
-          onFinish={(values) =>
+          onFinish={({ kind, format, scopeType, month, seasonId }) =>
             onSubmit({
-              kind: values.kind,
-              scope:
-                values.scopeType === 'month' && values.month
-                  ? { type: 'month', month: values.month.format('YYYY-MM') }
-                  : { type: 'season', seasonId: values.seasonId ?? '' },
+              kind,
+              format,
+              filters: scopeType === 'month' ? { month: month?.format('YYYY-MM') } : { seasonId },
             })
           }
         >
@@ -72,6 +73,14 @@ export function ExportReportModal({
     >
       <Form.Item label="Loại báo cáo" name="kind" rules={[{ required: true, message: 'Vui lòng chọn loại báo cáo.' }]}>
         <Select options={adminReportKinds.map((kind) => ({ value: kind, label: reportDefinitions[kind].label }))} />
+      </Form.Item>
+      <Form.Item label="Định dạng" name="format">
+        <Radio.Group
+          options={(Object.keys(reportFormatLabels) as ReportFormat[]).map((format) => ({
+            value: format,
+            label: reportFormatLabels[format],
+          }))}
+        />
       </Form.Item>
       <Form.Item label="Phạm vi" name="scopeType">
         <Radio.Group
@@ -84,12 +93,8 @@ export function ExportReportModal({
       <Form.Item noStyle dependencies={['scopeType']}>
         {({ getFieldValue }) =>
           getFieldValue('scopeType') === 'season' ? (
-            <Form.Item
-              label="Mùa phụng vụ"
-              name="seasonId"
-              rules={[{ required: true, message: 'Vui lòng chọn mùa phụng vụ.' }]}
-            >
-              <Select placeholder="Chọn mùa phụng vụ" options={seasons} />
+            <Form.Item label="Mùa phụng vụ" name="seasonId" rules={[{ required: true, message: 'Vui lòng chọn mùa phụng vụ.' }]}>
+              <Select showSearch optionFilterProp="label" placeholder="Chọn mùa phụng vụ" options={seasons} />
             </Form.Item>
           ) : (
             <Form.Item label="Tháng" name="month" rules={[{ required: true, message: 'Vui lòng chọn tháng.' }]}>
@@ -99,7 +104,7 @@ export function ExportReportModal({
         }
       </Form.Item>
       <Typography.Paragraph style={{ margin: 0, color: colors.textMuted }}>
-        Báo cáo xuất ra chỉ gồm số liệu thực tế đã ghi nhận.
+        File gồm mọi dòng của báo cáo trong phạm vi đã chọn và được lưu vào lịch sử xuất.
       </Typography.Paragraph>
     </Modal>
   )

@@ -10,13 +10,22 @@ import { ApiError } from './errors'
  * the refresh token has rotated.
  */
 export async function apiRequest<T>(path: string, init: RequestInit | (() => RequestInit) = {}): Promise<T> {
+  return (await request(path, init, false)) as T
+}
+
+/** A file answer, e.g. a report export: the same session handling as apiRequest, the body kept as a Blob. */
+export async function apiDownload(path: string): Promise<Blob> {
+  return (await request(path, {}, true)) as Blob
+}
+
+async function request(path: string, init: RequestInit | (() => RequestInit), asBlob: boolean): Promise<unknown> {
   const build = typeof init === 'function' ? init : () => init
-  let { response, body } = await send(path, build())
+  let { response, body } = await send(path, build(), asBlob)
 
   if (response.status === 401) {
     const code = new ApiError(401, body).code
     if (code === 'AUTH_TOKEN_EXPIRED' && (await refreshSessionOnce())) {
-      ;({ response, body } = await send(path, build()))
+      ;({ response, body } = await send(path, build(), asBlob))
     } else if (code === 'AUTH_TOKEN_EXPIRED' || code === 'AUTH_TOKEN_INVALID') {
       // The refresh was rejected, or there is no valid token at all: start over at sign-in. The full reload also
       // drops cached data of the previous session.
@@ -32,10 +41,10 @@ export async function apiRequest<T>(path: string, init: RequestInit | (() => Req
   }
 
   if (!response.ok) throw new ApiError(response.status, body)
-  return body as T
+  return body
 }
 
-async function send(path: string, init: RequestInit) {
+async function send(path: string, init: RequestInit, asBlob = false) {
   const accessToken = getSession()?.accessToken
   const response = await fetch(`${env.apiBaseUrl}${path}`, {
     ...init,
@@ -46,7 +55,8 @@ async function send(path: string, init: RequestInit) {
       ...init.headers,
     },
   })
-  return { response, body: await readBody(response) }
+  // A failed download still answers with the JSON error body.
+  return { response, body: asBlob && response.ok ? await response.blob() : await readBody(response) }
 }
 
 async function readBody(response: Response) {

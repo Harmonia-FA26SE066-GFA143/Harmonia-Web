@@ -1,5 +1,7 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import * as client from '@/lib/api/client'
+import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as reportsApi from '../api/reportsApi'
 import { PriestReportsPage } from './PriestReportsPage'
@@ -8,60 +10,74 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-const serviceHistory = {
-  metrics: {},
-  rows: [
-    { id: 'h1', programId: 'p1', cells: { program: 'Lễ Chúa Nhật XX', date: '20/09/2026', season: 'Mùa Thường Niên' } },
-    { id: 'h2', programId: 'p2', cells: { program: 'Giờ Chầu Thánh Thể', date: '03/09/2026', season: 'Mùa Thường Niên' } },
-  ],
-}
+const empty = { items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 }
 
 describe('PriestReportsPage', () => {
-  it('offers the three FE-22 reports', async () => {
+  it('offers the two reports the backend has for the Priest', async () => {
+    vi.spyOn(reportsApi, 'getReport').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<PriestReportsPage />, '/priest/reports')
 
-    for (const name of ['Lịch sử phục vụ', 'Sử dụng bài hát', 'Tình trạng chuẩn bị']) {
-      expect(screen.getByRole('tab', { name })).toBeInTheDocument()
-    }
+    expect(screen.getByRole('tab', { name: 'Lịch sử phục vụ' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Sử dụng bài hát' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Tình trạng chuẩn bị' })).toBeNull()
     expect(await screen.findByRole('heading', { name: 'Không thể tải báo cáo' })).toBeInTheDocument()
   })
 
   it('shows the empty state when there is no data and no filter', async () => {
-    vi.spyOn(reportsApi, 'getReport').mockResolvedValue({ metrics: {}, rows: [] })
+    vi.spyOn(reportsApi, 'getReport').mockResolvedValue(empty)
     renderPage(<PriestReportsPage />, '/priest/reports')
 
     expect(await screen.findByRole('heading', { name: 'Chưa có lịch sử phục vụ' })).toBeInTheDocument()
   })
 
-  it('searches rows and opens a program from the report', async () => {
-    vi.spyOn(reportsApi, 'getReport').mockResolvedValue(serviceHistory)
-    renderPage(<PriestReportsPage />, '/priest/reports')
+  it('reads the service history of the backend and opens an event from it', async () => {
+    const history = {
+      ...empty,
+      totalCount: 1,
+      totalPages: 1,
+      items: [
+        {
+          eventId: 'e1',
+          eventDate: '2026-09-20',
+          time: '08:00:00',
+          title: 'Lễ Chúa Nhật XXV',
+          liturgicalSeasonName: 'Mùa Thường Niên',
+          locationName: 'Nhà thờ chính',
+          songCount: 6,
+          membersServed: 18,
+          participationConfirmed: 20,
+          participationDeclined: 2,
+          rehearsalsHeld: 3,
+          attendancePresent: 51,
+        },
+      ],
+    }
+    // The season lookup goes through apiRequest too.
+    const request = vi
+      .spyOn(client, 'apiRequest')
+      .mockImplementation(async (path: string) => (path.startsWith('/api/reports/') ? history : []))
+    renderPage(<PriestReportsPage />, '/priest/reports', '/priest/reports?month=2026-09&seasonId=s5')
 
-    expect(await screen.findByText('Lễ Chúa Nhật XX')).toBeInTheDocument()
-    fireEvent.change(screen.getByRole('textbox', { name: 'Tìm trong báo cáo' }), { target: { value: 'chau' } })
-    expect(screen.queryByText('Lễ Chúa Nhật XX')).toBeNull()
+    expect(await screen.findByText('Lễ Chúa Nhật XXV')).toBeInTheDocument()
+    expect(screen.getByText('20/09/2026 08:00')).toBeInTheDocument()
+    expect(screen.getByText('51')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(request).toHaveBeenCalledWith(
+        '/api/reports/service-history?liturgicalSeasonId=s5&fromDate=2026-09-01&toDate=2026-09-30&pageNumber=1&pageSize=20',
+      ),
+    )
 
-    // The program is part of the button's name, as every row has one.
-    fireEvent.click(screen.getByRole('button', { name: 'Xem chương trình Giờ Chầu Thánh Thể' }))
-    expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/p2')
+    // The event is part of the button name, as every row has one.
+    fireEvent.click(screen.getByRole('button', { name: 'Xem chương trình Lễ Chúa Nhật XXV' }))
+    expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/e1')
   })
 
-  it('restores the report, filters and search from the address, as after Back from a program', async () => {
-    const getReport = vi.spyOn(reportsApi, 'getReport').mockResolvedValue({ metrics: {}, rows: [] })
-    renderPage(<PriestReportsPage />, '/priest/reports', '/priest/reports?kind=songUsage&seasonId=s5&search=xin')
+  it('restores the report and filters from the address and tells no results from no data', async () => {
+    const getReport = vi.spyOn(reportsApi, 'getReport').mockResolvedValue(empty)
+    renderPage(<PriestReportsPage />, '/priest/reports', '/priest/reports?kind=songUsage&seasonId=s5')
 
     expect(await screen.findByRole('tab', { name: 'Sử dụng bài hát', selected: true })).toBeInTheDocument()
-    expect(screen.getByRole('textbox', { name: 'Tìm trong báo cáo' })).toHaveValue('xin')
-    expect(getReport).toHaveBeenCalledWith('songUsage', expect.objectContaining({ seasonId: 's5' }))
-  })
-
-  it('distinguishes no search results from no data', async () => {
-    vi.spyOn(reportsApi, 'getReport').mockResolvedValue(serviceHistory)
-    renderPage(<PriestReportsPage />, '/priest/reports')
-
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Tìm trong báo cáo' }), { target: { value: 'xyz' } })
-    expect(screen.getByRole('heading', { name: 'Không tìm thấy kết quả phù hợp' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /Xoá bộ lọc/ }))
-    expect(screen.getByText('Lễ Chúa Nhật XX')).toBeInTheDocument()
+    expect(getReport).toHaveBeenCalledWith('songUsage', { seasonId: 's5' }, { pageNumber: 1, pageSize: 20 })
+    expect(await screen.findByRole('heading', { name: 'Không tìm thấy kết quả phù hợp' })).toBeInTheDocument()
   })
 })

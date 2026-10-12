@@ -1,24 +1,42 @@
 import { DownloadOutlined } from '@ant-design/icons'
-import { App, Button, Tabs } from 'antd'
+import { App, Button, Flex, Tabs } from 'antd'
+import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { PageHeader } from '@/shared/ui'
-import { ReportFilterBar } from '../components/ReportFilterBar'
-import { ExportReportModal } from '../components/ExportReportModal'
-import { ReportPanel } from '../components/ReportPanel'
 import { useCatalogOptions } from '@/features/system-categories'
+import { PageHeader } from '@/shared/ui'
+import { spacing } from '@/styles/tokens'
+import { ExportHistory } from '../components/ExportHistory'
+import { ExportReportModal } from '../components/ExportReportModal'
+import { ReportFilterBar } from '../components/ReportFilterBar'
+import { ReportPanel } from '../components/ReportPanel'
 import { useExportReport } from '../hooks/useReports'
-import { hasActiveReportFilters, readReportFilters, writeReportParams } from '../reportFilters'
 import { adminReportKinds, reportDefinitions } from '../reportDefinitions'
+import { reportErrorMessage } from '../reportErrors'
+import { hasActiveReportFilters, readReportFilters, writeReportParams } from '../reportFilters'
 import type { AdminReportKind, ReportExportRequest, ReportFilters } from '../types'
 
-/** Admin: activity, attendance, participation and assignment-completion reports (FE-52) with export (FE-53). */
+/** Saves a downloaded file under a name of its own: the backend's file name header is not readable across origins. */
+function saveFile(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  link.click()
+  // Revoked on the next task: some browsers drop the download when the URL goes away during the click.
+  setTimeout(() => URL.revokeObjectURL(url))
+}
+
+/**
+ * Admin: the four FE-52 reports and the Priest's two (`/api/reports`), with export to a file (FE-53) and the list of
+ * exports.
+ */
 export function AdminReportsPage() {
   const { message } = App.useApp()
   const seasons = useCatalogOptions('seasons')
   const exportReport = useExportReport()
   const [params, setParams] = useSearchParams()
-  const kind = adminReportKinds.find((item) => item === params.get('kind')) ?? 'rehearsalAttendance'
+  const kind = adminReportKinds.find((item) => item === params.get('kind')) ?? 'userActivity'
   const filters = useMemo(() => readReportFilters(params), [params])
   const show = (nextKind: AdminReportKind, nextFilters: ReportFilters) =>
     setParams(writeReportParams(nextKind, nextFilters), { replace: true })
@@ -27,11 +45,12 @@ export function AdminReportsPage() {
   const handleExport = (request: ReportExportRequest) => {
     if (exportReport.isPending) return
     exportReport.mutate(request, {
-      onSuccess: () => {
-        message.success('Đã gửi yêu cầu xuất báo cáo.')
+      onSuccess: (file) => {
+        saveFile(file, `bao-cao-${request.kind}-${dayjs().format('YYYYMMDD-HHmm')}.${request.format}`)
+        message.success('Đã xuất báo cáo.')
         setExporting(false)
       },
-      onError: () => message.error('Không thể xuất báo cáo. Vui lòng thử lại.'),
+      onError: (error) => message.error(reportErrorMessage(error, 'Không thể xuất báo cáo. Vui lòng thử lại.')),
     })
   }
 
@@ -40,31 +59,35 @@ export function AdminReportsPage() {
       <PageHeader
         title="Báo cáo"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Báo cáo' }]}
-        description="Theo dõi hoạt động, điểm danh, xác nhận tham gia và hoàn thành bài tập."
+        description="Theo dõi hoạt động người dùng, điểm danh, xác nhận tham gia, bài tập, lịch sử phục vụ và sử dụng bài hát."
         extra={
           <Button type="primary" icon={<DownloadOutlined />} onClick={() => setExporting(true)}>
             Xuất báo cáo
           </Button>
         }
       />
-      <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={() => show(kind, {})} showMonth seasons={seasons} />
-      <Tabs
-        destroyOnHidden
-        activeKey={kind}
-        onChange={(key) => show(key as AdminReportKind, filters)}
-        items={adminReportKinds.map((reportKind) => ({
-          key: reportKind,
-          label: reportDefinitions[reportKind].label,
-          children: (
-            <ReportPanel
-              kind={reportKind}
-              filters={filters}
-              filtered={hasActiveReportFilters(filters)}
-              onClearFilters={() => show(kind, {})}
-            />
-          ),
-        }))}
-      />
+      <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={() => show(kind, {})} seasons={seasons} />
+      <Flex vertical gap={spacing.lg}>
+        <Tabs
+          destroyOnHidden
+          activeKey={kind}
+          onChange={(key) => show(key as AdminReportKind, filters)}
+          items={adminReportKinds.map((reportKind) => ({
+            key: reportKind,
+            label: reportDefinitions[reportKind].label,
+            children: (
+              <ReportPanel
+                key={JSON.stringify(filters)}
+                kind={reportKind}
+                filters={filters}
+                filtered={hasActiveReportFilters(filters)}
+                onClearFilters={() => show(kind, {})}
+              />
+            ),
+          }))}
+        />
+        <ExportHistory seasons={seasons} />
+      </Flex>
       <ExportReportModal
         open={exporting}
         initialKind={kind}
