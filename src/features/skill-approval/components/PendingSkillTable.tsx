@@ -77,6 +77,7 @@ export function PendingSkillTable({
         <Flex gap={spacing.xs} justify="flex-end">
           <Button
             type="primary"
+            data-action="approve"
             disabled={busyId === skill.id}
             onClick={() => onApprove(skill)}
             aria-label={`Duyệt ${skill.skillName} của ${skill.memberName}`}
