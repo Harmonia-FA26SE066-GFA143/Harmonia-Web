@@ -27,8 +27,8 @@ function SectionTitle({ id, children, extra }: { id: string; children: string; e
  */
 export function AdminDashboardPage() {
   const navigate = useNavigate()
-  const log = useActivityLog()
-  const recent = (log.data ?? []).slice(0, recentLimit)
+  const log = useActivityLog({}, { pageNumber: 1, pageSize: recentLimit })
+  const recent = log.data?.items ?? []
 
   return (
     <>
@@ -62,7 +62,7 @@ export function AdminDashboardPage() {
           )}
           {recent.length > 0 && (
             <Card styles={{ body: { padding: 0 } }}>
-              <ActivityTable records={recent} pageSize={recentLimit} />
+              <ActivityTable records={recent} />
             </Card>
           )}
         </section>

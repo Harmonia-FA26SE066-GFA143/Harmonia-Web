@@ -1,51 +1,68 @@
 import { EyeOutlined } from '@ant-design/icons'
-import { Button, Flex, Table, Tag, Typography, type TableColumnsType } from 'antd'
-import { roleLabels } from '@/shared/types/account'
+import { Button, Flex, Table, Tag, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
 import { colors, typography } from '@/styles/tokens'
-import { formatActivityTime } from '../activityFilters'
-import { activityTypeLabels, type ActivityRecord } from '../types'
+import { actionLabel, actorName, entityLabel, formatActivityTime } from '../activityFilters'
+import type { ActivityRecord } from '../types'
 
 export interface ActivityTableProps {
   records: ActivityRecord[]
   /** Opens the detail view; the detail column is hidden when omitted. */
   onShowDetail?: (record: ActivityRecord) => void
-  /** Rows per page; pagination is hidden when all rows fit. */
-  pageSize?: number
+  /** Filters the log by the person; names are plain text when omitted. */
+  onPickUser?: (user: { id: string; name: string }) => void
+  /** Server-side paging; none when omitted. */
+  pagination?: TablePaginationConfig
+  loading?: boolean
 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
 
-/**
- * Read-only list of recorded activities (FE-54). No outcome/status column: Stitch's "Thành công / Hoàn tất /
- * Đã ghi nhận …" labels are not approved statuses.
- */
-export function ActivityTable({ records, onShowDetail, pageSize = 10 }: ActivityTableProps) {
+/** Read-only list of recorded changes (FE-54), newest first. */
+export function ActivityTable({ records, onShowDetail, onPickUser, pagination, loading }: ActivityTableProps) {
   const columns: TableColumnsType<ActivityRecord> = [
     {
       key: 'time',
       title: 'Thời gian',
       render: (_, record) => (
         <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric, whiteSpace: 'nowrap' }}>
-          {formatActivityTime(record.occurredAt)}
+          {formatActivityTime(record.createdAt)}
         </Typography.Text>
       ),
     },
     {
       key: 'actor',
       title: 'Người thực hiện',
-      render: (_, record) => (
-        <Flex vertical>
-          <Typography.Text strong>{record.actorName}</Typography.Text>
-          {record.actorRole && <Typography.Text style={muted}>{roleLabels[record.actorRole]}</Typography.Text>}
-        </Flex>
-      ),
+      render: (_, record) => {
+        const name = actorName(record)
+        const { user } = record
+        return (
+          <Flex vertical align="flex-start">
+            {user && onPickUser ? (
+              <Button
+                type="link"
+                size="small"
+                onClick={() => onPickUser({ id: user.id, name })}
+                aria-label={`Chỉ xem hoạt động của ${name}`}
+                style={{ padding: 0, height: 'auto', fontWeight: 600 }}
+              >
+                {name}
+              </Button>
+            ) : (
+              <Typography.Text strong={Boolean(user)} style={user ? undefined : muted}>
+                {name}
+              </Typography.Text>
+            )}
+            {user?.fullName && user.email && <Typography.Text style={muted}>{user.email}</Typography.Text>}
+          </Flex>
+        )
+      },
     },
     {
-      key: 'type',
-      title: 'Hoạt động',
-      render: (_, record) => <Tag style={{ marginInlineEnd: 0 }}>{activityTypeLabels[record.type]}</Tag>,
+      key: 'action',
+      title: 'Thao tác',
+      render: (_, record) => <Tag style={{ marginInlineEnd: 0 }}>{actionLabel(record.action)}</Tag>,
     },
-    { key: 'target', title: 'Đối tượng', dataIndex: 'target' },
+    { key: 'entity', title: 'Dữ liệu', render: (_, record) => entityLabel(record.entityType) },
     ...(onShowDetail
       ? [
           {
@@ -56,7 +73,7 @@ export function ActivityTable({ records, onShowDetail, pageSize = 10 }: Activity
               <Button
                 icon={<EyeOutlined />}
                 onClick={() => onShowDetail(record)}
-                aria-label={`Xem chi tiết: ${activityTypeLabels[record.type]} – ${record.target}`}
+                aria-label={`Xem chi tiết: ${actionLabel(record.action)} ${entityLabel(record.entityType)} lúc ${formatActivityTime(record.createdAt)}`}
               >
                 Xem
               </Button>
@@ -71,7 +88,8 @@ export function ActivityTable({ records, onShowDetail, pageSize = 10 }: Activity
       rowKey="id"
       columns={columns}
       dataSource={records}
-      pagination={{ pageSize, hideOnSinglePage: true }}
+      loading={loading}
+      pagination={pagination ?? false}
       scroll={{ x: 'max-content' }}
     />
   )
