@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getSession, setSession, type Session } from '@/lib/auth/session'
-import { apiRequest } from './client'
+import { apiDownload, apiRequest } from './client'
 import { ApiError } from './errors'
 
 const session = (token: string): Session => ({
@@ -140,5 +140,19 @@ describe('apiRequest', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(getSession()).toBeUndefined()
     expect(assign).toHaveBeenCalledWith('/login?reason=session-ended')
+  })
+})
+
+describe('apiDownload', () => {
+  it('keeps a file answer as a Blob and reads an error answer as JSON', async () => {
+    setSession(session('1'))
+    fetchMock
+      .mockResolvedValueOnce(new Response('a,b;1,2', { status: 200 }))
+      .mockResolvedValueOnce(reply(404, { code: 'REPORT_NO_DATA' }))
+
+    const file = await apiDownload('/api/reports/export?type=SongUsage&format=Csv')
+    expect(await file.text()).toBe('a,b;1,2')
+    expect(authorization(0)).toBe('Bearer access-1')
+    await expect(apiDownload('/api/reports/export')).rejects.toMatchObject({ status: 404, code: 'REPORT_NO_DATA' })
   })
 })
