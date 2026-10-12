@@ -5,6 +5,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router'
 import { colors, layout, sizes, spacing, typography } from '@/styles/tokens'
 import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection } from './navigation'
 import { NotificationBell } from '@/features/notifications'
+import { SystemAnnouncement } from '@/features/settings'
 import { UserMenu } from './UserMenu'
 
 const { Header, Sider, Content } = Layout
@@ -125,6 +126,7 @@ export function AppShell() {
           }}
         >
           <div style={{ maxWidth: layout.contentMaxWidth, marginInline: 'auto' }}>
+            <SystemAnnouncement />
             <Outlet />
           </div>
         </Content>

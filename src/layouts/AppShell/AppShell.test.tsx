@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
 import * as notificationsApi from '@/features/notifications/api/notificationsApi'
 import * as profileApi from '@/features/profile/api/profileApi'
+import * as settingsApi from '@/features/settings/api/settingsApi'
 import { clearSession, setSession } from '@/lib/auth/session'
 import { AppShell } from './AppShell'
 
@@ -202,5 +203,14 @@ describe('AppShell', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Đánh dấu tất cả đã đọc' }))
 
     await waitFor(() => expect(markAll).toHaveBeenCalled())
+  })
+
+  it('shows the system announcement the Admin set', async () => {
+    setViewportWidth(1280)
+    vi.spyOn(settingsApi, 'getPublicSettings').mockResolvedValue({ announcement: 'Tuần này tạm ngưng tập thứ Năm.' })
+    renderShellAt('/profile')
+
+    expect(await screen.findByText('Tuần này tạm ngưng tập thứ Năm.')).toBeInTheDocument()
+    expect(screen.getByText('Nội dung trang')).toBeInTheDocument()
   })
 })
