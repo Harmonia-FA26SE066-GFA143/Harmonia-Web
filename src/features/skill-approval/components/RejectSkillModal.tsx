@@ -7,10 +7,12 @@ export interface RejectSkillModalProps {
   saving?: boolean
   onSubmit: (reason: string) => void
   onCancel: () => void
+  /** Called once the modal has closed, after Ant Design has given the focus back. */
+  afterClose?: () => void
 }
 
 /** Asks for the reason the member will see (Harmonia-BE RejectMemberSkillRequestValidator: required, ≤ 500). */
-export function RejectSkillModal({ skill, saving = false, onSubmit, onCancel }: RejectSkillModalProps) {
+export function RejectSkillModal({ skill, saving = false, onSubmit, onCancel, afterClose }: RejectSkillModalProps) {
   return (
     <Modal
       open={Boolean(skill)}
@@ -20,12 +22,12 @@ export function RejectSkillModal({ skill, saving = false, onSubmit, onCancel }: 
       okButtonProps={{ htmlType: 'submit', danger: true, loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
+      afterClose={afterClose}
       mask={{ closable: !saving }}
       destroyOnHidden
       modalRender={(dom) => (
         <Form<{ reason: string }>
           layout="vertical"
-          disabled={saving}
           onFinish={({ reason }) => onSubmit(reason.trim())}
         >
           {dom}
