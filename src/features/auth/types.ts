@@ -13,7 +13,13 @@ export interface SignInResult {
 }
 
 /** Failures the sign-in form can display (by backend error code, see LoginPage). */
-export type SignInError = { kind: 'invalid-credentials' } | { kind: 'inactive' } | { kind: 'unavailable' }
+export type SignInError =
+  | { kind: 'invalid-credentials' }
+  | { kind: 'inactive' }
+  | { kind: 'unavailable' }
+  /** Google sign-in: the email has no Harmonia account, or Google's token was refused. */
+  | { kind: 'google-not-registered' }
+  | { kind: 'google-invalid' }
 
 export interface PasswordResetRequestValues {
   email: string

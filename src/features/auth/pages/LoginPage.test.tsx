@@ -1,5 +1,6 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { env } from '@/config/env'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as authApi from '../api/authApi'
@@ -13,7 +14,22 @@ function submitCredentials() {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  delete window.google
+  Object.assign(env, { googleClientId: '' })
 })
+
+/** Google Identity Services stand-in: keeps the callback and draws a plain button. */
+function fakeGoogle() {
+  let callback: (response: { credential?: string }) => void = () => {}
+  const initialize = vi.fn((config: { client_id: string; callback: typeof callback }) => {
+    callback = config.callback
+  })
+  const renderButton = vi.fn((parent: HTMLElement) => {
+    parent.innerHTML = '<button type="button">Đăng nhập bằng Google</button>'
+  })
+  window.google = { accounts: { id: { initialize, renderButton } } }
+  return { initialize, signInAs: (credential: string) => act(() => callback({ credential })) }
+}
 
 describe('LoginPage', () => {
   it('opens the workspace of the signed-in role', async () => {
@@ -51,5 +67,37 @@ describe('LoginPage', () => {
 
     submitCredentials()
     expect(await screen.findByText(text)).toBeInTheDocument()
+  })
+
+  it('hides the Google button while no client id is configured', () => {
+    renderPage(<LoginPage />, '/login')
+
+    expect(screen.queryByText('hoặc')).toBeNull()
+  })
+
+  it('signs in with the Google token and opens the workspace', async () => {
+    Object.assign(env, { googleClientId: 'web-client-id' })
+    const google = fakeGoogle()
+    const signIn = vi.spyOn(authApi, 'signInWithGoogle').mockResolvedValue({ role: 'admin', mustChangePassword: false })
+    renderPage(<LoginPage />, '/login')
+
+    expect(await screen.findByRole('button', { name: 'Đăng nhập bằng Google' })).toBeInTheDocument()
+    expect(google.initialize).toHaveBeenCalledWith(expect.objectContaining({ client_id: 'web-client-id' }))
+    google.signInAs('google-id-token')
+
+    await waitFor(() => expect(signIn).toHaveBeenCalledWith('google-id-token', expect.anything()))
+    expect(await screen.findByTestId('location')).toHaveTextContent('/admin')
+  })
+
+  it('explains a Google account that has no Harmonia account', async () => {
+    Object.assign(env, { googleClientId: 'web-client-id' })
+    const google = fakeGoogle()
+    vi.spyOn(authApi, 'signInWithGoogle').mockRejectedValue(new ApiError(401, { code: 'AUTH_INVALID_CREDENTIALS' }))
+    renderPage(<LoginPage />, '/login')
+
+    await screen.findByRole('button', { name: 'Đăng nhập bằng Google' })
+    google.signInAs('google-id-token')
+
+    expect(await screen.findByText('Tài khoản Google này chưa được cấp quyền vào Harmonia.')).toBeInTheDocument()
   })
 })
