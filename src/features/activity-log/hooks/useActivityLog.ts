@@ -1,12 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
-import { ApiContractMissingError } from '@/lib/api/errors'
-import { listActivityLog } from '../api/activityLogApi'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { listActivityLog, type ActivityPage, type ActivityQuery } from '../api/activityLogApi'
 
-export function useActivityLog() {
+/** One page of the log; the previous page stays visible while the next one loads. */
+export function useActivityLog(query: ActivityQuery, page: ActivityPage) {
   return useQuery({
-    queryKey: ['activity-log'],
-    queryFn: listActivityLog,
-    // Retrying cannot help while the API contract is missing.
-    retry: (failureCount, error) => !(error instanceof ApiContractMissingError) && failureCount < 3,
+    queryKey: ['activity-log', query, page],
+    queryFn: () => listActivityLog(query, page),
+    placeholderData: keepPreviousData,
   })
 }

@@ -1,61 +1,74 @@
 import { Card } from 'antd'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
-import { emptyActivityFilters, filterActivities } from '../activityFilters'
+import { emptyActivityFilters, hasActiveActivityFilters, toActivityQuery } from '../activityFilters'
 import { ActivityDetailModal } from '../components/ActivityDetailModal'
 import { ActivityFilterBar } from '../components/ActivityFilterBar'
 import { ActivityTable } from '../components/ActivityTable'
 import { useActivityLog } from '../hooks/useActivityLog'
 import type { ActivityFilters, ActivityRecord } from '../types'
 
-/** Admin: history of role changes, approvals, roster confirmation, attendance updates and deletions (FE-54). */
-export function ActivityLogPage() {
-  const log = useActivityLog()
-  const [filters, setFilters] = useState<ActivityFilters>(emptyActivityFilters)
-  const [selected, setSelected] = useState<ActivityRecord>()
+const pageSize = 20
 
-  const records = useMemo(() => log.data ?? [], [log.data])
-  const visible = useMemo(() => filterActivities(records, filters), [records, filters])
-  const actorNames = useMemo(
-    () => [...new Set(records.map((record) => record.actorName))].sort((a, b) => a.localeCompare(b, 'vi')),
-    [records],
-  )
-  const resetFilters = () => setFilters(emptyActivityFilters)
+/**
+ * Admin: every change the backend records (FE-54, `GET /api/audit-logs`): who changed which data, when, and the
+ * values before and after. Filters and paging run on the server.
+ */
+export function ActivityLogPage() {
+  const [filters, setFilters] = useState<ActivityFilters>(emptyActivityFilters)
+  const [page, setPage] = useState(1)
+  const [selected, setSelected] = useState<ActivityRecord>()
+  const log = useActivityLog(toActivityQuery(filters), { pageNumber: page, pageSize })
+  const total = log.data?.totalCount ?? 0
+  const filtered = hasActiveActivityFilters(filters)
+
+  const changeFilters = (next: ActivityFilters) => {
+    setFilters(next)
+    setPage(1)
+  }
+  const resetFilters = () => changeFilters(emptyActivityFilters)
 
   return (
     <>
       <PageHeader
         title="Lịch sử hoạt động"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Lịch sử hoạt động' }]}
-        description="Theo dõi thay đổi vai trò, duyệt kỹ năng, duyệt danh sách bài hát, xác nhận phân công, cập nhật điểm danh và xoá tài liệu."
+        description="Theo dõi ai đã thay đổi dữ liệu nào, khi nào, cùng giá trị trước và sau thay đổi."
       />
 
       {log.isPending && <SectionSkeleton rows={8} label="Đang tải lịch sử hoạt động" />}
       {log.isError && (
         <ErrorState title="Không thể tải lịch sử hoạt động" onRetry={() => log.refetch()} retrying={log.isFetching} />
       )}
-      {log.isSuccess && records.length === 0 && (
+      {log.isSuccess && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có hoạt động nào"
           description="Các hoạt động sẽ được hệ thống tự động ghi lại và hiển thị tại đây."
         />
       )}
-      {log.isSuccess && records.length > 0 && (
+      {log.isSuccess && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
-          <ActivityFilterBar
-            value={filters}
-            onChange={setFilters}
-            onReset={resetFilters}
-            actorNames={actorNames}
-            resultCount={visible.length}
-          />
-          {visible.length === 0 ? (
+          <ActivityFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
+          {total === 0 ? (
             <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
               <NoFilterResults onClearFilters={resetFilters} />
             </div>
           ) : (
-            <ActivityTable records={visible} onShowDetail={setSelected} />
+            <ActivityTable
+              records={log.data.items}
+              loading={log.isPlaceholderData}
+              onShowDetail={setSelected}
+              onPickUser={(user) => changeFilters({ ...filters, user })}
+              pagination={{
+                current: page,
+                pageSize,
+                total,
+                hideOnSinglePage: true,
+                showSizeChanger: false,
+                onChange: setPage,
+              }}
+            />
           )}
         </Card>
       )}
