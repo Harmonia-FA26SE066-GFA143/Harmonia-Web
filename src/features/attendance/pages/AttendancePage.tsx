@@ -13,7 +13,12 @@ import { useAttendance } from '../hooks/useAttendance'
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Điểm danh' }]
 
-const hasStarted = (rehearsal: Rehearsal) => Date.parse(rehearsal.startAt) <= Date.now()
+// The Admin may open attendance up to 120 minutes early (Harmonia-BE SystemSettingKeys,
+// Rehearsal.AttendanceOpensMinutesBefore, which the Choir Director cannot read): the sheet opens at the earliest
+// moment and the backend refuses a save made too early (REHEARSAL_NOT_STARTED).
+const maxMinutesEarly = 120
+const attendanceMayOpen = (rehearsal: Rehearsal) =>
+  Date.parse(rehearsal.startAt) - maxMinutesEarly * 60_000 <= Date.now()
 
 /** Today's session, otherwise the latest one that has started, otherwise the next one. */
 function defaultSession(rehearsals: Rehearsal[]): Rehearsal | undefined {
@@ -38,7 +43,7 @@ export function AttendancePage() {
   const program = programs.data?.find((item) => item.id === selected?.programId)
   // The backend records attendance from the start of the session on, corrections included (RehearsalAttendanceService),
   // which supersedes "on the day of the session only" (decision 2026-09-30, 6a.6).
-  const started = selected ? hasStarted(selected) : false
+  const started = selected ? attendanceMayOpen(selected) : false
 
   const scheduleButton = (
     <Button icon={<CalendarOutlined />} onClick={() => navigate(paths.director.rehearsals)}>
@@ -109,7 +114,7 @@ export function AttendancePage() {
             <Alert
               type="info"
               showIcon
-              title={`Điểm danh được từ khi buổi tập bắt đầu (${dayjs(selected.startAt).format('HH:mm DD/MM/YYYY')}).`}
+              title={`Điểm danh được từ khi buổi tập bắt đầu (${dayjs(selected.startAt).format('HH:mm DD/MM/YYYY')}), hoặc sớm hơn nếu Admin cho phép.`}
             />
           )}
           {attendance.isSuccess && attendance.data.length > 0 && (
