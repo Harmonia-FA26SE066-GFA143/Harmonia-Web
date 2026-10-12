@@ -38,20 +38,35 @@ export interface LiturgicalSeason extends CatalogEntry {
 
 export type LiturgicalSeasonValues = Omit<LiturgicalSeason, 'id'>
 
-/** The four liturgical catalogs listed in FE-50. */
-export type LiturgicalCatalog = 'seasons' | 'massTypes' | 'ceremonyTypes' | 'eventCategories'
+/** A liturgical slot of a Mass (`SaveLiturgicalSlotRequest`): slots are listed by their default order, then name. */
+export interface LiturgicalSlot extends CatalogEntry {
+  defaultOrder: number
+}
 
-/** Catalogs whose entries have only a name and a description. */
-export type BasicCatalog = Exclude<LiturgicalCatalog, 'seasons'> | 'skillCategories'
+export type LiturgicalSlotValues = Omit<LiturgicalSlot, 'id'>
 
-/** Backend lookups: the Admin catalogs plus the read-only song themes, liturgical slots and worship locations. */
-export type LookupKind =
-  | LiturgicalCatalog
-  | 'skillCategories'
-  | 'skills'
+/** A worship location (`SaveWorshipLocationRequest`) with an optional address. */
+export interface WorshipLocation extends CatalogEntry {
+  address: string | null
+}
+
+export type WorshipLocationValues = Omit<WorshipLocation, 'id'>
+
+/** The liturgical catalogs of FE-50: the four of Report 1 plus song themes, slots and locations (LookupsController). */
+export type LiturgicalCatalog =
+  | 'seasons'
+  | 'massTypes'
+  | 'ceremonyTypes'
+  | 'eventCategories'
   | 'songThemes'
   | 'liturgicalSlots'
   | 'worshipLocations'
+
+/** Catalogs whose entries have only a name and a description. */
+export type BasicCatalog = 'massTypes' | 'ceremonyTypes' | 'eventCategories' | 'songThemes' | 'skillCategories'
+
+/** Backend lookups, every one editable by the Admin. */
+export type LookupKind = LiturgicalCatalog | 'skillCategories' | 'skills'
 
 /** An active lookup row, as offered in selects; skills also carry their category. */
 export interface LookupItem {

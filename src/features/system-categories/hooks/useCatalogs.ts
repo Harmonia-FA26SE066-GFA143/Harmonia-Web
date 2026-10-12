@@ -1,11 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   listCatalogItems,
+  listLocations,
   listSeasons,
   listSkills,
+  listSlots,
   saveCatalogItem,
+  saveLocation,
   saveSeason,
   saveSkill,
+  saveSlot,
 } from '../api/categoriesApi'
 import type { BasicCatalog, CatalogItemValues, LookupKind } from '../types'
 
@@ -27,6 +31,14 @@ export function useSkills() {
 
 export function useSeasons() {
   return useQuery({ queryKey: catalogKey('seasons'), queryFn: listSeasons })
+}
+
+export function useSlots() {
+  return useQuery({ queryKey: catalogKey('liturgicalSlots'), queryFn: listSlots })
+}
+
+export function useLocations() {
+  return useQuery({ queryKey: catalogKey('worshipLocations'), queryFn: listLocations })
 }
 
 function useSave<T, V>(kind: LookupKind, save: (id: string | undefined, values: V) => Promise<T>) {
@@ -52,4 +64,12 @@ export function useSaveSkill() {
 
 export function useSaveSeason() {
   return useSave('seasons', saveSeason)
+}
+
+export function useSaveSlot() {
+  return useSave('liturgicalSlots', saveSlot)
+}
+
+export function useSaveLocation() {
+  return useSave('worshipLocations', saveLocation)
 }

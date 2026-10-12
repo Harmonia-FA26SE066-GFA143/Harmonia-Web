@@ -1,12 +1,15 @@
 import { ApiError } from '@/lib/api/errors'
 
-/** `/api/liturgical-events` refusals (Harmonia-BE LiturgicalEventService, ErrorStatusMap: 404 / 409). */
+/** `/api/liturgical-events` refusals (Harmonia-BE LiturgicalEventService, LookupService.CheckEventCatalogsAsync). */
 const messages: Record<string, string> = {
   EVENT_NOT_FOUND: 'Sự kiện không còn tồn tại. Vui lòng tải lại trang.',
   EVENT_SLOT_TAKEN: 'Đã có sự kiện khác cùng ngày, giờ và nơi cử hành.',
   EVENT_ALREADY_PUBLISHED: 'Sự kiện đã được công bố.',
   EVENT_CANCELLED: 'Sự kiện đã bị hủy, không thể thay đổi.',
   EVENT_ALREADY_PASSED: 'Sự kiện đã diễn ra, không thể hủy.',
+  EVENT_DATE_OUTSIDE_SEASON: 'Ngày cử hành không nằm trong mùa phụng vụ đã chọn.',
+  LOOKUP_INACTIVE: 'Có mục đã chọn (mùa, loại lễ, danh mục hoặc nơi cử hành) đã ngừng dùng. Vui lòng chọn mục khác.',
+  LOOKUP_NOT_FOUND: 'Có mục đã chọn không còn tồn tại. Vui lòng tải lại trang.',
 }
 
 export function eventErrorMessage(error: Error, fallback: string): string {
