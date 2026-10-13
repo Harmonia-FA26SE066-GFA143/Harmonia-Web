@@ -20,7 +20,7 @@ export interface ProposalTableProps {
 const muted = (text: string) => <Typography.Text style={{ color: colors.textMuted }}>{text}</Typography.Text>
 
 /** Ordered songs of the proposal: liturgical part and note per song, reordering and removal while editable. */
-export function ProposalTable({ items, editable, onChange }: ProposalTableProps) {
+export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTableProps>) {
   // Slots arrive in liturgical order (DefaultOrder). ponytail: the slot name is stored, not its id, until song lists
   // have a controller; the backend will expect `slotId`.
   const slotOptions = (useLookup('liturgicalSlots').data ?? []).map(({ name }) => ({ value: name, label: name }))

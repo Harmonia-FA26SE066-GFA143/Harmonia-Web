@@ -25,7 +25,7 @@ const notAfterToday = (message: string) => ({
  * The Choir Director edits what the member record holds: phone, birth date, joining date and status. Name and email
  * belong to the account (the member or the Admin edits them), so they are shown read-only.
  */
-export function MemberFormModal({ member, saving = false, onSubmit, onCancel }: MemberFormModalProps) {
+export function MemberFormModal({ member, saving = false, onSubmit, onCancel }: Readonly<MemberFormModalProps>) {
   return (
     <Modal
       open={Boolean(member)}

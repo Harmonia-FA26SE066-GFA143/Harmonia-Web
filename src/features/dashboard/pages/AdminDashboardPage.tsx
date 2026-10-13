@@ -9,7 +9,7 @@ import { AdminShortcuts } from '../components/AdminShortcuts'
 
 const recentLimit = 5
 
-function SectionTitle({ id, children, extra }: { id: string; children: string; extra?: ReactNode }) {
+function SectionTitle({ id, children, extra }: Readonly<{ id: string; children: string; extra?: ReactNode }>) {
   return (
     <Flex wrap align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
       <Typography.Title id={id} level={2} style={{ margin: 0 }}>

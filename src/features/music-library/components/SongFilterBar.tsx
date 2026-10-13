@@ -14,7 +14,7 @@ export interface SongFilterBarProps {
 }
 
 /** Search over title, composer and lyricist, and the FE-29 classification filters of GET /api/songs. */
-export function SongFilterBar({ value, onChange, onReset, resultCount }: SongFilterBarProps) {
+export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonly<SongFilterBarProps>) {
   const seasons = useCatalogOptions('seasons')
   const massTypes = useCatalogOptions('massTypes')
   const ceremonyTypes = useCatalogOptions('ceremonyTypes')

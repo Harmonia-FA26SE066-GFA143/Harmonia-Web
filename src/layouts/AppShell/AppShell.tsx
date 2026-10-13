@@ -23,7 +23,7 @@ function toMenuItems(sections: NavSection[]): MenuProps['items'] {
   }))
 }
 
-function Brand({ subtitle }: { subtitle: string }) {
+function Brand({ subtitle }: Readonly<{ subtitle: string }>) {
   return (
     <Flex vertical style={{ lineHeight: 1.3 }}>
       <Typography.Text strong style={{ fontSize: typography.sectionHeading.fontSize, color: colors.primary }}>

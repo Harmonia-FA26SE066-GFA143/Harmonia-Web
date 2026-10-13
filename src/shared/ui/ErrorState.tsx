@@ -20,7 +20,7 @@ export function ErrorState({
   onRetry,
   retrying = false,
   extra,
-}: ErrorStateProps) {
+}: Readonly<ErrorStateProps>) {
   const actions =
     onRetry || extra ? (
       <>

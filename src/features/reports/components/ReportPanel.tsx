@@ -22,7 +22,7 @@ export interface ReportPanelProps {
  * Loads one report page by page and renders its rows with loading, error, empty and no-result states. The parent
  * remounts it when the filters change (key), which starts again at page 1.
  */
-export function ReportPanel({ kind, filters, filtered, onClearFilters, onOpenProgram }: ReportPanelProps) {
+export function ReportPanel({ kind, filters, filtered, onClearFilters, onOpenProgram }: Readonly<ReportPanelProps>) {
   const definition = reportDefinitions[kind]
   const [page, setPage] = useState(1)
   const report = useReport(kind, filters, { pageNumber: page, pageSize })

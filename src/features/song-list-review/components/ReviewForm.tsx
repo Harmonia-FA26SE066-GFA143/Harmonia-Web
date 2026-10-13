@@ -13,7 +13,7 @@ export interface ReviewFormProps {
  * One decision for the whole submitted list (Harmonia-BE ReviewSongListRequestValidator): the note is required to
  * request a revision or to reject, ≤ 1000 (SongListReviewConfiguration). The Choir Director reads it.
  */
-export function ReviewForm({ saving = false, onSubmit }: ReviewFormProps) {
+export function ReviewForm({ saving = false, onSubmit }: Readonly<ReviewFormProps>) {
   const [form] = Form.useForm<ReviewValues>()
   const decision = Form.useWatch('decision', form)
   const notesRequired = decision === 'requestRevision' || decision === 'reject'

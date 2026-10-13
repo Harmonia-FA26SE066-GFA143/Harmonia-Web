@@ -9,13 +9,13 @@ export interface SectionSkeletonProps {
 }
 
 /** Loading placeholder for one section (table, card group, form) so the rest of the page stays usable. */
-export function SectionSkeleton({ rows = 5, label = 'Đang tải dữ liệu' }: SectionSkeletonProps) {
+export function SectionSkeleton({ rows = 5, label = 'Đang tải dữ liệu' }: Readonly<SectionSkeletonProps>) {
   return (
-    <div
-      role="status"
+    <output
       aria-busy="true"
       aria-label={label}
       style={{
+        display: 'block',
         padding: spacing.lg,
         background: colors.surface,
         border: `1px solid ${colors.border}`,
@@ -23,7 +23,7 @@ export function SectionSkeleton({ rows = 5, label = 'Đang tải dữ liệu' }:
       }}
     >
       <Skeleton active title={{ width: '30%' }} paragraph={{ rows }} />
-    </div>
+    </output>
   )
 }
 
@@ -34,7 +34,7 @@ export interface PageSkeletonProps {
 }
 
 /** Whole-page loading placeholder matching the PageHeader + sections layout. */
-export function PageSkeleton({ sections = 2, rows = 4 }: PageSkeletonProps) {
+export function PageSkeleton({ sections = 2, rows = 4 }: Readonly<PageSkeletonProps>) {
   return (
     <Flex vertical gap={spacing.lg} role="status" aria-busy="true" aria-label="Đang tải trang">
       <Flex vertical gap={spacing.sm}>

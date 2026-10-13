@@ -34,8 +34,14 @@ if (!window.matchMedia) {
 // Ant Design Table and Tabs observe element sizes; jsdom has no ResizeObserver and no layout to report.
 if (!window.ResizeObserver) {
   window.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
+    observe() {
+      // No layout in jsdom: there is never a size change to report.
+    }
+    unobserve() {
+      // Nothing observed, nothing to stop.
+    }
+    disconnect() {
+      // Nothing observed, nothing to stop.
+    }
   }
 }

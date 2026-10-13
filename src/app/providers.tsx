@@ -10,7 +10,7 @@ import { theme } from './theme'
 // Vietnamese month/day names for Ant Design date pickers and dayjs formatting.
 dayjs.locale('vi')
 
-export function AppProviders({ children }: { children: ReactNode }) {
+export function AppProviders({ children }: Readonly<{ children: ReactNode }>) {
   const [queryClient] = useState(
     () =>
       new QueryClient({

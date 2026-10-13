@@ -31,7 +31,7 @@ function toDraft(list: SongList): DraftItem[] {
 }
 
 /** Composes and submits the list; editable except while waiting for review and after approval. */
-function ProposalEditor({ program, list }: { program: LiturgicalProgram; list: SongList }) {
+function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram; list: SongList }>) {
   const { message } = App.useApp()
   const submit = useSubmitSongList(program.id)
   const editable = canEditSongList(list.status)

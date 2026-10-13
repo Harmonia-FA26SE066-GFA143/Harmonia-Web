@@ -17,7 +17,7 @@ export interface LoginFormProps {
   alternative?: ReactNode
 }
 
-function FeedbackAlert({ feedback }: { feedback: LoginFeedback }) {
+function FeedbackAlert({ feedback }: Readonly<{ feedback: LoginFeedback }>) {
   switch (feedback.kind) {
     case 'invalid-credentials':
       return (
@@ -97,7 +97,7 @@ function FeedbackAlert({ feedback }: { feedback: LoginFeedback }) {
   }
 }
 
-export function LoginForm({ onSubmit, submitting = false, feedback, alternative }: LoginFormProps) {
+export function LoginForm({ onSubmit, submitting = false, feedback, alternative }: Readonly<LoginFormProps>) {
   return (
     <Flex vertical gap={spacing.md}>
       {feedback && <FeedbackAlert feedback={feedback} />}

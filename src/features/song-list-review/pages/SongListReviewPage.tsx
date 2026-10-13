@@ -40,7 +40,7 @@ const confirmations: Record<ReviewDecision, { title: string; content: string; do
   },
 }
 
-function ListStatus({ list }: { list: SongList }) {
+function ListStatus({ list }: Readonly<{ list: SongList }>) {
   if (list.status === 'approved') {
     return (
       <Alert

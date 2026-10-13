@@ -18,7 +18,7 @@ export interface SongPickerModalProps {
 }
 
 /** Choose songs from the music library (FE-27) to add to a program's proposed list (FE-30). */
-export function SongPickerModal({ open, excludedSongIds, onAdd, onCancel }: SongPickerModalProps) {
+export function SongPickerModal({ open, excludedSongIds, onAdd, onCancel }: Readonly<SongPickerModalProps>) {
   const [search, setSearch] = useState('')
   const keyword = useDebouncedValue(search)
   const songs = useSongs({ search: keyword }, pickerPage)

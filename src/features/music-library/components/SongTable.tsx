@@ -22,7 +22,7 @@ const muted = <Typography.Text style={{ color: colors.textMuted }}>—</Typograp
  * Library overview. The list endpoint returns song fields only, so classification and materials are shown on the
  * song page rather than here.
  */
-export function SongTable({ songs, page, pageSize, total, loading, onPageChange, onOpen }: SongTableProps) {
+export function SongTable({ songs, page, pageSize, total, loading, onPageChange, onOpen }: Readonly<SongTableProps>) {
   const { search } = useLocation()
   const columns: TableColumnsType<Song> = [
     {

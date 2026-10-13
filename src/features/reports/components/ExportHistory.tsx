@@ -15,7 +15,7 @@ const numeric = { fontFamily: typography.fontFamilyNumeric, whiteSpace: 'nowrap'
 const day = (date: string) => dayjs(date).format('DD/MM/YYYY')
 
 /** Files the Admins exported (`GET /api/reports/exports`), newest first; each link expires soon after loading. */
-export function ExportHistory({ seasons }: { seasons: FilterOption[] }) {
+export function ExportHistory({ seasons }: Readonly<{ seasons: FilterOption[] }>) {
   const [page, setPage] = useState(1)
   const exports = useReportExports({ pageNumber: page, pageSize })
   const total = exports.data?.totalCount ?? 0

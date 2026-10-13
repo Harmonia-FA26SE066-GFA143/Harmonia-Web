@@ -9,7 +9,7 @@ const statusColors: Record<PracticeStatus, StatusTagColor> = {
   overdue: 'red',
 }
 
-export function PracticeStatusTag({ status }: { status: PracticeStatus }) {
+export function PracticeStatusTag({ status }: Readonly<{ status: PracticeStatus }>) {
   return (
     <StatusTag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
       {practiceStatusLabels[status]}

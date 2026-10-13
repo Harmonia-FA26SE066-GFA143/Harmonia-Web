@@ -13,7 +13,7 @@ export interface ProgramFilterBarProps {
 }
 
 /** Keyword and FE-50 catalog filters for program lists. */
-export function ProgramFilterBar({ value, onChange, onReset, resultCount }: ProgramFilterBarProps) {
+export function ProgramFilterBar({ value, onChange, onReset, resultCount }: Readonly<ProgramFilterBarProps>) {
   const seasons = useCatalogOptions('seasons')
   const massTypes = useCatalogOptions('massTypes')
   const ceremonyTypes = useCatalogOptions('ceremonyTypes')

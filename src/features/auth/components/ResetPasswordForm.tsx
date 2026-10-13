@@ -32,7 +32,7 @@ export function ResetPasswordForm({
   askCurrentPassword = false,
   currentPasswordError,
   submitText = 'Đặt lại mật khẩu',
-}: ResetPasswordFormProps) {
+}: Readonly<ResetPasswordFormProps>) {
   const [form] = Form.useForm<NewPasswordFormValues>()
 
   return (

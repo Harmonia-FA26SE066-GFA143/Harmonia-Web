@@ -9,7 +9,7 @@ export interface RoleSummaryProps {
 }
 
 /** The fixed FE-48 roles with their responsibilities. Roles are not created or edited here. */
-export function RoleSummary({ counts }: RoleSummaryProps) {
+export function RoleSummary({ counts }: Readonly<RoleSummaryProps>) {
   return (
     <Row gutter={[spacing.md, spacing.md]}>
       {assignableRoles.map((role) => (

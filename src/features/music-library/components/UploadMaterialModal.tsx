@@ -19,7 +19,7 @@ const titleFrom = (fileName: string) => fileName.replace(/\.[^.]+$/, '').slice(0
  * Title (required by the backend) and optional target skill of a material, before it is uploaded or when it is
  * edited. The file and the kind cannot change: another file is a new material.
  */
-export function UploadMaterialModal({ pending, material, saving = false, onSubmit, onCancel }: UploadMaterialModalProps) {
+export function UploadMaterialModal({ pending, material, saving = false, onSubmit, onCancel }: Readonly<UploadMaterialModalProps>) {
   const activeSkills = useCatalogOptions('skills')
   // A material may target a skill switched off since; keep it selectable so saving does not drop it silently.
   const skills =

@@ -17,7 +17,7 @@ export function NoFilterResults({
   description = 'Không có dữ liệu nào khớp với từ khoá hoặc bộ lọc hiện tại. Hãy thử thay đổi hoặc xoá bộ lọc.',
   onClearFilters,
   extra,
-}: NoFilterResultsProps) {
+}: Readonly<NoFilterResultsProps>) {
   const actions =
     onClearFilters || extra ? (
       <>

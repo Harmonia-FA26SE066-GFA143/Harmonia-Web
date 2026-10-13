@@ -19,7 +19,7 @@ export interface NoteTableProps {
 const muted = { color: colors.textMuted }
 const numeric = { fontFamily: typography.fontFamilyNumeric }
 
-export function NoteTable({ notes, party, page, pageSize, total, loading, onPageChange }: NoteTableProps) {
+export function NoteTable({ notes, party, page, pageSize, total, loading, onPageChange }: Readonly<NoteTableProps>) {
   const columns: TableColumnsType<DirectorNote> = [
     {
       key: 'party',

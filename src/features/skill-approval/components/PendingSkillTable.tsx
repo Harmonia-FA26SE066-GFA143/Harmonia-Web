@@ -30,7 +30,7 @@ export function PendingSkillTable({
   onPageChange,
   onApprove,
   onReject,
-}: PendingSkillTableProps) {
+}: Readonly<PendingSkillTableProps>) {
   const columns: TableColumnsType<PendingSkill> = [
     {
       key: 'member',

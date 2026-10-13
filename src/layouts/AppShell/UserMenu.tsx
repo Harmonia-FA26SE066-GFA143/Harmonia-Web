@@ -15,7 +15,7 @@ import { surfaces, type Surface } from './navigation'
  * edits on the Profile page; while that loads it falls back to the session (login answer), then to the email.
  * The workspace switch is a development aid for reviewing every role surface; it is not rendered in production builds.
  */
-export function UserMenu({ compact = false }: { compact?: boolean }) {
+export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
   const navigate = useNavigate()
   const [confirmingSignOut, setConfirmingSignOut] = useState(false)
   const user = getSession()?.user

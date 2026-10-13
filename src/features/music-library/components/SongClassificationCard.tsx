@@ -36,7 +36,7 @@ export interface SongClassificationCardProps {
 }
 
 /** The FE-29 dimensions of one song, each with any number of values (GET /api/songs/{id}/classification). */
-export function SongClassificationCard({ classification, loading, failed, onRetry, onEdit }: SongClassificationCardProps) {
+export function SongClassificationCard({ classification, loading, failed, onRetry, onEdit }: Readonly<SongClassificationCardProps>) {
   return (
     <Card
       title={<CardTitle>Phân loại</CardTitle>}

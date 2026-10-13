@@ -14,7 +14,7 @@ const pageSize = 20
  * Notes from the Parish Priest to Choir Directors (FE-23, `/api/director-notes`). The Parish Priest sends and lists
  * the copies sent, one row per Choir Director; a Choir Director lists the notes received. Newest first.
  */
-function NotesPage({ sender }: { sender: boolean }) {
+function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
   const { message } = App.useApp()
   const [page, setPage] = useState(1)
   const [sending, setSending] = useState(false)

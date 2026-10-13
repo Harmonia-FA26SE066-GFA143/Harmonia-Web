@@ -12,7 +12,7 @@ export interface SendRequestModalProps {
 }
 
 /** Choose who receives the program's confirmation round (FE-33); all members are selected by default. */
-export function SendRequestModal({ open, sending = false, onSend, onCancel }: SendRequestModalProps) {
+export function SendRequestModal({ open, sending = false, onSend, onCancel }: Readonly<SendRequestModalProps>) {
   const members = useChoirMembers()
   // Track deselected members so everyone is selected by default, including members loaded later.
   const [deselected, setDeselected] = useState<string[]>([])

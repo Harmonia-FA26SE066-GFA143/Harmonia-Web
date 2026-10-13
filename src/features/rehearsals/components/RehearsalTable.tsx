@@ -21,7 +21,7 @@ const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize 
 
 const deleteBlockedReason = 'Buổi tập đã có điểm danh nên không thể xoá.'
 
-export function RehearsalTable({ rehearsals, programs, programsStatus, onTakeAttendance, onEdit, onDelete }: RehearsalTableProps) {
+export function RehearsalTable({ rehearsals, programs, programsStatus, onTakeAttendance, onEdit, onDelete }: Readonly<RehearsalTableProps>) {
   const columns: TableColumnsType<Rehearsal> = [
     {
       key: 'name',

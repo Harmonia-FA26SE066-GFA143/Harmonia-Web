@@ -15,7 +15,7 @@ export interface ProfileDetailsProps {
 }
 
 /** Personal information panel with view and edit modes. Email and role are read-only here. */
-export function ProfileDetails({ profile, editing, saving = false, onEdit, onCancel, onSave }: ProfileDetailsProps) {
+export function ProfileDetails({ profile, editing, saving = false, onEdit, onCancel, onSave }: Readonly<ProfileDetailsProps>) {
   const [form] = Form.useForm<ProfileUpdateValues>()
 
   // Leaving edit mode removes the form (and the focused control), so the focus goes back to the button that opened it.

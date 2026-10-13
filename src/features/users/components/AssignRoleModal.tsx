@@ -19,7 +19,7 @@ interface FooterProps {
 }
 
 /** Rendered inside the modal's Form (see modalRender), so it can watch the selected role. */
-function AssignRoleFooter({ current, saving, onCancel }: FooterProps) {
+function AssignRoleFooter({ current, saving, onCancel }: Readonly<FooterProps>) {
   const selected = Form.useWatch<SystemRole | undefined>('role', Form.useFormInstance())
   return (
     <Flex justify="flex-end" gap={spacing.sm}>
@@ -37,7 +37,7 @@ function AssignRoleFooter({ current, saving, onCancel }: FooterProps) {
  * Picks one FE-48 role (`PUT /api/users/{id}/role`: one role per account). Saving is blocked until a different role
  * is chosen. The backend refuses the Admin's own account and removing the last active Admin.
  */
-export function AssignRoleModal({ account, saving = false, onSubmit, onCancel }: AssignRoleModalProps) {
+export function AssignRoleModal({ account, saving = false, onSubmit, onCancel }: Readonly<AssignRoleModalProps>) {
   const current = account?.role
 
   return (

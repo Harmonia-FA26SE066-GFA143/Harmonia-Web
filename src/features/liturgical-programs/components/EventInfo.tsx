@@ -11,7 +11,7 @@ const orNone = (value?: string) => value || <Typography.Text style={{ color: col
 const numeric = { fontFamily: typography.fontFamilyNumeric }
 
 /** Every field of a liturgical event (`LiturgicalEventDto`). */
-export function EventInfo({ event }: { event: LiturgicalEvent }) {
+export function EventInfo({ event }: Readonly<{ event: LiturgicalEvent }>) {
   const { name } = useEventNames()
 
   return (

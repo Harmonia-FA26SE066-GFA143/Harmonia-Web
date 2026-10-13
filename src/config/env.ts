@@ -1,6 +1,6 @@
 export const env = {
   /** Backend API base URL. Empty until the backend contract and environment are supplied. */
-  apiBaseUrl: (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, ''),
+  apiBaseUrl: (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, ''),
   /**
    * OAuth client id (type Web) for Google sign-in; empty hides the Google button. The backend must list it in
    * `Google__ClientIds`.

@@ -36,7 +36,7 @@ export function ExportReportModal({
   exporting = false,
   onSubmit,
   onCancel,
-}: ExportReportModalProps) {
+}: Readonly<ExportReportModalProps>) {
   return (
     <Modal
       open={open}

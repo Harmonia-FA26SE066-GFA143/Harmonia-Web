@@ -13,7 +13,7 @@ export interface EventFilterBarProps {
 }
 
 /** The filters GET /api/liturgical-events offers: status and a date range. */
-export function EventFilterBar({ value, onChange, onReset, resultCount }: EventFilterBarProps) {
+export function EventFilterBar({ value, onChange, onReset, resultCount }: Readonly<EventFilterBarProps>) {
   return (
     <Flex wrap align="center" gap={spacing.sm} style={{ padding: spacing.md }}>
       <Select

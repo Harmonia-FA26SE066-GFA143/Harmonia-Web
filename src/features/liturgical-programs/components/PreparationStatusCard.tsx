@@ -50,7 +50,7 @@ function roster({ rosterFinalized, rosterActiveAssignments, rosterShortages }: P
  * Parish Priest: how ready the choir is for a published event (FE-21, `GET /api/liturgical-events/{id}/preparation-status`).
  * The backend gives raw counts; each line shows them as they are.
  */
-export function PreparationStatusCard({ eventId }: { eventId: string }) {
+export function PreparationStatusCard({ eventId }: Readonly<{ eventId: string }>) {
   const navigate = useNavigate()
   const status = usePreparationStatus(eventId)
   const songListStatus = status.data?.songListStatus

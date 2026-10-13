@@ -32,7 +32,7 @@ export function CatalogItemModal<T extends CatalogEntry, V extends { name: strin
   saving = false,
   onSubmit,
   onCancel,
-}: CatalogItemModalProps<T, V>) {
+}: Readonly<CatalogItemModalProps<T, V>>) {
   return (
     <Modal
       open={open}

@@ -35,7 +35,7 @@ export interface AttendanceSheetProps {
   editable: boolean
 }
 
-export function AttendanceSheet({ rehearsalId, records, editable }: AttendanceSheetProps) {
+export function AttendanceSheet({ rehearsalId, records, editable }: Readonly<AttendanceSheetProps>) {
   const { message } = App.useApp()
   const save = useSaveAttendance(rehearsalId)
   // Only what the user changed; the rest reads from `records`. The sheet is not remounted when the records reload

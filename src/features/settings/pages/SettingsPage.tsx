@@ -49,7 +49,7 @@ const toField = ({ dataType, value }: SystemSetting): FieldValue =>
 const toText = ({ dataType }: SystemSetting, field: FieldValue) =>
   dataType === 'bool' ? String(Boolean(field)) : String(field ?? '').trim()
 
-function SettingField({ setting }: { setting: SystemSetting }) {
+function SettingField({ setting }: Readonly<{ setting: SystemSetting }>) {
   const { label, help, multiline } = copy[setting.key] ?? { label: setting.key, help: setting.description }
   const { dataType, minValue, maxValue } = setting
   let input: ReactNode = <Input maxLength={1000} />

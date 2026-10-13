@@ -19,7 +19,7 @@ const clean = (value?: string) => value?.trim() || undefined
  * Add/edit the song fields of POST/PUT /api/songs. Only the title is required; maximum lengths follow the backend
  * validator. Classification is edited on the song page.
  */
-export function SongFormModal({ open, song, saving = false, titleError, onSubmit, onCancel }: SongFormModalProps) {
+export function SongFormModal({ open, song, saving = false, titleError, onSubmit, onCancel }: Readonly<SongFormModalProps>) {
   return (
     <Modal
       open={open}

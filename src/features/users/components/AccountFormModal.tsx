@@ -22,7 +22,7 @@ type FormValues = { fullName?: string; email: string; phone?: string; role?: Cre
  * phone (Harmonia-BE CreateUserRequestValidator / UpdateUserRequestValidator). The backend generates the first
  * password and emails it. The role is changed on the Roles page.
  */
-export function AccountFormModal({ open, account, saving = false, emailError, onSubmit, onCancel }: AccountFormModalProps) {
+export function AccountFormModal({ open, account, saving = false, emailError, onSubmit, onCancel }: Readonly<AccountFormModalProps>) {
   return (
     <Modal
       open={open}

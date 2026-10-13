@@ -9,7 +9,7 @@ const muted = { color: colors.textMuted }
 const maxFileBytes = 2 * 1024 * 1024
 
 /** The liturgical day of `date` (YYYY-MM-DD): celebration, rank and season, or a hint to import the calendar. */
-export function LiturgicalDayInfo({ date }: { date: string }) {
+export function LiturgicalDayInfo({ date }: Readonly<{ date: string }>) {
   const day = useLiturgicalDay(date)
 
   if (day.isPending) return <Typography.Text style={muted}>Đang tải ngày phụng vụ…</Typography.Text>
