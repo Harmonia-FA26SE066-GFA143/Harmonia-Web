@@ -12,6 +12,6 @@ export interface EmptyStateProps {
   icon?: ReactNode
 }
 
-export function EmptyState({ title, description, action, icon = <InboxOutlined /> }: EmptyStateProps) {
+export function EmptyState({ title, description, action, icon = <InboxOutlined /> }: Readonly<EmptyStateProps>) {
   return <StatePanel role="status" icon={icon} title={title} description={description} actions={action} />
 }

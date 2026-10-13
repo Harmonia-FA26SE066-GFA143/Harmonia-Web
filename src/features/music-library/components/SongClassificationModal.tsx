@@ -26,12 +26,12 @@ const skillOptions = (items: { skillId: string; skillName: string }[]) =>
 
 type RequirementField = 'vocalRequirements' | 'instrumentRequirements'
 
-function RequirementList({ name, label, addLabel, options }: {
+function RequirementList({ name, label, addLabel, options }: Readonly<{
   name: RequirementField
   label: string
   addLabel: string
   options: CatalogOption[]
-}) {
+}>) {
   const chosen: (string | undefined)[] = (Form.useWatch(name) ?? []).map((row?: { skillId?: string }) => row?.skillId)
 
   return (
@@ -80,7 +80,7 @@ function RequirementList({ name, label, addLabel, options }: {
 }
 
 /** Edits every FE-29 dimension of a song at once (PUT /api/songs/{id}/classification replaces the whole set). */
-export function SongClassificationModal({ open, classification, saving = false, onSubmit, onCancel }: SongClassificationModalProps) {
+export function SongClassificationModal({ open, classification, saving = false, onSubmit, onCancel }: Readonly<SongClassificationModalProps>) {
   const seasons = withCurrent(useCatalogOptions('seasons'), refOptions(classification.liturgicalSeasons))
   const massTypes = withCurrent(useCatalogOptions('massTypes'), refOptions(classification.massTypes))
   const ceremonyTypes = withCurrent(useCatalogOptions('ceremonyTypes'), refOptions(classification.ceremonyTypes))

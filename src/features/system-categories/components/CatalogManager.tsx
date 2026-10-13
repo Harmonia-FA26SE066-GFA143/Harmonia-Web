@@ -38,7 +38,7 @@ export function CatalogManager<T extends CatalogEntry, V extends { name: string 
   columns,
   fields,
   nameMax = 50,
-}: CatalogManagerProps<T, V>) {
+}: Readonly<CatalogManagerProps<T, V>>) {
   const labels = labelsFor(noun)
   const { message } = App.useApp()
   const [modal, setModal] = useState<ModalState<T>>({ open: false })

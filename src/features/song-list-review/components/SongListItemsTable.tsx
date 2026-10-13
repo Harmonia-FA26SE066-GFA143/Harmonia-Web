@@ -5,7 +5,7 @@ import type { SongListItem } from '../types'
 const muted = { color: colors.textMuted }
 
 /** The songs of a list in display order, read-only: the Priest decides on the whole list. */
-export function SongListItemsTable({ items }: { items: SongListItem[] }) {
+export function SongListItemsTable({ items }: Readonly<{ items: SongListItem[] }>) {
   const columns: TableColumnsType<SongListItem> = [
     {
       key: 'order',

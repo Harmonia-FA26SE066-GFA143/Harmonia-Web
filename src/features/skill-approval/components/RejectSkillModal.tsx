@@ -12,7 +12,7 @@ export interface RejectSkillModalProps {
 }
 
 /** Asks for the reason the member will see (Harmonia-BE RejectMemberSkillRequestValidator: required, ≤ 500). */
-export function RejectSkillModal({ skill, saving = false, onSubmit, onCancel, afterClose }: RejectSkillModalProps) {
+export function RejectSkillModal({ skill, saving = false, onSubmit, onCancel, afterClose }: Readonly<RejectSkillModalProps>) {
   return (
     <Modal
       open={Boolean(skill)}

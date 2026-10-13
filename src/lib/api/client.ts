@@ -78,7 +78,7 @@ function refreshSessionOnce(): Promise<boolean> {
  * Refresh answers that end the session (Harmonia-BE ErrorStatusMap): 400 VALIDATION_FAILED,
  * 401 AUTH_REFRESH_TOKEN_NOT_FOUND / _REVOKED / _EXPIRED, 403 AUTH_ACCOUNT_INACTIVE.
  */
-const sessionEndingStatuses = [400, 401, 403]
+const sessionEndingStatuses = new Set([400, 401, 403])
 
 /**
  * True when a usable session is stored afterwards. Resolves false only when the backend rejects the refresh
@@ -97,7 +97,7 @@ async function refreshSession(): Promise<boolean> {
     setSession((await response.json()) as Session)
     return true
   }
-  if (!sessionEndingStatuses.includes(response.status)) throw new ApiError(response.status, await readBody(response))
+  if (!sessionEndingStatuses.has(response.status)) throw new ApiError(response.status, await readBody(response))
   // Another tab may have refreshed first: rotation revoked the token sent here, but its new session is stored.
   // ponytail: if this answer arrives before the other tab stores its session, the user is still signed out;
   // serializing refreshes across tabs with navigator.locks would close that window.

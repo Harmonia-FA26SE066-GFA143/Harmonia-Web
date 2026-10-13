@@ -56,7 +56,7 @@ export function CatalogTable<T extends CatalogEntry>({
   onRetry,
   onAdd,
   onEdit,
-}: CatalogTableProps<T>) {
+}: Readonly<CatalogTableProps<T>>) {
   const [search, setSearch] = useState('')
   const visible = useMemo(
     () => (items ?? []).filter((item) => matchesSearch(search, item.name, item.description ?? undefined)),

@@ -13,7 +13,7 @@ const statusColors: Record<SongListStatus, StatusTagColor> = {
 }
 
 /** Song-list condition of a program (conceptual label, see types.ts); "Chưa có" when none was submitted. */
-export function SongListStatusTag({ status }: { status?: SongListStatus }) {
+export function SongListStatusTag({ status }: Readonly<{ status?: SongListStatus }>) {
   if (!status) return <Typography.Text style={{ color: colors.textMuted }}>Chưa có</Typography.Text>
   return (
     <StatusTag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>

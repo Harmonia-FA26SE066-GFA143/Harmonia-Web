@@ -4,7 +4,7 @@ import { StatusTag } from '@/shared/ui'
 import { songReviewDecisionLabels, type SongReview } from '../types'
 
 /** The Priest's decision on one song, with its note. Shared by the proposal and review pages. */
-export function SongReviewNote({ review }: { review?: SongReview }) {
+export function SongReviewNote({ review }: Readonly<{ review?: SongReview }>) {
   // No per-song decision: not reviewed yet, added after the last review, or the whole list was rejected.
   if (!review) return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
   return (

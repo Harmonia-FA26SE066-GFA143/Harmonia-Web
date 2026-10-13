@@ -2,7 +2,7 @@ import { Flex, Tag, Typography } from 'antd'
 import { colors } from '@/styles/tokens'
 
 /** A member's approved skills as neutral tags; "—" when none are recorded. */
-export function SkillTags({ skills }: { skills: string[] }) {
+export function SkillTags({ skills }: Readonly<{ skills: string[] }>) {
   if (skills.length === 0) return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
   return (
     <Flex wrap gap={4}>

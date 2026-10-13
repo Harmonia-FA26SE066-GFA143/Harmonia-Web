@@ -38,7 +38,7 @@ export interface SongStaffingCardProps {
  * a set and saved together (PUT replaces them); lines are added, replaced and removed one at a time. A position
  * takes members only once its requirement is saved (PERSONNEL_REQUIREMENT_NOT_FOUND otherwise).
  */
-export function SongStaffingCard({ programId, song, assignments, shortages, eligible, skills, locked }: SongStaffingCardProps) {
+export function SongStaffingCard({ programId, song, assignments, shortages, eligible, skills, locked }: Readonly<SongStaffingCardProps>) {
   const { message, modal } = App.useApp()
   const requirements = usePersonnelRequirements(programId, song.id)
   const save = useSavePersonnelRequirements(programId, song.id)

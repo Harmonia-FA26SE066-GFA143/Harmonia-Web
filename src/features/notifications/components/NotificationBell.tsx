@@ -13,7 +13,7 @@ import {
 } from '../hooks/useNotifications'
 import { notificationTitles, type AppNotification } from '../types'
 
-function NotificationContent({ notification }: { notification: AppNotification }) {
+function NotificationContent({ notification }: Readonly<{ notification: AppNotification }>) {
   const { isRead } = notification
   return (
     <Flex vertical style={{ minWidth: 0 }}>
@@ -47,7 +47,7 @@ const itemStyle = {
 } as const
 
 /** An unread notification is a button that marks it read; a read one has nothing to do, so it is not a control. */
-function NotificationItem({ notification, onMarkRead }: { notification: AppNotification; onMarkRead: (id: string) => void }) {
+function NotificationItem({ notification, onMarkRead }: Readonly<{ notification: AppNotification; onMarkRead: (id: string) => void }>) {
   return (
     <li>
       {notification.isRead ? (
@@ -68,7 +68,7 @@ function NotificationItem({ notification, onMarkRead }: { notification: AppNotif
   )
 }
 
-function NotificationList({ open, onMarkRead }: { open: boolean; onMarkRead: (id: string) => void }) {
+function NotificationList({ open, onMarkRead }: Readonly<{ open: boolean; onMarkRead: (id: string) => void }>) {
   const list = useNotificationList(open)
   const items = list.data?.pages.flatMap((page) => page.items) ?? []
 

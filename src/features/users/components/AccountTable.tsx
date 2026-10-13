@@ -18,7 +18,7 @@ export interface AccountTableProps {
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
 
-export function AccountTable({ accounts, page, pageSize, total, loading, onPageChange, renderActions }: AccountTableProps) {
+export function AccountTable({ accounts, page, pageSize, total, loading, onPageChange, renderActions }: Readonly<AccountTableProps>) {
   const columns: TableColumnsType<Account> = [
     {
       key: 'account',

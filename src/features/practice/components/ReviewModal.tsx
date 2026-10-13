@@ -27,7 +27,7 @@ const resultOptions = [
  * chỉnh sửa", a comment required for the latter (POST …/feedback); later comments may change the result on the
  * member's newest attempt (POST …/comments). Earlier reviews stay as history.
  */
-export function ReviewModal({ submissionId, onClose }: ReviewModalProps) {
+export function ReviewModal({ submissionId, onClose }: Readonly<ReviewModalProps>) {
   const { message } = App.useApp()
   const submission = useSubmission(submissionId)
   const review = useReviewSubmission()

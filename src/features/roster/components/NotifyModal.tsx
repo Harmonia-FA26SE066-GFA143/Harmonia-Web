@@ -12,7 +12,7 @@ export interface NotifyModalProps {
 }
 
 /** Choose the assigned members who receive the assignment notification (FE-40); all are selected by default. */
-export function NotifyModal({ open, members, sending = false, onSend, onCancel }: NotifyModalProps) {
+export function NotifyModal({ open, members, sending = false, onSend, onCancel }: Readonly<NotifyModalProps>) {
   const [deselected, setDeselected] = useState<string[]>([])
   const selected = members.filter((member) => !deselected.includes(member.memberId)).map((member) => member.memberId)
 

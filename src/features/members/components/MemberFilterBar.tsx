@@ -13,7 +13,7 @@ export interface MemberFilterBarProps {
   resultCount: number
 }
 
-export function MemberFilterBar({ value, onChange, onReset, resultCount }: MemberFilterBarProps) {
+export function MemberFilterBar({ value, onChange, onReset, resultCount }: Readonly<MemberFilterBarProps>) {
   const skills = useCatalogOptions('skills')
   const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
   return (

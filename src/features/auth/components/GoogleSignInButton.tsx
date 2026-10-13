@@ -49,7 +49,7 @@ export interface GoogleSignInButtonProps {
  * Google's own "Sign in with Google" button. Nothing is shown while the script loads or when it cannot load; the
  * email and password form stays usable either way.
  */
-export function GoogleSignInButton({ clientId, onCredential, width = 320 }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ clientId, onCredential, width = 320 }: Readonly<GoogleSignInButtonProps>) {
   const container = useRef<HTMLDivElement>(null)
   // The latest handler, so the button is not rendered again when the parent re-renders.
   const handler = useRef(onCredential)

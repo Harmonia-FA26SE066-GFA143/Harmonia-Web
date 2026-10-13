@@ -14,7 +14,7 @@ export interface ReportTableProps {
 }
 
 /** Report rows rendered as returned; empty cells show "—". */
-export function ReportTable({ columns, rows, pagination, loading, onOpenProgram }: ReportTableProps) {
+export function ReportTable({ columns, rows, pagination, loading, onOpenProgram }: Readonly<ReportTableProps>) {
   const tableColumns: TableColumnsType<ReportRow> = [
     ...columns.map((column) => ({
       key: column.key,

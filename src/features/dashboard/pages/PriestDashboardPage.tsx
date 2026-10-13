@@ -17,7 +17,7 @@ const metrics = [
 ]
 
 /** A submitted list, named after its event (the pending lists carry only the event id). */
-function PendingSongList({ eventId, version, submittedAt }: { eventId: string; version: number; submittedAt?: string }) {
+function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: string; version: number; submittedAt?: string }>) {
   const navigate = useNavigate()
   const event = useEvent(eventId)
   const { eventName } = useEventNames()

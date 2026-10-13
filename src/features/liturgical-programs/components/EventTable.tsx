@@ -16,7 +16,7 @@ export interface EventTableProps {
 const numeric = { fontFamily: typography.fontFamilyNumeric, whiteSpace: 'nowrap' } as const
 
 /** Liturgical events of the Priest with date, time, place and status. */
-export function EventTable({ events, onOpen, pagination = false, loading }: EventTableProps) {
+export function EventTable({ events, onOpen, pagination = false, loading }: Readonly<EventTableProps>) {
   const { name, eventName } = useEventNames()
   const columns: TableColumnsType<LiturgicalEvent> = [
     {

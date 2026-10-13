@@ -14,7 +14,7 @@ const refText = (ref?: CatalogRef) =>
   ref?.name ?? <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
 
 /** Programs with their FE-16 fields and song-list condition. Shared by the Priest and Choir Director pages. */
-export function ProgramTable({ programs, onOpen, pageSize = 10 }: ProgramTableProps) {
+export function ProgramTable({ programs, onOpen, pageSize = 10 }: Readonly<ProgramTableProps>) {
   const columns: TableColumnsType<LiturgicalProgram> = [
     {
       key: 'name',

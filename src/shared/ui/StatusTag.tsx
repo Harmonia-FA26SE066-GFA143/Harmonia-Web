@@ -14,7 +14,7 @@ export interface StatusTagProps extends Omit<TagProps, 'color' | 'children'> {
  * tags put the -7 shade on the -1 background: green 3.4:1 and gold 2.8:1 fall short, so those use the -8 / -9 shade.
  * The label, not the color, still carries the meaning.
  */
-export function StatusTag({ color = 'default', style, children, ...props }: StatusTagProps) {
+export function StatusTag({ color = 'default', style, children, ...props }: Readonly<StatusTagProps>) {
   const { token } = theme.useToken()
   if (color === 'default') {
     return (

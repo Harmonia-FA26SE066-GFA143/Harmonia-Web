@@ -48,14 +48,14 @@ const kindIcons: Record<MaterialKind, ComponentType> = {
   rehearsalMaterial: FolderOpenOutlined,
 }
 
-function UploadButton({ kind, loading, label, hintId, onPick }: {
+function UploadButton({ kind, loading, label, hintId, onPick }: Readonly<{
   kind: MaterialKind
   loading: boolean
   label: string
   /** Element that tells which files are accepted. */
   hintId: string
   onPick: (kind: MaterialKind, file: File) => void
-}) {
+}>) {
   return (
     <Upload
       showUploadList={false}
@@ -79,7 +79,7 @@ function UploadButton({ kind, loading, label, hintId, onPick }: {
 
 type MaterialActions = Pick<SongMaterialsCardProps, 'onDelete' | 'onEdit' | 'onProgress'>
 
-function MaterialRow({ material, onDelete, onEdit, onProgress }: { material: SongMaterial } & MaterialActions) {
+function MaterialRow({ material, onDelete, onEdit, onProgress }: Readonly<{ material: SongMaterial } & MaterialActions>) {
   const Icon = kindIcons[material.kind]
   return (
     <Flex
@@ -138,7 +138,7 @@ function MaterialRow({ material, onDelete, onEdit, onProgress }: { material: Son
 }
 
 /** Materials grouped by the four FE-08/FE-28 kinds, each with its own upload action. */
-export function SongMaterialsCard({ materials, uploadingKind, onPick, ...actions }: SongMaterialsCardProps) {
+export function SongMaterialsCard({ materials, uploadingKind, onPick, ...actions }: Readonly<SongMaterialsCardProps>) {
   return (
     <Card title={<CardTitle>Tài liệu</CardTitle>}>
       {materialKinds.map((kind, index) => {

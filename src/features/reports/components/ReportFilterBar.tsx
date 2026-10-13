@@ -19,7 +19,7 @@ export interface ReportFilterBarProps {
 }
 
 /** Server-side report filters of SearchReportsRequest: month (FE-53) and liturgical season. */
-export function ReportFilterBar({ value, onChange, onReset, seasons }: ReportFilterBarProps) {
+export function ReportFilterBar({ value, onChange, onReset, seasons }: Readonly<ReportFilterBarProps>) {
   // A visible label: once a value is chosen the placeholder is gone and the filters would look alike.
   const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
 

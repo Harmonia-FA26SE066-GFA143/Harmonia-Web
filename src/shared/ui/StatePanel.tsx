@@ -12,7 +12,7 @@ export interface StatePanelProps {
 }
 
 /** Shared layout for empty / error / no-result states: icon, heading, explanation, actions. */
-export function StatePanel({ icon, title, description, actions, tone = 'neutral', role }: StatePanelProps) {
+export function StatePanel({ icon, title, description, actions, tone = 'neutral', role }: Readonly<StatePanelProps>) {
   const { token } = theme.useToken()
   const danger = tone === 'danger'
 

@@ -18,7 +18,7 @@ export interface ActivityTableProps {
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
 
 /** Read-only list of recorded changes (FE-54), newest first. */
-export function ActivityTable({ records, onShowDetail, onPickUser, pagination, loading }: ActivityTableProps) {
+export function ActivityTable({ records, onShowDetail, onPickUser, pagination, loading }: Readonly<ActivityTableProps>) {
   const columns: TableColumnsType<ActivityRecord> = [
     {
       key: 'time',

@@ -40,7 +40,7 @@ function changesOf({ oldValue, newValue }: ActivityRecord): FieldChange[] {
 }
 
 /** Read-only detail of one recorded change, with its field values before and after. */
-export function ActivityDetailModal({ record, onClose }: ActivityDetailModalProps) {
+export function ActivityDetailModal({ record, onClose }: Readonly<ActivityDetailModalProps>) {
   const changes = record ? changesOf(record) : []
 
   return (

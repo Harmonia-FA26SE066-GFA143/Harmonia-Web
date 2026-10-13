@@ -7,7 +7,7 @@ const orNone = (value: string | null) =>
   value || <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
 
 /** Song fields of GET /api/songs/{id}. */
-export function SongInfoCard({ song }: { song: Song }) {
+export function SongInfoCard({ song }: Readonly<{ song: Song }>) {
   return (
     <Card title={<CardTitle>Thông tin bài hát</CardTitle>}>
       <Descriptions

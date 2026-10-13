@@ -3,8 +3,8 @@ export function normalizeSearchText(value: string): string {
   return value
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
+    .replaceAll('đ', 'd')
+    .replaceAll('Đ', 'D')
     .toLowerCase()
     .trim()
 }

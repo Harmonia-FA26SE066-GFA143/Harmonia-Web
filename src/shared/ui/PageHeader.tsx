@@ -13,7 +13,7 @@ export interface PageHeaderProps {
 }
 
 /** Page title block: breadcrumb → title → description, with actions on the right. */
-export function PageHeader({ title, description, breadcrumb, tags, extra }: PageHeaderProps) {
+export function PageHeader({ title, description, breadcrumb, tags, extra }: Readonly<PageHeaderProps>) {
   return (
     <Flex
       component="header"

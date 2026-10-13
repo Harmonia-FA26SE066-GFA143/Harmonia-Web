@@ -18,7 +18,7 @@ const pageSize = 20
 // Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
 const statusColors: Record<LearningStatus, StatusTagColor> = { notStarted: 'default', needsPractice: 'gold', learned: 'green' }
 
-function ProgressList({ material }: { material: SongMaterial }) {
+function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
   const [status, setStatus] = useState<LearningStatus | 'all'>('all')
   const [page, setPage] = useState(1)
   const progress = useLearningProgress(material.id, status === 'all' ? undefined : status, { pageNumber: page, pageSize })
@@ -95,7 +95,7 @@ function ProgressList({ material }: { material: SongMaterial }) {
 }
 
 /** Choir Director: who has learned a material, as members mark it in the mobile app (FE-09). */
-export function LearningProgressModal({ material, onClose }: LearningProgressModalProps) {
+export function LearningProgressModal({ material, onClose }: Readonly<LearningProgressModalProps>) {
   return (
     <Modal
       open={Boolean(material)}

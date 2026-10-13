@@ -41,7 +41,7 @@ const notApprovedMessage = 'Chương trình chưa có danh sách bài hát đã 
  * Only programs with an approved song list can have rehearsals (decision 2026-09-30, 6a.2). Changing the program
  * clears the songs, which belong to the previous program's list.
  */
-function ProgramField({ programs }: { programs: LiturgicalProgram[] }) {
+function ProgramField({ programs }: Readonly<{ programs: LiturgicalProgram[] }>) {
   const form = Form.useFormInstance<FormValues>()
   const isApproved = (programId?: string) => programs.find((program) => program.id === programId)?.songListStatus === 'approved'
   return (
@@ -112,7 +112,7 @@ export function RehearsalFormModal({
   saving = false,
   onSubmit,
   onCancel,
-}: RehearsalFormModalProps) {
+}: Readonly<RehearsalFormModalProps>) {
   return (
     <Modal
       open={open}

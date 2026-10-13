@@ -15,7 +15,7 @@ export interface AuthCardProps {
 }
 
 /** Centered card frame shared by the sign-in and password screens. */
-export function AuthCard({ title, description, icon, children, footer }: AuthCardProps) {
+export function AuthCard({ title, description, icon, children, footer }: Readonly<AuthCardProps>) {
   return (
     <Flex vertical align="center" gap={spacing.lg} style={{ paddingBlock: spacing.xl }}>
       <Link to={paths.home} style={{ textAlign: 'center' }}>

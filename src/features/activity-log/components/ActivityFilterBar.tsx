@@ -14,7 +14,7 @@ export interface ActivityFilterBarProps {
 
 const options = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }))
 
-export function ActivityFilterBar({ value, onChange, onReset, resultCount }: ActivityFilterBarProps) {
+export function ActivityFilterBar({ value, onChange, onReset, resultCount }: Readonly<ActivityFilterBarProps>) {
   return (
     <Flex wrap align="center" gap={spacing.sm} style={{ padding: spacing.md }}>
       <Select

@@ -80,7 +80,7 @@ function NoteFields() {
  * Parish Priest: a note or request to Choir Directors (FE-23; Harmonia-BE CreateDirectorNoteRequestValidator). Each
  * chosen Choir Director gets their own copy and a notification.
  */
-export function SendNoteModal({ open, saving = false, onSubmit, onCancel }: SendNoteModalProps) {
+export function SendNoteModal({ open, saving = false, onSubmit, onCancel }: Readonly<SendNoteModalProps>) {
   return (
     <Modal
       open={open}

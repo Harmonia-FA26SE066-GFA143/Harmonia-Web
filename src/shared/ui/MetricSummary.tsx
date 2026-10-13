@@ -7,7 +7,7 @@ export interface MetricSummaryProps {
 }
 
 /** Row of summary counts; a missing value shows "—" instead of a guess. */
-export function MetricSummary({ definitions, values }: MetricSummaryProps) {
+export function MetricSummary({ definitions, values }: Readonly<MetricSummaryProps>) {
   if (definitions.length === 0) return null
   return (
     <Flex component="dl" wrap gap={spacing.md} style={{ margin: `0 0 ${spacing.md}px` }}>

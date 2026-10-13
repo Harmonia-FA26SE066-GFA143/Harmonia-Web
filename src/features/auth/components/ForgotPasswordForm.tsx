@@ -8,7 +8,7 @@ export interface ForgotPasswordFormProps {
   failed?: boolean
 }
 
-export function ForgotPasswordForm({ onSubmit, submitting = false, failed = false }: ForgotPasswordFormProps) {
+export function ForgotPasswordForm({ onSubmit, submitting = false, failed = false }: Readonly<ForgotPasswordFormProps>) {
   const [form] = Form.useForm<PasswordResetRequestValues>()
 
   return (

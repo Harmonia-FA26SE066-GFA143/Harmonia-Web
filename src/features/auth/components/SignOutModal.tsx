@@ -4,7 +4,7 @@ import { paths } from '@/app/router/paths'
 import { useSignOut } from '../hooks/useAuthMutations'
 
 /** Confirms sign-out, then returns to sign-in. Used by the profile page and the header user menu. */
-export function SignOutModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function SignOutModal({ open, onClose }: Readonly<{ open: boolean; onClose: () => void }>) {
   const navigate = useNavigate()
   const { message } = App.useApp()
   const signOut = useSignOut()

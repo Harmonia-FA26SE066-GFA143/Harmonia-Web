@@ -6,7 +6,7 @@ import type { ProgramSong } from '../types'
  * Songs of a program's current song list, in order. No per-song review status: whether decisions apply to each
  * song or to the whole list is UNRESOLVED (song-approval.md).
  */
-export function ProgramSongTable({ songs }: { songs: ProgramSong[] }) {
+export function ProgramSongTable({ songs }: Readonly<{ songs: ProgramSong[] }>) {
   const columns: TableColumnsType<ProgramSong> = [
     {
       key: 'order',

@@ -45,7 +45,7 @@ const toFields = (event: LiturgicalEvent): FormFields => ({
  * Event fields with the backend's rules (Create/UpdateLiturgicalEventRequestValidator): date, time and place are
  * required, and a Mass type or a ceremony type. Shared by the create page and the edit dialog.
  */
-export function EventForm({ event, initialDate, saving = false, submitText, onSubmit, onCancel, onDirty }: EventFormProps) {
+export function EventForm({ event, initialDate, saving = false, submitText, onSubmit, onCancel, onDirty }: Readonly<EventFormProps>) {
   const locations = useCatalogOptions('worshipLocations')
   const categories = useCatalogOptions('eventCategories')
   const seasons = useCatalogOptions('seasons')

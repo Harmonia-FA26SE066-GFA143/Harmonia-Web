@@ -19,7 +19,7 @@ const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize 
 const numeric = { fontFamily: typography.fontFamilyNumeric }
 
 /** The review queue: each member's newest attempt, oldest first, across every assignment (FE-42). */
-export function SubmissionTable({ submissions, page, pageSize, total, loading, onPageChange, onOpen }: SubmissionTableProps) {
+export function SubmissionTable({ submissions, page, pageSize, total, loading, onPageChange, onOpen }: Readonly<SubmissionTableProps>) {
   const columns: TableColumnsType<PracticeSubmission> = [
     {
       key: 'member',

@@ -24,7 +24,7 @@ const statusColors = { draft: 'default', suggested: 'blue', finalized: 'green' }
  * shortages computed by the backend (FE-37), manual lines (FE-38), finalization that locks everything (FE-39) and
  * the assignment notification, sent only once finalized (FE-40).
  */
-export function RosterPanel({ programId, songs, eligible, skills }: RosterPanelProps) {
+export function RosterPanel({ programId, songs, eligible, skills }: Readonly<RosterPanelProps>) {
   const { message, modal } = App.useApp()
   const roster = useRoster(programId)
   const shortages = useShortages(programId)

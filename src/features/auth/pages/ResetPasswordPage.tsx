@@ -8,7 +8,7 @@ import { passwordRuleMessage, ResetPasswordForm } from '../components/ResetPassw
 import { useResetPassword } from '../hooks/useAuthMutations'
 
 /** Error codes of POST /api/auth/reset-password (Harmonia-BE AuthService.ResetPasswordAsync). */
-const unusableLinkCodes = ['AUTH_RESET_TOKEN_INVALID', 'AUTH_RESET_TOKEN_EXPIRED', 'AUTH_RESET_TOKEN_USED']
+const unusableLinkCodes = new Set(['AUTH_RESET_TOKEN_INVALID', 'AUTH_RESET_TOKEN_EXPIRED', 'AUTH_RESET_TOKEN_USED'])
 
 /** Opened from the link in the reset email: `/reset-password?token=…`. */
 export function ResetPasswordPage() {
@@ -22,7 +22,7 @@ export function ResetPasswordPage() {
   // (Harmonia-BE ValidationFilter, PasswordRuleExtensions), never as the top-level code.
   const passwordRejected = Boolean(error?.errors?.newPassword)
 
-  if (!token || (code !== undefined && unusableLinkCodes.includes(code))) {
+  if (!token || (code !== undefined && unusableLinkCodes.has(code))) {
     return (
       <AuthCard
         icon={<CloseCircleOutlined />}

@@ -21,7 +21,7 @@ const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize 
 // Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
 const statusColors: Record<MemberStatus, StatusTagColor> = { active: 'green', inactive: 'gold', left: 'default' }
 
-export function MemberTable({ members, page, pageSize, total, loading, onPageChange, onEdit }: MemberTableProps) {
+export function MemberTable({ members, page, pageSize, total, loading, onPageChange, onEdit }: Readonly<MemberTableProps>) {
   const columns: TableColumnsType<MemberProfile> = [
     {
       key: 'member',

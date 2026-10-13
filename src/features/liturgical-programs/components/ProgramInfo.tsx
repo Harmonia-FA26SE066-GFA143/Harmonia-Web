@@ -7,7 +7,7 @@ const orNone = (value?: string) => value || <Typography.Text style={{ color: col
 const refName = (ref?: CatalogRef) => orNone(ref?.name)
 
 /** FE-16 event information of a program. Shared by the Priest and Choir Director detail pages. */
-export function ProgramInfo({ program }: { program: LiturgicalProgram }) {
+export function ProgramInfo({ program }: Readonly<{ program: LiturgicalProgram }>) {
   return (
     <Card title="Thông tin chương trình">
       <Descriptions

@@ -70,7 +70,7 @@ const seasonFields = (
   </>
 )
 
-function ColorSwatch({ colorHex }: { colorHex: string | null }) {
+function ColorSwatch({ colorHex }: Readonly<{ colorHex: string | null }>) {
   if (!colorHex) return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
   // The code is shown next to the swatch, so the colour is never the only cue.
   return (
@@ -157,7 +157,7 @@ function LocationsPanel() {
   )
 }
 
-function BasicCatalogPanel({ catalog, noun }: { catalog: BasicCatalog; noun: string }) {
+function BasicCatalogPanel({ catalog, noun }: Readonly<{ catalog: BasicCatalog; noun: string }>) {
   return (
     <CatalogManager
       noun={noun}

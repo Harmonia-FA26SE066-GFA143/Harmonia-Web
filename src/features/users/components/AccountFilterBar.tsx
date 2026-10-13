@@ -14,7 +14,7 @@ export interface AccountFilterBarProps {
   resultCount: number
 }
 
-export function AccountFilterBar({ value, onChange, onReset, resultCount }: AccountFilterBarProps) {
+export function AccountFilterBar({ value, onChange, onReset, resultCount }: Readonly<AccountFilterBarProps>) {
   return (
     <Flex wrap align="center" gap={spacing.sm} style={{ padding: spacing.md }}>
       <Input

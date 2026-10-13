@@ -11,7 +11,7 @@ export const duplicateTitleMessage = 'Kho đã có bài hát cùng tên và cùn
  * (400 SONG_CLASSIFICATION_TARGET_INVALID, 409 SKILL_INACTIVE, 404 SKILL_NOT_FOUND). Duplicates and a skill in the
  * wrong list cannot be chosen in the form.
  */
-const staleChoiceCodes = ['SONG_CLASSIFICATION_TARGET_INVALID', 'SKILL_INACTIVE', 'SKILL_NOT_FOUND']
+const staleChoiceCodes = new Set(['SONG_CLASSIFICATION_TARGET_INVALID', 'SKILL_INACTIVE', 'SKILL_NOT_FOUND'])
 
 const extensionOf = (name: string) => name.slice(name.lastIndexOf('.')).toLowerCase()
 
@@ -46,7 +46,7 @@ export function uploadErrorMessage(error: Error): string {
 }
 
 export function classificationErrorMessage(error: Error): string {
-  return error instanceof ApiError && error.code !== undefined && staleChoiceCodes.includes(error.code)
+  return error instanceof ApiError && error.code !== undefined && staleChoiceCodes.has(error.code)
     ? 'Một số mục vừa chọn đã bị tắt hoặc không còn tồn tại. Vui lòng tải lại trang rồi chọn lại.'
     : 'Không thể lưu phân loại. Vui lòng thử lại.'
 }
