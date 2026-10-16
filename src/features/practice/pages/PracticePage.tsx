@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AssignmentForm } from '../components/AssignmentForm'
+import { AssignmentsTab } from '../components/AssignmentsTab'
 import { ProgressTab } from '../components/ProgressTab'
 import { ReviewModal } from '../components/ReviewModal'
 import { SubmissionTable } from '../components/SubmissionTable'
@@ -62,9 +63,8 @@ function ReviewQueue() {
 
 /**
  * Choir Director: practice (FE-41–FE-44) as Harmonia-BE offers it (owner choice 2026-10-10). "Chấm bài" is the review
- * queue across every assignment, each member's newest attempt; "Giao bài" gives a new assignment; "Tiến độ" shows each
- * member's readiness for an upcoming event (FE-46). The backend has no list of the assignments given (tbd-backlog
- * B21), which supersedes the per-program assignment list of the 2026-10-01 decisions.
+ * queue across every assignment, each member's newest attempt; "Bài đã giao" lists the assignments given with their
+ * submissions; "Giao bài" gives a new assignment; "Tiến độ" shows each member's readiness for an upcoming event (FE-46).
  */
 export function PracticePage() {
   return (
@@ -78,6 +78,7 @@ export function PracticePage() {
         destroyOnHidden
         items={[
           { key: 'review', label: 'Chấm bài', children: <ReviewQueue /> },
+          { key: 'assignments', label: 'Bài đã giao', children: <AssignmentsTab /> },
           { key: 'assign', label: 'Giao bài', children: <AssignmentForm /> },
           { key: 'progress', label: 'Tiến độ', children: <ProgressTab /> },
         ]}
