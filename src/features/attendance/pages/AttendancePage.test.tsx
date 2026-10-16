@@ -2,7 +2,9 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
+import type { Rehearsal } from '@/features/rehearsals'
 import * as rehearsalsApi from '@/features/rehearsals/api/rehearsalsApi'
+import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import { programPage } from '@/test/programs'
 import * as attendanceApi from '../api/attendanceApi'
@@ -12,6 +14,9 @@ import { AttendancePage } from './AttendancePage'
 const today = { startAt: dayjs().startOf('day').toISOString(), endAt: dayjs().endOf('day').toISOString() }
 
 const at = (days: number, hour: number) => dayjs().add(days, 'day').hour(hour).minute(0).second(0).millisecond(0).toISOString()
+
+// The backend lists the newest first; the rows here are written earliest first.
+const sessions = (...rows: Rehearsal[]) => ({ items: rows.toReversed(), pageNumber: 1, pageSize: 100, totalCount: rows.length, totalPages: 1 })
 
 const renderAttendance = (initialEntry = '/director/attendance') =>
   renderPage(<AttendancePage />, '/director/attendance', initialEntry)
@@ -25,25 +30,26 @@ afterEach(() => {
 })
 
 describe('AttendancePage', () => {
-  it('shows a recoverable error while the rehearsal list has no API', async () => {
+  it('shows a recoverable error when the sessions cannot be loaded', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockRejectedValue(new ApiError(403, undefined))
     renderAttendance()
 
     expect(await screen.findByRole('heading', { name: 'Không thể tải buổi tập' })).toBeInTheDocument()
   })
 
   it('points to the schedule when there is no session', async () => {
-    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([])
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions())
     renderAttendance()
 
     expect(await screen.findByRole('heading', { name: 'Chưa có buổi tập để điểm danh' })).toBeInTheDocument()
   })
 
   it('marks members and saves only the changes', async () => {
-    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
-      { id: 'r0', programId: 'p1', name: 'Tập hôm qua', startAt: at(-1, 19), endAt: at(-1, 21), location: 'Nhà thờ', songs: [] },
-      { id: 'r1', programId: 'p1', name: 'Tập toàn ca đoàn', ...today, location: 'Nhà thờ', songs: [] },
-      { id: 'r2', programId: 'p1', name: 'Tập riêng bè Nam', startAt: at(3, 19), endAt: at(3, 21), location: 'Nhà thờ', songs: [] },
-    ])
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions(
+      { id: 'r0', eventId: 'p1', startAt: at(-1, 19), endAt: at(-1, 21), locationName: 'Nhà thờ', songs: [] },
+      { id: 'r1', eventId: 'p1', ...today, locationName: 'Nhà thờ', songs: [] },
+      { id: 'r2', eventId: 'p1', startAt: at(3, 19), endAt: at(3, 21), locationName: 'Nhà thờ', songs: [] },
+    ))
     const get = vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
       { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' },
       { memberId: 'm2', fullName: 'Simon Phan Văn Đức' },
@@ -65,9 +71,9 @@ describe('AttendancePage', () => {
   })
 
   it('keeps unsaved marks through a reload of the list, and shows saved ones as saved', async () => {
-    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
-      { id: 'r1', programId: 'p1', name: 'Tập toàn ca đoàn', ...today, location: 'Nhà thờ', songs: [] },
-    ])
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions(
+      { id: 'r1', eventId: 'p1', ...today, locationName: 'Nhà thờ', songs: [] },
+    ))
     // A backend that remembers what is saved.
     let stored: AttendanceRecord[] = [
       { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' },
@@ -96,9 +102,9 @@ describe('AttendancePage', () => {
   })
 
   it('marks everyone present at once', async () => {
-    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
-      { id: 'r1', programId: 'p1', name: 'Tập toàn ca đoàn', ...today, location: 'Nhà thờ', songs: [] },
-    ])
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions(
+      { id: 'r1', eventId: 'p1', ...today, locationName: 'Nhà thờ', songs: [] },
+    ))
     vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
       { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'absent' },
       { memberId: 'm2', fullName: 'Simon Phan Văn Đức' },
@@ -110,9 +116,9 @@ describe('AttendancePage', () => {
   })
 
   it('corrects a past session, as the backend allows any time after the start', async () => {
-    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
-      { id: 'r0', programId: 'p1', name: 'Tập hôm qua', startAt: at(-1, 19), endAt: at(-1, 21), location: 'Nhà thờ', songs: [] },
-    ])
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions(
+      { id: 'r0', eventId: 'p1', startAt: at(-1, 19), endAt: at(-1, 21), locationName: 'Nhà thờ', songs: [] },
+    ))
     vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([{ memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' }])
     const save = vi.spyOn(attendanceApi, 'saveAttendance').mockResolvedValue()
     renderAttendance('/director/attendance?rehearsalId=r0')
@@ -125,9 +131,9 @@ describe('AttendancePage', () => {
   })
 
   it('shows a session read-only until it starts', async () => {
-    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue([
-      { id: 'r0', programId: 'p1', name: 'Tập tuần sau', startAt: at(7, 19), endAt: at(7, 21), location: 'Nhà thờ', songs: [] },
-    ])
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions(
+      { id: 'r0', eventId: 'p1', startAt: at(7, 19), endAt: at(7, 21), locationName: 'Nhà thờ', songs: [] },
+    ))
     vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
       { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' },
     ])

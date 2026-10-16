@@ -5,12 +5,14 @@ import { useMemo, useState } from 'react'
 import { generatePath, Link, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
-import { SkillTags } from '@/features/members'
+import { SkillTags, useChoirMembers } from '@/features/members'
+import { parseUtc } from '@/lib/api/dates'
 import { EmptyState, ErrorState, MetricSummary, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { SendRequestModal } from '../components/SendRequestModal'
 import { useParticipation, useSendParticipationRequests } from '../hooks/useParticipation'
+import { participationErrorMessage } from '../participationErrors'
 import { participationResponseLabels, type ParticipationRequest, type ParticipationResponse } from '../types'
 
 type ResponseFilter = 'all' | ParticipationResponse | 'none'
@@ -25,16 +27,17 @@ const metrics = [
   { key: 'none', label: 'Chưa phản hồi' },
 ]
 
-const formatDateTime = (value?: string) => (value ? dayjs(value).format('DD/MM/YYYY HH:mm') : '—')
+const formatDateTime = (value?: string) => (value ? dayjs(parseUtc(value)).format('DD/MM/YYYY HH:mm') : '—')
 
-const columns: TableColumnsType<ParticipationRequest> = [
+/** Skills are not part of a request; they come from the member profiles. */
+const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<ParticipationRequest> => [
   { key: 'name', title: 'Thành viên', render: (_, request) => <Typography.Text strong>{request.fullName}</Typography.Text> },
-  { key: 'skills', title: 'Kỹ năng', render: (_, request) => <SkillTags skills={request.skills} /> },
+  { key: 'skills', title: 'Kỹ năng', render: (_, request) => <SkillTags skills={skillsOf.get(request.memberId) ?? []} /> },
   {
-    key: 'sentAt',
+    key: 'requestedAt',
     title: 'Gửi yêu cầu lúc',
     render: (_, request) => (
-      <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric }}>{formatDateTime(request.sentAt)}</Typography.Text>
+      <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric }}>{formatDateTime(request.requestedAt)}</Typography.Text>
     ),
   },
   {
@@ -54,16 +57,23 @@ const columns: TableColumnsType<ParticipationRequest> = [
         <Tag style={{ marginInlineEnd: 0 }}>Chưa phản hồi</Tag>
       ),
   },
+  {
+    key: 'note',
+    title: 'Ghi chú của thành viên',
+    render: (_, request) => request.note ?? <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>,
+  },
 ]
 
 /**
  * Choir Director: send participation confirmation requests for a liturgical program and follow the responses
- * (FE-06, FE-33–FE-34). One round per program, recipients chosen by the Director (decision 2026-09-29).
+ * (FE-06, FE-33–FE-34) on `/api/event-participations`. The Director picks the recipients; each member is asked once
+ * per program, so a later send only reaches members not asked yet. This supersedes resending to non-responders
+ * (decision 2026-09-29; owner decision 2026-10-07: follow the BE).
  * `?programId=` selects the program (link from the program detail); otherwise the next upcoming program.
  * TBD: "real time" latency (FE-34) – the list refreshes on focus and with the refresh button.
  */
 export function ParticipationPage() {
-  const { message, modal } = App.useApp()
+  const { message } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
   const programs = useUpcomingPrograms()
   const allPrograms = useMemo(() => programs.data ?? [], [programs.data])
@@ -77,6 +87,9 @@ export function ParticipationPage() {
   const [picking, setPicking] = useState(false)
   const [filter, setFilter] = useState<ResponseFilter>('all')
   const [search, setSearch] = useState('')
+  const members = useChoirMembers()
+  const skillsOf = useMemo(() => new Map((members.data ?? []).map((member) => [member.id, member.skills])), [members.data])
+  const columns = useMemo(() => columnsFor(skillsOf), [skillsOf])
 
   const requests = useMemo(() => participation.data ?? [], [participation.data])
   const countResponses = (list: ParticipationRequest[]) => {
@@ -86,11 +99,10 @@ export function ParticipationPage() {
   // The summary counts every request; the filter tabs count the ones that match the search, like the list below them.
   const counts = useMemo(() => countResponses(requests), [requests])
   const searched = useMemo(
-    () => requests.filter((request) => matchesSearch(search, request.fullName, ...request.skills)),
-    [requests, search],
+    () => requests.filter((request) => matchesSearch(search, request.fullName, ...(skillsOf.get(request.memberId) ?? []))),
+    [requests, search, skillsOf],
   )
   const tabCounts = useMemo(() => countResponses(searched), [searched])
-  const pending = requests.filter((request) => !request.response)
   const visible = searched.filter(
     (request) => filter === 'all' || (filter === 'none' ? !request.response : request.response === filter),
   )
@@ -101,20 +113,7 @@ export function ParticipationPage() {
         message.success(`Đã gửi yêu cầu xác nhận cho ${memberIds.length} thành viên.`)
         setPicking(false)
       },
-      onError: () => message.error('Không thể gửi yêu cầu. Vui lòng thử lại.'),
-    })
-
-  const handleResend = () =>
-    modal.confirm({
-      title: 'Gửi lại yêu cầu xác nhận?',
-      content: `Yêu cầu sẽ được gửi lại cho ${pending.length} thành viên chưa phản hồi.`,
-      okText: 'Gửi lại',
-      cancelText: 'Hủy',
-      onOk: () =>
-        send
-          .mutateAsync(pending.map((request) => request.memberId))
-          .then(() => message.success(`Đã gửi lại yêu cầu cho ${pending.length} thành viên.`))
-          .catch(() => message.error('Không thể gửi lại yêu cầu. Vui lòng thử lại.')),
+      onError: (error) => message.error(participationErrorMessage(error, 'Không thể gửi yêu cầu. Vui lòng thử lại.')),
     })
 
   const sendButton = (
@@ -129,7 +128,7 @@ export function ParticipationPage() {
         title="Xác nhận tham gia"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Xác nhận tham gia' }]}
         description="Gửi yêu cầu xác nhận tham gia phục vụ và theo dõi phản hồi."
-        // One round per program (decision 2026-09-29): after it is sent, only resending to non-responders.
+        // The first send is offered here; later ones reach members not asked yet, from the list toolbar.
         extra={program && !isPast && participation.isSuccess && requests.length === 0 && sendButton}
       />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
@@ -159,7 +158,7 @@ export function ParticipationPage() {
             </Flex>
           </Card>
           {isPast && requests.length > 0 && (
-            <Alert type="info" showIcon title="Chương trình đã qua: không gửi hoặc gửi lại yêu cầu xác nhận được." />
+            <Alert type="info" showIcon title="Chương trình đã qua: không gửi thêm yêu cầu xác nhận được." />
           )}
           {participation.isPending && <SectionSkeleton rows={8} label="Đang tải phản hồi" />}
           {participation.isError && (
@@ -207,8 +206,8 @@ export function ParticipationPage() {
                       >
                         Làm mới
                       </Button>
-                      <Button icon={<SendOutlined />} onClick={handleResend} disabled={isPast || pending.length === 0 || send.isPending}>
-                        Gửi lại cho {pending.length} thành viên chưa phản hồi
+                      <Button icon={<SendOutlined />} onClick={() => setPicking(true)} disabled={isPast || send.isPending}>
+                        Gửi thêm cho thành viên chưa được mời
                       </Button>
                     </Flex>
                   </Flex>
@@ -250,6 +249,7 @@ export function ParticipationPage() {
       )}
       <SendRequestModal
         open={picking}
+        excludedMemberIds={requests.map((request) => request.memberId)}
         sending={send.isPending}
         onSend={handleSend}
         onCancel={() => setPicking(false)}

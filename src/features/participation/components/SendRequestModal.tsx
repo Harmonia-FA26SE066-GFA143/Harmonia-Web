@@ -6,17 +6,19 @@ import { colors, radius, spacing } from '@/styles/tokens'
 
 export interface SendRequestModalProps {
   open: boolean
+  /** Members already asked for this program; the backend asks each member once. */
+  excludedMemberIds: string[]
   sending?: boolean
   onSend: (memberIds: string[]) => void
   onCancel: () => void
 }
 
-/** Choose who receives the program's confirmation round (FE-33); all members are selected by default. */
-export function SendRequestModal({ open, sending = false, onSend, onCancel }: Readonly<SendRequestModalProps>) {
+/** Choose who is asked to serve (FE-33) among members not asked yet; all of them are selected by default. */
+export function SendRequestModal({ open, excludedMemberIds, sending = false, onSend, onCancel }: Readonly<SendRequestModalProps>) {
   const members = useChoirMembers()
   // Track deselected members so everyone is selected by default, including members loaded later.
   const [deselected, setDeselected] = useState<string[]>([])
-  const available = members.data ?? []
+  const available = (members.data ?? []).filter((member) => !excludedMemberIds.includes(member.id))
   const selected = available.filter((member) => !deselected.includes(member.id)).map((member) => member.id)
 
   const toggleAll = (checked: boolean) => setDeselected(checked ? [] : available.map((member) => member.id))
@@ -40,7 +42,7 @@ export function SendRequestModal({ open, sending = false, onSend, onCancel }: Re
       {members.isError && (
         <ErrorState title="Không thể tải thành viên" onRetry={() => members.refetch()} retrying={members.isFetching} />
       )}
-      {members.isSuccess && available.length === 0 && <EmptyState title="Chưa có thành viên" />}
+      {members.isSuccess && available.length === 0 && <EmptyState title="Mọi thành viên đã được gửi yêu cầu" />}
       {members.isSuccess && available.length > 0 && (
         <Flex vertical gap={spacing.sm}>
           <Checkbox
