@@ -46,9 +46,14 @@ describe('RolesPage', () => {
   it('summarises the four FE-48 roles with their account counts and lists the accounts', async () => {
     renderRoles()
 
-    const heading = await screen.findByRole('heading', { level: 3, name: 'Ca viên' })
+    const heading = await screen.findByRole('heading', { level: 2, name: 'Ca viên' })
     await waitFor(() => expect(heading.closest('.ant-card')).toHaveTextContent('Đang gán: 2 tài khoản'))
-    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(4)
+    // The four role cards and the assignment section are level 2 headings: nothing skips from the page title to a level 3.
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(5)
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0)
+    // The filters have visible labels.
+    expect(screen.getByLabelText('Vai trò')).toBeInTheDocument()
+    expect(screen.getByLabelText('Trạng thái')).toBeInTheDocument()
     expect(screen.getByText('Giuse Trần Minh Tâm')).toBeInTheDocument()
   })
 

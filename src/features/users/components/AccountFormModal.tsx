@@ -37,7 +37,6 @@ export function AccountFormModal({ open, account, saving = false, emailError, on
       modalRender={(dom) => (
         <Form<FormValues>
           layout="vertical"
-          disabled={saving}
           initialValues={account && { fullName: account.fullName, email: account.email, phone: account.phone ?? undefined }}
           onFinish={({ fullName, email, phone, role }) =>
             onSubmit({
