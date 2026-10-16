@@ -52,7 +52,8 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
   const massTypes = useCatalogOptions('massTypes')
   const ceremonyTypes = useCatalogOptions('ceremonyTypes')
 
-  const handleFinish = (values: FormFields) =>
+  const handleFinish = (values: FormFields) => {
+    if (saving) return
     onSubmit({
       date: values.date?.format('YYYY-MM-DD') ?? '',
       time: values.time?.format('HH:mm') ?? '',
@@ -64,11 +65,11 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
       ceremonyTypeId: values.ceremonyTypeId,
       specialRequirements: values.specialRequirements?.trim() || undefined,
     })
+  }
 
   return (
     <Form<FormFields>
       layout="vertical"
-      disabled={saving}
       initialValues={event ? toFields(event) : { date: initialDate ? dayjs(initialDate) : undefined }}
       onValuesChange={onDirty}
       onFinish={handleFinish}

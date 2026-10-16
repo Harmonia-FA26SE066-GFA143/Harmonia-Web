@@ -69,8 +69,12 @@ export function ProgressTab() {
 
   return (
     <Flex vertical gap={spacing.md}>
+      <Flex vertical gap={4} style={{ maxWidth: 480 }}>
+      <label htmlFor="progress-event" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+        Sự kiện
+      </label>
       <Select
-        aria-label="Sự kiện"
+        id="progress-event"
         showSearch
         optionFilterProp="label"
         placeholder="Chọn sự kiện sắp tới"
@@ -78,8 +82,8 @@ export function ProgressTab() {
         value={eventId}
         onChange={setEventId}
         options={(events.data ?? []).map((event) => ({ value: event.id, label: formatEventOption(event) }))}
-        style={{ width: '100%', maxWidth: 480 }}
       />
+      </Flex>
       {events.isError && (
         <ErrorState title="Không thể tải sự kiện" onRetry={() => events.refetch()} retrying={events.isFetching} />
       )}

@@ -26,7 +26,7 @@ export function ForgotPasswordForm({ onSubmit, submitting = false, failed = fals
           }
         />
       )}
-      <Form<PasswordResetRequestValues> form={form} layout="vertical" requiredMark={false} onFinish={onSubmit} disabled={submitting}>
+      <Form<PasswordResetRequestValues> form={form} layout="vertical" requiredMark={false} onFinish={(values) => !submitting && onSubmit(values)}>
         <Form.Item
           label="Email"
           name="email"
@@ -35,7 +35,7 @@ export function ForgotPasswordForm({ onSubmit, submitting = false, failed = fals
             { type: 'email', message: 'Email không hợp lệ.' },
           ]}
         >
-          <Input type="email" autoComplete="email" placeholder="ten@giaoxu.org" />
+          <Input type="email" autoComplete="email" placeholder="ten@giaoxu.org" autoFocus />
         </Form.Item>
         <Button type="primary" htmlType="submit" block loading={submitting}>
           Gửi yêu cầu

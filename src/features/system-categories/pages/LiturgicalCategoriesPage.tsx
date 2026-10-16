@@ -1,6 +1,7 @@
 import { ColorPicker, DatePicker, Flex, Form, Input, InputNumber, Tabs, Typography } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
+import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { PageHeader } from '@/shared/ui'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { colors, radius, spacing } from '@/styles/tokens'
@@ -193,6 +194,10 @@ const tabs: { key: LiturgicalCatalog; label: string; children: ReactNode }[] = [
  * locations (FE-50).
  */
 export function LiturgicalCategoriesPage() {
+  const [tab, setTab] = useUrlTab(
+    tabs.map(({ key }) => key),
+    'seasons',
+  )
   return (
     <>
       <PageHeader
@@ -200,7 +205,7 @@ export function LiturgicalCategoriesPage() {
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Danh mục phụng vụ' }]}
         description="Cấu hình mùa phụng vụ, loại Thánh lễ, loại nghi thức, danh mục sự kiện, chủ đề bài hát, phần phụng vụ và nơi cử hành."
       />
-      <Tabs destroyOnHidden items={tabs} />
+      <Tabs destroyOnHidden activeKey={tab} onChange={setTab} items={tabs} />
     </>
   )
 }

@@ -43,11 +43,12 @@ export function EventTable({ events, onOpen, pagination = false, loading }: Read
       ),
     },
     { key: 'location', title: 'Nơi cử hành', render: (_, event) => event.locationName },
-    { key: 'status', title: 'Trạng thái', render: (_, event) => <EventStatusTag status={event.status} /> },
+    { key: 'status', title: 'Trạng thái', width: 130, fixed: 'right', render: (_, event) => <EventStatusTag status={event.status} /> },
     {
       key: 'actions',
       title: 'Thao tác',
       align: 'right',
+      fixed: 'right',
       render: (_, event) => (
         <Button onClick={() => onOpen(event)} aria-label={`Xem chi tiết ${eventName(event)} ngày ${formatProgramDate(event.date)}`}>
           Xem

@@ -1,13 +1,13 @@
 import { Card } from 'antd'
-import { useState } from 'react'
-import { generatePath, useNavigate } from 'react-router'
+import { useMemo } from 'react'
+import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { EventFilterBar } from '../components/EventFilterBar'
 import { ProgramTable } from '../components/ProgramTable'
 import { usePrograms } from '../hooks/usePrograms'
-import { hasActiveEventFilters } from '../programFilters'
+import { hasActiveEventFilters, readEventListState, writeEventListState } from '../programFilters'
 import type { EventFilters } from '../types'
 
 const pageSize = 20
@@ -18,16 +18,15 @@ const pageSize = 20
  */
 export function DirectorProgramListPage() {
   const navigate = useNavigate()
-  const [filters, setFilters] = useState<EventFilters>({})
-  const [page, setPage] = useState(1)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { filters, page } = useMemo(() => readEventListState(searchParams), [searchParams])
   const programs = usePrograms(filters, { pageNumber: page, pageSize })
 
   const total = programs.data?.totalCount ?? 0
   const filtered = hasActiveEventFilters(filters)
-  const changeFilters = (next: EventFilters) => {
-    setFilters(next)
-    setPage(1)
-  }
+  // Filters and page are in the URL, so reload and the back button keep them.
+  const changeFilters = (next: EventFilters) => setSearchParams(writeEventListState(next, 1), { replace: true })
+  const setPage = (next: number) => setSearchParams(writeEventListState(filters, next), { replace: true })
   const resetFilters = () => changeFilters({})
 
   return (

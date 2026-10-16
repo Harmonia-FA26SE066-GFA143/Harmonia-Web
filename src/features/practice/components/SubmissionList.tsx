@@ -26,6 +26,7 @@ export function SubmissionList({ assignmentId, defaultStatus }: Readonly<Submiss
   return (
     <Flex vertical gap={spacing.md}>
       <Segmented<PracticeStatus | 'all'>
+        aria-label="Lọc bản thu theo trạng thái"
         value={status}
         onChange={(value) => {
           setStatus(value)

@@ -39,7 +39,7 @@ export function AssignmentForm() {
   const members = useChoirMembers()
 
   const handleFinish = ({ dueDate, ...values }: FormValues) => {
-    if (!dueDate) return
+    if (!dueDate || create.isPending) return
     create.mutate(
       {
         ...values,
@@ -62,7 +62,6 @@ export function AssignmentForm() {
       <Form<FormValues>
         form={form}
         layout="vertical"
-        disabled={create.isPending}
         initialValues={{ scope: 'all' }}
         onFinish={handleFinish}
         style={{ maxWidth: 720 }}
@@ -108,7 +107,7 @@ export function AssignmentForm() {
           <Form.Item label="Tài liệu (không bắt buộc)" name="materialId" style={{ flex: '1 1 260px' }}>
             <Select
               allowClear
-              disabled={!songId || create.isPending}
+              disabled={!songId}
               placeholder={songId ? 'Chọn tài liệu của bài' : 'Chọn bài hát trước'}
               options={(songId ? (materials.data ?? []) : []).map((material) => ({ value: material.id, label: material.title }))}
             />

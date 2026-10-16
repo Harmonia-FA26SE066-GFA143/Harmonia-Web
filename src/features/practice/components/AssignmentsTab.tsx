@@ -94,11 +94,15 @@ export function AssignmentsTab() {
 
   return (
     <Flex vertical gap={spacing.md}>
+      <Flex vertical gap={4} style={{ maxWidth: 420 }}>
+      <label htmlFor="assignment-filter-event" style={muted}>
+        Chương trình
+      </label>
       <Select
+        id="assignment-filter-event"
         allowClear
         showSearch
         optionFilterProp="label"
-        aria-label="Lọc theo chương trình"
         placeholder="Tất cả chương trình"
         value={eventId}
         onChange={(value?: string) => {
@@ -107,8 +111,8 @@ export function AssignmentsTab() {
         }}
         loading={events.isPending}
         options={(events.data ?? []).map((event) => ({ value: event.id, label: formatEventOption(event) }))}
-        style={{ maxWidth: 420 }}
       />
+      </Flex>
       {assignments.isPending && <SectionSkeleton rows={6} label="Đang tải bài đã giao" />}
       {assignments.isError && (
         <ErrorState title="Không thể tải bài đã giao" onRetry={() => assignments.refetch()} retrying={assignments.isFetching} />

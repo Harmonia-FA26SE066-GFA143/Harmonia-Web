@@ -170,12 +170,12 @@ export function SongStaffingCard({ programId, song, assignments, shortages, elig
                   optionFilterProp="label"
                   size="small"
                   value={null}
-                  disabled={add.isPending}
                   aria-label={`Thêm ca viên cho ${row.skillName}`}
                   placeholder={options.length ? 'Thêm ca viên' : 'Không còn ca viên phù hợp'}
                   notFoundContent="Không có ca viên đã nhận lời (Xác nhận hoặc Chưa chắc chắn) có kỹ năng này"
                   options={options}
                   onChange={(memberId: string) =>
+                    !add.isPending &&
                     add.mutate(
                       { songListItemId: song.id, skillId: row.skillId, memberId },
                       { onError: failed('Không thể phân công ca viên. Vui lòng thử lại.') },
