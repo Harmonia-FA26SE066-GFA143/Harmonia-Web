@@ -24,6 +24,7 @@ function NoteFields() {
     <>
       <Form.Item label="Gửi đến" name="toUserIds" rules={[{ required: true, message: 'Chọn ít nhất một Ca trưởng.' }]}>
         <Select
+          autoFocus
           mode="multiple"
           showSearch
           optionFilterProp="label"
@@ -96,7 +97,6 @@ export function SendNoteModal({ open, saving = false, onSubmit, onCancel }: Read
       modalRender={(dom) => (
         <Form<DirectorNoteValues>
           layout="vertical"
-          disabled={saving}
           onFinish={(values) => onSubmit({ ...values, content: values.content.trim() })}
         >
           {dom}

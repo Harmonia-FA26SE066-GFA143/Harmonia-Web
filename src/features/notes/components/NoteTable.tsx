@@ -19,6 +19,16 @@ export interface NoteTableProps {
 const muted = { color: colors.textMuted }
 const numeric = { fontFamily: typography.fontFamilyNumeric }
 
+// Read by screen readers, not shown: tells which note a "Xem thêm" belongs to.
+const visuallyHidden = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+} as const
+
 export function NoteTable({ notes, party, page, pageSize, total, loading, onPageChange }: Readonly<NoteTableProps>) {
   const columns: TableColumnsType<DirectorNote> = [
     {
@@ -42,14 +52,26 @@ export function NoteTable({ notes, party, page, pageSize, total, loading, onPage
       key: 'content',
       title: 'Nội dung',
       dataIndex: 'content',
-      render: (content: string) => (
-        <Typography.Paragraph
-          style={{ margin: 0, minWidth: 240, maxWidth: 480, whiteSpace: 'pre-line' }}
-          ellipsis={{ rows: 3, expandable: 'collapsible', symbol: (expanded) => (expanded ? 'Thu gọn' : 'Xem thêm') }}
-        >
-          {content}
-        </Typography.Paragraph>
-      ),
+      render: (content: string, note) => {
+        const name = (party === 'recipient' ? note.toUserName : note.fromUserName) || 'Chưa có họ tên'
+        return (
+          <Typography.Paragraph
+            style={{ margin: 0, minWidth: 240, maxWidth: 480, whiteSpace: 'pre-line' }}
+            ellipsis={{
+              rows: 3,
+              expandable: 'collapsible',
+              symbol: (expanded) => (
+                <>
+                  {expanded ? 'Thu gọn' : 'Xem thêm'}
+                  <span style={visuallyHidden}> ghi chú {party === 'recipient' ? 'gửi' : 'từ'} {name}</span>
+                </>
+              ),
+            }}
+          >
+            {content}
+          </Typography.Paragraph>
+        )
+      },
     },
     {
       key: 'sentAt',
