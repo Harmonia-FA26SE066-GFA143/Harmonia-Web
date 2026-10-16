@@ -1,7 +1,8 @@
 import { EyeOutlined } from '@ant-design/icons'
 import { Button, Flex, Table, Tag, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
 import { colors, typography } from '@/styles/tokens'
-import { actionLabel, actorName, entityLabel, formatActivityTime } from '../activityFilters'
+import { actionLabel, actorName, entityLabel } from '../activityFilters'
+import { formatDateTime } from '@/lib/api/dates'
 import type { ActivityRecord } from '../types'
 
 export interface ActivityTableProps {
@@ -25,7 +26,7 @@ export function ActivityTable({ records, onShowDetail, onPickUser, pagination, l
       title: 'Thời gian',
       render: (_, record) => (
         <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric, whiteSpace: 'nowrap' }}>
-          {formatActivityTime(record.createdAt)}
+          {formatDateTime(record.createdAt)}
         </Typography.Text>
       ),
     },
@@ -73,7 +74,7 @@ export function ActivityTable({ records, onShowDetail, onPickUser, pagination, l
               <Button
                 icon={<EyeOutlined />}
                 onClick={() => onShowDetail(record)}
-                aria-label={`Xem chi tiết: ${actionLabel(record.action)} ${entityLabel(record.entityType)} lúc ${formatActivityTime(record.createdAt)}`}
+                aria-label={`Xem chi tiết: ${actionLabel(record.action)} ${entityLabel(record.entityType)} lúc ${formatDateTime(record.createdAt)}`}
               >
                 Xem
               </Button>

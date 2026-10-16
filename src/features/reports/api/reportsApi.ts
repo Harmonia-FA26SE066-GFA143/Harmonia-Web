@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { apiDownload, apiRequest } from '@/lib/api/client'
-import { parseUtc } from '@/lib/api/dates'
+import { formatDateTime } from '@/lib/api/dates'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { ApiRoleName } from '@/lib/auth/session'
 import { roleByApiName, roleLabels } from '@/shared/types/account'
@@ -124,7 +124,7 @@ const toRow: Record<ReportKind, (dto: never) => ReportRow> = {
       email: dto.email,
       role: roleLabels[roleByApiName[dto.roleName as ApiRoleName]] ?? dto.roleName,
       status: dto.isActive ? 'Đang hoạt động' : 'Đã khoá',
-      lastLogin: dto.lastLoginAt ? dayjs(parseUtc(dto.lastLoginAt)).format('DD/MM/YYYY HH:mm') : undefined,
+      lastLogin: dto.lastLoginAt ? formatDateTime(dto.lastLoginAt) : undefined,
       passwordChanges: dto.passwordChangeCount,
       passwordResets: dto.passwordResetCount,
       accountChanges: dto.accountChangeCount,

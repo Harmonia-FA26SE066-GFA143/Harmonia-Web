@@ -11,7 +11,8 @@ import { PreparationStatusCard } from '../components/PreparationStatusCard'
 import { eventErrorMessage } from '../eventErrors'
 import { useCancelEvent, useEvent, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
 import { useEventNames } from '../hooks/useEventNames'
-import { formatProgramDate, vietnamToday } from '../programFilters'
+import { vietnamToday } from '@/lib/api/dates'
+import { formatProgramDate } from '../programFilters'
 import type { EventFormValues, LiturgicalEvent } from '../types'
 
 const breadcrumb = [{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }, { title: 'Chi tiết chương trình' }]

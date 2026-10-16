@@ -1,6 +1,7 @@
 import { DatePicker, Form, Input, Modal, Select } from 'antd'
 import dayjs from 'dayjs'
-import { useEventNames, useEvents, vietnamToday } from '@/features/liturgical-programs'
+import { useEventNames, useEvents } from '@/features/liturgical-programs'
+import { vietnamToday } from '@/lib/api/dates'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { useNoteRecipients } from '../hooks/useNotes'
 import type { DirectorNoteValues } from '../types'

@@ -36,3 +36,7 @@ export class ApiError extends Error {
     }
   }
 }
+
+/** The feature's message for the error's backend `code`, or `fallback`. */
+export const errorMessage = (error: Error, messages: Record<string, string>, fallback: string): string =>
+  (error instanceof ApiError && error.code !== undefined && messages[error.code]) || fallback

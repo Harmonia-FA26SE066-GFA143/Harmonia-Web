@@ -3,7 +3,8 @@ import { ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { useCommentSubmission, useReviewSubmission, useSubmission } from '../hooks/usePractice'
 import { practiceErrorMessage } from '../practiceErrors'
-import { formatDateTime, formatDuration } from '../practiceFormat'
+import { formatDateTime } from '@/lib/api/dates'
+import { formatDuration } from '../practiceFormat'
 import { practiceStatusLabels, type ReviewResult } from '../types'
 
 export interface ReviewModalProps {

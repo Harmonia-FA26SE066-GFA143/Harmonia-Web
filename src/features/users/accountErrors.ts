@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api/errors'
+import { ApiError, errorMessage } from '@/lib/api/errors'
 
 /** `/api/users` refusals the Admin can act on (Harmonia-BE UserService, ErrorStatusMap: 404 / 409). */
 const messages: Record<string, string> = {
@@ -15,5 +15,5 @@ export const isDuplicateEmail = (error: Error) => error instanceof ApiError && e
 export const duplicateEmailMessage = 'Email này đã được dùng cho tài khoản khác.'
 
 export function accountErrorMessage(error: Error, fallback: string): string {
-  return (error instanceof ApiError && error.code !== undefined && messages[error.code]) || fallback
+  return errorMessage(error, messages, fallback)
 }

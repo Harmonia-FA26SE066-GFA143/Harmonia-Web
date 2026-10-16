@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api/errors'
+import { errorMessage } from '@/lib/api/errors'
 
 /** Refusals of POST /api/director-notes (Harmonia-BE DirectorNoteService, CreateDirectorNoteRequestValidator). */
 const messages: Record<string, string> = {
@@ -8,5 +8,5 @@ const messages: Record<string, string> = {
 }
 
 export function noteErrorMessage(error: Error, fallback: string): string {
-  return (error instanceof ApiError && error.code !== undefined && messages[error.code]) || fallback
+  return errorMessage(error, messages, fallback)
 }

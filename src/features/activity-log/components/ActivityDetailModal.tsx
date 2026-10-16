@@ -1,6 +1,7 @@
 import { Button, Descriptions, Modal, Table, Typography } from 'antd'
 import { colors, spacing, typography } from '@/styles/tokens'
-import { actionLabel, actorName, entityLabel, formatActivityTime } from '../activityFilters'
+import { actionLabel, actorName, entityLabel } from '../activityFilters'
+import { formatDateTime } from '@/lib/api/dates'
 import type { ActivityRecord } from '../types'
 
 export interface ActivityDetailModalProps {
@@ -58,7 +59,7 @@ export function ActivityDetailModal({ record, onClose }: Readonly<ActivityDetail
             column={1}
             size="small"
             items={[
-              { key: 'time', label: 'Thời gian', children: <span style={mono}>{formatActivityTime(record.createdAt)}</span> },
+              { key: 'time', label: 'Thời gian', children: <span style={mono}>{formatDateTime(record.createdAt)}</span> },
               {
                 key: 'actor',
                 label: 'Người thực hiện',

@@ -1,7 +1,6 @@
 import { Flex, Modal, Segmented, Table, Typography, type TableColumnsType } from 'antd'
-import dayjs from 'dayjs'
 import { useState } from 'react'
-import { parseUtc } from '@/lib/api/dates'
+import { formatDateTime } from '@/lib/api/dates'
 import { EmptyState, ErrorState, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { useLearningProgress } from '../hooks/useSongs'
@@ -42,7 +41,7 @@ function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
       render: (updatedAt: string | null) =>
         updatedAt ? (
           <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric }}>
-            {dayjs(parseUtc(updatedAt)).format('DD/MM/YYYY HH:mm')}
+            {formatDateTime(updatedAt)}
           </Typography.Text>
         ) : (
           <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>

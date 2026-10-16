@@ -1,8 +1,7 @@
 import { BellOutlined } from '@ant-design/icons'
 import { App, Badge, Button, Dropdown, Flex, theme, Typography } from 'antd'
-import dayjs from 'dayjs'
 import { useRef, useState } from 'react'
-import { parseUtc } from '@/lib/api/dates'
+import { formatDateTime } from '@/lib/api/dates'
 import { ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, radius, sizes, spacing, typography } from '@/styles/tokens'
 import {
@@ -29,7 +28,7 @@ function NotificationContent({ notification }: Readonly<{ notification: AppNotif
       </Flex>
       <Typography.Text style={{ color: colors.textMuted }}>{notification.content}</Typography.Text>
       <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
-        {dayjs(parseUtc(notification.createdAt)).format('DD/MM/YYYY HH:mm')}
+        {formatDateTime(notification.createdAt)}
       </Typography.Text>
     </Flex>
   )
