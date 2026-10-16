@@ -49,7 +49,7 @@ export function SongClassificationCard({ classification, loading, failed, onRetr
       }
     >
       {loading && <SectionSkeleton rows={2} label="Đang tải phân loại" />}
-      {failed && <ErrorState title="Không thể tải phân loại" onRetry={onRetry} />}
+      {failed && <ErrorState headingLevel={3} title="Không thể tải phân loại" onRetry={onRetry} />}
       {classification && (
         <Descriptions
           layout="vertical"

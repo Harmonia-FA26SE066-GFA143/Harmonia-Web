@@ -52,10 +52,11 @@ export function AdminDashboardPage() {
           </SectionTitle>
           {log.isPending && <SectionSkeleton rows={5} label="Đang tải hoạt động gần đây" />}
           {log.isError && (
-            <ErrorState title="Không thể tải hoạt động gần đây" onRetry={() => log.refetch()} retrying={log.isFetching} />
+            <ErrorState headingLevel={3} title="Không thể tải hoạt động gần đây" onRetry={() => log.refetch()} retrying={log.isFetching} />
           )}
           {log.isSuccess && recent.length === 0 && (
             <EmptyState
+              headingLevel={3}
               title="Chưa có hoạt động nào"
               description="Các hoạt động sẽ được hệ thống tự động ghi lại và hiển thị tại đây."
             />

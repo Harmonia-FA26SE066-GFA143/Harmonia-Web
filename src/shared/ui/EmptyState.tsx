@@ -10,8 +10,25 @@ export interface EmptyStateProps {
   /** Optional action (e.g. a create button) when one exists for the user. */
   action?: ReactNode
   icon?: ReactNode
+  /** 3 when the panel sits inside a section that has its own level 2 heading. */
+  headingLevel?: 2 | 3
 }
 
-export function EmptyState({ title, description, action, icon = <InboxOutlined /> }: Readonly<EmptyStateProps>) {
-  return <StatePanel role="status" icon={icon} title={title} description={description} actions={action} />
+export function EmptyState({
+  title,
+  description,
+  action,
+  icon = <InboxOutlined />,
+  headingLevel,
+}: Readonly<EmptyStateProps>) {
+  return (
+    <StatePanel
+      role="status"
+      icon={icon}
+      title={title}
+      description={description}
+      actions={action}
+      headingLevel={headingLevel}
+    />
+  )
 }

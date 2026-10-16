@@ -226,7 +226,7 @@ export function SongDetailPage() {
         {materials.isPending && <SectionSkeleton rows={3} label="Đang tải tài liệu" />}
         {materials.isError && (
           <Card title={<CardTitle>Tài liệu</CardTitle>}>
-            <ErrorState title="Không thể tải tài liệu" onRetry={() => materials.refetch()} retrying={materials.isFetching} />
+            <ErrorState headingLevel={3} title="Không thể tải tài liệu" onRetry={() => materials.refetch()} retrying={materials.isFetching} />
           </Card>
         )}
         {materials.isSuccess && (
