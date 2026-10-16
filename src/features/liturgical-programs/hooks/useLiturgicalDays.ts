@@ -1,11 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getLiturgicalDay, importLiturgicalCalendar } from '../api/liturgicalDaysApi'
+import { importLiturgicalCalendar, listLiturgicalDays } from '../api/liturgicalDaysApi'
 
 const daysKey = ['liturgical-days'] as const
 
-/** A day's entry changes only through an import, so it stays fresh for the session. */
-export function useLiturgicalDay(date: string) {
-  return useQuery({ queryKey: [...daysKey, date], queryFn: () => getLiturgicalDay(date), staleTime: Infinity })
+/** The days of a range by date; they change only through an import, so they stay fresh for the session. */
+export function useLiturgicalDays(fromDate: string, toDate: string) {
+  return useQuery({
+    queryKey: [...daysKey, fromDate, toDate],
+    queryFn: async () => new Map((await listLiturgicalDays(fromDate, toDate)).map((day) => [day.date, day])),
+    staleTime: Infinity,
+  })
 }
 
 export function useImportLiturgicalCalendar() {

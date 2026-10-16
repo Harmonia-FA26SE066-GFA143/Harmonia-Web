@@ -10,6 +10,7 @@ import { EventStatusTag } from '../components/EventStatusTag'
 import { ImportCalendarButton, LiturgicalDayInfo } from '../components/LiturgicalDayInfo'
 import { useEventNames } from '../hooks/useEventNames'
 import { useEvents } from '../hooks/useEvents'
+import { useLiturgicalDays } from '../hooks/useLiturgicalDays'
 import { eventStatusLabels, type LiturgicalEvent } from '../types'
 
 const cellLimit = 2
@@ -18,9 +19,8 @@ const monthPage = { pageNumber: 1, pageSize: 100 }
 
 /**
  * Priest: month calendar of the liturgical events (FE-15), loaded per month with the date filters of
- * `GET /api/liturgical-events`. The selected day also shows its liturgical day from `GET /api/liturgical-days/{date}`,
- * which the Priest fills by importing a calendar feed; the backend reads one day at a time, so the month cells show
- * events only.
+ * `GET /api/liturgical-events`. The liturgical days of the month (`GET /api/liturgical-days`, filled by importing a
+ * calendar feed) name each cell on wide screens and describe the selected day.
  */
 export function ProgramCalendarPage() {
   const navigate = useNavigate()
@@ -32,6 +32,7 @@ export function ProgramCalendarPage() {
     [selected],
   )
   const events = useEvents(month, monthPage)
+  const days = useLiturgicalDays(month.fromDate, month.toDate)
 
   const byDate = useMemo(() => {
     const map = new Map<string, LiturgicalEvent[]>()
@@ -45,11 +46,17 @@ export function ProgramCalendarPage() {
   const createForDate = () => navigate(`${paths.priest.programCreate}?date=${selectedKey}`)
 
   const renderDate = (date: Dayjs) => {
-    const items = byDate.get(date.format('YYYY-MM-DD')) ?? []
-    if (items.length === 0) return null
-    if (!screens.md) return <Badge color={colors.primary} aria-label={`${items.length} sự kiện`} />
+    const key = date.format('YYYY-MM-DD')
+    const items = byDate.get(key) ?? []
+    if (!screens.md) return items.length > 0 ? <Badge color={colors.primary} aria-label={`${items.length} sự kiện`} /> : null
+    const celebration = days.data?.get(key)?.celebrationName
     return (
       <Flex vertical gap={2}>
+        {celebration && (
+          <Typography.Text ellipsis={{ tooltip: true }} style={{ fontSize: 11, color: colors.textMuted }}>
+            {celebration}
+          </Typography.Text>
+        )}
         {items.slice(0, cellLimit).map((event) => (
           <Typography.Text
             key={event.id}
@@ -117,7 +124,7 @@ export function ProgramCalendarPage() {
               )}
               <Card title={`Ngày ${selected.format('DD/MM/YYYY')}`}>
                 <div style={{ marginBottom: spacing.md }}>
-                  <LiturgicalDayInfo date={selectedKey} />
+                  <LiturgicalDayInfo date={selectedKey} days={days} />
                 </div>
                 <Button icon={<PlusOutlined />} onClick={createForDate} style={{ marginBottom: spacing.md }}>
                   Tạo chương trình cho ngày này
