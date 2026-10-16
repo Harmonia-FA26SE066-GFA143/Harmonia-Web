@@ -1,13 +1,12 @@
 import { ArrowLeftOutlined } from '@ant-design/icons'
-import { Button, Card, Flex, Segmented, Select, Table, Typography, type TableColumnsType } from 'antd'
+import { Button, Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useMemo, useState } from 'react'
 import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
-import { useAssignments, useAssignmentSubmissions, useUpcomingEvents } from '../hooks/usePractice'
+import { useAssignments, useUpcomingEvents } from '../hooks/usePractice'
 import { formatDateTime, formatEventOption } from '../practiceFormat'
-import { practiceStatusLabels, practiceStatuses, type PracticeAssignment, type PracticeStatus } from '../types'
-import { ReviewModal } from './ReviewModal'
-import { SubmissionTable } from './SubmissionTable'
+import type { PracticeAssignment } from '../types'
+import { SubmissionList } from './SubmissionList'
 
 const pageSize = 20
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
@@ -15,14 +14,8 @@ const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize 
 const targetText = ({ scope, skillIds, memberIds }: PracticeAssignment) =>
   ({ all: 'Cả ca đoàn', skillGroup: `${skillIds.length} kỹ năng`, individual: `${memberIds.length} ca viên` })[scope]
 
-/** The submissions of one assignment, each member's newest attempt, reviewed like the queue. */
+/** The submissions of one assignment, reviewed like the queue. */
 function AssignmentSubmissions({ assignment, onBack }: Readonly<{ assignment: PracticeAssignment; onBack: () => void }>) {
-  const [status, setStatus] = useState<PracticeStatus | 'all'>('all')
-  const [page, setPage] = useState(1)
-  const [openId, setOpenId] = useState<string>()
-  const submissions = useAssignmentSubmissions(assignment.id, status === 'all' ? undefined : status, { pageNumber: page, pageSize })
-  const total = submissions.data?.totalCount ?? 0
-
   return (
     <Flex vertical gap={spacing.md}>
       <Flex wrap gap={spacing.sm} align="center">
@@ -34,42 +27,7 @@ function AssignmentSubmissions({ assignment, onBack }: Readonly<{ assignment: Pr
           <Typography.Text style={muted}>Hạn nộp {formatDateTime(assignment.dueDate)} · {targetText(assignment)}</Typography.Text>
         </Flex>
       </Flex>
-      <Segmented<PracticeStatus | 'all'>
-        value={status}
-        onChange={(value) => {
-          setStatus(value)
-          setPage(1)
-        }}
-        options={[
-          { value: 'all', label: 'Tất cả' },
-          ...practiceStatuses.map((value) => ({ value, label: practiceStatusLabels[value] })),
-        ]}
-        style={{ alignSelf: 'flex-start', maxWidth: '100%', overflowX: 'auto' }}
-      />
-      {submissions.isPending && <SectionSkeleton rows={5} label="Đang tải bản thu" />}
-      {submissions.isError && (
-        <ErrorState title="Không thể tải bản thu" onRetry={() => submissions.refetch()} retrying={submissions.isFetching} />
-      )}
-      {submissions.isSuccess && total === 0 && (
-        <EmptyState
-          title="Chưa có bản thu nào"
-          description="Ca viên nộp bản thu trên ứng dụng di động; bản thu mới sẽ xuất hiện tại đây."
-        />
-      )}
-      {submissions.isSuccess && total > 0 && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <SubmissionTable
-            submissions={submissions.data.items}
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            loading={submissions.isPlaceholderData}
-            onPageChange={setPage}
-            onOpen={(submission) => setOpenId(submission.id)}
-          />
-        </Card>
-      )}
-      <ReviewModal submissionId={openId} onClose={() => setOpenId(undefined)} />
+      <SubmissionList assignmentId={assignment.id} defaultStatus="all" />
     </Flex>
   )
 }

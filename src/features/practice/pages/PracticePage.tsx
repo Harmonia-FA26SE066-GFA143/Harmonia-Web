@@ -1,65 +1,9 @@
-import { Card, Flex, Segmented, Tabs } from 'antd'
-import { useState } from 'react'
-import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
+import { Tabs } from 'antd'
+import { PageHeader } from '@/shared/ui'
 import { AssignmentForm } from '../components/AssignmentForm'
 import { AssignmentsTab } from '../components/AssignmentsTab'
 import { ProgressTab } from '../components/ProgressTab'
-import { ReviewModal } from '../components/ReviewModal'
-import { SubmissionTable } from '../components/SubmissionTable'
-import { useSubmissions } from '../hooks/usePractice'
-import { practiceStatusLabels, practiceStatuses, type PracticeStatus } from '../types'
-
-const pageSize = 20
-
-function ReviewQueue() {
-  const [status, setStatus] = useState<PracticeStatus | 'all'>('submitted')
-  const [page, setPage] = useState(1)
-  const [openId, setOpenId] = useState<string>()
-  const submissions = useSubmissions(status === 'all' ? undefined : status, { pageNumber: page, pageSize })
-  const total = submissions.data?.totalCount ?? 0
-
-  return (
-    <Flex vertical gap={spacing.md}>
-      <Segmented<PracticeStatus | 'all'>
-        value={status}
-        onChange={(value) => {
-          setStatus(value)
-          setPage(1)
-        }}
-        options={[
-          ...practiceStatuses.map((value) => ({ value, label: practiceStatusLabels[value] })),
-          { value: 'all', label: 'Tất cả' },
-        ]}
-        style={{ alignSelf: 'flex-start', maxWidth: '100%', overflowX: 'auto' }}
-      />
-      {submissions.isPending && <SectionSkeleton rows={6} label="Đang tải bản thu" />}
-      {submissions.isError && (
-        <ErrorState title="Không thể tải bản thu" onRetry={() => submissions.refetch()} retrying={submissions.isFetching} />
-      )}
-      {submissions.isSuccess && total === 0 && (
-        <EmptyState
-          title={status === 'submitted' ? 'Không có bản thu nào chờ chấm' : 'Không có bản thu nào'}
-          description="Ca viên nộp bản thu trên ứng dụng di động; bản thu mới sẽ xuất hiện tại đây."
-        />
-      )}
-      {submissions.isSuccess && total > 0 && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <SubmissionTable
-            submissions={submissions.data.items}
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            loading={submissions.isPlaceholderData}
-            onPageChange={setPage}
-            onOpen={(submission) => setOpenId(submission.id)}
-          />
-        </Card>
-      )}
-      <ReviewModal submissionId={openId} onClose={() => setOpenId(undefined)} />
-    </Flex>
-  )
-}
+import { SubmissionList } from '../components/SubmissionList'
 
 /**
  * Choir Director: practice (FE-41–FE-44) as Harmonia-BE offers it (owner choice 2026-10-10). "Chấm bài" is the review
@@ -77,7 +21,7 @@ export function PracticePage() {
       <Tabs
         destroyOnHidden
         items={[
-          { key: 'review', label: 'Chấm bài', children: <ReviewQueue /> },
+          { key: 'review', label: 'Chấm bài', children: <SubmissionList defaultStatus="submitted" /> },
           { key: 'assignments', label: 'Bài đã giao', children: <AssignmentsTab /> },
           { key: 'assign', label: 'Giao bài', children: <AssignmentForm /> },
           { key: 'progress', label: 'Tiến độ', children: <ProgressTab /> },
