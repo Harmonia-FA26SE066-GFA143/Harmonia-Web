@@ -1,3 +1,4 @@
+import { CardTitle } from '@/shared/ui'
 import { Card, Descriptions, Typography } from 'antd'
 import { colors, typography } from '@/styles/tokens'
 import { formatProgramDate } from '../programFilters'
@@ -8,7 +9,7 @@ const orNone = (value?: string) => value || <Typography.Text style={{ color: col
 /** FE-16 event information of a program, for the Choir Director pages. */
 export function ProgramInfo({ program }: Readonly<{ program: LiturgicalProgram }>) {
   return (
-    <Card title="Thông tin chương trình">
+    <Card title={<CardTitle>Thông tin chương trình</CardTitle>}>
       <Descriptions
         column={{ xs: 1, md: 2 }}
         items={[

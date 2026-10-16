@@ -2,7 +2,7 @@ import { Card, Table, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { formatDateTime, parseUtc } from '@/lib/api/dates'
-import { ErrorState, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { useReportExports } from '../hooks/useReports'
 import { reportDefinitions } from '../reportDefinitions'
@@ -29,10 +29,10 @@ export function ExportHistory({ seasons }: Readonly<{ seasons: FilterOption[] }>
   }
 
   return (
-    <Card title="Lịch sử xuất báo cáo" styles={{ body: { padding: total > 0 ? 0 : undefined } }}>
+    <Card title={<CardTitle>Lịch sử xuất báo cáo</CardTitle>} styles={{ body: { padding: total > 0 ? 0 : undefined } }}>
       {exports.isPending && <SectionSkeleton rows={3} label="Đang tải lịch sử xuất báo cáo" />}
       {exports.isError && (
-        <ErrorState title="Không thể tải lịch sử xuất báo cáo" onRetry={() => exports.refetch()} retrying={exports.isFetching} />
+        <ErrorState headingLevel={3} title="Không thể tải lịch sử xuất báo cáo" onRetry={() => exports.refetch()} retrying={exports.isFetching} />
       )}
       {exports.isSuccess && total === 0 && <Typography.Text style={muted}>Chưa có lần xuất báo cáo nào.</Typography.Text>}
       {exports.isSuccess && total > 0 && (

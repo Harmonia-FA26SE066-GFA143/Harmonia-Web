@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import type { NamedRef, SkillRequirement, SongClassification } from '../types'
-import { CardTitle } from './CardTitle'
+import { CardTitle } from '@/shared/ui'
 
 const unclassified = (
   <Typography.Text style={{ color: colors.textMuted, fontStyle: 'italic' }}>Chưa phân loại</Typography.Text>

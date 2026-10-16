@@ -22,7 +22,7 @@ import {
   type MaterialKind,
   type SongMaterial,
 } from '../types'
-import { CardTitle } from './CardTitle'
+import { CardTitle } from '@/shared/ui'
 
 export interface SongMaterialsCardProps {
   materials: SongMaterial[]

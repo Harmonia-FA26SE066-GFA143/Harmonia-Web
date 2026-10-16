@@ -1,6 +1,6 @@
 import { App, Button, Card, Flex, Form, Input, InputNumber, Switch } from 'antd'
 import type { ReactNode } from 'react'
-import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { useSettings, useUpdateSettings } from '../hooks/useSettings'
 import { settingErrorMessage } from '../settingsErrors'
@@ -144,7 +144,7 @@ export function SettingsPage() {
         >
           <Flex vertical gap={spacing.lg}>
             {sections.map((section) => (
-              <Card key={section.title} title={section.title}>
+              <Card key={section.title} title={<CardTitle>{section.title}</CardTitle>}>
                 {section.items.map((setting) => (
                   <SettingField key={setting.id} setting={setting} />
                 ))}

@@ -1,3 +1,4 @@
+export { CardTitle } from './CardTitle'
 export { EmptyState, type EmptyStateProps } from './EmptyState'
 export { ErrorState, type ErrorStateProps } from './ErrorState'
 export { MetricSummary, type MetricSummaryProps } from './MetricSummary'

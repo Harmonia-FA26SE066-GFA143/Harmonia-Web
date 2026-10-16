@@ -1,7 +1,7 @@
 import { DeleteOutlined, DownOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import { App, Button, Card, Dropdown, Flex, InputNumber, Modal, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
-import { SectionSkeleton, StatusTag } from '@/shared/ui'
+import { CardTitle, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { useAddAssignment, usePersonnelRequirements, useRemoveAssignment, useReplaceAssignment, useSavePersonnelRequirements } from '../hooks/useRoster'
 import { rosterErrorMessage } from '../rosterErrors'
@@ -230,7 +230,7 @@ export function SongStaffingCard({ programId, song, assignments, shortages, elig
       styles={{ title: { whiteSpace: 'normal' } }}
       title={
         <Flex vertical>
-          <span>{song.title}</span>
+          <CardTitle>{song.title}</CardTitle>
           {song.liturgicalPart && (
             <Typography.Text style={{ color: colors.textMuted, fontWeight: 400 }}>{song.liturgicalPart}</Typography.Text>
           )}
