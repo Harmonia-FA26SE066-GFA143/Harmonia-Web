@@ -3,19 +3,20 @@ import { ApiError } from '@/lib/api/errors'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { EventFilters, EventFormValues, EventStatus, LiturgicalEvent, PreparationStatus, SongListStatus } from '../types'
 
-// `/api/liturgical-events` (Harmonia-BE LiturgicalEventsController), Parish Priest only. `eventDate` is a DateOnly
-// (YYYY-MM-DD) and `time` a TimeOnly (HH:mm:ss): calendar values in Vietnam, never parsed with `new Date()`.
+// `/api/liturgical-events` (Harmonia-BE LiturgicalEventsController), the Parish Priest side; the Choir Director reads
+// the list too (programsApi). `eventDate` is a DateOnly (YYYY-MM-DD) and `time` a TimeOnly (HH:mm:ss): calendar
+// values in Vietnam, never parsed with `new Date()`.
 
 export interface EventPage {
   pageNumber: number
   pageSize: number
 }
 
-type ApiEventStatus = 'Draft' | 'Published' | 'Cancelled'
+export type ApiEventStatus = 'Draft' | 'Published' | 'Cancelled'
 
-const statusByApi: Record<ApiEventStatus, EventStatus> = { Draft: 'draft', Published: 'published', Cancelled: 'cancelled' }
+export const statusByApi: Record<ApiEventStatus, EventStatus> = { Draft: 'draft', Published: 'published', Cancelled: 'cancelled' }
 
-const apiStatus = Object.fromEntries(Object.entries(statusByApi).map(([api, status]) => [status, api])) as Record<
+export const apiStatus = Object.fromEntries(Object.entries(statusByApi).map(([api, status]) => [status, api])) as Record<
   EventStatus,
   ApiEventStatus
 >
@@ -113,9 +114,9 @@ export async function cancelEvent(id: string): Promise<void> {
   await apiRequest<unknown>(`/api/liturgical-events/${id}/cancel`, { method: 'PATCH' })
 }
 
-type ApiSongListStatus = 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'NeedsRevision'
+export type ApiSongListStatus = 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'NeedsRevision'
 
-const songListStatusByApi: Record<ApiSongListStatus, SongListStatus> = {
+export const songListStatusByApi: Record<ApiSongListStatus, SongListStatus> = {
   Draft: 'draft',
   Submitted: 'submitted',
   Approved: 'approved',

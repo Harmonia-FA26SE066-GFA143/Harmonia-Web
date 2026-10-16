@@ -19,6 +19,9 @@ beforeEach(() => {
     id: 'p1',
     eventName: 'Lễ Chúa Nhật XXVI',
     date: '2026-09-27',
+    time: '08:00',
+    locationName: 'Nhà thờ',
+    status: 'published',
     songs: [],
   })
 })

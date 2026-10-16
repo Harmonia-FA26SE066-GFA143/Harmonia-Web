@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { formatProgramDate, usePrograms } from '@/features/liturgical-programs'
+import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { formatRehearsalTime, isRehearsalDay, rehearsalLabel, useRehearsals, type Rehearsal } from '@/features/rehearsals'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
@@ -36,7 +36,7 @@ export function AttendancePage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const rehearsals = useRehearsals()
-  const programs = usePrograms()
+  const programs = useUpcomingPrograms()
   const sessions = useMemo(() => rehearsals.data ?? [], [rehearsals.data])
   const selected = sessions.find((rehearsal) => rehearsal.id === searchParams.get('rehearsalId')) ?? defaultSession(sessions)
   const attendance = useAttendance(selected?.id)

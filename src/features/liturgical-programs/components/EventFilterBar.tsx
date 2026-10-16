@@ -10,10 +10,20 @@ export interface EventFilterBarProps {
   onChange: (value: EventFilters) => void
   onReset: () => void
   resultCount: number
+  /** Statuses offered; the Choir Director never sees drafts. */
+  statuses?: EventStatus[]
 }
 
 /** The filters GET /api/liturgical-events offers: status and a date range. */
-export function EventFilterBar({ value, onChange, onReset, resultCount }: Readonly<EventFilterBarProps>) {
+const allStatuses = Object.keys(eventStatusLabels) as EventStatus[]
+
+export function EventFilterBar({
+  value,
+  onChange,
+  onReset,
+  resultCount,
+  statuses = allStatuses,
+}: Readonly<EventFilterBarProps>) {
   return (
     <Flex wrap align="center" gap={spacing.sm} style={{ padding: spacing.md }}>
       <Select
@@ -22,7 +32,7 @@ export function EventFilterBar({ value, onChange, onReset, resultCount }: Readon
         placeholder="Tất cả trạng thái"
         value={value.status}
         onChange={(status?: EventStatus) => onChange({ ...value, status })}
-        options={(Object.keys(eventStatusLabels) as EventStatus[]).map((status) => ({
+        options={statuses.map((status) => ({
           value: status,
           label: eventStatusLabels[status],
         }))}
