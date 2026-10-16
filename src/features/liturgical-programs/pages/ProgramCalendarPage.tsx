@@ -1,10 +1,10 @@
 import { PlusOutlined } from '@ant-design/icons'
-import { Alert, Badge, Button, Calendar, Card, Col, Flex, Grid, Row, Spin, Typography } from 'antd'
+import { Alert, Badge, Button, Calendar, Card, Col, Flex, Grid, Radio, Row, Select, Spin, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useMemo, useState } from 'react'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { ImportCalendarButton, LiturgicalDayInfo } from '../components/LiturgicalDayInfo'
@@ -14,6 +14,7 @@ import { useLiturgicalDays } from '../hooks/useLiturgicalDays'
 import { eventStatusLabels, type LiturgicalEvent } from '../types'
 
 const cellLimit = 2
+const monthOptions = Array.from({ length: 12 }, (_, index) => ({ value: index, label: `Th ${index + 1}` }))
 // ponytail: one page of 100 events per month (the backend maximum); a busier month would need a second page.
 const monthPage = { pageNumber: 1, pageSize: 100 }
 
@@ -106,6 +107,39 @@ export function ProgramCalendarPage() {
                   fullscreen={Boolean(screens.md)}
                   value={selected}
                   onSelect={setSelected}
+                  headerRender={({ value, type, onChange, onTypeChange }) => (
+                    <Flex justify="flex-end" wrap gap={spacing.sm} style={{ paddingBlockEnd: spacing.sm }}>
+                      <Select
+                        size="small"
+                        aria-label="Năm"
+                        value={value.year()}
+                        onChange={(year: number) => onChange(value.year(year))}
+                        options={Array.from({ length: 21 }, (_, index) => ({ value: value.year() - 10 + index, label: value.year() - 10 + index }))}
+                        style={{ minWidth: 84 }}
+                      />
+                      {type === 'month' && (
+                        <Select
+                          size="small"
+                          aria-label="Tháng"
+                          value={value.month()}
+                          onChange={(monthIndex: number) => onChange(value.month(monthIndex))}
+                          options={monthOptions}
+                          style={{ minWidth: 84 }}
+                        />
+                      )}
+                      <Radio.Group
+                        size="small"
+                        optionType="button"
+                        aria-label="Chế độ xem lịch"
+                        value={type}
+                        onChange={(event) => onTypeChange(event.target.value)}
+                        options={[
+                          { value: 'month', label: 'Tháng' },
+                          { value: 'year', label: 'Năm' },
+                        ]}
+                      />
+                    </Flex>
+                  )}
                   cellRender={(date, info) => (info.type === 'date' ? renderDate(date) : info.originNode)}
                 />
               </Spin>
@@ -122,7 +156,7 @@ export function ProgramCalendarPage() {
                   description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình cho ngày này”."
                 />
               )}
-              <Card title={`Ngày ${selected.format('DD/MM/YYYY')}`}>
+              <Card title={<CardTitle>{`Ngày ${selected.format('DD/MM/YYYY')}`}</CardTitle>}>
                 <div style={{ marginBottom: spacing.md }}>
                   <LiturgicalDayInfo date={selectedKey} days={days} />
                 </div>

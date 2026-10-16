@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { canEditSongList, formatProgramDate, ProgramInfo, useProgram, type LiturgicalProgram } from '@/features/liturgical-programs'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
+import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { ProposalTable, type DraftItem } from '../components/ProposalTable'
 import { SongListStatusAlert } from '../components/SongListStatusAlert'
@@ -79,7 +79,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
         {list && <SongListStatusAlert list={list} />}
         <ProgramInfo program={program} />
         <Card
-          title={`Danh sách bài hát (${items.length})`}
+          title={<CardTitle>{`Danh sách bài hát (${items.length})`}</CardTitle>}
           extra={
             editable && (
               <Flex wrap gap={spacing.sm}>
@@ -104,6 +104,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
             <ProposalTable items={items} editable={editable} onChange={change} />
           ) : (
             <EmptyState
+              headingLevel={3}
               title="Chưa có bài hát nào trong đề xuất"
               description="Chọn các bài hát phù hợp từ kho bài hát của ca đoàn, mỗi bài cho một phần phụng vụ."
               action={editable ? addButton : undefined}

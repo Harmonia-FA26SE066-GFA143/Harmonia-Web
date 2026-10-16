@@ -1,7 +1,7 @@
 import { Card, Descriptions, Typography } from 'antd'
 import { colors } from '@/styles/tokens'
 import type { Song } from '../types'
-import { CardTitle } from './CardTitle'
+import { CardTitle } from '@/shared/ui'
 
 const orNone = (value: string | null) =>
   value || <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>

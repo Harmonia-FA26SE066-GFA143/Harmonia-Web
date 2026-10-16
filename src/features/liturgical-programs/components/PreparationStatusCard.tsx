@@ -1,7 +1,7 @@
 import { Button, Card, Descriptions, Flex, Typography } from 'antd'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { ErrorState, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { usePreparationStatus } from '../hooks/useEvents'
 import type { PreparationStatus } from '../types'
@@ -59,10 +59,10 @@ export function PreparationStatusCard({ eventId }: Readonly<{ eventId: string }>
     songListStatus === 'submitted' ? 'Duyệt danh sách' : songListStatus === 'approved' ? 'Xem danh sách' : undefined
 
   return (
-    <Card title="Tình hình chuẩn bị">
+    <Card title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>
       {status.isPending && <SectionSkeleton rows={4} label="Đang tải tình hình chuẩn bị" />}
       {status.isError && (
-        <ErrorState title="Không thể tải tình hình chuẩn bị" onRetry={() => status.refetch()} retrying={status.isFetching} />
+        <ErrorState headingLevel={3} title="Không thể tải tình hình chuẩn bị" onRetry={() => status.refetch()} retrying={status.isFetching} />
       )}
       {status.isSuccess && (
         <Descriptions

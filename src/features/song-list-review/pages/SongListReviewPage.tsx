@@ -5,7 +5,7 @@ import { generatePath, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, useEvent, useEventNames } from '@/features/liturgical-programs'
 import { parseUtc } from '@/lib/api/dates'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
+import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { ReviewForm } from '../components/ReviewForm'
 import { SongListItemsTable } from '../components/SongListItemsTable'
@@ -147,7 +147,7 @@ export function SongListReviewPage() {
       {!failed && event.data && list && (
         <Flex vertical gap={spacing.lg}>
           <ListStatus list={list} />
-          <Card title={`Danh sách bài hát (${list.items.length})`} styles={{ body: { padding: 0 } }}>
+          <Card title={<CardTitle>{`Danh sách bài hát (${list.items.length})`}</CardTitle>} styles={{ body: { padding: 0 } }}>
             <SongListItemsTable items={list.items} />
           </Card>
           {list.status === 'submitted' && <ReviewForm saving={review.isPending} onSubmit={handleReview} />}

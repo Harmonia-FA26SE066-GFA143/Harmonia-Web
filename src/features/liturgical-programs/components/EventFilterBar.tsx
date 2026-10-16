@@ -17,6 +17,16 @@ export interface EventFilterBarProps {
 /** The filters GET /api/liturgical-events offers: status and a date range. */
 const allStatuses = Object.keys(eventStatusLabels) as EventStatus[]
 
+/** Read by screen readers, not shown. */
+const visuallyHidden = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+} as const
+
 export function EventFilterBar({
   value,
   onChange,
@@ -31,36 +41,40 @@ export function EventFilterBar({
         <label htmlFor="event-filter-status" style={labelStyle}>
           Trạng thái
         </label>
-      <Select
-        id="event-filter-status"
-        allowClear
-        placeholder="Tất cả trạng thái"
-        value={value.status}
-        onChange={(status?: EventStatus) => onChange({ ...value, status })}
-        options={statuses.map((status) => ({
-          value: status,
-          label: eventStatusLabels[status],
-        }))}
-      />
+        <Select
+          id="event-filter-status"
+          allowClear
+          placeholder="Tất cả trạng thái"
+          value={value.status}
+          onChange={(status?: EventStatus) => onChange({ ...value, status })}
+          options={statuses.map((status) => ({
+            value: status,
+            label: eventStatusLabels[status],
+          }))}
+        />
       </Flex>
       <Flex vertical gap={4} style={{ flex: '1 1 260px', maxWidth: 320 }}>
         <label htmlFor="event-filter-dates" style={labelStyle}>
           Khoảng ngày
         </label>
-      <DatePicker.RangePicker
-        id="event-filter-dates"
-        format="DD/MM/YYYY"
-        placeholder={['Từ ngày', 'Đến ngày']}
-        allowEmpty={[true, true]}
-        value={[value.fromDate ? dayjs(value.fromDate) : null, value.toDate ? dayjs(value.toDate) : null]}
-        onChange={(range) =>
-          onChange({
-            ...value,
-            fromDate: range?.[0]?.format('YYYY-MM-DD'),
-            toDate: range?.[1]?.format('YYYY-MM-DD'),
-          })
-        }
-      />
+        {/* Names the second input of the range; the visible label above names the first. */}
+        <label htmlFor="event-filter-dates-end" style={visuallyHidden}>
+          Khoảng ngày, đến ngày
+        </label>
+        <DatePicker.RangePicker
+          id={{ start: 'event-filter-dates', end: 'event-filter-dates-end' }}
+          format="DD/MM/YYYY"
+          placeholder={['Từ ngày', 'Đến ngày']}
+          allowEmpty={[true, true]}
+          value={[value.fromDate ? dayjs(value.fromDate) : null, value.toDate ? dayjs(value.toDate) : null]}
+          onChange={(range) =>
+            onChange({
+              ...value,
+              fromDate: range?.[0]?.format('YYYY-MM-DD'),
+              toDate: range?.[1]?.format('YYYY-MM-DD'),
+            })
+          }
+        />
       </Flex>
       <Button icon={<ReloadOutlined />} onClick={onReset} disabled={!hasActiveEventFilters(value)}>
         Đặt lại bộ lọc

@@ -1,3 +1,4 @@
+import { CardTitle } from '@/shared/ui'
 import { Card, Descriptions, Typography } from 'antd'
 import { formatDateTime } from '@/lib/api/dates'
 import { colors, typography } from '@/styles/tokens'
@@ -14,7 +15,7 @@ export function EventInfo({ event }: Readonly<{ event: LiturgicalEvent }>) {
   const { name } = useEventNames()
 
   return (
-    <Card title="Thông tin sự kiện">
+    <Card title={<CardTitle>Thông tin sự kiện</CardTitle>}>
       <Descriptions
         column={{ xs: 1, md: 2 }}
         items={[

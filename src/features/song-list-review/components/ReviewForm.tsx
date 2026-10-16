@@ -1,4 +1,5 @@
 import { Button, Card, Flex, Form, Input, Radio } from 'antd'
+import { CardTitle } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { reviewDecisionLabels, type ReviewDecision, type ReviewValues } from '../types'
 
@@ -19,7 +20,7 @@ export function ReviewForm({ saving = false, onSubmit }: Readonly<ReviewFormProp
   const notesRequired = decision === 'requestRevision' || decision === 'reject'
 
   return (
-    <Card title="Quyết định">
+    <Card title={<CardTitle>Quyết định</CardTitle>}>
       <Form<ReviewValues>
         form={form}
         layout="vertical"

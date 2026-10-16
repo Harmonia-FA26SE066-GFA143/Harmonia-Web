@@ -2,7 +2,7 @@ import { ArrowLeftOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Typography } from 'antd'
 import { generatePath, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
+import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { ProgramInfo } from '../components/ProgramInfo'
 import { ProgramSongTable } from '../components/ProgramSongTable'
@@ -68,7 +68,7 @@ export function DirectorProgramDetailPage() {
         <Card
           title={
             <Flex align="center" gap={spacing.sm} wrap>
-              Danh sách bài hát <SongListStatusTag status={data.songListStatus} />
+              <CardTitle>Danh sách bài hát</CardTitle> <SongListStatusTag status={data.songListStatus} />
             </Flex>
           }
           extra={
@@ -86,7 +86,7 @@ export function DirectorProgramDetailPage() {
             </Typography.Text>
           )}
         </Card>
-        <Card title="Chuẩn bị phục vụ">
+        <Card title={<CardTitle>Chuẩn bị phục vụ</CardTitle>}>
           <Flex wrap gap={spacing.sm}>
             <Button onClick={() => navigate(`${paths.director.rehearsals}?programId=${data.id}`)}>Lịch tập</Button>
             <Button onClick={() => navigate(`${paths.director.participation}?programId=${data.id}`)}>Xác nhận tham gia</Button>
