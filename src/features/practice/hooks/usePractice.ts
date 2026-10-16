@@ -15,11 +15,14 @@ import type { AssignmentValues, PracticeStatus, ReviewResult } from '../types'
 
 const practiceKey = ['practice'] as const
 
-/** One page of the review queue; the previous page stays visible while the next one loads. */
-export function useSubmissions(status: PracticeStatus | undefined, page: SubmissionPage) {
+/**
+ * One page of submissions: the review queue across assignments, or those of `assignmentId`. The previous page stays
+ * visible while the next one loads; reviews reload it with the rest of the practice data.
+ */
+export function useSubmissions(status: PracticeStatus | undefined, page: SubmissionPage, assignmentId?: string) {
   return useQuery({
-    queryKey: [...practiceKey, 'submissions', status, page],
-    queryFn: () => listSubmissions(status, page),
+    queryKey: [...practiceKey, 'submissions', assignmentId, status, page],
+    queryFn: () => (assignmentId ? listAssignmentSubmissions(assignmentId, status, page) : listSubmissions(status, page)),
     placeholderData: keepPreviousData,
   })
 }
@@ -29,15 +32,6 @@ export function useAssignments(eventId: string | undefined, page: SubmissionPage
   return useQuery({
     queryKey: [...practiceKey, 'assignments', eventId, page],
     queryFn: () => listAssignments(eventId, page),
-    placeholderData: keepPreviousData,
-  })
-}
-
-/** One page of an assignment's submissions; reviews reload it with the rest of the practice data. */
-export function useAssignmentSubmissions(assignmentId: string, status: PracticeStatus | undefined, page: SubmissionPage) {
-  return useQuery({
-    queryKey: [...practiceKey, 'submissions', assignmentId, status, page],
-    queryFn: () => listAssignmentSubmissions(assignmentId, status, page),
     placeholderData: keepPreviousData,
   })
 }
