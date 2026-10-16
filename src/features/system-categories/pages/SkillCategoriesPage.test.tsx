@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError } from '@/lib/api/errors'
+import { ApiContractMissingError, ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as categoriesApi from '../api/categoriesApi'
 import type { CatalogItem, Skill } from '../types'
@@ -56,6 +56,7 @@ describe('SkillCategoriesPage', () => {
     expect(within(alto).getByText('Bè giọng')).toBeInTheDocument()
     expect(within(alto).getByText('Ngừng dùng')).toBeInTheDocument()
 
+    expect(screen.getByText('3/3 kỹ năng')).toHaveAttribute('aria-live', 'polite')
     const search = screen.getByRole('textbox', { name: 'Tìm kiếm kỹ năng' })
     fireEvent.change(search, { target: { value: 'dan' } })
     expect(screen.getByText('Organ')).toBeInTheDocument()
@@ -65,6 +66,16 @@ describe('SkillCategoriesPage', () => {
     expect(screen.getByRole('heading', { name: 'Không tìm thấy kết quả phù hợp' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Xoá bộ lọc/ }))
     expect(screen.getByText('Soprano')).toBeInTheDocument()
+  })
+
+  it('says the category is not loaded instead of showing "no category"', async () => {
+    vi.spyOn(categoriesApi, 'listSkills').mockResolvedValue(skills)
+    vi.spyOn(categoriesApi, 'listCatalogItems').mockRejectedValue(new ApiContractMissingError('nhóm kỹ năng'))
+    renderPage(<SkillCategoriesPage />, '/admin/skill-categories')
+
+    const soprano = (await screen.findByText('Soprano')).closest('tr') as HTMLElement
+    await waitFor(() => expect(within(soprano).getByText('Chưa tải được')).toBeInTheDocument())
+    expect(within(soprano).queryByText('—')).toBeNull()
   })
 
   it('requires a name and a category before adding a skill', async () => {
@@ -98,6 +109,28 @@ describe('SkillCategoriesPage', () => {
       expect(save).toHaveBeenCalledWith(undefined, expect.objectContaining({ name: 'Guitar', categoryId: 'c-instrument', isActive: true })),
     )
     expect(await screen.findByText('Đã thêm kỹ năng.')).toBeInTheDocument()
+  })
+
+  it('keeps the form enabled while saving and ignores a second submit', async () => {
+    vi.spyOn(categoriesApi, 'listSkills').mockResolvedValue(skills)
+    let finish: () => void = () => {}
+    const save = vi.spyOn(categoriesApi, 'saveSkill').mockImplementation(
+      () => new Promise((resolve) => (finish = () => resolve({ id: 's4', categoryId: 'c-vocal', name: 'Tenor', description: null, isActive: true }))),
+    )
+    renderPage(<SkillCategoriesPage />, '/admin/skill-categories')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Thêm kỹ năng/ }))
+    const dialog = await screen.findByRole('dialog')
+    const name = within(dialog).getByRole('textbox', { name: 'Tên kỹ năng' })
+    fireEvent.change(name, { target: { value: 'Tenor' } })
+    await choose(dialog, 'Nhóm kỹ năng', 'Bè giọng')
+    fireEvent.click(within(dialog).getByRole('button', { name: /Thêm/ }))
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
+
+    expect(name).not.toBeDisabled()
+    fireEvent.click(within(dialog).getByRole('button', { name: /Thêm/ }))
+    expect(save).toHaveBeenCalledTimes(1)
+    finish()
   })
 
   it('edits a skill with its current values prefilled and can switch it off', async () => {

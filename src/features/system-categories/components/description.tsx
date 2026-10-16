@@ -8,7 +8,12 @@ export const descriptionColumn = {
   title: 'Mô tả',
   dataIndex: 'description',
   render: (description: string | null) =>
-    description || <Typography.Text style={{ color: colors.textMuted }}>Chưa có mô tả</Typography.Text>,
+    description ? (
+      // A long description wraps here instead of widening the table past the card.
+      <Typography.Paragraph style={{ margin: 0, minWidth: 200, maxWidth: 300 }}>{description}</Typography.Paragraph>
+    ) : (
+      <Typography.Text style={{ color: colors.textMuted }}>Chưa có mô tả</Typography.Text>
+    ),
 }
 
 export const descriptionField = (

@@ -50,7 +50,6 @@ export function CatalogItemModal<T extends CatalogEntry, V extends { name: strin
           layout="vertical"
           initialValues={item ?? { isActive: true }}
           onFinish={(values) => onSubmit({ ...values, name: values.name.trim() })}
-          disabled={saving}
         >
           {dom}
         </Form>

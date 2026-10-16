@@ -35,6 +35,9 @@ const statusColumn = {
   key: 'status',
   title: 'Trạng thái',
   dataIndex: 'isActive',
+  width: 130,
+  // Pinned with the actions: the status and the way to change it stay in view when the table scrolls sideways.
+  fixed: 'right' as const,
   render: (isActive: boolean) => (
     <StatusTag color={isActive ? 'green' : 'default'} style={{ marginInlineEnd: 0 }}>
       {isActive ? 'Đang dùng' : 'Ngừng dùng'}
@@ -103,6 +106,7 @@ export function CatalogTable<T extends CatalogEntry>({
       title: 'Thao tác',
       align: 'right',
       width: 140,
+      fixed: 'right',
       render: (_, item) => (
         <Button icon={<EditOutlined />} onClick={() => onEdit(item)} aria-label={`Chỉnh sửa ${item.name}`}>
           Chỉnh sửa
@@ -124,7 +128,7 @@ export function CatalogTable<T extends CatalogEntry>({
           style={{ flex: '1 1 240px', maxWidth: 360 }}
         />
         <Flex align="center" gap={spacing.md} wrap>
-          <Typography.Text style={{ color: colors.textMuted }}>
+          <Typography.Text aria-live="polite" style={{ color: colors.textMuted }}>
             {visible.length}/{items.length} {labels.noun}
           </Typography.Text>
           <Button type="primary" icon={<PlusOutlined />} onClick={onAdd}>
