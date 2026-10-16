@@ -100,7 +100,7 @@ export function RosterPage() {
               // A program change starts from that program's saved requirements.
               key={program.id}
               programId={program.id}
-              songs={(songList.data?.items ?? []).map(({ id, title, liturgicalPart }) => ({ id, title, liturgicalPart }))}
+              songs={(songList.data?.items ?? []).map(({ id, songTitle, slotName }) => ({ id, title: songTitle, liturgicalPart: slotName }))}
               eligible={(participation.data ?? []).filter((request) => request.response === 'confirmed')}
               skills={(skills.data ?? []).map(({ id, name }) => ({ id, name }))}
             />

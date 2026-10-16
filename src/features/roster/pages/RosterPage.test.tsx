@@ -41,9 +41,14 @@ const tenorShort = {
 
 const withApprovedList = () =>
   vi.spyOn(songListsApi, 'getSongList').mockResolvedValue({
-    programId: 'p1',
+    id: 'l1',
+    eventId: 'p1',
+    version: 1,
     status: 'approved',
-    items: [{ id: 'i1', songId: 's1', title: 'Con Bước Lên Bàn Thờ', liturgicalPart: 'Ca nhập lễ' }],
+    items: [
+      { id: 'i1', songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ', slotId: 'k1', slotName: 'Ca nhập lễ', displayOrder: 1 },
+    ],
+    reviews: [],
   })
 
 const withRoster = (value: ServiceRoster | null, shortages = [tenorShort]) => {
@@ -78,7 +83,7 @@ afterEach(() => {
 
 describe('RosterPage', () => {
   it('needs an approved song list', async () => {
-    vi.spyOn(songListsApi, 'getSongList').mockResolvedValue({ programId: 'p1', status: 'submitted', items: [] })
+    vi.spyOn(songListsApi, 'getSongList').mockResolvedValue({ id: 'l1', eventId: 'p1', version: 1, status: 'submitted', items: [], reviews: [] })
     renderRoster()
 
     expect(await screen.findByRole('heading', { name: 'Chưa có danh sách bài hát đã duyệt' })).toBeInTheDocument()

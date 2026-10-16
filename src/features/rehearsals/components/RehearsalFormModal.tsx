@@ -77,7 +77,7 @@ function SongsField() {
   const programId: string = Form.useWatch('programId', Form.useFormInstance()) ?? ''
   const songList = useSongList(programId, { enabled: Boolean(programId) })
   const approved = songList.data?.status === 'approved'
-  const options = approved ? (songList.data?.items ?? []).map((item) => ({ value: item.songId, label: item.title })) : []
+  const options = approved ? (songList.data?.items ?? []).map((item) => ({ value: item.songId, label: item.songTitle })) : []
 
   return (
     <Form.Item

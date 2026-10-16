@@ -2,6 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
+import * as songListsApi from '@/features/song-lists/api/songListsApi'
 import { ApiContractMissingError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import { programPage } from '@/test/programs'
@@ -146,6 +147,7 @@ describe('RehearsalsPage', () => {
 
   it('requires location and songs, and rejects a program without an approved song list', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(rehearsals)
+    vi.spyOn(songListsApi, 'getSongList').mockResolvedValue({ id: 'l3', eventId: 'p3', version: 1, status: 'submitted', items: [], reviews: [] })
     const save = vi.spyOn(rehearsalsApi, 'saveRehearsal')
     renderRehearsals('/director/rehearsals?programId=p3')
 
@@ -154,7 +156,7 @@ describe('RehearsalsPage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo buổi tập' }))
 
     expect(await within(dialog).findByText('Chương trình chưa có danh sách bài hát đã duyệt.')).toBeInTheDocument()
-    expect(within(dialog).getByText('Vui lòng nhập địa điểm.')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Vui lòng nhập địa điểm.')).toBeInTheDocument()
     expect(within(dialog).getByText('Vui lòng chọn ít nhất một bài hát tập.')).toBeInTheDocument()
     expect(save).not.toHaveBeenCalled()
   })
