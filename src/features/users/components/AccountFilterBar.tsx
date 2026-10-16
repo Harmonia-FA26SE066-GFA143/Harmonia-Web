@@ -1,7 +1,7 @@
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Flex, Input, Select, Typography } from 'antd'
 import { roleLabels } from '@/shared/types/account'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { hasActiveFilters } from '../accountFilters'
 import { assignableRoles } from '../roles'
 import { accountStatusLabels, type AccountFilters } from '../types'
@@ -15,8 +15,9 @@ export interface AccountFilterBarProps {
 }
 
 export function AccountFilterBar({ value, onChange, onReset, resultCount }: Readonly<AccountFilterBarProps>) {
+  const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
   return (
-    <Flex wrap align="center" gap={spacing.sm} style={{ padding: spacing.md }}>
+    <Flex wrap align="end" gap={spacing.sm} style={{ padding: spacing.md }}>
       <Input
         allowClear
         prefix={<SearchOutlined aria-hidden />}
@@ -26,27 +27,36 @@ export function AccountFilterBar({ value, onChange, onReset, resultCount }: Read
         onChange={(event) => onChange({ ...value, search: event.target.value })}
         style={{ flex: '1 1 260px', maxWidth: 360 }}
       />
-      <Select
-        allowClear
-        aria-label="Lọc theo vai trò"
-        placeholder="Tất cả vai trò"
-        value={value.role}
-        onChange={(role) => onChange({ ...value, role })}
-        options={assignableRoles.map((role) => ({ value: role, label: roleLabels[role] }))}
-        style={{ flex: '0 1 220px', minWidth: 180 }}
-      />
-      <Select
-        allowClear
-        aria-label="Lọc theo trạng thái"
-        placeholder="Tất cả trạng thái"
-        value={value.isActive}
-        onChange={(isActive) => onChange({ ...value, isActive })}
-        options={[
-          { value: true, label: accountStatusLabels.active },
-          { value: false, label: accountStatusLabels.inactive },
-        ]}
-        style={{ flex: '0 1 200px', minWidth: 170 }}
-      />
+      {/* Visible labels: once a value is chosen the placeholder is gone and the two filters would look alike. */}
+      <Flex vertical gap={4} style={{ flex: '0 1 220px', minWidth: 180 }}>
+        <label htmlFor="account-filter-role" style={labelStyle}>
+          Vai trò
+        </label>
+        <Select
+          id="account-filter-role"
+          allowClear
+          placeholder="Tất cả vai trò"
+          value={value.role}
+          onChange={(role) => onChange({ ...value, role })}
+          options={assignableRoles.map((role) => ({ value: role, label: roleLabels[role] }))}
+        />
+      </Flex>
+      <Flex vertical gap={4} style={{ flex: '0 1 200px', minWidth: 170 }}>
+        <label htmlFor="account-filter-status" style={labelStyle}>
+          Trạng thái
+        </label>
+        <Select
+          id="account-filter-status"
+          allowClear
+          placeholder="Tất cả trạng thái"
+          value={value.isActive}
+          onChange={(isActive) => onChange({ ...value, isActive })}
+          options={[
+            { value: true, label: accountStatusLabels.active },
+            { value: false, label: accountStatusLabels.inactive },
+          ]}
+        />
+      </Flex>
       <Button icon={<ReloadOutlined />} onClick={onReset} disabled={!hasActiveFilters(value)}>
         Đặt lại bộ lọc
       </Button>

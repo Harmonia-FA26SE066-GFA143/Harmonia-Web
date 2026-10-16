@@ -1,10 +1,10 @@
 import { UserAddOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex } from 'antd'
+import { App, Button, Card, Flex, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { accountErrorMessage, duplicateEmailMessage, isDuplicateEmail } from '../accountErrors'
 import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
 import { AccountFilterBar } from '../components/AccountFilterBar'
@@ -49,6 +49,7 @@ export function AccountsPage() {
   }
 
   const handleSubmit = (values: CreateAccountValues | UpdateAccountValues) => {
+    if (create.isPending || update.isPending) return
     setEmailError(undefined)
     const callbacks = {
       onSuccess: () => {
@@ -89,7 +90,10 @@ export function AccountsPage() {
       <Button onClick={() => setForm({ open: true, account })} aria-label={`Sửa ${accountName(account)}`}>
         Sửa
       </Button>
-      {/* The backend refuses to deactivate the Admin's own account (USER_CANNOT_MODIFY_SELF). */}
+      {/* The backend refuses to deactivate the Admin's own account (USER_CANNOT_MODIFY_SELF); say so instead of a gap. */}
+      {account.id === ownId && (
+        <Typography.Text style={{ color: colors.textMuted, alignSelf: 'center' }}>Không thể tự ngừng hoạt động</Typography.Text>
+      )}
       {account.id !== ownId && (
         <Button
           danger={account.isActive}

@@ -7,7 +7,7 @@ import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import type { SystemRole } from '@/shared/types/account'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { accountErrorMessage } from '../accountErrors'
 import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
 import { AccountFilterBar } from '../components/AccountFilterBar'
@@ -45,7 +45,7 @@ export function RolesPage() {
   const resetFilters = () => changeFilters(emptyAccountFilters)
 
   const handleChangeRole = (role: SystemRole) => {
-    if (!changing) return
+    if (!changing || changeRole.isPending) return
     changeRole.mutate(
       { id: changing.id, role },
       {
@@ -83,6 +83,7 @@ export function RolesPage() {
             </Typography.Title>
             {total === 0 && !filtered ? (
               <EmptyState
+                headingLevel={3}
                 title="Chưa có tài khoản nào"
                 description="Tạo tài khoản ở trang Tài khoản trước."
                 action={<Button onClick={() => navigate(paths.admin.accounts)}>Đến trang Tài khoản</Button>}
@@ -104,7 +105,9 @@ export function RolesPage() {
                     onPageChange={setPage}
                     // The backend refuses to change the Admin's own role (USER_CANNOT_MODIFY_SELF).
                     renderActions={(account) =>
-                      account.id !== ownId && (
+                      account.id === ownId ? (
+                        <Typography.Text style={{ color: colors.textMuted }}>Không thể tự đổi vai trò</Typography.Text>
+                      ) : (
                         <Button
                           icon={<SwapOutlined />}
                           onClick={() => setChanging(account)}

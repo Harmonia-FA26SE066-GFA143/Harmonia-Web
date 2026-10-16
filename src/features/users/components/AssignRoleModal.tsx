@@ -51,7 +51,6 @@ export function AssignRoleModal({ account, saving = false, onSubmit, onCancel }:
       modalRender={(dom) => (
         <Form<{ role: SystemRole }>
           layout="vertical"
-          disabled={saving}
           initialValues={{ role: current }}
           onFinish={(values) => onSubmit(values.role)}
         >
