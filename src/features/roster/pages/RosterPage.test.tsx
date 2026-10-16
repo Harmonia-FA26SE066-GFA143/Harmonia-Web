@@ -7,6 +7,7 @@ import * as songListsApi from '@/features/song-lists/api/songListsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
+import { programPage } from '@/test/programs'
 import * as rosterApi from '../api/rosterApi'
 import type { ServiceRoster } from '../types'
 import { RosterPage } from './RosterPage'
@@ -56,9 +57,9 @@ const withRoster = (value: ServiceRoster | null, shortages = [tenorShort]) => {
 const confirmDialog = async (title: string) => (await screen.findAllByText(title))[0].closest('.ant-modal') as HTMLElement
 
 beforeEach(() => {
-  vi.spyOn(programsApi, 'listPrograms').mockResolvedValue([
+  vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(programPage(
     { id: 'p1', eventName: 'Thánh lễ Hôn Phối', date: dayjs().add(5, 'day').format('YYYY-MM-DD'), songListStatus: 'approved' },
-  ])
+  ))
   vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([
     { id: 'k-tenor', name: 'Tenor' },
     { id: 'k-organ', name: 'Organ' },

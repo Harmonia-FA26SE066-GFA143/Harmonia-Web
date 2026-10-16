@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import { ApiContractMissingError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
+import { programPage } from '@/test/programs'
 import * as rehearsalsApi from '../api/rehearsalsApi'
 import type { Rehearsal } from '../types'
 import { RehearsalsPage } from './RehearsalsPage'
@@ -37,11 +38,11 @@ const renderRehearsals = (initialEntry = '/director/rehearsals') =>
   renderPage(<RehearsalsPage />, '/director/rehearsals', initialEntry)
 
 beforeEach(() => {
-  vi.spyOn(programsApi, 'listPrograms').mockResolvedValue([
+  vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(programPage(
     { id: 'p1', eventName: 'Lễ Chúa Nhật', date: '2026-10-04', songListStatus: 'approved' },
     { id: 'p2', eventName: 'Lễ Bổn mạng', date: '2026-10-11', songListStatus: 'approved' },
     { id: 'p3', eventName: 'Lễ Mân Côi', date: '2026-10-18', songListStatus: 'submitted' },
-  ])
+  ))
 })
 
 afterEach(() => {

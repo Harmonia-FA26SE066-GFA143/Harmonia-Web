@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { generatePath, Link, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { formatProgramDate, upcomingPrograms, usePrograms } from '@/features/liturgical-programs'
+import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { SkillTags } from '@/features/members'
 import { EmptyState, ErrorState, MetricSummary, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
@@ -65,10 +65,10 @@ const columns: TableColumnsType<ParticipationRequest> = [
 export function ParticipationPage() {
   const { message, modal } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
-  const programs = usePrograms()
+  const programs = useUpcomingPrograms()
   const allPrograms = useMemo(() => programs.data ?? [], [programs.data])
   const program =
-    allPrograms.find((item) => item.id === searchParams.get('programId')) ?? upcomingPrograms(allPrograms)[0] ?? allPrograms[0]
+    allPrograms.find((item) => item.id === searchParams.get('programId')) ?? allPrograms[0]
   const today = dayjs().format('YYYY-MM-DD')
   // No request for a program that is already past (decision 2026-09-30, 6a.3).
   const isPast = program !== undefined && program.date < today

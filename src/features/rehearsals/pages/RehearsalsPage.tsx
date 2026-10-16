@@ -3,7 +3,7 @@ import { Alert, App, Button, Card, Flex, Input, Segmented, Select } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { formatProgramDate, usePrograms } from '@/features/liturgical-programs'
+import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { spacing } from '@/styles/tokens'
@@ -24,7 +24,7 @@ export function RehearsalsPage() {
   const { message, modal } = App.useApp()
   const [searchParams] = useSearchParams()
   const rehearsals = useRehearsals()
-  const programs = usePrograms()
+  const programs = useUpcomingPrograms()
   const save = useSaveRehearsal()
   const remove = useDeleteRehearsal()
   const [period, setPeriod] = useState<Period>('upcoming')

@@ -1,8 +1,3 @@
-import type { CatalogItem } from '@/features/system-categories'
-
-/** Reference to an FE-50 catalog entry as shown on a program. */
-export type CatalogRef = Pick<CatalogItem, 'id' | 'name'>
-
 /**
  * Song-list status: `SongListStatus` of Harmonia-BE (Draft, Submitted, Approved, Rejected, NeedsRevision), which
  * replaces the conceptual labels of song-approval.md. Transitions stay as decided on 2026-09-28 until song lists
@@ -27,41 +22,38 @@ export function canEditSongList(status?: SongListStatus): boolean {
 }
 
 /**
- * A program as the Choir Director pages and the song-list pages use it: an event together with its song list.
- * TBD: Backend API missing – song lists have no controller yet, so these pages stay on dev fixtures. The Priest
- * pages use `LiturgicalEvent` (below), which follows `/api/liturgical-events`.
+ * A program as the Choir Director pages use it: a row of `GET /api/liturgical-events` (`LiturgicalEventListItemDto`,
+ * never a draft for the Choir Director) or the event of `GET /api/schedule/events/{id}`. Catalog entries come as
+ * names; the Priest pages use `LiturgicalEvent` (below).
  */
 export interface LiturgicalProgram {
   id: string
+  /** Title, else the Mass or ceremony type, which the backend requires one of. */
   eventName: string
   /** Celebration date as YYYY-MM-DD. */
   date: string
-  season?: CatalogRef
-  massType?: CatalogRef
-  ceremonyType?: CatalogRef
+  /** Local time, HH:mm. */
+  time: string
+  locationName: string
+  status: EventStatus
+  seasonName?: string
+  massTypeName?: string
+  ceremonyTypeName?: string
   specialRequirements?: string
-  /** Absent until the Choir Director submits a song list. */
+  /** Newest song-list version; absent until the Choir Director proposes one. */
   songListStatus?: SongListStatus
 }
 
 export interface ProgramSong {
   id: string
-  /** Name of a liturgical slot (`GET /api/lookups/liturgical-slots`); see `SongListItem` of song-lists. */
+  /** Liturgical slot (Ca nhập lễ, Đáp ca…). */
   liturgicalPart?: string
   title: string
 }
 
 export interface LiturgicalProgramDetail extends LiturgicalProgram {
-  /** Songs of the current song list, in order. Per-song review decisions are shown on the song-list pages. */
+  /** Songs of the newest song-list version, in order. */
   songs: ProgramSong[]
-}
-
-
-export interface ProgramFilters {
-  search: string
-  seasonId?: string
-  massTypeId?: string
-  ceremonyTypeId?: string
 }
 
 /** `EventStatus` of Harmonia-BE (decision D3, 2026-10-07): Draft → Published, either may become Cancelled. */

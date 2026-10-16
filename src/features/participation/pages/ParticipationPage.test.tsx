@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as membersApi from '@/features/members/api/membersApi'
 import { renderPage } from '@/test/renderPage'
+import { programPage } from '@/test/programs'
 import * as participationApi from '../api/participationApi'
 import { ParticipationPage } from './ParticipationPage'
 
@@ -13,10 +14,10 @@ const renderParticipation = (initialEntry = '/director/participation') =>
   renderPage(<ParticipationPage />, '/director/participation', initialEntry)
 
 beforeEach(() => {
-  vi.spyOn(programsApi, 'listPrograms').mockResolvedValue([
-    { id: 'p1', eventName: 'Lễ Chúa Nhật', date: dayjs().subtract(3, 'day').format('YYYY-MM-DD') },
+  vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(programPage(
     { id: 'p2', eventName: 'Lễ Bổn mạng', date: dayjs().add(5, 'day').format('YYYY-MM-DD') },
-  ])
+    { id: 'p1', eventName: 'Lễ Chúa Nhật', date: dayjs().subtract(3, 'day').format('YYYY-MM-DD') },
+  ))
 })
 
 afterEach(() => {

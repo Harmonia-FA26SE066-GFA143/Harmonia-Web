@@ -2,7 +2,7 @@ import { Alert, Button, Card, Flex, Select } from 'antd'
 import { useMemo } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { formatProgramDate, SongListStatusTag, upcomingPrograms, usePrograms } from '@/features/liturgical-programs'
+import { formatProgramDate, SongListStatusTag, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
 import { useLookup } from '@/features/system-categories'
@@ -20,10 +20,10 @@ import { RosterPanel } from '../components/RosterPanel'
 export function RosterPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const programs = usePrograms()
+  const programs = useUpcomingPrograms()
   const allPrograms = useMemo(() => programs.data ?? [], [programs.data])
   const program =
-    allPrograms.find((item) => item.id === searchParams.get('programId')) ?? upcomingPrograms(allPrograms)[0] ?? allPrograms[0]
+    allPrograms.find((item) => item.id === searchParams.get('programId')) ?? allPrograms[0]
   const programId = program?.id ?? ''
   const songList = useSongList(programId, { enabled: Boolean(programId) })
   const approved = songList.data?.status === 'approved'

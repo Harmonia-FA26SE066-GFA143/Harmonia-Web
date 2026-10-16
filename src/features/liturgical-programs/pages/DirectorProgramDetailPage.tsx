@@ -44,7 +44,7 @@ export function DirectorProgramDetailPage() {
           <EmptyState
             icon={<FileSearchOutlined />}
             title="Không tìm thấy chương trình phụng vụ"
-            description="Chương trình không tồn tại hoặc đường dẫn không đúng."
+            description="Chương trình không tồn tại, đã bị hủy hoặc đường dẫn không đúng."
             action={backButton}
           />
         )}
@@ -60,7 +60,7 @@ export function DirectorProgramDetailPage() {
       <PageHeader
         title={data.eventName}
         breadcrumb={breadcrumb}
-        description={[formatProgramDate(data.date), data.season?.name].filter(Boolean).join(' • ')}
+        description={[formatProgramDate(data.date), data.seasonName].filter(Boolean).join(' • ')}
         extra={backButton}
       />
       <Flex vertical gap={spacing.lg}>

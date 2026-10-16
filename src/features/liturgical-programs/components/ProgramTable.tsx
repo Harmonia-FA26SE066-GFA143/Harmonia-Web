@@ -1,38 +1,46 @@
-import { Button, Table, Typography, type TableColumnsType } from 'antd'
+import { Button, Flex, Table, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
 import { colors, typography } from '@/styles/tokens'
 import { formatProgramDate } from '../programFilters'
-import type { CatalogRef, LiturgicalProgram } from '../types'
+import type { LiturgicalProgram } from '../types'
+import { EventStatusTag } from './EventStatusTag'
 import { SongListStatusTag } from './SongListStatusTag'
 
 export interface ProgramTableProps {
   programs: LiturgicalProgram[]
   onOpen: (program: LiturgicalProgram) => void
-  pageSize?: number
+  /** Server-side paging of GET /api/liturgical-events. */
+  pagination?: TablePaginationConfig | false
+  loading?: boolean
 }
 
-const refText = (ref?: CatalogRef) =>
-  ref?.name ?? <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
+const orDash = (name?: string) => name ?? <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
 
-/** Programs with their FE-16 fields and song-list condition. Shared by the Priest and Choir Director pages. */
-export function ProgramTable({ programs, onOpen, pageSize = 10 }: Readonly<ProgramTableProps>) {
+/** Programs of the Choir Director with their catalog names and song-list condition. */
+export function ProgramTable({ programs, onOpen, pagination = false, loading }: Readonly<ProgramTableProps>) {
   const columns: TableColumnsType<LiturgicalProgram> = [
     {
       key: 'name',
       title: 'Tên sự kiện',
-      render: (_, program) => <Typography.Text strong>{program.eventName}</Typography.Text>,
+      render: (_, program) => (
+        <Flex vertical align="start" gap={2}>
+          <Typography.Text strong>{program.eventName}</Typography.Text>
+          {program.status === 'cancelled' && <EventStatusTag status="cancelled" />}
+        </Flex>
+      ),
     },
     {
       key: 'date',
-      title: 'Ngày',
+      title: 'Ngày giờ',
       render: (_, program) => (
         <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric, whiteSpace: 'nowrap' }}>
-          {formatProgramDate(program.date)}
+          {program.time} · {formatProgramDate(program.date)}
         </Typography.Text>
       ),
     },
-    { key: 'season', title: 'Mùa phụng vụ', render: (_, program) => refText(program.season) },
-    { key: 'massType', title: 'Loại Thánh lễ', render: (_, program) => refText(program.massType) },
-    { key: 'ceremonyType', title: 'Loại nghi thức', render: (_, program) => refText(program.ceremonyType) },
+    { key: 'location', title: 'Nơi cử hành', render: (_, program) => program.locationName },
+    { key: 'season', title: 'Mùa phụng vụ', render: (_, program) => orDash(program.seasonName) },
+    { key: 'massType', title: 'Loại Thánh lễ', render: (_, program) => orDash(program.massTypeName) },
+    { key: 'ceremonyType', title: 'Loại nghi thức', render: (_, program) => orDash(program.ceremonyTypeName) },
     {
       key: 'songList',
       title: 'Danh sách bài hát',
@@ -55,7 +63,8 @@ export function ProgramTable({ programs, onOpen, pageSize = 10 }: Readonly<Progr
       rowKey="id"
       columns={columns}
       dataSource={programs}
-      pagination={{ pageSize, hideOnSinglePage: true }}
+      loading={loading}
+      pagination={pagination}
       scroll={{ x: 'max-content' }}
     />
   )
