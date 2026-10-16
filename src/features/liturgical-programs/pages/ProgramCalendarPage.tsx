@@ -96,9 +96,9 @@ export function ProgramCalendarPage() {
         <ErrorState title="Không thể tải lịch phụng vụ" onRetry={() => events.refetch()} retrying={events.isFetching} />
       )}
       {events.isSuccess && (
-        // From lg the day panel sits beside the calendar, so picking a day shows its events without scrolling.
+        // From xl the day panel sits beside the calendar, so picking a day shows its events without scrolling.
         <Row gutter={[spacing.lg, spacing.lg]}>
-          <Col xs={24} lg={16}>
+          <Col xs={24} xl={16}>
             <Card styles={{ body: { padding: screens.md ? spacing.md : spacing.sm } }}>
               {/* The previous month stays on screen while the next one loads (keepPreviousData), so it is dimmed. */}
               <Spin spinning={events.isPlaceholderData} description="Đang tải tháng…">
@@ -111,7 +111,7 @@ export function ProgramCalendarPage() {
               </Spin>
             </Card>
           </Col>
-          <Col xs={24} lg={8}>
+          <Col xs={24} xl={8}>
             <Flex vertical gap={spacing.lg}>
               {/* Kept out of the calendar column so switching between empty and busy months does not move the grid. */}
               {!events.isPlaceholderData && events.data.totalCount === 0 && (
@@ -126,7 +126,13 @@ export function ProgramCalendarPage() {
                 <div style={{ marginBottom: spacing.md }}>
                   <LiturgicalDayInfo date={selectedKey} days={days} />
                 </div>
-                <Button icon={<PlusOutlined />} onClick={createForDate} style={{ marginBottom: spacing.md }}>
+                {/* The panel is narrow beside the calendar: the label wraps instead of running out of the card. */}
+                <Button
+                  block
+                  icon={<PlusOutlined />}
+                  onClick={createForDate}
+                  style={{ marginBottom: spacing.md, height: 'auto', paddingBlock: spacing.xs, whiteSpace: 'normal' }}
+                >
                   Tạo chương trình cho ngày này
                 </Button>
                 {events.isPlaceholderData ? (
