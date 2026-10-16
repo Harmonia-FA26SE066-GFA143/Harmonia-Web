@@ -8,7 +8,7 @@ import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
 import { useLookup } from '@/features/system-categories'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { RosterPanel } from '../components/RosterPanel'
 
 /**
@@ -58,15 +58,19 @@ export function RosterPage() {
         <Flex vertical gap={spacing.md}>
           <Card>
             <Flex wrap gap={spacing.md} align="center" justify="space-between">
+              <Flex vertical gap={4} style={{ flex: '1 1 280px', maxWidth: 420, minWidth: 0 }}>
+              <label htmlFor="roster-program" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+                Chương trình phụng vụ
+              </label>
               <Select
+                id="roster-program"
                 showSearch
                 optionFilterProp="label"
-                aria-label="Chọn chương trình phụng vụ"
                 value={program.id}
                 onChange={(id: string) => setSearchParams({ programId: id })}
                 options={allPrograms.map((item) => ({ value: item.id, label: `${item.eventName} · ${formatProgramDate(item.date)}` }))}
-                style={{ flex: '1 1 280px', maxWidth: 420, minWidth: 0 }}
               />
+              </Flex>
               <Flex wrap gap={spacing.sm} align="center">
                 <SongListStatusTag status={program.songListStatus} />
                 <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>Xem chi tiết chương trình</Link>

@@ -65,7 +65,7 @@ describe('PriestProgramListPage', () => {
       .mockImplementation(async (filters) => page(filters.status ? [] : events))
     renderPage(<PriestProgramListPage />, '/priest/programs')
 
-    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Lọc theo trạng thái' }))
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Trạng thái' }))
     fireEvent.click(await screen.findByTitle('Đã hủy'))
 
     expect(await screen.findByRole('heading', { name: 'Không tìm thấy kết quả phù hợp' })).toBeInTheDocument()

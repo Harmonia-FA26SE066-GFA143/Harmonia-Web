@@ -23,8 +23,7 @@ export function ReviewForm({ saving = false, onSubmit }: Readonly<ReviewFormProp
       <Form<ReviewValues>
         form={form}
         layout="vertical"
-        disabled={saving}
-        onFinish={({ decision: chosen, notes }) => onSubmit({ decision: chosen, notes: notes?.trim() || undefined })}
+        onFinish={({ decision: chosen, notes }) => !saving && onSubmit({ decision: chosen, notes: notes?.trim() || undefined })}
       >
         <Form.Item name="decision" rules={[{ required: true, message: 'Vui lòng chọn quyết định.' }]}>
           <Radio.Group

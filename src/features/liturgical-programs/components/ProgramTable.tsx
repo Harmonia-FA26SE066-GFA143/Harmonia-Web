@@ -44,12 +44,15 @@ export function ProgramTable({ programs, onOpen, pagination = false, loading }: 
     {
       key: 'songList',
       title: 'Danh sách bài hát',
+      width: 150,
+      fixed: 'right',
       render: (_, program) => <SongListStatusTag status={program.songListStatus} />,
     },
     {
       key: 'actions',
       title: 'Thao tác',
       align: 'right',
+      fixed: 'right',
       render: (_, program) => (
         <Button onClick={() => onOpen(program)} aria-label={`Xem chi tiết ${program.eventName}`}>
           Xem

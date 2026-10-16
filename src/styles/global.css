@@ -7,3 +7,26 @@ body,
 body {
   margin: 0;
 }
+
+/* Hidden until a keyboard user tabs to it: jumps over the sidebar to the page content. */
+.skip-link {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  z-index: 1100;
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: #fff;
+  color: #8e3b4b;
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+  outline: 2px solid #8e3b4b;
+}
+
+#main-content:focus {
+  outline: none;
+}

@@ -63,6 +63,7 @@ export function SongPickerModal({ open, excludedSongIds, onAdd, onCancel }: Read
       destroyOnHidden
     >
       <Input
+        autoFocus
         allowClear
         prefix={<SearchOutlined aria-hidden />}
         placeholder="Tìm theo tên bài hát, nhạc sĩ, người viết lời"

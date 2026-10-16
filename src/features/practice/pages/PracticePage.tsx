@@ -1,4 +1,5 @@
 import { Tabs } from 'antd'
+import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { PageHeader } from '@/shared/ui'
 import { AssignmentForm } from '../components/AssignmentForm'
 import { AssignmentsTab } from '../components/AssignmentsTab'
@@ -11,6 +12,7 @@ import { SubmissionList } from '../components/SubmissionList'
  * submissions; "Giao bài" gives a new assignment; "Tiến độ" shows each member's readiness for an upcoming event (FE-46).
  */
 export function PracticePage() {
+  const [tab, setTab] = useUrlTab(['review', 'assignments', 'assign', 'progress'], 'review')
   return (
     <>
       <PageHeader
@@ -20,6 +22,8 @@ export function PracticePage() {
       />
       <Tabs
         destroyOnHidden
+        activeKey={tab}
+        onChange={setTab}
         items={[
           { key: 'review', label: 'Chấm bài', children: <SubmissionList defaultStatus="submitted" /> },
           { key: 'assignments', label: 'Bài đã giao', children: <AssignmentsTab /> },

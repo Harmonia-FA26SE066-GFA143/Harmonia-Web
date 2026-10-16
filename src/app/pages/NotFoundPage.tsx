@@ -1,17 +1,21 @@
 import { Button, Result } from 'antd'
-import { Link } from 'react-router'
+import { useNavigate } from 'react-router'
 
 export function NotFoundPage() {
+  const navigate = useNavigate()
   return (
-    <Result
-      status="404"
-      title="404"
-      subTitle="The page you are looking for does not exist."
-      extra={
-        <Link to="/">
-          <Button type="primary">Back to home</Button>
-        </Link>
-      }
-    />
+    <main>
+      <title>Không tìm thấy trang · Harmonia</title>
+      <Result
+        status="404"
+        title="404"
+        subTitle="Không tìm thấy trang bạn cần. Đường dẫn có thể đã đổi hoặc bạn không có quyền xem trang này."
+        extra={
+          <Button type="primary" onClick={() => navigate('/')}>
+            Về trang chủ
+          </Button>
+        }
+      />
+    </main>
   )
 }

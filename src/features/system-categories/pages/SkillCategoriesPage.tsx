@@ -1,4 +1,5 @@
 import { Form, Select, Tabs, Typography } from 'antd'
+import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { PageHeader } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import { CatalogManager } from '../components/CatalogManager'
@@ -65,6 +66,7 @@ function SkillCategoriesPanel() {
  * instruments (Harmonia-BE `SaveSkillRequest.CategoryId`; owner decision 2026-09-30), and both are managed here.
  */
 export function SkillCategoriesPage() {
+  const [tab, setTab] = useUrlTab(['skills', 'categories'], 'skills')
   return (
     <>
       <PageHeader
@@ -74,6 +76,8 @@ export function SkillCategoriesPage() {
       />
       <Tabs
         destroyOnHidden
+        activeKey={tab}
+        onChange={setTab}
         items={[
           { key: 'skills', label: 'Kỹ năng', children: <SkillsPanel /> },
           { key: 'categories', label: 'Nhóm kỹ năng', children: <SkillCategoriesPanel /> },

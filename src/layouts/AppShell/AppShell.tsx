@@ -67,6 +67,17 @@ export function AppShell() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
+      <a
+        className="skip-link"
+        href="#main-content"
+        onClick={(event) => {
+          // A hash link would change the route; move the focus instead.
+          event.preventDefault()
+          document.getElementById('main-content')?.focus()
+        }}
+      >
+        Bỏ qua điều hướng, đến nội dung chính
+      </a>
       {!isMobile && (
         <Sider
           width={layout.sidebarWidth}
@@ -119,6 +130,8 @@ export function AppShell() {
           </Flex>
         </Header>
         <Content
+          id="main-content"
+          tabIndex={-1}
           style={{
             padding: isMobile
               ? `${spacing.lg}px ${layout.contentPaddingXMobile}px`

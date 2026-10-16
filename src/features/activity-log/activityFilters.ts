@@ -29,3 +29,33 @@ export const entityLabel = (entityType: string) => entityTypeLabels[entityType] 
 
 export const actorName = ({ user }: ActivityRecord) =>
   user ? user.fullName || user.email || 'Người dùng' : 'Không đăng nhập'
+
+/** The list state kept in the URL: `?entityType=&action=&period=&userId=&userName=&page=`; unknown values are ignored. */
+export function readActivityState(params: URLSearchParams): { filters: ActivityFilters; page: number } {
+  const entityType = params.get('entityType') ?? undefined
+  const action = params.get('action') ?? undefined
+  const period = params.get('period') ?? undefined
+  const userId = params.get('userId')
+  return {
+    filters: {
+      entityType: entityType && entityType in entityTypeLabels ? entityType : undefined,
+      action: action && action in actionLabels ? action : undefined,
+      period: period && period in periodLabels ? (period as ActivityPeriod) : undefined,
+      user: userId ? { id: userId, name: params.get('userName') || 'Người dùng' } : undefined,
+    },
+    page: Math.max(1, Number.parseInt(params.get('page') ?? '', 10) || 1),
+  }
+}
+
+export function writeActivityState({ entityType, action, period, user }: ActivityFilters, page: number): URLSearchParams {
+  const params = new URLSearchParams()
+  if (entityType) params.set('entityType', entityType)
+  if (action) params.set('action', action)
+  if (period) params.set('period', period)
+  if (user) {
+    params.set('userId', user.id)
+    params.set('userName', user.name)
+  }
+  if (page > 1) params.set('page', String(page))
+  return params
+}

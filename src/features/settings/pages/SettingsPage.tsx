@@ -108,6 +108,7 @@ export function SettingsPage() {
   ].filter((section) => section.items.length > 0)
 
   const handleFinish = (values: Record<string, FieldValue>) => {
+    if (update.isPending) return
     const changes = all
       .map((setting) => ({ setting, value: toText(setting, values[setting.id]) }))
       .filter(({ setting, value }) => value !== setting.value)
@@ -137,7 +138,6 @@ export function SettingsPage() {
       {settings.isSuccess && all.length > 0 && (
         <Form<Record<string, FieldValue>>
           layout="vertical"
-          disabled={update.isPending}
           initialValues={Object.fromEntries(all.map((setting) => [setting.id, toField(setting)]))}
           onFinish={handleFinish}
           style={{ maxWidth: 720 }}

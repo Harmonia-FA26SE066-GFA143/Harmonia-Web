@@ -38,7 +38,7 @@ export function ReviewModal({ submissionId, onClose }: Readonly<ReviewModalProps
   const saving = review.isPending || comment.isPending
 
   const handleFinish = ({ result, comment: text }: FormValues) => {
-    if (!data) return
+    if (!data || saving) return
     const callbacks = {
       onSuccess: () => {
         message.success(reviewed ? 'Đã thêm nhận xét.' : 'Đã chấm bài.')
@@ -67,7 +67,7 @@ export function ReviewModal({ submissionId, onClose }: Readonly<ReviewModalProps
       width={600}
       destroyOnHidden
       modalRender={(dom) => (
-        <Form<FormValues> layout="vertical" disabled={saving} initialValues={{ result: undefined }} onFinish={handleFinish}>
+        <Form<FormValues> layout="vertical" initialValues={{ result: undefined }} onFinish={handleFinish}>
           {dom}
         </Form>
       )}

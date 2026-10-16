@@ -55,7 +55,7 @@ describe('ActivityLogPage', () => {
       { pageNumber: 1, pageSize: 20 },
     )
 
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Lọc theo loại dữ liệu' }))
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Loại dữ liệu' }))
     fireEvent.click(await screen.findByTitle('Danh sách bài hát'))
     await waitFor(() => expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ entityType: 'SongList' }), expect.anything()))
 

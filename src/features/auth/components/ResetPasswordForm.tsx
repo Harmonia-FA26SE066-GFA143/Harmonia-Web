@@ -50,7 +50,7 @@ export function ResetPasswordForm({
           }
         />
       )}
-      <Form<NewPasswordFormValues> form={form} layout="vertical" requiredMark={false} onFinish={onSubmit} disabled={submitting}>
+      <Form<NewPasswordFormValues> form={form} layout="vertical" requiredMark={false} onFinish={(values) => !submitting && onSubmit(values)}>
         {askCurrentPassword && (
           <Form.Item
             label="Mật khẩu hiện tại"

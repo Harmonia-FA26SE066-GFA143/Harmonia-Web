@@ -1,7 +1,7 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { Button, DatePicker, Flex, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { hasActiveEventFilters } from '../programFilters'
 import { eventStatusLabels, type EventFilters, type EventStatus } from '../types'
 
@@ -24,11 +24,16 @@ export function EventFilterBar({
   resultCount,
   statuses = allStatuses,
 }: Readonly<EventFilterBarProps>) {
+  const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
   return (
-    <Flex wrap align="center" gap={spacing.sm} style={{ padding: spacing.md }}>
+    <Flex wrap align="end" gap={spacing.sm} style={{ padding: spacing.md }}>
+      <Flex vertical gap={4} style={{ flex: '0 1 200px', minWidth: 170 }}>
+        <label htmlFor="event-filter-status" style={labelStyle}>
+          Trạng thái
+        </label>
       <Select
+        id="event-filter-status"
         allowClear
-        aria-label="Lọc theo trạng thái"
         placeholder="Tất cả trạng thái"
         value={value.status}
         onChange={(status?: EventStatus) => onChange({ ...value, status })}
@@ -36,10 +41,14 @@ export function EventFilterBar({
           value: status,
           label: eventStatusLabels[status],
         }))}
-        style={{ flex: '0 1 200px', minWidth: 170 }}
       />
+      </Flex>
+      <Flex vertical gap={4} style={{ flex: '1 1 260px', maxWidth: 320 }}>
+        <label htmlFor="event-filter-dates" style={labelStyle}>
+          Khoảng ngày
+        </label>
       <DatePicker.RangePicker
-        aria-label="Lọc theo khoảng ngày"
+        id="event-filter-dates"
         format="DD/MM/YYYY"
         placeholder={['Từ ngày', 'Đến ngày']}
         allowEmpty={[true, true]}
@@ -51,8 +60,8 @@ export function EventFilterBar({
             toDate: range?.[1]?.format('YYYY-MM-DD'),
           })
         }
-        style={{ flex: '1 1 260px', maxWidth: 320 }}
       />
+      </Flex>
       <Button icon={<ReloadOutlined />} onClick={onReset} disabled={!hasActiveEventFilters(value)}>
         Đặt lại bộ lọc
       </Button>

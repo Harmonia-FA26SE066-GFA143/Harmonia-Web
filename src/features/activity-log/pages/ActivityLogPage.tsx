@@ -1,8 +1,9 @@
 import { Card } from 'antd'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
-import { emptyActivityFilters, hasActiveActivityFilters, toActivityQuery } from '../activityFilters'
+import { emptyActivityFilters, hasActiveActivityFilters, readActivityState, toActivityQuery, writeActivityState } from '../activityFilters'
 import { ActivityDetailModal } from '../components/ActivityDetailModal'
 import { ActivityFilterBar } from '../components/ActivityFilterBar'
 import { ActivityTable } from '../components/ActivityTable'
@@ -16,17 +17,16 @@ const pageSize = 20
  * values before and after. Filters and paging run on the server.
  */
 export function ActivityLogPage() {
-  const [filters, setFilters] = useState<ActivityFilters>(emptyActivityFilters)
-  const [page, setPage] = useState(1)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { filters, page } = useMemo(() => readActivityState(searchParams), [searchParams])
   const [selected, setSelected] = useState<ActivityRecord>()
   const log = useActivityLog(toActivityQuery(filters), { pageNumber: page, pageSize })
   const total = log.data?.totalCount ?? 0
   const filtered = hasActiveActivityFilters(filters)
 
-  const changeFilters = (next: ActivityFilters) => {
-    setFilters(next)
-    setPage(1)
-  }
+  // Filters and page are in the URL, so reload and the back button keep them.
+  const changeFilters = (next: ActivityFilters) => setSearchParams(writeActivityState(next, 1), { replace: true })
+  const setPage = (next: number) => setSearchParams(writeActivityState(filters, next), { replace: true })
   const resetFilters = () => changeFilters(emptyActivityFilters)
 
   return (
