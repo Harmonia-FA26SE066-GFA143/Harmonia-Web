@@ -1,5 +1,6 @@
-import { Form, Select, Tabs } from 'antd'
+import { Form, Select, Tabs, Typography } from 'antd'
 import { PageHeader } from '@/shared/ui'
+import { colors } from '@/styles/tokens'
 import { CatalogManager } from '../components/CatalogManager'
 import { descriptionColumn, descriptionField } from '../components/description'
 import { useCatalogItems, useSaveCatalogItem, useSaveSkill, useSkills } from '../hooks/useCatalogs'
@@ -7,8 +8,11 @@ import { useCatalogItems, useSaveCatalogItem, useSaveSkill, useSkills } from '..
 function SkillsPanel() {
   const query = useSkills()
   const save = useSaveSkill()
-  const categories = useCatalogItems('skillCategories').data ?? []
+  const categoryQuery = useCatalogItems('skillCategories')
+  const categories = categoryQuery.data ?? []
   const categoryName = new Map(categories.map((category) => [category.id, category.name]))
+  // While the categories load or when they failed, a skill's category is unknown, not absent.
+  const unknownCategory = { pending: 'Đang tải…', error: 'Chưa tải được', success: '—' }[categoryQuery.status]
   return (
     <CatalogManager
       noun="kỹ năng"
@@ -19,7 +23,8 @@ function SkillsPanel() {
           key: 'category',
           title: 'Nhóm kỹ năng',
           dataIndex: 'categoryId',
-          render: (categoryId: string) => categoryName.get(categoryId) ?? '—',
+          render: (categoryId: string) =>
+            categoryName.get(categoryId) ?? <Typography.Text style={{ color: colors.textMuted }}>{unknownCategory}</Typography.Text>,
         },
         descriptionColumn,
       ]}
@@ -27,6 +32,8 @@ function SkillsPanel() {
         <>
           <Form.Item label="Nhóm kỹ năng" name="categoryId" rules={[{ required: true, message: 'Vui lòng chọn nhóm kỹ năng.' }]}>
             <Select
+              loading={categoryQuery.isPending}
+              notFoundContent={categoryQuery.isError ? 'Không tải được danh sách nhóm kỹ năng.' : undefined}
               placeholder="Chọn nhóm kỹ năng"
               options={categories.map(({ id, name, isActive }) => ({
                 value: id,

@@ -75,6 +75,7 @@ export function CatalogManager<T extends CatalogEntry, V extends { name: string 
         saving={save.isPending}
         onCancel={close}
         onSubmit={(values) => {
+          if (save.isPending) return
           setNameError(undefined)
           save.mutate(
             { id: editing?.id, values },
