@@ -1,63 +1,45 @@
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Card, Flex, Input, Segmented, Select } from 'antd'
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Alert, App, Button, Card, DatePicker, Flex, Select, Typography } from 'antd'
+import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { matchesSearch } from '@/shared/utils/search'
-import { spacing } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { RehearsalFormModal } from '../components/RehearsalFormModal'
 import { RehearsalTable } from '../components/RehearsalTable'
 import { useDeleteRehearsal, useRehearsals, useSaveRehearsal } from '../hooks/useRehearsals'
-import { isUpcoming, type Rehearsal, type RehearsalValues } from '../types'
+import { rehearsalLabel } from '../rehearsalFormat'
+import { rehearsalErrorMessage } from '../rehearsalErrors'
+import type { Rehearsal, RehearsalFilters, RehearsalValues } from '../types'
 
-type Period = 'upcoming' | 'past'
+const pageSize = 20
 
 /**
- * Choir Director: rehearsal schedule of the liturgical programs (FE-26), with create, edit and delete.
- * Upcoming and past are told apart by time only; there is no rehearsal status and no recurrence (decision
- * 2026-09-29). `?programId=` preselects the program filter (link from the program detail).
+ * Choir Director: rehearsal schedule (FE-26) on `/api/rehearsals`, newest first, filtered by program and start date
+ * on the server, with create, edit and delete. `?programId=` preselects the program filter (link from the program
+ * detail).
  */
 export function RehearsalsPage() {
   const navigate = useNavigate()
   const { message, modal } = App.useApp()
   const [searchParams] = useSearchParams()
-  const rehearsals = useRehearsals()
+  const [filters, setFilters] = useState<RehearsalFilters>({ eventId: searchParams.get('programId') ?? undefined })
+  const [page, setPage] = useState(1)
+  const rehearsals = useRehearsals(filters, { pageNumber: page, pageSize })
   const programs = useUpcomingPrograms()
   const save = useSaveRehearsal()
   const remove = useDeleteRehearsal()
-  const [period, setPeriod] = useState<Period>('upcoming')
-  const [programId, setProgramId] = useState<string | undefined>(searchParams.get('programId') ?? undefined)
-  const [search, setSearch] = useState('')
   // `null` = create; a rehearsal = edit; `undefined` = closed.
   const [editing, setEditing] = useState<Rehearsal | null>()
 
   const programMap = useMemo(() => new Map((programs.data ?? []).map((program) => [program.id, program])), [programs.data])
-  const all = useMemo(() => rehearsals.data ?? [], [rehearsals.data])
-  // The tab counts follow the program and search filters, so a tab that shows nothing says whether the other one has matches.
-  const filtered = useMemo(
-    () =>
-      all.filter(
-        (rehearsal) =>
-          (!programId || rehearsal.programId === programId) &&
-          matchesSearch(search, rehearsal.name, rehearsal.location, programMap.get(rehearsal.programId)?.eventName),
-      ),
-    [all, programId, search, programMap],
-  )
-  const counts = useMemo(() => {
-    const upcoming = filtered.filter((rehearsal) => isUpcoming(rehearsal)).length
-    return { upcoming, past: filtered.length - upcoming }
-  }, [filtered])
-  const visible = useMemo(() => {
-    const matching = filtered.filter((rehearsal) => isUpcoming(rehearsal) === (period === 'upcoming'))
-    // Past sessions: most recent first.
-    return period === 'past' ? matching.reverse() : matching
-  }, [filtered, period])
-
-  const resetFilters = () => {
-    setProgramId(undefined)
-    setSearch('')
+  const total = rehearsals.data?.totalCount ?? 0
+  const filtered = Boolean(filters.eventId || filters.fromDate || filters.toDate)
+  const changeFilters = (next: RehearsalFilters) => {
+    setFilters(next)
+    setPage(1)
   }
 
   const handleSave = (values: RehearsalValues) => {
@@ -69,7 +51,7 @@ export function RehearsalsPage() {
           message.success(editing ? 'Đã lưu thay đổi buổi tập.' : 'Đã tạo buổi tập.')
           setEditing(undefined)
         },
-        onError: () => message.error('Không thể lưu buổi tập. Vui lòng thử lại.'),
+        onError: (error) => message.error(rehearsalErrorMessage(error, 'Không thể lưu buổi tập. Vui lòng thử lại.')),
       },
     )
   }
@@ -77,7 +59,7 @@ export function RehearsalsPage() {
   const handleDelete = (rehearsal: Rehearsal) =>
     modal.confirm({
       title: 'Xoá buổi tập?',
-      content: `Buổi tập "${rehearsal.name}" sẽ bị xoá khỏi lịch tập.`,
+      content: `Buổi tập ${rehearsalLabel(rehearsal)} sẽ bị xoá khỏi lịch tập. Buổi tập đã có điểm danh thì không xoá được.`,
       okText: 'Xoá buổi tập',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
@@ -85,7 +67,7 @@ export function RehearsalsPage() {
         remove
           .mutateAsync(rehearsal.id)
           .then(() => message.success('Đã xoá buổi tập.'))
-          .catch(() => message.error('Không thể xoá buổi tập. Vui lòng thử lại.')),
+          .catch((error: Error) => message.error(rehearsalErrorMessage(error, 'Không thể xoá buổi tập. Vui lòng thử lại.'))),
     })
 
   const createButton = (
@@ -107,7 +89,7 @@ export function RehearsalsPage() {
           type="warning"
           showIcon
           title="Không thể tải danh sách chương trình phụng vụ"
-          description="Cột chương trình, bộ lọc và form tạo buổi tập cần danh sách này."
+          description="Bộ lọc và ô chọn chương trình trong form cần danh sách này."
           action={
             <Button size="small" onClick={() => programs.refetch()} loading={programs.isFetching}>
               Thử lại
@@ -120,64 +102,62 @@ export function RehearsalsPage() {
       {rehearsals.isError && (
         <ErrorState title="Không thể tải lịch tập" onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
       )}
-      {rehearsals.isSuccess && all.length === 0 && (
+      {rehearsals.isSuccess && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có buổi tập nào"
-          description="Tạo buổi tập cho một chương trình phụng vụ để lên kế hoạch luyện tập và điểm danh."
+          description="Tạo buổi tập để lên kế hoạch luyện tập và điểm danh."
           action={createButton}
         />
       )}
-      {rehearsals.isSuccess && all.length > 0 && (
+      {rehearsals.isSuccess && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
           <Flex wrap gap={spacing.sm} align="center" style={{ padding: spacing.md }}>
-            <Segmented<Period>
-              value={period}
-              onChange={setPeriod}
-              options={[
-                { value: 'upcoming', label: `Sắp tới (${counts.upcoming})` },
-                { value: 'past', label: `Đã qua (${counts.past})` },
-              ]}
-            />
             <Select
               allowClear
               showSearch
               optionFilterProp="label"
               aria-label="Lọc theo chương trình phụng vụ"
               placeholder="Tất cả chương trình"
-              value={programId}
-              onChange={setProgramId}
+              value={filters.eventId}
+              onChange={(eventId?: string) => changeFilters({ ...filters, eventId })}
               options={(programs.data ?? []).map((program) => ({
                 value: program.id,
                 label: `${program.eventName} · ${formatProgramDate(program.date)}`,
               }))}
               style={{ flex: '1 1 240px', maxWidth: 360, minWidth: 0 }}
             />
-            <Input
-              allowClear
-              prefix={<SearchOutlined aria-hidden />}
-              placeholder="Tìm theo tên buổi tập hoặc địa điểm"
-              aria-label="Tìm buổi tập"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              style={{ flex: '1 1 240px', maxWidth: 360, minWidth: 0 }}
+            <DatePicker.RangePicker
+              aria-label="Lọc theo ngày tập"
+              format="DD/MM/YYYY"
+              placeholder={['Từ ngày', 'Đến ngày']}
+              allowEmpty={[true, true]}
+              value={[filters.fromDate ? dayjs(filters.fromDate) : null, filters.toDate ? dayjs(filters.toDate) : null]}
+              onChange={(range) =>
+                changeFilters({
+                  ...filters,
+                  fromDate: range?.[0]?.format('YYYY-MM-DD'),
+                  toDate: range?.[1]?.format('YYYY-MM-DD'),
+                })
+              }
+              style={{ flex: '1 1 260px', maxWidth: 320 }}
             />
+            <Button icon={<ReloadOutlined />} onClick={() => changeFilters({})} disabled={!filtered}>
+              Đặt lại bộ lọc
+            </Button>
+            <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted }}>
+              {total} buổi tập
+            </Typography.Text>
           </Flex>
-          {visible.length === 0 ? (
+          {total === 0 ? (
             <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
-              {programId || search ? (
-                <NoFilterResults onClearFilters={resetFilters} />
-              ) : (
-                <EmptyState
-                  title={period === 'upcoming' ? 'Không có buổi tập sắp tới' : 'Chưa có buổi tập đã qua'}
-                  description={period === 'upcoming' ? 'Tạo buổi tập mới để chuẩn bị cho chương trình sắp tới.' : undefined}
-                />
-              )}
+              <NoFilterResults onClearFilters={() => changeFilters({})} />
             </div>
           ) : (
             <RehearsalTable
-              rehearsals={visible}
+              rehearsals={rehearsals.data.items}
               programs={programMap}
-              programsStatus={programs.status}
+              loading={rehearsals.isPlaceholderData}
+              pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
               onTakeAttendance={(rehearsal) => navigate(`${paths.director.attendance}?rehearsalId=${rehearsal.id}`)}
               onEdit={setEditing}
               onDelete={handleDelete}
@@ -189,7 +169,7 @@ export function RehearsalsPage() {
         open={editing !== undefined}
         programs={programs.data ?? []}
         rehearsal={editing ?? undefined}
-        defaultProgramId={programId}
+        defaultProgramId={filters.eventId}
         saving={save.isPending}
         onSubmit={handleSave}
         onCancel={() => setEditing(undefined)}

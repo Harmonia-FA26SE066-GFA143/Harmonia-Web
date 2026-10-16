@@ -1,37 +1,39 @@
 /**
- * A rehearsal of one liturgical program (FE-26). Fields follow the owner decisions of 2026-09-29 and 2026-09-30
- * (rehearsal-attendance.md, DECIDED): no rehearsal status and no recurrence; a service-preparation session is
- * created as a rehearsal. TBD: Backend API missing – identifiers and field names come with the contract.
+ * A rehearsal or service-preparation session (`RehearsalDto` of Harmonia-BE, FE-26). It has no name and no status;
+ * the program and the location are optional. This supersedes the required name, location and songs of the owner
+ * decisions of 2026-09-29 and 2026-09-30 (owner decision 2026-10-07: follow the BE).
  */
 export interface Rehearsal {
   id: string
-  programId: string
-  name: string
-  /** ISO date-time. */
+  /** The liturgical program it prepares, if any. */
+  eventId?: string
+  /** A worship location of the catalog. */
+  locationId?: string
+  locationName?: string
+  /** Backend `DateTime`s; read them with `parseUtc`. */
   startAt: string
-  /** ISO date-time, after `startAt`. */
   endAt: string
-  location: string
-  /** Songs to practise, chosen from the program's approved song list (at least one). */
-  songs: RehearsalSong[]
   note?: string
-  /**
-   * Attendance was recorded for this session, so it cannot be deleted (decision 2026-09-30, 6a.7).
-   * TBD: chờ API contract – how the backend reports this.
-   */
-  hasAttendance?: boolean
+  /** Songs to practise, in order. */
+  songs: RehearsalSong[]
 }
 
 export interface RehearsalSong {
   songId: string
-  title: string
+  songTitle: string
 }
 
-export type RehearsalValues = Omit<Rehearsal, 'id' | 'hasAttendance'>
+export type RehearsalValues = Omit<Rehearsal, 'id' | 'locationName'>
 
-/** Upcoming until the session has ended; the only distinction the UI makes (no stored status). */
+/** Filters of GET /api/rehearsals; the dates apply to the start, as YYYY-MM-DD. */
+export interface RehearsalFilters {
+  eventId?: string
+  fromDate?: string
+  toDate?: string
+}
+
+/** Upcoming until the session has ended; the backend refuses to edit it afterwards (REHEARSAL_ALREADY_PASSED). */
 export const isUpcoming = (rehearsal: Pick<Rehearsal, 'endAt'>, now = Date.now()) => Date.parse(rehearsal.endAt) >= now
 
-/** Attendance is taken on the day of the session only (decision 2026-09-30, 6a.6). */
 export const isRehearsalDay = (rehearsal: Pick<Rehearsal, 'startAt'>, now = new Date()) =>
   new Date(rehearsal.startAt).toDateString() === now.toDateString()

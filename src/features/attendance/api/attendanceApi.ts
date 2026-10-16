@@ -1,10 +1,7 @@
-import { env } from '@/config/env'
 import { apiRequest } from '@/lib/api/client'
 import type { AttendanceRecord, AttendanceValue } from '../types'
 
-// `/api/rehearsals/{id}/attendances` (Harmonia-BE RehearsalsController), Choir Director only. The rehearsal list the
-// page picks from has no endpoint for the Choir Director yet (tbd-backlog B20), so in development with fixtures on
-// the attendance fixture answers too, keyed by the rehearsal fixture's ids.
+// `/api/rehearsals/{id}/attendances` (Harmonia-BE RehearsalsController), Choir Director only.
 
 type ApiAttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Excused'
 
@@ -28,10 +25,6 @@ interface RehearsalAttendanceDto {
 
 /** The sheet of one session, every member listed; `value` is absent until recorded. */
 export async function getAttendance(rehearsalId: string): Promise<AttendanceRecord[]> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { getAttendanceFixture } = await import('./fixtures.dev')
-    return getAttendanceFixture(rehearsalId)
-  }
   const rows = await apiRequest<RehearsalAttendanceDto[]>(`/api/rehearsals/${rehearsalId}/attendances`)
   return rows.map(({ memberId, fullName, status }) => ({
     memberId,
@@ -42,10 +35,6 @@ export async function getAttendance(rehearsalId: string): Promise<AttendanceReco
 
 /** Records or corrects the given members, keyed by member id; members left out keep what they had. */
 export async function saveAttendance(rehearsalId: string, values: Record<string, AttendanceValue>): Promise<void> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { saveAttendanceFixture } = await import('./fixtures.dev')
-    return saveAttendanceFixture(rehearsalId, values)
-  }
   await apiRequest<unknown>(`/api/rehearsals/${rehearsalId}/attendances`, {
     method: 'PUT',
     body: JSON.stringify({

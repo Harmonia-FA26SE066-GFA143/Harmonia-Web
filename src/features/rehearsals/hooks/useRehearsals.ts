@@ -1,29 +1,46 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiContractMissingError } from '@/lib/api/errors'
-import { deleteRehearsal, listRehearsals, saveRehearsal } from '../api/rehearsalsApi'
-import type { RehearsalValues } from '../types'
-
-// Retrying cannot help while the API contract is missing.
-const retry = (failureCount: number, error: Error) => !(error instanceof ApiContractMissingError) && failureCount < 3
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import dayjs from 'dayjs'
+import { vietnamToday } from '@/lib/api/dates'
+import { deleteRehearsal, getDefaultSongs, listRehearsals, saveRehearsal, type RehearsalPage } from '../api/rehearsalsApi'
+import type { RehearsalFilters, RehearsalValues } from '../types'
 
 const rehearsalsKey = ['rehearsals'] as const
 
-export function useRehearsals() {
-  return useQuery({ queryKey: rehearsalsKey, queryFn: listRehearsals, retry })
-}
-
-export function useSaveRehearsal() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: { id?: string; values: RehearsalValues }) => saveRehearsal(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: rehearsalsKey }),
+/** One page of rehearsals; the previous page stays visible while the next one loads. */
+export function useRehearsals(filters: RehearsalFilters, page: RehearsalPage) {
+  return useQuery({
+    queryKey: [...rehearsalsKey, 'list', filters, page],
+    queryFn: () => listRehearsals(filters, page),
+    placeholderData: keepPreviousData,
   })
 }
 
-export function useDeleteRehearsal() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => deleteRehearsal(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: rehearsalsKey }),
+/**
+ * Sessions from 30 days back to 7 days ahead, earliest first, for the attendance picker.
+ * ponytail: fixed window of one page of 100; widen or page it if older sheets need correcting from the picker.
+ */
+export function useRecentRehearsals() {
+  const today = dayjs(vietnamToday())
+  const filters: RehearsalFilters = {
+    fromDate: today.subtract(30, 'day').format('YYYY-MM-DD'),
+    toDate: today.add(7, 'day').format('YYYY-MM-DD'),
+  }
+  return useQuery({
+    queryKey: [...rehearsalsKey, 'recent', filters],
+    queryFn: async () => (await listRehearsals(filters, { pageNumber: 1, pageSize: 100 })).items.toReversed(),
   })
 }
+
+/** Every attempt reloads the schedule: a refusal may mean the session changed or gained attendance. */
+function useRehearsalMutation<TVariables>(mutationFn: (variables: TVariables) => Promise<void>) {
+  const queryClient = useQueryClient()
+  return useMutation({ mutationFn, onSettled: () => queryClient.invalidateQueries({ queryKey: rehearsalsKey }) })
+}
+
+export const useSaveRehearsal = () =>
+  useRehearsalMutation((input: { id?: string; values: RehearsalValues }) => saveRehearsal(input))
+
+export const useDeleteRehearsal = () => useRehearsalMutation((id: string) => deleteRehearsal(id))
+
+/** Reads the suggested songs of an event on demand; nothing is saved. */
+export const useDefaultSongs = () => useMutation({ mutationFn: (eventId: string) => getDefaultSongs(eventId) })

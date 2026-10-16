@@ -1,12 +1,17 @@
-import { DatePicker, Flex, Form, Input, Modal, Select, TimePicker } from 'antd'
+import { App, Button, DatePicker, Flex, Form, Input, Modal, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
+import { useState } from 'react'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
-import { useSongList } from '@/features/song-lists'
+import { useSongs } from '@/features/music-library'
+import { useCatalogOptions } from '@/features/system-categories'
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { spacing } from '@/styles/tokens'
+import { useDefaultSongs } from '../hooks/useRehearsals'
 import type { Rehearsal, RehearsalValues } from '../types'
 
 export interface RehearsalFormModalProps {
   open: boolean
+  /** Upcoming published programs a session can prepare. */
   programs: LiturgicalProgram[]
   /** Rehearsal being edited; absent when creating. */
   rehearsal?: Rehearsal
@@ -23,86 +28,66 @@ interface SongOption {
 }
 
 interface FormValues {
-  programId: string
-  name: string
+  eventId?: string
   date: Dayjs
   time: [Dayjs, Dayjs]
-  location: string
+  locationId?: string
   songs?: SongOption[]
   note?: string
 }
 
-const clean = (value?: string) => value?.trim() || undefined
 const withTime = (date: Dayjs, time: Dayjs) => date.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
 
-const notApprovedMessage = 'Chương trình chưa có danh sách bài hát đã duyệt.'
-
-/**
- * Only programs with an approved song list can have rehearsals (decision 2026-09-30, 6a.2). Changing the program
- * clears the songs, which belong to the previous program's list.
- */
-function ProgramField({ programs }: Readonly<{ programs: LiturgicalProgram[] }>) {
-  const form = Form.useFormInstance<FormValues>()
-  const isApproved = (programId?: string) => programs.find((program) => program.id === programId)?.songListStatus === 'approved'
-  return (
-    <Form.Item
-      label="Chương trình phụng vụ"
-      name="programId"
-      extra="Chỉ chọn được chương trình đã có danh sách bài hát được duyệt."
-      rules={[
-        { required: true, message: 'Vui lòng chọn chương trình.' },
-        {
-          validator: (_, programId?: string) =>
-            !programId || isApproved(programId) ? Promise.resolve() : Promise.reject(new Error(notApprovedMessage)),
-        },
-      ]}
-    >
-      <Select
-        showSearch
-        optionFilterProp="label"
-        placeholder="Chọn chương trình"
-        options={programs.map((program) => ({
-          value: program.id,
-          label: `${program.eventName} · ${formatProgramDate(program.date)}${program.songListStatus === 'approved' ? '' : ' (chưa duyệt bài hát)'}`,
-          disabled: program.songListStatus !== 'approved',
-        }))}
-        onChange={() => form.setFieldValue('songs', [])}
-      />
-    </Form.Item>
-  )
-}
-
-/** Song choices come from the selected program's approved song list. */
+/** Songs of the music library, searched on the server; the program's approved list can fill the field. */
 function SongsField() {
-  const programId: string = Form.useWatch('programId', Form.useFormInstance()) ?? ''
-  const songList = useSongList(programId, { enabled: Boolean(programId) })
-  const approved = songList.data?.status === 'approved'
-  const options = approved ? (songList.data?.items ?? []).map((item) => ({ value: item.songId, label: item.songTitle })) : []
+  const { message } = App.useApp()
+  const form = Form.useFormInstance<FormValues>()
+  const eventId: string | undefined = Form.useWatch('eventId', form)
+  const [search, setSearch] = useState('')
+  const songs = useSongs({ search: useDebouncedValue(search) }, { pageNumber: 1, pageSize: 50 })
+  const defaults = useDefaultSongs()
+  const options = (songs.data?.items ?? []).map((song) => ({ value: song.id, label: song.title }))
+
+  const fillFromProgram = () =>
+    eventId &&
+    defaults.mutate(eventId, {
+      onSuccess: (list) =>
+        list.length === 0
+          ? message.info('Chương trình chưa có danh sách bài hát đã duyệt.')
+          : form.setFieldValue('songs', list.map((song) => ({ value: song.songId, label: song.songTitle }))),
+      onError: () => message.error('Không thể lấy danh sách bài hát của chương trình. Vui lòng thử lại.'),
+    })
 
   return (
-    <Form.Item
-      label="Bài hát tập"
-      name="songs"
-      extra={songList.isSuccess && !approved ? notApprovedMessage : undefined}
-      rules={[{ required: true, type: 'array', min: 1, message: 'Vui lòng chọn ít nhất một bài hát tập.' }]}
-    >
-      <Select
-        mode="multiple"
-        labelInValue
-        allowClear
-        disabled={!programId}
-        loading={songList.isFetching}
-        placeholder={programId ? 'Chọn bài hát từ danh sách đã duyệt của chương trình' : 'Chọn chương trình trước'}
-        options={options}
-        optionFilterProp="label"
-      />
+    <Form.Item label="Bài hát tập (không bắt buộc)">
+      <Flex vertical gap={spacing.xs}>
+        <Form.Item name="songs" noStyle>
+          <Select
+            mode="multiple"
+            labelInValue
+            allowClear
+            showSearch
+            filterOption={false}
+            onSearch={setSearch}
+            loading={songs.isFetching}
+            aria-label="Bài hát tập"
+            placeholder="Tìm bài hát trong kho"
+            options={options}
+          />
+        </Form.Item>
+        <div>
+          <Button size="small" disabled={!eventId} loading={defaults.isPending} onClick={fillFromProgram}>
+            Lấy bài hát từ danh sách đã duyệt của chương trình
+          </Button>
+        </div>
+      </Flex>
     </Form.Item>
   )
 }
 
 /**
- * Create or edit a rehearsal (FE-26). Required: program, name, date, time, location and at least one song
- * (decisions 2026-09-29 and 2026-09-30); the note is optional. Songs come from the program's approved song list.
+ * Create or edit a rehearsal (FE-26) as Harmonia-BE takes it: date and time required; program, worship location,
+ * songs and note (≤ 500) optional. Editing saves the details, then the songs.
  */
 export function RehearsalFormModal({
   open,
@@ -113,6 +98,20 @@ export function RehearsalFormModal({
   onSubmit,
   onCancel,
 }: Readonly<RehearsalFormModalProps>) {
+  const locations = useCatalogOptions('worshipLocations')
+  // A session keeps a location switched off since, and a program no longer upcoming; both stay selectable.
+  const locationOptions =
+    rehearsal?.locationId && !locations.some((option) => option.value === rehearsal.locationId)
+      ? [...locations, { value: rehearsal.locationId, label: rehearsal.locationName ?? '' }]
+      : locations
+  const programOptions = programs.map((program) => ({
+    value: program.id,
+    label: `${program.eventName} · ${formatProgramDate(program.date)}`,
+  }))
+  if (rehearsal?.eventId && !programs.some((program) => program.id === rehearsal.eventId)) {
+    programOptions.push({ value: rehearsal.eventId, label: 'Chương trình đã chọn trước đây' })
+  }
+
   return (
     <Modal
       open={open}
@@ -129,23 +128,21 @@ export function RehearsalFormModal({
         <Form<FormValues>
           layout="vertical"
           initialValues={{
-            programId: rehearsal?.programId ?? defaultProgramId,
-            name: rehearsal?.name,
+            eventId: rehearsal ? rehearsal.eventId : defaultProgramId,
             date: rehearsal ? dayjs(rehearsal.startAt) : undefined,
             time: rehearsal ? [dayjs(rehearsal.startAt), dayjs(rehearsal.endAt)] : undefined,
-            location: rehearsal?.location,
-            songs: rehearsal?.songs.map((song) => ({ value: song.songId, label: song.title })),
+            locationId: rehearsal?.locationId,
+            songs: rehearsal?.songs.map((song) => ({ value: song.songId, label: song.songTitle })),
             note: rehearsal?.note,
           }}
           onFinish={(values) =>
             onSubmit({
-              programId: values.programId,
-              name: values.name.trim(),
+              eventId: values.eventId,
+              locationId: values.locationId,
               startAt: withTime(values.date, values.time[0]).toISOString(),
               endAt: withTime(values.date, values.time[1]).toISOString(),
-              location: values.location.trim(),
-              songs: (values.songs ?? []).map((song) => ({ songId: song.value, title: song.label })),
-              note: clean(values.note),
+              songs: (values.songs ?? []).map((song) => ({ songId: song.value, songTitle: song.label })),
+              note: values.note?.trim() || undefined,
             })
           }
         >
@@ -153,9 +150,8 @@ export function RehearsalFormModal({
         </Form>
       )}
     >
-      <ProgramField programs={programs} />
-      <Form.Item label="Tên buổi tập" name="name" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập tên buổi tập.' }]}>
-        <Input placeholder="Ví dụ: Tập chính ráp 4 bè" />
+      <Form.Item label="Chương trình phụng vụ (không bắt buộc)" name="eventId">
+        <Select allowClear showSearch optionFilterProp="label" placeholder="Chọn chương trình" options={programOptions} />
       </Form.Item>
       <Flex wrap gap={spacing.md}>
         <Form.Item label="Ngày tập" name="date" rules={[{ required: true, message: 'Vui lòng chọn ngày tập.' }]} style={{ flex: '1 1 200px' }}>
@@ -178,12 +174,12 @@ export function RehearsalFormModal({
           <TimePicker.RangePicker format="HH:mm" minuteStep={5} placeholder={['Bắt đầu', 'Kết thúc']} style={{ width: '100%' }} />
         </Form.Item>
       </Flex>
-      <Form.Item label="Địa điểm" name="location" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập địa điểm.' }]}>
-        <Input placeholder="Ví dụ: Phòng tập nhà xứ" />
+      <Form.Item label="Địa điểm (không bắt buộc)" name="locationId">
+        <Select allowClear showSearch optionFilterProp="label" placeholder="Chọn nơi tập" options={locationOptions} />
       </Form.Item>
       <SongsField />
       <Form.Item label="Ghi chú (không bắt buộc)" name="note">
-        <Input.TextArea rows={3} placeholder="Nội dung chính của buổi tập" />
+        <Input.TextArea rows={3} maxLength={500} showCount placeholder="Nội dung chính của buổi tập" />
       </Form.Item>
     </Modal>
   )
