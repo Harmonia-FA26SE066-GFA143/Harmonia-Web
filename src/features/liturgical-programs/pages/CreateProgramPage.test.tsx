@@ -87,7 +87,7 @@ describe('CreateProgramPage', () => {
   })
 
   it('explains a taken slot and keeps the entered values', async () => {
-    vi.spyOn(eventsApi, 'createEvent').mockRejectedValue(new ApiError(409, { code: 'EVENT_SLOT_TAKEN' }))
+    vi.spyOn(eventsApi, 'createEvent').mockRejectedValue(new ApiError(409, { code: 'LITURGICAL_EVENT_SLOT_TAKEN' }))
     renderPage(<CreateProgramPage />, route, `${route}?date=2026-10-04`)
 
     enterTime('18:30')

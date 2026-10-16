@@ -78,7 +78,7 @@ export async function listEvents(filters: EventFilters, page: EventPage): Promis
   return { ...result, items: result.items.map(toEvent) }
 }
 
-/** `null` for EVENT_NOT_FOUND (404), so the page can show its not-found state. */
+/** `null` for LITURGICAL_EVENT_NOT_FOUND (404), so the page can show its not-found state. */
 export async function getEvent(id: string): Promise<LiturgicalEvent | null> {
   try {
     return toEvent(await apiRequest<LiturgicalEventDto>(`/api/liturgical-events/${id}`))
@@ -93,7 +93,7 @@ export async function createEvent(values: EventFormValues): Promise<LiturgicalEv
   return toEvent(await apiRequest<LiturgicalEventDto>('/api/liturgical-events', { method: 'POST', body: toBody(values) }))
 }
 
-/** Replaces every field; refused for a cancelled event (EVENT_CANCELLED). */
+/** Replaces every field; refused for a cancelled event (LITURGICAL_EVENT_CANCELLED). */
 export async function updateEvent(id: string, values: EventFormValues): Promise<LiturgicalEvent> {
   return toEvent(
     await apiRequest<LiturgicalEventDto>(`/api/liturgical-events/${id}`, { method: 'PUT', body: toBody(values) }),
@@ -108,7 +108,7 @@ export async function publishEvent(id: string): Promise<void> {
   await apiRequest<unknown>(`/api/liturgical-events/${id}/publish`, { method: 'PATCH' })
 }
 
-/** Refused once the date has passed (EVENT_ALREADY_PASSED); members are notified if it was published. */
+/** Refused once the date has passed (LITURGICAL_EVENT_ALREADY_PASSED); members are notified if it was published. */
 export async function cancelEvent(id: string): Promise<void> {
   await apiRequest<unknown>(`/api/liturgical-events/${id}/cancel`, { method: 'PATCH' })
 }
