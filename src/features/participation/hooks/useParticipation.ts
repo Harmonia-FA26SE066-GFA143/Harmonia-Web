@@ -1,9 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiContractMissingError } from '@/lib/api/errors'
 import { getParticipation, sendParticipationRequests } from '../api/participationApi'
-
-// Retrying cannot help while the API contract is missing.
-const retry = (failureCount: number, error: Error) => !(error instanceof ApiContractMissingError) && failureCount < 3
 
 const participationKey = (programId: string) => ['participation', programId] as const
 
@@ -13,14 +9,14 @@ export function useParticipation(programId?: string) {
     queryKey: participationKey(programId ?? ''),
     queryFn: () => getParticipation(programId ?? ''),
     enabled: Boolean(programId),
-    retry,
   })
 }
 
+/** Reloads the requests after every attempt: a refusal may mean someone was asked meanwhile. */
 export function useSendParticipationRequests(programId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (memberIds: string[]) => sendParticipationRequests(programId, memberIds),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: participationKey(programId) }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: participationKey(programId) }),
   })
 }

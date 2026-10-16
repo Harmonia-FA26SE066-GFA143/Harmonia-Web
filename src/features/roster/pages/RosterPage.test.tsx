@@ -2,6 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
+import * as membersApi from '@/features/members/api/membersApi'
 import * as participationApi from '@/features/participation/api/participationApi'
 import * as songListsApi from '@/features/song-lists/api/songListsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
@@ -69,11 +70,26 @@ beforeEach(() => {
     { id: 'k-tenor', name: 'Tenor' },
     { id: 'k-organ', name: 'Organ' },
   ])
+  const asked = (memberId: string, fullName: string, response?: 'confirmed' | 'declined' | 'unsure') => ({
+    id: `ep-${memberId}`,
+    memberId,
+    fullName,
+    requestedAt: '2026-09-27T02:30:00Z',
+    response,
+  })
   vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([
-    { memberId: 'm1', fullName: 'Giuse Vũ Đình Khôi', skills: ['Tenor'], response: 'confirmed' },
-    { memberId: 'm2', fullName: 'Giuse Nguyễn Hoàng Long', skills: ['Tenor'], response: 'confirmed' },
-    { memberId: 'm3', fullName: 'Vinhsơn Nguyễn Văn Hưng', skills: ['Tenor'], response: 'unsure' },
-    { memberId: 'm4', fullName: 'Simon Phan Văn Đức', skills: ['Bass'], response: 'confirmed' },
+    asked('m1', 'Giuse Vũ Đình Khôi', 'confirmed'),
+    asked('m2', 'Giuse Nguyễn Hoàng Long', 'confirmed'),
+    asked('m3', 'Vinhsơn Nguyễn Văn Hưng', 'declined'),
+    asked('m4', 'Simon Phan Văn Đức', 'confirmed'),
+    asked('m5', 'Phêrô Lê Minh Tâm', 'unsure'),
+  ])
+  vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([
+    { id: 'm1', fullName: 'Giuse Vũ Đình Khôi', skills: ['Tenor'] },
+    { id: 'm2', fullName: 'Giuse Nguyễn Hoàng Long', skills: ['Tenor'] },
+    { id: 'm3', fullName: 'Vinhsơn Nguyễn Văn Hưng', skills: ['Tenor'] },
+    { id: 'm4', fullName: 'Simon Phan Văn Đức', skills: ['Bass'] },
+    { id: 'm5', fullName: 'Phêrô Lê Minh Tâm', skills: ['Tenor'] },
   ])
 })
 
@@ -98,7 +114,7 @@ describe('RosterPage', () => {
     expect(await screen.findByRole('heading', { name: 'Không thể tải phân công' })).toBeInTheDocument()
   })
 
-  it('shows the backend shortages and adds only confirmed members holding the skill', async () => {
+  it('shows the backend shortages and adds only members who accepted, Unsure included, holding the skill', async () => {
     withRoster(roster)
     const add = vi.spyOn(rosterApi, 'addAssignment').mockResolvedValue()
     renderRoster()
@@ -106,7 +122,8 @@ describe('RosterPage', () => {
     expect(await screen.findByText('Con Bước Lên Bàn Thờ: thiếu 1 Tenor')).toBeInTheDocument()
     fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Thêm ca viên cho Tenor' }))
     expect(await screen.findByRole('option', { name: 'Giuse Nguyễn Hoàng Long' })).toBeInTheDocument()
-    // Already on the position, not confirmed, or without the skill.
+    expect(screen.getByRole('option', { name: 'Phêrô Lê Minh Tâm' })).toBeInTheDocument()
+    // Already on the position, declined, or without the skill.
     expect(screen.queryByRole('option', { name: 'Giuse Vũ Đình Khôi' })).toBeNull()
     expect(screen.queryByRole('option', { name: 'Vinhsơn Nguyễn Văn Hưng' })).toBeNull()
     expect(screen.queryByRole('option', { name: 'Simon Phan Văn Đức' })).toBeNull()
