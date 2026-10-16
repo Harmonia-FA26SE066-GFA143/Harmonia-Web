@@ -6,7 +6,7 @@ const messages: Record<string, string> = {
   REHEARSAL_NOT_STARTED: 'Chưa tới giờ mở điểm danh của buổi tập này.',
   MEMBER_NOT_FOUND: 'Có ca viên không còn tồn tại. Vui lòng tải lại trang.',
   MEMBER_NOT_ACTIVE: 'Có ca viên không còn sinh hoạt. Vui lòng tải lại trang.',
-  ATTENDANCE_ALREADY_RECORDED: 'Điểm danh vừa được người khác lưu. Danh sách đã được tải lại, vui lòng kiểm tra rồi lưu lại.',
+  REHEARSAL_ATTENDANCE_ALREADY_RECORDED: 'Điểm danh vừa được người khác lưu. Danh sách đã được tải lại, vui lòng kiểm tra rồi lưu lại.',
 }
 
 export function attendanceErrorMessage(error: Error): string {

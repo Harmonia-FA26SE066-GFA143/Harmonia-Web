@@ -82,7 +82,7 @@ describe('LiturgicalCategoriesPage', () => {
     vi.spyOn(categoriesApi, 'listSeasons').mockResolvedValue([advent])
     const save = vi
       .spyOn(categoriesApi, 'saveSeason')
-      .mockRejectedValue(new ApiError(409, { code: 'SEASON_DATE_OVERLAP' }))
+      .mockRejectedValue(new ApiError(409, { code: 'LITURGICAL_SEASON_DATE_OVERLAP' }))
     renderPage(<LiturgicalCategoriesPage />, '/admin/liturgical-categories')
 
     fireEvent.click(await screen.findByRole('button', { name: /Thêm mùa phụng vụ/ }))

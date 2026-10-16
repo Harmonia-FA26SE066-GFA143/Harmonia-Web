@@ -12,7 +12,7 @@ export function useAttendance(rehearsalId?: string) {
   })
 }
 
-/** Reloads the sheet after every attempt: a refusal may mean someone else saved it first (ATTENDANCE_ALREADY_RECORDED). */
+/** Reloads the sheet after every attempt: a refusal may mean someone else saved it first (REHEARSAL_ATTENDANCE_ALREADY_RECORDED). */
 export function useSaveAttendance(rehearsalId: string) {
   const queryClient = useQueryClient()
   return useMutation({

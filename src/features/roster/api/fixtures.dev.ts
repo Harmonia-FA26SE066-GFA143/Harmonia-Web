@@ -100,10 +100,10 @@ function editableRoster(rosterId: string) {
 function assignable(eventId: string, line: Pick<RosterAssignmentDto, 'songListItemId' | 'skillId' | 'skillName' | 'memberId'>) {
   const lines = rosters.get(eventId)?.assignments ?? []
   if (lines.some((entry) => entry.songListItemId === line.songListItemId && entry.skillId === line.skillId && entry.memberId === line.memberId)) {
-    fail(409, 'ASSIGNMENT_DUPLICATE')
+    fail(409, 'ROSTER_ASSIGNMENT_DUPLICATE')
   }
-  const member = confirmed(eventId).find((request) => request.memberId === line.memberId) ?? fail(409, 'ASSIGNMENT_MEMBER_NOT_CONFIRMED')
-  return member.skills.includes(line.skillName) ? member : fail(409, 'ASSIGNMENT_MEMBER_SKILL_NOT_APPROVED')
+  const member = confirmed(eventId).find((request) => request.memberId === line.memberId) ?? fail(409, 'ROSTER_ASSIGNMENT_MEMBER_NOT_CONFIRMED')
+  return member.skills.includes(line.skillName) ? member : fail(409, 'ROSTER_ASSIGNMENT_MEMBER_SKILL_NOT_APPROVED')
 }
 
 export async function getRequirementsFixture(songListItemId: string): Promise<PersonnelRequirementDto[]> {
@@ -196,7 +196,7 @@ function findLine(assignmentId: string) {
     const line = roster.assignments.find((entry) => entry.id === assignmentId)
     if (line) return { roster: editableRoster(roster.id), line }
   }
-  return fail(404, 'ASSIGNMENT_NOT_FOUND')
+  return fail(404, 'ROSTER_ASSIGNMENT_NOT_FOUND')
 }
 
 export const replaceAssignmentFixture = (assignmentId: string, memberId: string) =>
@@ -229,6 +229,6 @@ export const sendNotificationsFixture = (rosterId: string, memberIds: string[]) 
   writeFixture(() => {
     const roster = [...rosters.values()].find((entry) => entry.id === rosterId) ?? fail(404, 'ROSTER_NOT_FOUND')
     if (roster.status !== 'Finalized') fail(409, 'ROSTER_NOT_FINALIZED')
-    if (memberIds.some((id) => !roster.assignments.some((line) => line.memberId === id))) fail(404, 'ASSIGNMENT_NOT_FOUND')
+    if (memberIds.some((id) => !roster.assignments.some((line) => line.memberId === id))) fail(404, 'ROSTER_ASSIGNMENT_NOT_FOUND')
     return {}
   }).then(() => undefined)
