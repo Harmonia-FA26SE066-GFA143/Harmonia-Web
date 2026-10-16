@@ -22,7 +22,8 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
   const send = useSendNote()
   const total = notes.data?.totalCount ?? 0
 
-  const handleSend = (values: DirectorNoteValues) =>
+  const handleSend = (values: DirectorNoteValues) => {
+    if (send.isPending) return
     send.mutate(values, {
       onSuccess: () => {
         message.success('Đã gửi ghi chú. Ca trưởng sẽ nhận được thông báo.')
@@ -31,6 +32,7 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
       },
       onError: (error) => message.error(noteErrorMessage(error, 'Không thể gửi ghi chú. Vui lòng thử lại.')),
     })
+  }
 
   return (
     <>
