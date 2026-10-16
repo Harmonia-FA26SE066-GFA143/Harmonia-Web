@@ -1,33 +1,36 @@
 import { UploadOutlined } from '@ant-design/icons'
+import type { UseQueryResult } from '@tanstack/react-query'
 import { App, Button, Flex, Tag, Typography, Upload } from 'antd'
 import { colors, spacing } from '@/styles/tokens'
 import { calendarErrorMessage } from '../calendarErrors'
-import { useImportLiturgicalCalendar, useLiturgicalDay } from '../hooks/useLiturgicalDays'
-import { liturgicalRankLabels, liturgicalSeasonLabels } from '../types'
+import { useImportLiturgicalCalendar } from '../hooks/useLiturgicalDays'
+import { liturgicalRankLabels, liturgicalSeasonLabels, type LiturgicalDay } from '../types'
 
 const muted = { color: colors.textMuted }
 const maxFileBytes = 2 * 1024 * 1024
 
-/** The liturgical day of `date` (YYYY-MM-DD): celebration, rank and season, or a hint to import the calendar. */
-export function LiturgicalDayInfo({ date }: Readonly<{ date: string }>) {
-  const day = useLiturgicalDay(date)
-
-  if (day.isPending) return <Typography.Text style={muted}>Đang tải ngày phụng vụ…</Typography.Text>
-  if (day.isError) {
+/**
+ * The liturgical day of `date` (YYYY-MM-DD) from the days loaded for its month: celebration, rank and season, or a
+ * hint to import the calendar.
+ */
+export function LiturgicalDayInfo({ date, days }: Readonly<{ date: string; days: UseQueryResult<Map<string, LiturgicalDay>> }>) {
+  if (days.isPending) return <Typography.Text style={muted}>Đang tải ngày phụng vụ…</Typography.Text>
+  if (days.isError) {
     return (
       <Flex align="center" gap={spacing.xs} wrap>
         <Typography.Text type="danger">Không thể tải ngày phụng vụ.</Typography.Text>
-        <Button type="link" size="small" onClick={() => day.refetch()} loading={day.isFetching}>
+        <Button type="link" size="small" onClick={() => days.refetch()} loading={days.isFetching}>
           Thử lại
         </Button>
       </Flex>
     )
   }
-  if (!day.data) {
+  const day = days.data.get(date)
+  if (!day) {
     return <Typography.Text style={muted}>Chưa có ngày phụng vụ cho ngày này. Nhập lịch phụng vụ (.ics) để hiển thị.</Typography.Text>
   }
 
-  const { celebrationName, rank, seasonName } = day.data
+  const { celebrationName, rank, seasonName } = day
   return (
     <Flex align="center" gap={spacing.xs} wrap>
       <Typography.Text strong>{celebrationName}</Typography.Text>

@@ -10,7 +10,7 @@ import { ProgramCalendarPage } from './ProgramCalendarPage'
 const empty = { items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 }
 
 beforeEach(() => {
-  vi.spyOn(daysApi, 'getLiturgicalDay').mockResolvedValue(null)
+  vi.spyOn(daysApi, 'listLiturgicalDays').mockResolvedValue([])
 })
 
 afterEach(() => {
@@ -63,18 +63,17 @@ describe('ProgramCalendarPage', () => {
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/new')
   })
 
-  it('shows the liturgical day of the selected date', async () => {
+  it('loads the liturgical days of the month once and describes the selected date', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(empty)
-    const get = vi.spyOn(daysApi, 'getLiturgicalDay').mockResolvedValue({
-      date: dayjs().format('YYYY-MM-DD'),
-      celebrationName: 'Chúa Nhật XXIX Mùa Quanh Năm',
-      rank: 'Solemnity',
-      seasonName: 'OrdinaryTime',
-    })
+    const list = vi.spyOn(daysApi, 'listLiturgicalDays').mockResolvedValue([
+      { date: dayjs().format('YYYY-MM-DD'), celebrationName: 'Chúa Nhật XXIX Mùa Quanh Năm', rank: 'Solemnity', seasonName: 'OrdinaryTime' },
+    ])
     renderPage(<ProgramCalendarPage />, '/priest/calendar')
 
-    expect(await screen.findByText('Chúa Nhật XXIX Mùa Quanh Năm')).toBeInTheDocument()
-    expect(get).toHaveBeenCalledWith(dayjs().format('YYYY-MM-DD'))
+    // Named in its calendar cell on wide screens and in the day panel.
+    expect((await screen.findAllByText('Chúa Nhật XXIX Mùa Quanh Năm')).length).toBeGreaterThan(0)
+    expect(list).toHaveBeenCalledTimes(1)
+    expect(list).toHaveBeenCalledWith(dayjs().startOf('month').format('YYYY-MM-DD'), dayjs().endOf('month').format('YYYY-MM-DD'))
     expect(screen.getByText('Lễ trọng')).toBeInTheDocument()
     expect(screen.getByText('Mùa Thường Niên')).toBeInTheDocument()
   })
