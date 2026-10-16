@@ -1,34 +1,43 @@
 import { CheckSquareOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Flex, Table, Tooltip, Typography, type TableColumnsType } from 'antd'
+import { Button, Flex, Table, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
 import { generatePath, Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { colors, typography } from '@/styles/tokens'
-import { formatRehearsalTime } from '../rehearsalFormat'
-import { isRehearsalDay, type Rehearsal } from '../types'
+import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
+import { isRehearsalDay, isUpcoming, type Rehearsal } from '../types'
 
 export interface RehearsalTableProps {
   rehearsals: Rehearsal[]
+  /** Upcoming programs by id; an older program is shown as a link only. */
   programs: Map<string, LiturgicalProgram>
-  /** Load state of `programs`: a program that is missing while it loads or failed is not "no program". */
-  programsStatus: 'pending' | 'error' | 'success'
+  pagination: TablePaginationConfig
+  loading?: boolean
   onTakeAttendance: (rehearsal: Rehearsal) => void
   onEdit: (rehearsal: Rehearsal) => void
   onDelete: (rehearsal: Rehearsal) => void
 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
+const none = <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
 
-const deleteBlockedReason = 'Buổi tập đã có điểm danh nên không thể xoá.'
-
-export function RehearsalTable({ rehearsals, programs, programsStatus, onTakeAttendance, onEdit, onDelete }: Readonly<RehearsalTableProps>) {
+export function RehearsalTable({
+  rehearsals,
+  programs,
+  pagination,
+  loading,
+  onTakeAttendance,
+  onEdit,
+  onDelete,
+}: Readonly<RehearsalTableProps>) {
   const columns: TableColumnsType<Rehearsal> = [
     {
-      key: 'name',
-      title: 'Buổi tập',
+      key: 'time',
+      title: 'Thời gian & địa điểm',
       render: (_, rehearsal) => (
         <Flex vertical gap={2}>
-          <Typography.Text strong>{rehearsal.name}</Typography.Text>
+          <Typography.Text strong>{formatRehearsalTime(rehearsal)}</Typography.Text>
+          {rehearsal.locationName && <Typography.Text style={muted}>{rehearsal.locationName}</Typography.Text>}
           {rehearsal.note && (
             <Typography.Text style={muted} ellipsis={{ tooltip: rehearsal.note }}>
               {rehearsal.note}
@@ -41,39 +50,29 @@ export function RehearsalTable({ rehearsals, programs, programsStatus, onTakeAtt
       key: 'program',
       title: 'Chương trình phụng vụ',
       render: (_, rehearsal) => {
-        const program = programs.get(rehearsal.programId)
-        if (!program) {
-          const text = { pending: 'Đang tải…', error: 'Chưa tải được', success: '—' }[programsStatus]
-          return <Typography.Text style={{ color: colors.textMuted }}>{text}</Typography.Text>
-        }
-        return (
+        if (!rehearsal.eventId) return none
+        const program = programs.get(rehearsal.eventId)
+        const link = generatePath(paths.director.programDetail, { programId: rehearsal.eventId })
+        return program ? (
           <Flex vertical gap={2}>
-            <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>{program.eventName}</Link>
+            <Link to={link}>{program.eventName}</Link>
             <Typography.Text style={{ ...muted, fontFamily: typography.fontFamilyNumeric }}>{formatProgramDate(program.date)}</Typography.Text>
           </Flex>
+        ) : (
+          <Link to={link}>Xem chương trình</Link>
         )
       },
-    },
-    {
-      key: 'time',
-      title: 'Thời gian & địa điểm',
-      render: (_, rehearsal) => (
-        <Flex vertical gap={2}>
-          <Typography.Text>{formatRehearsalTime(rehearsal)}</Typography.Text>
-          {rehearsal.location && <Typography.Text style={muted}>{rehearsal.location}</Typography.Text>}
-        </Flex>
-      ),
     },
     {
       key: 'songs',
       title: 'Bài hát tập',
       render: (_, rehearsal) =>
         rehearsal.songs.length === 0 ? (
-          <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
+          none
         ) : (
           <ul style={{ margin: 0, paddingInlineStart: 18 }}>
             {rehearsal.songs.map((song) => (
-              <li key={song.songId}>{song.title}</li>
+              <li key={song.songId}>{song.songTitle}</li>
             ))}
           </ul>
         ),
@@ -87,23 +86,30 @@ export function RehearsalTable({ rehearsals, programs, programsStatus, onTakeAtt
           <Button type="link" icon={<CheckSquareOutlined />} onClick={() => onTakeAttendance(rehearsal)}>
             {isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
           </Button>
-          <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa ${rehearsal.name}`} />
-          {/* aria-disabled, not disabled: the button keeps the focus, so the reason reaches keyboard and screen reader users. */}
-          <Tooltip title={rehearsal.hasAttendance ? deleteBlockedReason : undefined}>
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              aria-disabled={rehearsal.hasAttendance}
-              style={rehearsal.hasAttendance ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
-              onClick={() => !rehearsal.hasAttendance && onDelete(rehearsal)}
-              aria-label={rehearsal.hasAttendance ? `Xoá ${rehearsal.name}. ${deleteBlockedReason}` : `Xoá ${rehearsal.name}`}
-            />
-          </Tooltip>
+          {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
+          {isUpcoming(rehearsal) && (
+            <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${rehearsalLabel(rehearsal)}`} />
+          )}
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => onDelete(rehearsal)}
+            aria-label={`Xoá buổi tập ${rehearsalLabel(rehearsal)}`}
+          />
         </Flex>
       ),
     },
   ]
 
-  return <Table<Rehearsal> rowKey="id" columns={columns} dataSource={rehearsals} pagination={false} scroll={{ x: 900 }} />
+  return (
+    <Table<Rehearsal>
+      rowKey="id"
+      columns={columns}
+      dataSource={rehearsals}
+      loading={loading}
+      pagination={pagination}
+      scroll={{ x: 900 }}
+    />
+  )
 }

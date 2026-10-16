@@ -1,6 +1,6 @@
-import { ArrowLeftOutlined, FileSearchOutlined, PlusOutlined, SendOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, FileSearchOutlined, PlusOutlined, SaveOutlined, SendOutlined } from '@ant-design/icons'
 import { App, Button, Card, Flex, Modal, Typography } from 'antd'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { canEditSongList, formatProgramDate, ProgramInfo, useProgram, type LiturgicalProgram } from '@/features/liturgical-programs'
@@ -9,7 +9,8 @@ import { spacing } from '@/styles/tokens'
 import { ProposalTable, type DraftItem } from '../components/ProposalTable'
 import { SongListStatusAlert } from '../components/SongListStatusAlert'
 import { SongPickerModal } from '../components/SongPickerModal'
-import { useSongList, useSubmitSongList } from '../hooks/useSongList'
+import { useSaveSongList, useSongList } from '../hooks/useSongList'
+import { songListErrorMessage } from '../songListErrors'
 import type { SongList } from '../types'
 
 const breadcrumb = [
@@ -19,34 +20,24 @@ const breadcrumb = [
   { title: 'Đề xuất danh sách bài hát' },
 ]
 
-function toDraft(list: SongList): DraftItem[] {
-  return list.items.map(({ id, songId, title, liturgicalPart, directorNote, review }) => ({
-    key: id,
-    songId,
-    title,
-    liturgicalPart,
-    directorNote,
-    review,
-  }))
-}
+const toDraft = (list: SongList | null): DraftItem[] =>
+  (list?.items ?? []).map(({ id, songId, songTitle, slotId, slotName, note }) => ({ key: id, songId, songTitle, slotId, slotName, note }))
 
-/** Composes and submits the list; editable except while waiting for review and after approval. */
-function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram; list: SongList }>) {
+/** Composes, saves and submits the list; editable while there is none, as a draft, and after rejection or a revision request. */
+function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram; list: SongList | null }>) {
   const { message } = App.useApp()
-  const submit = useSubmitSongList(program.id)
-  const editable = canEditSongList(list.status)
+  const save = useSaveSongList(program.id, list)
+  const editable = canEditSongList(list?.status)
   const [items, setItems] = useState<DraftItem[]>(() => toDraft(list))
   const [dirty, setDirty] = useState(false)
   const [picking, setPicking] = useState(false)
   const [confirming, setConfirming] = useState(false)
-  // Set once submitted so the list refresh does not trigger the leave warning.
-  const submitted = useRef(false)
 
   const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) => dirty && !submitted.current && currentLocation.pathname !== nextLocation.pathname,
+    ({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname,
   )
   useBeforeUnload((event) => {
-    if (dirty && !submitted.current) event.preventDefault()
+    if (dirty) event.preventDefault()
   })
 
   const change = (next: DraftItem[]) => {
@@ -54,23 +45,27 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
     setDirty(true)
   }
 
-  const handleSubmit = () =>
-    submit.mutate(
-      items.map(({ songId, title, liturgicalPart, directorNote }) => ({
-        songId,
-        title,
-        liturgicalPart: liturgicalPart?.trim() || undefined,
-        directorNote: directorNote?.trim() || undefined,
-      })),
+  const handleSave = (submit: boolean) => {
+    if (items.some((item) => !item.slotId)) {
+      setConfirming(false)
+      message.warning('Chọn phần phụng vụ cho mọi bài hát trước khi lưu.')
+      return
+    }
+    save.mutate(
+      { items: items.map(({ songId, slotId = '', note }) => ({ songId, slotId, note })), submit },
       {
         onSuccess: () => {
-          submitted.current = true
+          setDirty(false)
           setConfirming(false)
-          message.success('Đã gửi danh sách bài hát để duyệt.')
+          message.success(submit ? 'Đã gửi danh sách bài hát để duyệt.' : 'Đã lưu bản nháp.')
         },
-        onError: () => message.error('Không thể gửi danh sách. Vui lòng thử lại.'),
+        onError: (error) => {
+          setConfirming(false)
+          message.error(songListErrorMessage(error, submit ? 'Không thể gửi danh sách. Vui lòng thử lại.' : 'Không thể lưu bản nháp. Vui lòng thử lại.'))
+        },
       },
     )
+  }
 
   const addButton = (
     <Button icon={<PlusOutlined />} onClick={() => setPicking(true)}>
@@ -81,7 +76,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
   return (
     <>
       <Flex vertical gap={spacing.lg}>
-        <SongListStatusAlert list={list} viewer="director" />
+        {list && <SongListStatusAlert list={list} />}
         <ProgramInfo program={program} />
         <Card
           title={`Danh sách bài hát (${items.length})`}
@@ -89,6 +84,14 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
             editable && (
               <Flex wrap gap={spacing.sm}>
                 {addButton}
+                <Button
+                  icon={<SaveOutlined />}
+                  disabled={!dirty || items.length === 0}
+                  loading={save.isPending && !confirming}
+                  onClick={() => handleSave(false)}
+                >
+                  Lưu nháp
+                </Button>
                 <Button type="primary" icon={<SendOutlined />} disabled={items.length === 0} onClick={() => setConfirming(true)}>
                   Gửi duyệt
                 </Button>
@@ -102,7 +105,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
           ) : (
             <EmptyState
               title="Chưa có bài hát nào trong đề xuất"
-              description="Chọn các bài hát phù hợp từ kho bài hát của ca đoàn."
+              description="Chọn các bài hát phù hợp từ kho bài hát của ca đoàn, mỗi bài cho một phần phụng vụ."
               action={editable ? addButton : undefined}
             />
           )}
@@ -114,7 +117,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
         excludedSongIds={items.map((item) => item.songId)}
         onCancel={() => setPicking(false)}
         onAdd={(songs) => {
-          change([...items, ...songs.map((song) => ({ key: `new-${song.id}`, songId: song.id, title: song.title }))])
+          change([...items, ...songs.map((song) => ({ key: `new-${song.id}`, songId: song.id, songTitle: song.title }))])
           setPicking(false)
         }}
       />
@@ -123,14 +126,14 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
         title="Gửi danh sách bài hát để duyệt?"
         okText="Gửi duyệt"
         cancelText="Hủy"
-        okButtonProps={{ loading: submit.isPending }}
-        cancelButtonProps={{ disabled: submit.isPending }}
-        onOk={handleSubmit}
+        okButtonProps={{ loading: save.isPending }}
+        cancelButtonProps={{ disabled: save.isPending }}
+        onOk={() => handleSave(true)}
         onCancel={() => setConfirming(false)}
       >
         <Typography.Paragraph style={{ margin: 0 }}>
-          {items.length} bài hát cho “{program.eventName}” ({formatProgramDate(program.date)}) sẽ được gửi Cha xứ / Ban
-          phụng vụ xem xét. Trong lúc chờ duyệt, danh sách chỉ xem.
+          {items.length} bài hát cho “{program.eventName}” ({formatProgramDate(program.date)}) sẽ được gửi Cha xứ xem xét.
+          Trong lúc chờ duyệt, danh sách chỉ xem.
         </Typography.Paragraph>
       </Modal>
       <Modal
@@ -142,16 +145,13 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
         onOk={() => blocker.proceed?.()}
         onCancel={() => blocker.reset?.()}
       >
-        Các thay đổi chưa gửi duyệt sẽ không được lưu.
+        Các thay đổi chưa lưu sẽ mất.
       </Modal>
     </>
   )
 }
 
-/**
- * Choir Director: propose, submit and revise the song list of a program (FE-30–FE-32). Saving a draft without
- * submitting is not defined (TBD): changes stay on the page until they are submitted.
- */
+/** Choir Director: propose, save, submit and revise the song list of a program (FE-30–FE-32). */
 export function SongListProposalPage() {
   const navigate = useNavigate()
   const { programId = '' } = useParams()
@@ -187,15 +187,11 @@ export function SongListProposalPage() {
         <EmptyState
           icon={<FileSearchOutlined />}
           title="Không tìm thấy chương trình phụng vụ"
-          description="Chương trình không tồn tại hoặc đường dẫn không đúng."
+          description="Chương trình không tồn tại, đã bị hủy hoặc đường dẫn không đúng."
         />
       )}
-      {program.data && list.data && (
-        <ProposalEditor
-          key={`${list.data.status}-${list.data.submittedAt}-${list.data.reviewedAt}`}
-          program={program.data}
-          list={list.data}
-        />
+      {program.data && list.isSuccess && (
+        <ProposalEditor key={`${list.data?.id}-${list.data?.status}`} program={program.data} list={list.data} />
       )}
     </>
   )

@@ -8,6 +8,6 @@ export function formatRehearsalTime({ startAt, endAt }: Pick<Rehearsal, 'startAt
   return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${start.format('DD/MM/YYYY')} · ${start.format('HH:mm')}–${dayjs(endAt).format('HH:mm')}`
 }
 
-/** Short label for pickers: "Tập chính ráp 4 bè · 18/09 19:30". */
-export const rehearsalLabel = ({ name, startAt }: Pick<Rehearsal, 'name' | 'startAt'>) =>
-  `${name} · ${dayjs(startAt).format('DD/MM HH:mm')}`
+/** Short label for pickers, as a session has no name: "18/09 19:30 · Phòng tập nhà xứ". */
+export const rehearsalLabel = ({ startAt, locationName }: Pick<Rehearsal, 'startAt' | 'locationName'>) =>
+  [dayjs(startAt).format('DD/MM HH:mm'), locationName].filter(Boolean).join(' · ')

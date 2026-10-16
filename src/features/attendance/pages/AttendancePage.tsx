@@ -5,7 +5,7 @@ import { useMemo } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
-import { formatRehearsalTime, isRehearsalDay, rehearsalLabel, useRehearsals, type Rehearsal } from '@/features/rehearsals'
+import { formatRehearsalTime, isRehearsalDay, rehearsalLabel, useRecentRehearsals, type Rehearsal } from '@/features/rehearsals'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { AttendanceSheet } from '../components/AttendanceSheet'
@@ -29,18 +29,18 @@ function defaultSession(rehearsals: Rehearsal[]): Rehearsal | undefined {
 
 /**
  * Choir Director: attendance of one rehearsal session (FE-45) on `/api/rehearsals/{id}/attendances`, with the four
- * Harmonia-BE `AttendanceStatus` values. The sessions themselves still come from the rehearsals fixture (B20).
+ * Harmonia-BE `AttendanceStatus` values. The picker offers sessions from 30 days back to 7 days ahead;
  * `?rehearsalId=` selects the session (link from the rehearsal schedule).
  */
 export function AttendancePage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const rehearsals = useRehearsals()
+  const rehearsals = useRecentRehearsals()
   const programs = useUpcomingPrograms()
   const sessions = useMemo(() => rehearsals.data ?? [], [rehearsals.data])
   const selected = sessions.find((rehearsal) => rehearsal.id === searchParams.get('rehearsalId')) ?? defaultSession(sessions)
   const attendance = useAttendance(selected?.id)
-  const program = programs.data?.find((item) => item.id === selected?.programId)
+  const program = programs.data?.find((item) => item.id === selected?.eventId)
   // The backend records attendance from the start of the session on, corrections included (RehearsalAttendanceService),
   // which supersedes "on the day of the session only" (decision 2026-09-30, 6a.6).
   const started = selected ? attendanceMayOpen(selected) : false
@@ -86,7 +86,7 @@ export function AttendancePage() {
               <Flex vertical gap={2} style={{ flex: '1 1 280px' }}>
                 <Typography.Text>{formatRehearsalTime(selected)}</Typography.Text>
                 <Typography.Text style={{ color: colors.textMuted }}>
-                  {[selected.location, program && `${program.eventName} · ${formatProgramDate(program.date)}`]
+                  {[selected.locationName, program && `${program.eventName} · ${formatProgramDate(program.date)}`]
                     .filter(Boolean)
                     .join(' · ')}
                   {program && (

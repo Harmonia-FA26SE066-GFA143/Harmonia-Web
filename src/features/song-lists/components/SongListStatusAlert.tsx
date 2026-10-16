@@ -1,28 +1,25 @@
 import { Alert } from 'antd'
 import dayjs from 'dayjs'
-import type { ReactNode } from 'react'
+import { parseUtc } from '@/lib/api/dates'
 import type { SongList } from '../types'
 
-const at = (iso?: string) => (iso ? ` lúc ${dayjs(iso).format('HH:mm DD/MM/YYYY')}` : '')
+const at = (value?: string) => (value ? ` lúc ${dayjs(parseUtc(value)).format('HH:mm DD/MM/YYYY')}` : '')
 
-/**
- * Where the list stands in the review loop, from the point of view of `viewer`. Statuses follow Harmonia-BE
- * `SongListStatus`; the wording explains the editing lock decided on 2026-09-28.
- */
-export function SongListStatusAlert({ list, viewer, action }: Readonly<{ list: SongList; viewer: 'director' | 'priest'; action?: ReactNode }>) {
-  const note = list.priestNote ? `Ghi chú của Cha xứ / Ban phụng vụ: “${list.priestNote}”` : undefined
+/** Where the newest version stands in the review loop, for the Choir Director (Harmonia-BE `SongListStatus`). */
+export function SongListStatusAlert({ list }: Readonly<{ list: SongList }>) {
+  const notes = list.reviews.at(-1)?.notes
+  const note = notes ? `Nhận xét của Cha xứ: “${notes}”` : undefined
+  const version = `Phiên bản ${list.version}`
   switch (list.status) {
     case 'draft':
-      return viewer === 'director' ? (
-        <Alert type="info" showIcon title="Danh sách đang là bản nháp, chưa gửi duyệt." action={action} />
-      ) : null
+      return <Alert type="info" showIcon title={`${version} đang là bản nháp, chưa gửi duyệt.`} />
     case 'submitted':
       return (
         <Alert
           type="info"
           showIcon
-          title={viewer === 'director' ? `Đã gửi duyệt${at(list.submittedAt)}. Đang chờ Cha xứ / Ban phụng vụ xem xét.` : `Ca trưởng đã gửi danh sách${at(list.submittedAt)}.`}
-          description={viewer === 'director' ? 'Danh sách chỉ xem trong lúc chờ duyệt.' : 'Xem xét từng bài hát rồi gửi quyết định.'}
+          title={`${version} đã gửi duyệt${at(list.submittedAt)}. Đang chờ Cha xứ xem xét.`}
+          description="Danh sách chỉ xem trong lúc chờ duyệt."
         />
       )
     case 'needsRevision':
@@ -30,9 +27,8 @@ export function SongListStatusAlert({ list, viewer, action }: Readonly<{ list: S
         <Alert
           type="warning"
           showIcon
-          title={`Cha xứ / Ban phụng vụ yêu cầu chỉnh sửa${at(list.reviewedAt)}.`}
-          description={[note, viewer === 'director' ? 'Sửa các bài được đánh dấu “Cần chỉnh sửa” rồi gửi duyệt lại.' : 'Đang chờ Ca trưởng cập nhật và gửi lại.'].filter(Boolean).join(' ')}
-          action={action}
+          title={`Cha xứ yêu cầu chỉnh sửa ${version.toLowerCase()}${at(list.decidedAt)}.`}
+          description={[note, 'Lưu thay đổi sẽ tạo phiên bản mới; gửi duyệt khi đã sửa xong.'].filter(Boolean).join(' ')}
         />
       )
     case 'rejected':
@@ -40,9 +36,8 @@ export function SongListStatusAlert({ list, viewer, action }: Readonly<{ list: S
         <Alert
           type="error"
           showIcon
-          title={`Danh sách đã bị từ chối${at(list.reviewedAt)}.`}
-          description={[note, viewer === 'director' ? 'Biên soạn lại danh sách rồi gửi duyệt lần mới.' : 'Đang chờ Ca trưởng biên soạn lại.'].filter(Boolean).join(' ')}
-          action={action}
+          title={`${version} đã bị từ chối${at(list.decidedAt)}.`}
+          description={[note, 'Biên soạn lại rồi lưu để tạo phiên bản mới.'].filter(Boolean).join(' ')}
         />
       )
     case 'approved':
@@ -50,11 +45,9 @@ export function SongListStatusAlert({ list, viewer, action }: Readonly<{ list: S
         <Alert
           type="success"
           showIcon
-          title={`Danh sách đã được phê duyệt${at(list.reviewedAt)}.`}
-          description={[note, viewer === 'director' ? 'Danh sách đã khoá, chỉ xem.' : undefined].filter(Boolean).join(' ') || undefined}
+          title={`${version} đã được phê duyệt${at(list.decidedAt)}.`}
+          description={[note, 'Danh sách đã khoá, chỉ xem.'].filter(Boolean).join(' ')}
         />
       )
-    default:
-      return null
   }
 }

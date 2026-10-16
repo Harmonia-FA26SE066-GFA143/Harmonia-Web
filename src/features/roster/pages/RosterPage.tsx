@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, SongListStatusTag, useUpcomingPrograms } from '@/features/liturgical-programs'
+import { useChoirMembers } from '@/features/members'
 import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
 import { useLookup } from '@/features/system-categories'
@@ -29,9 +30,17 @@ export function RosterPage() {
   const approved = songList.data?.status === 'approved'
   const participation = useParticipation(approved ? programId : undefined)
   const skills = useLookup('skills')
+  const members = useChoirMembers()
+  // Members who answered Confirmed or Unsure can be assigned (ServiceRosterRepository); skills from their profiles.
+  const eligible = useMemo(() => {
+    const skillsOf = new Map((members.data ?? []).map((member) => [member.id, member.skills]))
+    return (participation.data ?? [])
+      .filter((request) => request.response === 'confirmed' || request.response === 'unsure')
+      .map(({ memberId, fullName }) => ({ memberId, fullName, skills: skillsOf.get(memberId) ?? [] }))
+  }, [participation.data, members.data])
 
-  const loading = songList.isPending || (approved && (participation.isPending || skills.isPending))
-  const failed = [songList, participation, skills].find((query) => query.isError)
+  const loading = songList.isPending || (approved && (participation.isPending || skills.isPending || members.isPending))
+  const failed = [songList, participation, skills, members].find((query) => query.isError)
 
   return (
     <>
@@ -67,7 +76,7 @@ export function RosterPage() {
           {failed && (
             <ErrorState
               title="Không thể tải dữ liệu phân công"
-              onRetry={() => [songList, participation, skills].forEach((query) => query.isError && query.refetch())}
+              onRetry={() => [songList, participation, skills, members].forEach((query) => query.isError && query.refetch())}
             />
           )}
           {!failed && loading && <SectionSkeleton rows={8} label="Đang tải phân công" />}
@@ -89,7 +98,7 @@ export function RosterPage() {
               title="Chưa gửi yêu cầu xác nhận tham gia"
               description={
                 <>
-                  Chỉ phân công được ca viên đã xác nhận tham gia.{' '}
+                  Chỉ phân công được ca viên trả lời Xác nhận hoặc Chưa chắc chắn.{' '}
                   <Link to={`${paths.director.participation}?programId=${program.id}`}>Gửi yêu cầu xác nhận</Link>
                 </>
               }
@@ -100,8 +109,8 @@ export function RosterPage() {
               // A program change starts from that program's saved requirements.
               key={program.id}
               programId={program.id}
-              songs={(songList.data?.items ?? []).map(({ id, title, liturgicalPart }) => ({ id, title, liturgicalPart }))}
-              eligible={(participation.data ?? []).filter((request) => request.response === 'confirmed')}
+              songs={(songList.data?.items ?? []).map(({ id, songTitle, slotName }) => ({ id, title: songTitle, liturgicalPart: slotName }))}
+              eligible={eligible}
               skills={(skills.data ?? []).map(({ id, name }) => ({ id, name }))}
             />
           )}

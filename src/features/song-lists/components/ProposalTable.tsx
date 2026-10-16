@@ -2,13 +2,16 @@ import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined } from '@ant-design/
 import { Button, Flex, Input, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useLookup } from '@/features/system-categories'
 import { colors, typography } from '@/styles/tokens'
-import type { SongListItemInput, SongReview } from '../types'
-import { SongReviewNote } from './SongReviewNote'
 
-/** A row of the list being composed; `review` is the Priest's decision from the last round, if any. */
-export interface DraftItem extends SongListItemInput {
+/** A row of the list being composed; the slot is chosen after the song is picked. */
+export interface DraftItem {
   key: string
-  review?: SongReview
+  songId: string
+  songTitle: string
+  slotId?: string
+  /** Kept so a slot switched off since it was chosen still shows its name. */
+  slotName?: string
+  note?: string
 }
 
 export interface ProposalTableProps {
@@ -19,11 +22,10 @@ export interface ProposalTableProps {
 
 const muted = (text: string) => <Typography.Text style={{ color: colors.textMuted }}>{text}</Typography.Text>
 
-/** Ordered songs of the proposal: liturgical part and note per song, reordering and removal while editable. */
+/** Ordered songs of the proposal: one liturgical slot per song and a note, reordering and removal while editable. */
 export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTableProps>) {
-  // Slots arrive in liturgical order (DefaultOrder). ponytail: the slot name is stored, not its id, until song lists
-  // have a controller; the backend will expect `slotId`.
-  const slotOptions = (useLookup('liturgicalSlots').data ?? []).map(({ name }) => ({ value: name, label: name }))
+  // Active slots, in liturgical order (DefaultOrder).
+  const slots = useLookup('liturgicalSlots').data ?? []
   const update = (key: string, patch: Partial<DraftItem>) =>
     onChange(items.map((item) => (item.key === key ? { ...item, ...patch } : item)))
   const move = (index: number, offset: -1 | 1) => {
@@ -32,7 +34,14 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
     next.splice(index + offset, 0, moved)
     onChange(next)
   }
-  const hasReviews = items.some((item) => item.review)
+
+  // Each slot holds one song of the list (SONG_LIST_SLOT_DUPLICATE), so slots taken by another row are disabled.
+  const slotOptions = (item: DraftItem) => {
+    const taken = new Set(items.filter((other) => other.key !== item.key).map((other) => other.slotId))
+    const options = slots.map(({ id, name }) => ({ value: id, label: name, disabled: taken.has(id) }))
+    const retired = item.slotId && !slots.some(({ id }) => id === item.slotId)
+    return retired ? [...options, { value: item.slotId, label: item.slotName ?? '', disabled: false }] : options
+  }
 
   const columns: TableColumnsType<DraftItem> = [
     {
@@ -52,7 +61,7 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
                 icon={<ArrowUpOutlined />}
                 disabled={index === 0}
                 onClick={() => move(index, -1)}
-                aria-label={`Chuyển ${item.title} lên`}
+                aria-label={`Chuyển ${item.songTitle} lên`}
               />
               <Button
                 size="small"
@@ -60,31 +69,32 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
                 icon={<ArrowDownOutlined />}
                 disabled={index === items.length - 1}
                 onClick={() => move(index, 1)}
-                aria-label={`Chuyển ${item.title} xuống`}
+                aria-label={`Chuyển ${item.songTitle} xuống`}
               />
             </>
           )}
         </Flex>
       ),
     },
-    { key: 'title', title: 'Bài hát', render: (_, item) => <Typography.Text strong>{item.title}</Typography.Text> },
+    { key: 'title', title: 'Bài hát', render: (_, item) => <Typography.Text strong>{item.songTitle}</Typography.Text> },
     {
-      key: 'part',
+      key: 'slot',
       title: 'Phần phụng vụ',
       render: (_, item) =>
         editable ? (
           <Select
-            allowClear
             showSearch
-            value={item.liturgicalPart}
+            optionFilterProp="label"
+            value={item.slotId}
             placeholder="Chọn phần phụng vụ"
-            aria-label={`Phần phụng vụ của ${item.title}`}
-            options={slotOptions}
-            onChange={(liturgicalPart?: string) => update(item.key, { liturgicalPart })}
+            status={item.slotId ? undefined : 'warning'}
+            aria-label={`Phần phụng vụ của ${item.songTitle}`}
+            options={slotOptions(item)}
+            onChange={(slotId: string) => update(item.key, { slotId, slotName: slots.find(({ id }) => id === slotId)?.name })}
             style={{ minWidth: 180 }}
           />
         ) : (
-          item.liturgicalPart || muted('—')
+          item.slotName || muted('—')
         ),
     },
     {
@@ -93,18 +103,15 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
       render: (_, item) =>
         editable ? (
           <Input
-            value={item.directorNote}
+            value={item.note}
             placeholder="Ghi chú (không bắt buộc)"
-            aria-label={`Ghi chú cho ${item.title}`}
-            onChange={(event) => update(item.key, { directorNote: event.target.value })}
+            aria-label={`Ghi chú cho ${item.songTitle}`}
+            onChange={(event) => update(item.key, { note: event.target.value })}
           />
         ) : (
-          item.directorNote || muted('—')
+          item.note || muted('—')
         ),
     },
-    ...(hasReviews
-      ? [{ key: 'review', title: 'Nhận xét của Cha xứ / Ban phụng vụ', render: (_: unknown, item: DraftItem) => <SongReviewNote review={item.review} /> }]
-      : []),
     ...(editable
       ? [
           {
@@ -117,7 +124,7 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
                 danger
                 icon={<DeleteOutlined />}
                 onClick={() => onChange(items.filter((entry) => entry.key !== item.key))}
-                aria-label={`Bỏ ${item.title} khỏi danh sách`}
+                aria-label={`Bỏ ${item.songTitle} khỏi danh sách`}
               />
             ),
           },

@@ -57,8 +57,9 @@ export interface ServiceRoster {
 }
 
 /**
- * A member offered for a line: confirmed for the program, with approved skills (the backend checks both again).
- * ponytail: skills are matched by name while participation is a dev fixture; use skill ids when it has an API (B15).
+ * A member offered for a line: answered Confirmed or Unsure for the program, with approved skills (the backend checks
+ * both again). ponytail: skills are matched by name, as `listChoirMembers` keeps names only; keep skill ids there if
+ * two skills ever share a name.
  */
 export interface EligibleMember {
   memberId: string

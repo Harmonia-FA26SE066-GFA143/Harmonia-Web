@@ -58,7 +58,7 @@ export function SongStaffingCard({ programId, song, assignments, shortages, elig
   const failed = (fallback: string) => (error: Error) => message.error(rosterErrorMessage(error, fallback))
 
   const linesOf = (skillId: string) => assignments.filter((line) => line.skillId === skillId)
-  // Members confirmed for the program who hold the skill and are not on this position yet.
+  // Members who answered Confirmed or Unsure, hold the skill and are not on this position yet.
   const candidates = (row: Pick<PersonnelRequirement, 'skillId' | 'skillName'>) =>
     eligible.filter(
       (member) => member.skills.includes(row.skillName) && !linesOf(row.skillId).some((line) => line.memberId === member.memberId),
@@ -173,7 +173,7 @@ export function SongStaffingCard({ programId, song, assignments, shortages, elig
                   disabled={add.isPending}
                   aria-label={`Thêm ca viên cho ${row.skillName}`}
                   placeholder={options.length ? 'Thêm ca viên' : 'Không còn ca viên phù hợp'}
-                  notFoundContent="Không có ca viên đã xác nhận có kỹ năng này"
+                  notFoundContent="Không có ca viên đã nhận lời (Xác nhận hoặc Chưa chắc chắn) có kỹ năng này"
                   options={options}
                   onChange={(memberId: string) =>
                     add.mutate(
@@ -323,7 +323,7 @@ export function SongStaffingCard({ programId, song, assignments, shortages, elig
               placeholder="Chọn ca viên"
               value={replacement}
               onChange={setReplacement}
-              notFoundContent="Không có ca viên đã xác nhận có kỹ năng này"
+              notFoundContent="Không có ca viên đã nhận lời (Xác nhận hoặc Chưa chắc chắn) có kỹ năng này"
               options={candidates(replacing).map((member) => ({ value: member.memberId, label: member.fullName }))}
             />
           </Flex>

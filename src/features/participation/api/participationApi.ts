@@ -1,25 +1,44 @@
-import { env } from '@/config/env'
-import { ApiContractMissingError } from '@/lib/api/errors'
-import type { ParticipationRequest } from '../types'
+import { apiRequest } from '@/lib/api/client'
+import { toQuery } from '@/lib/api/paging'
+import type { ParticipationRequest, ParticipationResponse } from '../types'
 
-// TBD: Backend API missing – participation confirmation requests and responses (FE-06, FE-33–FE-34).
-// Decision 0002: no endpoint is guessed. Each function checks `import.meta.env.DEV` at the call site so the
-// fixture import is dropped from dist/.
+// `/api/event-participations` (Harmonia-BE EventParticipationsController), the Choir Director's side: the requests
+// of an event with their answers, and new requests. A member is asked once per event.
 
-/** Members sent the program's confirmation request, with their responses; empty when none was sent. */
-export async function getParticipation(programId: string): Promise<ParticipationRequest[]> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { getParticipationFixture } = await import('./fixtures.dev')
-    return getParticipationFixture(programId)
-  }
-  throw new ApiContractMissingError('Xem phản hồi xác nhận tham gia')
+type ApiStatus = 'Invited' | 'Confirmed' | 'Declined' | 'Unsure'
+
+const responseByApi: Record<ApiStatus, ParticipationResponse | undefined> = {
+  Invited: undefined,
+  Confirmed: 'confirmed',
+  Declined: 'declined',
+  Unsure: 'unsure',
 }
 
-/** Sends the request to the given members; members already sent it get it again (resend). */
-export async function sendParticipationRequests(programId: string, memberIds: string[]): Promise<ParticipationRequest[]> {
-  if (import.meta.env.DEV && env.useDevFixtures) {
-    const { sendParticipationRequestsFixture } = await import('./fixtures.dev')
-    return sendParticipationRequestsFixture(programId, memberIds)
-  }
-  throw new ApiContractMissingError('Gửi yêu cầu xác nhận tham gia')
+interface EventParticipationDto {
+  id: string
+  memberId: string
+  memberFullName: string
+  status: ApiStatus
+  requestedAt: string
+  respondedAt: string | null
+  note: string | null
+}
+
+/** Every request of the event, empty when none was sent. The counts of the answer are worked out by the page. */
+export async function getParticipation(eventId: string): Promise<ParticipationRequest[]> {
+  const summary = await apiRequest<{ items: EventParticipationDto[] }>(`/api/event-participations${toQuery({ eventId })}`)
+  return summary.items.map((dto) => ({
+    id: dto.id,
+    memberId: dto.memberId,
+    fullName: dto.memberFullName,
+    requestedAt: dto.requestedAt,
+    response: responseByApi[dto.status],
+    respondedAt: dto.respondedAt ?? undefined,
+    note: dto.note ?? undefined,
+  }))
+}
+
+/** Asks the given members, none of whom may have been asked for this event (EVENT_PARTICIPATION_ALREADY_REQUESTED). */
+export async function sendParticipationRequests(eventId: string, memberIds: string[]): Promise<void> {
+  await apiRequest<unknown>('/api/event-participations', { method: 'POST', body: JSON.stringify({ eventId, memberIds }) })
 }
