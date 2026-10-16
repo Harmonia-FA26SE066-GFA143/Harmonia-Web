@@ -19,6 +19,19 @@ export type ReviewResult = 'passed' | 'needsRevision'
 /** `AssignmentScope` of Harmonia-BE: the whole choir, members with given skills, or chosen members. */
 export type AssignmentScope = 'all' | 'skillGroup' | 'individual'
 
+/** An assignment the Choir Director gave (`PracticeAssignmentDto`): targets come as ids. */
+export interface PracticeAssignment {
+  id: string
+  eventId?: string
+  title: string
+  instruction?: string
+  scope: AssignmentScope
+  /** Backend `DateTime`; read it with `parseUtc`. */
+  dueDate: string
+  skillIds: string[]
+  memberIds: string[]
+}
+
 /** Body of POST /api/practice-assignments (CreatePracticeAssignmentRequestValidator). */
 export interface AssignmentValues {
   title: string

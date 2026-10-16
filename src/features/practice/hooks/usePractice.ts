@@ -3,6 +3,8 @@ import {
   commentSubmission,
   createAssignment,
   getSubmission,
+  listAssignments,
+  listAssignmentSubmissions,
   listPreparationProgress,
   listSubmissions,
   listUpcomingEvents,
@@ -18,6 +20,24 @@ export function useSubmissions(status: PracticeStatus | undefined, page: Submiss
   return useQuery({
     queryKey: [...practiceKey, 'submissions', status, page],
     queryFn: () => listSubmissions(status, page),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** One page of the assignments given, all or those of one event. */
+export function useAssignments(eventId: string | undefined, page: SubmissionPage) {
+  return useQuery({
+    queryKey: [...practiceKey, 'assignments', eventId, page],
+    queryFn: () => listAssignments(eventId, page),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** One page of an assignment's submissions; reviews reload it with the rest of the practice data. */
+export function useAssignmentSubmissions(assignmentId: string, status: PracticeStatus | undefined, page: SubmissionPage) {
+  return useQuery({
+    queryKey: [...practiceKey, 'submissions', assignmentId, status, page],
+    queryFn: () => listAssignmentSubmissions(assignmentId, status, page),
     placeholderData: keepPreviousData,
   })
 }
@@ -48,8 +68,13 @@ export const useCommentSubmission = () =>
     commentSubmission(id, { comment, result }),
   )
 
+/** A new assignment shows under "Bài đã giao". */
 export function useCreateAssignment() {
-  return useMutation({ mutationFn: (values: AssignmentValues) => createAssignment(values) })
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (values: AssignmentValues) => createAssignment(values),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [...practiceKey, 'assignments'] }),
+  })
 }
 
 export function useUpcomingEvents() {

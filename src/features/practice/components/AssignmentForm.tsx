@@ -23,7 +23,7 @@ const scopeOptions: { value: AssignmentScope; label: string }[] = [
 /**
  * Gives a practice assignment (FE-41; `CreatePracticeAssignmentRequestValidator`): event, song and material are
  * optional, the due date is in the future, and the members are the whole choir, those with chosen skills or chosen
- * members. The backend notifies them; it offers no list of the assignments given yet (tbd-backlog B21).
+ * members. The backend notifies them; the assignment then appears under "Bài đã giao".
  */
 export function AssignmentForm() {
   const { message } = App.useApp()

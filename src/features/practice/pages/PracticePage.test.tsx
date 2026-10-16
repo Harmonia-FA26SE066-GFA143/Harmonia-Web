@@ -148,4 +148,37 @@ describe('PracticePage', () => {
     expect(screen.getByText('Xác nhận')).toBeInTheDocument()
     expect(screen.getByText('2/3')).toBeInTheDocument()
   })
+
+  it('lists the assignments given and opens the submissions of one', async () => {
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
+    vi.mocked(practiceApi.listUpcomingEvents).mockResolvedValue([
+      { id: 'e1', eventDate: '2026-10-25', time: '08:00:00', title: 'Lễ Bổn mạng', locationName: 'Nhà thờ' },
+    ])
+    const assignments = vi.spyOn(practiceApi, 'listAssignments').mockResolvedValue({
+      items: [
+        { id: 'as-1', eventId: 'e1', title: 'Tập bè Tenor', scope: 'skillGroup', dueDate: '2026-10-20T12:00:00Z', skillIds: ['k-tenor'], memberIds: [] },
+        { id: 'as-2', eventId: 'old', title: 'Ôn Thánh Vịnh', scope: 'all', dueDate: '2026-09-20T12:00:00Z', skillIds: [], memberIds: [] },
+      ],
+      pageNumber: 1,
+      pageSize: 20,
+      totalCount: 2,
+      totalPages: 1,
+    })
+    const submissions = vi.spyOn(practiceApi, 'listAssignmentSubmissions').mockResolvedValue(page([submission()]))
+    renderPractice()
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Bài đã giao' }))
+    expect(await screen.findByText('Tập bè Tenor')).toBeInTheDocument()
+    expect(assignments).toHaveBeenCalledWith(undefined, { pageNumber: 1, pageSize: 20 })
+    expect(screen.getByText('1 kỹ năng')).toBeInTheDocument()
+    expect(await screen.findByText(/Lễ Bổn mạng · 25\/10\/2026/)).toBeInTheDocument()
+    expect(screen.getByText('Chương trình đã qua')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Xem bản thu của Tập bè Tenor' }))
+    expect(await screen.findByText('Giuse Vũ Đình Khôi')).toBeInTheDocument()
+    expect(submissions).toHaveBeenCalledWith('as-1', undefined, { pageNumber: 1, pageSize: 20 })
+    // The status filter comes before the status tags of the rows.
+    fireEvent.click(screen.getAllByText('Chờ chấm')[0])
+    await waitFor(() => expect(submissions).toHaveBeenCalledWith('as-1', 'submitted', { pageNumber: 1, pageSize: 20 }))
+  })
 })
