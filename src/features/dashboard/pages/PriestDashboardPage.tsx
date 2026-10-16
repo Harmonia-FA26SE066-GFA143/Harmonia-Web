@@ -90,6 +90,7 @@ export function PriestDashboardPage() {
           {pending.isPending && <SectionSkeleton rows={2} label="Đang tải danh sách bài hát chờ xem xét" />}
           {pending.isError && (
             <ErrorState
+              headingLevel={3}
               title="Không thể tải danh sách bài hát chờ xem xét"
               onRetry={() => pending.refetch()}
               retrying={pending.isFetching}
@@ -97,6 +98,7 @@ export function PriestDashboardPage() {
           )}
           {pending.isSuccess && pending.data.length === 0 && (
             <EmptyState
+              headingLevel={3}
               title="Không có danh sách bài hát nào chờ xem xét"
               description="Khi Ca trưởng gửi danh sách bài hát, danh sách sẽ xuất hiện tại đây."
             />
@@ -121,10 +123,11 @@ export function PriestDashboardPage() {
           </Flex>
           {upcoming.isPending && <SectionSkeleton rows={upcomingLimit} label="Đang tải sự kiện sắp tới" />}
           {upcoming.isError && (
-            <ErrorState title="Không thể tải sự kiện sắp tới" onRetry={() => upcoming.refetch()} retrying={upcoming.isFetching} />
+            <ErrorState headingLevel={3} title="Không thể tải sự kiện sắp tới" onRetry={() => upcoming.refetch()} retrying={upcoming.isFetching} />
           )}
           {upcoming.isSuccess && upcoming.data.totalCount === 0 && (
             <EmptyState
+              headingLevel={3}
               title="Chưa có sự kiện sắp tới"
               description="Tạo và công bố sự kiện phụng vụ để Ca trưởng bắt đầu chuẩn bị."
               action={createButton}

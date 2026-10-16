@@ -12,6 +12,8 @@ export interface ErrorStateProps {
   retrying?: boolean
   /** Secondary actions shown after the retry button. */
   extra?: ReactNode
+  /** 3 when the panel sits inside a section that has its own level 2 heading. */
+  headingLevel?: 2 | 3
 }
 
 export function ErrorState({
@@ -20,6 +22,7 @@ export function ErrorState({
   onRetry,
   retrying = false,
   extra,
+  headingLevel,
 }: Readonly<ErrorStateProps>) {
   const actions =
     onRetry || extra ? (
@@ -41,6 +44,7 @@ export function ErrorState({
       title={title}
       description={description}
       actions={actions}
+      headingLevel={headingLevel}
     />
   )
 }

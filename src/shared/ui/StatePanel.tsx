@@ -9,10 +9,20 @@ export interface StatePanelProps {
   actions?: ReactNode
   tone?: 'neutral' | 'danger'
   role?: 'status' | 'alert'
+  /** Level of the title: 3 when the panel sits inside a section that has its own level 2 heading. */
+  headingLevel?: 2 | 3
 }
 
 /** Shared layout for empty / error / no-result states: icon, heading, explanation, actions. */
-export function StatePanel({ icon, title, description, actions, tone = 'neutral', role }: Readonly<StatePanelProps>) {
+export function StatePanel({
+  icon,
+  title,
+  description,
+  actions,
+  tone = 'neutral',
+  role,
+  headingLevel = 2,
+}: Readonly<StatePanelProps>) {
   const { token } = theme.useToken()
   const danger = tone === 'danger'
 
@@ -46,7 +56,7 @@ export function StatePanel({ icon, title, description, actions, tone = 'neutral'
       >
         {icon}
       </Flex>
-      <Typography.Title level={2} style={{ margin: 0 }}>
+      <Typography.Title level={headingLevel} style={{ margin: 0 }}>
         {title}
       </Typography.Title>
       {description && (

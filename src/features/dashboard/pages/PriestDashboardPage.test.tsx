@@ -65,7 +65,7 @@ describe('PriestDashboardPage', () => {
     renderPage(<PriestDashboardPage />, '/priest')
 
     expect(await screen.findByText('Lễ Chúa Nhật tới')).toBeInTheDocument()
-    expect(screen.getByText('Sự kiện sắp tới', { selector: 'span' }).closest('.ant-card')).toHaveTextContent('7')
+    expect(screen.getByText('Sự kiện sắp tới', { selector: 'dt' }).closest('.ant-card')).toHaveTextContent('7')
     expect(screen.getByText('Danh sách bài hát chờ xem xét').closest('.ant-card')).toHaveTextContent('1')
 
     expect(await screen.findByText('Lễ Bổn mạng · 11/10/2099')).toBeInTheDocument()
