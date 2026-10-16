@@ -6,7 +6,7 @@ import { generatePath, Link, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { SkillTags, useChoirMembers } from '@/features/members'
-import { parseUtc } from '@/lib/api/dates'
+import { formatDateTime } from '@/lib/api/dates'
 import { EmptyState, ErrorState, MetricSummary, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
@@ -26,8 +26,6 @@ const metrics = [
   { key: 'declined', label: participationResponseLabels.declined },
   { key: 'none', label: 'Chưa phản hồi' },
 ]
-
-const formatDateTime = (value?: string) => (value ? dayjs(parseUtc(value)).format('DD/MM/YYYY HH:mm') : '—')
 
 /** Skills are not part of a request; they come from the member profiles. */
 const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<ParticipationRequest> => [
@@ -50,7 +48,7 @@ const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<Participa
             {participationResponseLabels[request.response]}
           </StatusTag>
           <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
-            {formatDateTime(request.respondedAt)}
+            {request.respondedAt ? formatDateTime(request.respondedAt) : '—'}
           </Typography.Text>
         </Flex>
       ) : (

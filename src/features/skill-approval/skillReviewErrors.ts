@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api/errors'
+import { ApiError, errorMessage } from '@/lib/api/errors'
 
 /**
  * The declaration is gone or another Choir Director decided it first (Harmonia-BE MemberSkillService, ErrorStatusMap:
@@ -13,5 +13,5 @@ export const isStaleReview = (error: Error) =>
   error instanceof ApiError && error.code !== undefined && error.code in staleMessages
 
 export function reviewErrorMessage(error: Error, fallback: string): string {
-  return (error instanceof ApiError && error.code !== undefined && staleMessages[error.code]) || fallback
+  return errorMessage(error, staleMessages, fallback)
 }

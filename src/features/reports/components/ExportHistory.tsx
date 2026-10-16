@@ -1,7 +1,7 @@
 import { Card, Table, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
-import { parseUtc } from '@/lib/api/dates'
+import { formatDateTime, parseUtc } from '@/lib/api/dates'
 import { ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { useReportExports } from '../hooks/useReports'
@@ -46,7 +46,7 @@ export function ExportHistory({ seasons }: Readonly<{ seasons: FilterOption[] }>
             {
               key: 'at',
               title: 'Thời điểm xuất',
-              render: (_, item) => <span style={numeric}>{dayjs(parseUtc(item.exportedAt)).format('DD/MM/YYYY HH:mm')}</span>,
+              render: (_, item) => <span style={numeric}>{formatDateTime(item.exportedAt)}</span>,
             },
             { key: 'kind', title: 'Loại báo cáo', render: (_, item) => (item.kind ? reportDefinitions[item.kind].label : '—') },
             { key: 'format', title: 'Định dạng', render: (_, item) => (item.format ? reportFormatLabels[item.format] : '—') },

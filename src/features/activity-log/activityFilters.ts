@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { parseUtc, vietnamToday } from '@/lib/api/dates'
+import { vietnamToday } from '@/lib/api/dates'
 import type { ActivityQuery } from './api/activityLogApi'
 import { actionLabels, entityTypeLabels, type ActivityFilters, type ActivityPeriod, type ActivityRecord } from './types'
 
@@ -22,7 +22,6 @@ export function toActivityQuery({ entityType, action, period, user }: ActivityFi
   return { entityType, action, fromDate, userId: user?.id }
 }
 
-export const formatActivityTime = (createdAt: string) => dayjs(parseUtc(createdAt)).format('DD/MM/YYYY HH:mm')
 
 export const actionLabel = (action: string) => actionLabels[action] ?? action
 

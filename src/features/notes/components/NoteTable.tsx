@@ -1,6 +1,6 @@
 import { Flex, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
-import { parseUtc } from '@/lib/api/dates'
+import { formatDateTime } from '@/lib/api/dates'
 import { colors, typography } from '@/styles/tokens'
 import type { DirectorNote } from '../types'
 
@@ -55,7 +55,7 @@ export function NoteTable({ notes, party, page, pageSize, total, loading, onPage
       key: 'sentAt',
       title: 'Gửi lúc',
       dataIndex: 'sentAt',
-      render: (sentAt: string) => <Typography.Text style={numeric}>{dayjs(parseUtc(sentAt)).format('DD/MM/YYYY HH:mm')}</Typography.Text>,
+      render: (sentAt: string) => <Typography.Text style={numeric}>{formatDateTime(sentAt)}</Typography.Text>,
     },
   ]
 

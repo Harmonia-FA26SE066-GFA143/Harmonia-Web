@@ -1,6 +1,5 @@
 import { Button, Flex, Table, Tag, Typography, type TableColumnsType } from 'antd'
-import dayjs from 'dayjs'
-import { parseUtc } from '@/lib/api/dates'
+import { formatDateTime } from '@/lib/api/dates'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { skillLevelLabels, type PendingSkill } from '../types'
 
@@ -65,7 +64,7 @@ export function PendingSkillTable({
       dataIndex: 'declaredAt',
       render: (declaredAt: string) => (
         <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric }}>
-          {dayjs(parseUtc(declaredAt)).format('DD/MM/YYYY HH:mm')}
+          {formatDateTime(declaredAt)}
         </Typography.Text>
       ),
     },

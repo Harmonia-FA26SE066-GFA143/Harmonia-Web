@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api/errors'
+import { errorMessage } from '@/lib/api/errors'
 
 /** `/api/liturgical-events` refusals (Harmonia-BE LiturgicalEventService, LookupService.CheckEventCatalogsAsync). */
 const messages: Record<string, string> = {
@@ -13,5 +13,5 @@ const messages: Record<string, string> = {
 }
 
 export function eventErrorMessage(error: Error, fallback: string): string {
-  return (error instanceof ApiError && error.code !== undefined && messages[error.code]) || fallback
+  return errorMessage(error, messages, fallback)
 }

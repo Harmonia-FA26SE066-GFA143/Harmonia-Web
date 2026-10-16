@@ -1,6 +1,5 @@
 import { Card, Descriptions, Typography } from 'antd'
-import dayjs from 'dayjs'
-import { parseUtc } from '@/lib/api/dates'
+import { formatDateTime } from '@/lib/api/dates'
 import { colors, typography } from '@/styles/tokens'
 import { useEventNames } from '../hooks/useEventNames'
 import { formatProgramDate } from '../programFilters'
@@ -32,7 +31,7 @@ export function EventInfo({ event }: Readonly<{ event: LiturgicalEvent }>) {
             key: 'published',
             label: 'Công bố lúc',
             children: event.publishedAt ? (
-              <span style={numeric}>{dayjs(parseUtc(event.publishedAt)).format('DD/MM/YYYY HH:mm')}</span>
+              <span style={numeric}>{formatDateTime(event.publishedAt)}</span>
             ) : (
               orNone()
             ),

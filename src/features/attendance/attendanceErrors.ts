@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api/errors'
+import { errorMessage } from '@/lib/api/errors'
 
 /** PUT /api/rehearsals/{id}/attendances refusals (Harmonia-BE RehearsalAttendanceService). */
 const messages: Record<string, string> = {
@@ -10,8 +10,5 @@ const messages: Record<string, string> = {
 }
 
 export function attendanceErrorMessage(error: Error): string {
-  return (
-    (error instanceof ApiError && error.code !== undefined && messages[error.code]) ||
-    'Không thể lưu điểm danh. Vui lòng thử lại.'
-  )
+  return errorMessage(error, messages, 'Không thể lưu điểm danh. Vui lòng thử lại.')
 }

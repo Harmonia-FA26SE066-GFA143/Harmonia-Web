@@ -5,5 +5,3 @@ export const formatProgramDate = (date: string) => dayjs(date).format('DD/MM/YYY
 
 export const hasActiveEventFilters = (filters: EventFilters) =>
   Boolean(filters.status || filters.fromDate || filters.toDate)
-
-export { vietnamToday } from '@/lib/api/dates'

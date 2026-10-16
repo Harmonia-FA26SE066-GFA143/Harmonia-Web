@@ -1,6 +1,7 @@
 import { Button, Flex, Table, Typography, type TableColumnsType } from 'antd'
 import { colors, typography } from '@/styles/tokens'
-import { formatDateTime, formatDuration } from '../practiceFormat'
+import { formatDateTime } from '@/lib/api/dates'
+import { formatDuration } from '../practiceFormat'
 import type { PracticeSubmission } from '../types'
 import { PracticeStatusTag } from './PracticeStatusTag'
 
