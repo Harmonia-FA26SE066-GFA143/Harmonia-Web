@@ -33,10 +33,11 @@ export function StatePanel({
       vertical
       align="center"
       style={{
-        padding: `${spacing.xxl}px ${spacing.lg}px`,
+        padding: `${spacing.xxl}px ${spacing.xl}px`,
         textAlign: 'center',
-        background: colors.surface,
-        border: `1px solid ${colors.border}`,
+        background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFD 100%)',
+        border: '1px solid rgba(0, 0, 0, 0.06)',
+        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
         borderRadius: radius.lg,
       }}
     >
@@ -45,22 +46,40 @@ export function StatePanel({
         align="center"
         justify="center"
         style={{
-          width: 64,
-          height: 64,
-          marginBottom: spacing.md,
-          borderRadius: radius.lg,
+          width: 72,
+          height: 72,
+          marginBottom: spacing.lg,
+          borderRadius: '50%',
           fontSize: 28,
-          background: danger ? token.colorErrorBg : colors.softSurface,
-          color: danger ? token.colorError : colors.textMuted,
+          background: danger ? token.colorErrorBg : 'rgba(142, 59, 75, 0.06)',
+          border: `1px solid ${danger ? 'rgba(207, 19, 34, 0.15)' : 'rgba(142, 59, 75, 0.12)'}`,
+          color: danger ? token.colorError : colors.primary,
+          boxShadow: `0 4px 16px ${danger ? 'rgba(207, 19, 34, 0.08)' : 'rgba(142, 59, 75, 0.06)'}`,
         }}
       >
         {icon}
       </Flex>
-      <Typography.Title level={headingLevel} style={{ margin: 0 }}>
+      <Typography.Title
+        level={headingLevel}
+        style={{
+          margin: 0,
+          color: colors.textPrimary,
+          letterSpacing: '-0.01em',
+          fontWeight: 600,
+        }}
+      >
         {title}
       </Typography.Title>
       {description && (
-        <Typography.Paragraph style={{ maxWidth: 520, margin: `${spacing.sm}px 0 0`, color: colors.textMuted }}>
+        <Typography.Paragraph
+          style={{
+            maxWidth: 520,
+            margin: `${spacing.sm}px 0 0`,
+            color: colors.textMuted,
+            fontSize: 14,
+            lineHeight: 1.55,
+          }}
+        >
           {description}
         </Typography.Paragraph>
       )}

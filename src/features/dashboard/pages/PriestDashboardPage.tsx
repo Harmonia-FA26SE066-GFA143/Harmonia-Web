@@ -7,7 +7,7 @@ import { EventTable, formatProgramDate, useEvent, useEventNames, useEvents } fro
 import { usePendingSongLists } from '@/features/song-list-review'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
 import { EmptyState, ErrorState, MetricSummary, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, radius, spacing } from '@/styles/tokens'
 
 const upcomingLimit = 5
 
@@ -24,7 +24,15 @@ function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: 
   const label = event.data ? `${eventName(event.data)} · ${formatProgramDate(event.data.date)}` : 'Sự kiện phụng vụ'
 
   return (
-    <Card styles={{ body: { padding: spacing.md } }}>
+    <Card
+      hoverable
+      style={{
+        borderRadius: radius.lg,
+        border: '1px solid rgba(0, 0, 0, 0.06)',
+        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
+      }}
+      styles={{ body: { padding: '18px 20px' } }}
+    >
       <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
         <div>
           {event.isPending ? (
@@ -33,9 +41,11 @@ function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: 
               <Skeleton.Input active size="small" />
             </output>
           ) : (
-            <Typography.Text strong>{label}</Typography.Text>
+            <Typography.Text strong style={{ fontSize: 15, color: colors.textPrimary }}>
+              {label}
+            </Typography.Text>
           )}
-          <Typography.Paragraph style={{ margin: 0, color: colors.textMuted }}>
+          <Typography.Paragraph style={{ margin: '4px 0 0', color: colors.textMuted, fontSize: 13.5 }}>
             Ca trưởng đã gửi danh sách bài hát (phiên bản {version})
             {submittedAt && ` lúc ${dayjs(parseUtc(submittedAt)).format('HH:mm DD/MM/YYYY')}`}.
           </Typography.Paragraph>
@@ -84,7 +94,16 @@ export function PriestDashboardPage() {
         />
 
         <section aria-labelledby="to-review-heading">
-          <Typography.Title id="to-review-heading" level={2} style={{ marginBottom: spacing.md }}>
+          <Typography.Title
+            id="to-review-heading"
+            level={2}
+            style={{
+              marginBottom: spacing.md,
+              fontSize: 18,
+              fontWeight: 700,
+              letterSpacing: '-0.01em',
+            }}
+          >
             Cần xem xét
           </Typography.Title>
           {pending.isPending && <SectionSkeleton rows={2} label="Đang tải danh sách bài hát chờ xem xét" />}
@@ -116,7 +135,16 @@ export function PriestDashboardPage() {
 
         <section aria-labelledby="upcoming-heading">
           <Flex wrap align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
-            <Typography.Title id="upcoming-heading" level={2} style={{ margin: 0 }}>
+            <Typography.Title
+              id="upcoming-heading"
+              level={2}
+              style={{
+                margin: 0,
+                fontSize: 18,
+                fontWeight: 700,
+                letterSpacing: '-0.01em',
+              }}
+            >
               Sự kiện sắp tới
             </Typography.Title>
             <Button onClick={() => navigate(paths.priest.programs)}>Xem tất cả</Button>
@@ -134,7 +162,15 @@ export function PriestDashboardPage() {
             />
           )}
           {upcoming.isSuccess && upcoming.data.totalCount > 0 && (
-            <Card styles={{ body: { padding: 0 } }}>
+            <Card
+              style={{
+                borderRadius: radius.lg,
+                overflow: 'hidden',
+                border: '1px solid rgba(0, 0, 0, 0.06)',
+                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
+              }}
+              styles={{ body: { padding: 0 } }}
+            >
               <EventTable
                 events={upcoming.data.items}
                 onOpen={(event) => navigate(generatePath(paths.priest.programDetail, { programId: event.id }))}
@@ -143,15 +179,40 @@ export function PriestDashboardPage() {
           )}
         </section>
 
-        <Card styles={{ body: { padding: spacing.lg } }}>
+        <Card
+          hoverable
+          style={{
+            borderRadius: radius.lg,
+            border: '1px solid rgba(0, 0, 0, 0.06)',
+            boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
+            background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%)',
+          }}
+          styles={{ body: { padding: spacing.lg } }}
+        >
           <Flex wrap align="center" justify="space-between" gap={spacing.md}>
             <Flex align="center" gap={spacing.md}>
-              <span aria-hidden style={{ fontSize: 22, color: colors.primary }}>
+              <div
+                aria-hidden
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: radius.md,
+                  background: 'rgba(142, 59, 75, 0.08)',
+                  color: colors.primary,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 22,
+                  flexShrink: 0,
+                }}
+              >
                 <BarChartOutlined />
-              </span>
+              </div>
               <div>
-                <Typography.Text strong>Báo cáo</Typography.Text>
-                <Typography.Paragraph style={{ margin: 0, color: colors.textMuted }}>
+                <Typography.Text strong style={{ fontSize: 15, color: colors.textPrimary }}>
+                  Báo cáo
+                </Typography.Text>
+                <Typography.Paragraph style={{ margin: 0, color: colors.textMuted, fontSize: 13.5 }}>
                   Lịch sử phục vụ, sử dụng bài hát và tình trạng chuẩn bị của ca đoàn.
                 </Typography.Paragraph>
               </div>

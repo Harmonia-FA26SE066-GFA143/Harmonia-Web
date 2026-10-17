@@ -54,7 +54,7 @@ export function ProgramCalendarPage() {
     return (
       <Flex vertical gap={2}>
         {celebration && (
-          <Typography.Text ellipsis={{ tooltip: true }} style={{ fontSize: 11, color: colors.textMuted }}>
+          <Typography.Text ellipsis={{ tooltip: true }} style={{ fontSize: 11, color: colors.textBody }}>
             {celebration}
           </Typography.Text>
         )}
@@ -63,7 +63,7 @@ export function ProgramCalendarPage() {
             key={event.id}
             ellipsis={{ tooltip: true }}
             delete={event.status === 'cancelled'}
-            style={{ fontSize: 12, color: event.status === 'published' ? colors.primary : colors.textMuted }}
+            style={{ fontSize: 12, color: event.status === 'published' ? colors.primary : colors.textBody }}
           >
             {/* Published is the usual state; the others are named so the status does not rest on color alone. */}
             {event.status !== 'published' && `${eventStatusLabels[event.status]} · `}
@@ -71,7 +71,7 @@ export function ProgramCalendarPage() {
           </Typography.Text>
         ))}
         {items.length > cellLimit && (
-          <Typography.Text style={{ fontSize: 12, color: colors.textMuted }}>+{items.length - cellLimit} khác</Typography.Text>
+          <Typography.Text style={{ fontSize: 12, color: colors.textBody }}>+{items.length - cellLimit} khác</Typography.Text>
         )}
       </Flex>
     )
