@@ -1,4 +1,5 @@
 export { EventTable } from './components/EventTable'
+export { ProgramTable } from './components/ProgramTable'
 export { ProgramInfo } from './components/ProgramInfo'
 export { SongListStatusTag } from './components/SongListStatusTag'
 export { useEventNames } from './hooks/useEventNames'
