@@ -12,8 +12,8 @@ import type { ComponentType, MouseEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { contactEmail } from '@/config/contact'
-import { StatusTag } from '@/shared/ui'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { BrandMark, IconTile, StatusTag } from '@/shared/ui'
+import { cardSurface, colors, radius, spacing, typography } from '@/styles/tokens'
 
 interface RoleSummary {
   title: string
@@ -68,33 +68,6 @@ const roleSummaries: RoleSummary[] = [
     ],
   },
 ]
-
-function LandingBrandLogo() {
-  return (
-    <div
-      aria-hidden
-      style={{
-        width: 36,
-        height: 36,
-        borderRadius: radius.md,
-        background: 'linear-gradient(135deg, #8E3B4B 0%, #A24557 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 4px 12px rgba(142, 59, 75, 0.28)',
-        flexShrink: 0,
-      }}
-    >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 4V20" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M18 4V20" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M6 12H18" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="12" cy="7" r="1.5" fill="#F3C68F" />
-        <path d="M9.5 17C11 16 13 16 14.5 17" stroke="#F3C68F" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-    </div>
-  )
-}
 
 /** Public landing page (Stitch SHARED-04), rendered outside the application shell. */
 export function LandingPage() {
@@ -151,7 +124,7 @@ export function LandingPage() {
         }}
       >
         <Flex align="center" gap={spacing.sm}>
-          <LandingBrandLogo />
+          <BrandMark size={36} />
           <Typography.Text
             strong
             style={{
@@ -180,7 +153,7 @@ export function LandingPage() {
             gap: spacing.xs,
             padding: '4px 12px',
             borderRadius: 9999,
-            background: 'rgba(142, 59, 75, 0.08)',
+            background: colors.primarySoft,
             border: '1px solid rgba(142, 59, 75, 0.15)',
             color: colors.primary,
             fontSize: 12.5,
@@ -201,7 +174,6 @@ export function LandingPage() {
             fontSize: 38,
             lineHeight: 1.25,
             letterSpacing: '-0.03em',
-            color: colors.textPrimary,
           }}
         >
           Điều phối ca đoàn và quản lý âm nhạc phụng vụ
@@ -258,33 +230,18 @@ export function LandingPage() {
               <article
                 key={role.title}
                 style={{
+                  ...cardSurface,
                   padding: spacing.xl,
-                  background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%)',
-                  border: '1px solid rgba(0, 0, 0, 0.06)',
                   borderRadius: radius.lg,
                   boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.03)',
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
                 <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
-                  <div
-                    aria-hidden
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: radius.md,
-                      background: 'rgba(142, 59, 75, 0.08)',
-                      color: colors.primary,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 22,
-                    }}
-                  >
+                  <IconTile size={44}>
                     <Icon />
-                  </div>
+                  </IconTile>
                   <StatusTag color={role.platform === 'Web' ? 'blue' : 'green'}>{role.platform}</StatusTag>
                 </Flex>
 
@@ -294,7 +251,6 @@ export function LandingPage() {
                     margin: 0,
                     fontSize: 17,
                     fontWeight: 700,
-                    color: colors.textPrimary,
                     letterSpacing: '-0.01em',
                   }}
                 >

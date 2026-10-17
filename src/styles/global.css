@@ -26,7 +26,6 @@ body {
 ::-webkit-scrollbar-thumb {
   background: rgba(142, 59, 75, 0.15);
   border-radius: 9999px;
-  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {

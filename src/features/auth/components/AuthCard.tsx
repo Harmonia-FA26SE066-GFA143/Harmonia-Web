@@ -2,6 +2,7 @@ import { Flex, Typography } from 'antd'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { BrandMark } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 
 export interface AuthCardProps {
@@ -14,39 +15,12 @@ export interface AuthCardProps {
   footer?: ReactNode
 }
 
-function AuthBrandLogo() {
-  return (
-    <div
-      aria-hidden
-      style={{
-        width: 48,
-        height: 48,
-        borderRadius: radius.md,
-        background: 'linear-gradient(135deg, #8E3B4B 0%, #A24557 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 8px 20px rgba(142, 59, 75, 0.28)',
-        margin: '0 auto 12px',
-      }}
-    >
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 4V20" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M18 4V20" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M6 12H18" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="12" cy="7" r="1.5" fill="#F3C68F" />
-        <path d="M9.5 17C11 16 13 16 14.5 17" stroke="#F3C68F" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-    </div>
-  )
-}
-
 /** Centered card frame shared by the sign-in and password screens. */
 export function AuthCard({ title, description, icon, children, footer }: Readonly<AuthCardProps>) {
   return (
     <Flex vertical align="center" gap={spacing.lg} style={{ paddingBlock: `${spacing.xl}px ${spacing.xxl}px` }}>
       <Link to={paths.home} style={{ textAlign: 'center', textDecoration: 'none' }}>
-        <AuthBrandLogo />
+        <BrandMark size={48} style={{ boxShadow: '0 8px 20px rgba(142, 59, 75, 0.28)', margin: '0 auto 12px' }} />
         <Typography.Text
           strong
           style={{

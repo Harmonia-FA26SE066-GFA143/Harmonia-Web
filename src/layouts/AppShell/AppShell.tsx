@@ -2,7 +2,8 @@ import { MenuOutlined } from '@ant-design/icons'
 import { Button, Drawer, Flex, Grid, Layout, Menu, Typography, type MenuProps } from 'antd'
 import { createElement, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
-import { colors, layout, radius, sizes, spacing, typography } from '@/styles/tokens'
+import { BrandMark } from '@/shared/ui'
+import { colors, layout, sizes, spacing, typography } from '@/styles/tokens'
 import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection } from './navigation'
 import { NotificationBell } from '@/features/notifications'
 import { SystemAnnouncement } from '@/features/settings'
@@ -23,37 +24,10 @@ function toMenuItems(sections: NavSection[]): MenuProps['items'] {
   }))
 }
 
-function BrandLogo() {
-  return (
-    <div
-      aria-hidden
-      style={{
-        width: 38,
-        height: 38,
-        borderRadius: radius.md,
-        background: 'linear-gradient(135deg, #8E3B4B 0%, #A24557 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 4px 12px rgba(142, 59, 75, 0.28)',
-        flexShrink: 0,
-      }}
-    >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 4V20" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M18 4V20" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M6 12H18" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="12" cy="7" r="1.5" fill="#F3C68F" />
-        <path d="M9.5 17C11 16 13 16 14.5 17" stroke="#F3C68F" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-    </div>
-  )
-}
-
 function Brand({ subtitle }: Readonly<{ subtitle: string }>) {
   return (
     <Flex align="center" gap={spacing.sm}>
-      <BrandLogo />
+      <BrandMark size={38} />
       <Flex vertical style={{ lineHeight: 1.25, minWidth: 0 }}>
         <Typography.Text
           strong
@@ -112,7 +86,7 @@ export function AppShell() {
   )
 
   return (
-    <Layout style={{ minHeight: '100vh', background: colors.background }}>
+    <Layout style={{ minHeight: '100vh' }}>
       <a
         className="skip-link"
         href="#main-content"
@@ -135,7 +109,6 @@ export function AppShell() {
             overflow: 'auto',
             borderInlineEnd: '1px solid rgba(0, 0, 0, 0.06)',
             boxShadow: '1px 0 4px 0 rgba(0, 0, 0, 0.02)',
-            background: colors.surface,
           }}
         >
           <div style={{ padding: `${spacing.lg}px ${spacing.lg}px ${spacing.md}px` }}>
@@ -144,7 +117,7 @@ export function AppShell() {
           {menu}
         </Sider>
       )}
-      <Layout style={{ background: 'transparent' }}>
+      <Layout>
         <Header
           style={{
             position: 'sticky',

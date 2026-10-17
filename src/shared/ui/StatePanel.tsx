@@ -1,6 +1,6 @@
 import { Flex, theme, Typography } from 'antd'
 import type { ReactNode } from 'react'
-import { colors, radius, spacing } from '@/styles/tokens'
+import { cardSurface, colors, radius, spacing } from '@/styles/tokens'
 
 export interface StatePanelProps {
   icon: ReactNode
@@ -35,9 +35,7 @@ export function StatePanel({
       style={{
         padding: `${spacing.xxl}px ${spacing.xl}px`,
         textAlign: 'center',
-        background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFD 100%)',
-        border: '1px solid rgba(0, 0, 0, 0.06)',
-        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
+        ...cardSurface,
         borderRadius: radius.lg,
       }}
     >
@@ -59,15 +57,7 @@ export function StatePanel({
       >
         {icon}
       </Flex>
-      <Typography.Title
-        level={headingLevel}
-        style={{
-          margin: 0,
-          color: colors.textPrimary,
-          letterSpacing: '-0.01em',
-          fontWeight: 600,
-        }}
-      >
+      <Typography.Title level={headingLevel} style={{ margin: 0, letterSpacing: '-0.01em' }}>
         {title}
       </Typography.Title>
       {description && (
@@ -76,7 +66,6 @@ export function StatePanel({
             maxWidth: 520,
             margin: `${spacing.sm}px 0 0`,
             color: colors.textMuted,
-            fontSize: 14,
             lineHeight: 1.55,
           }}
         >
