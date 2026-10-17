@@ -10,7 +10,11 @@ const programs = 'Chương trình phụng vụ'
  * Only the matching signed-in role is admitted (RoleGuard).
  */
 export const directorRoutes: RouteObject[] = [
-  placeholderRoute(paths.director.dashboard, { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'], phase: 6 }),
+  pageRoute(
+    paths.director.dashboard,
+    { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'], phase: 6 },
+    async () => (await import('@/features/dashboard')).DirectorDashboardPage,
+  ),
   pageRoute(
     paths.director.members,
     { title: 'Danh sách ca viên', breadcrumb: [area, 'Danh sách ca viên'], phase: 6 },

@@ -1,10 +1,16 @@
 import { fireEvent, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as eventsApi from '@/features/liturgical-programs/api/eventsApi'
+import * as programsApi from '@/features/liturgical-programs/api/programsApi'
+import * as practiceApi from '@/features/practice/api/practiceApi'
+import * as memberSkillsApi from '@/features/skill-approval/api/memberSkillsApi'
+import * as songListsApi from '@/features/song-lists/api/songListsApi'
 import * as reviewApi from '@/features/song-list-review/api/songListReviewApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
+import { programPage } from '@/test/programs'
 import { renderPage } from '@/test/renderPage'
+import { DirectorDashboardPage } from './DirectorDashboardPage'
 import { PriestDashboardPage } from './PriestDashboardPage'
 
 const emptyPage = { items: [], pageNumber: 1, pageSize: 5, totalCount: 0, totalPages: 0 }
@@ -71,5 +77,61 @@ describe('PriestDashboardPage', () => {
     expect(await screen.findByText('Lễ Bổn mạng · 11/10/2099')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Xem danh sách bài hát: Lễ Bổn mạng · 11/10/2099' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/p1/song-review')
+  })
+})
+
+describe('DirectorDashboardPage', () => {
+  const counts = () => {
+    vi.spyOn(memberSkillsApi, 'listPendingSkills').mockResolvedValue({ ...emptyPage, totalCount: 4 })
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue({ ...emptyPage, totalCount: 7 })
+  }
+
+  it('lists the programs whose song list waits on the Director, with the Priest note', async () => {
+    counts()
+    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(
+      programPage(
+        { id: 'p1', eventName: 'Lễ Chúa Nhật XX', date: '2026-10-18', songListStatus: 'needsRevision' },
+        { id: 'p2', eventName: 'Lễ Bổn mạng', date: '2026-10-25', specialRequirements: 'Rước kiệu' },
+        { id: 'p3', eventName: 'Lễ Các Đẳng', date: '2026-11-02', songListStatus: 'approved' },
+      ),
+    )
+    vi.spyOn(songListsApi, 'getSongList').mockResolvedValue({
+      id: 'l1',
+      eventId: 'p1',
+      version: 1,
+      status: 'needsRevision',
+      items: [],
+      reviews: [{ decision: 'requestRevision', notes: 'Đổi bài Hiệp lễ.', reviewedAt: '2026-10-15T02:00:00Z' }],
+    })
+    renderPage(<DirectorDashboardPage />, '/director')
+
+    expect(await screen.findByText('Cần chỉnh sửa danh sách bài hát')).toBeInTheDocument()
+    expect(await screen.findByText('“Đổi bài Hiệp lễ.”')).toBeInTheDocument()
+    expect(screen.getByText('Chưa đề xuất bài hát')).toBeInTheDocument()
+    expect(screen.getByText('Rước kiệu')).toBeInTheDocument()
+    // Counts from the backend totals.
+    expect(await screen.findByText('4')).toBeInTheDocument()
+    expect(screen.getByText('7')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Đề xuất danh sách bài hát: Lễ Bổn mạng' }))
+    expect(await screen.findByTestId('location')).toHaveTextContent('/director/programs/p2/song-list')
+  })
+
+  it('says when nothing waits, and shows a recoverable error per section', async () => {
+    counts()
+    vi.spyOn(programsApi, 'listPrograms').mockResolvedValueOnce(
+      programPage({ id: 'p3', eventName: 'Lễ Các Đẳng', date: '2026-11-02', songListStatus: 'submitted' }),
+    )
+    renderPage(<DirectorDashboardPage />, '/director')
+    expect(await screen.findByRole('heading', { name: 'Không có việc tồn đọng' })).toBeInTheDocument()
+    expect(screen.getByText('Lễ Các Đẳng')).toBeInTheDocument()
+  })
+
+  it('shows a recoverable error when the programs cannot be loaded', async () => {
+    counts()
+    vi.spyOn(programsApi, 'listPrograms').mockRejectedValue(new ApiError(403, undefined))
+    renderPage(<DirectorDashboardPage />, '/director')
+
+    expect((await screen.findAllByRole('heading', { name: 'Không thể tải chương trình sắp tới' })).length).toBe(2)
   })
 })
