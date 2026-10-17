@@ -16,9 +16,27 @@ export interface StatusTagProps extends Omit<TagProps, 'color' | 'children'> {
  */
 export function StatusTag({ color = 'default', style, children, ...props }: Readonly<StatusTagProps>) {
   const { token } = theme.useToken()
+  const baseStyle = {
+    borderRadius: 9999,
+    padding: '2px 10px',
+    fontSize: 12,
+    fontWeight: 500,
+    lineHeight: '18px',
+    letterSpacing: '0.01em',
+  }
+
   if (color === 'default') {
     return (
-      <Tag style={style} {...props}>
+      <Tag
+        style={{
+          ...baseStyle,
+          color: '#4B5563',
+          background: '#F3F4F6',
+          borderColor: '#E5E7EB',
+          ...style,
+        }}
+        {...props}
+      >
         {children}
       </Tag>
     )
@@ -35,7 +53,16 @@ export function StatusTag({ color = 'default', style, children, ...props }: Read
   const [text, background, border] = tones[color === 'processing' ? 'blue' : color]
 
   return (
-    <Tag style={{ color: text, background, borderColor: border, ...style }} {...props}>
+    <Tag
+      style={{
+        ...baseStyle,
+        color: text,
+        background,
+        borderColor: border,
+        ...style,
+      }}
+      {...props}
+    >
       {children}
     </Tag>
   )

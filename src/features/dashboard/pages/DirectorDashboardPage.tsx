@@ -55,7 +55,17 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
   const kind = [type !== program.eventName && type, program.time].filter(Boolean).join(' · ')
 
   return (
-    <Card style={{ height: '100%' }} styles={{ body: { padding: spacing.lg, height: '100%' } }}>
+    <Card
+      hoverable
+      style={{
+        height: '100%',
+        borderRadius: radius.lg,
+        border: '1px solid rgba(0, 0, 0, 0.06)',
+        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
+        background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%)',
+      }}
+      styles={{ body: { padding: spacing.lg, height: '100%' } }}
+    >
       <Flex vertical gap={spacing.sm} style={{ height: '100%' }}>
         <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
           <StatusTag color={color} style={{ marginInlineEnd: 0 }}>
@@ -64,24 +74,32 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
           <Typography.Text style={{ ...muted, fontFamily: typography.fontFamilyNumeric }}>{formatProgramDate(program.date)}</Typography.Text>
         </Flex>
         <div>
-          <Typography.Title level={3} style={{ margin: 0 }}>
+          <Typography.Title level={3} style={{ margin: 0, fontSize: 16.5, fontWeight: 700, color: colors.textPrimary }}>
             {program.eventName}
           </Typography.Title>
           {kind && <Typography.Text style={muted}>{kind}</Typography.Text>}
         </div>
-        <div style={{ background: colors.softSurface, borderRadius: radius.md, padding: spacing.md, flex: 1 }}>
-          <Typography.Text strong style={{ display: 'block', marginBottom: spacing.xs }}>
+        <div
+          style={{
+            background: sentBack ? 'rgba(207, 19, 34, 0.04)' : '#F9FAFB',
+            border: `1px solid ${sentBack ? 'rgba(207, 19, 34, 0.12)' : '#E5E7EB'}`,
+            borderRadius: radius.md,
+            padding: spacing.md,
+            flex: 1,
+          }}
+        >
+          <Typography.Text strong style={{ display: 'block', marginBottom: spacing.xs, fontSize: 13, color: colors.textPrimary }}>
             {sentBack ? 'Nhận xét của Cha xứ' : 'Yêu cầu đặc biệt'}
           </Typography.Text>
           {sentBack ? (
             <PriestNote programId={program.id} />
           ) : (
-            <Typography.Text>{program.specialRequirements ?? 'Không có yêu cầu đặc biệt.'}</Typography.Text>
+            <Typography.Text style={{ fontSize: 13.5 }}>{program.specialRequirements ?? 'Không có yêu cầu đặc biệt.'}</Typography.Text>
           )}
         </div>
         <Button
           type={sentBack ? 'primary' : 'default'}
-          style={{ alignSelf: 'flex-end' }}
+          style={{ alignSelf: 'flex-end', fontWeight: 500 }}
           aria-label={`${sentBack || todo === 'draft' ? 'Cập nhật' : 'Đề xuất'} danh sách bài hát: ${program.eventName}`}
           onClick={() => navigate(generatePath(paths.director.songListProposal, { programId: program.id }))}
         >

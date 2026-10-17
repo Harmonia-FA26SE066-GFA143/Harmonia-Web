@@ -21,26 +21,53 @@ export function PageHeader({ title, description, breadcrumb, tags, extra }: Read
       align="flex-end"
       justify="space-between"
       gap={spacing.md}
-      style={{ marginBottom: spacing.lg }}
+      style={{
+        marginBottom: spacing.xl,
+        paddingBottom: spacing.sm,
+      }}
     >
-      <div style={{ minWidth: 0 }}>
+      <div style={{ minWidth: 0, flex: '1 1 auto' }}>
         {breadcrumb && breadcrumb.length > 0 && (
-          <Breadcrumb items={breadcrumb} style={{ marginBottom: spacing.xs }} />
+          <Breadcrumb
+            items={breadcrumb}
+            style={{
+              marginBottom: 6,
+              fontSize: 12.5,
+              fontWeight: 500,
+            }}
+          />
         )}
         <Flex align="center" wrap gap={spacing.sm}>
-          <Typography.Title level={1} style={{ margin: 0, fontWeight: typography.pageTitle.fontWeight }}>
+          <Typography.Title
+            level={1}
+            style={{
+              margin: 0,
+              fontWeight: typography.pageTitle.fontWeight,
+              fontSize: typography.pageTitle.fontSize,
+              color: colors.textPrimary,
+              letterSpacing: '-0.02em',
+            }}
+          >
             {title}
           </Typography.Title>
           {tags}
         </Flex>
         {description && (
-          <Typography.Paragraph style={{ margin: `${spacing.xs}px 0 0`, color: colors.textMuted }}>
+          <Typography.Paragraph
+            style={{
+              margin: `${spacing.xs}px 0 0`,
+              color: colors.textMuted,
+              fontSize: 14,
+              maxWidth: 720,
+              lineHeight: 1.5,
+            }}
+          >
             {description}
           </Typography.Paragraph>
         )}
       </div>
       {extra && (
-        <Flex wrap gap={spacing.sm}>
+        <Flex wrap align="center" gap={spacing.sm} style={{ flexShrink: 0 }}>
           {extra}
         </Flex>
       )}

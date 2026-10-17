@@ -14,15 +14,51 @@ export interface AuthCardProps {
   footer?: ReactNode
 }
 
+function AuthBrandLogo() {
+  return (
+    <div
+      aria-hidden
+      style={{
+        width: 48,
+        height: 48,
+        borderRadius: radius.md,
+        background: 'linear-gradient(135deg, #8E3B4B 0%, #A24557 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 8px 20px rgba(142, 59, 75, 0.28)',
+        margin: '0 auto 12px',
+      }}
+    >
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 4V20" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M18 4V20" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M6 12H18" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
+        <circle cx="12" cy="7" r="1.5" fill="#F3C68F" />
+        <path d="M9.5 17C11 16 13 16 14.5 17" stroke="#F3C68F" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    </div>
+  )
+}
+
 /** Centered card frame shared by the sign-in and password screens. */
 export function AuthCard({ title, description, icon, children, footer }: Readonly<AuthCardProps>) {
   return (
-    <Flex vertical align="center" gap={spacing.lg} style={{ paddingBlock: spacing.xl }}>
-      <Link to={paths.home} style={{ textAlign: 'center' }}>
-        <Typography.Text strong style={{ display: 'block', fontSize: typography.panelTitle.fontSize, color: colors.primary }}>
+    <Flex vertical align="center" gap={spacing.lg} style={{ paddingBlock: `${spacing.xl}px ${spacing.xxl}px` }}>
+      <Link to={paths.home} style={{ textAlign: 'center', textDecoration: 'none' }}>
+        <AuthBrandLogo />
+        <Typography.Text
+          strong
+          style={{
+            display: 'block',
+            fontSize: 26,
+            color: colors.primary,
+            letterSpacing: '-0.02em',
+          }}
+        >
           Harmonia
         </Typography.Text>
-        <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+        <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted, fontWeight: 500 }}>
           Điều phối ca đoàn và quản lý âm nhạc phụng vụ
         </Typography.Text>
       </Link>
@@ -30,10 +66,11 @@ export function AuthCard({ title, description, icon, children, footer }: Readonl
         style={{
           width: '100%',
           maxWidth: 440,
-          padding: spacing.xl,
+          padding: '36px 32px',
           background: colors.surface,
-          border: `1px solid ${colors.border}`,
-          borderRadius: radius.lg,
+          border: '1px solid rgba(0, 0, 0, 0.06)',
+          borderRadius: 16,
+          boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.03)',
         }}
       >
         {icon && (
@@ -45,7 +82,7 @@ export function AuthCard({ title, description, icon, children, footer }: Readonl
               width: 56,
               height: 56,
               marginBottom: spacing.md,
-              borderRadius: radius.lg,
+              borderRadius: radius.md,
               fontSize: 26,
               background: colors.primarySoft,
               color: colors.primary,
@@ -56,18 +93,23 @@ export function AuthCard({ title, description, icon, children, footer }: Readonl
         )}
         <Typography.Title
           level={1}
-          style={{ margin: 0, fontSize: typography.panelTitle.fontSize, lineHeight: typography.panelTitle.lineHeight }}
+          style={{
+            margin: 0,
+            fontSize: typography.panelTitle.fontSize,
+            lineHeight: typography.panelTitle.lineHeight,
+            letterSpacing: '-0.01em',
+          }}
         >
           {title}
         </Typography.Title>
         {description && (
-          <Typography.Paragraph style={{ margin: `${spacing.xs}px 0 0`, color: colors.textMuted }}>
+          <Typography.Paragraph style={{ margin: `${spacing.xs}px 0 0`, color: colors.textMuted, fontSize: 13.5 }}>
             {description}
           </Typography.Paragraph>
         )}
         {children && <div style={{ marginTop: spacing.lg }}>{children}</div>}
       </section>
-      {footer && <Typography.Text style={{ color: colors.textBody }}>{footer}</Typography.Text>}
+      {footer && <Typography.Text style={{ color: colors.textBody, fontSize: 13 }}>{footer}</Typography.Text>}
     </Flex>
   )
 }
