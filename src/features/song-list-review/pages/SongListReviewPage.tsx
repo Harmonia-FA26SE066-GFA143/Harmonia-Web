@@ -9,7 +9,7 @@ import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/s
 import { spacing } from '@/styles/tokens'
 import { ReviewForm } from '../components/ReviewForm'
 import { SongListItemsTable } from '../components/SongListItemsTable'
-import { useApprovedSongList, usePendingSongLists, useReviewSongList, useSongList } from '../hooks/useSongListReview'
+import { useLatestSongList, useReviewSongList } from '../hooks/useSongListReview'
 import { reviewErrorMessage } from '../songListReviewErrors'
 import type { ReviewDecision, ReviewValues, SongList } from '../types'
 
@@ -40,14 +40,24 @@ const confirmations: Record<ReviewDecision, { title: string; content: string; do
   },
 }
 
+const decided: Partial<Record<SongList['status'], { type: 'success' | 'warning' | 'error'; title: string }>> = {
+  approved: { type: 'success', title: 'Danh sách đã được phê duyệt' },
+  needsRevision: { type: 'warning', title: 'Đã yêu cầu Ca trưởng chỉnh sửa' },
+  rejected: { type: 'error', title: 'Danh sách đã bị từ chối' },
+}
+
 function ListStatus({ list }: Readonly<{ list: SongList }>) {
-  if (list.status === 'approved') {
+  const decision = decided[list.status]
+  if (decision) {
+    const notes = list.reviews.at(-1)?.notes
     return (
       <Alert
-        type="success"
+        type={decision.type}
         showIcon
-        title={`Danh sách đã được phê duyệt${at(list.decidedAt)}.`}
-        description={list.reviews.at(-1)?.notes && `Ghi chú: “${list.reviews.at(-1)?.notes}”`}
+        title={`${decision.title} (phiên bản ${list.version})${at(list.decidedAt)}.`}
+        description={[notes && `Ghi chú: “${notes}”`, list.status !== 'approved' && 'Ca trưởng sẽ gửi một phiên bản mới.']
+          .filter(Boolean)
+          .join(' ') || undefined}
       />
     )
   }
@@ -67,18 +77,15 @@ function ListStatus({ list }: Readonly<{ list: SongList }>) {
 
 /**
  * Priest / Liturgy Committee: the song list the Choir Director submitted for an event, decided as a whole (FE-17–FE-20,
- * `/api/song-lists`): approve, request a revision or reject, with a note the Choir Director reads. An approved list is
- * shown read-only. A list being drafted or revised cannot be read by event yet (tbd-backlog B14).
+ * `/api/song-lists`): approve, request a revision or reject, with a note the Choir Director reads. The newest list that
+ * is not a draft is read by event; once decided it is shown read-only with the decision.
  */
 export function SongListReviewPage() {
   const navigate = useNavigate()
   const { message, modal } = App.useApp()
   const { programId = '' } = useParams()
   const event = useEvent(programId)
-  const pending = usePendingSongLists()
-  const pendingId = pending.data?.find((list) => list.eventId === programId)?.id
-  const submitted = useSongList(pendingId)
-  const approved = useApprovedSongList(programId)
+  const latest = useLatestSongList(programId)
   const review = useReviewSongList()
   const { eventName } = useEventNames()
 
@@ -89,12 +96,12 @@ export function SongListReviewPage() {
     </Button>
   )
 
-  if (event.isPending || pending.isPending || approved.isPending || (pendingId && submitted.isPending)) {
+  if (event.isPending || latest.isPending) {
     return <PageSkeleton sections={2} />
   }
 
-  const failed = event.isError || pending.isError || approved.isError || submitted.isError
-  const list = submitted.data ?? approved.data ?? undefined
+  const failed = event.isError || latest.isError
+  const list = latest.data ?? undefined
 
   const handleReview = (values: ReviewValues) => {
     if (!list) return
@@ -127,8 +134,8 @@ export function SongListReviewPage() {
       {failed && (
         <ErrorState
           title="Không thể tải danh sách bài hát"
-          onRetry={() => Promise.all([event.refetch(), pending.refetch(), approved.refetch(), submitted.refetch()])}
-          retrying={event.isFetching || pending.isFetching || approved.isFetching || submitted.isFetching}
+          onRetry={() => Promise.all([event.refetch(), latest.refetch()])}
+          retrying={event.isFetching || latest.isFetching}
         />
       )}
       {!failed && !event.data && (
@@ -140,8 +147,8 @@ export function SongListReviewPage() {
       )}
       {!failed && event.data && !list && (
         <EmptyState
-          title="Không có danh sách chờ duyệt"
-          description="Ca trưởng chưa gửi danh sách bài hát cho sự kiện này, hoặc đang chỉnh sửa theo yêu cầu."
+          title="Chưa có danh sách bài hát"
+          description="Ca trưởng chưa gửi danh sách bài hát cho sự kiện này."
         />
       )}
       {!failed && event.data && list && (

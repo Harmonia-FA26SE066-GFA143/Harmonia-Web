@@ -3,9 +3,8 @@ import { apiRequest } from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import type { ReviewDecision, ReviewValues, SongList } from '../types'
 
-// `/api/song-lists` (Harmonia-BE SongListsController), the Parish Priest's side: lists waiting for review, one list,
-// the approved list of an event, and the decision. There is no read of an event's current list by event while it is
-// a draft, needs revision or was rejected (tbd-backlog B14).
+// `/api/song-lists` (Harmonia-BE SongListsController), the Parish Priest's side: lists waiting for review, the newest
+// list of an event that is not a draft, and the decision.
 
 type ApiStatus = 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'NeedsRevision'
 type ApiDecision = 'Approve' | 'Reject' | 'RequestRevision'
@@ -59,19 +58,18 @@ const toSongList = (dto: SongListDto): SongList => ({
   })),
 })
 
-/** Every submitted list, oldest submission first. Their `items` are empty: open one with `getSongList`. */
+/** Every submitted list, oldest submission first; their `items` are empty. */
 export async function listPendingSongLists(): Promise<SongList[]> {
   return (await apiRequest<SongListDto[]>('/api/song-lists/pending')).map(toSongList)
 }
 
-export async function getSongList(id: string): Promise<SongList> {
-  return toSongList(await apiRequest<SongListDto>(`/api/song-lists/${id}`))
-}
-
-/** `null` while the event has no approved list (404 SONG_LIST_NOT_FOUND, also for an unpublished event). */
-export async function getApprovedSongList(eventId: string): Promise<SongList | null> {
+/**
+ * The newest version of the event's list that is not a draft (the Choir Director's drafts stay theirs); `null` while
+ * there is none (404 SONG_LIST_NOT_FOUND).
+ */
+export async function getLatestSongList(eventId: string): Promise<SongList | null> {
   try {
-    return toSongList(await apiRequest<SongListDto>(`/api/song-lists/event/${eventId}/approved`))
+    return toSongList(await apiRequest<SongListDto>(`/api/song-lists/event/${eventId}/latest`))
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null
     throw error

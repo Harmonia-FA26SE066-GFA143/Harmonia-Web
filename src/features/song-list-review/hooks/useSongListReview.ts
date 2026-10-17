@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getApprovedSongList, getSongList, listPendingSongLists, reviewSongList } from '../api/songListReviewApi'
+import { getLatestSongList, listPendingSongLists, reviewSongList } from '../api/songListReviewApi'
 import type { ReviewValues } from '../types'
 
 const reviewKey = ['song-list-review'] as const
@@ -8,12 +8,8 @@ export function usePendingSongLists() {
   return useQuery({ queryKey: [...reviewKey, 'pending'], queryFn: listPendingSongLists })
 }
 
-export function useSongList(id?: string) {
-  return useQuery({ queryKey: [...reviewKey, 'list', id], queryFn: () => getSongList(id ?? ''), enabled: Boolean(id) })
-}
-
-export function useApprovedSongList(eventId: string) {
-  return useQuery({ queryKey: [...reviewKey, 'approved', eventId], queryFn: () => getApprovedSongList(eventId) })
+export function useLatestSongList(eventId: string) {
+  return useQuery({ queryKey: [...reviewKey, 'latest', eventId], queryFn: () => getLatestSongList(eventId) })
 }
 
 /**
