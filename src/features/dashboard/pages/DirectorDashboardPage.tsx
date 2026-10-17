@@ -1,7 +1,6 @@
 import { CalendarOutlined, FileTextOutlined, ReadOutlined, TeamOutlined } from '@ant-design/icons'
 import { Button, Card, Col, Flex, Row, Typography } from 'antd'
-import type { ComponentType } from 'react'
-import { generatePath, Link, useNavigate } from 'react-router'
+import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, ProgramTable, useUpcomingPrograms, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { useSubmissions } from '@/features/practice'
@@ -9,6 +8,7 @@ import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
 import { EmptyState, ErrorState, MetricSummary, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { ShortcutCards, type Shortcut } from '../components/ShortcutCards'
 
 const upcomingLimit = 5
 const todoLimit = 4
@@ -90,13 +90,6 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
       </Flex>
     </Card>
   )
-}
-
-interface Shortcut {
-  path: string
-  title: string
-  description: string
-  icon: ComponentType
 }
 
 const shortcuts: Shortcut[] = [
@@ -201,23 +194,7 @@ export function DirectorDashboardPage() {
           <Typography.Title id="shortcuts-heading" level={2} style={{ marginBottom: spacing.md }}>
             Truy cập nhanh
           </Typography.Title>
-          <Row gutter={[spacing.md, spacing.md]}>
-            {shortcuts.map(({ path, title, description, icon: Icon }) => (
-              <Col key={path} xs={24} sm={12} xl={6}>
-                <Link to={path} style={{ display: 'block', height: '100%' }}>
-                  <Card hoverable style={{ height: '100%' }} styles={{ body: { padding: spacing.md } }}>
-                    <Flex align="center" gap={spacing.sm} style={{ marginBottom: spacing.xs }}>
-                      <span aria-hidden style={{ color: colors.primary, fontSize: 18 }}>
-                        <Icon />
-                      </span>
-                      <Typography.Text strong>{title}</Typography.Text>
-                    </Flex>
-                    <Typography.Text style={{ color: colors.textMuted }}>{description}</Typography.Text>
-                  </Card>
-                </Link>
-              </Col>
-            ))}
-          </Row>
+          <ShortcutCards shortcuts={shortcuts} />
         </section>
       </Flex>
     </>
