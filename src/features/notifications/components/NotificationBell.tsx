@@ -116,16 +116,7 @@ export function NotificationBell() {
     markAll.mutate(undefined, { onError: () => message.error('Không thể đánh dấu tất cả đã đọc. Vui lòng thử lại.') })
 
   return (
-    <div
-      ref={wrapper}
-      style={{ position: 'relative', display: 'inline-flex' }}
-      onKeyDown={(event) => {
-        if (open && event.key === 'Escape') {
-          setOpen(false)
-          bell.current?.focus()
-        }
-      }}
-    >
+    <div ref={wrapper} style={{ position: 'relative', display: 'inline-flex' }}>
       <Dropdown
         open={open}
         onOpenChange={setOpen}
@@ -133,10 +124,22 @@ export function NotificationBell() {
         placement="bottomRight"
         getPopupContainer={() => wrapper.current ?? document.body}
         popupRender={() => (
-          <div
-            role="dialog"
+          <dialog
+            open
             aria-label="Thông báo"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setOpen(false)
+                bell.current?.focus()
+              }
+            }}
             style={{
+              // Undo the browser's own dialog box (absolute, centred, bordered, padded); the Dropdown places it.
+              position: 'static',
+              margin: 0,
+              padding: 0,
+              border: 'none',
+              color: 'inherit',
               width: 'min(360px, calc(100vw - 32px))',
               background: token.colorBgElevated,
               borderRadius: token.borderRadiusLG,
@@ -159,7 +162,7 @@ export function NotificationBell() {
             <div style={{ padding: spacing.sm, maxHeight: 420, overflowY: 'auto' }}>
               <NotificationList open={open} onMarkRead={handleMarkRead} />
             </div>
-          </div>
+          </dialog>
         )}
       >
         <Button

@@ -120,12 +120,11 @@ export function ReviewModal({ submissionId, onClose }: Readonly<ReviewModalProps
             rules={[
               { max: 1000, message: 'Nhận xét tối đa 1000 ký tự.' },
               ({ getFieldValue }) => ({
-                validator: (_, value?: string) =>
-                  value?.trim() || (!reviewed && getFieldValue('result') !== 'needsRevision')
-                    ? Promise.resolve()
-                    : Promise.reject(
-                        new Error(reviewed ? 'Vui lòng nhập nhận xét.' : 'Vui lòng nhập nhận xét khi cần chỉnh sửa.'),
-                      ),
+                validator: (_, value?: string) => {
+                  if (value?.trim() || (!reviewed && getFieldValue('result') !== 'needsRevision')) return Promise.resolve()
+                  const required = reviewed ? 'Vui lòng nhập nhận xét.' : 'Vui lòng nhập nhận xét khi cần chỉnh sửa.'
+                  return Promise.reject(new Error(required))
+                },
               }),
             ]}
           >

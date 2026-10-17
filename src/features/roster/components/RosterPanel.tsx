@@ -70,9 +70,10 @@ export function RosterPanel({ programId, songs, eligible, skills }: Readonly<Ros
   const handleFinalize = () => {
     if (!current) return
     const short = shortages.data.length
+    const shortNote = short ? `Còn ${short} vị trí thiếu người. ` : ''
     modal.confirm({
       title: 'Chốt phân công?',
-      content: `${short ? `Còn ${short} vị trí thiếu người. ` : ''}Sau khi chốt, yêu cầu nhân sự và phân công không thể thay đổi.`,
+      content: `${shortNote}Sau khi chốt, yêu cầu nhân sự và phân công không thể thay đổi.`,
       okText: 'Chốt phân công',
       cancelText: 'Hủy',
       onOk: () =>

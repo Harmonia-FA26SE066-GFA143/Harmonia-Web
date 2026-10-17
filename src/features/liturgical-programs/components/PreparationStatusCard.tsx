@@ -23,27 +23,37 @@ function participation({ invited, confirmed, declined, unsure }: PreparationStat
   return `${confirmed} xác nhận · ${declined} từ chối · ${unsure} chưa chắc chắn · ${invited} chưa phản hồi`
 }
 
+function shortageLines(shortages: PreparationStatus['rosterShortages']) {
+  if (shortages === undefined) {
+    return <Typography.Text style={muted}>Chưa tính được nhu cầu nhân sự: danh sách bài hát chưa được duyệt.</Typography.Text>
+  }
+  if (shortages.length === 0) return <Typography.Text style={muted}>Đủ người cho mọi bài hát.</Typography.Text>
+  return shortages.map((shortage) => (
+    <Typography.Text key={`${shortage.songTitle}-${shortage.skillName}`} type="danger">
+      Thiếu {shortage.skillName} cho {shortage.songTitle}: {shortage.assignedCount}/{shortage.requiredCount} người
+    </Typography.Text>
+  ))
+}
+
 function roster({ rosterFinalized, rosterActiveAssignments, rosterShortages }: PreparationStatus) {
-  const state =
-    rosterFinalized === undefined
-      ? 'Chưa phân công'
-      : `${rosterFinalized ? 'Đã chốt' : 'Đang phân công'} · ${rosterActiveAssignments} lượt phân công`
+  let state = 'Chưa phân công'
+  if (rosterFinalized !== undefined) {
+    const stage = rosterFinalized ? 'Đã chốt' : 'Đang phân công'
+    state = `${stage} · ${rosterActiveAssignments} lượt phân công`
+  }
   return (
     <Flex vertical>
       <span>{state}</span>
-      {rosterShortages === undefined ? (
-        <Typography.Text style={muted}>Chưa tính được nhu cầu nhân sự: danh sách bài hát chưa được duyệt.</Typography.Text>
-      ) : rosterShortages.length === 0 ? (
-        <Typography.Text style={muted}>Đủ người cho mọi bài hát.</Typography.Text>
-      ) : (
-        rosterShortages.map((shortage) => (
-          <Typography.Text key={`${shortage.songTitle}-${shortage.skillName}`} type="danger">
-            Thiếu {shortage.skillName} cho {shortage.songTitle}: {shortage.assignedCount}/{shortage.requiredCount} người
-          </Typography.Text>
-        ))
-      )}
+      {shortageLines(rosterShortages)}
     </Flex>
   )
+}
+
+/** A draft stays the Choir Director's; any other list is read on the review page. */
+function songListActionLabel(songListStatus: PreparationStatus['songListStatus']) {
+  if (songListStatus === 'submitted') return 'Duyệt danh sách'
+  if (songListStatus && songListStatus !== 'draft') return 'Xem danh sách'
+  return undefined
 }
 
 /**
@@ -54,8 +64,7 @@ export function PreparationStatusCard({ eventId }: Readonly<{ eventId: string }>
   const navigate = useNavigate()
   const status = usePreparationStatus(eventId)
   const songListStatus = status.data?.songListStatus
-  // A draft stays the Choir Director's; any other list is read on the review page.
-  const songListAction = songListStatus === 'submitted' ? 'Duyệt danh sách' : songListStatus && songListStatus !== 'draft' ? 'Xem danh sách' : undefined
+  const songListAction = songListActionLabel(songListStatus)
 
   return (
     <Card title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>

@@ -58,10 +58,10 @@ function NoteFields() {
           loading={events.isPending}
           options={(events.data?.items ?? [])
             .filter((event) => event.status !== 'cancelled')
-            .map((event) => ({
-              value: event.id,
-              label: `${eventName(event)} · ${dayjs(`${event.date}T${event.time}`).format('DD/MM/YYYY HH:mm')}`,
-            }))}
+            .map((event) => {
+              const startsAt = dayjs(`${event.date}T${event.time}`).format('DD/MM/YYYY HH:mm')
+              return { value: event.id, label: `${eventName(event)} · ${startsAt}` }
+            })}
         />
       </Form.Item>
       <Form.Item

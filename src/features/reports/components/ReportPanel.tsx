@@ -4,13 +4,13 @@ import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton } from '@/shar
 import { colors, spacing } from '@/styles/tokens'
 import { useReport } from '../hooks/useReports'
 import { reportDefinitions } from '../reportDefinitions'
-import type { ReportFilters, ReportKind } from '../types'
+import type { AdminReportKind, ReportFilters } from '../types'
 import { ReportTable } from './ReportTable'
 
 const pageSize = 20
 
 export interface ReportPanelProps {
-  kind: ReportKind
+  kind: AdminReportKind
   filters: ReportFilters
   /** True when a filter is applied, to tell "no results" from "no data". */
   filtered: boolean

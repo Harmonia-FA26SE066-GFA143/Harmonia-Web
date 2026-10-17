@@ -169,11 +169,13 @@ export function ProgramCalendarPage() {
                 >
                   Tạo chương trình cho ngày này
                 </Button>
-                {events.isPlaceholderData ? (
+                {events.isPlaceholderData && (
                   <Typography.Text style={{ color: colors.textMuted }}>Đang tải sự kiện…</Typography.Text>
-                ) : selectedEvents.length === 0 ? (
+                )}
+                {!events.isPlaceholderData && selectedEvents.length === 0 && (
                   <Typography.Text style={{ color: colors.textMuted }}>Chưa có sự kiện nào trong ngày này.</Typography.Text>
-                ) : (
+                )}
+                {!events.isPlaceholderData && selectedEvents.length > 0 && (
                   <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                     {selectedEvents.map((event) => (
                       <Flex component="li" key={event.id} wrap align="center" justify="space-between" gap={spacing.sm}>

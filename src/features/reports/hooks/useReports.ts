@@ -1,9 +1,9 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { exportReport, getReport, listExports, type ReportPage } from '../api/reportsApi'
-import type { ReportExportRequest, ReportFilters, ReportKind } from '../types'
+import type { AdminReportKind, ReportExportRequest, ReportFilters } from '../types'
 
 /** One page of a report; the previous page stays visible while the next one loads. */
-export function useReport(kind: ReportKind, filters: ReportFilters, page: ReportPage) {
+export function useReport(kind: AdminReportKind, filters: ReportFilters, page: ReportPage) {
   return useQuery({
     queryKey: ['reports', kind, filters, page],
     queryFn: () => getReport(kind, filters, page),

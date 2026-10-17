@@ -41,7 +41,8 @@ function listAll<T>(kind: LookupKind): Promise<T[]> {
 }
 
 function save<T>(kind: LookupKind, id: string | undefined, body: object): Promise<T> {
-  return apiRequest<T>(`/api/lookups/${lookupPaths[kind]}${id ? `/${id}` : ''}`, {
+  const path = `/api/lookups/${lookupPaths[kind]}`
+  return apiRequest<T>(id ? `${path}/${id}` : path, {
     method: id ? 'PUT' : 'POST',
     body: JSON.stringify(body),
   })
