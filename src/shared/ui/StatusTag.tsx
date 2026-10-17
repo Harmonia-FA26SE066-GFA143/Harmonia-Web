@@ -1,5 +1,6 @@
 import { Tag, theme, type TagProps } from 'antd'
 import type { ReactNode } from 'react'
+import { colors } from '@/styles/tokens'
 
 /** The Ant Design preset names the status maps already use; `processing` reads as blue. */
 export type StatusTagColor = 'default' | 'green' | 'gold' | 'red' | 'orange' | 'blue' | 'processing'
@@ -16,34 +17,9 @@ export interface StatusTagProps extends Omit<TagProps, 'color' | 'children'> {
  */
 export function StatusTag({ color = 'default', style, children, ...props }: Readonly<StatusTagProps>) {
   const { token } = theme.useToken()
-  const baseStyle = {
-    borderRadius: 9999,
-    padding: '2px 10px',
-    fontSize: 12,
-    fontWeight: 500,
-    lineHeight: '18px',
-    letterSpacing: '0.01em',
-  }
-
-  if (color === 'default') {
-    return (
-      <Tag
-        style={{
-          ...baseStyle,
-          color: '#4B5563',
-          background: '#F3F4F6',
-          borderColor: '#E5E7EB',
-          ...style,
-        }}
-        {...props}
-      >
-        {children}
-      </Tag>
-    )
-  }
-
   // [text, background, border]
   const tones = {
+    default: ['#4B5563', colors.softSurface, colors.border],
     green: [token.green8, token.green1, token.green3],
     gold: [token.gold9, token.gold1, token.gold3],
     red: [token.red8, token.red1, token.red3],
@@ -55,7 +31,12 @@ export function StatusTag({ color = 'default', style, children, ...props }: Read
   return (
     <Tag
       style={{
-        ...baseStyle,
+        borderRadius: 9999,
+        padding: '2px 10px',
+        fontSize: 12,
+        fontWeight: 500,
+        lineHeight: '18px',
+        letterSpacing: '0.01em',
         color: text,
         background,
         borderColor: border,

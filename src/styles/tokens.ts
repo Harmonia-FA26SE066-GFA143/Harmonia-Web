@@ -19,32 +19,23 @@ export const colors = {
   primaryHover: '#762E3D',
   primarySoft: 'rgba(142, 59, 75, 0.08)',
   primaryFocus: 'rgba(142, 59, 75, 0.25)',
-  primaryGlow: 'rgba(142, 59, 75, 0.15)',
-  accentGold: '#B8860B',
-  accentGoldSoft: 'rgba(184, 134, 11, 0.10)',
 } as const
 
-export const gradients = {
-  primary: 'linear-gradient(135deg, #8E3B4B 0%, #A3485A 100%)',
-  primaryHover: 'linear-gradient(135deg, #7A2E3D 0%, #8E3B4B 100%)',
-  surfaceCard: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFD 100%)',
-  brandGlow: 'radial-gradient(ellipse at top, rgba(142, 59, 75, 0.08) 0%, rgba(255, 255, 255, 0) 70%)',
-  heroBg: 'linear-gradient(180deg, #FFF9FA 0%, #F8F9FA 100%)',
-} as const
+/** Brand mark and avatar fill; `.ant-btn-primary` in global.css repeats it, since CSS cannot read this file. */
+export const brandGradient = 'linear-gradient(135deg, #8E3B4B 0%, #A24557 100%)'
 
 export const shadows = {
   sm: '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
   md: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
   lg: '0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04)',
   xl: '0 20px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
-  primary: '0 4px 14px 0 rgba(142, 59, 75, 0.25)',
-  cardHover: '0 8px 24px -4px rgba(0, 0, 0, 0.08), 0 2px 6px -2px rgba(0, 0, 0, 0.04)',
 } as const
 
-export const transitions = {
-  fast: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-  normal: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-  smooth: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+/** Raised card look: hairline border, faint shadow, near-white gradient. The Card theme gives the radius. */
+export const cardSurface = {
+  border: '1px solid rgba(0, 0, 0, 0.06)',
+  boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
+  background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%)',
 } as const
 
 /**
@@ -82,8 +73,6 @@ export const radius = {
   md: 10,
   /** Containers: cards, modals, state panels. */
   lg: 14,
-  xl: 20,
-  full: 9999,
 } as const
 
 export const sizes = {

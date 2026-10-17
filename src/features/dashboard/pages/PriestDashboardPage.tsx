@@ -1,4 +1,4 @@
-import { BarChartOutlined, PlusOutlined } from '@ant-design/icons'
+import { BarChartOutlined, CalendarOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Skeleton, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { generatePath, useNavigate } from 'react-router'
@@ -6,13 +6,13 @@ import { paths } from '@/app/router/paths'
 import { EventTable, formatProgramDate, useEvent, useEventNames, useEvents } from '@/features/liturgical-programs'
 import { usePendingSongLists } from '@/features/song-list-review'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
-import { EmptyState, ErrorState, MetricSummary, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, radius, spacing } from '@/styles/tokens'
+import { EmptyState, ErrorState, IconTile, MetricSummary, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { cardSurface, colors, spacing } from '@/styles/tokens'
 
 const upcomingLimit = 5
 
 const metrics = [
-  { key: 'upcoming', label: 'Sự kiện sắp tới' },
+  { key: 'upcoming', label: 'Sự kiện sắp tới', icon: CalendarOutlined },
   { key: 'pending', label: 'Danh sách bài hát chờ xem xét' },
 ]
 
@@ -26,22 +26,18 @@ function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: 
   return (
     <Card
       hoverable
-      style={{
-        borderRadius: radius.lg,
-        border: '1px solid rgba(0, 0, 0, 0.06)',
-        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
-      }}
+      style={cardSurface}
       styles={{ body: { padding: '18px 20px' } }}
     >
       <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
         <div>
           {event.isPending ? (
             // Keeps the title's place so the card does not jump when the event name arrives.
-            <output aria-label="Đang tải tên sự kiện" style={{ display: 'block' }}>
+            <output aria-label="Đang tải tên sự kiện">
               <Skeleton.Input active size="small" />
             </output>
           ) : (
-            <Typography.Text strong style={{ fontSize: 15, color: colors.textPrimary }}>
+            <Typography.Text strong style={{ fontSize: 15 }}>
               {label}
             </Typography.Text>
           )}
@@ -94,16 +90,7 @@ export function PriestDashboardPage() {
         />
 
         <section aria-labelledby="to-review-heading">
-          <Typography.Title
-            id="to-review-heading"
-            level={2}
-            style={{
-              marginBottom: spacing.md,
-              fontSize: 18,
-              fontWeight: 700,
-              letterSpacing: '-0.01em',
-            }}
-          >
+          <Typography.Title id="to-review-heading" level={2} style={{ marginBottom: spacing.md }}>
             Cần xem xét
           </Typography.Title>
           {pending.isPending && <SectionSkeleton rows={2} label="Đang tải danh sách bài hát chờ xem xét" />}
@@ -135,16 +122,7 @@ export function PriestDashboardPage() {
 
         <section aria-labelledby="upcoming-heading">
           <Flex wrap align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
-            <Typography.Title
-              id="upcoming-heading"
-              level={2}
-              style={{
-                margin: 0,
-                fontSize: 18,
-                fontWeight: 700,
-                letterSpacing: '-0.01em',
-              }}
-            >
+            <Typography.Title id="upcoming-heading" level={2} style={{ margin: 0 }}>
               Sự kiện sắp tới
             </Typography.Title>
             <Button onClick={() => navigate(paths.priest.programs)}>Xem tất cả</Button>
@@ -163,12 +141,7 @@ export function PriestDashboardPage() {
           )}
           {upcoming.isSuccess && upcoming.data.totalCount > 0 && (
             <Card
-              style={{
-                borderRadius: radius.lg,
-                overflow: 'hidden',
-                border: '1px solid rgba(0, 0, 0, 0.06)',
-                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
-              }}
+              style={{ ...cardSurface, overflow: 'hidden' }}
               styles={{ body: { padding: 0 } }}
             >
               <EventTable
@@ -181,35 +154,16 @@ export function PriestDashboardPage() {
 
         <Card
           hoverable
-          style={{
-            borderRadius: radius.lg,
-            border: '1px solid rgba(0, 0, 0, 0.06)',
-            boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
-            background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%)',
-          }}
+          style={cardSurface}
           styles={{ body: { padding: spacing.lg } }}
         >
           <Flex wrap align="center" justify="space-between" gap={spacing.md}>
             <Flex align="center" gap={spacing.md}>
-              <div
-                aria-hidden
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: radius.md,
-                  background: 'rgba(142, 59, 75, 0.08)',
-                  color: colors.primary,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 22,
-                  flexShrink: 0,
-                }}
-              >
+              <IconTile size={44}>
                 <BarChartOutlined />
-              </div>
+              </IconTile>
               <div>
-                <Typography.Text strong style={{ fontSize: 15, color: colors.textPrimary }}>
+                <Typography.Text strong style={{ fontSize: 15 }}>
                   Báo cáo
                 </Typography.Text>
                 <Typography.Paragraph style={{ margin: 0, color: colors.textMuted, fontSize: 13.5 }}>

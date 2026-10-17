@@ -7,7 +7,7 @@ import { SignOutModal } from '@/features/auth'
 import { useMyProfile } from '@/features/profile'
 import { getSession } from '@/lib/auth/session'
 import { roleByApiName, roleLabels } from '@/shared/types/account'
-import { colors, spacing } from '@/styles/tokens'
+import { brandGradient, colors, spacing } from '@/styles/tokens'
 import { surfaces, type Surface } from './navigation'
 
 /**
@@ -59,7 +59,6 @@ export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
             borderRadius: 9999,
             border: '1px solid rgba(0, 0, 0, 0.06)',
             background: 'rgba(255, 255, 255, 0.6)',
-            transition: 'all 0.2s ease',
           }}
         >
           <Flex align="center" gap={spacing.sm}>
@@ -67,14 +66,14 @@ export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
               size={32}
               icon={<UserOutlined />}
               style={{
-                background: 'linear-gradient(135deg, #8E3B4B 0%, #A24557 100%)',
+                background: brandGradient,
                 boxShadow: '0 2px 6px rgba(142, 59, 75, 0.3)',
               }}
             />
             {/* Small screens keep the avatar only, so the brand still fits beside it. */}
             {!compact && (
               <Flex vertical align="flex-start" style={{ lineHeight: 1.25, minWidth: 0, paddingRight: 4 }}>
-                <Typography.Text strong ellipsis style={{ maxWidth: 180, fontSize: 13, color: colors.textPrimary }}>
+                <Typography.Text strong ellipsis style={{ maxWidth: 180, fontSize: 13 }}>
                   {name}
                 </Typography.Text>
                 <Typography.Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: 500 }}>

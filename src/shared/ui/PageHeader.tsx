@@ -43,8 +43,6 @@ export function PageHeader({ title, description, breadcrumb, tags, extra }: Read
             style={{
               margin: 0,
               fontWeight: typography.pageTitle.fontWeight,
-              fontSize: typography.pageTitle.fontSize,
-              color: colors.textPrimary,
               letterSpacing: '-0.02em',
             }}
           >
@@ -57,7 +55,6 @@ export function PageHeader({ title, description, breadcrumb, tags, extra }: Read
             style={{
               margin: `${spacing.xs}px 0 0`,
               color: colors.textMuted,
-              fontSize: 14,
               maxWidth: 720,
               lineHeight: 1.5,
             }}

@@ -1,4 +1,4 @@
-import { CalendarOutlined, FileTextOutlined, ReadOutlined, TeamOutlined } from '@ant-design/icons'
+import { CalendarOutlined, CustomerServiceOutlined, FileTextOutlined, ReadOutlined, TeamOutlined, TrophyOutlined } from '@ant-design/icons'
 import { Button, Card, Col, Flex, Row, Typography } from 'antd'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -7,7 +7,7 @@ import { useSubmissions } from '@/features/practice'
 import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
 import { EmptyState, ErrorState, MetricSummary, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { cardSurface, colors, radius, spacing, typography } from '@/styles/tokens'
 import { ShortcutCards, type Shortcut } from '../components/ShortcutCards'
 
 const upcomingLimit = 5
@@ -15,9 +15,9 @@ const todoLimit = 4
 const countOnly = { pageNumber: 1, pageSize: 1 }
 
 const metrics = [
-  { key: 'upcoming', label: 'Chương trình sắp tới' },
-  { key: 'skills', label: 'Kỹ năng chờ duyệt' },
-  { key: 'submissions', label: 'Bản thu chờ chấm' },
+  { key: 'upcoming', label: 'Chương trình sắp tới', icon: CalendarOutlined },
+  { key: 'skills', label: 'Kỹ năng chờ duyệt', icon: TrophyOutlined },
+  { key: 'submissions', label: 'Bản thu chờ chấm', icon: CustomerServiceOutlined },
 ]
 
 type Todo = 'none' | 'draft' | 'needsRevision' | 'rejected'
@@ -57,13 +57,7 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
   return (
     <Card
       hoverable
-      style={{
-        height: '100%',
-        borderRadius: radius.lg,
-        border: '1px solid rgba(0, 0, 0, 0.06)',
-        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
-        background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%)',
-      }}
+      style={{ ...cardSurface, height: '100%' }}
       styles={{ body: { padding: spacing.lg, height: '100%' } }}
     >
       <Flex vertical gap={spacing.sm} style={{ height: '100%' }}>
@@ -74,7 +68,7 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
           <Typography.Text style={{ ...muted, fontFamily: typography.fontFamilyNumeric }}>{formatProgramDate(program.date)}</Typography.Text>
         </Flex>
         <div>
-          <Typography.Title level={3} style={{ margin: 0, fontSize: 16.5, fontWeight: 700, color: colors.textPrimary }}>
+          <Typography.Title level={3} style={{ margin: 0, fontSize: 16.5, fontWeight: 700 }}>
             {program.eventName}
           </Typography.Title>
           {kind && <Typography.Text style={muted}>{kind}</Typography.Text>}
@@ -82,13 +76,13 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
         <div
           style={{
             background: sentBack ? 'rgba(207, 19, 34, 0.04)' : '#F9FAFB',
-            border: `1px solid ${sentBack ? 'rgba(207, 19, 34, 0.12)' : '#E5E7EB'}`,
+            border: `1px solid ${sentBack ? 'rgba(207, 19, 34, 0.12)' : colors.border}`,
             borderRadius: radius.md,
             padding: spacing.md,
             flex: 1,
           }}
         >
-          <Typography.Text strong style={{ display: 'block', marginBottom: spacing.xs, fontSize: 13, color: colors.textPrimary }}>
+          <Typography.Text strong style={{ display: 'block', marginBottom: spacing.xs, fontSize: 13 }}>
             {sentBack ? 'Nhận xét của Cha xứ' : 'Yêu cầu đặc biệt'}
           </Typography.Text>
           {sentBack ? (
