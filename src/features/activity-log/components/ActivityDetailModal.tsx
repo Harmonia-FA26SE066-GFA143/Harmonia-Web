@@ -1,5 +1,6 @@
 import { Button, Descriptions, Modal, Table, Typography } from 'antd'
 import { colors, spacing, typography } from '@/styles/tokens'
+import { fieldLabel, fieldValue } from '../activityFields'
 import { actionLabel, actorName, entityLabel } from '../activityFilters'
 import { formatDateTime } from '@/lib/api/dates'
 import type { ActivityRecord } from '../types'
@@ -19,7 +20,7 @@ interface FieldChange {
 const muted = { color: colors.textMuted }
 const mono = { fontFamily: typography.fontFamilyNumeric }
 
-/** The fields of the old and new JSON objects; a value that is not an object is shown under "Giá trị". */
+/** The fields of the old and new JSON objects, in words; a value that is not an object is shown under "Giá trị". */
 function changesOf({ oldValue, newValue }: ActivityRecord): FieldChange[] {
   const parse = (json?: string): Record<string, unknown> => {
     if (!json) return {}
@@ -30,13 +31,12 @@ function changesOf({ oldValue, newValue }: ActivityRecord): FieldChange[] {
       return { 'Giá trị': json }
     }
   }
-  const text = (value: unknown) => (value === undefined ? undefined : typeof value === 'string' ? value : JSON.stringify(value))
   const before = parse(oldValue)
   const after = parse(newValue)
   return [...new Set([...Object.keys(before), ...Object.keys(after)])].map((field) => ({
     field,
-    before: text(before[field]),
-    after: text(after[field]),
+    before: fieldValue(field, before[field]),
+    after: fieldValue(field, after[field]),
   }))
 }
 
@@ -80,7 +80,7 @@ export function ActivityDetailModal({ record, onClose }: Readonly<ActivityDetail
               scroll={{ x: 'max-content' }}
               style={{ marginTop: spacing.md }}
               columns={[
-                { key: 'field', title: 'Trường', dataIndex: 'field', render: (field: string) => <span style={mono}>{field}</span> },
+                { key: 'field', title: 'Trường', dataIndex: 'field', render: (field: string) => fieldLabel(record.entityType, field) },
                 { key: 'before', title: 'Trước', dataIndex: 'before', render: (value?: string) => value ?? <span style={muted}>—</span> },
                 { key: 'after', title: 'Sau', dataIndex: 'after', render: (value?: string) => value ?? <span style={muted}>—</span> },
               ]}
