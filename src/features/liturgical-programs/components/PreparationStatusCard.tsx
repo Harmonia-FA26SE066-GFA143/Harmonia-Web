@@ -54,9 +54,8 @@ export function PreparationStatusCard({ eventId }: Readonly<{ eventId: string }>
   const navigate = useNavigate()
   const status = usePreparationStatus(eventId)
   const songListStatus = status.data?.songListStatus
-  // Only a submitted or an approved list can be read by event (tbd-backlog B14).
-  const songListAction =
-    songListStatus === 'submitted' ? 'Duyệt danh sách' : songListStatus === 'approved' ? 'Xem danh sách' : undefined
+  // A draft stays the Choir Director's; any other list is read on the review page.
+  const songListAction = songListStatus === 'submitted' ? 'Duyệt danh sách' : songListStatus && songListStatus !== 'draft' ? 'Xem danh sách' : undefined
 
   return (
     <Card title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>

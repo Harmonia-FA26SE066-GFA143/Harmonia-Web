@@ -37,7 +37,6 @@ beforeEach(() => {
     locationName: 'Nhà thờ chính',
     status: 'published',
   })
-  vi.spyOn(reviewApi, 'getApprovedSongList').mockResolvedValue(null)
 })
 
 afterEach(() => {
@@ -45,21 +44,20 @@ afterEach(() => {
 })
 
 describe('SongListReviewPage', () => {
-  it('explains when no list of the event is waiting for review', async () => {
-    vi.spyOn(reviewApi, 'listPendingSongLists').mockResolvedValue([{ ...submitted, eventId: 'other', items: [] }])
+  it('explains when the event has no list yet', async () => {
+    const latest = vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue(null)
     renderReview()
 
-    expect(await screen.findByRole('heading', { name: 'Không có danh sách chờ duyệt' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Chưa có danh sách bài hát' })).toBeInTheDocument()
+    expect(latest).toHaveBeenCalledWith('e1')
   })
 
   it('requires a note to request a revision of the whole list', async () => {
-    vi.spyOn(reviewApi, 'listPendingSongLists').mockResolvedValue([{ ...submitted, items: [] }])
-    const get = vi.spyOn(reviewApi, 'getSongList').mockResolvedValue(submitted)
+    vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue(submitted)
     const review = vi.spyOn(reviewApi, 'reviewSongList').mockResolvedValue()
     renderReview()
 
     expect(await screen.findByText('Toàn ca đoàn hát.')).toBeInTheDocument()
-    expect(get).toHaveBeenCalledWith('sl-2')
     expect(screen.getByText(/phiên bản 2/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('radio', { name: 'Yêu cầu chỉnh sửa' }))
     fireEvent.click(screen.getByRole('button', { name: 'Gửi quyết định' }))
@@ -77,8 +75,7 @@ describe('SongListReviewPage', () => {
   })
 
   it('approves without a note', async () => {
-    vi.spyOn(reviewApi, 'listPendingSongLists').mockResolvedValue([{ ...submitted, items: [] }])
-    vi.spyOn(reviewApi, 'getSongList').mockResolvedValue(submitted)
+    vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue(submitted)
     const review = vi.spyOn(reviewApi, 'reviewSongList').mockResolvedValue()
     renderReview()
 
@@ -91,8 +88,7 @@ describe('SongListReviewPage', () => {
   })
 
   it('shows the approved list read-only', async () => {
-    vi.spyOn(reviewApi, 'listPendingSongLists').mockResolvedValue([])
-    vi.spyOn(reviewApi, 'getApprovedSongList').mockResolvedValue({
+    vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue({
       ...submitted,
       status: 'approved',
       decidedAt: '2026-10-10T02:00:00Z',
@@ -103,6 +99,20 @@ describe('SongListReviewPage', () => {
     expect(await screen.findByText(/Danh sách đã được phê duyệt/)).toBeInTheDocument()
     expect(screen.getByText('Ghi chú: “Hợp chủ đề.”')).toBeInTheDocument()
     expect(screen.getByText('Lễ Vật Tâm Tình')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Gửi quyết định' })).toBeNull()
+  })
+
+  it('shows a list sent back for revision read-only, with the note', async () => {
+    vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue({
+      ...submitted,
+      status: 'needsRevision',
+      decidedAt: '2026-10-10T02:00:00Z',
+      reviews: [{ id: 'r1', decision: 'requestRevision', notes: 'Đổi bài Ca dâng lễ.', reviewedAt: '2026-10-10T02:00:00Z' }],
+    })
+    renderReview()
+
+    expect(await screen.findByText(/Đã yêu cầu Ca trưởng chỉnh sửa \(phiên bản 2\)/)).toBeInTheDocument()
+    expect(screen.getByText(/Ghi chú: “Đổi bài Ca dâng lễ.” Ca trưởng sẽ gửi một phiên bản mới./)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Gửi quyết định' })).toBeNull()
   })
 })
