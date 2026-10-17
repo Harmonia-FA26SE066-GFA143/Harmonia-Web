@@ -71,21 +71,22 @@ body {
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-/* Enhanced Primary Buttons */
-.ant-btn-primary {
+/* Enhanced Primary Buttons. Danger buttons keep antd's red and disabled ones its grey, so neither reads as the brand
+   action (a disabled one would otherwise show grey text on the gradient). */
+.ant-btn-primary:not(.ant-btn-dangerous):not(:disabled) {
   background: linear-gradient(135deg, #8E3B4B 0%, #A24557 100%) !important;
   border: none !important;
   box-shadow: 0 3px 10px rgba(142, 59, 75, 0.22) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.ant-btn-primary:not(:disabled):hover {
+.ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):hover {
   background: linear-gradient(135deg, #7A2E3D 0%, #8E3B4B 100%) !important;
   box-shadow: 0 6px 18px rgba(142, 59, 75, 0.35) !important;
   transform: translateY(-1px);
 }
 
-.ant-btn-primary:not(:disabled):active {
+.ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):active {
   transform: translateY(0);
 }
 
