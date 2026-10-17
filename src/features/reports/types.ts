@@ -7,8 +7,6 @@ export type PriestReportKind = 'serviceHistory' | 'songUsage'
 
 export type AdminReportKind = PriestReportKind | 'userActivity' | 'rehearsalAttendance' | 'participation' | 'assignmentCompletion'
 
-export type ReportKind = AdminReportKind
-
 /**
  * Filters of `SearchReportsRequest`. The month becomes `fromDate` / `toDate`; filtering by Mass or ceremony type is not
  * offered by the backend, and by event would need an event list the Admin cannot read.
@@ -47,7 +45,7 @@ export interface ReportExportRequest {
 /** One file an Admin exported (`ReportExportDto`). */
 export interface ReportExport {
   id: string
-  kind?: ReportKind
+  kind?: AdminReportKind
   format?: ReportFormat
   fromDate?: string
   toDate?: string

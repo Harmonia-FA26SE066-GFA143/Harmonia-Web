@@ -4,7 +4,7 @@ import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as reportsApi from '../api/reportsApi'
-import type { ReportKind } from '../types'
+import type { AdminReportKind } from '../types'
 import { AdminReportsPage } from './AdminReportsPage'
 
 const empty = { items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 }
@@ -40,7 +40,7 @@ describe('AdminReportsPage', () => {
   })
 
   it('loads the report of the selected tab, page by page on the server', async () => {
-    const getReport = vi.spyOn(reportsApi, 'getReport').mockImplementation(async (kind: ReportKind) =>
+    const getReport = vi.spyOn(reportsApi, 'getReport').mockImplementation(async (kind: AdminReportKind) =>
       kind === 'participation'
         ? { ...empty, totalCount: 1, items: [{ id: 'm1', cells: { member: 'Simon Đức', confirmed: 3, declined: 1, unsure: 0, invited: 2 } }] }
         : empty,

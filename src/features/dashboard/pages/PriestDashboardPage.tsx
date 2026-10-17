@@ -29,9 +29,9 @@ function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: 
         <div>
           {event.isPending ? (
             // Keeps the title's place so the card does not jump when the event name arrives.
-            <div role="status" aria-label="Đang tải tên sự kiện">
+            <output aria-label="Đang tải tên sự kiện" style={{ display: 'block' }}>
               <Skeleton.Input active size="small" />
-            </div>
+            </output>
           ) : (
             <Typography.Text strong>{label}</Typography.Text>
           )}

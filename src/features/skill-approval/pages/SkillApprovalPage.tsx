@@ -29,7 +29,7 @@ export function SkillApprovalPage() {
   const approve = useApproveSkill()
   const reject = useRejectSkill()
   const [rejecting, setRejecting] = useState<PendingSkill>()
-  const results = useRef<HTMLDivElement>(null)
+  const results = useRef<HTMLElement>(null)
   const decided = useRef(false)
   const [decisions, setDecisions] = useState(0)
 
@@ -99,7 +99,7 @@ export function SkillApprovalPage() {
         description="Kỹ năng ca viên khai báo trên ứng dụng di động, chờ Ca trưởng duyệt. Khai báo cũ nhất ở trên cùng."
       />
 
-      <div ref={results} tabIndex={-1} role="region" aria-label="Kỹ năng chờ duyệt" style={{ outline: 'none' }}>
+      <section ref={results} tabIndex={-1} aria-label="Kỹ năng chờ duyệt" style={{ outline: 'none' }}>
         {pending.isPending && <SectionSkeleton rows={5} label="Đang tải kỹ năng chờ duyệt" />}
         {pending.isError && (
           <ErrorState
@@ -134,7 +134,7 @@ export function SkillApprovalPage() {
             </Card>
           </>
         )}
-      </div>
+      </section>
 
       <RejectSkillModal
         skill={rejecting}

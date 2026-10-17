@@ -132,6 +132,6 @@ describe('DirectorDashboardPage', () => {
     vi.spyOn(programsApi, 'listPrograms').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<DirectorDashboardPage />, '/director')
 
-    expect((await screen.findAllByRole('heading', { name: 'Không thể tải chương trình sắp tới' })).length).toBe(2)
+    expect(await screen.findAllByRole('heading', { name: 'Không thể tải chương trình sắp tới' })).toHaveLength(2)
   })
 })

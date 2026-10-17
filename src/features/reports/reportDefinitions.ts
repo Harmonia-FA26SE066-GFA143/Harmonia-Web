@@ -1,4 +1,4 @@
-import type { AdminReportKind, PriestReportKind, ReportKind } from './types'
+import type { AdminReportKind, PriestReportKind } from './types'
 
 export interface ReportColumnDefinition {
   key: string
@@ -18,7 +18,7 @@ const member: ReportColumnDefinition = { key: 'member', title: 'Ca viên' }
 const count = (key: string, title: string): ReportColumnDefinition => ({ key, title, numeric: true })
 
 /** Columns follow the DTOs of Harmonia-BE ReportsController; every value is the backend's own count. */
-export const reportDefinitions: Record<ReportKind, ReportDefinition> = {
+export const reportDefinitions: Record<AdminReportKind, ReportDefinition> = {
   serviceHistory: {
     label: 'Lịch sử phục vụ',
     description: 'Các sự kiện đã diễn ra và kết quả chuẩn bị của ca đoàn cho từng sự kiện.',

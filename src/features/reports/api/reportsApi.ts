@@ -5,7 +5,7 @@ import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { ApiRoleName } from '@/lib/auth/session'
 import { roleByApiName, roleLabels } from '@/shared/types/account'
 import { toReportQuery } from '../reportFilters'
-import type { ReportExport, ReportExportRequest, ReportFilters, ReportFormat, ReportKind, ReportRow } from '../types'
+import type { AdminReportKind, ReportExport, ReportExportRequest, ReportFilters, ReportFormat, ReportRow } from '../types'
 
 // `/api/reports` (Harmonia-BE ReportsController): six paged reports over past data, an export to a file and the list
 // of exports. Service history and song usage are open to the Parish Priest and the Admin, the rest to the Admin only.
@@ -15,7 +15,7 @@ export interface ReportPage {
   pageSize: number
 }
 
-const paths: Record<ReportKind, string> = {
+const paths: Record<AdminReportKind, string> = {
   serviceHistory: 'service-history',
   songUsage: 'song-usage',
   userActivity: 'user-activity',
@@ -32,7 +32,7 @@ type ApiReportType =
   | 'Participation'
   | 'AssignmentCompletion'
 
-const kindByApi: Record<ApiReportType, ReportKind> = {
+const kindByApi: Record<ApiReportType, AdminReportKind> = {
   ServiceHistory: 'serviceHistory',
   SongUsage: 'songUsage',
   UserActivity: 'userActivity',
@@ -41,7 +41,7 @@ const kindByApi: Record<ApiReportType, ReportKind> = {
   AssignmentCompletion: 'assignmentCompletion',
 }
 
-const apiType = Object.fromEntries(Object.entries(kindByApi).map(([api, kind]) => [kind, api])) as Record<ReportKind, ApiReportType>
+const apiType = Object.fromEntries(Object.entries(kindByApi).map(([api, kind]) => [kind, api])) as Record<AdminReportKind, ApiReportType>
 
 type ApiFormat = 'Csv' | 'Xlsx' | 'Pdf' | 'Xml' | 'Json'
 
@@ -96,7 +96,7 @@ interface MemberCountsDto {
   [count: string]: string | number
 }
 
-const toRow: Record<ReportKind, (dto: never) => ReportRow> = {
+const toRow: Record<AdminReportKind, (dto: never) => ReportRow> = {
   serviceHistory: (dto: ServiceHistoryDto) => ({
     id: dto.eventId,
     programId: dto.eventId,
@@ -158,7 +158,7 @@ const toRow: Record<ReportKind, (dto: never) => ReportRow> = {
   }),
 }
 
-export async function getReport(kind: ReportKind, filters: ReportFilters, page: ReportPage): Promise<PagedList<ReportRow>> {
+export async function getReport(kind: AdminReportKind, filters: ReportFilters, page: ReportPage): Promise<PagedList<ReportRow>> {
   const result = await apiRequest<PagedList<never>>(`/api/reports/${paths[kind]}${toQuery({ ...toReportQuery(filters), ...page })}`)
   return { ...result, items: result.items.map(toRow[kind]) }
 }

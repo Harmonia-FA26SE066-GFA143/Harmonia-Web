@@ -42,8 +42,11 @@ const groups: { title: string; keys: string[] }[] = [
   { title: 'Lịch tập và điểm danh', keys: ['Rehearsal.AttendanceOpensMinutesBefore'] },
 ]
 
-const toField = ({ dataType, value }: SystemSetting): FieldValue =>
-  dataType === 'int' ? Number(value) : dataType === 'bool' ? value === 'true' : value
+function toField({ dataType, value }: SystemSetting): FieldValue {
+  if (dataType === 'int') return Number(value)
+  if (dataType === 'bool') return value === 'true'
+  return value
+}
 
 /** The text the backend stores (SystemSetting.SetValue): "42", "true" / "false", trimmed text. */
 const toText = ({ dataType }: SystemSetting, field: FieldValue) =>
