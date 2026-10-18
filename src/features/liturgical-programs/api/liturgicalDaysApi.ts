@@ -1,5 +1,6 @@
 import { apiRequest } from '@/lib/api/client'
 import { toQuery } from '@/lib/api/paging'
+import { celebrationNameVi } from '../celebrationNames'
 import type { LiturgicalDay } from '../types'
 
 // `/api/liturgical-days` (Harmonia-BE LiturgicalDaysController): the liturgical days of a date range (at most 366 days),
@@ -17,7 +18,7 @@ export async function listLiturgicalDays(fromDate: string, toDate: string): Prom
   const days = await apiRequest<LiturgicalDayDto[]>(`/api/liturgical-days${toQuery({ fromDate, toDate })}`)
   return days.map((dto) => ({
     date: dto.date,
-    celebrationName: dto.celebrationName,
+    celebrationName: celebrationNameVi(dto.celebrationName),
     rank: dto.rank ?? undefined,
     seasonName: dto.seasonName ?? undefined,
   }))

@@ -146,12 +146,12 @@ export interface PreparationStatus {
 }
 
 /**
- * The liturgical day of a date (`LiturgicalDayDto`), imported from a Catholic calendar feed. `rank` and `seasonName`
- * are the backend's English words (CatholicCalendarParser), shown through the labels below.
+ * The liturgical day of a date (`LiturgicalDayDto`), synced from the Liturgical Calendar API. `rank` and `seasonName`
+ * are the backend's English words (LiturgicalCalendarApiClient), shown through the labels below.
  */
 export interface LiturgicalDay {
   date: string
-  /** As written in the feed, e.g. "Chúa Nhật XXIX Mùa Quanh Năm". */
+  /** In Vietnamese (celebrationNames.ts), e.g. "Chúa nhật XXIX Thường niên"; English when the name is not listed. */
   celebrationName: string
   rank?: string
   seasonName?: string
