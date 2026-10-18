@@ -57,6 +57,12 @@ body {
   outline: none;
 }
 
+/* The day grid takes the keyboard focus (arrow keys change the day), so it needs a visible ring. */
+.ant-picker-calendar .ant-picker-panel:focus-visible {
+  outline: 2px solid #8e3b4b;
+  outline-offset: 2px;
+}
+
 /* Days of the neighbouring months stay dimmed, but readable (the antd default is 2.6:1). */
 .ant-picker-calendar .ant-picker-cell:not(.ant-picker-cell-in-view) {
   color: #71717a;
