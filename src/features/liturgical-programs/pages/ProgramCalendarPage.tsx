@@ -1,10 +1,10 @@
 import { PlusOutlined } from '@ant-design/icons'
 import { Alert, Badge, Button, Calendar, Card, Col, Flex, Grid, Radio, Row, Select, Spin, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useMemo, useState } from 'react'
-import { generatePath, useNavigate } from 'react-router'
+import { useId, useMemo, useState, type KeyboardEvent } from 'react'
+import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { CardTitle, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, ErrorState, PageHeader, SectionSkeleton, visuallyHidden } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { ImportCalendarButton, LiturgicalDayInfo } from '../components/LiturgicalDayInfo'
@@ -14,7 +14,23 @@ import { useLiturgicalDays } from '../hooks/useLiturgicalDays'
 import { eventStatusLabels, type LiturgicalEvent } from '../types'
 
 const cellLimit = 2
-const monthOptions = Array.from({ length: 12 }, (_, index) => ({ value: index, label: `Th ${index + 1}` }))
+const monthOptions = Array.from({ length: 12 }, (_, index) => ({ value: index, label: `Tháng ${index + 1}` }))
+const isoDate = /^\d{4}-\d{2}-\d{2}$/
+/** "Thứ bảy, 17/10/2026": the weekday matters when planning a Mass. */
+const dayTitle = (date: Dayjs) => {
+  const weekday = date.format('dddd')
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${date.format('DD/MM/YYYY')}`
+}
+
+// The antd day grid takes focus but ignores the arrow keys, so they are handled here.
+const keySteps: Record<string, [number, 'day' | 'month']> = {
+  ArrowLeft: [-1, 'day'],
+  ArrowRight: [1, 'day'],
+  ArrowUp: [-7, 'day'],
+  ArrowDown: [7, 'day'],
+  PageUp: [-1, 'month'],
+  PageDown: [1, 'month'],
+}
 // ponytail: one page of 100 events per month (the backend maximum); a busier month would need a second page.
 const monthPage = { pageNumber: 1, pageSize: 100 }
 
@@ -27,7 +43,13 @@ export function ProgramCalendarPage() {
   const navigate = useNavigate()
   const screens = Grid.useBreakpoint()
   const { eventName } = useEventNames()
-  const [selected, setSelected] = useState<Dayjs>(() => dayjs())
+  // The selected day is kept in `?date=`, so reload and the back button return to it; today needs no parameter.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const dateParam = searchParams.get('date')
+  const selected = useMemo(() => (dateParam && isoDate.test(dateParam) && dayjs(dateParam).isValid() ? dayjs(dateParam) : dayjs()), [dateParam])
+  const setSelected = (date: Dayjs) => setSearchParams(date.isSame(dayjs(), 'day') ? {} : { date: date.format('YYYY-MM-DD') }, { replace: true })
+  const [mode, setMode] = useState<'month' | 'year'>('month')
+  const hintId = useId()
   const month = useMemo(
     () => ({ fromDate: selected.startOf('month').format('YYYY-MM-DD'), toDate: selected.endOf('month').format('YYYY-MM-DD') }),
     [selected],
@@ -44,6 +66,13 @@ export function ProgramCalendarPage() {
   const selectedKey = selected.format('YYYY-MM-DD')
   const selectedEvents = byDate.get(selectedKey) ?? []
   const openEvent = (event: LiturgicalEvent) => navigate(generatePath(paths.priest.programDetail, { programId: event.id }))
+  const moveByKey = (event: KeyboardEvent<HTMLDivElement>) => {
+    const step = keySteps[event.key]
+    // Only the day grid itself: the selects and the view switch keep their own keys.
+    if (!step || mode !== 'month' || !(event.target as HTMLElement).classList.contains('ant-picker-panel')) return
+    event.preventDefault()
+    setSelected(selected.add(step[0], step[1]))
+  }
   const createForDate = () => navigate(`${paths.priest.programCreate}?date=${selectedKey}`)
 
   const renderDate = (date: Dayjs) => {
@@ -103,45 +132,55 @@ export function ProgramCalendarPage() {
             <Card styles={{ body: { padding: screens.md ? spacing.md : spacing.sm } }}>
               {/* The previous month stays on screen while the next one loads (keepPreviousData), so it is dimmed. */}
               <Spin spinning={events.isPlaceholderData} description="Đang tải tháng…">
-                <Calendar
-                  fullscreen={Boolean(screens.md)}
-                  value={selected}
-                  onSelect={setSelected}
-                  headerRender={({ value, type, onChange, onTypeChange }) => (
-                    <Flex justify="flex-end" wrap gap={spacing.sm} style={{ paddingBlockEnd: spacing.sm }}>
-                      <Select
-                        size="small"
-                        aria-label="Năm"
-                        value={value.year()}
-                        onChange={(year: number) => onChange(value.year(year))}
-                        options={Array.from({ length: 21 }, (_, index) => ({ value: value.year() - 10 + index, label: value.year() - 10 + index }))}
-                        style={{ minWidth: 84 }}
-                      />
-                      {type === 'month' && (
+                <div role="group" aria-label="Lịch sự kiện phụng vụ" aria-describedby={hintId} onKeyDown={moveByKey}>
+                  <span id={hintId} style={visuallyHidden}>
+                    Dùng phím mũi tên để đổi ngày, PageUp và PageDown để đổi tháng.
+                  </span>
+                  <Calendar
+                    fullscreen={Boolean(screens.md)}
+                    value={selected}
+                    mode={mode}
+                    onSelect={setSelected}
+                    onPanelChange={(_, next) => setMode(next)}
+                    headerRender={({ value, type, onChange, onTypeChange }) => (
+                      <Flex justify="flex-end" wrap gap={spacing.sm} style={{ paddingBlockEnd: spacing.sm }}>
                         <Select
                           size="small"
-                          aria-label="Tháng"
-                          value={value.month()}
-                          onChange={(monthIndex: number) => onChange(value.month(monthIndex))}
-                          options={monthOptions}
+                          aria-label="Năm"
+                          value={value.year()}
+                          onChange={(year: number) => onChange(value.year(year))}
+                          options={Array.from({ length: 21 }, (_, index) => ({ value: value.year() - 10 + index, label: value.year() - 10 + index }))}
                           style={{ minWidth: 84 }}
                         />
-                      )}
-                      <Radio.Group
-                        size="small"
-                        optionType="button"
-                        aria-label="Chế độ xem lịch"
-                        value={type}
-                        onChange={(event) => onTypeChange(event.target.value)}
-                        options={[
-                          { value: 'month', label: 'Tháng' },
-                          { value: 'year', label: 'Năm' },
-                        ]}
-                      />
-                    </Flex>
-                  )}
-                  cellRender={(date, info) => (info.type === 'date' ? renderDate(date) : info.originNode)}
-                />
+                        {type === 'month' && (
+                          <Select
+                            size="small"
+                            aria-label="Tháng"
+                            value={value.month()}
+                            onChange={(monthIndex: number) => onChange(value.month(monthIndex))}
+                            options={monthOptions}
+                            style={{ minWidth: 112 }}
+                          />
+                        )}
+                        <Button size="small" onClick={() => setSelected(dayjs())}>
+                          Hôm nay
+                        </Button>
+                        <Radio.Group
+                          size="small"
+                          optionType="button"
+                          aria-label="Chế độ xem lịch"
+                          value={type}
+                          onChange={(event) => onTypeChange(event.target.value)}
+                          options={[
+                            { value: 'month', label: 'Tháng' },
+                            { value: 'year', label: 'Năm' },
+                          ]}
+                        />
+                      </Flex>
+                    )}
+                    cellRender={(date, info) => (info.type === 'date' ? renderDate(date) : info.originNode)}
+                  />
+                </div>
               </Spin>
             </Card>
           </Col>
@@ -156,7 +195,10 @@ export function ProgramCalendarPage() {
                   description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình cho ngày này”."
                 />
               )}
-              <Card title={<CardTitle>{`Ngày ${selected.format('DD/MM/YYYY')}`}</CardTitle>}>
+              <Card title={<CardTitle>{dayTitle(selected)}</CardTitle>}>
+                <span role="status" style={visuallyHidden}>
+                  {events.isPlaceholderData ? '' : `Ngày ${selected.format('DD/MM/YYYY')}: ${selectedEvents.length} sự kiện`}
+                </span>
                 <div style={{ marginBottom: spacing.md }}>
                   <LiturgicalDayInfo date={selectedKey} days={days} />
                 </div>
