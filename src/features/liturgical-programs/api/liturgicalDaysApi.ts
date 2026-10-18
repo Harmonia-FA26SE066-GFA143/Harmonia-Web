@@ -3,7 +3,7 @@ import { toQuery } from '@/lib/api/paging'
 import type { LiturgicalDay } from '../types'
 
 // `/api/liturgical-days` (Harmonia-BE LiturgicalDaysController): the liturgical days of a date range (at most 366 days),
-// read by every signed-in role, and the Parish Priest's import of a Catholic calendar feed (.ics).
+// read by every signed-in role, and the Parish Priest's sync of a civil year from the Liturgical Calendar API.
 
 interface LiturgicalDayDto {
   date: string
@@ -12,7 +12,7 @@ interface LiturgicalDayDto {
   seasonName: string | null
 }
 
-/** The imported days between the two dates (YYYY-MM-DD, inclusive); a day not imported yet is absent. */
+/** The cached days between the two dates (YYYY-MM-DD, inclusive); a day of a year not synced yet is absent. */
 export async function listLiturgicalDays(fromDate: string, toDate: string): Promise<LiturgicalDay[]> {
   const days = await apiRequest<LiturgicalDayDto[]>(`/api/liturgical-days${toQuery({ fromDate, toDate })}`)
   return days.map((dto) => ({
@@ -23,9 +23,10 @@ export async function listLiturgicalDays(fromDate: string, toDate: string): Prom
   }))
 }
 
-/** Adds the days of the file not cached yet and returns how many; days already imported are kept as they are. */
-export function importLiturgicalCalendar(file: File): Promise<number> {
-  const form = new FormData()
-  form.append('file', file)
-  return apiRequest<number>('/api/liturgical-days/import', { method: 'POST', body: form })
+/**
+ * Fetches a civil year (1970–9999) from the Liturgical Calendar API and overwrites the cached days of that year
+ * (LiturgicalDayService.SyncAsync); answers how many days the year has.
+ */
+export function syncLiturgicalDays(year: number): Promise<number> {
+  return apiRequest<number>('/api/liturgical-days/sync', { method: 'POST', body: JSON.stringify({ year }) })
 }
