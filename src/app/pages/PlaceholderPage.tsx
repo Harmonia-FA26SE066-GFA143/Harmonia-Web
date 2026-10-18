@@ -14,15 +14,8 @@ export function PlaceholderPage() {
   return (
     <>
       <PageHeader title={handle.title} breadcrumb={handle.breadcrumb?.map((title) => ({ title }))} />
-      <EmptyState
-        icon={<ToolOutlined />}
-        title="Đang phát triển"
-        description={
-          handle.phase === 'TBD'
-            ? 'Màn hình này chưa được xếp vào phase triển khai nào.'
-            : `Màn hình này sẽ được dựng ở Phase ${handle.phase}.`
-        }
-      />
+      {/* The build phase (handle.phase) is for the team; people using the app only need to know the page is coming. */}
+      <EmptyState icon={<ToolOutlined />} title="Đang phát triển" description="Trang này đang được hoàn thiện." />
     </>
   )
 }

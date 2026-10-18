@@ -95,8 +95,10 @@ export function AccountsPage() {
         <Typography.Text style={{ color: colors.textMuted, alignSelf: 'center' }}>Không thể tự ngừng hoạt động</Typography.Text>
       )}
       {account.id !== ownId && (
+        // A row of outlined red buttons shouted on every account; the destructive action stays red but quiet.
         <Button
           danger={account.isActive}
+          type={account.isActive ? 'text' : 'default'}
           onClick={() => handleToggleActive(account)}
           aria-label={`${account.isActive ? 'Ngừng hoạt động' : 'Kích hoạt'} ${accountName(account)}`}
         >

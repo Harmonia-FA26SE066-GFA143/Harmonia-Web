@@ -48,7 +48,7 @@ export interface SurfaceConfig {
  */
 export const surfaces: Record<Surface, SurfaceConfig> = {
   priest: {
-    label: 'Cha xứ / Hội đồng Phụng vụ',
+    label: 'Cha xứ',
     basePath: paths.priest.dashboard,
     sections: [
       { label: 'Tổng quan', items: [{ path: paths.priest.dashboard, label: 'Tổng quan', icon: AppstoreOutlined }] },
@@ -117,10 +117,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
   },
 }
 
-/**
- * Shown on role-neutral pages (e.g. Hồ sơ cá nhân) until the signed-in role is known.
- * Temporary: replaced by the user's own navigation once auth exists.
- */
+/** Shown on role-neutral pages (e.g. Hồ sơ cá nhân) when no signed-in role is known. */
 export const workspaceSections: NavSection[] = [
   {
     label: 'Không gian làm việc',

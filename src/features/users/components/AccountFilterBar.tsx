@@ -1,7 +1,7 @@
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Flex, Input, Select, Typography } from 'antd'
 import { roleLabels } from '@/shared/types/account'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { hasActiveFilters } from '../accountFilters'
 import { assignableRoles } from '../roles'
 import { accountStatusLabels, type AccountFilters } from '../types'
@@ -60,7 +60,7 @@ export function AccountFilterBar({ value, onChange, onReset, resultCount }: Read
       <Button icon={<ReloadOutlined />} onClick={onReset} disabled={!hasActiveFilters(value)}>
         Đặt lại bộ lọc
       </Button>
-      <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted }}>
+      <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
         {resultCount} tài khoản
       </Typography.Text>
     </Flex>

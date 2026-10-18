@@ -1,7 +1,7 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { Button, Flex, Select, Tag, Typography } from 'antd'
 import type { ReactNode } from 'react'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { hasActiveActivityFilters, periodLabels } from '../activityFilters'
 import { actionLabels, entityTypeLabels, type ActivityFilters, type ActivityPeriod } from '../types'
 
@@ -70,7 +70,7 @@ export function ActivityFilterBar({ value, onChange, onReset, resultCount }: Rea
       <Button icon={<ReloadOutlined />} onClick={onReset} disabled={!hasActiveActivityFilters(value)}>
         Đặt lại bộ lọc
       </Button>
-      <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted }}>
+      <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
         {resultCount} bản ghi
       </Typography.Text>
     </Flex>

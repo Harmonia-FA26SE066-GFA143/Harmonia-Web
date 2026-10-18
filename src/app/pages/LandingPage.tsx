@@ -24,7 +24,7 @@ interface RoleSummary {
 
 const roleSummaries: RoleSummary[] = [
   {
-    title: 'Cha xứ / Hội đồng Phụng vụ',
+    title: 'Cha xứ',
     platform: 'Web',
     icon: ReadOutlined,
     duties: [
@@ -188,7 +188,7 @@ export function LandingPage() {
             lineHeight: 1.6,
           }}
         >
-          Harmonia giúp Cha xứ / Hội đồng Phụng vụ, Ca trưởng và thành viên ca đoàn cùng chuẩn bị chương trình phụng vụ,
+          Harmonia giúp Cha xứ, Ca trưởng và thành viên ca đoàn cùng chuẩn bị chương trình phụng vụ,
           danh sách bài hát, lịch tập và phân công phục vụ trên một hệ thống chung.
         </Typography.Paragraph>
         <Flex wrap gap={spacing.md}>

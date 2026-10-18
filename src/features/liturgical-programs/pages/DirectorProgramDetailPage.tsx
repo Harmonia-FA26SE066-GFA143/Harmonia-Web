@@ -82,7 +82,7 @@ export function DirectorProgramDetailPage() {
             <ProgramSongTable songs={data.songs} />
           ) : (
             <Typography.Text style={{ color: colors.textMuted }}>
-              Chưa có danh sách bài hát. Chọn bài từ kho và gửi Cha xứ / Ban phụng vụ duyệt.
+              Chưa có danh sách bài hát. Chọn bài từ kho và gửi Cha xứ duyệt.
             </Typography.Text>
           )}
         </Card>

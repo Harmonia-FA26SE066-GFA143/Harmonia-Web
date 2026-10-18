@@ -4,7 +4,9 @@ import { createElement, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { BrandMark } from '@/shared/ui'
 import { colors, layout, sizes, spacing, typography } from '@/styles/tokens'
-import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection } from './navigation'
+import { getSession } from '@/lib/auth/session'
+import { roleByApiName } from '@/shared/types/account'
+import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection, type Surface } from './navigation'
 import { NotificationBell } from '@/features/notifications'
 import { SystemAnnouncement } from '@/features/settings'
 import { UserMenu } from './UserMenu'
@@ -65,7 +67,11 @@ export function AppShell() {
   const isMobile = screens.md === false
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const surface = getSurface(location.pathname)
+  // Role-neutral pages (Hồ sơ cá nhân) keep the signed-in user's own sidebar; RoleGuard admits only these three roles.
+  const role = getSession()?.user.roleName
+  const ownSurface = role ? (roleByApiName[role] as string) : undefined
+  const surface =
+    getSurface(location.pathname) ?? (ownSurface && ownSurface in surfaces ? (ownSurface as Surface) : undefined)
   const sections = surface ? surfaces[surface].sections : workspaceSections
   const selectedPath = findSelectedPath(sections, location.pathname)
   const subtitle = surface ? surfaces[surface].label : 'Điều phối ca đoàn'
@@ -80,7 +86,7 @@ export function AppShell() {
           setDrawerOpen(false)
           navigate(key)
         }}
-        style={{ borderInlineEnd: 0, paddingInline: spacing.sm }}
+        style={{ borderInlineEnd: 0 }}
       />
     </nav>
   )
@@ -107,6 +113,9 @@ export function AppShell() {
             top: 0,
             height: '100vh',
             overflow: 'auto',
+            // The Choir Director menu is taller than a laptop screen: a thin, quiet scrollbar instead of the default one.
+            scrollbarWidth: 'thin',
+            scrollbarColor: `${colors.mutedBorder} transparent`,
             borderInlineEnd: '1px solid rgba(0, 0, 0, 0.06)',
             boxShadow: '1px 0 4px 0 rgba(0, 0, 0, 0.02)',
           }}

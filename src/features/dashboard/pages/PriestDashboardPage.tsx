@@ -25,7 +25,6 @@ function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: 
 
   return (
     <Card
-      hoverable
       style={cardSurface}
       styles={{ body: { padding: '18px 20px' } }}
     >
@@ -153,7 +152,6 @@ export function PriestDashboardPage() {
         </section>
 
         <Card
-          hoverable
           style={cardSurface}
           styles={{ body: { padding: spacing.lg } }}
         >

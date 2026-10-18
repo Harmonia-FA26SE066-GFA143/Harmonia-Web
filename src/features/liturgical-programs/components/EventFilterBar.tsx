@@ -1,7 +1,7 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { Button, DatePicker, Flex, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { hasActiveEventFilters } from '../programFilters'
 import { eventStatusLabels, type EventFilters, type EventStatus } from '../types'
 
@@ -79,7 +79,7 @@ export function EventFilterBar({
       <Button icon={<ReloadOutlined />} onClick={onReset} disabled={!hasActiveEventFilters(value)}>
         Đặt lại bộ lọc
       </Button>
-      <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted }}>
+      <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
         {resultCount} sự kiện
       </Typography.Text>
     </Flex>

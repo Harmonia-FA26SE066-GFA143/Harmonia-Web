@@ -1,7 +1,7 @@
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Flex, Input, Select, Typography } from 'antd'
 import { useCatalogOptions } from '@/features/system-categories'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { hasActiveMemberFilters } from '../memberFilters'
 import { memberStatuses, memberStatusLabels, type MemberFilters } from '../types'
 
@@ -59,7 +59,7 @@ export function MemberFilterBar({ value, onChange, onReset, resultCount }: Reado
       <Button icon={<ReloadOutlined />} onClick={onReset} disabled={!hasActiveMemberFilters(value)}>
         Đặt lại bộ lọc
       </Button>
-      <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted }}>
+      <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
         {resultCount} ca viên
       </Typography.Text>
     </Flex>

@@ -28,7 +28,7 @@ describe('ProfilePage', () => {
     renderPage(<ProfilePage />, '/profile')
 
     expect(await screen.findByText('Nguyễn Văn An')).toBeInTheDocument()
-    expect(screen.getByText('Cha xứ / Ban phụng vụ')).toBeInTheDocument()
+    expect(screen.getByText('Cha xứ')).toBeInTheDocument()
   })
 
   it('moves the focus into the form when editing and back to the edit button when leaving it', async () => {

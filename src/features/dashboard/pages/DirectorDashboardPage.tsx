@@ -56,7 +56,6 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
 
   return (
     <Card
-      hoverable
       style={{ ...cardSurface, height: '100%' }}
       styles={{ body: { padding: spacing.lg, height: '100%' } }}
     >

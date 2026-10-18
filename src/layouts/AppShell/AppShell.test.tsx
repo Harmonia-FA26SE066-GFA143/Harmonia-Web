@@ -64,6 +64,21 @@ describe('AppShell', () => {
     expect(within(nav).getByText('Ca trưởng')).toBeInTheDocument()
   })
 
+  it("keeps the signed-in user's own sidebar on role-neutral pages", async () => {
+    setViewportWidth(1280)
+    setSession({
+      accessToken: 'access',
+      accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+      refreshToken: 'refresh',
+      user: { id: 'u1', email: 'chaxu@giaoxu.org', fullName: 'Cha xứ', roleName: 'ParishPriest' },
+    })
+    renderShellAt('/profile')
+
+    const nav = await screen.findByRole('navigation', { name: 'Điều hướng chính' })
+    expect(within(nav).getByText('Lịch phụng vụ')).toBeInTheDocument()
+    expect(within(nav).queryByText('Quản trị hệ thống')).toBeNull()
+  })
+
   it('moves the sidebar into a drawer on small screens', async () => {
     setViewportWidth(375)
     renderShellAt('/admin')
