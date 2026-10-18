@@ -34,6 +34,12 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
     })
   }
 
+  const sendButton = (
+    <Button type="primary" icon={<SendOutlined />} onClick={() => setSending(true)}>
+      Gửi ghi chú
+    </Button>
+  )
+
   return (
     <>
       <PageHeader
@@ -44,13 +50,7 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
             ? 'Ghi chú và yêu cầu gửi Ca trưởng về một ngày hoặc một sự kiện. Mới nhất ở trên cùng.'
             : 'Ghi chú và yêu cầu Cha xứ gửi cho bạn. Mới nhất ở trên cùng.'
         }
-        extra={
-          sender && (
-            <Button type="primary" icon={<SendOutlined />} onClick={() => setSending(true)}>
-              Gửi ghi chú
-            </Button>
-          )
-        }
+        extra={sender && sendButton}
       />
 
       {notes.isPending && <SectionSkeleton rows={5} label="Đang tải ghi chú" />}
@@ -63,6 +63,7 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
               ? 'Ghi chú đã gửi cho Ca trưởng sẽ xuất hiện tại đây.'
               : 'Khi Cha xứ gửi ghi chú, bạn sẽ nhận được thông báo và ghi chú xuất hiện tại đây.'
           }
+          action={sender ? sendButton : undefined}
         />
       )}
       {notes.isSuccess && total > 0 && (

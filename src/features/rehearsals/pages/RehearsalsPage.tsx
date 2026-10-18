@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, sizes, spacing } from '@/styles/tokens'
 import { RehearsalFormModal } from '../components/RehearsalFormModal'
 import { RehearsalTable } from '../components/RehearsalTable'
 import { useDeleteRehearsal, useRehearsals, useSaveRehearsal } from '../hooks/useRehearsals'
@@ -144,7 +144,7 @@ export function RehearsalsPage() {
             <Button icon={<ReloadOutlined />} onClick={() => changeFilters({})} disabled={!filtered}>
               Đặt lại bộ lọc
             </Button>
-            <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted }}>
+            <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
               {total} buổi tập
             </Typography.Text>
           </Flex>

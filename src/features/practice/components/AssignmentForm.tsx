@@ -58,7 +58,7 @@ export function AssignmentForm() {
   }
 
   return (
-    <Card>
+    <Card style={{ maxWidth: 720 + spacing.lg * 2 }}>
       <Form<FormValues>
         form={form}
         layout="vertical"

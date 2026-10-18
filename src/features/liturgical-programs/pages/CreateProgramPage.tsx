@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { PageHeader } from '@/shared/ui'
+import { spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
 import { eventErrorMessage } from '../eventErrors'
 import { useCreateEvent } from '../hooks/useEvents'
@@ -47,7 +48,7 @@ export function CreateProgramPage() {
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }, { title: 'Tạo chương trình' }]}
         description="Nhập thông tin sự kiện phụng vụ. Sự kiện được lưu dưới dạng bản nháp; công bố ở trang chi tiết."
       />
-      <Card>
+      <Card style={{ maxWidth: 720 + spacing.lg * 2 }}>
         <EventForm
           initialDate={initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) ? initialDate : undefined}
           saving={create.isPending}

@@ -7,7 +7,7 @@ import type { ApiRoleName } from '@/lib/auth/session'
 export type SystemRole = 'priest' | 'director' | 'member' | 'admin'
 
 export const roleLabels: Record<SystemRole, string> = {
-  priest: 'Cha xứ / Ban phụng vụ',
+  priest: 'Cha xứ',
   director: 'Ca trưởng',
   member: 'Ca viên',
   admin: 'Quản trị viên',
