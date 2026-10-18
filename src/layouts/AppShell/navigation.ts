@@ -1,4 +1,5 @@
 import {
+  ApartmentOutlined,
   AppstoreOutlined,
   AuditOutlined,
   BarChartOutlined,
@@ -72,6 +73,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
         label: 'Ca viên',
         items: [
           { path: paths.director.members, label: 'Danh sách ca viên', icon: IdcardOutlined },
+          { path: paths.director.choirs, label: 'Ca đoàn', icon: ApartmentOutlined },
           { path: paths.director.skillApproval, label: 'Duyệt kỹ năng', icon: SafetyCertificateOutlined },
         ],
       },
