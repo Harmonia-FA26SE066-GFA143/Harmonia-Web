@@ -7,7 +7,7 @@ import { paths } from '@/app/router/paths'
 import { CardTitle, ErrorState, PageHeader, SectionSkeleton, visuallyHidden } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
-import { ImportCalendarButton, LiturgicalDayInfo } from '../components/LiturgicalDayInfo'
+import { LiturgicalDayInfo, SyncCalendarButton } from '../components/LiturgicalDayInfo'
 import { useEventNames } from '../hooks/useEventNames'
 import { useEvents } from '../hooks/useEvents'
 import { useLiturgicalDays } from '../hooks/useLiturgicalDays'
@@ -36,8 +36,8 @@ const monthPage = { pageNumber: 1, pageSize: 100 }
 
 /**
  * Priest: month calendar of the liturgical events (FE-15), loaded per month with the date filters of
- * `GET /api/liturgical-events`. The liturgical days of the month (`GET /api/liturgical-days`, filled by importing a
- * calendar feed) name each cell on wide screens and describe the selected day.
+ * `GET /api/liturgical-events`. The liturgical days of the month (`GET /api/liturgical-days`, filled by syncing a
+ * year from the Liturgical Calendar API) name each cell on wide screens and describe the selected day.
  */
 export function ProgramCalendarPage() {
   const navigate = useNavigate()
@@ -114,7 +114,7 @@ export function ProgramCalendarPage() {
         description="Xem các sự kiện phụng vụ theo tháng, ngày phụng vụ của ngày đang chọn, và tạo sự kiện cho một ngày."
         extra={
           <Flex wrap gap={spacing.sm}>
-            <ImportCalendarButton />
+            <SyncCalendarButton year={selected.year()} />
             <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
               Tạo chương trình
             </Button>

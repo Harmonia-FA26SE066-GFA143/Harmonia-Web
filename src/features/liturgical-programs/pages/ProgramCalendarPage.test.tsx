@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api/errors'
@@ -78,21 +78,31 @@ describe('ProgramCalendarPage', () => {
     expect(screen.getByText('Mùa Thường Niên')).toBeInTheDocument()
   })
 
-  it('imports an .ics calendar and refuses other files', async () => {
+  it('syncs the year on view after asking, since the backend overwrites it', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(empty)
-    const importCalendar = vi.spyOn(daysApi, 'importLiturgicalCalendar').mockResolvedValue(365)
-    const { container } = renderPage(<ProgramCalendarPage />, '/priest/calendar')
+    const sync = vi.spyOn(daysApi, 'syncLiturgicalDays').mockResolvedValue(365)
+    renderPage(<ProgramCalendarPage />, '/priest/calendar', '/priest/calendar?date=2027-03-10')
 
-    expect(await screen.findByText(/Chưa có ngày phụng vụ cho ngày này/)).toBeInTheDocument()
-    // rc-upload mounts a fresh input after each pick, so it is looked up each time.
-    const fileInput = () => container.querySelector('input[type=file]') as HTMLInputElement
-    fireEvent.change(fileInput(), { target: { files: [new File(['x'], 'lich.pdf')] } })
-    expect(await screen.findByText('Chỉ nhận file lịch .ics.')).toBeInTheDocument()
-    expect(importCalendar).not.toHaveBeenCalled()
+    expect(await screen.findByText(/Đồng bộ lịch phụng vụ của năm để hiển thị/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Đồng bộ lịch phụng vụ 2027/ }))
+    // Ant Design renders a confirm title twice; the first one sits in the visible dialog.
+    const dialog = (await screen.findAllByText('Đồng bộ lịch phụng vụ năm 2027?'))[0].closest('.ant-modal') as HTMLElement
+    expect(within(dialog).getByText(/ghi đè các ngày phụng vụ đã có của năm này/)).toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Đồng bộ' }))
 
-    const ics = new File(['BEGIN:VCALENDAR'], 'lich-2026.ics')
-    fireEvent.change(fileInput(), { target: { files: [ics] } })
-    await waitFor(() => expect(importCalendar).toHaveBeenCalledWith(ics))
-    expect(await screen.findByText('Đã nhập 365 ngày phụng vụ mới.')).toBeInTheDocument()
+    await waitFor(() => expect(sync).toHaveBeenCalledWith(2027))
+    expect(await screen.findByText('Đã đồng bộ 365 ngày phụng vụ năm 2027.')).toBeInTheDocument()
+  })
+
+  it('explains when the external calendar cannot be reached', async () => {
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(empty)
+    vi.spyOn(daysApi, 'syncLiturgicalDays').mockRejectedValue(new ApiError(502, { code: 'EXTERNAL_CALENDAR_FAILED' }))
+    renderPage(<ProgramCalendarPage />, '/priest/calendar')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Đồng bộ lịch phụng vụ/ }))
+    const dialog = (await screen.findAllByText(/Đồng bộ lịch phụng vụ năm \d{4}\?/))[0].closest('.ant-modal') as HTMLElement
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Đồng bộ' }))
+
+    expect(await screen.findByText('Không lấy được lịch từ Liturgical Calendar API. Vui lòng thử lại sau.')).toBeInTheDocument()
   })
 })

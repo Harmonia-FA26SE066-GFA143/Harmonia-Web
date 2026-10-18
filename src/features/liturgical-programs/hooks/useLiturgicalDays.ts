@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { importLiturgicalCalendar, listLiturgicalDays } from '../api/liturgicalDaysApi'
+import { listLiturgicalDays, syncLiturgicalDays } from '../api/liturgicalDaysApi'
 
 const daysKey = ['liturgical-days'] as const
 
-/** The days of a range by date; they change only through an import, so they stay fresh for the session. */
+/** The days of a range by date; they change only through a sync, so they stay fresh for the session. */
 export function useLiturgicalDays(fromDate: string, toDate: string) {
   return useQuery({
     queryKey: [...daysKey, fromDate, toDate],
@@ -12,10 +12,10 @@ export function useLiturgicalDays(fromDate: string, toDate: string) {
   })
 }
 
-export function useImportLiturgicalCalendar() {
+export function useSyncLiturgicalDays() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (file: File) => importLiturgicalCalendar(file),
+    mutationFn: (year: number) => syncLiturgicalDays(year),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: daysKey }),
   })
 }
