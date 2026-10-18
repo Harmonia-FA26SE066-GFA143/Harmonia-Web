@@ -21,6 +21,11 @@ export const directorRoutes: RouteObject[] = [
     async () => (await import('@/features/members')).MembersPage,
   ),
   pageRoute(
+    paths.director.choirs,
+    { title: 'Ca đoàn', breadcrumb: [area, 'Ca đoàn'], phase: 6 },
+    async () => (await import('@/features/choirs')).ChoirsPage,
+  ),
+  pageRoute(
     paths.director.skillApproval,
     { title: 'Duyệt kỹ năng', breadcrumb: [area, 'Duyệt kỹ năng'], phase: 6 },
     async () => (await import('@/features/skill-approval')).SkillApprovalPage,

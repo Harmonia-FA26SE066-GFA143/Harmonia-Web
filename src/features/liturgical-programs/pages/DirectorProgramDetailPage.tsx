@@ -2,6 +2,8 @@ import { ArrowLeftOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Typography } from 'antd'
 import { generatePath, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { EventChoirsCard } from '@/features/choirs'
+import { vietnamToday } from '@/lib/api/dates'
 import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { ProgramInfo } from '../components/ProgramInfo'
@@ -65,6 +67,7 @@ export function DirectorProgramDetailPage() {
       />
       <Flex vertical gap={spacing.lg}>
         <ProgramInfo program={data} />
+        <EventChoirsCard eventId={data.id} locked={data.date < vietnamToday()} />
         <Card
           title={
             <Flex align="center" gap={spacing.sm} wrap>

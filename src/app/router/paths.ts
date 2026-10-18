@@ -38,6 +38,7 @@ export const paths = {
   director: {
     dashboard: '/director',
     members: '/director/members',
+    choirs: '/director/choirs',
     skillApproval: '/director/skill-approval',
     programs: '/director/programs',
     programDetail: '/director/programs/:programId',
