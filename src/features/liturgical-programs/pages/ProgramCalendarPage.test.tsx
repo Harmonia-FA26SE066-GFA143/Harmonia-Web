@@ -1,10 +1,12 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as client from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as eventsApi from '../api/eventsApi'
 import * as daysApi from '../api/liturgicalDaysApi'
+import { celebrationNameVi } from '../celebrationNames'
 import { ProgramCalendarPage } from './ProgramCalendarPage'
 
 const empty = { items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 }
@@ -63,19 +65,30 @@ describe('ProgramCalendarPage', () => {
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/new')
   })
 
-  it('loads the liturgical days of the month once and describes the selected date', async () => {
+  it('loads the liturgical days of the month once and describes the selected date in Vietnamese', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(empty)
-    const list = vi.spyOn(daysApi, 'listLiturgicalDays').mockResolvedValue([
-      { date: dayjs().format('YYYY-MM-DD'), celebrationName: 'Chúa Nhật XXIX Mùa Quanh Năm', rank: 'Solemnity', seasonName: 'OrdinaryTime' },
-    ])
+    vi.mocked(daysApi.listLiturgicalDays).mockRestore()
+    const today = dayjs()
+    // The backend keeps the English names of the Liturgical Calendar API.
+    const request = vi.spyOn(client, 'apiRequest').mockImplementation(async (path: string) =>
+      path.startsWith('/api/liturgical-days')
+        ? [{ date: today.format('YYYY-MM-DD'), celebrationName: '29th Sunday of Ordinary Time', rank: 'Solemnity', seasonName: 'OrdinaryTime' }]
+        : [],
+    )
     renderPage(<ProgramCalendarPage />, '/priest/calendar')
 
     // Named in its calendar cell on wide screens and in the day panel.
-    expect((await screen.findAllByText('Chúa Nhật XXIX Mùa Quanh Năm')).length).toBeGreaterThan(0)
-    expect(list).toHaveBeenCalledTimes(1)
-    expect(list).toHaveBeenCalledWith(dayjs().startOf('month').format('YYYY-MM-DD'), dayjs().endOf('month').format('YYYY-MM-DD'))
+    expect((await screen.findAllByText('Chúa nhật XXIX Thường niên')).length).toBeGreaterThan(0)
+    const dayRequests = request.mock.calls.filter(([path]) => path.startsWith('/api/liturgical-days'))
+    expect(dayRequests).toEqual([
+      [`/api/liturgical-days?fromDate=${today.startOf('month').format('YYYY-MM-DD')}&toDate=${today.endOf('month').format('YYYY-MM-DD')}`],
+    ])
     expect(screen.getByText('Lễ trọng')).toBeInTheDocument()
     expect(screen.getByText('Mùa Thường Niên')).toBeInTheDocument()
+    // Saints come from the table, weekdays from a pattern; a name in neither stays in English.
+    expect(celebrationNameVi('Saint Luke, Evangelist')).toBe('Thánh Luca, Thánh sử')
+    expect(celebrationNameVi('Tuesday of the 34th Week of Ordinary Time')).toBe('Thứ Ba tuần XXXIV Thường niên')
+    expect(celebrationNameVi('Saint Newly Canonized')).toBe('Saint Newly Canonized')
   })
 
   it('syncs the year on view after asking, since the backend overwrites it', async () => {

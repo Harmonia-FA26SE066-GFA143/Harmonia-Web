@@ -41,7 +41,8 @@ export function LiturgicalDayInfo({ date, days }: Readonly<{ date: string; days:
 
 /**
  * Parish Priest: syncs a civil year from the Liturgical Calendar API (Harmonia-BE LiturgicalDayService.SyncAsync). The
- * backend overwrites the days already cached for that year, so it asks first. Celebration names arrive in English.
+ * backend overwrites the days already cached for that year, so it asks first. Celebration names arrive in English and
+ * are shown in Vietnamese (celebrationNames.ts).
  */
 export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
   const { message, modal } = App.useApp()
@@ -50,7 +51,7 @@ export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
   const confirm = () =>
     modal.confirm({
       title: `Đồng bộ lịch phụng vụ năm ${year}?`,
-      content: `Harmonia lấy lịch năm ${year} từ Liturgical Calendar API (tên lễ bằng tiếng Anh) và ghi đè các ngày phụng vụ đã có của năm này.`,
+      content: `Harmonia lấy lịch năm ${year} từ Liturgical Calendar API và ghi đè các ngày phụng vụ đã có của năm này.`,
       okText: 'Đồng bộ',
       cancelText: 'Hủy',
       onOk: () =>
