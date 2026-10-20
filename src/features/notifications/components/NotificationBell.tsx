@@ -10,16 +10,14 @@ import {
   useNotificationList,
   useUnreadNotificationCount,
 } from '../hooks/useNotifications'
-import { notificationTitles, type AppNotification } from '../types'
+import type { AppNotification } from '../types'
 
 function NotificationContent({ notification }: Readonly<{ notification: AppNotification }>) {
   const { isRead } = notification
   return (
     <Flex vertical style={{ minWidth: 0 }}>
       <Flex gap={spacing.xs} align="center" wrap>
-        <Typography.Text strong={!isRead}>
-          {notification.type ? notificationTitles[notification.type] : notification.title}
-        </Typography.Text>
+        <Typography.Text strong={!isRead}>{notification.title}</Typography.Text>
         {!isRead && (
           <StatusTag color="processing" style={{ marginInlineEnd: 0 }}>
             Mới

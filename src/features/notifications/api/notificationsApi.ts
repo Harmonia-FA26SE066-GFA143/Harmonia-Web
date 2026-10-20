@@ -1,43 +1,11 @@
 import { apiRequest } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
-import type { AppNotification, NotificationType } from '../types'
+import type { AppNotification } from '../types'
 
 // `/api/notifications` (Harmonia-BE NotificationsController): every signed-in user reads their own, newest first.
 
-const typeByApi: Record<string, NotificationType> = {
-  EventPublished: 'eventPublished',
-  SongListDecision: 'songListDecision',
-  ParticipationRequest: 'participationRequest',
-  AssignmentNotice: 'assignmentNotice',
-  PracticeFeedback: 'practiceFeedback',
-  DirectorNote: 'directorNote',
-  SkillReview: 'skillReview',
-  EventCancelled: 'eventCancelled',
-  SongListSubmitted: 'songListSubmitted',
-}
-
-interface NotificationDto {
-  id: string
-  type: string
-  title: string
-  content: string
-  createdAt: string
-  isRead: boolean
-}
-
-export async function listNotifications(pageNumber: number, pageSize: number): Promise<PagedList<AppNotification>> {
-  const result = await apiRequest<PagedList<NotificationDto>>(`/api/notifications${toQuery({ pageNumber, pageSize })}`)
-  return {
-    ...result,
-    items: result.items.map(({ id, type, title, content, createdAt, isRead }) => ({
-      id,
-      type: typeByApi[type],
-      title,
-      content,
-      createdAt,
-      isRead,
-    })),
-  }
+export function listNotifications(pageNumber: number, pageSize: number): Promise<PagedList<AppNotification>> {
+  return apiRequest<PagedList<AppNotification>>(`/api/notifications${toQuery({ pageNumber, pageSize })}`)
 }
 
 export function countUnreadNotifications(): Promise<number> {
