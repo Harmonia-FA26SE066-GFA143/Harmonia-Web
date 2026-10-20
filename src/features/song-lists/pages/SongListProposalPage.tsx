@@ -106,7 +106,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
             <EmptyState
               headingLevel={3}
               title="Chưa có bài hát nào trong đề xuất"
-              description="Chọn các bài hát phù hợp từ kho bài hát của ca đoàn, mỗi bài cho một phần phụng vụ."
+              description="Chọn các bài hát phù hợp từ kho bài hát của ca đoàn rồi gán phần phụng vụ cho từng bài; một phần có thể có nhiều bài."
               action={editable ? addButton : undefined}
             />
           )}
