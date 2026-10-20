@@ -73,6 +73,8 @@ export interface LookupItem {
   id: string
   name: string
   categoryId?: string
+  /** Liturgical slots only: place in the Mass. */
+  defaultOrder?: number
 }
 
 /** Fixed on every environment (Harmonia-BE doc/api.md, Lookups); instrument requirements accept only this category. */

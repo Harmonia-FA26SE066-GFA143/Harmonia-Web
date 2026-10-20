@@ -101,6 +101,28 @@ describe('SongListProposalPage', () => {
     expect(save).toHaveBeenCalledWith('p1', null, [{ songId: 'song-2', slotId: 'slot-3', note: undefined }])
   })
 
+  it('adds a liturgical slot of its own and uses it for the song', async () => {
+    withList(null)
+    withLibrary()
+    const saveSlot = vi
+      .spyOn(categoriesApi, 'saveSlot')
+      .mockResolvedValue({ id: 'slot-new', name: 'Ca nguyện Đức Mẹ', defaultOrder: 1, isActive: true })
+    const save = vi.spyOn(songListsApi, 'saveSongList').mockResolvedValue(songList({ id: 'l-new' }))
+    renderProposal()
+
+    await screen.findByRole('heading', { name: 'Chưa có bài hát nào trong đề xuất' })
+    await addFromLibrary('Lễ Vật Tâm Tình')
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Phần phụng vụ của Lễ Vật Tâm Tình' }))
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Tên phần phụng vụ mới' }), { target: { value: ' Ca nguyện Đức Mẹ ' } })
+    fireEvent.click(screen.getByRole('button', { name: /Thêm$/ }))
+
+    await waitFor(() =>
+      expect(saveSlot).toHaveBeenCalledWith(undefined, { name: 'Ca nguyện Đức Mẹ', defaultOrder: 1, isActive: true }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Lưu nháp/ }))
+    await waitFor(() => expect(save).toHaveBeenCalledWith('p1', null, [{ songId: 'song-2', slotId: 'slot-new', note: undefined }]))
+  })
+
   it('lets several songs share a liturgical slot', async () => {
     const draft = songList({ items: [item('1', 'Con Bước Lên Bàn Thờ', 'Ca dâng lễ')].map((entry) => ({ ...entry, slotId: 'slot-3' })) })
     withList(draft)

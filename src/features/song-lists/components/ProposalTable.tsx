@@ -1,7 +1,8 @@
-import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined } from '@ant-design/icons'
-import { Button, Flex, Input, Select, Table, Typography, type TableColumnsType } from 'antd'
-import { useLookup } from '@/features/system-categories'
-import { colors, typography } from '@/styles/tokens'
+import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import { App, Button, Divider, Flex, Input, Select, Table, Typography, type TableColumnsType } from 'antd'
+import { useState, type ReactNode } from 'react'
+import { nameConflictMessage, useLookup, useSaveSlot } from '@/features/system-categories'
+import { colors, spacing, typography } from '@/styles/tokens'
 
 /** A row of the list being composed; the slot is chosen after the song is picked. */
 export interface DraftItem {
@@ -22,10 +23,65 @@ export interface ProposalTableProps {
 
 const muted = (text: string) => <Typography.Text style={{ color: colors.textMuted }}>{text}</Typography.Text>
 
+/**
+ * Under the slot choices: the Choir Director adds a slot of their own (e.g. "Ca nguyện Đức Mẹ"), shared by every later
+ * list (POST /api/lookups/liturgical-slots, open to the Choir Director since BE 2100688). It goes after the others.
+ */
+function NewSlot({ nextOrder, onCreated }: Readonly<{ nextOrder: number; onCreated: (id: string, name: string) => void }>) {
+  const { message } = App.useApp()
+  const save = useSaveSlot()
+  const [name, setName] = useState('')
+  const add = () => {
+    const trimmed = name.trim()
+    if (!trimmed || save.isPending) return
+    save.mutate(
+      { values: { name: trimmed, defaultOrder: nextOrder, isActive: true } },
+      {
+        onSuccess: (slot) => {
+          setName('')
+          onCreated(slot.id, slot.name)
+        },
+        onError: (error) => message.error(nameConflictMessage(error) ?? 'Không thể thêm phần phụng vụ. Vui lòng thử lại.'),
+      },
+    )
+  }
+
+  return (
+    <Flex gap={spacing.xs} style={{ padding: spacing.xs }}>
+      <Input
+        size="small"
+        value={name}
+        maxLength={100}
+        placeholder="Phần mới, vd Ca nguyện Đức Mẹ"
+        aria-label="Tên phần phụng vụ mới"
+        onChange={(event) => setName(event.target.value)}
+        // The select would otherwise take the keys (Enter picks the highlighted option).
+        onKeyDown={(event) => {
+          event.stopPropagation()
+          if (event.key === 'Enter') add()
+        }}
+      />
+      <Button size="small" icon={<PlusOutlined />} loading={save.isPending} disabled={!name.trim()} onClick={add}>
+        Thêm
+      </Button>
+    </Flex>
+  )
+}
+
+/** The slot choices with the new-slot field under them. */
+const withNewSlot = (nextOrder: number, onCreated: (id: string, name: string) => void) => (menu: ReactNode) => (
+  <>
+    {menu}
+    <Divider style={{ margin: `${spacing.xs}px 0` }} />
+    <NewSlot nextOrder={nextOrder} onCreated={onCreated} />
+  </>
+)
+
 /** Ordered songs of the proposal: a liturgical slot per song and a note, reordering and removal while editable. */
 export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTableProps>) {
   // Active slots, in liturgical order (DefaultOrder).
   const slots = useLookup('liturgicalSlots').data ?? []
+  const nextOrder = Math.max(0, ...slots.map(({ defaultOrder = 0 }) => defaultOrder)) + 1
   const update = (key: string, patch: Partial<DraftItem>) =>
     onChange(items.map((item) => (item.key === key ? { ...item, ...patch } : item)))
   const move = (index: number, offset: -1 | 1) => {
@@ -90,6 +146,7 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
             aria-label={`Phần phụng vụ của ${item.songTitle}`}
             options={slotOptions(item)}
             onChange={(slotId: string) => update(item.key, { slotId, slotName: slots.find(({ id }) => id === slotId)?.name })}
+            popupRender={withNewSlot(nextOrder, (slotId, slotName) => update(item.key, { slotId, slotName }))}
             style={{ minWidth: 180 }}
           />
         ) : (
