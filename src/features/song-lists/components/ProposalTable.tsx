@@ -68,7 +68,7 @@ function NewSlot({ nextOrder, onCreated }: Readonly<{ nextOrder: number; onCreat
   )
 }
 
-/** Ordered songs of the proposal: one liturgical slot per song and a note, reordering and removal while editable. */
+/** Ordered songs of the proposal: a liturgical slot per song and a note, reordering and removal while editable. */
 export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTableProps>) {
   // Active slots, in liturgical order (DefaultOrder).
   const slots = useLookup('liturgicalSlots').data ?? []
@@ -82,12 +82,11 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
     onChange(next)
   }
 
-  // Each slot holds one song of the list (SONG_LIST_SLOT_DUPLICATE), so slots taken by another row are disabled.
+  // A slot may hold several songs (e.g. two at Communion); the picker adds each song once, so a song never repeats in a slot.
   const slotOptions = (item: DraftItem) => {
-    const taken = new Set(items.filter((other) => other.key !== item.key).map((other) => other.slotId))
-    const options = slots.map(({ id, name }) => ({ value: id, label: name, disabled: taken.has(id) }))
+    const options = slots.map(({ id, name }) => ({ value: id, label: name }))
     const retired = item.slotId && !slots.some(({ id }) => id === item.slotId)
-    return retired ? [...options, { value: item.slotId, label: item.slotName ?? '', disabled: false }] : options
+    return retired ? [...options, { value: item.slotId, label: item.slotName ?? '' }] : options
   }
 
   const columns: TableColumnsType<DraftItem> = [

@@ -123,6 +123,29 @@ describe('SongListProposalPage', () => {
     await waitFor(() => expect(save).toHaveBeenCalledWith('p1', null, [{ songId: 'song-2', slotId: 'slot-new', note: undefined }]))
   })
 
+  it('lets several songs share a liturgical slot', async () => {
+    const draft = songList({ items: [item('1', 'Con Bước Lên Bàn Thờ', 'Ca dâng lễ')].map((entry) => ({ ...entry, slotId: 'slot-3' })) })
+    withList(draft)
+    withLibrary()
+    const save = vi.spyOn(songListsApi, 'saveSongList').mockResolvedValue(draft)
+    renderProposal()
+
+    await screen.findByText('Con Bước Lên Bàn Thờ')
+    await addFromLibrary('Lễ Vật Tâm Tình')
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Phần phụng vụ của Lễ Vật Tâm Tình' }))
+    const option = (await screen.findAllByTitle('Ca dâng lễ')).find((node) => node.classList.contains('ant-select-item-option'))
+    expect(option).not.toHaveClass('ant-select-item-option-disabled')
+    fireEvent.click(option as HTMLElement)
+    fireEvent.click(screen.getByRole('button', { name: /Lưu nháp/ }))
+
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith('p1', draft, [
+        { songId: 'song-1', slotId: 'slot-3', note: undefined },
+        { songId: 'song-2', slotId: 'slot-3', note: undefined },
+      ]),
+    )
+  })
+
   it('asks for a liturgical slot on every song before saving', async () => {
     withList(null)
     withLibrary()
@@ -150,7 +173,7 @@ describe('SongListProposalPage', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /Lưu nháp/ }))
 
-    expect(await screen.findByText('Mỗi phần phụng vụ chỉ được chọn một bài hát.')).toBeInTheDocument()
+    expect(await screen.findByText('Một bài hát chỉ được chọn một lần trong cùng một phần phụng vụ.')).toBeInTheDocument()
     expect(save).toHaveBeenCalledWith('p1', draft, [{ songId: 'song-1', slotId: 'slot-1', note: 'Hát 2 lần' }])
   })
 
