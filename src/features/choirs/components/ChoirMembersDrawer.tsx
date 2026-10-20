@@ -144,6 +144,7 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
           Chỉ ca viên đang sinh hoạt; một ca viên có thể thuộc nhiều ca đoàn.
         </Typography.Paragraph>
         <Select
+          autoFocus
           mode="multiple"
           allowClear
           showSearch

@@ -116,6 +116,6 @@ describe('ProgramCalendarPage', () => {
     const dialog = (await screen.findAllByText(/Đồng bộ lịch phụng vụ năm \d{4}\?/))[0].closest('.ant-modal') as HTMLElement
     fireEvent.click(within(dialog).getByRole('button', { name: 'Đồng bộ' }))
 
-    expect(await screen.findByText('Không lấy được lịch từ Liturgical Calendar API. Vui lòng thử lại sau.')).toBeInTheDocument()
+    expect(await screen.findByText('Không lấy được lịch phụng vụ từ nguồn lịch trực tuyến. Vui lòng thử lại sau.')).toBeInTheDocument()
   })
 })
