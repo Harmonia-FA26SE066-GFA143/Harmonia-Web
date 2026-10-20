@@ -51,7 +51,7 @@ export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
   const confirm = () =>
     modal.confirm({
       title: `Đồng bộ lịch phụng vụ năm ${year}?`,
-      content: `Harmonia lấy lịch năm ${year} từ Liturgical Calendar API và ghi đè các ngày phụng vụ đã có của năm này.`,
+      content: `Harmonia lấy lịch phụng vụ năm ${year} từ nguồn lịch trực tuyến và ghi đè các ngày phụng vụ đã có của năm này.`,
       okText: 'Đồng bộ',
       cancelText: 'Hủy',
       onOk: () =>

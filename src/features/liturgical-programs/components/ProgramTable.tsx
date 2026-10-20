@@ -13,7 +13,12 @@ export interface ProgramTableProps {
   loading?: boolean
 }
 
-const orDash = (name?: string) => name ?? <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
+const secondary = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
+
+// Mass or ceremony type and season under the name, so the table fits without scrolling sideways. An untitled
+// program is already named after its type, which is then not repeated.
+const classification = ({ eventName, massTypeName, ceremonyTypeName, seasonName }: LiturgicalProgram) =>
+  [massTypeName, ceremonyTypeName, seasonName].filter((name) => name && name !== eventName).join(' · ')
 
 /** Programs of the Choir Director with their catalog names and song-list condition. */
 export function ProgramTable({ programs, onOpen, pagination = false, loading }: Readonly<ProgramTableProps>) {
@@ -24,6 +29,7 @@ export function ProgramTable({ programs, onOpen, pagination = false, loading }: 
       render: (_, program) => (
         <Flex vertical align="start" gap={2}>
           <Typography.Text strong>{program.eventName}</Typography.Text>
+          {classification(program) && <Typography.Text style={secondary}>{classification(program)}</Typography.Text>}
           {program.status === 'cancelled' && <EventStatusTag status="cancelled" />}
         </Flex>
       ),
@@ -38,13 +44,10 @@ export function ProgramTable({ programs, onOpen, pagination = false, loading }: 
       ),
     },
     { key: 'location', title: 'Nơi cử hành', render: (_, program) => program.locationName },
-    { key: 'season', title: 'Mùa phụng vụ', render: (_, program) => orDash(program.seasonName) },
-    { key: 'massType', title: 'Loại Thánh lễ', render: (_, program) => orDash(program.massTypeName) },
-    { key: 'ceremonyType', title: 'Loại nghi thức', render: (_, program) => orDash(program.ceremonyTypeName) },
     {
       key: 'songList',
       title: 'Danh sách bài hát',
-      width: 150,
+      width: 170,
       fixed: 'right',
       render: (_, program) => <SongListStatusTag status={program.songListStatus} />,
     },

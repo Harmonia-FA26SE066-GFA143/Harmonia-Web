@@ -1,6 +1,6 @@
 import { EditOutlined } from '@ant-design/icons'
 import { App, Button, Card, Flex, Select, Tag, Typography } from 'antd'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
@@ -24,14 +24,25 @@ export function EventChoirsCard({ eventId, locked = false }: Readonly<EventChoir
   const choirs = useChoirs()
   const update = useUpdateEventChoirs(eventId)
   const [editing, setEditing] = useState<string[]>()
+  const chooseButton = useRef<HTMLButtonElement>(null)
+  const wasEditing = useRef(false)
+  // The button is replaced by the picker while editing; give the focus back to it once the picker closes.
+  useEffect(() => {
+    if (wasEditing.current && !editing) chooseButton.current?.focus()
+    wasEditing.current = Boolean(editing)
+  }, [editing])
 
   const current = serving.data ?? []
   const options = (choirs.data ?? [])
     .filter((choir) => choir.isActive || current.some((item) => item.id === choir.id))
     .map((choir) => ({ value: choir.id, label: choir.isActive ? choir.name : `${choir.name} (ngừng hoạt động)` }))
 
+  const unchanged =
+    editing !== undefined && editing.length === current.length && editing.every((id) => current.some((choir) => choir.id === id))
+
   const save = () =>
     editing &&
+    !unchanged &&
     update.mutate(editing, {
       onSuccess: () => {
         message.success('Đã lưu ca đoàn phục vụ.')
@@ -47,7 +58,7 @@ export function EventChoirsCard({ eventId, locked = false }: Readonly<EventChoir
         !locked &&
         serving.isSuccess &&
         !editing && (
-          <Button icon={<EditOutlined />} onClick={() => setEditing(current.map((choir) => choir.id))}>
+          <Button ref={chooseButton} icon={<EditOutlined />} onClick={() => setEditing(current.map((choir) => choir.id))}>
             Chọn ca đoàn
           </Button>
         )
@@ -73,6 +84,7 @@ export function EventChoirsCard({ eventId, locked = false }: Readonly<EventChoir
       {editing && (
         <Flex vertical gap={spacing.sm}>
           <Select
+            autoFocus
             mode="multiple"
             allowClear
             optionFilterProp="label"
@@ -88,7 +100,7 @@ export function EventChoirsCard({ eventId, locked = false }: Readonly<EventChoir
             <Button onClick={() => setEditing(undefined)} disabled={update.isPending}>
               Hủy
             </Button>
-            <Button type="primary" loading={update.isPending} onClick={save}>
+            <Button type="primary" loading={update.isPending} disabled={unchanged} onClick={save}>
               Lưu
             </Button>
           </Flex>

@@ -1,6 +1,7 @@
 import { Flex, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { formatDateTime } from '@/lib/api/dates'
+import { visuallyHidden } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import type { DirectorNote } from '../types'
 
@@ -18,16 +19,6 @@ export interface NoteTableProps {
 
 const muted = { color: colors.textMuted }
 const numeric = { fontFamily: typography.fontFamilyNumeric }
-
-// Read by screen readers, not shown: tells which note a "Xem thêm" belongs to.
-const visuallyHidden = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  overflow: 'hidden',
-  clip: 'rect(0 0 0 0)',
-  whiteSpace: 'nowrap',
-} as const
 
 export function NoteTable({ notes, party, page, pageSize, total, loading, onPageChange }: Readonly<NoteTableProps>) {
   const columns: TableColumnsType<DirectorNote> = [
@@ -63,6 +54,7 @@ export function NoteTable({ notes, party, page, pageSize, total, loading, onPage
               symbol: (expanded) => (
                 <>
                   {expanded ? 'Thu gọn' : 'Xem thêm'}
+                  {/* Tells a screen reader which note this "Xem thêm" belongs to. */}
                   <span style={visuallyHidden}> ghi chú {party === 'recipient' ? 'gửi' : 'từ'} {name}</span>
                 </>
               ),

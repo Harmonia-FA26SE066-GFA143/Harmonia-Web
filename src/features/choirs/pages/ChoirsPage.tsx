@@ -106,7 +106,9 @@ export function ChoirsPage() {
                     <Button icon={<TeamOutlined />} onClick={() => setMembersOf(choir)} aria-label={`Ca viên của ${choir.name}`}>
                       Ca viên
                     </Button>
-                    <Button type="text" icon={<EditOutlined />} onClick={() => openForm(choir)} aria-label={`Chỉnh sửa ${choir.name}`} />
+                    <Button icon={<EditOutlined />} onClick={() => openForm(choir)} aria-label={`Sửa ${choir.name}`}>
+                      Sửa
+                    </Button>
                   </Flex>
                 ),
               },

@@ -1,6 +1,7 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { Button, DatePicker, Flex, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
+import { visuallyHidden } from '@/shared/ui'
 import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { hasActiveEventFilters } from '../programFilters'
 import { eventStatusLabels, type EventFilters, type EventStatus } from '../types'
@@ -16,16 +17,6 @@ export interface EventFilterBarProps {
 
 /** The filters GET /api/liturgical-events offers: status and a date range. */
 const allStatuses = Object.keys(eventStatusLabels) as EventStatus[]
-
-/** Read by screen readers, not shown. */
-const visuallyHidden = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  overflow: 'hidden',
-  clip: 'rect(0 0 0 0)',
-  whiteSpace: 'nowrap',
-} as const
 
 export function EventFilterBar({
   value,
