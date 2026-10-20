@@ -119,16 +119,15 @@ describe('AppShell', () => {
     expect(within(menu).getByText('Ca trưởng')).toBeInTheDocument()
   })
 
-  it('shows unread notifications with Vietnamese titles and marks one read when opened', async () => {
+  it('shows unread notifications with the title the backend writes and marks one read when opened', async () => {
     setViewportWidth(1280)
     vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(2)
     vi.spyOn(notificationsApi, 'listNotifications').mockResolvedValue({
       items: [
         {
           id: 'n1',
-          type: 'eventPublished',
-          title: 'New event published',
-          content: 'The event on 24/10/2026 at 18:00 has been published.',
+          title: 'Sự kiện mới được công bố',
+          content: 'Sự kiện ngày 24/10/2026 lúc 18:00 đã được công bố.',
           createdAt: '2026-10-08T02:00:00Z',
           isRead: false,
         },
@@ -154,8 +153,8 @@ describe('AppShell', () => {
     vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(1)
     vi.spyOn(notificationsApi, 'listNotifications').mockResolvedValue({
       items: [
-        { id: 'n1', type: 'eventPublished', title: 'x', content: 'Chưa đọc', createdAt: '2026-10-08T02:00:00Z', isRead: false },
-        { id: 'n2', type: 'eventCancelled', title: 'y', content: 'Đã đọc', createdAt: '2026-10-07T02:00:00Z', isRead: true },
+        { id: 'n1', title: 'Sự kiện mới được công bố', content: 'Chưa đọc', createdAt: '2026-10-08T02:00:00Z', isRead: false },
+        { id: 'n2', title: 'Sự kiện đã bị huỷ', content: 'Đã đọc', createdAt: '2026-10-07T02:00:00Z', isRead: true },
       ],
       pageNumber: 1,
       pageSize: 10,
@@ -174,8 +173,8 @@ describe('AppShell', () => {
     // Inside the bell's wrapper, so Tab goes from the bell into the panel.
     expect(bell.parentElement).toContainElement(dialog)
     expect(await within(dialog).findByRole('button', { name: /Sự kiện mới được công bố/ })).toBeInTheDocument()
-    expect(within(dialog).queryByRole('button', { name: /Sự kiện đã bị hủy/ })).toBeNull()
-    expect(within(dialog).getByText('Sự kiện đã bị hủy')).toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: /Sự kiện đã bị huỷ/ })).toBeNull()
+    expect(within(dialog).getByText('Sự kiện đã bị huỷ')).toBeInTheDocument()
 
     fireEvent.keyDown(dialog, { key: 'Escape' })
     expect(bell).toHaveAttribute('aria-expanded', 'false')
@@ -186,7 +185,7 @@ describe('AppShell', () => {
     setViewportWidth(1280)
     vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(1)
     vi.spyOn(notificationsApi, 'listNotifications').mockResolvedValue({
-      items: [{ id: 'n1', type: 'eventPublished', title: 'x', content: 'Chưa đọc', createdAt: '2026-10-08T02:00:00Z', isRead: false }],
+      items: [{ id: 'n1', title: 'Sự kiện mới được công bố', content: 'Chưa đọc', createdAt: '2026-10-08T02:00:00Z', isRead: false }],
       pageNumber: 1,
       pageSize: 10,
       totalCount: 1,
