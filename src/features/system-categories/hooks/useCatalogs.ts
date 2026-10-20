@@ -2,16 +2,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   listCatalogItems,
   listLocations,
+  listMassSchedules,
   listSeasons,
   listSkills,
   listSlots,
   saveCatalogItem,
   saveLocation,
+  saveMassSchedule,
   saveSeason,
   saveSkill,
   saveSlot,
 } from '../api/categoriesApi'
-import type { BasicCatalog, CatalogItemValues, LookupKind } from '../types'
+import type { BasicCatalog, CatalogItemValues, LookupKind, MassScheduleValues } from '../types'
 
 /** Values for the add/edit modal; `id` is present when editing an existing entry. */
 export interface SaveCatalogEntry<V> {
@@ -72,4 +74,19 @@ export function useSaveSlot() {
 
 export function useSaveLocation() {
   return useSave('worshipLocations', saveLocation)
+}
+
+const massSchedulesKey = ['system-categories', 'mass-schedules'] as const
+
+/** Fixed Mass times; the Parish Priest reads them before generating events. */
+export function useMassSchedules() {
+  return useQuery({ queryKey: massSchedulesKey, queryFn: listMassSchedules })
+}
+
+export function useSaveMassSchedule() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, values }: SaveCatalogEntry<MassScheduleValues>) => saveMassSchedule(id, values),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: massSchedulesKey }),
+  })
 }

@@ -7,6 +7,7 @@ import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { colors, radius, spacing } from '@/styles/tokens'
 import { CatalogManager } from '../components/CatalogManager'
 import { descriptionColumn, descriptionField } from '../components/description'
+import { MassSchedulesPanel } from '../components/MassSchedulesPanel'
 import {
   useCatalogItems,
   useLocations,
@@ -170,8 +171,11 @@ function BasicCatalogPanel({ catalog, noun }: Readonly<{ catalog: BasicCatalog; 
   )
 }
 
-/** The four catalogs Report 1 FE-50 lists, in its order, then the three the backend added (LookupsController). */
-const tabs: { key: LiturgicalCatalog; label: string; children: ReactNode }[] = [
+/**
+ * The four catalogs Report 1 FE-50 lists, in its order, then the three the backend added (LookupsController) and the
+ * fixed Mass times (MassSchedulesController).
+ */
+const tabs: { key: LiturgicalCatalog | 'massSchedules'; label: string; children: ReactNode }[] = [
   { key: 'seasons', label: 'Mùa phụng vụ', children: <SeasonsPanel /> },
   { key: 'massTypes', label: 'Loại Thánh lễ', children: <BasicCatalogPanel catalog="massTypes" noun="loại Thánh lễ" /> },
   {
@@ -187,11 +191,12 @@ const tabs: { key: LiturgicalCatalog; label: string; children: ReactNode }[] = [
   { key: 'songThemes', label: 'Chủ đề bài hát', children: <BasicCatalogPanel catalog="songThemes" noun="chủ đề bài hát" /> },
   { key: 'liturgicalSlots', label: 'Phần phụng vụ', children: <SlotsPanel /> },
   { key: 'worshipLocations', label: 'Nơi cử hành', children: <LocationsPanel /> },
+  { key: 'massSchedules', label: 'Giờ lễ cố định', children: <MassSchedulesPanel /> },
 ]
 
 /**
- * Admin: liturgical seasons, Mass types, ceremony types, event categories, song themes, liturgical slots and worship
- * locations (FE-50).
+ * Admin: liturgical seasons, Mass types, ceremony types, event categories, song themes, liturgical slots, worship
+ * locations (FE-50) and the fixed weekly Mass times.
  */
 export function LiturgicalCategoriesPage() {
   const [tab, setTab] = useUrlTab(
@@ -203,7 +208,7 @@ export function LiturgicalCategoriesPage() {
       <PageHeader
         title="Danh mục phụng vụ"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Danh mục phụng vụ' }]}
-        description="Cấu hình mùa phụng vụ, loại Thánh lễ, loại nghi thức, danh mục sự kiện, chủ đề bài hát, phần phụng vụ và nơi cử hành."
+        description="Cấu hình mùa phụng vụ, loại Thánh lễ, loại nghi thức, danh mục sự kiện, chủ đề bài hát, phần phụng vụ, nơi cử hành và giờ lễ cố định hằng tuần."
       />
       <Tabs destroyOnHidden activeKey={tab} onChange={setTab} items={tabs} />
     </>

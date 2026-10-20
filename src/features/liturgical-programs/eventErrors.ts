@@ -9,6 +9,7 @@ const messages: Record<string, string> = {
   LITURGICAL_EVENT_ALREADY_PASSED: 'Sự kiện đã diễn ra, không thể hủy.',
   LITURGICAL_EVENT_DATE_OUTSIDE_LITURGICAL_SEASON: 'Ngày cử hành không nằm trong mùa phụng vụ đã chọn.',
   LOOKUP_INACTIVE: 'Có mục đã chọn (mùa, loại lễ, danh mục hoặc nơi cử hành) đã ngừng dùng. Vui lòng chọn mục khác.',
+  LITURGICAL_EVENT_GENERATION_RANGE_INVALID: 'Khoảng ngày phải bắt đầu từ hôm nay và dài tối đa 62 ngày.',
   LOOKUP_NOT_FOUND: 'Có mục đã chọn không còn tồn tại. Vui lòng tải lại trang.',
 }
 

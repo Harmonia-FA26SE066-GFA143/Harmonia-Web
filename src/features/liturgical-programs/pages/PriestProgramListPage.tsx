@@ -1,11 +1,12 @@
 import { PlusOutlined } from '@ant-design/icons'
-import { Button, Card } from 'antd'
+import { Button, Card, Flex } from 'antd'
 import { useMemo } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { EventFilterBar } from '../components/EventFilterBar'
+import { GenerateEventsButton } from '../components/GenerateEventsButton'
 import { EventTable } from '../components/EventTable'
 import { useEvents } from '../hooks/useEvents'
 import { hasActiveEventFilters, readEventListState, writeEventListState } from '../programFilters'
@@ -39,7 +40,12 @@ export function PriestProgramListPage() {
         title="Danh sách chương trình phụng vụ"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }]}
         description="Theo dõi các sự kiện phụng vụ, tạo bản nháp và công bố cho ca đoàn."
-        extra={createButton}
+        extra={
+          <Flex wrap gap={spacing.sm}>
+            <GenerateEventsButton />
+            {createButton}
+          </Flex>
+        }
       />
       {events.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách chương trình" />}
       {events.isError && (

@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import {
   cancelEvent,
   createEvent,
+  generateEvents,
   getEvent,
   getPreparationStatus,
   listEvents,
@@ -44,3 +45,6 @@ export const useUpdateEvent = () =>
 export const usePublishEvent = () => useEventMutation((id: string) => publishEvent(id))
 
 export const useCancelEvent = () => useEventMutation((id: string) => cancelEvent(id))
+
+export const useGenerateEvents = () =>
+  useEventMutation(({ fromDate, toDate }: { fromDate: string; toDate: string }) => generateEvents(fromDate, toDate))

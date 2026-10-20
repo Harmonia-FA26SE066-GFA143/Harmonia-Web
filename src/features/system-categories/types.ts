@@ -77,3 +77,34 @@ export interface LookupItem {
 
 /** Fixed on every environment (Harmonia-BE doc/api.md, Lookups); instrument requirements accept only this category. */
 export const instrumentSkillCategoryId = '0904ad8b-87f2-46c5-9938-f6cfbf0fa70b'
+
+/** `System.DayOfWeek` names, as the backend sends them. */
+export type DayOfWeek = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday'
+
+/** Sunday first, as the backend sorts mass schedules. */
+export const dayOfWeekLabels: Record<DayOfWeek, string> = {
+  Sunday: 'Chúa nhật',
+  Monday: 'Thứ Hai',
+  Tuesday: 'Thứ Ba',
+  Wednesday: 'Thứ Tư',
+  Thursday: 'Thứ Năm',
+  Friday: 'Thứ Sáu',
+  Saturday: 'Thứ Bảy',
+}
+
+/**
+ * A fixed weekly Mass time of the parish (`MassScheduleDto`, `api/mass-schedules`): the Parish Priest generates draft
+ * events from the active ones. Day + time + location is unique; never deleted, switched off with `isActive`.
+ */
+export interface MassSchedule {
+  id: string
+  dayOfWeek: DayOfWeek
+  /** Local time, HH:mm. */
+  time: string
+  massTypeId: string
+  locationId: string
+  title: string | null
+  isActive: boolean
+}
+
+export type MassScheduleValues = Omit<MassSchedule, 'id'>
