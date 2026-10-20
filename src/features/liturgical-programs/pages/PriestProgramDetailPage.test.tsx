@@ -97,6 +97,26 @@ describe('PriestProgramDetailPage', () => {
     expect(await screen.findByText('Đã công bố sự kiện.')).toBeInTheDocument()
   })
 
+  it('warns that a draft needs a season and explains a refused publish', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({ ...draft, seasonId: undefined })
+    vi.spyOn(eventsApi, 'publishEvent').mockRejectedValue(new ApiError(400, { code: 'LITURGICAL_EVENT_SEASON_REQUIRED' }))
+    renderDetail()
+
+    expect(await screen.findByText('Chưa chọn mùa phụng vụ')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Công bố' }))
+    fireEvent.click(within(await confirmDialog('Công bố sự kiện?')).getByRole('button', { name: 'Công bố' }))
+
+    expect(await screen.findByText('Chọn mùa phụng vụ cho sự kiện (bấm Sửa) rồi công bố lại.')).toBeInTheDocument()
+  })
+
+  it('does not offer to publish a past draft', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({ ...draft, date: '2020-01-05' })
+    renderDetail()
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Lễ Chúa Nhật XXVI' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Công bố' })).not.toBeInTheDocument()
+  })
+
   it('cancels a published event, warning that members are notified', async () => {
     vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({ ...draft, status: 'published', publishedAt: '2026-09-20T02:00:00Z' })
     const cancel = vi.spyOn(eventsApi, 'cancelEvent').mockResolvedValue()

@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, EditOutlined, FileSearchOutlined, StopOutlined } from '@ant-design/icons'
-import { App, Button, Flex, Modal } from 'antd'
+import { Alert, App, Button, Flex, Modal } from 'antd'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -19,7 +19,7 @@ const breadcrumb = [{ title: 'Cha xứ' }, { title: 'Chương trình phụng v�
 
 /**
  * Priest: one liturgical event (FE-15–FE-16) with the actions the backend allows (LiturgicalEventService): edit
- * unless cancelled, publish a Draft, cancel unless already cancelled or past. Publishing and cancelling a published
+ * unless cancelled, publish an upcoming Draft that has a season, cancel unless already cancelled or past. Publishing and cancelling a published
  * event notify Choir Directors and members. A published event shows how ready the choir is (FE-21), with its song
  * list status and a link to the review page; the Choir Director proposes a list once the event is published.
  */
@@ -61,7 +61,11 @@ export function PriestProgramDetailPage() {
 
   const data: LiturgicalEvent = event.data
   const cancelled = data.status === 'cancelled'
-  const canCancel = !cancelled && data.date >= vietnamToday()
+  const upcoming = data.date >= vietnamToday()
+  const canCancel = !cancelled && upcoming
+  // The backend refuses to publish a past event, or one without a season (LITURGICAL_EVENT_SEASON_REQUIRED).
+  const canPublish = data.status === 'draft' && upcoming
+  const needsSeason = canPublish && !data.seasonId
 
   const handleUpdate = (values: EventFormValues) =>
     update.mutate(
@@ -124,7 +128,7 @@ export function PriestProgramDetailPage() {
                 Hủy sự kiện
               </Button>
             )}
-            {data.status === 'draft' && (
+            {canPublish && (
               <Button type="primary" onClick={confirmPublish}>
                 Công bố
               </Button>
@@ -133,6 +137,14 @@ export function PriestProgramDetailPage() {
         }
       />
       <Flex vertical gap={spacing.lg}>
+        {needsSeason && (
+          <Alert
+            type="warning"
+            showIcon
+            title="Chưa chọn mùa phụng vụ"
+            description="Sự kiện cần có mùa phụng vụ trước khi công bố. Bấm “Sửa” để chọn mùa."
+          />
+        )}
         <EventInfo event={data} />
         {data.status === 'published' && <PreparationStatusCard eventId={data.id} />}
       </Flex>
