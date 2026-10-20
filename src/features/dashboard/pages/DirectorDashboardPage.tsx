@@ -1,4 +1,4 @@
-import { CalendarOutlined, CustomerServiceOutlined, FileTextOutlined, ReadOutlined, TeamOutlined, TrophyOutlined } from '@ant-design/icons'
+import { ArrowRightOutlined, CalendarOutlined, CustomerServiceOutlined, FileTextOutlined, ReadOutlined, TeamOutlined, TrophyOutlined } from '@ant-design/icons'
 import { Button, Card, Col, Flex, Row, Typography } from 'antd'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -7,7 +7,7 @@ import { useSubmissions } from '@/features/practice'
 import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
 import { EmptyState, ErrorState, MetricSummary, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
-import { cardSurface, colors, radius, spacing, typography } from '@/styles/tokens'
+import { brandGradient, cardSurface, colors, radius, spacing, typography } from '@/styles/tokens'
 import { ShortcutCards, type Shortcut } from '../components/ShortcutCards'
 
 const upcomingLimit = 5
@@ -56,6 +56,7 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
 
   return (
     <Card
+      className="director-todo-card"
       style={{ ...cardSurface, height: '100%' }}
       styles={{ body: { padding: spacing.lg, height: '100%' } }}
     >
@@ -129,17 +130,47 @@ export function DirectorDashboardPage() {
   })
 
   return (
-    <>
+    <div className="director-dashboard-page">
       <PageHeader
         title="Tổng quan"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Tổng quan' }]}
         description="Quản lý các chương trình và công việc chuẩn bị của ca đoàn."
       />
-      <Flex vertical gap={spacing.xl}>
-        <MetricSummary
-          definitions={metrics}
-          values={{ upcoming: programs.data?.length, skills: skills.data?.totalCount, submissions: submissions.data?.totalCount }}
-        />
+      <Flex vertical gap={spacing.lg}>
+        <Card
+          className="director-hero"
+          style={{ border: 0, overflow: 'hidden', background: brandGradient, color: '#fff' }}
+          styles={{ body: { padding: '24px 28px' } }}
+        >
+          <Flex wrap align="center" justify="space-between" gap={spacing.lg}>
+            <div style={{ maxWidth: 600 }}>
+              <Typography.Text style={{ color: 'rgba(255,255,255,.76)', fontSize: 12, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                Không gian điều hành ca đoàn
+              </Typography.Text>
+              <Typography.Title level={2} style={{ color: '#fff', margin: '8px 0 4px', fontSize: 25 }}>
+                Sẵn sàng cho những ngày phục vụ
+              </Typography.Title>
+              <Typography.Text style={{ color: 'rgba(255,255,255,.82)' }}>
+                Theo dõi chương trình, hoàn thiện danh sách bài hát và giữ nhịp chuẩn bị của ca đoàn.
+              </Typography.Text>
+            </div>
+            <Button
+              size="large"
+              icon={<ArrowRightOutlined />}
+              iconPlacement="end"
+              onClick={() => navigate(paths.director.programs)}
+              style={{ height: 46, border: 0, color: colors.primary, fontWeight: 600 }}
+            >
+              Mở chương trình phụng vụ
+            </Button>
+          </Flex>
+        </Card>
+        <div className="director-metrics-enter">
+          <MetricSummary
+            definitions={metrics}
+            values={{ upcoming: programs.data?.length, skills: skills.data?.totalCount, submissions: submissions.data?.totalCount }}
+          />
+        </div>
 
         <section aria-labelledby="todo-heading">
           <Flex wrap align="baseline" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
@@ -208,6 +239,6 @@ export function DirectorDashboardPage() {
           <ShortcutCards shortcuts={shortcuts} />
         </section>
       </Flex>
-    </>
+    </div>
   )
 }
