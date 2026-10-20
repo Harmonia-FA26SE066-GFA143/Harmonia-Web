@@ -49,6 +49,9 @@ describe('DirectorProgramListPage', () => {
 
     expect(await screen.findByText('Lễ Bổn mạng')).toBeInTheDocument()
     expect(screen.getByText('Đã hủy')).toBeInTheDocument()
+    // Its detail cannot be read by the Choir Director, so nothing leads to a "not found" page.
+    expect(screen.queryByRole('button', { name: 'Xem chi tiết Lễ Bổn mạng' })).toBeNull()
+    expect(screen.getByText('Không xem được')).toBeInTheDocument()
     expect(list).toHaveBeenCalledWith({}, { pageNumber: 1, pageSize: 20 })
   })
 })

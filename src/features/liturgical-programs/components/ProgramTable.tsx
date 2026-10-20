@@ -56,11 +56,16 @@ export function ProgramTable({ programs, onOpen, pagination = false, loading }: 
       title: 'Thao tác',
       align: 'right',
       fixed: 'right',
-      render: (_, program) => (
-        <Button onClick={() => onOpen(program)} aria-label={`Xem chi tiết ${program.eventName}`}>
-          Xem
-        </Button>
-      ),
+      render: (_, program) =>
+        // The Choir Director's detail reads published events only (GET /api/schedule/events/{id}), so a cancelled one
+        // would open on "not found".
+        program.status === 'cancelled' ? (
+          <Typography.Text style={secondary}>Không xem được</Typography.Text>
+        ) : (
+          <Button onClick={() => onOpen(program)} aria-label={`Xem chi tiết ${program.eventName}`}>
+            Xem
+          </Button>
+        ),
     },
   ]
 
