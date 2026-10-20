@@ -15,6 +15,7 @@ const messages: Record<string, string> = {
   LITURGICAL_EVENT_TYPE_REQUIRED: 'Chọn loại lễ hoặc loại nghi thức cho sự kiện (bấm Sửa) rồi công bố lại.',
   LITURGICAL_EVENT_SEASON_REQUIRED: 'Chọn mùa phụng vụ cho sự kiện (bấm Sửa) rồi công bố lại.',
   LOOKUP_INACTIVE: 'Có mục đã chọn (mùa, loại lễ, danh mục hoặc nơi cử hành) đã ngừng dùng. Vui lòng chọn mục khác.',
+  LITURGICAL_EVENT_GENERATION_RANGE_INVALID: 'Khoảng ngày phải bắt đầu từ hôm nay và dài tối đa 62 ngày.',
   LOOKUP_NOT_FOUND: 'Có mục đã chọn không còn tồn tại. Vui lòng tải lại trang.',
 }
 

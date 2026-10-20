@@ -1,5 +1,8 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import dayjs from 'dayjs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
+import { vietnamToday } from '@/lib/api/dates'
 import { ApiError } from '@/lib/api/errors'
 import type { PagedList } from '@/lib/api/paging'
 import { renderPage } from '@/test/renderPage'
@@ -75,5 +78,31 @@ describe('PriestProgramListPage', () => {
         expect.objectContaining({ pageNumber: 1, pageSize: 20 }),
       ),
     )
+  })
+
+  it('creates draft events from the active fixed Mass times for four weeks from today', async () => {
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(page(events))
+    vi.spyOn(categoriesApi, 'listMassSchedules').mockResolvedValue([
+      { id: 'ms1', dayOfWeek: 'Sunday', time: '05:00', massTypeId: 'm1', locationId: 'loc-1', title: 'Lễ sáng sớm', isActive: true },
+      { id: 'ms2', dayOfWeek: 'Monday', time: '18:00', massTypeId: 'm1', locationId: 'loc-1', title: 'Lễ chiều', isActive: false },
+    ])
+    vi.spyOn(categoriesApi, 'listLookup').mockImplementation(async (kind) =>
+      kind === 'worshipLocations' ? [{ id: 'loc-1', name: 'Nhà thờ chính' }] : [],
+    )
+    const generate = vi.spyOn(eventsApi, 'generateEvents').mockResolvedValue([event('e3', 'Lễ sáng sớm', 'draft')])
+    renderPage(<PriestProgramListPage />, '/priest/programs')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Tạo từ giờ lễ cố định/ }))
+    const dialog = await screen.findByRole('dialog')
+    // Only the active Mass time is used.
+    expect(await within(dialog).findByText('Chúa nhật · 05:00 · Lễ sáng sớm · Nhà thờ chính')).toBeInTheDocument()
+    expect(within(dialog).queryByText(/Lễ chiều/)).not.toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo sự kiện nháp' }))
+
+    const today = dayjs(vietnamToday())
+    await waitFor(() =>
+      expect(generate).toHaveBeenCalledWith(today.format('YYYY-MM-DD'), today.add(27, 'day').format('YYYY-MM-DD')),
+    )
+    expect(await screen.findByText('Đã tạo 1 sự kiện nháp.')).toBeInTheDocument()
   })
 })

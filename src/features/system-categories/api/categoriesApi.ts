@@ -10,6 +10,8 @@ import type {
   LiturgicalSlotValues,
   LookupItem,
   LookupKind,
+  MassSchedule,
+  MassScheduleValues,
   Skill,
   SkillValues,
   WorshipLocation,
@@ -96,4 +98,29 @@ export function listLocations(): Promise<WorshipLocation[]> {
 
 export function saveLocation(id: string | undefined, values: WorshipLocationValues): Promise<WorshipLocation> {
   return save('worshipLocations', id, { ...values, address: values.address?.trim() || null })
+}
+
+// `api/mass-schedules` (Harmonia-BE MassSchedulesController): read by the Admin and the Parish Priest, written by the
+// Admin. `time` is a TimeOnly (HH:mm:ss) on the wire.
+
+interface MassScheduleDto extends Omit<MassSchedule, 'time'> {
+  time: string
+}
+
+const toMassSchedule = (dto: MassScheduleDto): MassSchedule => ({ ...dto, time: dto.time.slice(0, 5) })
+
+/** Every schedule, switched-off ones included, Sunday first then by time. */
+export async function listMassSchedules(): Promise<MassSchedule[]> {
+  return (await apiRequest<MassScheduleDto[]>('/api/mass-schedules')).map(toMassSchedule)
+}
+
+/** POST takes no `isActive` (a new schedule is active); PUT replaces every field. */
+export async function saveMassSchedule(id: string | undefined, values: MassScheduleValues): Promise<MassSchedule> {
+  const { isActive, ...fields } = values
+  const body = { ...fields, time: `${values.time}:00`, title: values.title?.trim() || null }
+  const dto = await apiRequest<MassScheduleDto>(id ? `/api/mass-schedules/${id}` : '/api/mass-schedules', {
+    method: id ? 'PUT' : 'POST',
+    body: JSON.stringify(id ? { ...body, isActive } : body),
+  })
+  return toMassSchedule(dto)
 }

@@ -170,3 +170,16 @@ export async function getPreparationStatus(id: string): Promise<PreparationStatu
     practiceOverdue: dto.practiceOverdue,
   }
 }
+
+/**
+ * Creates a Draft for every active fixed Mass time on each day between the two dates (YYYY-MM-DD, inclusive; from
+ * today, at most 62 days), skipping a day + time + location already taken (MassScheduleService.GenerateEventsAsync).
+ * Answers the events created, none when there was nothing to create.
+ */
+export async function generateEvents(fromDate: string, toDate: string): Promise<LiturgicalEvent[]> {
+  const created = await apiRequest<LiturgicalEventDto[]>('/api/liturgical-events/generation', {
+    method: 'POST',
+    body: JSON.stringify({ fromDate, toDate }),
+  })
+  return created.map(toEvent)
+}

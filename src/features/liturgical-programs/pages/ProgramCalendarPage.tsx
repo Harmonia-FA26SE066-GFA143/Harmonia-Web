@@ -7,6 +7,7 @@ import { paths } from '@/app/router/paths'
 import { CardTitle, ErrorState, PageHeader, SectionSkeleton, visuallyHidden } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
+import { GenerateEventsButton } from '../components/GenerateEventsButton'
 import { LiturgicalDayInfo, SyncCalendarButton } from '../components/LiturgicalDayInfo'
 import { useEventNames } from '../hooks/useEventNames'
 import { useEvents } from '../hooks/useEvents'
@@ -115,6 +116,7 @@ export function ProgramCalendarPage() {
         extra={
           <Flex wrap gap={spacing.sm}>
             <SyncCalendarButton year={selected.year()} />
+            <GenerateEventsButton />
             <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
               Tạo chương trình
             </Button>

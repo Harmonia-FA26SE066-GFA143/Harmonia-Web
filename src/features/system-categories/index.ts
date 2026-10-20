@@ -3,3 +3,5 @@ export { useCatalogOptions, useLookup, useSkillOptions, type CatalogOption } fro
 export { useSaveSlot } from './hooks/useCatalogs'
 export { LiturgicalCategoriesPage } from './pages/LiturgicalCategoriesPage'
 export { SkillCategoriesPage } from './pages/SkillCategoriesPage'
+export { useMassSchedules } from './hooks/useCatalogs'
+export { dayOfWeekLabels, type MassSchedule } from './types'
