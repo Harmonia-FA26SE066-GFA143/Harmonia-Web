@@ -5,7 +5,7 @@ import { useId, useMemo, useState, type KeyboardEvent } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { CardTitle, ErrorState, PageHeader, SectionSkeleton, visuallyHidden } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { cardSurface, colors, spacing, typography } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
 import { LiturgicalDayInfo, SyncCalendarButton } from '../components/LiturgicalDayInfo'
@@ -108,7 +108,7 @@ export function ProgramCalendarPage() {
   }
 
   return (
-    <>
+    <div className="priest-calendar-page">
       <PageHeader
         title="Lịch phụng vụ"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Lịch phụng vụ' }]}
@@ -128,10 +128,33 @@ export function ProgramCalendarPage() {
         <ErrorState title="Không thể tải lịch phụng vụ" onRetry={() => events.refetch()} retrying={events.isFetching} />
       )}
       {events.isSuccess && (
-        // From xl the day panel sits beside the calendar, so picking a day shows its events without scrolling.
-        <Row gutter={[spacing.lg, spacing.lg]}>
-          <Col xs={24} xl={16}>
-            <Card styles={{ body: { padding: screens.md ? spacing.md : spacing.sm } }}>
+        <Flex vertical gap={spacing.md}>
+          <Card className="calendar-summary-card" style={{ ...cardSurface, borderInlineStart: `4px solid ${colors.primary}` }} styles={{ body: { padding: `${spacing.md}px ${spacing.lg}px` } }}>
+            <Flex wrap align="center" justify="space-between" gap={spacing.md}>
+              <div>
+                <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                  Lịch tháng
+                </Typography.Text>
+                <Typography.Title level={3} style={{ margin: '2px 0 0', fontSize: 19 }}>
+                  {selected.format('[Tháng] M YYYY')}
+                </Typography.Title>
+              </div>
+              <Flex wrap gap={spacing.lg}>
+                <div>
+                  <Typography.Text style={{ display: 'block', color: colors.textMuted, fontSize: 12 }}>Sự kiện trong tháng</Typography.Text>
+                  <Typography.Text strong style={{ fontSize: 20, fontVariantNumeric: 'tabular-nums' }}>{events.data.totalCount}</Typography.Text>
+                </div>
+                <div>
+                  <Typography.Text style={{ display: 'block', color: colors.textMuted, fontSize: 12 }}>Ngày đang chọn</Typography.Text>
+                  <Typography.Text strong style={{ fontSize: 20, fontVariantNumeric: 'tabular-nums' }}>{selected.format('DD/MM')}</Typography.Text>
+                </div>
+              </Flex>
+            </Flex>
+          </Card>
+          {/* From xl the day panel sits beside the calendar, so picking a day shows its events without scrolling. */}
+          <Row gutter={[spacing.md, spacing.md]}>
+            <Col xs={24} xl={16}>
+              <Card className="calendar-grid-card" style={cardSurface} styles={{ body: { padding: screens.md ? spacing.md : spacing.sm } }}>
               {/* The previous month stays on screen while the next one loads (keepPreviousData), so it is dimmed. */}
               <Spin spinning={events.isPlaceholderData} description="Đang tải tháng…">
                 <div role="group" aria-label="Lịch sự kiện phụng vụ" aria-describedby={hintId} onKeyDown={moveByKey}>
@@ -184,10 +207,10 @@ export function ProgramCalendarPage() {
                   />
                 </div>
               </Spin>
-            </Card>
-          </Col>
-          <Col xs={24} xl={8}>
-            <Flex vertical gap={spacing.lg}>
+              </Card>
+            </Col>
+            <Col xs={24} xl={8}>
+              <Flex vertical gap={spacing.md}>
               {/* Kept out of the calendar column so switching between empty and busy months does not move the grid. */}
               {!events.isPlaceholderData && events.data.totalCount === 0 && (
                 <Alert
@@ -197,7 +220,7 @@ export function ProgramCalendarPage() {
                   description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình cho ngày này”."
                 />
               )}
-              <Card title={<CardTitle>{dayTitle(selected)}</CardTitle>}>
+              <Card className="calendar-day-card" title={<CardTitle>{dayTitle(selected)}</CardTitle>}>
                 <span role="status" style={visuallyHidden}>
                   {events.isPlaceholderData ? '' : `Ngày ${selected.format('DD/MM/YYYY')}: ${selectedEvents.length} sự kiện`}
                 </span>
@@ -221,8 +244,8 @@ export function ProgramCalendarPage() {
                 )}
                 {!events.isPlaceholderData && selectedEvents.length > 0 && (
                   <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                    {selectedEvents.map((event) => (
-                      <Flex component="li" key={event.id} wrap align="center" justify="space-between" gap={spacing.sm}>
+                    {selectedEvents.map((event, index) => (
+                      <Flex component="li" className="calendar-event-row" key={event.id} wrap align="center" justify="space-between" gap={spacing.sm} style={{ animationDelay: `${index * 60}ms` }}>
                         <Flex vertical>
                           <Typography.Text strong>
                             {event.time} · {eventName(event)}
@@ -242,10 +265,11 @@ export function ProgramCalendarPage() {
                   </Flex>
                 )}
               </Card>
-            </Flex>
-          </Col>
-        </Row>
+              </Flex>
+            </Col>
+          </Row>
+        </Flex>
       )}
-    </>
+    </div>
   )
 }
