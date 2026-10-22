@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" fill="none">
+  <!-- Biểu tượng đơn sắc đen Monochrome Black (#18181B) -->
+  <g transform="translate(16, 16)">
+    <line x1="22" y1="10" x2="22" y2="78" stroke="#18181B" stroke-width="9" stroke-linecap="round" />
+    <line x1="66" y1="10" x2="66" y2="78" stroke="#18181B" stroke-width="9" stroke-linecap="round" />
+    <line x1="22" y1="44" x2="66" y2="44" stroke="#18181B" stroke-width="9" stroke-linecap="round" />
+    <circle cx="44" cy="18" r="4.5" fill="#18181B" />
+    <circle cx="44" cy="70" r="4.5" fill="#18181B" />
+  </g>
+</svg>

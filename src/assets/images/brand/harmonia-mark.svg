@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" fill="none">
+  <!-- Biểu tượng chỉ riêng Symbol: Chữ H Monoline với nét đều bo tròn (Burgundy #8E3B4B) -->
+  <g transform="translate(16, 16)">
+    <!-- Left bar -->
+    <line x1="22" y1="10" x2="22" y2="78" stroke="#8E3B4B" stroke-width="9" stroke-linecap="round" />
+    <!-- Right bar -->
+    <line x1="66" y1="10" x2="66" y2="78" stroke="#8E3B4B" stroke-width="9" stroke-linecap="round" />
+    <!-- Center bar -->
+    <line x1="22" y1="44" x2="66" y2="44" stroke="#8E3B4B" stroke-width="9" stroke-linecap="round" />
+    <!-- Harmonic rhythm nodes -->
+    <circle cx="44" cy="18" r="4.5" fill="#8E3B4B" />
+    <circle cx="44" cy="70" r="4.5" fill="#8E3B4B" />
+  </g>
+</svg>
