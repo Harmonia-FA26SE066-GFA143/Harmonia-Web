@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { paths } from '../paths'
-import { pageRoute, placeholderRoute } from '../placeholderRoute'
+import { pageRoute } from '../placeholderRoute'
 
 const area = 'Ca trưởng'
 const programs = 'Chương trình phụng vụ'
@@ -86,5 +86,9 @@ export const directorRoutes: RouteObject[] = [
     { title: 'Ghi chú từ Cha xứ', breadcrumb: [area, 'Ghi chú'], phase: 'TBD' },
     async () => (await import('@/features/notes')).DirectorNotesPage,
   ),
-  placeholderRoute(paths.director.reports, { title: 'Báo cáo ca đoàn', breadcrumb: [area, 'Báo cáo'], phase: 6 }),
+  pageRoute(
+    paths.director.reports,
+    { title: 'Báo cáo ca đoàn', breadcrumb: [area, 'Báo cáo'], phase: 6 },
+    async () => (await import('@/features/reports')).DirectorReportsPage,
+  ),
 ]

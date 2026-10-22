@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getAttendance, saveAttendance } from '../api/attendanceApi'
 import type { AttendanceRecord, AttendanceValue } from '../types'
 
@@ -27,5 +27,12 @@ export function useSaveAttendance(rehearsalId: string) {
       // A session with attendance can no longer be deleted (decision 2026-09-30, 6a.7).
       queryClient.invalidateQueries({ queryKey: ['rehearsals'] })
     },
+  })
+}
+
+/** The sheets of several sessions, sharing the cache of `useAttendance`; for reports. */
+export function useAttendances(rehearsalIds: string[]) {
+  return useQueries({
+    queries: rehearsalIds.map((rehearsalId) => ({ queryKey: attendanceKey(rehearsalId), queryFn: () => getAttendance(rehearsalId) })),
   })
 }
