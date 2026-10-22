@@ -16,8 +16,8 @@ const countOnly = { pageNumber: 1, pageSize: 1 }
 
 const metrics = [
   { key: 'upcoming', label: 'Chương trình sắp tới', icon: CalendarOutlined },
-  { key: 'skills', label: 'Kỹ năng chờ duyệt', icon: TrophyOutlined },
-  { key: 'submissions', label: 'Bản thu chờ chấm', icon: CustomerServiceOutlined },
+  { key: 'skills', label: 'Kỹ năng chờ duyệt', icon: TrophyOutlined, to: paths.director.skillApproval },
+  { key: 'submissions', label: 'Bản thu chờ chấm', icon: CustomerServiceOutlined, to: paths.director.practice },
 ]
 
 type Todo = 'none' | 'draft' | 'needsRevision' | 'rejected'
@@ -188,7 +188,7 @@ export function DirectorDashboardPage() {
           {programs.isSuccess && todos.length === 0 && (
             <EmptyState
               headingLevel={3}
-              title="Không có việc tồn đọng"
+              title="Không có danh sách bài hát cần chuẩn bị"
               description="Các chương trình sắp tới đều đã gửi danh sách bài hát để duyệt hoặc đã được phê duyệt."
             />
           )}

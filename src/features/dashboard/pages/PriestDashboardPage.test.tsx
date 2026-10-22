@@ -112,6 +112,9 @@ describe('DirectorDashboardPage', () => {
     // Counts from the backend totals.
     expect(await screen.findByText('4')).toBeInTheDocument()
     expect(screen.getByText('7')).toBeInTheDocument()
+    // The pending counts lead to the pages where they are handled.
+    expect(screen.getByRole('link', { name: /^Kỹ năng chờ duyệt: \d+\. Xem và xử lý$/ })).toHaveAttribute('href', '/director/skill-approval')
+    expect(screen.getByRole('link', { name: /^Bản thu chờ chấm: \d+\. Xem và xử lý$/ })).toHaveAttribute('href', '/director/practice')
 
     fireEvent.click(screen.getByRole('button', { name: 'Đề xuất danh sách bài hát: Lễ Bổn mạng' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/director/programs/p2/song-list')
@@ -123,7 +126,7 @@ describe('DirectorDashboardPage', () => {
       programPage({ id: 'p3', eventName: 'Lễ Các Đẳng', date: '2026-11-02', songListStatus: 'submitted' }),
     )
     renderPage(<DirectorDashboardPage />, '/director')
-    expect(await screen.findByRole('heading', { name: 'Không có việc tồn đọng' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Không có danh sách bài hát cần chuẩn bị' })).toBeInTheDocument()
     expect(screen.getByText('Lễ Các Đẳng')).toBeInTheDocument()
   })
 
