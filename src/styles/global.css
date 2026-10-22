@@ -251,3 +251,23 @@ body {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Song cards of the music library: the title link covers the card, and the card shows its keyboard focus. */
+.song-card-link::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+}
+
+.song-card-link:focus-visible {
+  outline: none;
+}
+
+.song-card:has(.song-card-link:focus-visible) {
+  outline: 2px solid #8e3b4b;
+  outline-offset: 2px;
+}
+
+.song-card .song-card-link:hover {
+  color: #8e3b4b !important;
+}

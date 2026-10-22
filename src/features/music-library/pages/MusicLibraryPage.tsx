@@ -8,13 +8,14 @@ import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } 
 import { spacing } from '@/styles/tokens'
 import { SongFilterBar } from '../components/SongFilterBar'
 import { SongFormModal } from '../components/SongFormModal'
-import { SongTable } from '../components/SongTable'
+import { SongGrid } from '../components/SongGrid'
 import { useSaveSong, useSongs } from '../hooks/useSongs'
 import { duplicateTitleMessage, isDuplicateTitle } from '../songErrors'
 import { emptySongFilters, hasActiveSongFilters, readSongListState, songListState, writeSongListState } from '../songFilters'
 import type { SongFilters, SongValues } from '../types'
 
-const pageSize = 20
+// Divisible by 2, 3 and 4: the card grid ends on a full row at every width.
+const pageSize = 24
 
 /** Choir Director: the choir's music library with FE-29 classification filters and song creation (FE-27–FE-29). */
 export function MusicLibraryPage() {
@@ -71,7 +72,7 @@ export function MusicLibraryPage() {
       <PageHeader
         title="Kho bài hát"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }]}
-        description="Quản lý bài hát của ca đoàn và tìm bài theo phân loại phụng vụ."
+        description="Bài hát của ca đoàn cùng bản nhạc, lời và audio mẫu; tìm bài theo phân loại phụng vụ."
         extra={addButton}
       />
       {songs.isPending && <SectionSkeleton rows={8} label="Đang tải kho bài hát" />}
@@ -93,14 +94,13 @@ export function MusicLibraryPage() {
               <NoFilterResults onClearFilters={resetFilters} />
             </div>
           ) : (
-            <SongTable
+            <SongGrid
               songs={songs.data.items}
               page={page}
               pageSize={pageSize}
               total={total}
               loading={songs.isPlaceholderData}
               onPageChange={setPage}
-              onOpen={(song) => openSong(song.id)}
             />
           )}
         </Card>

@@ -9,7 +9,7 @@ import {
   ReadOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
-import { Button, Card, Divider, Flex, Tag, Typography, Upload } from 'antd'
+import { Button, Card, Divider, Flex, Image, Tag, Typography, Upload } from 'antd'
 import dayjs from 'dayjs'
 import { Fragment, type ComponentType } from 'react'
 import { parseUtc } from '@/lib/api/dates'
@@ -23,6 +23,7 @@ import {
   type SongMaterial,
 } from '../types'
 import { CardTitle } from '@/shared/ui'
+import { AudioWaveform } from './AudioWaveform'
 
 export interface SongMaterialsCardProps {
   materials: SongMaterial[]
@@ -41,7 +42,11 @@ function formatSize(bytes: number | null): string | undefined {
   return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
 }
 
-const kindIcons: Record<MaterialKind, ComponentType> = {
+const extension = (fileName: string) => fileName.slice(fileName.lastIndexOf('.')).toLowerCase()
+const isAudio = ({ fileName }: SongMaterial) => ['.mp3', '.m4a', '.wav'].includes(extension(fileName))
+const isImage = ({ fileName }: SongMaterial) => ['.png', '.jpg', '.jpeg'].includes(extension(fileName))
+
+const kindIcons:Record<MaterialKind, ComponentType> = {
   sheetMusic: ReadOutlined,
   lyrics: FileTextOutlined,
   sampleAudio: CustomerServiceOutlined,
@@ -82,57 +87,62 @@ type MaterialActions = Pick<SongMaterialsCardProps, 'onDelete' | 'onEdit' | 'onP
 function MaterialRow({ material, onDelete, onEdit, onProgress }: Readonly<{ material: SongMaterial } & MaterialActions>) {
   const Icon = kindIcons[material.kind]
   return (
-    <Flex
-      component="li"
-      wrap
-      align="center"
-      gap={spacing.md}
-      style={{ padding: spacing.md, background: colors.background, borderRadius: radius.md }}
-    >
-      <span aria-hidden style={{ color: colors.primary, fontSize: 20 }}>
-        <Icon />
-      </span>
-      <Flex vertical style={{ flex: '1 1 200px', minWidth: 0 }}>
-        <Flex wrap align="center" gap={spacing.xs}>
-          <Typography.Text strong ellipsis={{ tooltip: material.title }}>
-            {material.title}
+    <Flex component="li" vertical gap={spacing.sm} style={{ padding: spacing.md, background: colors.background, borderRadius: radius.md }}>
+      <Flex wrap align="center" gap={spacing.md}>
+        {isImage(material) ? (
+          // A sheet or lyrics page is recognised at a glance; the preview opens it full size.
+          <Image
+            src={material.url}
+            alt={`Trang đầu của ${material.title}`}
+            width={48}
+            height={60}
+            style={{ objectFit: 'cover', borderRadius: radius.sm, border: `1px solid ${colors.border}` }}
+          />
+        ) : (
+          <span aria-hidden style={{ color: colors.primary, fontSize: 20 }}>
+            <Icon />
+          </span>
+        )}
+        <Flex vertical style={{ flex: '1 1 200px', minWidth: 0 }}>
+          <Flex wrap align="center" gap={spacing.xs}>
+            <Typography.Text strong ellipsis={{ tooltip: material.title }}>
+              {material.title}
+            </Typography.Text>
+            {material.targetSkillName && <Tag style={{ marginInlineEnd: 0 }}>{material.targetSkillName}</Tag>}
+          </Flex>
+          <Typography.Text
+            ellipsis={{ tooltip: material.fileName }}
+            style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}
+          >
+            {[material.fileName, formatSize(material.fileSizeBytes), `tải lên ${dayjs(parseUtc(material.createdAt)).format('DD/MM/YYYY')}`]
+              .filter(Boolean)
+              .join(' · ')}
           </Typography.Text>
-          {material.targetSkillName && <Tag style={{ marginInlineEnd: 0 }}>{material.targetSkillName}</Tag>}
         </Flex>
-        <Typography.Text
-          ellipsis={{ tooltip: material.fileName }}
-          style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}
+        {/* Signed URLs expire; the list is refetched when the window regains focus, which renews them. */}
+        <Button
+          type="link"
+          icon={<ExportOutlined />}
+          href={material.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Xem/Tải xuống ${material.title} (mở tab mới)`}
         >
-          {[material.fileName, formatSize(material.fileSizeBytes), `tải lên ${dayjs(parseUtc(material.createdAt)).format('DD/MM/YYYY')}`]
-            .filter(Boolean)
-            .join(' · ')}
-        </Typography.Text>
+          Xem/Tải xuống
+        </Button>
+        <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Tiến độ học ${material.title}`}>
+          Tiến độ học
+        </Button>
+        <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
+        <Button
+          type="text"
+          danger
+          icon={<DeleteOutlined />}
+          onClick={() => onDelete(material)}
+          aria-label={`Xoá ${material.title}`}
+        />
       </Flex>
-      {material.kind === 'sampleAudio' && (
-        <audio controls preload="none" src={material.url} aria-label={`Nghe ${material.title}`} style={{ height: 36 }} />
-      )}
-      {/* Signed URLs expire; the list is refetched when the window regains focus, which renews them. */}
-      <Button
-        type="link"
-        icon={<ExportOutlined />}
-        href={material.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`Xem/Tải xuống ${material.title} (mở tab mới)`}
-      >
-        Xem/Tải xuống
-      </Button>
-      <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Tiến độ học ${material.title}`}>
-        Tiến độ học
-      </Button>
-      <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
-      <Button
-        type="text"
-        danger
-        icon={<DeleteOutlined />}
-        onClick={() => onDelete(material)}
-        aria-label={`Xoá ${material.title}`}
-      />
+      {isAudio(material) && <AudioWaveform url={material.url} title={material.title} />}
     </Flex>
   )
 }

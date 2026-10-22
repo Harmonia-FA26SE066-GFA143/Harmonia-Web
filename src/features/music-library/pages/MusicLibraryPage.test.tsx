@@ -52,7 +52,7 @@ describe('MusicLibraryPage', () => {
     renderPage(<MusicLibraryPage />, '/director/library')
 
     expect(await screen.findByText('Con Bước Lên Bàn Thờ')).toBeInTheDocument()
-    expect(screen.getByText('Lm. Kim Long')).toBeInTheDocument()
+    expect(screen.getByText('Nhạc: Lm. Kim Long')).toBeInTheDocument()
     expect(screen.getByText('2 bài hát')).toBeInTheDocument()
   })
 
@@ -66,7 +66,7 @@ describe('MusicLibraryPage', () => {
     expect(await screen.findByRole('heading', { name: 'Không tìm thấy kết quả phù hợp' })).toBeInTheDocument()
     expect(list).toHaveBeenLastCalledWith(
       expect.objectContaining({ search: 'không có' }),
-      expect.objectContaining({ pageNumber: 1, pageSize: 20 }),
+      expect.objectContaining({ pageNumber: 1, pageSize: 24 }),
     )
   })
 
@@ -78,7 +78,7 @@ describe('MusicLibraryPage', () => {
     expect(screen.getByRole('textbox', { name: 'Tìm bài hát' })).toHaveValue('xin')
     expect(list).toHaveBeenLastCalledWith(
       expect.objectContaining({ search: 'xin', seasonId: 'a1' }),
-      expect.objectContaining({ pageNumber: 2, pageSize: 20 }),
+      expect.objectContaining({ pageNumber: 2, pageSize: 24 }),
     )
   })
 
