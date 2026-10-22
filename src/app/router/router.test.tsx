@@ -98,6 +98,24 @@ describe('router', () => {
     renderAt('/does-not-exist')
     expect(await screen.findByText('404')).toBeInTheDocument()
   })
+
+  it('shows a Vietnamese error page when a page throws', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const Broken = () => {
+      throw new Error('render failed')
+    }
+    const router = createMemoryRouter([{ errorElement: routes[0].errorElement, children: [{ path: '/broken', Component: Broken }] }], {
+      initialEntries: ['/broken'],
+    })
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    )
+    expect(await screen.findByText('Đã xảy ra lỗi')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tải lại trang' })).toBeInTheDocument()
+    vi.mocked(console.error).mockRestore()
+  })
 })
 
 describe('route guard', () => {
@@ -123,10 +141,11 @@ describe('route guard', () => {
     ['ChoirDirector', '/admin/accounts'],
     ['Admin', '/priest/programs'],
     ['ParishPriest', '/director'],
-  ] as const)('shows 404 when %s opens %s', async (roleName, path) => {
+  ] as const)('shows 403 when %s opens %s', async (roleName, path) => {
     signInAs(roleName)
     renderAt(path)
-    expect(await screen.findByText('404')).toBeInTheDocument()
+    expect(await screen.findByText('403')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Về trang của tôi' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
   })
 })

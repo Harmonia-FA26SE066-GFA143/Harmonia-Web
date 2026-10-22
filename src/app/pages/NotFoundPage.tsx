@@ -9,7 +9,7 @@ export function NotFoundPage() {
       <Result
         status="404"
         title="404"
-        subTitle="Không tìm thấy trang bạn cần. Đường dẫn có thể đã đổi hoặc bạn không có quyền xem trang này."
+        subTitle="Không tìm thấy trang bạn cần. Đường dẫn có thể đã đổi hoặc không còn tồn tại."
         extra={
           <Button type="primary" onClick={() => navigate('/')}>
             Về trang chủ
