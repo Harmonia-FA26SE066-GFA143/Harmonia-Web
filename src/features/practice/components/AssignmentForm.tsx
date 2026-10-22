@@ -8,11 +8,14 @@ import { colors, spacing } from '@/styles/tokens'
 import { useCreateAssignment, useUpcomingEvents } from '../hooks/usePractice'
 import { practiceErrorMessage } from '../practiceErrors'
 import { formatEventOption } from '../practiceFormat'
+import { MaterialPicker } from './MaterialPicker'
 import type { AssignmentScope, AssignmentValues } from '../types'
 
 interface FormValues extends Omit<AssignmentValues, 'dueDate'> {
   dueDate?: Dayjs
 }
+
+const muted = { color: colors.textMuted }
 
 const scopeOptions: { value: AssignmentScope; label: string }[] = [
   { value: 'all', label: 'Cả ca đoàn' },
@@ -92,27 +95,31 @@ export function AssignmentForm() {
             }))}
           />
         </Form.Item>
-        <Flex gap={spacing.md} wrap>
-          <Form.Item label="Bài hát (không bắt buộc)" name="songId" style={{ flex: '1 1 260px' }}>
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder="Chọn bài hát"
-              loading={songs.isPending}
-              onChange={() => form.setFieldValue('materialId', undefined)}
-              options={(songs.data?.items ?? []).map((song) => ({ value: song.id, label: song.title }))}
-            />
+        <Form.Item label="Bài hát (không bắt buộc)" name="songId">
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Chọn bài hát"
+            loading={songs.isPending}
+            onChange={() => form.setFieldValue('materialId', undefined)}
+            options={(songs.data?.items ?? []).map((song) => ({ value: song.id, label: song.title }))}
+          />
+        </Form.Item>
+        {songId && materials.isPending && <Typography.Paragraph style={muted}>Đang tải tài liệu của bài…</Typography.Paragraph>}
+        {songId && materials.isError && <Typography.Paragraph type="danger">Không thể tải tài liệu của bài hát.</Typography.Paragraph>}
+        {songId && materials.data?.length === 0 && (
+          <Typography.Paragraph style={muted}>Bài hát chưa có bản nhạc hay audio; tải lên trong Kho bài hát.</Typography.Paragraph>
+        )}
+        {songId && !!materials.data?.length && (
+          <Form.Item
+            label="Tài liệu gửi kèm"
+            name="materialId"
+            extra="Mỗi bài tập hiện gắn được một tài liệu. Bản nhạc và audio của bài dành cho cả ca đoàn hoặc cho kỹ năng của ca viên vẫn hiện trong mục tài liệu trên ứng dụng của ca viên."
+          >
+            <MaterialPicker materials={materials.data} />
           </Form.Item>
-          <Form.Item label="Tài liệu (không bắt buộc)" name="materialId" style={{ flex: '1 1 260px' }}>
-            <Select
-              allowClear
-              disabled={!songId}
-              placeholder={songId ? 'Chọn tài liệu của bài' : 'Chọn bài hát trước'}
-              options={(songId ? (materials.data ?? []) : []).map((material) => ({ value: material.id, label: material.title }))}
-            />
-          </Form.Item>
-        </Flex>
+        )}
         <Form.Item
           label="Hạn nộp"
           name="dueDate"
@@ -156,7 +163,7 @@ export function AssignmentForm() {
           <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={create.isPending}>
             Giao bài tập
           </Button>
-          <Typography.Text style={{ color: colors.textMuted }}>Bài tập đã giao chưa xem lại được trên Web.</Typography.Text>
+          <Typography.Text style={muted}>Bài tập đã giao xem lại ở thẻ “Bài đã giao”.</Typography.Text>
         </Flex>
       </Form>
     </Card>
