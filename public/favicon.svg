@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" fill="none">
+  <!-- Harmonia: chữ H monoline trắng trên ô bo góc đỏ rượu (#8E3B4B) -->
+  <rect width="120" height="120" rx="24" fill="#8E3B4B" />
+  <g transform="translate(16, 16)">
+    <line x1="22" y1="10" x2="22" y2="78" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" />
+    <line x1="66" y1="10" x2="66" y2="78" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" />
+    <line x1="22" y1="44" x2="66" y2="44" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" />
+    <circle cx="44" cy="18" r="4.5" fill="#FFFFFF" />
+    <circle cx="44" cy="70" r="4.5" fill="#FFFFFF" />
+  </g>
+</svg>
