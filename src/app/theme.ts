@@ -4,7 +4,8 @@ import { colors, layout, radius, shadows, sizes, spacing, typography } from '@/s
 /**
  * Maps Harmonia design tokens onto Ant Design theme tokens.
  * Semantic colors (success/warning/info) keep Ant Design defaults: no approved values exist yet. Two defaults fail
- * WCAG 1.4.3 as text and are darkened: the placeholder (1.8:1) and the error red (3.3:1 on white).
+ * WCAG 1.4.3 as text and are darkened: the placeholder (1.8:1) and the error red (3.3:1 on white); the focus ring
+ * fails 1.4.11 and uses the primary color.
  */
 export const theme: ThemeConfig = {
   token: {
@@ -24,6 +25,8 @@ export const theme: ThemeConfig = {
     colorTextPlaceholder: colors.textMuted,
     colorError: '#cf1322',
     controlOutline: colors.primaryFocus,
+    // Color of every keyboard focus ring; the derived default is 2.2:1 on white.
+    colorPrimaryBorder: colors.primary,
     controlItemBgActive: colors.primarySoft,
     controlItemBgHover: 'rgba(142, 59, 75, 0.04)',
 
