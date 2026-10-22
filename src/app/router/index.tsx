@@ -1,4 +1,5 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
+import { ErrorPage } from '@/app/pages/ErrorPage'
 import { NotFoundPage } from '@/app/pages/NotFoundPage'
 import { AppShell } from '@/layouts/AppShell/AppShell'
 import { BlankLayout } from '@/layouts/BlankLayout/BlankLayout'
@@ -15,6 +16,8 @@ import { publicRoutes, sharedRoutes } from './routes/shared.routes'
 export const routes: RouteObject[] = [
   {
     element: <PageTitle />,
+    // A page that throws shows a Vietnamese error page instead of React Router's default screen.
+    errorElement: <ErrorPage />,
     // Shown while the first lazily loaded page resolves.
     hydrateFallbackElement: (
       <div style={{ maxWidth: layout.contentMaxWidth, marginInline: 'auto', padding: `${spacing.xl}px ${layout.contentPaddingX}px` }}>
