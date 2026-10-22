@@ -88,7 +88,7 @@ describe('SongDetailPage', () => {
     expect(screen.getByText('Bản nhạc SATB')).toBeInTheDocument()
     expect(screen.getByText('con-buoc_SATB.pdf · 2.4 MB · tải lên 12/08/2026')).toBeInTheDocument()
     expect(screen.getByText('Tenor')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nghe Audio mẫu bè Tenor')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Phát Audio mẫu bè Tenor' })).toBeInTheDocument()
 
     // The cards are sections of the page (h2), the kinds of material sit under Tài liệu (h3).
     for (const name of ['Thông tin bài hát', 'Phân loại', 'Tài liệu']) {
