@@ -277,3 +277,44 @@ body {
 .song-card .song-card-link:hover {
   color: #8e3b4b !important;
 }
+
+/*
+ * Landing hero and sign-in image: controls on dark media. Values repeat `media` in tokens.ts (CSS cannot read it).
+ * Burgundy focus rings would vanish on the dark scrim, so they are white here; the hover states stay light too.
+ */
+.landing-hero .ant-btn:focus-visible,
+.on-media-link:focus-visible {
+  outline: 2px solid #fff !important;
+  outline-offset: 2px;
+}
+
+.on-media-link {
+  display: block;
+  border-radius: 10px;
+}
+
+.landing-hero .landing-hero-sign-in {
+  border: 0 !important;
+  background: #fff !important;
+  color: #8e3b4b !important;
+}
+
+.landing-hero .landing-hero-sign-in:hover {
+  background: rgba(255, 255, 255, 0.86) !important;
+  color: #762e3d !important;
+}
+
+.landing-hero .landing-hero-sign-in:active {
+  background: rgba(255, 255, 255, 0.76) !important;
+}
+
+.landing-hero .ant-btn-background-ghost {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: #fff !important;
+}
+
+.landing-hero .ant-btn-background-ghost:hover {
+  border-color: #fff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+}
