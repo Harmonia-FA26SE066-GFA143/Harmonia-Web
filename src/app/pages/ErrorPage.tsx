@@ -1,5 +1,7 @@
+import { WarningOutlined } from '@ant-design/icons'
 import { Button, Flex, Result } from 'antd'
 import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router'
+import { IconTile } from '@/shared/ui'
 import { NotFoundPage } from './NotFoundPage'
 
 /**
@@ -15,7 +17,14 @@ export function ErrorPage() {
     <main>
       <title>Đã xảy ra lỗi · Harmonia</title>
       <Result
-        status="500"
+        icon={
+          // A burgundy tile, as in the empty states; the antd status pictures are purple.
+          <Flex justify="center">
+            <IconTile size={72}>
+              <WarningOutlined />
+            </IconTile>
+          </Flex>
+        }
         title="Đã xảy ra lỗi"
         subTitle="Trang gặp lỗi khi hiển thị. Hãy tải lại trang; nếu vẫn lỗi, vui lòng báo cho quản trị viên."
         extra={
