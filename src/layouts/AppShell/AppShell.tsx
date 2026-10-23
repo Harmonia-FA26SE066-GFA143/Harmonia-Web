@@ -2,7 +2,7 @@ import { MenuOutlined } from '@ant-design/icons'
 import { Button, Drawer, Flex, Grid, Layout, Menu, Typography, type MenuProps } from 'antd'
 import { createElement, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
-import { BrandMark } from '@/shared/ui'
+import { BrandMark, OfflineNotice } from '@/shared/ui'
 import { colors, layout, sizes, spacing, typography } from '@/styles/tokens'
 import { getSession } from '@/lib/auth/session'
 import { roleByApiName } from '@/shared/types/account'
@@ -170,6 +170,7 @@ export function AppShell() {
           }}
         >
           <div style={{ maxWidth: layout.contentMaxWidth, marginInline: 'auto' }}>
+            <OfflineNotice />
             <SystemAnnouncement />
             <Outlet />
           </div>

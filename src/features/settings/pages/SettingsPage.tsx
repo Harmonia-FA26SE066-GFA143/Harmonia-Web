@@ -135,10 +135,10 @@ export function SettingsPage() {
       />
       {settings.isPending && <SectionSkeleton rows={6} label="Đang tải cấu hình" />}
       {settings.isError && (
-        <ErrorState title="Không thể tải cấu hình" onRetry={() => settings.refetch()} retrying={settings.isFetching} />
+        <ErrorState title="Không thể tải cấu hình" error={settings.error} hasData={settings.data !== undefined} onRetry={() => settings.refetch()} retrying={settings.isFetching} />
       )}
-      {settings.isSuccess && all.length === 0 && <EmptyState title="Chưa có thiết lập nào" />}
-      {settings.isSuccess && all.length > 0 && (
+      {settings.data !== undefined && all.length === 0 && <EmptyState title="Chưa có thiết lập nào" />}
+      {settings.data !== undefined && all.length > 0 && (
         <Form<Record<string, FieldValue>>
           layout="vertical"
           initialValues={Object.fromEntries(all.map((setting) => [setting.id, toField(setting)]))}

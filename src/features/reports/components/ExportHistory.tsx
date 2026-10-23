@@ -32,10 +32,10 @@ export function ExportHistory({ seasons }: Readonly<{ seasons: FilterOption[] }>
     <Card title={<CardTitle>Lịch sử xuất báo cáo</CardTitle>} styles={{ body: { padding: total > 0 ? 0 : undefined } }}>
       {exports.isPending && <SectionSkeleton rows={3} label="Đang tải lịch sử xuất báo cáo" />}
       {exports.isError && (
-        <ErrorState headingLevel={3} title="Không thể tải lịch sử xuất báo cáo" onRetry={() => exports.refetch()} retrying={exports.isFetching} />
+        <ErrorState headingLevel={3} title="Không thể tải lịch sử xuất báo cáo" error={exports.error} hasData={exports.data !== undefined} onRetry={() => exports.refetch()} retrying={exports.isFetching} />
       )}
-      {exports.isSuccess && total === 0 && <Typography.Text style={muted}>Chưa có lần xuất báo cáo nào.</Typography.Text>}
-      {exports.isSuccess && total > 0 && (
+      {exports.data !== undefined && total === 0 && <Typography.Text style={muted}>Chưa có lần xuất báo cáo nào.</Typography.Text>}
+      {exports.data !== undefined && total > 0 && (
         <Table<ReportExport>
           rowKey="id"
           dataSource={exports.data.items}

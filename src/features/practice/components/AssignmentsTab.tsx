@@ -115,15 +115,15 @@ export function AssignmentsTab() {
       </Flex>
       {assignments.isPending && <SectionSkeleton rows={6} label="Đang tải bài đã giao" />}
       {assignments.isError && (
-        <ErrorState title="Không thể tải bài đã giao" onRetry={() => assignments.refetch()} retrying={assignments.isFetching} />
+        <ErrorState title="Không thể tải bài đã giao" error={assignments.error} hasData={assignments.data !== undefined} onRetry={() => assignments.refetch()} retrying={assignments.isFetching} />
       )}
-      {assignments.isSuccess && total === 0 &&
+      {assignments.data !== undefined && total === 0 &&
         (eventId ? (
           <NoFilterResults onClearFilters={() => setEventId(undefined)} />
         ) : (
           <EmptyState title="Chưa giao bài tập nào" description="Giao bài ở tab “Giao bài”; bài đã giao sẽ xuất hiện tại đây." />
         ))}
-      {assignments.isSuccess && total > 0 && (
+      {assignments.data !== undefined && total > 0 && (
         <Card styles={{ body: { padding: 0 } }}>
           <Table<PracticeAssignment>
             rowKey="id"

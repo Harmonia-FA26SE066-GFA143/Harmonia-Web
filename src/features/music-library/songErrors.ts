@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api/errors'
+import { ApiError, requestFailureMessage } from '@/lib/api/errors'
 import { materialExtensions, materialKindLabels, maxMaterialBytes, type MaterialKind } from './types'
 
 /** POST/PUT /api/songs answer 409 SONG_TITLE_DUPLICATE when an active song has the same title and composer. */
@@ -41,14 +41,14 @@ export function uploadErrorMessage(error: Error): string {
     case 'EXTERNAL_STORAGE_FAILED':
       return 'Không thể lưu tệp lúc này. Vui lòng thử lại sau.'
     default:
-      return 'Không thể tải lên tài liệu. Vui lòng thử lại.'
+      return requestFailureMessage(error, 'Không thể tải lên tài liệu. Vui lòng thử lại.')
   }
 }
 
 export function classificationErrorMessage(error: Error): string {
   return error instanceof ApiError && error.code !== undefined && staleChoiceCodes.has(error.code)
     ? 'Một số mục vừa chọn đã bị tắt hoặc không còn tồn tại. Vui lòng tải lại trang rồi chọn lại.'
-    : 'Không thể lưu phân loại. Vui lòng thử lại.'
+    : requestFailureMessage(error, 'Không thể lưu phân loại. Vui lòng thử lại.')
 }
 
 /** PUT /api/music-materials/{id} (Harmonia-BE MusicMaterialService.UpdateAsync). */
@@ -60,6 +60,6 @@ export function materialUpdateErrorMessage(error: Error): string {
     case 'SKILL_NOT_FOUND':
       return 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại.'
     default:
-      return 'Không thể lưu tài liệu. Vui lòng thử lại.'
+      return requestFailureMessage(error, 'Không thể lưu tài liệu. Vui lòng thử lại.')
   }
 }

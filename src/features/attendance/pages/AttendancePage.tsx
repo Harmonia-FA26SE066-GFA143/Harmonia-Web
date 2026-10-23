@@ -61,9 +61,9 @@ export function AttendancePage() {
       />
       {rehearsals.isPending && <SectionSkeleton rows={6} label="Đang tải buổi tập" />}
       {rehearsals.isError && (
-        <ErrorState title="Không thể tải buổi tập" onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
+        <ErrorState title="Không thể tải buổi tập" error={rehearsals.error} hasData={rehearsals.data !== undefined} onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
       )}
-      {rehearsals.isSuccess && !selected && (
+      {rehearsals.data !== undefined && !selected && (
         <EmptyState
           title="Chưa có buổi tập để điểm danh"
           description="Tạo buổi tập trong Lịch tập, sau đó quay lại đây để điểm danh."
@@ -103,21 +103,21 @@ export function AttendancePage() {
           {attendance.isError && (
             <ErrorState
               title="Không thể tải danh sách điểm danh"
-              onRetry={() => attendance.refetch()}
+              error={attendance.error} hasData={attendance.data !== undefined} onRetry={() => attendance.refetch()}
               retrying={attendance.isFetching}
             />
           )}
-          {attendance.isSuccess && attendance.data.length === 0 && (
+          {attendance.data !== undefined && attendance.data.length === 0 && (
             <EmptyState title="Chưa có thành viên trong danh sách điểm danh" />
           )}
-          {attendance.isSuccess && !started && (
+          {attendance.data !== undefined && !started && (
             <Alert
               type="info"
               showIcon
               title={`Điểm danh được từ khi buổi tập bắt đầu (${dayjs(selected.startAt).format('HH:mm DD/MM/YYYY')}), hoặc sớm hơn nếu Admin cho phép.`}
             />
           )}
-          {attendance.isSuccess && attendance.data.length > 0 && (
+          {attendance.data !== undefined && attendance.data.length > 0 && (
             // One sheet per session: its unsaved marks stay through a reload of the records.
             <AttendanceSheet
               key={selected.id}

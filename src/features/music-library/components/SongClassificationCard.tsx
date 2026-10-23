@@ -30,12 +30,14 @@ export interface SongClassificationCardProps {
   classification?: SongClassification | null
   loading?: boolean
   failed?: boolean
+  error?: unknown
+  hasData?: boolean
   onRetry?: () => void
   onEdit?: () => void
 }
 
 /** The FE-29 dimensions of one song, each with any number of values (GET /api/songs/{id}/classification). */
-export function SongClassificationCard({ classification, loading, failed, onRetry, onEdit }: Readonly<SongClassificationCardProps>) {
+export function SongClassificationCard({ classification, loading, failed, error, hasData, onRetry, onEdit }: Readonly<SongClassificationCardProps>) {
   return (
     <Card
       title={<CardTitle>Phân loại</CardTitle>}
@@ -48,7 +50,7 @@ export function SongClassificationCard({ classification, loading, failed, onRetr
       }
     >
       {loading && <SectionSkeleton rows={2} label="Đang tải phân loại" />}
-      {failed && <ErrorState headingLevel={3} title="Không thể tải phân loại" onRetry={onRetry} />}
+      {failed && <ErrorState headingLevel={3} title="Không thể tải phân loại" error={error} hasData={hasData} onRetry={onRetry} />}
       {classification && (
         <Descriptions
           layout="vertical"

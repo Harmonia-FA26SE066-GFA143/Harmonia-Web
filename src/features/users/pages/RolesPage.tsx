@@ -70,11 +70,11 @@ export function RolesPage() {
       {accounts.isError && (
         <ErrorState
           title="Không thể tải vai trò và tài khoản"
-          onRetry={() => accounts.refetch()}
+          error={accounts.error} hasData={accounts.data !== undefined} onRetry={() => accounts.refetch()}
           retrying={accounts.isFetching}
         />
       )}
-      {accounts.isSuccess && (
+      {accounts.data !== undefined && (
         <Flex vertical gap={spacing.lg}>
           <RoleSummary counts={counts} />
           <section aria-labelledby="role-assignment-heading">

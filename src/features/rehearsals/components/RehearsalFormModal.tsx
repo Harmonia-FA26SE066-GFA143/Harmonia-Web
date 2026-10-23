@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { useSongs } from '@/features/music-library'
 import { useCatalogOptions } from '@/features/system-categories'
+import { requestFailureMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { spacing } from '@/styles/tokens'
 import { useDefaultSongs } from '../hooks/useRehearsals'
@@ -55,7 +56,7 @@ function SongsField() {
         list.length === 0
           ? message.info('Chương trình chưa có danh sách bài hát đã duyệt.')
           : form.setFieldValue('songs', list.map((song) => ({ value: song.songId, label: song.songTitle }))),
-      onError: () => message.error('Không thể lấy danh sách bài hát của chương trình. Vui lòng thử lại.'),
+      onError: (error) => message.error(requestFailureMessage(error, 'Không thể lấy danh sách bài hát của chương trình. Vui lòng thử lại.')),
     })
 
   return (

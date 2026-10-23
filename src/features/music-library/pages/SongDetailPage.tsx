@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
+import { requestFailureMessage } from '@/lib/api/errors'
 import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { LearningProgressModal } from '../components/LearningProgressModal'
@@ -80,12 +81,12 @@ export function SongDetailPage() {
   )
 
   if (song.isPending) return <PageSkeleton sections={3} />
-  if (song.isError || !song.data) {
+  if (!song.data) {
     return (
       <>
         <PageHeader title="Chi tiết bài hát" breadcrumb={breadcrumb} extra={backButton} />
         {song.isError ? (
-          <ErrorState title="Không thể tải bài hát" onRetry={() => song.refetch()} retrying={song.isFetching} />
+          <ErrorState title="Không thể tải bài hát" error={song.error} hasData={song.data !== undefined} onRetry={() => song.refetch()} retrying={song.isFetching} />
         ) : (
           <EmptyState
             icon={<FileSearchOutlined />}
@@ -116,7 +117,9 @@ export function SongDetailPage() {
           closeForm()
         },
         onError: (error) =>
-          isDuplicateTitle(error) ? setTitleError(duplicateTitleMessage) : message.error('Không thể lưu bài hát. Vui lòng thử lại.'),
+          isDuplicateTitle(error)
+            ? setTitleError(duplicateTitleMessage)
+            : message.error(requestFailureMessage(error, 'Không thể lưu bài hát. Vui lòng thử lại.')),
       },
     )
   }
@@ -182,7 +185,7 @@ export function SongDetailPage() {
             navigate(paths.director.library)
           })
           // 404 SONG_NOT_FOUND: someone deleted it already.
-          .catch(() => message.error('Không thể xoá bài hát. Vui lòng tải lại trang rồi thử lại.')),
+          .catch((error: Error) => message.error(requestFailureMessage(error, 'Không thể xoá bài hát. Vui lòng tải lại trang rồi thử lại.'))),
     })
 
   const handleDelete = () => {
@@ -192,7 +195,7 @@ export function SongDetailPage() {
         message.success('Đã xoá tài liệu.')
         setDeleting(undefined)
       },
-      onError: () => message.error('Không thể xoá tài liệu. Vui lòng thử lại.'),
+      onError: (error) => message.error(requestFailureMessage(error, 'Không thể xoá tài liệu. Vui lòng thử lại.')),
     })
   }
 
@@ -213,22 +216,27 @@ export function SongDetailPage() {
           </>
         }
       />
+      {song.isError && (
+        <ErrorState title="Không thể cập nhật bài hát" error={song.error} hasData onRetry={() => song.refetch()} retrying={song.isFetching} />
+      )}
       <Flex vertical gap={spacing.lg}>
         <SongInfoCard song={data} />
         <SongClassificationCard
           classification={classification.data}
           loading={classification.isPending}
           failed={classification.isError}
+          error={classification.error}
+          hasData={classification.data !== undefined}
           onRetry={() => classification.refetch()}
           onEdit={() => setClassifying(true)}
         />
         {materials.isPending && <SectionSkeleton rows={3} label="Đang tải tài liệu" />}
         {materials.isError && (
           <Card title={<CardTitle>Tài liệu</CardTitle>}>
-            <ErrorState headingLevel={3} title="Không thể tải tài liệu" onRetry={() => materials.refetch()} retrying={materials.isFetching} />
+            <ErrorState headingLevel={3} title="Không thể tải tài liệu" error={materials.error} hasData={materials.data !== undefined} onRetry={() => materials.refetch()} retrying={materials.isFetching} />
           </Card>
         )}
-        {materials.isSuccess && (
+        {materials.data !== undefined && (
           <SongMaterialsCard
             materials={materials.data}
             uploadingKind={upload.isPending ? picked?.kind : undefined}

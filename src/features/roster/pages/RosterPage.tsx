@@ -51,9 +51,9 @@ export function RosterPage() {
       />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
       {programs.isError && (
-        <ErrorState title="Không thể tải chương trình phụng vụ" onRetry={() => programs.refetch()} retrying={programs.isFetching} />
+        <ErrorState title="Không thể tải chương trình phụng vụ" error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
       )}
-      {programs.isSuccess && !program && <EmptyState title="Chưa có chương trình phụng vụ" />}
+      {programs.data !== undefined && !program && <EmptyState title="Chưa có chương trình phụng vụ" />}
       {program && (
         <Flex vertical gap={spacing.md}>
           <Card>

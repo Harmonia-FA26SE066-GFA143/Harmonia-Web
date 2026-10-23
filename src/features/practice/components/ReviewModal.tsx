@@ -74,7 +74,7 @@ export function ReviewModal({ submissionId, onClose }: Readonly<ReviewModalProps
     >
       {submission.isPending && <SectionSkeleton rows={4} label="Đang tải bản thu" />}
       {submission.isError && (
-        <ErrorState title="Không thể tải bản thu" onRetry={() => submission.refetch()} retrying={submission.isFetching} />
+        <ErrorState title="Không thể tải bản thu" error={submission.error} hasData={submission.data !== undefined} onRetry={() => submission.refetch()} retrying={submission.isFetching} />
       )}
       {data && (
         <Flex vertical gap={spacing.md}>

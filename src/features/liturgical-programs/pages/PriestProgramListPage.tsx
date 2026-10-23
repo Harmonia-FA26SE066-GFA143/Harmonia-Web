@@ -49,16 +49,16 @@ export function PriestProgramListPage() {
       />
       {events.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách chương trình" />}
       {events.isError && (
-        <ErrorState title="Không thể tải danh sách chương trình" onRetry={() => events.refetch()} retrying={events.isFetching} />
+        <ErrorState title="Không thể tải danh sách chương trình" error={events.error} hasData={events.data !== undefined} onRetry={() => events.refetch()} retrying={events.isFetching} />
       )}
-      {events.isSuccess && total === 0 && !filtered && (
+      {events.data !== undefined && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có chương trình phụng vụ nào"
           description="Tạo sự kiện đầu tiên, rồi công bố để Ca trưởng bắt đầu chuẩn bị."
           action={createButton}
         />
       )}
-      {events.isSuccess && (total > 0 || filtered) && (
+      {events.data !== undefined && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
           <EventFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
           {total === 0 ? (

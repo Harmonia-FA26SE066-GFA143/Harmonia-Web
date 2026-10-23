@@ -97,18 +97,18 @@ export function PriestDashboardPage() {
             <ErrorState
               headingLevel={3}
               title="Không thể tải danh sách bài hát chờ xem xét"
-              onRetry={() => pending.refetch()}
+              error={pending.error} hasData={pending.data !== undefined} onRetry={() => pending.refetch()}
               retrying={pending.isFetching}
             />
           )}
-          {pending.isSuccess && pending.data.length === 0 && (
+          {pending.data !== undefined && pending.data.length === 0 && (
             <EmptyState
               headingLevel={3}
               title="Không có danh sách bài hát nào chờ xem xét"
               description="Khi Ca trưởng gửi danh sách bài hát, danh sách sẽ xuất hiện tại đây."
             />
           )}
-          {pending.isSuccess && pending.data.length > 0 && (
+          {pending.data !== undefined && pending.data.length > 0 && (
             <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {pending.data.map((list) => (
                 <li key={list.id}>
@@ -128,9 +128,9 @@ export function PriestDashboardPage() {
           </Flex>
           {upcoming.isPending && <SectionSkeleton rows={upcomingLimit} label="Đang tải sự kiện sắp tới" />}
           {upcoming.isError && (
-            <ErrorState headingLevel={3} title="Không thể tải sự kiện sắp tới" onRetry={() => upcoming.refetch()} retrying={upcoming.isFetching} />
+            <ErrorState headingLevel={3} title="Không thể tải sự kiện sắp tới" error={upcoming.error} hasData={upcoming.data !== undefined} onRetry={() => upcoming.refetch()} retrying={upcoming.isFetching} />
           )}
-          {upcoming.isSuccess && upcoming.data.totalCount === 0 && (
+          {upcoming.data !== undefined && upcoming.data.totalCount === 0 && (
             <EmptyState
               headingLevel={3}
               title="Chưa có sự kiện sắp tới"
@@ -138,7 +138,7 @@ export function PriestDashboardPage() {
               action={createButton}
             />
           )}
-          {upcoming.isSuccess && upcoming.data.totalCount > 0 && (
+          {upcoming.data !== undefined && upcoming.data.totalCount > 0 && (
             <Card
               style={{ ...cardSurface, overflow: 'hidden' }}
               styles={{ body: { padding: 0 } }}

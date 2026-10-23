@@ -115,7 +115,7 @@ export function ParticipationPage() {
     })
 
   const sendButton = (
-    <Button type="primary" icon={<SendOutlined />} onClick={() => setPicking(true)} disabled={!participation.isSuccess}>
+    <Button type="primary" icon={<SendOutlined />} onClick={() => setPicking(true)} disabled={participation.data === undefined}>
       Gửi yêu cầu xác nhận
     </Button>
   )
@@ -127,13 +127,13 @@ export function ParticipationPage() {
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Xác nhận tham gia' }]}
         description="Gửi yêu cầu xác nhận tham gia phục vụ và theo dõi phản hồi."
         // The first send is offered here; later ones reach members not asked yet, from the list toolbar.
-        extra={program && !isPast && participation.isSuccess && requests.length === 0 && sendButton}
+        extra={program && !isPast && participation.data !== undefined && requests.length === 0 && sendButton}
       />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
       {programs.isError && (
-        <ErrorState title="Không thể tải chương trình phụng vụ" onRetry={() => programs.refetch()} retrying={programs.isFetching} />
+        <ErrorState title="Không thể tải chương trình phụng vụ" error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
       )}
-      {programs.isSuccess && !program && (
+      {programs.data !== undefined && !program && (
         <EmptyState title="Chưa có chương trình phụng vụ" description="Yêu cầu xác nhận tham gia được gửi theo từng chương trình." />
       )}
       {program && (
@@ -162,11 +162,11 @@ export function ParticipationPage() {
           {participation.isError && (
             <ErrorState
               title="Không thể tải phản hồi xác nhận"
-              onRetry={() => participation.refetch()}
+              error={participation.error} hasData={participation.data !== undefined} onRetry={() => participation.refetch()}
               retrying={participation.isFetching}
             />
           )}
-          {participation.isSuccess && requests.length === 0 && (
+          {participation.data !== undefined && requests.length === 0 && (
             <EmptyState
               title="Chưa gửi yêu cầu xác nhận"
               description={
@@ -177,7 +177,7 @@ export function ParticipationPage() {
               action={isPast ? undefined : sendButton}
             />
           )}
-          {participation.isSuccess && requests.length > 0 && (
+          {participation.data !== undefined && requests.length > 0 && (
             <>
               <MetricSummary definitions={metrics} values={counts} />
               <Card styles={{ body: { padding: 0 } }}>

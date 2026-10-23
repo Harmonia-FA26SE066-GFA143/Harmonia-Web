@@ -177,22 +177,22 @@ export function DirectorDashboardPage() {
             <Typography.Title id="todo-heading" level={2} style={{ margin: 0 }}>
               Cần xử lý
             </Typography.Title>
-            {programs.isSuccess && todos.length > 0 && (
+            {programs.data !== undefined && todos.length > 0 && (
               <Typography.Text style={{ color: colors.textMuted }}>{todos.length} chương trình cần chuẩn bị bài hát</Typography.Text>
             )}
           </Flex>
           {programs.isPending && <SectionSkeleton rows={3} label="Đang tải việc cần xử lý" />}
           {programs.isError && (
-            <ErrorState headingLevel={3} title="Không thể tải chương trình sắp tới" onRetry={() => programs.refetch()} retrying={programs.isFetching} />
+            <ErrorState headingLevel={3} title="Không thể tải chương trình sắp tới" error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
           )}
-          {programs.isSuccess && todos.length === 0 && (
+          {programs.data !== undefined && todos.length === 0 && (
             <EmptyState
               headingLevel={3}
               title="Không có danh sách bài hát cần chuẩn bị"
               description="Các chương trình sắp tới đều đã gửi danh sách bài hát để duyệt hoặc đã được phê duyệt."
             />
           )}
-          {programs.isSuccess && todos.length > 0 && (
+          {programs.data !== undefined && todos.length > 0 && (
             <Row gutter={[spacing.md, spacing.md]}>
               {todos.slice(0, todoLimit).map(({ program, todo }) => (
                 <Col key={program.id} xs={24} lg={12}>
@@ -217,12 +217,12 @@ export function DirectorDashboardPage() {
           </Flex>
           {programs.isPending && <SectionSkeleton rows={upcomingLimit} label="Đang tải chương trình sắp tới" />}
           {programs.isError && (
-            <ErrorState headingLevel={3} title="Không thể tải chương trình sắp tới" onRetry={() => programs.refetch()} retrying={programs.isFetching} />
+            <ErrorState headingLevel={3} title="Không thể tải chương trình sắp tới" error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
           )}
-          {programs.isSuccess && upcoming.length === 0 && (
+          {programs.data !== undefined && upcoming.length === 0 && (
             <EmptyState headingLevel={3} title="Chưa có chương trình sắp tới" description="Chương trình Cha xứ công bố sẽ xuất hiện tại đây." />
           )}
-          {programs.isSuccess && upcoming.length > 0 && (
+          {programs.data !== undefined && upcoming.length > 0 && (
             <Card styles={{ body: { padding: 0 } }}>
               <ProgramTable
                 programs={upcoming.slice(0, upcomingLimit)}

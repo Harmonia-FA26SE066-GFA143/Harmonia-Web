@@ -127,18 +127,18 @@ export function AccountsPage() {
       {accounts.isError && (
         <ErrorState
           title="Không thể tải danh sách tài khoản"
-          onRetry={() => accounts.refetch()}
+          error={accounts.error} hasData={accounts.data !== undefined} onRetry={() => accounts.refetch()}
           retrying={accounts.isFetching}
         />
       )}
-      {accounts.isSuccess && total === 0 && !filtered && (
+      {accounts.data !== undefined && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có tài khoản nào"
           description="Tài khoản bạn tạo sẽ xuất hiện tại đây."
           action={createButton}
         />
       )}
-      {accounts.isSuccess && (total > 0 || filtered) && (
+      {accounts.data !== undefined && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
           <AccountFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
           {total === 0 ? (

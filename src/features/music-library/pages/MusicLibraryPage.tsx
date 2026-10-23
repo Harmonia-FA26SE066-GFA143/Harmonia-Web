@@ -3,6 +3,7 @@ import { App, Button, Card } from 'antd'
 import { useMemo, useState } from 'react'
 import { generatePath, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { requestFailureMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
@@ -56,7 +57,9 @@ export function MusicLibraryPage() {
           openSong(song.id)
         },
         onError: (error) =>
-          isDuplicateTitle(error) ? setTitleError(duplicateTitleMessage) : message.error('Không thể lưu bài hát. Vui lòng thử lại.'),
+          isDuplicateTitle(error)
+            ? setTitleError(duplicateTitleMessage)
+            : message.error(requestFailureMessage(error, 'Không thể lưu bài hát. Vui lòng thử lại.')),
       },
     )
   }
@@ -77,16 +80,16 @@ export function MusicLibraryPage() {
       />
       {songs.isPending && <SectionSkeleton rows={8} label="Đang tải kho bài hát" />}
       {songs.isError && (
-        <ErrorState title="Không thể tải kho bài hát" onRetry={() => songs.refetch()} retrying={songs.isFetching} />
+        <ErrorState title="Không thể tải kho bài hát" error={songs.error} hasData={songs.data !== undefined} onRetry={() => songs.refetch()} retrying={songs.isFetching} />
       )}
-      {songs.isSuccess && total === 0 && !filtered && (
+      {songs.data !== undefined && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có bài hát nào"
           description="Thêm bài hát để phân loại và tải lên bản nhạc, lời, audio mẫu và tài liệu tập luyện."
           action={addButton}
         />
       )}
-      {songs.isSuccess && (total > 0 || filtered) && (
+      {songs.data !== undefined && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
           <SongFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
           {total === 0 ? (

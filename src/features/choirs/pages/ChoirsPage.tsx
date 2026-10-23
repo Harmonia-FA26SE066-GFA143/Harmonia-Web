@@ -65,11 +65,11 @@ export function ChoirsPage() {
         extra={addButton}
       />
       {choirs.isPending && <SectionSkeleton rows={4} label="Đang tải ca đoàn" />}
-      {choirs.isError && <ErrorState title="Không thể tải ca đoàn" onRetry={() => choirs.refetch()} retrying={choirs.isFetching} />}
-      {choirs.isSuccess && choirs.data.length === 0 && (
+      {choirs.isError && <ErrorState title="Không thể tải ca đoàn" error={choirs.error} hasData={choirs.data !== undefined} onRetry={() => choirs.refetch()} retrying={choirs.isFetching} />}
+      {choirs.data !== undefined && choirs.data.length === 0 && (
         <EmptyState title="Chưa có ca đoàn nào" description="Thêm ca đoàn đầu tiên rồi gán ca viên vào ca đoàn." action={addButton} />
       )}
-      {choirs.isSuccess && choirs.data.length > 0 && (
+      {choirs.data !== undefined && choirs.data.length > 0 && (
         <Card styles={{ body: { padding: 0 } }}>
           <Table<Choir>
             rowKey="id"

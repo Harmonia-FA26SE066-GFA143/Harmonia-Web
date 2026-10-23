@@ -49,7 +49,7 @@ function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
     },
   ]
 
-  const empty = progress.isSuccess && progress.data.totalCount === 0
+  const empty = progress.data !== undefined && progress.data.totalCount === 0
 
   return (
     <Flex vertical gap={spacing.md}>
@@ -70,7 +70,7 @@ function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
         ]}
       />
       {progress.isError && (
-        <ErrorState title="Không thể tải tiến độ học" onRetry={() => progress.refetch()} retrying={progress.isFetching} />
+        <ErrorState title="Không thể tải tiến độ học" error={progress.error} hasData={progress.data !== undefined} onRetry={() => progress.refetch()} retrying={progress.isFetching} />
       )}
       {empty && (
         <EmptyState title={status === 'all' ? 'Chưa có ca viên nào cần học tài liệu này' : 'Không có ca viên ở tình trạng này'} />

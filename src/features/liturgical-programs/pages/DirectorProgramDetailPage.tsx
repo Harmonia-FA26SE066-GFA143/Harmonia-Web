@@ -36,12 +36,12 @@ export function DirectorProgramDetailPage() {
   )
 
   if (program.isPending) return <PageSkeleton sections={2} />
-  if (program.isError || !program.data) {
+  if (!program.data) {
     return (
       <>
         <PageHeader title="Chi tiết chương trình phụng vụ" breadcrumb={breadcrumb} extra={backButton} />
         {program.isError ? (
-          <ErrorState title="Không thể tải chương trình" onRetry={() => program.refetch()} retrying={program.isFetching} />
+          <ErrorState title="Không thể tải chương trình" error={program.error} hasData={program.data !== undefined} onRetry={() => program.refetch()} retrying={program.isFetching} />
         ) : (
           <EmptyState
             icon={<FileSearchOutlined />}
@@ -65,6 +65,9 @@ export function DirectorProgramDetailPage() {
         description={[formatProgramDate(data.date), data.seasonName].filter(Boolean).join(' • ')}
         extra={backButton}
       />
+      {program.isError && (
+        <ErrorState title="Không thể cập nhật chương trình" error={program.error} hasData onRetry={() => program.refetch()} retrying={program.isFetching} />
+      )}
       <Flex vertical gap={spacing.lg}>
         <ProgramInfo program={data} />
         <EventChoirsCard eventId={data.id} locked={data.date < vietnamToday()} />

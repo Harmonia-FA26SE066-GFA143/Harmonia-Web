@@ -56,7 +56,7 @@ export function EventChoirsCard({ eventId, locked = false }: Readonly<EventChoir
       title={<CardTitle>Ca đoàn phục vụ</CardTitle>}
       extra={
         !locked &&
-        serving.isSuccess &&
+        serving.data !== undefined &&
         !editing && (
           <Button ref={chooseButton} icon={<EditOutlined />} onClick={() => setEditing(current.map((choir) => choir.id))}>
             Chọn ca đoàn
@@ -66,9 +66,9 @@ export function EventChoirsCard({ eventId, locked = false }: Readonly<EventChoir
     >
       {serving.isPending && <SectionSkeleton rows={1} label="Đang tải ca đoàn phục vụ" />}
       {serving.isError && (
-        <ErrorState headingLevel={3} title="Không thể tải ca đoàn phục vụ" onRetry={() => serving.refetch()} retrying={serving.isFetching} />
+        <ErrorState headingLevel={3} title="Không thể tải ca đoàn phục vụ" error={serving.error} hasData={serving.data !== undefined} onRetry={() => serving.refetch()} retrying={serving.isFetching} />
       )}
-      {serving.isSuccess && !editing && (
+      {serving.data !== undefined && !editing && (
         current.length > 0 ? (
           <Flex wrap gap={spacing.xs}>
             {current.map((choir) => (

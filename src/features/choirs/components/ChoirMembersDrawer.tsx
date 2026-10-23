@@ -81,14 +81,14 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
         <ErrorState
           headingLevel={3}
           title="Không thể tải ca viên của ca đoàn"
-          onRetry={() => members.refetch()}
+          error={members.error} hasData={members.data !== undefined} onRetry={() => members.refetch()}
           retrying={members.isFetching}
         />
       )}
-      {members.isSuccess && members.data.length === 0 && (
+      {members.data !== undefined && members.data.length === 0 && (
         <EmptyState headingLevel={3} title="Ca đoàn chưa có ca viên" description="Thêm ca viên đang sinh hoạt vào ca đoàn này." />
       )}
-      {members.isSuccess && members.data.length > 0 && (
+      {members.data !== undefined && members.data.length > 0 && (
         <Table<ChoirMembership>
           rowKey="memberId"
           size="small"

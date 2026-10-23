@@ -39,15 +39,15 @@ export function ActivityLogPage() {
 
       {log.isPending && <SectionSkeleton rows={8} label="Đang tải lịch sử hoạt động" />}
       {log.isError && (
-        <ErrorState title="Không thể tải lịch sử hoạt động" onRetry={() => log.refetch()} retrying={log.isFetching} />
+        <ErrorState title="Không thể tải lịch sử hoạt động" error={log.error} hasData={log.data !== undefined} onRetry={() => log.refetch()} retrying={log.isFetching} />
       )}
-      {log.isSuccess && total === 0 && !filtered && (
+      {log.data !== undefined && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có hoạt động nào"
           description="Các hoạt động sẽ được hệ thống tự động ghi lại và hiển thị tại đây."
         />
       )}
-      {log.isSuccess && (total > 0 || filtered) && (
+      {log.data !== undefined && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
           <ActivityFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
           {total === 0 ? (
