@@ -3,6 +3,7 @@ import { App, Button, Flex } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { requestFailureMessage } from '@/lib/api/errors'
 import { SignOutModal } from '@/features/auth'
 import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
@@ -25,7 +26,7 @@ export function ProfilePage() {
         message.success('Đã lưu thay đổi.')
         setEditing(false)
       },
-      onError: () => message.error('Không thể lưu thay đổi. Vui lòng thử lại.'),
+      onError: (error) => message.error(requestFailureMessage(error, 'Không thể lưu thay đổi. Vui lòng thử lại.')),
     })
   }
 
@@ -50,7 +51,7 @@ export function ProfilePage() {
       {profile.isError && (
         <ErrorState
           title="Không thể tải hồ sơ cá nhân"
-          onRetry={() => profile.refetch()}
+          error={profile.error} hasData={profile.data !== undefined} onRetry={() => profile.refetch()}
           retrying={profile.isFetching}
         />
       )}

@@ -54,8 +54,8 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
       />
 
       {notes.isPending && <SectionSkeleton rows={5} label="Đang tải ghi chú" />}
-      {notes.isError && <ErrorState title="Không thể tải ghi chú" onRetry={() => notes.refetch()} retrying={notes.isFetching} />}
-      {notes.isSuccess && total === 0 && (
+      {notes.isError && <ErrorState title="Không thể tải ghi chú" error={notes.error} hasData={notes.data !== undefined} onRetry={() => notes.refetch()} retrying={notes.isFetching} />}
+      {notes.data !== undefined && total === 0 && (
         <EmptyState
           title={sender ? 'Chưa gửi ghi chú nào' : 'Chưa có ghi chú nào'}
           description={
@@ -66,7 +66,7 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
           action={sender ? sendButton : undefined}
         />
       )}
-      {notes.isSuccess && total > 0 && (
+      {notes.data !== undefined && total > 0 && (
         <Card styles={{ body: { padding: 0 } }}>
           <NoteTable
             notes={notes.data.items}

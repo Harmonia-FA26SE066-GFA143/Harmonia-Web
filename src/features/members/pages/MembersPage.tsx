@@ -1,6 +1,6 @@
 import { App, Card } from 'antd'
 import { useMemo, useState } from 'react'
-import { ApiError } from '@/lib/api/errors'
+import { ApiError, requestFailureMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
@@ -50,7 +50,7 @@ export function MembersPage() {
           message.error(
             error instanceof ApiError && error.code === 'MEMBER_NOT_FOUND'
               ? 'Ca viên không còn tồn tại. Vui lòng tải lại trang.'
-              : 'Không thể lưu thông tin ca viên. Vui lòng thử lại.',
+              : requestFailureMessage(error, 'Không thể lưu thông tin ca viên. Vui lòng thử lại.'),
           ),
       },
     )
@@ -66,15 +66,15 @@ export function MembersPage() {
 
       {members.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách ca viên" />}
       {members.isError && (
-        <ErrorState title="Không thể tải danh sách ca viên" onRetry={() => members.refetch()} retrying={members.isFetching} />
+        <ErrorState title="Không thể tải danh sách ca viên" error={members.error} hasData={members.data !== undefined} onRetry={() => members.refetch()} retrying={members.isFetching} />
       )}
-      {members.isSuccess && total === 0 && !filtered && (
+      {members.data !== undefined && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có ca viên nào"
           description="Ca viên xuất hiện tại đây sau khi Quản trị viên tạo tài khoản với vai trò Ca viên."
         />
       )}
-      {members.isSuccess && (total > 0 || filtered) && (
+      {members.data !== undefined && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
           <MemberFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
           {total === 0 ? (

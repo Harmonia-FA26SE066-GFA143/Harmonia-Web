@@ -41,12 +41,12 @@ export function PriestProgramDetailPage() {
   )
 
   if (event.isPending) return <PageSkeleton sections={2} />
-  if (event.isError || !event.data) {
+  if (!event.data) {
     return (
       <>
         <PageHeader title="Chi tiết chương trình phụng vụ" breadcrumb={breadcrumb} extra={backButton} />
         {event.isError ? (
-          <ErrorState title="Không thể tải chương trình" onRetry={() => event.refetch()} retrying={event.isFetching} />
+          <ErrorState title="Không thể tải chương trình" error={event.error} hasData={event.data !== undefined} onRetry={() => event.refetch()} retrying={event.isFetching} />
         ) : (
           <EmptyState
             icon={<FileSearchOutlined />}
@@ -136,6 +136,9 @@ export function PriestProgramDetailPage() {
           </Flex>
         }
       />
+      {event.isError && (
+        <ErrorState title="Không thể cập nhật chương trình" error={event.error} hasData onRetry={() => event.refetch()} retrying={event.isFetching} />
+      )}
       <Flex vertical gap={spacing.lg}>
         {needsSeason && (
           <Alert

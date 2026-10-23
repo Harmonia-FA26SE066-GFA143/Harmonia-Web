@@ -125,9 +125,9 @@ export function ProgramCalendarPage() {
       />
       {events.isPending && <SectionSkeleton rows={8} label="Đang tải lịch phụng vụ" />}
       {events.isError && (
-        <ErrorState title="Không thể tải lịch phụng vụ" onRetry={() => events.refetch()} retrying={events.isFetching} />
+        <ErrorState title="Không thể tải lịch phụng vụ" error={events.error} hasData={events.data !== undefined} onRetry={() => events.refetch()} retrying={events.isFetching} />
       )}
-      {events.isSuccess && (
+      {events.data !== undefined && (
         <Flex vertical gap={spacing.md}>
           <Card className="calendar-summary-card" style={{ ...cardSurface, borderInlineStart: `4px solid ${colors.primary}` }} styles={{ body: { padding: `${spacing.md}px ${spacing.lg}px` } }}>
             <Flex wrap align="center" justify="space-between" gap={spacing.md}>

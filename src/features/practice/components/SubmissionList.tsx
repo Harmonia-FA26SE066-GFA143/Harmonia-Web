@@ -40,15 +40,15 @@ export function SubmissionList({ assignmentId, defaultStatus }: Readonly<Submiss
       />
       {submissions.isPending && <SectionSkeleton rows={6} label="Đang tải bản thu" />}
       {submissions.isError && (
-        <ErrorState title="Không thể tải bản thu" onRetry={() => submissions.refetch()} retrying={submissions.isFetching} />
+        <ErrorState title="Không thể tải bản thu" error={submissions.error} hasData={submissions.data !== undefined} onRetry={() => submissions.refetch()} retrying={submissions.isFetching} />
       )}
-      {submissions.isSuccess && total === 0 && (
+      {submissions.data !== undefined && total === 0 && (
         <EmptyState
           title={status === 'submitted' ? 'Không có bản thu nào chờ chấm' : 'Không có bản thu nào'}
           description="Ca viên nộp bản thu trên ứng dụng di động; bản thu mới sẽ xuất hiện tại đây."
         />
       )}
-      {submissions.isSuccess && total > 0 && (
+      {submissions.data !== undefined && total > 0 && (
         <Card styles={{ body: { padding: 0 } }}>
           <SubmissionTable
             submissions={submissions.data.items}

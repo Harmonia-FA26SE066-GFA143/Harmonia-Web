@@ -83,7 +83,7 @@ export function MassSchedulesPanel() {
   let content
   if (schedules.isPending) content = <SectionSkeleton rows={5} label="Đang tải giờ lễ cố định" />
   else if (schedules.isError)
-    content = <ErrorState title="Không thể tải giờ lễ cố định" onRetry={() => schedules.refetch()} retrying={schedules.isFetching} />
+    content = <ErrorState title="Không thể tải giờ lễ cố định" error={schedules.error} hasData={schedules.data !== undefined} onRetry={() => schedules.refetch()} retrying={schedules.isFetching} />
   else if (schedules.data.length === 0)
     content = (
       <EmptyState

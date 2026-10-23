@@ -40,17 +40,17 @@ export function DirectorProgramListPage() {
       {programs.isError && (
         <ErrorState
           title="Không thể tải danh sách chương trình"
-          onRetry={() => programs.refetch()}
+          error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()}
           retrying={programs.isFetching}
         />
       )}
-      {programs.isSuccess && total === 0 && !filtered && (
+      {programs.data !== undefined && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có chương trình phụng vụ nào"
           description="Chương trình Cha xứ công bố sẽ xuất hiện tại đây."
         />
       )}
-      {programs.isSuccess && (total > 0 || filtered) && (
+      {programs.data !== undefined && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
           <EventFilterBar
             value={filters}

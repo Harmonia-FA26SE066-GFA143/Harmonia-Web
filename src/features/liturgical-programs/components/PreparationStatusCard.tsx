@@ -70,9 +70,9 @@ export function PreparationStatusCard({ eventId }: Readonly<{ eventId: string }>
     <Card title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>
       {status.isPending && <SectionSkeleton rows={4} label="Đang tải tình hình chuẩn bị" />}
       {status.isError && (
-        <ErrorState headingLevel={3} title="Không thể tải tình hình chuẩn bị" onRetry={() => status.refetch()} retrying={status.isFetching} />
+        <ErrorState headingLevel={3} title="Không thể tải tình hình chuẩn bị" error={status.error} hasData={status.data !== undefined} onRetry={() => status.refetch()} retrying={status.isFetching} />
       )}
-      {status.isSuccess && (
+      {status.data !== undefined && (
         <Descriptions
           column={1}
           items={[

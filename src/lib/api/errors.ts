@@ -38,5 +38,18 @@ export class ApiError extends Error {
 }
 
 /** The feature's message for the error's backend `code`, or `fallback`. */
-export const errorMessage = (error: Error, messages: Record<string, string>, fallback: string): string =>
-  (error instanceof ApiError && error.code !== undefined && messages[error.code]) || fallback
+export function requestFailureMessage(error: Error, fallback: string): string {
+  if (error instanceof TypeError || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return 'Không có kết nối mạng. Vui lòng kiểm tra kết nối rồi thử lại.'
+  }
+  if (error instanceof ApiError && error.status >= 500) {
+    return 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.'
+  }
+  return fallback
+}
+
+/** The feature's message for a known backend code; otherwise a network/server-aware fallback. */
+export const errorMessage = (error: Error, messages: Record<string, string>, fallback: string): string => {
+  const knownMessage = error instanceof ApiError && error.code !== undefined ? messages[error.code] : undefined
+  return knownMessage ?? requestFailureMessage(error, fallback)
+}

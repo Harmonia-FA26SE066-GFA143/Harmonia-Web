@@ -74,14 +74,14 @@ export function SongPickerModal({ open, excludedSongIds, onAdd, onCancel }: Read
       />
       {songs.isPending && <SectionSkeleton rows={4} label="Đang tải kho bài hát" />}
       {songs.isError && (
-        <ErrorState title="Không thể tải kho bài hát" onRetry={() => songs.refetch()} retrying={songs.isFetching} />
+        <ErrorState title="Không thể tải kho bài hát" error={songs.error} hasData={songs.data !== undefined} onRetry={() => songs.refetch()} retrying={songs.isFetching} />
       )}
-      {songs.isSuccess && available.length === 0 && (
+      {songs.data !== undefined && available.length === 0 && (
         <Typography.Paragraph style={{ color: colors.textMuted, margin: 0 }}>
           Không có bài hát phù hợp trong kho.
         </Typography.Paragraph>
       )}
-      {songs.isSuccess && available.length > 0 && (
+      {songs.data !== undefined && available.length > 0 && (
         <Checkbox.Group value={picked.map((song) => song.id)} onChange={toggle} style={{ width: '100%' }}>
           <Flex vertical gap={spacing.xs} style={{ width: '100%', maxHeight: 360, overflowY: 'auto' }}>
             {available.map((song) => (
@@ -103,7 +103,7 @@ export function SongPickerModal({ open, excludedSongIds, onAdd, onCancel }: Read
           </Flex>
         </Checkbox.Group>
       )}
-      {songs.isSuccess && more > 0 && (
+      {songs.data !== undefined && more > 0 && (
         <Typography.Paragraph style={{ color: colors.textMuted, margin: `${spacing.sm}px 0 0` }}>
           Còn {more} bài hát khác, hãy tìm theo tên để thu hẹp danh sách.
         </Typography.Paragraph>

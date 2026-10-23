@@ -100,16 +100,16 @@ export function RehearsalsPage() {
       )}
       {rehearsals.isPending && <SectionSkeleton rows={6} label="Đang tải lịch tập" />}
       {rehearsals.isError && (
-        <ErrorState title="Không thể tải lịch tập" onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
+        <ErrorState title="Không thể tải lịch tập" error={rehearsals.error} hasData={rehearsals.data !== undefined} onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
       )}
-      {rehearsals.isSuccess && total === 0 && !filtered && (
+      {rehearsals.data !== undefined && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có buổi tập nào"
           description="Tạo buổi tập để lên kế hoạch luyện tập và điểm danh."
           action={createButton}
         />
       )}
-      {rehearsals.isSuccess && (total > 0 || filtered) && (
+      {rehearsals.data !== undefined && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
           <Flex wrap gap={spacing.sm} align="center" style={{ padding: spacing.md }}>
             <Select

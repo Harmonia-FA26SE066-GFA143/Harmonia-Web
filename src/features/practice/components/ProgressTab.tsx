@@ -85,22 +85,22 @@ export function ProgressTab() {
       />
       </Flex>
       {events.isError && (
-        <ErrorState title="Không thể tải sự kiện" onRetry={() => events.refetch()} retrying={events.isFetching} />
+        <ErrorState title="Không thể tải sự kiện" error={events.error} hasData={events.data !== undefined} onRetry={() => events.refetch()} retrying={events.isFetching} />
       )}
-      {events.isSuccess && events.data.length === 0 && (
+      {events.data !== undefined && events.data.length === 0 && (
         <EmptyState title="Không có sự kiện sắp tới" description="Tiến độ chuẩn bị được xem theo sự kiện đã công bố." />
       )}
-      {events.isSuccess && events.data.length > 0 && !eventId && (
+      {events.data !== undefined && events.data.length > 0 && !eventId && (
         <EmptyState title="Chọn một sự kiện" description="Chọn sự kiện để xem tiến độ chuẩn bị của từng ca viên." />
       )}
       {eventId && progress.isPending && <SectionSkeleton rows={6} label="Đang tải tiến độ" />}
       {progress.isError && (
-        <ErrorState title="Không thể tải tiến độ" onRetry={() => progress.refetch()} retrying={progress.isFetching} />
+        <ErrorState title="Không thể tải tiến độ" error={progress.error} hasData={progress.data !== undefined} onRetry={() => progress.refetch()} retrying={progress.isFetching} />
       )}
-      {progress.isSuccess && progress.data.length === 0 && (
+      {progress.data !== undefined && progress.data.length === 0 && (
         <EmptyState title="Chưa có ca viên đang sinh hoạt" description="Tiến độ hiện theo từng ca viên đang sinh hoạt." />
       )}
-      {progress.isSuccess && progress.data.length > 0 && (
+      {progress.data !== undefined && progress.data.length > 0 && (
         <Card styles={{ body: { padding: 0 } }}>
           <Table<MemberProgress>
             rowKey="memberId"

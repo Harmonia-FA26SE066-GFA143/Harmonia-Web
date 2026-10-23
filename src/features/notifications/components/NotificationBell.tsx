@@ -2,6 +2,7 @@ import { BellOutlined } from '@ant-design/icons'
 import { App, Badge, Button, Dropdown, Flex, theme, Typography } from 'antd'
 import { useRef, useState } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
+import { requestFailureMessage } from '@/lib/api/errors'
 import { ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, radius, sizes, spacing, typography } from '@/styles/tokens'
 import {
@@ -70,7 +71,7 @@ function NotificationList({ open, onMarkRead }: Readonly<{ open: boolean; onMark
   const items = list.data?.pages.flatMap((page) => page.items) ?? []
 
   if (list.isPending) return <SectionSkeleton rows={3} label="Đang tải thông báo" />
-  if (list.isError) return <ErrorState title="Không thể tải thông báo" onRetry={() => list.refetch()} retrying={list.isFetching} />
+  if (list.isError) return <ErrorState title="Không thể tải thông báo" error={list.error} hasData={list.data !== undefined} onRetry={() => list.refetch()} retrying={list.isFetching} />
   if (items.length === 0) {
     return <Typography.Text style={{ color: colors.textMuted }}>Chưa có thông báo nào.</Typography.Text>
   }
@@ -109,9 +110,9 @@ export function NotificationBell() {
   const markAll = useMarkAllNotificationsRead()
 
   const handleMarkRead = (id: string) =>
-    markRead.mutate(id, { onError: () => message.error('Không thể đánh dấu đã đọc. Vui lòng thử lại.') })
+    markRead.mutate(id, { onError: (error) => message.error(requestFailureMessage(error, 'Không thể đánh dấu đã đọc. Vui lòng thử lại.')) })
   const handleMarkAll = () =>
-    markAll.mutate(undefined, { onError: () => message.error('Không thể đánh dấu tất cả đã đọc. Vui lòng thử lại.') })
+    markAll.mutate(undefined, { onError: (error) => message.error(requestFailureMessage(error, 'Không thể đánh dấu tất cả đã đọc. Vui lòng thử lại.')) })
 
   return (
     <div ref={wrapper} style={{ position: 'relative', display: 'inline-flex' }}>

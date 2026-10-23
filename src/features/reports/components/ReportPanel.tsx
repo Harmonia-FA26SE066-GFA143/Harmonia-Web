@@ -30,7 +30,7 @@ export function ReportPanel({ kind, filters, filtered, onClearFilters, onOpenPro
 
   if (report.isPending) return <SectionSkeleton rows={6} label={`Đang tải báo cáo ${definition.label.toLowerCase()}`} />
   if (report.isError) {
-    return <ErrorState title="Không thể tải báo cáo" onRetry={() => report.refetch()} retrying={report.isFetching} />
+    return <ErrorState title="Không thể tải báo cáo" error={report.error} hasData={report.data !== undefined} onRetry={() => report.refetch()} retrying={report.isFetching} />
   }
 
   return (

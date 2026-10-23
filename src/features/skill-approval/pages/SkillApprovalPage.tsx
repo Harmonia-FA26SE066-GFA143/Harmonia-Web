@@ -104,17 +104,17 @@ export function SkillApprovalPage() {
         {pending.isError && (
           <ErrorState
             title="Không thể tải kỹ năng chờ duyệt"
-            onRetry={() => pending.refetch()}
+            error={pending.error} hasData={pending.data !== undefined} onRetry={() => pending.refetch()}
             retrying={pending.isFetching}
           />
         )}
-        {pending.isSuccess && total === 0 && (
+        {pending.data !== undefined && total === 0 && (
           <EmptyState
             title="Không có kỹ năng nào chờ duyệt"
             description="Khi ca viên khai báo kỹ năng trên ứng dụng, khai báo sẽ xuất hiện tại đây."
           />
         )}
-        {pending.isSuccess && total > 0 && (
+        {pending.data !== undefined && total > 0 && (
           <>
             <Typography.Text aria-live="polite" style={{ display: 'block', marginBottom: spacing.sm, color: colors.textMuted }}>
               {total} kỹ năng chờ duyệt

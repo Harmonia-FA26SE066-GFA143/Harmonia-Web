@@ -40,10 +40,10 @@ export function SendRequestModal({ open, excludedMemberIds, sending = false, onS
     >
       {members.isPending && <SectionSkeleton rows={5} label="Đang tải thành viên" />}
       {members.isError && (
-        <ErrorState title="Không thể tải thành viên" onRetry={() => members.refetch()} retrying={members.isFetching} />
+        <ErrorState title="Không thể tải thành viên" error={members.error} hasData={members.data !== undefined} onRetry={() => members.refetch()} retrying={members.isFetching} />
       )}
-      {members.isSuccess && available.length === 0 && <EmptyState title="Mọi thành viên đã được gửi yêu cầu" />}
-      {members.isSuccess && available.length > 0 && (
+      {members.data !== undefined && available.length === 0 && <EmptyState title="Mọi thành viên đã được gửi yêu cầu" />}
+      {members.data !== undefined && available.length > 0 && (
         <Flex vertical gap={spacing.sm}>
           <Checkbox
             checked={selected.length === available.length}
