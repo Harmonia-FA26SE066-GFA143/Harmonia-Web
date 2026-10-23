@@ -13,7 +13,8 @@ import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { contactEmail } from '@/config/contact'
 import { BrandMark, IconTile, StatusTag } from '@/shared/ui'
-import { cardSurface, colors, radius, spacing, typography } from '@/styles/tokens'
+import { cardSurface, colors, media, radius, spacing, typography } from '@/styles/tokens'
+import { HeroVideo } from './HeroVideo'
 
 interface RoleSummary {
   title: string
@@ -97,6 +98,7 @@ export function LandingPage() {
   // Accounts are created by an Admin, so writing to the administrators is how a newcomer gets one.
   const contact = (
     <Button
+      ghost
       icon={<MailOutlined />}
       href={`mailto:${contactEmail}`}
       style={{
@@ -139,62 +141,84 @@ export function LandingPage() {
         {signIn}
       </Flex>
 
-      {/* Hero section */}
+      {/* Hero: a decorative looping video under a scrim that keeps the text at AA contrast. */}
       <section
+        aria-labelledby="hero-heading"
+        className="landing-hero"
         style={{
-          padding: `${spacing.xl}px 0`,
           position: 'relative',
+          overflow: 'hidden',
+          isolation: 'isolate',
+          display: 'flex',
+          alignItems: 'center',
+          minHeight: 560,
+          borderRadius: radius.lg,
+          background: media.backdrop,
         }}
       >
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: spacing.xs,
-            padding: '4px 12px',
-            borderRadius: 9999,
-            background: colors.primarySoft,
-            border: '1px solid rgba(142, 59, 75, 0.15)',
-            color: colors.primary,
-            fontSize: 12.5,
-            fontWeight: 600,
-            marginBottom: spacing.md,
-          }}
-        >
-          <AppstoreOutlined />
-          Hệ thống Quản lý Thánh nhạc & Điều phối Phụng vụ
-        </div>
+        <HeroVideo />
+        <div aria-hidden style={{ position: 'absolute', inset: 0, background: media.heroScrim }} />
+        <div style={{ position: 'relative', zIndex: 1, padding: spacing.xxl + spacing.sm }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: spacing.xs,
+              padding: '4px 12px',
+              borderRadius: 9999,
+              background: media.controlFill,
+              border: `1px solid ${media.controlBorder}`,
+              color: media.text,
+              fontSize: 12.5,
+              fontWeight: 600,
+              marginBottom: spacing.md,
+            }}
+          >
+            <AppstoreOutlined />
+            Hệ thống Quản lý Thánh nhạc & Điều phối Phụng vụ
+          </div>
 
-        <Typography.Title
-          level={1}
-          style={{
-            margin: 0,
-            maxWidth: 780,
-            fontWeight: 800,
-            fontSize: 38,
-            lineHeight: 1.25,
-            letterSpacing: '-0.03em',
-          }}
-        >
-          Điều phối ca đoàn và quản lý âm nhạc phụng vụ
-        </Typography.Title>
-        {/* 65ch keeps lines at a readable 65-75 characters. */}
-        <Typography.Paragraph
-          style={{
-            margin: `${spacing.lg}px 0 ${spacing.xl}px`,
-            maxWidth: '65ch',
-            color: colors.textBody,
-            fontSize: 16,
-            lineHeight: 1.6,
-          }}
-        >
-          Harmonia giúp Cha xứ, Ca trưởng và thành viên ca đoàn cùng chuẩn bị chương trình phụng vụ,
-          danh sách bài hát, lịch tập và phân công phục vụ trên một hệ thống chung.
-        </Typography.Paragraph>
-        <Flex wrap gap={spacing.md}>
-          {signIn}
-          {contact}
-        </Flex>
+          <Typography.Title
+            id="hero-heading"
+            level={1}
+            style={{
+              margin: 0,
+              maxWidth: 720,
+              color: media.text,
+              fontWeight: 800,
+              fontSize: 42,
+              lineHeight: 1.22,
+              letterSpacing: '-0.03em',
+            }}
+          >
+            Điều phối ca đoàn và quản lý âm nhạc phụng vụ
+          </Typography.Title>
+          {/* 60ch keeps lines at a readable length. */}
+          <Typography.Paragraph
+            style={{
+              margin: `${spacing.lg}px 0 ${spacing.xl}px`,
+              maxWidth: '60ch',
+              color: media.textMuted,
+              fontSize: 16,
+              lineHeight: 1.6,
+            }}
+          >
+            Harmonia giúp Cha xứ, Ca trưởng và thành viên ca đoàn cùng chuẩn bị chương trình phụng vụ,
+            danh sách bài hát, lịch tập và phân công phục vụ trên một hệ thống chung.
+          </Typography.Paragraph>
+          <Flex wrap gap={spacing.md}>
+            {/* On the dark scrim the sign-in is a white button; the header keeps the burgundy one. */}
+            <Button
+              className="landing-hero-sign-in"
+              href={paths.login}
+              onClick={goToSignIn}
+              style={{ paddingInline: spacing.lg, height: 42, fontWeight: 600 }}
+            >
+              Đăng nhập
+            </Button>
+            {contact}
+          </Flex>
+        </div>
       </section>
 
       {/* Roles section */}

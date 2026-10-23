@@ -21,6 +21,24 @@ export const colors = {
   primaryFocus: 'rgba(142, 59, 75, 0.25)',
 } as const
 
+/**
+ * Text and scrims over photos and video (landing hero, sign-in image). The scrim is a dark burgundy ink, so the
+ * picture keeps the brand's warmth; contrast was measured on the brightest frames behind the text.
+ */
+export const media = {
+  /** Shown behind the poster until it loads. */
+  backdrop: '#1C0C11',
+  text: '#FFFFFF',
+  textMuted: 'rgba(255, 255, 255, 0.88)',
+  /** Hero: darkest on the text side (left), opening up to the right where the light falls. */
+  heroScrim: 'linear-gradient(90deg, rgba(28, 12, 17, 0.8) 0%, rgba(28, 12, 17, 0.66) 50%, rgba(28, 12, 17, 0.2) 100%)',
+  /** Sign-in image: clear at the top, dark under the brand at the bottom. */
+  imageScrim: 'linear-gradient(180deg, rgba(28, 12, 17, 0.05) 30%, rgba(28, 12, 17, 0.82) 100%)',
+  /** Controls drawn on the media (pause button, pill). */
+  controlFill: 'rgba(255, 255, 255, 0.14)',
+  controlBorder: 'rgba(255, 255, 255, 0.4)',
+} as const
+
 /** Brand mark and avatar fill; `.ant-btn-primary` in global.css repeats it, since CSS cannot read this file. */
 export const brandGradient = 'linear-gradient(135deg, #8E3B4B 0%, #A24557 100%)'
 
