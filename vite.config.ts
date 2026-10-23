@@ -21,6 +21,9 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
       css: false,
+      // The default (all logical CPUs - 1) starves each jsdom + Ant Design worker on hyper-threaded laptops: a 1 s
+      // test took 4 s+ and crossed the 5 s timeout at random. Half the logical CPUs keeps the slowest test near 2 s.
+      maxWorkers: '50%',
       // A local .env may point at a real backend; tests must never reach it.
       env: { VITE_API_BASE_URL: '' },
     },
