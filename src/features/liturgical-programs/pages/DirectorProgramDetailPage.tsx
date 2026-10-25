@@ -6,6 +6,7 @@ import { EventChoirsCard } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
 import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
+import { DirectorPreparationHub } from '../components/DirectorPreparationHub'
 import { ProgramInfo } from '../components/ProgramInfo'
 import { ProgramSongTable } from '../components/ProgramSongTable'
 import { SongListStatusTag } from '../components/SongListStatusTag'
@@ -21,9 +22,8 @@ function songListAction(status?: SongListStatus): string {
 }
 
 /**
- * Choir Director: one program with its FE-16 information and song list (FE-20, FE-30), with links to its rehearsals,
- * confirmation round, roster and practice assignments. Finalize and readiness arrive in Phase 6d. Not built: the five-step
- * progress bar (team decision 2026-09-26).
+ * Choir Director: one program with its FE-16 information, song list (FE-20, FE-30), and preparation hub
+ * connecting rehearsals, attendance, participation, roster, and practice readiness.
  */
 export function DirectorProgramDetailPage() {
   const navigate = useNavigate()
@@ -69,8 +69,11 @@ export function DirectorProgramDetailPage() {
         <ErrorState title="Không thể cập nhật chương trình" error={program.error} hasData onRetry={() => program.refetch()} retrying={program.isFetching} />
       )}
       <Flex vertical gap={spacing.lg}>
+        <DirectorPreparationHub program={data} onOpenSongList={openProposal} />
+
         <ProgramInfo program={data} />
         <EventChoirsCard eventId={data.id} locked={data.date < vietnamToday()} />
+
         <Card
           title={
             <Flex align="center" gap={spacing.sm} wrap>
@@ -91,14 +94,6 @@ export function DirectorProgramDetailPage() {
               Chưa có danh sách bài hát. Chọn bài từ kho và gửi Cha xứ duyệt.
             </Typography.Text>
           )}
-        </Card>
-        <Card title={<CardTitle>Chuẩn bị phục vụ</CardTitle>}>
-          <Flex wrap gap={spacing.sm}>
-            <Button onClick={() => navigate(`${paths.director.rehearsals}?programId=${data.id}`)}>Lịch tập</Button>
-            <Button onClick={() => navigate(`${paths.director.participation}?programId=${data.id}`)}>Xác nhận tham gia</Button>
-            <Button onClick={() => navigate(`${paths.director.roster}?programId=${data.id}`)}>Phân công phục vụ</Button>
-            <Button onClick={() => navigate(`${paths.director.practice}?programId=${data.id}`)}>Bài tập luyện tập</Button>
-          </Flex>
         </Card>
       </Flex>
     </>

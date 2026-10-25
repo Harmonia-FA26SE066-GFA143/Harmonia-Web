@@ -38,9 +38,16 @@ export function AttendancePage() {
   const rehearsals = useRecentRehearsals()
   const programs = useUpcomingPrograms()
   const sessions = useMemo(() => rehearsals.data ?? [], [rehearsals.data])
-  const selected = sessions.find((rehearsal) => rehearsal.id === searchParams.get('rehearsalId')) ?? defaultSession(sessions)
+  const rehearsalId = searchParams.get('rehearsalId')
+  const programId = searchParams.get('programId')
+
+  const selected =
+    sessions.find((rehearsal) => rehearsal.id === rehearsalId) ??
+    (programId ? sessions.find((rehearsal) => rehearsal.eventId === programId) : undefined) ??
+    defaultSession(sessions)
+
   const attendance = useAttendance(selected?.id)
-  const program = programs.data?.find((item) => item.id === selected?.eventId)
+  const program = programs.data?.find((item) => item.id === (selected?.eventId ?? programId))
   // The backend records attendance from the start of the session on, corrections included (RehearsalAttendanceService),
   // which supersedes "on the day of the session only" (decision 2026-09-30, 6a.6).
   const started = selected ? attendanceMayOpen(selected) : false
@@ -59,6 +66,45 @@ export function AttendancePage() {
         description="Ghi nhận thành viên có mặt thực tế tại buổi tập hoặc buổi chuẩn bị phục vụ."
         extra={scheduleButton}
       />
+      {programId && !sessions.some((r) => r.eventId === programId) && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: spacing.md }}
+          title={
+            program
+              ? `Chương trình “${program.eventName}” chưa có buổi tập nào trong lịch điểm danh gần đây.`
+              : 'Chương trình này chưa có buổi tập nào trong lịch điểm danh gần đây.'
+          }
+          description="Chỉ những buổi tập từ 30 ngày trước đến 7 ngày tới mới xuất hiện để điểm danh."
+          action={
+            <Button
+              size="small"
+              onClick={() => navigate(`${paths.director.rehearsals}?programId=${programId}`)}
+            >
+              Đến lịch tập
+            </Button>
+          }
+        />
+      )}
+      {program && selected?.eventId === program.id && (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: spacing.md }}
+          title={
+            <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
+              <Typography.Text>
+                Điểm danh buổi tập cho chương trình:{' '}
+                <strong>{program.eventName}</strong> · {formatProgramDate(program.date)}
+              </Typography.Text>
+              <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>
+                Xem chi tiết chương trình
+              </Link>
+            </Flex>
+          }
+        />
+      )}
       {rehearsals.isPending && <SectionSkeleton rows={6} label="Đang tải buổi tập" />}
       {rehearsals.isError && (
         <ErrorState title="Không thể tải buổi tập" error={rehearsals.error} hasData={rehearsals.data !== undefined} onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
@@ -79,7 +125,11 @@ export function AttendancePage() {
                 optionFilterProp="label"
                 aria-label="Chọn buổi tập"
                 value={selected.id}
-                onChange={(rehearsalId: string) => setSearchParams({ rehearsalId })}
+                onChange={(nextId: string) => {
+                  const next = new URLSearchParams(searchParams)
+                  next.set('rehearsalId', nextId)
+                  setSearchParams(next)
+                }}
                 options={sessions.map((rehearsal) => ({ value: rehearsal.id, label: rehearsalLabel(rehearsal) }))}
                 style={{ flex: '1 1 280px', maxWidth: 420, minWidth: 0 }}
               />

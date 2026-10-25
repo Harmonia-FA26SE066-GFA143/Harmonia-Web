@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { generatePath, Link, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
+import { formatProgramDate, SongListStatusTag, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { SkillTags, useChoirMembers } from '@/features/members'
 import { formatDateTime } from '@/lib/api/dates'
 import { EmptyState, ErrorState, MetricSummary, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
@@ -152,7 +152,10 @@ export function ParticipationPage() {
                 }))}
                 style={{ flex: '1 1 280px', maxWidth: 420, minWidth: 0 }}
               />
-              <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>Xem chi tiết chương trình</Link>
+              <Flex wrap gap={spacing.sm} align="center">
+                <SongListStatusTag status={program.songListStatus} />
+                <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>Xem chi tiết chương trình</Link>
+              </Flex>
             </Flex>
           </Card>
           {isPast && requests.length > 0 && (
