@@ -10,7 +10,7 @@ import {
 import { paths } from '@/app/router/paths'
 import { ShortcutCards, type Shortcut } from './ShortcutCards'
 
-/** Admin areas with their responsibilities as stated in Report 1 FE-47–FE-54 (docs/local/business/actors.md). */
+/** Admin areas with their responsibilities as stated in Report 1 FE-47–FE-54 (docs/business/actors.md). */
 const shortcuts: Shortcut[] = [
   { path: paths.admin.accounts, title: 'Tài khoản', description: 'Tạo và quản lý tài khoản người dùng.', icon: TeamOutlined },
   { path: paths.admin.roles, title: 'Vai trò & Phân quyền', description: 'Gán vai trò hệ thống cho tài khoản.', icon: UserSwitchOutlined },

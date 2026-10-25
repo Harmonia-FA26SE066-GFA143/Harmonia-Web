@@ -1,5 +1,5 @@
 /**
- * Route paths for every page in docs/design/stitch-screen-map.md (workspace root).
+ * Route paths for every page in docs/stitch-screen-map.md.
  * Paths are proposals from phase 0; role prefixes separate the per-role Stitch variants of the same page.
  * Each prefix is admitted only to its role by RoleGuard.
  */
