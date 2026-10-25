@@ -25,16 +25,17 @@ import {
 import { CardTitle } from '@/shared/ui'
 import { AudioWaveform } from './AudioWaveform'
 
+/** Without the handlers the card is read-only (the Parish Priest reviewing a song list): view and download only. */
 export interface SongMaterialsCardProps {
   materials: SongMaterial[]
   /** Kind currently being uploaded, to show progress on its button. */
   uploadingKind?: MaterialKind
   /** A file was picked for a kind; the page checks it and asks for a title before uploading. */
-  onPick: (kind: MaterialKind, file: File) => void
-  onDelete: (material: SongMaterial) => void
-  onEdit: (material: SongMaterial) => void
+  onPick?: (kind: MaterialKind, file: File) => void
+  onDelete?: (material: SongMaterial) => void
+  onEdit?: (material: SongMaterial) => void
   /** Opens who has learned the material (FE-09). */
-  onProgress: (material: SongMaterial) => void
+  onProgress?: (material: SongMaterial) => void
 }
 
 function formatSize(bytes: number | null): string | undefined {
@@ -130,17 +131,23 @@ function MaterialRow({ material, onDelete, onEdit, onProgress }: Readonly<{ mate
         >
           Xem/Tải xuống
         </Button>
-        <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Tiến độ học ${material.title}`}>
-          Tiến độ học
-        </Button>
-        <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
-        <Button
-          type="text"
-          danger
-          icon={<DeleteOutlined />}
-          onClick={() => onDelete(material)}
-          aria-label={`Xoá ${material.title}`}
-        />
+        {onProgress && (
+          <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Tiến độ học ${material.title}`}>
+            Tiến độ học
+          </Button>
+        )}
+        {onEdit && (
+          <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
+        )}
+        {onDelete && (
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => onDelete(material)}
+            aria-label={`Xoá ${material.title}`}
+          />
+        )}
       </Flex>
       {isAudio(material) && <AudioWaveform url={material.url} title={material.title} />}
     </Flex>
@@ -163,15 +170,17 @@ export function SongMaterialsCard({ materials, uploadingKind, onPick, ...actions
                 <Typography.Title id={headingId} level={3} style={{ margin: 0 }}>
                   {materialKindLabels[kind]}
                 </Typography.Title>
-                <UploadButton kind={kind} label="Tải lên" hintId={hintId} loading={uploadingKind === kind} onPick={onPick} />
+                {onPick && <UploadButton kind={kind} label="Tải lên" hintId={hintId} loading={uploadingKind === kind} onPick={onPick} />}
               </Flex>
               {/* The limits are known before a file is picked, not only when a wrong one is refused. */}
-              <Typography.Paragraph
-                id={hintId}
-                style={{ margin: `0 0 ${spacing.sm}px`, color: colors.textMuted, fontSize: typography.metadata.fontSize }}
-              >
-                Nhận tệp {materialExtensions[kind].join(', ')}, tối đa {maxMaterialBytes / 1024 / 1024} MB.
-              </Typography.Paragraph>
+              {onPick && (
+                <Typography.Paragraph
+                  id={hintId}
+                  style={{ margin: `0 0 ${spacing.sm}px`, color: colors.textMuted, fontSize: typography.metadata.fontSize }}
+                >
+                  Nhận tệp {materialExtensions[kind].join(', ')}, tối đa {maxMaterialBytes / 1024 / 1024} MB.
+                </Typography.Paragraph>
+              )}
               {items.length > 0 ? (
                 <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                   {items.map((material) => (

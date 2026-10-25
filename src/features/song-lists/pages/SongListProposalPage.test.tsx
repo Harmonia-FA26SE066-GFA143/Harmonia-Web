@@ -79,6 +79,38 @@ describe('SongListProposalPage', () => {
     expect(await screen.findByRole('heading', { name: 'Không thể tải danh sách bài hát' })).toBeInTheDocument()
   })
 
+  it("opens the library filtered by the event's season and Mass type, which the Director can clear", async () => {
+    withList(null)
+    withLibrary()
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue({
+      id: 'p1',
+      eventName: 'Lễ Chúa Nhật XXVI',
+      date: '2026-09-27',
+      time: '08:00',
+      locationName: 'Nhà thờ',
+      status: 'published',
+      seasonName: 'Mùa Thường niên',
+      massTypeName: 'Chúa nhật',
+      songs: [],
+    })
+    vi.spyOn(categoriesApi, 'listLookup').mockImplementation(async (kind) => {
+      if (kind === 'seasons') return [{ id: 'season-ot', name: 'Mùa Thường niên' }]
+      if (kind === 'massTypes') return [{ id: 'mass-sunday', name: 'Chúa nhật' }]
+      return []
+    })
+    const list = vi.mocked(songsApi.listSongs)
+    renderProposal()
+
+    fireEvent.click((await screen.findAllByRole('button', { name: /Thêm bài hát từ kho/ }))[0])
+    const picker = await screen.findByRole('dialog')
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ seasonId: 'season-ot', massTypeId: 'mass-sunday' }), expect.anything()),
+    )
+
+    fireEvent.click(within(picker).getByRole('button', { name: /Đặt lại bộ lọc/ }))
+    await waitFor(() => expect(list).toHaveBeenLastCalledWith({ search: '' }, expect.anything()))
+  })
+
   it('composes a first list from the library, saves it and submits it', async () => {
     withList(null)
     withLibrary()

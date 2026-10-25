@@ -35,7 +35,7 @@ interface SongListDto {
   status: ApiStatus
   submittedAt: string | null
   decidedAt: string | null
-  items: { id: string; songTitle: string; slotName: string; displayOrder: number; note: string | null }[]
+  items: { id: string; songId: string; songTitle: string; slotName: string; displayOrder: number; note: string | null }[]
   reviews: { id: string; decision: ApiDecision; notes: string | null; reviewedAt: string }[]
 }
 
@@ -48,7 +48,7 @@ const toSongList = (dto: SongListDto): SongList => ({
   decidedAt: dto.decidedAt ?? undefined,
   // The backend does not order the items.
   items: dto.items
-    .map(({ id, songTitle, slotName, displayOrder, note }) => ({ id, songTitle, slotName, displayOrder, note: note ?? undefined }))
+    .map(({ id, songId, songTitle, slotName, displayOrder, note }) => ({ id, songId, songTitle, slotName, displayOrder, note: note ?? undefined }))
     .sort((a, b) => a.displayOrder - b.displayOrder),
   reviews: dto.reviews.map(({ id, decision, notes, reviewedAt }) => ({
     id,
