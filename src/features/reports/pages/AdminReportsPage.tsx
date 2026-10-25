@@ -14,18 +14,8 @@ import { useExportReport } from '../hooks/useReports'
 import { adminReportKinds, reportDefinitions } from '../reportDefinitions'
 import { reportErrorMessage } from '../reportErrors'
 import { hasActiveReportFilters, readReportFilters, writeReportParams } from '../reportFilters'
+import { saveFile } from '../saveFile'
 import type { AdminReportKind, ReportExportRequest, ReportFilters } from '../types'
-
-/** Saves a downloaded file under a name of its own: the backend's file name header is not readable across origins. */
-function saveFile(blob: Blob, fileName: string) {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = fileName
-  link.click()
-  // Revoked on the next task: some browsers drop the download when the URL goes away during the click.
-  setTimeout(() => URL.revokeObjectURL(url))
-}
 
 /**
  * Admin: the four FE-52 reports and the Priest's two (`/api/reports`), with export to a file (FE-53) and the list of

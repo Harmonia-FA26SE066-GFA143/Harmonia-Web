@@ -16,16 +16,3 @@ export function toQuery(params: Record<string, string | number | boolean | undef
   const query = search.toString()
   return query ? `?${query}` : ''
 }
-
-/**
- * Every item of a paged list, read 100 at a time (the backend maximum), for summaries the backend does not compute.
- * ponytail: sequential pages; fine for a choir's yearly volume, needs a backend aggregate if it grows to thousands.
- */
-export async function fetchAllPages<T>(load: (page: { pageNumber: number; pageSize: number }) => Promise<PagedList<T>>): Promise<T[]> {
-  const items: T[] = []
-  for (let pageNumber = 1; ; pageNumber += 1) {
-    const page = await load({ pageNumber, pageSize: 100 })
-    items.push(...page.items)
-    if (pageNumber >= page.totalPages) return items
-  }
-}

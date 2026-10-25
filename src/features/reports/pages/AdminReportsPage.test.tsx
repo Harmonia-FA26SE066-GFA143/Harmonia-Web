@@ -1,11 +1,14 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
+import * as client from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as reportsApi from '../api/reportsApi'
 import type { AdminReportKind } from '../types'
 import { AdminReportsPage } from './AdminReportsPage'
+import { DirectorReportsPage } from './DirectorReportsPage'
 
 const empty = { items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 }
 
@@ -105,5 +108,51 @@ describe('AdminReportsPage', () => {
 
     expect(await within(dialog).findByText('Vui lòng chọn tháng.')).toBeInTheDocument()
     expect(exportReport).not.toHaveBeenCalled()
+  })
+})
+
+describe('DirectorReportsPage', () => {
+  beforeEach(() => {
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cêcilia', isActive: true },
+    ])
+  })
+
+  it('reads the per-member report of the backend for the month and choir in the address', async () => {
+    const request = vi.spyOn(client, 'apiRequest').mockResolvedValue({
+      ...empty,
+      totalCount: 1,
+      totalPages: 1,
+      items: [{ memberId: 'm1', fullName: 'Simon Đức', presentCount: 6, lateCount: 1, excusedCount: 0, absentCount: 1 }],
+    })
+    renderPage(<DirectorReportsPage />, '/director/reports', '/director/reports?by=month&date=2026-10-15&choirId=c1')
+
+    expect(await screen.findByText('Simon Đức')).toBeInTheDocument()
+    for (const name of ['Điểm danh', 'Xác nhận tham gia', 'Hoàn thành bài tập']) {
+      expect(screen.getByRole('tab', { name })).toBeInTheDocument()
+    }
+    expect(request).toHaveBeenCalledWith(
+      '/api/reports/rehearsal-attendance?fromDate=2026-10-01&toDate=2026-10-31&choirId=c1&pageNumber=1&pageSize=20',
+    )
+    expect(screen.getByText('Từ 01/10/2026 đến 31/10/2026')).toBeInTheDocument()
+  })
+
+  it('exports the open report for the chosen week in the chosen format', async () => {
+    vi.spyOn(reportsApi, 'getReport').mockResolvedValue(empty)
+    const exportReport = vi.spyOn(reportsApi, 'exportReport').mockResolvedValue(new Blob(['x']))
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    renderPage(<DirectorReportsPage />, '/director/reports', '/director/reports?tab=participation&by=week&date=2026-10-15')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Xuất xác nhận tham gia/ }))
+    fireEvent.click(await screen.findByText('Excel (XLSX)'))
+
+    await waitFor(() =>
+      expect(exportReport).toHaveBeenCalledWith({
+        kind: 'participation',
+        format: 'xlsx',
+        filters: { fromDate: '2026-10-12', toDate: '2026-10-18', choirId: undefined },
+      }),
+    )
+    expect(await screen.findByText('Đã xuất báo cáo.')).toBeInTheDocument()
   })
 })

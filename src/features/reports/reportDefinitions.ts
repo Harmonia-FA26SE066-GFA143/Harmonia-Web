@@ -1,4 +1,4 @@
-import type { AdminReportKind, PriestReportKind } from './types'
+import type { AdminReportKind, DirectorReportKind, PriestReportKind } from './types'
 
 export interface ReportColumnDefinition {
   key: string
@@ -101,3 +101,6 @@ export const adminReportKinds: AdminReportKind[] = [
   'serviceHistory',
   'songUsage',
 ]
+
+/** The three per-member reports the Choir Director reads and exports (ReportsController, BE 446f429). */
+export const directorReportKinds: DirectorReportKind[] = ['rehearsalAttendance', 'participation', 'assignmentCompletion']

@@ -1,5 +1,4 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { fetchAllPages } from '@/lib/api/paging'
 import {
   commentSubmission,
   createAssignment,
@@ -84,10 +83,3 @@ export function usePreparationProgress(eventId?: string) {
   })
 }
 
-/** Every member's newest attempt at every assignment, for reports; reviews reload it with the rest of the practice data. */
-export function useAllSubmissions() {
-  return useQuery({
-    queryKey: [...practiceKey, 'submissions', 'all'],
-    queryFn: () => fetchAllPages((page) => listSubmissions(undefined, page)),
-  })
-}

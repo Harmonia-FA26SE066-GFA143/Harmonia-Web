@@ -1,11 +1,15 @@
 /**
  * The reports of Harmonia-BE (`ReportType`, ReportsController): service history and song usage for the Parish Priest
- * and the Admin (FE-22), the other four for the Admin only (FE-52). The backend has no "event preparation" report:
+ * and the Admin (FE-22), the other four for the Admin (FE-52); the three per-member ones also for the Choir Director
+ * (BE 446f429). The backend has no "event preparation" report:
  * a published event shows its preparation on its page (FE-21), which supersedes that FE-22 tab.
  */
 export type PriestReportKind = 'serviceHistory' | 'songUsage'
 
-export type AdminReportKind = PriestReportKind | 'userActivity' | 'rehearsalAttendance' | 'participation' | 'assignmentCompletion'
+/** Per-member reports, which the Choir Director may also read and export, narrowed to a choir with `choirId`. */
+export type DirectorReportKind = 'rehearsalAttendance' | 'participation' | 'assignmentCompletion'
+
+export type AdminReportKind = PriestReportKind | DirectorReportKind | 'userActivity'
 
 /**
  * Filters of `SearchReportsRequest`. The month becomes `fromDate` / `toDate`; filtering by Mass or ceremony type is not
@@ -15,6 +19,11 @@ export interface ReportFilters {
   /** Month as YYYY-MM. */
   month?: string
   seasonId?: string
+  /** Inclusive YYYY-MM-DD bounds, used instead of the month (the Choir Director picks a week, month or year). */
+  fromDate?: string
+  toDate?: string
+  /** Per-member reports only: members active in this choir. */
+  choirId?: string
 }
 
 /** One report row: display-ready values keyed by column, computed by the backend (never derived here). */
