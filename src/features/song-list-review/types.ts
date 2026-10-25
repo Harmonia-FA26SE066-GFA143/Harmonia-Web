@@ -22,6 +22,7 @@ export interface ReviewValues {
 /** One song of a list (`SongListItemDto`). */
 export interface SongListItem {
   id: string
+  songId: string
   songTitle: string
   /** Liturgical slot (Ca nhập lễ, Đáp ca…). */
   slotName: string

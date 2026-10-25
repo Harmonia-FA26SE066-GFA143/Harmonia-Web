@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as eventsApi from '@/features/liturgical-programs/api/eventsApi'
+import * as songsApi from '@/features/music-library/api/songsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { renderPage } from '@/test/renderPage'
 import * as reviewApi from '../api/songListReviewApi'
@@ -14,8 +15,8 @@ const submitted: SongList = {
   status: 'submitted',
   submittedAt: '2026-10-09T02:00:00Z',
   items: [
-    { id: 'i1', songTitle: 'Con Bước Lên Bàn Thờ', slotName: 'Ca nhập lễ', displayOrder: 1, note: 'Toàn ca đoàn hát.' },
-    { id: 'i2', songTitle: 'Lễ Vật Tâm Tình', slotName: 'Ca dâng lễ', displayOrder: 2 },
+    { id: 'i1', songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ', slotName: 'Ca nhập lễ', displayOrder: 1, note: 'Toàn ca đoàn hát.' },
+    { id: 'i2', songId: 's2', songTitle: 'Lễ Vật Tâm Tình', slotName: 'Ca dâng lễ', displayOrder: 2 },
   ],
   reviews: [],
 }
@@ -50,6 +51,32 @@ describe('SongListReviewPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Chưa có danh sách bài hát' })).toBeInTheDocument()
     expect(latest).toHaveBeenCalledWith('e1')
+  })
+
+  it("opens a song's materials read-only, so the Priest can judge it before deciding", async () => {
+    vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue(submitted)
+    const materials = vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([
+      {
+        id: 'm1',
+        kind: 'lyrics',
+        title: 'Lời bài hát bản in',
+        fileName: 'loi.pdf',
+        fileSizeBytes: 2048,
+        targetSkillId: null,
+        targetSkillName: null,
+        url: 'https://files.example/loi.pdf',
+        createdAt: '2026-10-01T02:00:00Z',
+      },
+    ])
+    renderReview()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Xem tài liệu của Lễ Vật Tâm Tình' }))
+
+    const drawer = await screen.findByRole('dialog', { name: 'Lễ Vật Tâm Tình' })
+    expect(await within(drawer).findByText('Lời bài hát bản in')).toBeInTheDocument()
+    expect(within(drawer).getByRole('link', { name: /Xem\/Tải xuống Lời bài hát bản in/ })).toHaveAttribute('href', 'https://files.example/loi.pdf')
+    expect(within(drawer).queryByRole('button', { name: /Tải lên|Xoá|Sửa|Tiến độ học/ })).toBeNull()
+    expect(materials).toHaveBeenCalledWith('s2')
   })
 
   it('requires a note to request a revision of the whole list', async () => {

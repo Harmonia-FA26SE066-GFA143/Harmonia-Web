@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { canEditSongList, formatProgramDate, ProgramInfo, useProgram, type LiturgicalProgram } from '@/features/liturgical-programs'
+import type { SongFilters } from '@/features/music-library'
+import { useCatalogOptions, type CatalogOption } from '@/features/system-categories'
 import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { ProposalTable, type DraftItem } from '../components/ProposalTable'
@@ -23,6 +25,24 @@ const breadcrumb = [
 const toDraft = (list: SongList | null): DraftItem[] =>
   (list?.items ?? []).map(({ id, songId, songTitle, slotId, slotName, note }) => ({ key: id, songId, songTitle, slotId, slotName, note }))
 
+/**
+ * The event's classification as library filters. The event carries catalog names only (`MemberEventDetailDto`); a
+ * name is unique within its catalog, switched-off entries included, so it finds the id. An entry no longer listed
+ * is simply not suggested.
+ */
+function useEventSongFilters(program: LiturgicalProgram): SongFilters {
+  const seasons = useCatalogOptions('seasons')
+  const massTypes = useCatalogOptions('massTypes')
+  const ceremonyTypes = useCatalogOptions('ceremonyTypes')
+  const idOf = (options: CatalogOption[], name?: string) => (name ? options.find((option) => option.label === name)?.value : undefined)
+  return {
+    search: '',
+    seasonId: idOf(seasons, program.seasonName),
+    massTypeId: idOf(massTypes, program.massTypeName),
+    ceremonyTypeId: idOf(ceremonyTypes, program.ceremonyTypeName),
+  }
+}
+
 /** Composes, saves and submits the list; editable while there is none, as a draft, and after rejection or a revision request. */
 function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram; list: SongList | null }>) {
   const { message } = App.useApp()
@@ -31,6 +51,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
   const [items, setItems] = useState<DraftItem[]>(() => toDraft(list))
   const [dirty, setDirty] = useState(false)
   const [picking, setPicking] = useState(false)
+  const suggestedFilters = useEventSongFilters(program)
   const [confirming, setConfirming] = useState(false)
 
   const blocker = useBlocker(
@@ -113,15 +134,17 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
         </Card>
       </Flex>
 
-      <SongPickerModal
-        open={picking}
-        excludedSongIds={items.map((item) => item.songId)}
-        onCancel={() => setPicking(false)}
-        onAdd={(songs) => {
-          change([...items, ...songs.map((song) => ({ key: `new-${song.id}`, songId: song.id, songTitle: song.title }))])
-          setPicking(false)
-        }}
-      />
+      {picking && (
+        <SongPickerModal
+          excludedSongIds={items.map((item) => item.songId)}
+          suggestedFilters={suggestedFilters}
+          onCancel={() => setPicking(false)}
+          onAdd={(songs) => {
+            change([...items, ...songs.map((song) => ({ key: `new-${song.id}`, songId: song.id, songTitle: song.title }))])
+            setPicking(false)
+          }}
+        />
+      )}
       <Modal
         open={confirming}
         title="Gửi danh sách bài hát để duyệt?"

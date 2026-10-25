@@ -1,4 +1,7 @@
+export { SongFilterBar } from './components/SongFilterBar'
+export { SongMaterialsCard } from './components/SongMaterialsCard'
 export { useSongMaterials, useSongs } from './hooks/useSongs'
 export { MusicLibraryPage } from './pages/MusicLibraryPage'
 export { SongDetailPage } from './pages/SongDetailPage'
-export { materialKindLabels, type Song, type SongMaterial } from './types'
+export { hasActiveSongFilters } from './songFilters'
+export { materialKindLabels, type Song, type SongFilters, type SongMaterial } from './types'
