@@ -2,7 +2,7 @@
  * Harmonia design tokens.
  * Sources: .ai-skills/design/design-system.md (workspace root) for colors; Stitch DESIGN(2).md
  * (project 5445464059092912576) for typography, sizing and layout where design-system.md is silent.
- * Where the two disagree, design-system.md wins (see docs/design/stitch-screen-map.md, phase 0 notes).
+ * Where the two disagree, design-system.md wins (see docs/stitch-screen-map.md, phase 0 notes).
  * Single source for colors and sizes; the Ant Design theme and custom styles both read from here.
  */
 export const colors = {
