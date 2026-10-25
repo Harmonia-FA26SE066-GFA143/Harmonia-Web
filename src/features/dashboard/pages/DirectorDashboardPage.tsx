@@ -91,14 +91,23 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
             <Typography.Text style={{ fontSize: 13.5 }}>{program.specialRequirements ?? 'Không có yêu cầu đặc biệt.'}</Typography.Text>
           )}
         </div>
-        <Button
-          type={sentBack ? 'primary' : 'default'}
-          style={{ alignSelf: 'flex-end', fontWeight: 500 }}
-          aria-label={`${sentBack || todo === 'draft' ? 'Cập nhật' : 'Đề xuất'} danh sách bài hát: ${program.eventName}`}
-          onClick={() => navigate(generatePath(paths.director.songListProposal, { programId: program.id }))}
-        >
-          {sentBack || todo === 'draft' ? 'Cập nhật danh sách bài hát' : 'Soạn & đề xuất bài hát'}
-        </Button>
+        <Flex wrap justify="space-between" align="center" gap={spacing.sm} style={{ marginTop: 'auto' }}>
+          <Button
+            type="link"
+            style={{ paddingInline: 0, fontSize: 13 }}
+            onClick={() => navigate(generatePath(paths.director.programDetail, { programId: program.id }))}
+          >
+            Chi tiết chương trình
+          </Button>
+          <Button
+            type={sentBack ? 'primary' : 'default'}
+            style={{ fontWeight: 500 }}
+            aria-label={`${sentBack || todo === 'draft' ? 'Cập nhật' : 'Đề xuất'} danh sách bài hát: ${program.eventName}`}
+            onClick={() => navigate(generatePath(paths.director.songListProposal, { programId: program.id }))}
+          >
+            {sentBack || todo === 'draft' ? 'Cập nhật danh sách bài hát' : 'Soạn & đề xuất bài hát'}
+          </Button>
+        </Flex>
       </Flex>
     </Card>
   )

@@ -1,5 +1,6 @@
 import { Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { EmptyState, ErrorState, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { usePreparationProgress, useUpcomingEvents } from '../hooks/usePractice'
@@ -61,11 +62,28 @@ const columns: TableColumnsType<MemberProgress> = [
  * Choir Director: each active member's readiness for an upcoming event (FE-46,
  * `GET /api/liturgical-events/{id}/preparation-progress`): participation answer, rehearsals attended out of those
  * held, assignments passed and overdue. Events come from `GET /api/schedule/events`, the upcoming published ones.
+ * Preselects event from `?programId=` or `?eventId=` when provided.
  */
 export function ProgressTab() {
+  const [params, setParams] = useSearchParams()
+  const urlEventId = params.get('programId') ?? params.get('eventId') ?? undefined
   const events = useUpcomingEvents()
-  const [eventId, setEventId] = useState<string>()
+  const [userSelectedId, setUserSelectedId] = useState<string | null>(null)
+  const eventId = userSelectedId ?? urlEventId
   const progress = usePreparationProgress(eventId)
+
+  const handleSelectEvent = (id?: string) => {
+    setUserSelectedId(id ?? '')
+    const next = new URLSearchParams(params)
+    if (id) {
+      next.set('programId', id)
+      next.delete('eventId')
+    } else {
+      next.delete('programId')
+      next.delete('eventId')
+    }
+    setParams(next, { replace: true })
+  }
 
   return (
     <Flex vertical gap={spacing.md}>
@@ -80,7 +98,7 @@ export function ProgressTab() {
         placeholder="Chọn sự kiện sắp tới"
         loading={events.isPending}
         value={eventId}
-        onChange={setEventId}
+        onChange={handleSelectEvent}
         options={(events.data ?? []).map((event) => ({ value: event.id, label: formatEventOption(event) }))}
       />
       </Flex>

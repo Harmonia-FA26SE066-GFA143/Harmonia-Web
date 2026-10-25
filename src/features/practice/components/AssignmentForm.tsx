@@ -1,6 +1,7 @@
 import { SendOutlined } from '@ant-design/icons'
 import { App, Button, Card, DatePicker, Flex, Form, Input, Radio, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
+import { useSearchParams } from 'react-router'
 import { useChoirMembers } from '@/features/members'
 import { useSongMaterials, useSongs } from '@/features/music-library'
 import { useCatalogOptions } from '@/features/system-categories'
@@ -30,6 +31,8 @@ const scopeOptions: { value: AssignmentScope; label: string }[] = [
  */
 export function AssignmentForm() {
   const { message } = App.useApp()
+  const [params] = useSearchParams()
+  const urlProgramId = params.get('programId') ?? params.get('eventId') ?? undefined
   const [form] = Form.useForm<FormValues>()
   const scope = Form.useWatch('scope', form)
   const songId = Form.useWatch('songId', form)
@@ -65,7 +68,7 @@ export function AssignmentForm() {
       <Form<FormValues>
         form={form}
         layout="vertical"
-        initialValues={{ scope: 'all' }}
+        initialValues={{ scope: 'all', eventId: urlProgramId }}
         onFinish={handleFinish}
         style={{ maxWidth: 720 }}
       >

@@ -2,7 +2,7 @@ import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Card, DatePicker, Flex, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
@@ -35,6 +35,7 @@ export function RehearsalsPage() {
   const [editing, setEditing] = useState<Rehearsal | null>()
 
   const programMap = useMemo(() => new Map((programs.data ?? []).map((program) => [program.id, program])), [programs.data])
+  const activeProgram = filters.eventId ? programMap.get(filters.eventId) : undefined
   const total = rehearsals.data?.totalCount ?? 0
   const filtered = Boolean(filters.eventId || filters.fromDate || filters.toDate)
   const changeFilters = (next: RehearsalFilters) => {
@@ -84,6 +85,24 @@ export function RehearsalsPage() {
         description="Tạo và quản lý các buổi tập để chuẩn bị cho từng chương trình phụng vụ."
         extra={createButton}
       />
+      {activeProgram && (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: spacing.md }}
+          title={
+            <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
+              <Typography.Text>
+                Đang xem lịch tập cho chương trình:{' '}
+                <strong>{activeProgram.eventName}</strong> · {formatProgramDate(activeProgram.date)}
+              </Typography.Text>
+              <Link to={generatePath(paths.director.programDetail, { programId: activeProgram.id })}>
+                Xem chi tiết chương trình
+              </Link>
+            </Flex>
+          }
+        />
+      )}
       {programs.isError && (
         <Alert
           type="warning"
@@ -158,7 +177,9 @@ export function RehearsalsPage() {
               programs={programMap}
               loading={rehearsals.isPlaceholderData}
               pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
-              onTakeAttendance={(rehearsal) => navigate(`${paths.director.attendance}?rehearsalId=${rehearsal.id}`)}
+              onTakeAttendance={(rehearsal) =>
+                navigate(`${paths.director.attendance}?rehearsalId=${rehearsal.id}${rehearsal.eventId ? `&programId=${rehearsal.eventId}` : ''}`)
+              }
               onEdit={setEditing}
               onDelete={handleDelete}
             />

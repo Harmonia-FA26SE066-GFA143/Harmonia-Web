@@ -87,10 +87,23 @@ export function RosterPage() {
           {!failed && songList.isSuccess && !approved && (
             <EmptyState
               title="Chưa có danh sách bài hát đã duyệt"
-              description="Phân công được thực hiện sau khi danh sách bài hát được duyệt."
+              description={
+                songList.data?.status === 'needsRevision'
+                  ? `Cha xứ yêu cầu chỉnh sửa danh sách bài hát${songList.data.reviews.at(-1)?.notes ? `: “${songList.data.reviews.at(-1)?.notes}”` : ''}. Vui lòng cập nhật và gửi duyệt lại trước khi lập phân công.`
+                  : songList.data?.status === 'rejected'
+                    ? `Danh sách bài hát đã bị từ chối${songList.data.reviews.at(-1)?.notes ? `: “${songList.data.reviews.at(-1)?.notes}”` : ''}. Vui lòng biên soạn lại danh sách trước khi lập phân công.`
+                    : songList.data?.status === 'submitted'
+                      ? 'Danh sách bài hát đang chờ Cha xứ phê duyệt. Phân công sẽ mở sau khi được duyệt.'
+                      : 'Phân công được thực hiện sau khi danh sách bài hát được duyệt.'
+              }
               action={
-                <Button onClick={() => navigate(generatePath(paths.director.songListProposal, { programId: program.id }))}>
-                  Mở danh sách bài hát
+                <Button
+                  type={songList.data?.status === 'needsRevision' || songList.data?.status === 'rejected' ? 'primary' : 'default'}
+                  onClick={() => navigate(generatePath(paths.director.songListProposal, { programId: program.id }))}
+                >
+                  {songList.data?.status === 'needsRevision' || songList.data?.status === 'rejected'
+                    ? 'Cập nhật danh sách bài hát'
+                    : 'Mở danh sách bài hát'}
                 </Button>
               }
             />
