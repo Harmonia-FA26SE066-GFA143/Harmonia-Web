@@ -23,11 +23,12 @@ export function writeReportParams(kind: string, filters: ReportFilters): URLSear
 }
 
 /** The query of `SearchReportsRequest`: a month is its first and last day, both inclusive. */
-export function toReportQuery({ month, seasonId }: ReportFilters) {
+export function toReportQuery({ month, seasonId, fromDate, toDate, choirId }: ReportFilters) {
   const start = month ? dayjs(`${month}-01`) : undefined
   return {
     liturgicalSeasonId: seasonId,
-    fromDate: start?.format('YYYY-MM-DD'),
-    toDate: start?.endOf('month').format('YYYY-MM-DD'),
+    fromDate: fromDate ?? start?.format('YYYY-MM-DD'),
+    toDate: toDate ?? start?.endOf('month').format('YYYY-MM-DD'),
+    choirId,
   }
 }

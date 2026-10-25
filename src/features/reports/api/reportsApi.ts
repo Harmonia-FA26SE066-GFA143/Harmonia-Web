@@ -8,7 +8,8 @@ import { toReportQuery } from '../reportFilters'
 import type { AdminReportKind, ReportExport, ReportExportRequest, ReportFilters, ReportFormat, ReportRow } from '../types'
 
 // `/api/reports` (Harmonia-BE ReportsController): six paged reports over past data, an export to a file and the list
-// of exports. Service history and song usage are open to the Parish Priest and the Admin, the rest to the Admin only.
+// of exports. Service history and song usage are open to the Parish Priest and the Admin, the rest to the Admin; the
+// three per-member reports and their export also to the Choir Director.
 
 export interface ReportPage {
   pageNumber: number
@@ -163,7 +164,10 @@ export async function getReport(kind: AdminReportKind, filters: ReportFilters, p
   return { ...result, items: result.items.map(toRow[kind]) }
 }
 
-/** Admin only. Every matching row, as a file; the backend records the export (REPORT_NO_DATA when nothing matches). */
+/**
+ * Every matching row, as a file; the backend records the export (REPORT_NO_DATA when nothing matches). The Choir
+ * Director may export the three per-member reports only (REPORT_TYPE_NOT_SUPPORTED otherwise).
+ */
 export function exportReport({ kind, format, filters }: ReportExportRequest): Promise<Blob> {
   return apiDownload(`/api/reports/export${toQuery({ ...toReportQuery(filters), type: apiType[kind], format: apiFormat[format] })}`)
 }

@@ -1,7 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { vietnamToday } from '@/lib/api/dates'
-import { fetchAllPages } from '@/lib/api/paging'
 import { deleteRehearsal, getDefaultSongs, listRehearsals, saveRehearsal, type RehearsalPage } from '../api/rehearsalsApi'
 import type { RehearsalFilters, RehearsalValues } from '../types'
 
@@ -46,11 +45,3 @@ export const useDeleteRehearsal = () => useRehearsalMutation((id: string) => del
 /** Reads the suggested songs of an event on demand; nothing is saved. */
 export const useDefaultSongs = () => useMutation({ mutationFn: (eventId: string) => getDefaultSongs(eventId) })
 
-/** Every session between two dates (inclusive), for reports. */
-export function useRehearsalsBetween(fromDate: string, toDate: string) {
-  const filters: RehearsalFilters = { fromDate, toDate }
-  return useQuery({
-    queryKey: [...rehearsalsKey, 'between', filters],
-    queryFn: () => fetchAllPages((page) => listRehearsals(filters, page)),
-  })
-}

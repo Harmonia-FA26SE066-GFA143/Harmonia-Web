@@ -1,4 +1,4 @@
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getAttendance, saveAttendance } from '../api/attendanceApi'
 import type { AttendanceRecord, AttendanceValue } from '../types'
 
@@ -30,9 +30,3 @@ export function useSaveAttendance(rehearsalId: string) {
   })
 }
 
-/** The sheets of several sessions, sharing the cache of `useAttendance`; for reports. */
-export function useAttendances(rehearsalIds: string[]) {
-  return useQueries({
-    queries: rehearsalIds.map((rehearsalId) => ({ queryKey: attendanceKey(rehearsalId), queryFn: () => getAttendance(rehearsalId) })),
-  })
-}
