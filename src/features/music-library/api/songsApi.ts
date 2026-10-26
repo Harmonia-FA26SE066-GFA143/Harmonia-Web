@@ -22,8 +22,25 @@ export interface SongPage {
   pageSize: number
 }
 
-export function listSongs(filters: SongFilters, page: SongPage): Promise<PagedList<Song>> {
-  return apiRequest<PagedList<Song>>(
+interface SongDto extends Omit<Song, 'materialCounts' | 'lastUsedDate'> {
+  materialCounts?: Partial<Record<ApiMaterialType, number>>
+  lastUsedDate?: string | null
+}
+
+const toSong = ({ materialCounts, lastUsedDate, ...rest }: SongDto): Song => ({
+  ...rest,
+  materialCounts: materialCounts && {
+    sheetMusic: materialCounts.SheetMusic ?? 0,
+    lyrics: materialCounts.Lyrics ?? 0,
+    sampleAudio: materialCounts.SampleAudio ?? 0,
+    rehearsalMaterial: materialCounts.RehearsalMaterial ?? 0,
+  },
+  lastUsedDate: lastUsedDate ?? undefined,
+})
+
+/** Keyword and names are matched ignoring case and Vietnamese diacritics on the server. */
+export async function listSongs(filters: SongFilters, page: SongPage): Promise<PagedList<Song>> {
+  const result = await apiRequest<PagedList<SongDto>>(
     `/api/songs${toQuery({
       keyword: filters.search.trim(),
       liturgicalSeasonId: filters.seasonId,
@@ -31,9 +48,12 @@ export function listSongs(filters: SongFilters, page: SongPage): Promise<PagedLi
       ceremonyTypeId: filters.ceremonyTypeId,
       songThemeId: filters.themeId,
       skillId: filters.skillId,
+      isClassified: filters.classified === undefined ? undefined : filters.classified === 'yes',
+      missingMaterialType: filters.missingMaterial && typeByKind[filters.missingMaterial],
       ...page,
     })}`,
   )
+  return { ...result, items: result.items.map(toSong) }
 }
 
 /** `null` for SONG_NOT_FOUND (404), so the page can show its not-found state. */
@@ -46,8 +66,9 @@ async function orNullWhenMissing<T>(request: Promise<T>): Promise<T | null> {
   }
 }
 
-export function getSong(id: string): Promise<Song | null> {
-  return orNullWhenMissing(apiRequest<Song>(`/api/songs/${id}`))
+export async function getSong(id: string): Promise<Song | null> {
+  const song = await orNullWhenMissing(apiRequest<SongDto>(`/api/songs/${id}`))
+  return song && toSong(song)
 }
 
 export function getSongClassification(id: string): Promise<SongClassification | null> {
@@ -58,12 +79,12 @@ export function updateSongClassification(id: string, values: SongClassificationV
   return apiRequest<SongClassification>(`/api/songs/${id}/classification`, { method: 'PUT', body: JSON.stringify(values) })
 }
 
-export function createSong(values: SongValues): Promise<Song> {
-  return apiRequest<Song>('/api/songs', { method: 'POST', body: JSON.stringify(values) })
+export async function createSong(values: SongValues): Promise<Song> {
+  return toSong(await apiRequest<SongDto>('/api/songs', { method: 'POST', body: JSON.stringify(values) }))
 }
 
-export function updateSong(id: string, values: SongValues): Promise<Song> {
-  return apiRequest<Song>(`/api/songs/${id}`, { method: 'PUT', body: JSON.stringify(values) })
+export async function updateSong(id: string, values: SongValues): Promise<Song> {
+  return toSong(await apiRequest<SongDto>(`/api/songs/${id}`, { method: 'PUT', body: JSON.stringify(values) }))
 }
 
 // Materials: `/api/music-materials` (Harmonia-BE MusicMaterialsController). The backend sends and expects the
@@ -117,6 +138,17 @@ export function deleteMaterial(materialId: string): Promise<void> {
   return apiRequest<void>(`/api/music-materials/${materialId}`, { method: 'DELETE' })
 }
 
+/**
+ * Replaces the file of a material (`PUT /api/music-materials/{id}/file`), keeping its id, title, kind, target skill
+ * and the assignments it is attached to. Members keep what they marked unless `resetProgress` clears it.
+ */
+export async function replaceMaterialFile(materialId: string, file: File, resetProgress: boolean): Promise<SongMaterial> {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('resetProgress', String(resetProgress))
+  return toMaterial(await apiRequest<MusicMaterialDto>(`/api/music-materials/${materialId}/file`, { method: 'PUT', body: form }))
+}
+
 /** Replaces title and target skill; leaving the skill out makes the material for the whole choir. */
 export async function updateMaterial(materialId: string, values: MaterialValues): Promise<void> {
   await apiRequest<unknown>(`/api/music-materials/${materialId}`, { method: 'PUT', body: JSON.stringify(values) })
@@ -124,7 +156,7 @@ export async function updateMaterial(materialId: string, values: MaterialValues)
 
 /**
  * Removes the song from the library (Harmonia-BE SongService.DeleteAsync sets `IsActive = false`): it is no longer
- * listed or opened, while programs that used it keep it.
+ * listed or opened. A song in any song list, rehearsal or practice assignment cannot be deleted (409 SONG_IN_USE).
  */
 export function deleteSong(id: string): Promise<void> {
   return apiRequest<void>(`/api/songs/${id}`, { method: 'DELETE' })

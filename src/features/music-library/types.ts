@@ -33,6 +33,14 @@ export interface Song {
   musicalKey: string | null
   tempo: string | null
   notes: string | null
+  /** Active materials per kind (0 when none); absent on a song the Web just saved. */
+  materialCounts?: Record<MaterialKind, number>
+  /** Has a season, Mass type, ceremony type or theme. */
+  isClassified?: boolean
+  /** Past published programs whose approved list has the song, as the song-usage report counts them. */
+  timesUsed?: number
+  /** YYYY-MM-DD of the latest of those programs. */
+  lastUsedDate?: string
 }
 
 /** Body of POST /api/songs and PUT /api/songs/{id}. PUT replaces every field, so the form always sends all of them. */
@@ -116,6 +124,10 @@ export interface SongFilters {
   themeId?: string
   /** Matches a vocal or an instrument requirement. */
   skillId?: string
+  /** 'no': songs with no season, Mass type, ceremony type or theme yet. */
+  classified?: 'yes' | 'no'
+  /** Songs with no active material of this kind. */
+  missingMaterial?: MaterialKind
 }
 
 /** Body of PUT /api/music-materials/{id}: metadata only; the file and the kind stay as uploaded. */

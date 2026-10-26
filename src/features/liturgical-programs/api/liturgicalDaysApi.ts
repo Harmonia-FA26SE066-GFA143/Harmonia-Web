@@ -1,16 +1,17 @@
 import { apiRequest } from '@/lib/api/client'
 import { toQuery } from '@/lib/api/paging'
-import { celebrationNameVi } from '../celebrationNames'
 import type { LiturgicalDay } from '../types'
 
 // `/api/liturgical-days` (Harmonia-BE LiturgicalDaysController): the liturgical days of a date range (at most 366 days),
 // read by every signed-in role, and the Parish Priest's sync of a civil year from the Liturgical Calendar API.
 
+// The calendar's English names stay as codes; the backend adds Vietnamese ones from the Admin's translations or known
+// patterns, falling back to the English name (LiturgicalDayDto, api/liturgical-name-translations).
 interface LiturgicalDayDto {
   date: string
-  celebrationName: string
-  rank: string | null
-  seasonName: string | null
+  celebrationNameVi: string
+  rankVi: string | null
+  seasonNameVi: string | null
 }
 
 /** The cached days between the two dates (YYYY-MM-DD, inclusive); a day of a year not synced yet is absent. */
@@ -18,9 +19,9 @@ export async function listLiturgicalDays(fromDate: string, toDate: string): Prom
   const days = await apiRequest<LiturgicalDayDto[]>(`/api/liturgical-days${toQuery({ fromDate, toDate })}`)
   return days.map((dto) => ({
     date: dto.date,
-    celebrationName: celebrationNameVi(dto.celebrationName),
-    rank: dto.rank ?? undefined,
-    seasonName: dto.seasonName ?? undefined,
+    celebrationName: dto.celebrationNameVi,
+    rank: dto.rankVi ?? undefined,
+    seasonName: dto.seasonNameVi ?? undefined,
   }))
 }
 

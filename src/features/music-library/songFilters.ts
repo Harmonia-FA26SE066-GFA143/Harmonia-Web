@@ -1,4 +1,4 @@
-import type { SongFilters } from './types'
+import { materialKinds, type MaterialKind, type SongFilters } from './types'
 
 export const emptySongFilters: SongFilters = { search: '' }
 
@@ -18,6 +18,10 @@ const selectKeys = ['seasonId', 'massTypeId', 'ceremonyTypeId', 'themeId', 'skil
 export function readSongListState(params: URLSearchParams): { filters: SongFilters; page: number } {
   const filters: SongFilters = { search: params.get('search') ?? '' }
   for (const key of selectKeys) filters[key] = params.get(key) ?? undefined
+  const classified = params.get('classified')
+  if (classified === 'yes' || classified === 'no') filters.classified = classified
+  const missing = params.get('missingMaterial')
+  if (materialKinds.includes(missing as MaterialKind)) filters.missingMaterial = missing as MaterialKind
   return { filters, page: Math.max(1, Number.parseInt(params.get('page') ?? '', 10) || 1) }
 }
 
@@ -28,6 +32,8 @@ export function writeSongListState(filters: SongFilters, page: number): URLSearc
     const value = filters[key]
     if (value) params.set(key, value)
   }
+  if (filters.classified) params.set('classified', filters.classified)
+  if (filters.missingMaterial) params.set('missingMaterial', filters.missingMaterial)
   if (page > 1) params.set('page', String(page))
   return params
 }

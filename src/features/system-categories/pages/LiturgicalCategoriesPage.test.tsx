@@ -4,6 +4,7 @@ import * as client from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as categoriesApi from '../api/categoriesApi'
+import * as namesApi from '../api/liturgicalNamesApi'
 import type { LiturgicalSeason } from '../types'
 import { LiturgicalCategoriesPage } from './LiturgicalCategoriesPage'
 
@@ -41,6 +42,7 @@ describe('LiturgicalCategoriesPage', () => {
       'Phần phụng vụ',
       'Nơi cử hành',
       'Giờ lễ cố định',
+      'Tên phụng vụ',
     ]) {
       expect(screen.getByRole('tab', { name })).toBeInTheDocument()
     }
@@ -161,5 +163,41 @@ describe('LiturgicalCategoriesPage', () => {
       }),
     )
     expect(await screen.findByText('Đã lưu thay đổi.')).toBeInTheDocument()
+  })
+
+  it('translates a name the calendar still shows in English and deletes a translation after asking', async () => {
+    vi.spyOn(categoriesApi, 'listSeasons').mockResolvedValue([])
+    vi.spyOn(namesApi, 'listUntranslatedNames').mockResolvedValue([{ kind: 'Celebration', englishName: 'Saint Newly Canonized' }])
+    const list = vi.spyOn(namesApi, 'listLiturgicalNames').mockResolvedValue({
+      items: [{ id: 't1', kind: 'Celebration', englishName: 'Christ the King', vietnameseName: 'Đức Giêsu Kitô, Vua Vũ Trụ' }],
+      pageNumber: 1,
+      pageSize: 20,
+      totalCount: 1,
+      totalPages: 1,
+    })
+    const save = vi
+      .spyOn(namesApi, 'saveLiturgicalName')
+      .mockResolvedValue({ id: 't2', kind: 'Celebration', englishName: 'Saint Newly Canonized', vietnameseName: 'Thánh Tân Phong' })
+    const remove = vi.spyOn(namesApi, 'deleteLiturgicalName').mockResolvedValue()
+    renderPage(<LiturgicalCategoriesPage />, '/admin/liturgical-categories')
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Tên phụng vụ' }))
+    expect(await screen.findByText('Đức Giêsu Kitô, Vua Vũ Trụ')).toBeInTheDocument()
+    expect(list).toHaveBeenCalledWith({ keyword: '', kind: undefined }, { pageNumber: 1, pageSize: 20 })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Dịch Saint Newly Canonized' }))
+    const dialog = await screen.findByRole('dialog')
+    // The English name of the calendar is kept exactly as it comes.
+    expect(within(dialog).getByRole('textbox', { name: 'Tên tiếng Anh' })).toBeDisabled()
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Tên tiếng Việt' }), { target: { value: 'Thánh Tân Phong' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thêm' }))
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(undefined, { kind: 'Celebration', englishName: 'Saint Newly Canonized', vietnameseName: 'Thánh Tân Phong' }),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Xoá bản dịch Christ the King' }))
+    const confirm = (await screen.findAllByText(/Xoá bản dịch/))[0].closest('.ant-modal') as HTMLElement
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá' }))
+    await waitFor(() => expect(remove).toHaveBeenCalledWith('t1'))
   })
 })

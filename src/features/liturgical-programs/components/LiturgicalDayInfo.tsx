@@ -4,7 +4,7 @@ import { App, Button, Flex, Tag, Typography } from 'antd'
 import { colors, spacing } from '@/styles/tokens'
 import { calendarErrorMessage } from '../calendarErrors'
 import { useSyncLiturgicalDays } from '../hooks/useLiturgicalDays'
-import { liturgicalRankLabels, liturgicalSeasonLabels, type LiturgicalDay } from '../types'
+import type { LiturgicalDay } from '../types'
 
 const muted = { color: colors.textMuted }
 
@@ -33,16 +33,16 @@ export function LiturgicalDayInfo({ date, days }: Readonly<{ date: string; days:
   return (
     <Flex align="center" gap={spacing.xs} wrap>
       <Typography.Text strong>{celebrationName}</Typography.Text>
-      {rank && <Tag style={{ marginInlineEnd: 0 }}>{liturgicalRankLabels[rank] ?? rank}</Tag>}
-      {seasonName && <Tag style={{ marginInlineEnd: 0 }}>{liturgicalSeasonLabels[seasonName] ?? seasonName}</Tag>}
+      {rank && <Tag style={{ marginInlineEnd: 0 }}>{rank}</Tag>}
+      {seasonName && <Tag style={{ marginInlineEnd: 0 }}>{seasonName}</Tag>}
     </Flex>
   )
 }
 
 /**
  * Parish Priest: syncs a civil year from the Liturgical Calendar API (Harmonia-BE LiturgicalDayService.SyncAsync). The
- * backend overwrites the days already cached for that year, so it asks first. Celebration names arrive in English and
- * are shown in Vietnamese (celebrationNames.ts).
+ * backend overwrites the days already cached for that year, so it asks first. The backend translates the names when
+ * they are read, so a translation the Admin edits shows without syncing again.
  */
 export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
   const { message, modal } = App.useApp()

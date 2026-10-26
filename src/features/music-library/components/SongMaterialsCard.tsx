@@ -7,6 +7,7 @@ import {
   FileTextOutlined,
   FolderOpenOutlined,
   ReadOutlined,
+  SwapOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
 import { Button, Card, Divider, Flex, Image, Tag, Typography, Upload } from 'antd'
@@ -34,6 +35,8 @@ export interface SongMaterialsCardProps {
   onPick?: (kind: MaterialKind, file: File) => void
   onDelete?: (material: SongMaterial) => void
   onEdit?: (material: SongMaterial) => void
+  /** Replaces the file, keeping the material and what members marked. */
+  onReplace?: (material: SongMaterial) => void
   /** Opens who has learned the material (FE-09). */
   onProgress?: (material: SongMaterial) => void
 }
@@ -83,9 +86,9 @@ function UploadButton({ kind, loading, label, hintId, onPick }: Readonly<{
   )
 }
 
-type MaterialActions = Pick<SongMaterialsCardProps, 'onDelete' | 'onEdit' | 'onProgress'>
+type MaterialActions = Pick<SongMaterialsCardProps, 'onDelete' | 'onEdit' | 'onProgress' | 'onReplace'>
 
-function MaterialRow({ material, onDelete, onEdit, onProgress }: Readonly<{ material: SongMaterial } & MaterialActions>) {
+function MaterialRow({ material, onDelete, onEdit, onProgress, onReplace }: Readonly<{ material: SongMaterial } & MaterialActions>) {
   const Icon = kindIcons[material.kind]
   return (
     <Flex component="li" vertical gap={spacing.sm} style={{ padding: spacing.md, background: colors.background, borderRadius: radius.md }}>
@@ -135,6 +138,9 @@ function MaterialRow({ material, onDelete, onEdit, onProgress }: Readonly<{ mate
           <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Tiến độ học ${material.title}`}>
             Tiến độ học
           </Button>
+        )}
+        {onReplace && (
+          <Button type="text" icon={<SwapOutlined />} onClick={() => onReplace(material)} aria-label={`Thay file ${material.title}`} />
         )}
         {onEdit && (
           <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />

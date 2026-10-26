@@ -2,7 +2,7 @@ import { apiRequest } from '@/lib/api/client'
 import type { PublicSettings, SettingDataType, SystemSetting } from '../types'
 
 // `/api/system-settings` (Harmonia-BE SystemSettingsController): the Admin lists and edits every setting; every
-// signed-in role reads the public ones.
+// signed-in role reads the public ones, and Parish.Name, Choir.Name and Contact.Email are readable before signing in.
 
 type ApiDataType = 'String' | 'Int' | 'Bool' | 'Json'
 
@@ -13,6 +13,9 @@ interface SystemSettingDto {
   key: string
   value: string
   dataType: ApiDataType
+  displayName: string
+  group: string
+  order: number
   description: string | null
   isPublic: boolean
   minValue: number | null
@@ -24,13 +27,16 @@ const toSetting = (dto: SystemSettingDto): SystemSetting => ({
   key: dto.key,
   value: dto.value,
   dataType: dataTypeByApi[dto.dataType],
+  displayName: dto.displayName,
+  group: dto.group,
+  order: dto.order,
   description: dto.description ?? undefined,
   isPublic: dto.isPublic,
   minValue: dto.minValue ?? undefined,
   maxValue: dto.maxValue ?? undefined,
 })
 
-/** Admin only; sorted by key on the server. */
+/** Admin only; in the order of the settings page (`order`). */
 export async function listSettings(): Promise<SystemSetting[]> {
   return (await apiRequest<SystemSettingDto[]>('/api/system-settings')).map(toSetting)
 }
@@ -43,5 +49,5 @@ export async function updateSetting(id: string, value: string): Promise<void> {
 export async function getPublicSettings(): Promise<PublicSettings> {
   const rows = await apiRequest<SystemSettingDto[]>('/api/system-settings/public')
   const value = (key: string) => rows.find((row) => row.key === key)?.value.trim() || undefined
-  return { parishName: value('Parish.Name'), choirName: value('Choir.Name'), announcement: value('System.Announcement') }
+  return { parishName: value('Parish.Name'), choirName: value('Choir.Name'), announcement: value('System.Announcement'), contactEmail: value('Contact.Email') }
 }

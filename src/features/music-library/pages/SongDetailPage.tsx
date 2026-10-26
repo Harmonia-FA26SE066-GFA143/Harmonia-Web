@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
-import { requestFailureMessage } from '@/lib/api/errors'
+import { ApiError, requestFailureMessage } from '@/lib/api/errors'
 import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { LearningProgressModal } from '../components/LearningProgressModal'
@@ -14,6 +14,7 @@ import { SongClassificationModal } from '../components/SongClassificationModal'
 import { SongFormModal } from '../components/SongFormModal'
 import { SongInfoCard } from '../components/SongInfoCard'
 import { SongMaterialsCard } from '../components/SongMaterialsCard'
+import { ReplaceMaterialFileModal } from '../components/ReplaceMaterialFileModal'
 import { UploadMaterialModal } from '../components/UploadMaterialModal'
 import {
   useDeleteMaterial,
@@ -22,6 +23,7 @@ import {
   useSaveSongClassification,
   useSong,
   useSongClassification,
+  useReplaceMaterialFile,
   useSongMaterials,
   useUpdateMaterial,
   useUploadMaterial,
@@ -48,8 +50,8 @@ const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { tit
 
 /**
  * Choir Director: one song with its fields, FE-29 classification and FE-08/FE-28 materials, their learning progress
- * (FE-09) and deletion of the song. The backend deletes a song even when programs used it (it is only hidden from the
- * library), which supersedes "only if never selected for a Mass" (song-approval.md, 5a.5).
+ * (FE-09) and deletion of the song. The backend refuses to delete a song any song list, rehearsal or practice
+ * assignment uses (409 SONG_IN_USE, BE 718696c), as "only if never selected for a Mass" (song-approval.md, 5a.5) asks.
  */
 export function SongDetailPage() {
   const navigate = useNavigate()
@@ -64,8 +66,10 @@ export function SongDetailPage() {
   const upload = useUploadMaterial(songId)
   const remove = useDeleteMaterial(songId)
   const updateMaterial = useUpdateMaterial(songId)
+  const replaceFile = useReplaceMaterialFile(songId)
   const deleteSong = useDeleteSong()
   const [editingMaterial, setEditingMaterial] = useState<SongMaterial>()
+  const [replacing, setReplacing] = useState<SongMaterial>()
   const [progressOf, setProgressOf] = useState<SongMaterial>()
   const [editing, setEditing] = useState(false)
   const [classifying, setClassifying] = useState(false)
@@ -170,10 +174,30 @@ export function SongDetailPage() {
     )
   }
 
+  const handleReplaceFile = (file: File, resetProgress: boolean) => {
+    if (!replacing || replaceFile.isPending) return
+    replaceFile.mutate(
+      { id: replacing.id, file, resetProgress },
+      {
+        onSuccess: () => {
+          message.success(resetProgress ? 'Đã thay file và xoá tiến độ học của ca viên.' : 'Đã thay file tài liệu.')
+          setReplacing(undefined)
+        },
+        // The same refusals as an upload (type, size, storage), plus a material deleted meanwhile.
+        onError: (error) =>
+          message.error(
+            error instanceof ApiError && error.code === 'MATERIAL_NOT_FOUND'
+              ? 'Tài liệu không còn tồn tại. Vui lòng tải lại trang.'
+              : uploadErrorMessage(error),
+          ),
+      },
+    )
+  }
+
   const handleDeleteSong = () =>
     modal.confirm({
       title: 'Xoá bài hát?',
-      content: `“${data.title}” sẽ không còn trong kho bài hát. Các chương trình đã dùng bài vẫn giữ bài này.`,
+      content: `“${data.title}” sẽ không còn trong kho bài hát. Bài đã có trong danh sách bài hát, buổi tập hoặc bài tập thì không xoá được.`,
       okText: 'Xoá bài hát',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
@@ -185,7 +209,13 @@ export function SongDetailPage() {
             navigate(paths.director.library)
           })
           // 404 SONG_NOT_FOUND: someone deleted it already.
-          .catch((error: Error) => message.error(requestFailureMessage(error, 'Không thể xoá bài hát. Vui lòng tải lại trang rồi thử lại.'))),
+          .catch((error: Error) =>
+            message.error(
+              error instanceof ApiError && error.code === 'SONG_IN_USE'
+                ? 'Bài hát đã được dùng trong danh sách bài hát, buổi tập hoặc bài tập nên không xoá được.'
+                : requestFailureMessage(error, 'Không thể xoá bài hát. Vui lòng tải lại trang rồi thử lại.'),
+            ),
+          ),
     })
 
   const handleDelete = () => {
@@ -243,6 +273,7 @@ export function SongDetailPage() {
             onPick={handlePick}
             onDelete={setDeleting}
             onEdit={setEditingMaterial}
+            onReplace={setReplacing}
             onProgress={setProgressOf}
           />
         )}
@@ -267,6 +298,12 @@ export function SongDetailPage() {
         saving={updateMaterial.isPending}
         onSubmit={handleUpdateMaterial}
         onCancel={() => setEditingMaterial(undefined)}
+      />
+      <ReplaceMaterialFileModal
+        material={replacing}
+        saving={replaceFile.isPending}
+        onSubmit={handleReplaceFile}
+        onCancel={() => setReplacing(undefined)}
       />
       <LearningProgressModal material={progressOf} onClose={() => setProgressOf(undefined)} />
       {classification.data && (

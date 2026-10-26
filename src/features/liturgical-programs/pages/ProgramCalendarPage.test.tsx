@@ -6,7 +6,6 @@ import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as eventsApi from '../api/eventsApi'
 import * as daysApi from '../api/liturgicalDaysApi'
-import { celebrationNameVi } from '../celebrationNames'
 import { ProgramCalendarPage } from './ProgramCalendarPage'
 
 const empty = { items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 }
@@ -69,10 +68,20 @@ describe('ProgramCalendarPage', () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(empty)
     vi.mocked(daysApi.listLiturgicalDays).mockRestore()
     const today = dayjs()
-    // The backend keeps the English names of the Liturgical Calendar API.
+    // The English names are codes; the Vietnamese ones come from the backend.
     const request = vi.spyOn(client, 'apiRequest').mockImplementation(async (path: string) =>
       path.startsWith('/api/liturgical-days')
-        ? [{ date: today.format('YYYY-MM-DD'), celebrationName: '29th Sunday of Ordinary Time', rank: 'Solemnity', seasonName: 'OrdinaryTime' }]
+        ? [
+            {
+              date: today.format('YYYY-MM-DD'),
+              celebrationName: '29th Sunday of Ordinary Time',
+              rank: 'Solemnity',
+              seasonName: 'OrdinaryTime',
+              celebrationNameVi: 'Chúa nhật XXIX Thường niên',
+              rankVi: 'Lễ trọng',
+              seasonNameVi: 'Mùa Thường Niên',
+            },
+          ]
         : [],
     )
     renderPage(<ProgramCalendarPage />, '/priest/calendar')
@@ -85,10 +94,6 @@ describe('ProgramCalendarPage', () => {
     ])
     expect(screen.getByText('Lễ trọng')).toBeInTheDocument()
     expect(screen.getByText('Mùa Thường Niên')).toBeInTheDocument()
-    // Saints come from the table, weekdays from a pattern; a name in neither stays in English.
-    expect(celebrationNameVi('Saint Luke, Evangelist')).toBe('Thánh Luca, Thánh sử')
-    expect(celebrationNameVi('Tuesday of the 34th Week of Ordinary Time')).toBe('Thứ Ba tuần XXXIV Thường niên')
-    expect(celebrationNameVi('Saint Newly Canonized')).toBe('Saint Newly Canonized')
   })
 
   it('syncs the year on view after asking, since the backend overwrites it', async () => {

@@ -11,7 +11,7 @@ import { Button, Flex, Typography } from 'antd'
 import type { ComponentType, MouseEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { contactEmail } from '@/config/contact'
+import { useContactEmail } from '@/features/settings'
 import { BrandMark, IconTile, StatusTag } from '@/shared/ui'
 import { cardSurface, colors, media, radius, spacing, typography } from '@/styles/tokens'
 import { HeroVideo } from './HeroVideo'
@@ -73,6 +73,8 @@ const roleSummaries: RoleSummary[] = [
 /** Public landing page (Stitch SHARED-04), rendered outside the application shell. */
 export function LandingPage() {
   const navigate = useNavigate()
+  // Set by the Admin (Contact.Email, readable before signing in); the project address until then.
+  const contactEmail = useContactEmail()
 
   // A real link (open in a new tab, visible URL); a plain click still navigates inside the app.
   const goToSignIn = (event: MouseEvent) => {
