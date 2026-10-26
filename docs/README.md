@@ -2,7 +2,7 @@
 
 Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì với BE, đọc trực tiếp sau khi `git pull` repo Harmonia-Web. Nội dung các file viết bằng tiếng Anh để giữ nguyên tên API, mã lỗi và trích dẫn code; file này là bản tóm tắt tiếng Việt.
 
-- Cập nhật lần cuối: 2026-10-25, đối chiếu với Harmonia-BE `main@42e604e`.
+- Cập nhật lần cuối: 2026-10-26, đối chiếu với Harmonia-BE `main@43dfe31`. Thay đổi hợp đồng phía BE ghi ở `doc/api-changelog.md` của repo BE.
 - Cách đọc trích dẫn: `File.cs:12-20` là đường dẫn và số dòng trong code BE ở commit trên; `src/...` là code Web.
 - Web làm theo BE ở mọi chỗ BE đã quy định (trường, trạng thái, ai được làm gì, mã lỗi). Chỗ BE chưa có thì ghi là cần BE bổ sung, kèm quyết định tạm của owner.
 
@@ -26,18 +26,10 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
 
 | Mục | Việc cần BE làm | Ghi chú |
 |---|---|---|
-| B10 | Changelog hợp đồng API, quy ước "thay đổi phá vỡ", cấu hình môi trường | Đã có một phần (CORS, tên biến môi trường) |
-| B24 (phần còn lại) | Số liệu tổng hợp điểm danh và luyện tập theo khoảng ngày cho Ca trưởng | Báo cáo theo ca viên đã có; Web đang tự cộng dồn ở trình duyệt |
-| B25 | Tên ngày phụng vụ, mùa và bậc lễ bằng tiếng Việt | Web đang tự dịch 221 tên |
-| B26 | Tên hiển thị và nhóm cho cấu hình hệ thống | Như cách BE đã trả `MinValue`/`MaxValue` |
-| B27 | Danh sách cột (key, tiêu đề) cho từng báo cáo | Bảng trên Web và file xuất đang khác tiêu đề |
-| B28 | Email liên hệ public, đọc được khi chưa đăng nhập | `GET /api/system-settings/public` đang bắt đăng nhập |
-| B31 | Gắn nhiều tài liệu vào một bài luyện tập | Hiện chỉ một `MaterialId` |
-| B32 | Tìm bài hát không phân biệt dấu ("con buoc" ra "Con Bước") | Áp dụng được cho tìm ca viên, tài liệu |
-| B33 | Danh sách bài hát kèm số tài liệu theo loại và cờ "đã phân loại" | Kèm bộ lọc "chưa phân loại", "thiếu audio" |
-| B34 | Số lần dùng và lần dùng gần nhất của từng bài | Hiện chỉ có trong báo cáo song-usage |
-| B35 | Chặn xoá bài hát đã được dùng | Owner đã chọn: BE chặn, không làm lưu trữ hay khôi phục |
-| B36 | Thay file của tài liệu mà giữ tiến độ học | Hiện phải xoá rồi tải lại |
+| B37 | Cho Cha xứ xem danh sách ca đoàn (`GET /api/choirs`) | Cha xứ gán ca đoàn cho sự kiện nhưng không đọc được danh sách, nên chưa thêm được ca đoàn mới |
+| B38 | Cho Admin tìm ca viên (`GET /api/member-profiles`) | Admin quản lý mọi ca đoàn nhưng không chọn được ca viên để thêm vào |
+
+Đã xong ở `718696c` (2026-10-25): B10, B24–B28, B31–B36. Web đã dùng hết, trừ B27 (Web chưa lấy tiêu đề cột báo cáo từ BE) và B31 (Web nối ở #211).
 
 Chi tiết và bằng chứng của từng mục nằm trong [`tbd-backlog.md`](tbd-backlog.md).
 

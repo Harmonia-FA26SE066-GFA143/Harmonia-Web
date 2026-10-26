@@ -42,7 +42,7 @@ Lập ở Phase 0 (2026-09-26), làm sạch 2026-10-20. File này chỉ nối **
 | 27 | Xác nhận tham gia | Ca trưởng | `/director/participation` | `participation` | `cb679c6b86a24f0d9cdd3f5d33c334e0` Mặc định | Đã dựng, nối BE |
 | 28 | Yêu cầu nhân sự & Phân công | Ca trưởng | `/director/roster` | `roster` | `49b75e16525a41468110349f798c6902` Mặc định | Đã dựng, nối BE |
 | 29 | Bài tập & Tiến độ luyện tập | Ca trưởng | `/director/practice` | `practice` | `8e5269ea64ca40d29916872749794317` Mặc định | Đã dựng, nối BE |
-| 30 | Báo cáo (Ca trưởng) | Ca trưởng | `/director/reports` | `reports` | `10d1d8e343004640935a93f9d6fa5cbd` Mặc định | Placeholder: BE chỉ mở báo cáo cho Cha xứ và Admin (`tbd-backlog.md` B24, quyết định 2026-10-17) |
+| 30 | Báo cáo (Ca trưởng) | Ca trưởng | `/director/reports` | `reports` | `10d1d8e343004640935a93f9d6fa5cbd` Mặc định | Đã dựng, nối BE: ba báo cáo theo ca viên và biểu đồ theo kỳ (B24) |
 | 31 | Kho bài hát | Ca trưởng | `/director/library` | `music-library` | `e7556b69066f4fc0bdb75fd2f1ff60ae` Mặc định (chọn; bản `9d462ed531074e32ab4f779495a0ffc6` bỏ vì tự thêm tên tác giả)<br>`84c6d1c1945a4bd1a5d4bb658d33d794` Modal Thêm bài hát<br>`c85e8d4bb0ac4fc29f7e559641c34f40` Đang tải Skeleton<br>`c8bd63639b004e3e935bf5834c004152` Trạng thái Trống<br>`c1c985b101dd4ecba3ee12dc740b0093` Không có kết quả lọc<br>`75d08692dc5a4132b8a4dadb9e672133` Lỗi tải dữ liệu | Đã dựng, nối BE |
 | 32 | Chi tiết bài hát | Ca trưởng | `/director/library/:songId` | `music-library` | `2edd5a15ed274d2fa03cde452694ee05` Mặc định (chọn; bản `7ac0d7d6096449eb93ab2f718fa35907` bỏ vì dồn tài liệu vào một bảng, không chia 4 nhóm và không có "Chưa phân loại")<br>`344309c695d44d90b9f3f3c83fcded90` Modal Xoá tài liệu | Đã dựng, nối BE |
 
@@ -55,7 +55,8 @@ Screen Stitch không dựng: **Đăng ký** `04312fd5c7f945ba8f83dcf0f84c2051`. 
 | Đặt lại mật khẩu (từ link email) | Công khai | `/reset-password` | `auth` |
 | Đổi mật khẩu | Mọi role web | `/change-password` | `auth` |
 | Danh sách ca viên | Ca trưởng | `/director/members` | `members` |
-| Ca đoàn | Ca trưởng | `/director/choirs` | `choirs` |
+| Ca đoàn | Admin | `/admin/choirs` | `choirs` |
+| Ca đoàn của tôi | Ca trưởng | `/director/choirs` | `choirs` |
 | Duyệt kỹ năng | Ca trưởng | `/director/skill-approval` | `skill-approval` |
 | Ghi chú từ Cha xứ | Ca trưởng | `/director/notes` | `notes` |
 | Ghi chú cho Ca trưởng | Cha xứ | `/priest/notes` | `notes` |
@@ -79,7 +80,6 @@ Quy tắc 3 của `stitch-implementation-plan.md` giả định các cặp trùn
 - **Đăng nhập:** nút "Đăng nhập với Google" chỉ hiện khi có `VITE_GOOGLE_CLIENT_ID` (`src/config/env.ts`); BE chỉ nhận tài khoản Admin đã tạo sẵn. Không có đăng ký công khai, không có màn "Chờ xác nhận".
 - **Hồ sơ cá nhân:** FE-01–FE-02 là chức năng của Ca viên trên mobile; hồ sơ trên web dành cho Cha xứ, Ca trưởng và Admin (xem `role-surfaces.md`).
 - **Chi tiết CTPV (Cha xứ / Ca trưởng):** hai screen Stitch cùng tên là hai shell khác nhau, không phải bản cũ/mới (bảng trên). Thanh 5 bước không dựng; trạng thái chuẩn bị lấy từ `GET …/preparation-status`.
-- **Báo cáo (Ca trưởng):** giữ placeholder tới khi BE mở báo cáo cho Ca trưởng (B24).
 - **Chi tiết Stitch tự thêm** (mã tài khoản, thanh "Sandbox", "Căn cứ thẩm định", cột/nút không có trường BE tương ứng, thanh "Mô phỏng trạng thái") **không** được dựng. Khi một màn Stitch cần trường mà BE không có, ghi `TBD: Backend API missing` vào `tbd-backlog.md`.
 - **Locale:** `AppProviders` dùng `vi_VN` cho Ant Design và `vi` cho dayjs (lịch, phân trang, chữ mặc định).
 

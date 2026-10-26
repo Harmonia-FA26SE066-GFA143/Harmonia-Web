@@ -1,6 +1,6 @@
 # Practice Assignments and Submissions
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e` and 2026-10-26 at `main@43dfe31`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 FE-08–FE-13, FE-41–FE-44, LI-03, LI-05
 
@@ -8,11 +8,13 @@ The Choir Director creates practice assignments for all members, selected skill 
 
 Evaluation is manual (LI-03, LI-05); advanced AI performance analysis is excluded (EX-05).
 
-## BE contract (verified `a6af23e`, re-checked `42e604e`)
+## BE contract (verified `a6af23e`, re-checked `43dfe31`)
 
 - **Statuses**: `SubmissionStatus` = `Submitted`, `Passed`, `NeedsRevision`, `Overdue` (`SubmissionStatus.cs`). Assignment audience: `All`, `SkillGroup`, `Individual` (`AssignmentScope.cs`).
 - **Endpoints**: `api/practice-assignments` (create, list, mine, submissions) and `api/practice-submissions` (list, detail, feedback, comments, mine) (`PracticeAssignmentsController.cs`, `PracticeSubmissionsController.cs`). Learning progress per material is `LearningStatus` = `NotStarted`, `NeedsPractice`, `Learned`.
 - The Director's feedback and comments are the BE's review model; follow the DTOs rather than a separate "review" entity.
+- **Choir** (D8, `718696c`): an assignment needs `choirId`, with the same checks as a rehearsal (`CHOIR_NOT_FOUND`, `CHOIR_INACTIVE`, `CHOIR_NOT_SERVING_EVENT`); every audience stays inside that choir (`CreatePracticeAssignmentRequest.cs:7-11`, `PracticeAssignmentService.cs:50-57`). A Choir Director sees and reviews only assignments and submissions of their choirs (`PracticeSubmissionService.cs:25-59`).
+- **Materials**: several per assignment, in order (`materialIds`; `materialId` is the first) (`CreatePracticeAssignmentRequest.cs:17-24`).
 
 ## Owner decisions still standing (BE silent)
 

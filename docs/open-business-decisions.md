@@ -28,7 +28,14 @@ Stored in the business files (`roles-permissions.md`, `choir-skills.md`, `liturg
 
 - **Reports**: export is a downloadable PDF; metric definitions for attendance rate, overdue and confirmation rate are in the business files. The BE also offers CSV, XLSX, XML and JSON (`ReportFormat.cs`).
 - **Activity history**: record important actions only; keep entries for 5 years. Which actions beyond the six FE-54 kinds count as important is to be clarified.
-- **Still open**: notification channels beyond what the BE sends (C5), General Settings content, material size limits. Choir Director reports were decided on 2026-10-25: the Web uses the BE per-member reports (Web #199, tbd-backlog B24).
+- **Still open**: notification channels beyond what the BE sends (C5), material size limits. Choir Director reports were decided on 2026-10-25: the Web uses the BE per-member reports (Web #199, tbd-backlog B24). General Settings content is the BE's (`SystemSettingKeys`, labels and groups from the BE since `718696c`).
+
+## Owner decisions 2026-10-26
+
+- **Choirs (D8)**: a separate Choirs page for the Admin (`/admin/choirs`: create, edit, set the director, members); the Choir Director's page shows only their choirs, read only for the choir itself (Web #205).
+- **Liturgical names**: use the BE translations and give the Admin a translation tab on the liturgical catalog page; the Web's own name list is removed (Web #207, tbd-backlog B25).
+- **Trend charts**: attendance and practice by period for the Choir Director and the Admin, from `GET /api/reports/activity-trend` (Web #209).
+- **Delivery**: fewer, larger Web PRs per BE update.
 
 ## Confirmed BA decisions — Daniel, 2026-10-01
 
