@@ -126,6 +126,44 @@ describe('PracticePage', () => {
     expect(create).not.toHaveBeenCalled()
   })
 
+  it('attaches several materials of the song to the assignment', async () => {
+    const material = (id: string, kind: 'sheetMusic' | 'sampleAudio', title: string, fileName: string) => ({
+      id, kind, title, fileName, fileSizeBytes: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, createdAt: '2026-10-01T00:00:00Z',
+    })
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cecilia', isActive: true }])
+    vi.spyOn(songsApi, 'listSongs').mockResolvedValue({
+      items: [{ id: 's1', title: 'Con Bước Lên Bàn Thờ' }] as never,
+      pageNumber: 1,
+      pageSize: 100,
+      totalCount: 1,
+      totalPages: 1,
+    })
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([
+      material('m1', 'sheetMusic', 'Bản nhạc', 'con-buoc.pdf'),
+      material('m2', 'sampleAudio', 'Audio mẫu', 'con-buoc.mp3'),
+    ])
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
+    const create = vi.spyOn(practiceApi, 'createAssignment').mockResolvedValue()
+    renderPractice()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Ca đoàn' }))
+    fireEvent.click(await screen.findByTitle('Ca đoàn Cecilia'))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tiêu đề' }), { target: { value: 'Tập bài nhập lễ' } })
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bài hát (không bắt buộc)' }))
+    fireEvent.click(await screen.findByTitle('Con Bước Lên Bàn Thờ'))
+    fireEvent.click(await screen.findByRole('checkbox', { name: /Bản nhạc/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Audio mẫu/ }))
+    const due = screen.getByPlaceholderText('Chọn ngày giờ')
+    fireEvent.mouseDown(due)
+    fireEvent.change(due, { target: { value: '20/12/2030 18:00' } })
+    fireEvent.keyDown(due, { key: 'Enter' })
+    fireEvent.click(screen.getByRole('button', { name: /Giao bài tập/ }))
+
+    await waitFor(() => expect(create).toHaveBeenCalled())
+    expect(create.mock.calls[0][0]).toMatchObject({ choirId: 'c1', songId: 's1', materialIds: ['m1', 'm2'] })
+  })
+
   it('shows the readiness of each member for the chosen upcoming event', async () => {
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
     vi.spyOn(practiceApi, 'listUpcomingEvents').mockResolvedValue([
