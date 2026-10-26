@@ -1,5 +1,5 @@
 import { CustomerServiceOutlined, ExportOutlined, FileTextOutlined, FolderOpenOutlined, ReadOutlined } from '@ant-design/icons'
-import { Button, Flex, Radio, Tag, Typography } from 'antd'
+import { Button, Checkbox, Flex, Tag, Typography } from 'antd'
 import type { ComponentType } from 'react'
 import { materialKindLabels, type SongMaterial } from '@/features/music-library'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
@@ -15,20 +15,19 @@ const isAudio = ({ fileName }: SongMaterial) => /\.(mp3|m4a|wav)$/i.test(fileNam
 
 /**
  * The song's materials as choices, each with its kind and a preview (play the audio, open the sheet), so the Director
- * sees what members will receive. Value: the material id, or undefined for none.
+ * sees what members will receive. Value: the chosen material ids, in the order of the list.
  */
 export function MaterialPicker({
   materials,
   value,
   onChange,
-}: Readonly<{ materials: SongMaterial[]; value?: string; onChange?: (value?: string) => void }>) {
+}: Readonly<{ materials: SongMaterial[]; value?: string[]; onChange?: (value: string[]) => void }>) {
   return (
-    <Radio.Group value={value ?? ''} onChange={(event) => onChange?.(event.target.value || undefined)} style={{ width: '100%' }}>
-      <Flex vertical gap={spacing.sm}>
-        <Radio value="">Không gắn tài liệu</Radio>
+    <Checkbox.Group value={value} onChange={onChange} style={{ width: '100%' }}>
+      <Flex vertical gap={spacing.sm} style={{ width: '100%' }}>
         {materials.map((material) => {
           const Icon = kindIcons[material.kind]
-          const selected = value === material.id
+          const selected = value?.includes(material.id)
           return (
             <Flex
               key={material.id}
@@ -42,7 +41,7 @@ export function MaterialPicker({
                 background: selected ? colors.primarySoft : colors.surface,
               }}
             >
-              <Radio value={material.id} style={{ flex: '1 1 240px', minWidth: 0 }}>
+              <Checkbox value={material.id} style={{ flex: '1 1 240px', minWidth: 0 }}>
                 <Flex align="center" gap={spacing.sm}>
                   <span aria-hidden style={{ color: colors.primary, fontSize: 18 }}>
                     <Icon />
@@ -57,7 +56,7 @@ export function MaterialPicker({
                   </span>
                   {material.targetSkillName && <Tag style={{ marginInlineEnd: 0 }}>{material.targetSkillName}</Tag>}
                 </Flex>
-              </Radio>
+              </Checkbox>
               {isAudio(material) ? (
                 <audio controls preload="none" src={material.url} aria-label={`Nghe ${material.title}`} style={{ height: 36, maxWidth: '100%' }} />
               ) : (
@@ -76,6 +75,6 @@ export function MaterialPicker({
           )
         })}
       </Flex>
-    </Radio.Group>
+    </Checkbox.Group>
   )
 }

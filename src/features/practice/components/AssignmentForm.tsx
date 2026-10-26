@@ -26,7 +26,7 @@ const scopeOptions: { value: AssignmentScope; label: string }[] = [
 
 /**
  * Gives a practice assignment (FE-41; `CreatePracticeAssignmentRequestValidator`) to one of the director's choirs (D8,
- * required): event, song and material are optional, the due date is in the future, and the members are the whole
+ * required): event, song and materials (several since BE 718696c) are optional, the due date is in the future, and the members are the whole
  * choir, its members with chosen skills or chosen members of it. The backend notifies them; the assignment then
  * appears under "Bài đã giao".
  */
@@ -126,7 +126,7 @@ export function AssignmentForm() {
             optionFilterProp="label"
             placeholder="Chọn bài hát"
             loading={songs.isPending}
-            onChange={() => form.setFieldValue('materialId', undefined)}
+            onChange={() => form.setFieldValue('materialIds', undefined)}
             options={(songs.data?.items ?? []).map((song) => ({ value: song.id, label: song.title }))}
           />
         </Form.Item>
@@ -138,8 +138,8 @@ export function AssignmentForm() {
         {songId && !!materials.data?.length && (
           <Form.Item
             label="Tài liệu gửi kèm"
-            name="materialId"
-            extra="Mỗi bài tập hiện gắn được một tài liệu. Bản nhạc và audio của bài dành cho cả ca đoàn hoặc cho kỹ năng của ca viên vẫn hiện trong mục tài liệu trên ứng dụng của ca viên."
+            name="materialIds"
+            extra="Chọn một hoặc nhiều tài liệu, ví dụ bản nhạc và audio mẫu. Bản nhạc và audio của bài dành cho cả ca đoàn hoặc cho kỹ năng của ca viên vẫn hiện trong mục tài liệu trên ứng dụng của ca viên."
           >
             <MaterialPicker materials={materials.data} />
           </Form.Item>

@@ -40,8 +40,8 @@ export interface AssignmentValues {
   instruction?: string
   eventId?: string
   songId?: string
-  /** Must belong to the song. */
-  materialId?: string
+  /** In display order; each must belong to the song. */
+  materialIds?: string[]
   /** UTC ISO-8601, not in the past. */
   dueDate: string
   scope: AssignmentScope
