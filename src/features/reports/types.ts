@@ -27,6 +27,12 @@ export interface ReportFilters {
 }
 
 /** One report row: display-ready values keyed by column, computed by the backend (never derived here). */
+/** A report column (`ReportColumnDto`): `key` is the JSON field of the report rows, `title` the heading of the export. */
+export interface ReportColumn {
+  key: string
+  title: string
+}
+
 export interface ReportRow {
   id: string
   /** The event a service-history row is about, for a link to its page. */

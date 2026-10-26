@@ -2,7 +2,7 @@ import { Card, Typography } from 'antd'
 import { useState } from 'react'
 import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
-import { useReport } from '../hooks/useReports'
+import { useReport, useReportColumns } from '../hooks/useReports'
 import { reportDefinitions } from '../reportDefinitions'
 import type { AdminReportKind, ReportFilters } from '../types'
 import { ReportTable } from './ReportTable'
@@ -26,11 +26,16 @@ export function ReportPanel({ kind, filters, filtered, onClearFilters, onOpenPro
   const definition = reportDefinitions[kind]
   const [page, setPage] = useState(1)
   const report = useReport(kind, filters, { pageNumber: page, pageSize })
+  const columns = useReportColumns(kind)
   const total = report.data?.totalCount ?? 0
+  // The columns matter only once there are rows to show.
+  const failed = report.isError || total === 0 || !columns.isError ? report : columns
 
-  if (report.isPending) return <SectionSkeleton rows={6} label={`Đang tải báo cáo ${definition.label.toLowerCase()}`} />
-  if (report.isError) {
-    return <ErrorState title="Không thể tải báo cáo" error={report.error} hasData={report.data !== undefined} onRetry={() => report.refetch()} retrying={report.isFetching} />
+  if (report.isPending || (total > 0 && columns.isPending)) {
+    return <SectionSkeleton rows={6} label={`Đang tải báo cáo ${definition.label.toLowerCase()}`} />
+  }
+  if (failed.isError) {
+    return <ErrorState title="Không thể tải báo cáo" error={failed.error} hasData={report.data !== undefined} onRetry={() => failed.refetch()} retrying={failed.isFetching} />
   }
 
   return (
@@ -45,8 +50,8 @@ export function ReportPanel({ kind, filters, filtered, onClearFilters, onOpenPro
       {total > 0 && (
         <Card styles={{ body: { padding: 0 } }}>
           <ReportTable
-            columns={definition.columns}
-            rows={report.data.items}
+            columns={columns.data ?? []}
+            rows={report.data?.items ?? []}
             loading={report.isPlaceholderData}
             onOpenProgram={onOpenProgram}
             pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
