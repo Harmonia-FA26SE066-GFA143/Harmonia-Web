@@ -3,6 +3,7 @@ import { App, Button, Flex, Tabs } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { useChoirs } from '@/features/choirs'
 import { useCatalogOptions } from '@/features/system-categories'
 import { vietnamToday } from '@/lib/api/dates'
 import { PageHeader } from '@/shared/ui'
@@ -21,11 +22,17 @@ import type { AdminReportKind, ReportExportRequest, ReportFilters } from '../typ
 
 /**
  * Admin: the four FE-52 reports and the Priest's two (`/api/reports`), with export to a file (FE-53) and the list of
- * exports.
+ * exports. The choir filter narrows the three per-member reports, the chart and their export to the members of one
+ * choir; the other reports ignore it (`SearchReportsRequest.ChoirId`).
  */
 export function AdminReportsPage() {
   const { message } = App.useApp()
   const seasons = useCatalogOptions('seasons')
+  const choirs = useChoirs()
+  const choirOptions = (choirs.data ?? []).map((choir) => ({
+    value: choir.id,
+    label: choir.isActive ? choir.name : `${choir.name} (ngừng hoạt động)`,
+  }))
   const exportReport = useExportReport()
   const [params, setParams] = useSearchParams()
   const kind = adminReportKinds.find((item) => item === params.get('kind')) ?? 'userActivity'
@@ -39,6 +46,7 @@ export function AdminReportsPage() {
     groupBy: 'month' as const,
     fromDate: trendEnd.subtract(11, 'month').startOf('month').format('YYYY-MM-DD'),
     toDate: trendEnd.format('YYYY-MM-DD'),
+    choirId: filters.choirId,
   }
 
   const handleExport = (request: ReportExportRequest) => {
@@ -66,7 +74,7 @@ export function AdminReportsPage() {
         }
       />
       <ActivityTrendCard query={trendQuery} title={`Điểm danh và bài tập 12 tháng đến ${trendEnd.format('MM/YYYY')}`} />
-      <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={() => show(kind, {})} seasons={seasons} />
+      <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={() => show(kind, {})} seasons={seasons} choirs={choirOptions} />
       <Flex vertical gap={spacing.lg}>
         <Tabs
           destroyOnHidden

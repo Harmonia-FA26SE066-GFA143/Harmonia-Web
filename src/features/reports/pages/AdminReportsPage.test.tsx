@@ -117,6 +117,47 @@ describe('AdminReportsPage', () => {
     expect(await within(dialog).findByText('Vui lòng chọn tháng.')).toBeInTheDocument()
     expect(exportReport).not.toHaveBeenCalled()
   })
+
+  it('narrows the per-member reports, the chart and the export to the choir in the address', async () => {
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cêcilia', isActive: true },
+      { id: 'c2', name: 'Ca đoàn Giuse', isActive: false },
+    ])
+    const getReport = vi.spyOn(reportsApi, 'getReport').mockResolvedValue(empty)
+    const trend = vi.spyOn(reportsApi, 'getActivityTrend').mockResolvedValue([])
+    const exportReport = vi.spyOn(reportsApi, 'exportReport').mockResolvedValue(new Blob(['x']))
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    renderPage(<AdminReportsPage />, '/admin/reports', '/admin/reports?kind=rehearsalAttendance&month=2026-10&choirId=c1')
+
+    expect(await screen.findByText('Ca đoàn Cêcilia')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(getReport).toHaveBeenCalledWith('rehearsalAttendance', { month: '2026-10', choirId: 'c1' }, { pageNumber: 1, pageSize: 20 }),
+    )
+    expect(trend).toHaveBeenCalledWith(expect.objectContaining({ fromDate: '2025-11-01', toDate: '2026-10-31', choirId: 'c1' }))
+    // A filtered view with no rows offers to clear the filters.
+    expect(await screen.findByRole('button', { name: /Xoá bộ lọc/ })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Xuất báo cáo/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText(/chỉ gồm ca viên của ca đoàn đang lọc/)).toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Xuất báo cáo' }))
+    await waitFor(() =>
+      expect(exportReport).toHaveBeenCalledWith({
+        kind: 'rehearsalAttendance',
+        format: 'xlsx',
+        filters: { month: '2026-10', choirId: 'c1' },
+      }),
+    )
+  })
+
+  it('shows the choir filter to the Admin with inactive choirs marked', async () => {
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c2', name: 'Ca đoàn Giuse', isActive: false }])
+    vi.spyOn(reportsApi, 'getReport').mockResolvedValue(empty)
+    renderPage(<AdminReportsPage />, '/admin/reports')
+
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Ca đoàn' }))
+    expect(await screen.findByTitle('Ca đoàn Giuse (ngừng hoạt động)')).toBeInTheDocument()
+  })
 })
 
 describe('DirectorReportsPage', () => {

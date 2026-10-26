@@ -13,6 +13,7 @@ export function readReportFilters(params: URLSearchParams): ReportFilters {
   return {
     month: month && monthPattern.test(month) ? month : undefined,
     seasonId: params.get('seasonId') ?? undefined,
+    choirId: params.get('choirId') ?? undefined,
   }
 }
 

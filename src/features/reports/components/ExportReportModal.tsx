@@ -63,7 +63,10 @@ export function ExportReportModal({
             onSubmit({
               kind,
               format,
-              filters: scopeType === 'month' ? { month: month?.format('YYYY-MM') } : { seasonId },
+              filters: {
+                ...(scopeType === 'month' ? { month: month?.format('YYYY-MM') } : { seasonId }),
+                choirId: filters.choirId,
+              },
             })
           }
         >
@@ -105,6 +108,7 @@ export function ExportReportModal({
       </Form.Item>
       <Typography.Paragraph style={{ margin: 0, color: colors.textMuted }}>
         File gồm mọi dòng của báo cáo trong phạm vi đã chọn và được lưu vào lịch sử xuất.
+        {filters.choirId && ' Điểm danh, xác nhận tham gia và bài tập chỉ gồm ca viên của ca đoàn đang lọc trên trang.'}
       </Typography.Paragraph>
     </Modal>
   )
