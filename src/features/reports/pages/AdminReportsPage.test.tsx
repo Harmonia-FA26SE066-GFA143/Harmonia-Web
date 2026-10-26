@@ -200,7 +200,7 @@ describe('DirectorReportsPage', () => {
     expect(await screen.findByText('Theo tuần trong tháng 10/2026')).toBeInTheDocument()
     expect(trend).toHaveBeenCalledWith({ groupBy: 'week', fromDate: '2026-10-01', toDate: '2026-10-31', choirId: 'c1' })
     expect(
-      await screen.findByRole('img', { name: 'Tuần 01/10 – 04/10/2026 · chuyên cần 100%: 3 có mặt, 1 đi muộn' }),
+      await screen.findByRole('img', { name: 'Tuần 01/10 – 04/10/2026 · chuyên cần 100%: 3 có mặt, 1 đi trễ' }),
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Bài tập'))
