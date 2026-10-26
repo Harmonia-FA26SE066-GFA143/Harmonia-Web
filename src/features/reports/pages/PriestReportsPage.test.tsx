@@ -52,15 +52,26 @@ describe('PriestReportsPage', () => {
         },
       ],
     }
+    const columns = [
+      { key: 'eventDate', title: 'Ngày' },
+      { key: 'time', title: 'Giờ' },
+      { key: 'title', title: 'Sự kiện' },
+      { key: 'attendancePresent', title: 'Lượt có mặt' },
+    ]
     // The season lookup goes through apiRequest too.
-    const request = vi
-      .spyOn(client, 'apiRequest')
-      .mockImplementation(async (path: string) => (path.startsWith('/api/reports/') ? history : []))
+    const request = vi.spyOn(client, 'apiRequest').mockImplementation(async (path: string) => {
+      if (path === '/api/reports/columns/ServiceHistory') return columns
+      return path.startsWith('/api/reports/') ? history : []
+    })
     renderPage(<PriestReportsPage />, '/priest/reports', '/priest/reports?month=2026-09&seasonId=s5')
 
     expect(await screen.findByText('Lễ Chúa Nhật XXV')).toBeInTheDocument()
-    expect(screen.getByText('20/09/2026 08:00')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Giờ' })).toBeInTheDocument()
+    expect(screen.getByText('20/09/2026')).toBeInTheDocument()
+    expect(screen.getByText('08:00')).toBeInTheDocument()
     expect(screen.getByText('51')).toBeInTheDocument()
+    // Only the columns the backend lists are shown.
+    expect(screen.queryByText('Nhà thờ chính')).toBeNull()
     await waitFor(() =>
       expect(request).toHaveBeenCalledWith(
         '/api/reports/service-history?liturgicalSeasonId=s5&fromDate=2026-09-01&toDate=2026-09-30&pageNumber=1&pageSize=20',

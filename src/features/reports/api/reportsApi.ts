@@ -10,7 +10,7 @@ import type {
   ActivityTrendQuery,
   AdminReportKind,
   TrendPeriod,
-  ReportExport, ReportExportRequest, ReportFilters, ReportFormat, ReportRow } from '../types'
+  ReportColumn, ReportExport, ReportExportRequest, ReportFilters, ReportFormat, ReportRow } from '../types'
 
 // `/api/reports` (Harmonia-BE ReportsController): six paged reports over past data, an export to a file and the list
 // of exports. Service history and song usage are open to the Parish Priest and the Admin, the rest to the Admin; the
@@ -102,71 +102,46 @@ interface MemberCountsDto {
   [count: string]: string | number
 }
 
+/** Cells are keyed by the JSON field names, the keys of `GET /api/reports/columns`; dates and labels are worded here. */
 const toRow: Record<AdminReportKind, (dto: never) => ReportRow> = {
-  serviceHistory: (dto: ServiceHistoryDto) => ({
-    id: dto.eventId,
-    programId: dto.eventId,
+  serviceHistory: ({ eventId, eventDate, time, title, liturgicalSeasonName, ...rest }: ServiceHistoryDto) => ({
+    id: eventId,
+    programId: eventId,
     cells: {
-      event: dto.title || 'Sự kiện phụng vụ',
-      date: `${day(dto.eventDate)} ${dto.time.slice(0, 5)}`,
-      season: dto.liturgicalSeasonName ?? undefined,
-      location: dto.locationName,
-      songs: dto.songCount,
-      served: dto.membersServed,
-      confirmed: dto.participationConfirmed,
-      declined: dto.participationDeclined,
-      rehearsals: dto.rehearsalsHeld,
-      present: dto.attendancePresent,
+      ...rest,
+      eventDate: day(eventDate),
+      time: time.slice(0, 5),
+      title: title || 'Sự kiện phụng vụ',
+      liturgicalSeasonName: liturgicalSeasonName ?? undefined,
     },
   }),
   songUsage: (dto: SongUsageDto) => ({
     id: dto.songId,
-    cells: { song: dto.title, composer: dto.composer ?? undefined, timesUsed: dto.timesUsed, lastUsed: day(dto.lastUsedDate) },
+    cells: { title: dto.title, composer: dto.composer ?? undefined, timesUsed: dto.timesUsed, lastUsedDate: day(dto.lastUsedDate) },
   }),
-  userActivity: (dto: UserActivityDto) => ({
-    id: dto.userId,
+  userActivity: ({ userId, roleName, isActive, lastLoginAt, ...rest }: UserActivityDto) => ({
+    id: userId,
     cells: {
-      user: dto.fullName || undefined,
-      email: dto.email,
-      role: roleLabels[roleByApiName[dto.roleName as ApiRoleName]] ?? dto.roleName,
-      status: dto.isActive ? 'Đang hoạt động' : 'Đã khoá',
-      lastLogin: dto.lastLoginAt ? formatDateTime(dto.lastLoginAt) : undefined,
-      passwordChanges: dto.passwordChangeCount,
-      passwordResets: dto.passwordResetCount,
-      accountChanges: dto.accountChangeCount,
-      actions: dto.actionCount,
+      ...rest,
+      fullName: rest.fullName || undefined,
+      roleName: roleLabels[roleByApiName[roleName as ApiRoleName]] ?? roleName,
+      isActive: isActive ? 'Có' : 'Không',
+      lastLoginAt: lastLoginAt ? formatDateTime(lastLoginAt) : undefined,
     },
   }),
-  rehearsalAttendance: (dto: MemberCountsDto) => ({
-    id: dto.memberId,
-    cells: { member: dto.fullName, present: dto.presentCount, late: dto.lateCount, excused: dto.excusedCount, absent: dto.absentCount },
-  }),
-  participation: (dto: MemberCountsDto) => ({
-    id: dto.memberId,
-    cells: {
-      member: dto.fullName,
-      confirmed: dto.confirmedCount,
-      declined: dto.declinedCount,
-      unsure: dto.unsureCount,
-      invited: dto.invitedCount,
-    },
-  }),
-  assignmentCompletion: (dto: MemberCountsDto) => ({
-    id: dto.memberId,
-    cells: {
-      member: dto.fullName,
-      assigned: dto.assignedCount,
-      passed: dto.passedCount,
-      needsRevision: dto.needsRevisionCount,
-      awaitingReview: dto.awaitingReviewCount,
-      notSubmitted: dto.notSubmittedCount,
-    },
-  }),
+  rehearsalAttendance: ({ memberId, ...cells }: MemberCountsDto) => ({ id: memberId, cells }),
+  participation: ({ memberId, ...cells }: MemberCountsDto) => ({ id: memberId, cells }),
+  assignmentCompletion: ({ memberId, ...cells }: MemberCountsDto) => ({ id: memberId, cells }),
 }
 
 export async function getReport(kind: AdminReportKind, filters: ReportFilters, page: ReportPage): Promise<PagedList<ReportRow>> {
   const result = await apiRequest<PagedList<never>>(`/api/reports/${paths[kind]}${toQuery({ ...toReportQuery(filters), ...page })}`)
   return { ...result, items: result.items.map(toRow[kind]) }
+}
+
+/** Column keys and Vietnamese titles of a report, the same as its exported file (any role that reads reports). */
+export function getReportColumns(kind: AdminReportKind): Promise<ReportColumn[]> {
+  return apiRequest<ReportColumn[]>(`/api/reports/columns/${apiType[kind]}`)
 }
 
 /**

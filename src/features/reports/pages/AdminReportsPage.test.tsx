@@ -42,17 +42,25 @@ describe('AdminReportsPage', () => {
     expect(await screen.findByText('Chưa có lần xuất báo cáo nào.')).toBeInTheDocument()
   })
 
-  it('loads the report of the selected tab, page by page on the server', async () => {
+  it('loads the report of the selected tab, page by page on the server, with the columns of the backend', async () => {
     const getReport = vi.spyOn(reportsApi, 'getReport').mockImplementation(async (kind: AdminReportKind) =>
       kind === 'participation'
-        ? { ...empty, totalCount: 1, items: [{ id: 'm1', cells: { member: 'Simon Đức', confirmed: 3, declined: 1, unsure: 0, invited: 2 } }] }
+        ? { ...empty, totalCount: 1, items: [{ id: 'm1', cells: { fullName: 'Simon Đức', confirmedCount: 3, declinedCount: 1 } }] }
         : empty,
     )
+    const getColumns = vi.spyOn(reportsApi, 'getReportColumns').mockResolvedValue([
+      { key: 'fullName', title: 'Họ tên' },
+      { key: 'confirmedCount', title: 'Xác nhận' },
+      { key: 'declinedCount', title: 'Từ chối' },
+    ])
     renderPage(<AdminReportsPage />, '/admin/reports')
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Xác nhận tham gia' }))
     expect(await screen.findByText('Simon Đức')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Họ tên' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Từ chối' })).toBeInTheDocument()
     expect(getReport).toHaveBeenCalledWith('participation', {}, { pageNumber: 1, pageSize: 20 })
+    expect(getColumns).toHaveBeenCalledWith('participation')
   })
 
   it('exports by liturgical season in the chosen format and saves the file', async () => {
@@ -119,15 +127,24 @@ describe('DirectorReportsPage', () => {
   })
 
   it('reads the per-member report of the backend for the month and choir in the address', async () => {
-    const request = vi.spyOn(client, 'apiRequest').mockResolvedValue({
+    const report = {
       ...empty,
       totalCount: 1,
       totalPages: 1,
       items: [{ memberId: 'm1', fullName: 'Simon Đức', presentCount: 6, lateCount: 1, excusedCount: 0, absentCount: 1 }],
-    })
+    }
+    const columns = [
+      { key: 'fullName', title: 'Họ tên' },
+      { key: 'lateCount', title: 'Đi trễ' },
+    ]
+    const request = vi
+      .spyOn(client, 'apiRequest')
+      .mockImplementation(async (path: string) => (path.startsWith('/api/reports/columns/') ? columns : report))
     renderPage(<DirectorReportsPage />, '/director/reports', '/director/reports?by=month&date=2026-10-15&choirId=c1')
 
     expect(await screen.findByText('Simon Đức')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Đi trễ' })).toBeInTheDocument()
+    expect(request).toHaveBeenCalledWith('/api/reports/columns/RehearsalAttendance')
     for (const name of ['Điểm danh', 'Xác nhận tham gia', 'Hoàn thành bài tập']) {
       expect(screen.getByRole('tab', { name })).toBeInTheDocument()
     }
