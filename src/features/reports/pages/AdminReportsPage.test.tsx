@@ -155,4 +155,40 @@ describe('DirectorReportsPage', () => {
     )
     expect(await screen.findByText('Đã xuất báo cáo.')).toBeInTheDocument()
   })
+
+  it('charts attendance by week of the chosen month, and practice on demand', async () => {
+    vi.spyOn(reportsApi, 'getReport').mockResolvedValue(empty)
+    const point = (periodStart: string, periodEnd: string, present: number) => ({
+      periodStart,
+      periodEnd,
+      rehearsalsRecorded: 1,
+      presentCount: present,
+      lateCount: 1,
+      absentCount: 0,
+      excusedCount: 0,
+      attendanceRate: present ? 1 : undefined,
+      assignmentsDue: 1,
+      assignedCount: 2,
+      passedCount: 1,
+      needsRevisionCount: 0,
+      awaitingReviewCount: 0,
+      notSubmittedCount: 1,
+      completionRate: 0.5,
+    })
+    const trend = vi
+      .spyOn(reportsApi, 'getActivityTrend')
+      .mockResolvedValue([point('2026-10-01', '2026-10-04', 3), point('2026-10-05', '2026-10-11', 0)])
+    renderPage(<DirectorReportsPage />, '/director/reports', '/director/reports?by=month&date=2026-10-15&choirId=c1')
+
+    expect(await screen.findByText('Theo tuần trong tháng 10/2026')).toBeInTheDocument()
+    expect(trend).toHaveBeenCalledWith({ groupBy: 'week', fromDate: '2026-10-01', toDate: '2026-10-31', choirId: 'c1' })
+    expect(
+      await screen.findByRole('img', { name: 'Tuần 01/10 – 04/10/2026 · chuyên cần 100%: 3 có mặt, 1 đi muộn' }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Bài tập'))
+    expect(
+      await screen.findByRole('img', { name: 'Tuần 01/10 – 04/10/2026 · hoàn thành 50%: 1 đạt, 1 chưa nộp' }),
+    ).toBeInTheDocument()
+  })
 })

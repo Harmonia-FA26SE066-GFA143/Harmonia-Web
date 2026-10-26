@@ -5,7 +5,12 @@ import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { ApiRoleName } from '@/lib/auth/session'
 import { roleByApiName, roleLabels } from '@/shared/types/account'
 import { toReportQuery } from '../reportFilters'
-import type { AdminReportKind, ReportExport, ReportExportRequest, ReportFilters, ReportFormat, ReportRow } from '../types'
+import type {
+  ActivityTrendPoint,
+  ActivityTrendQuery,
+  AdminReportKind,
+  TrendPeriod,
+  ReportExport, ReportExportRequest, ReportFilters, ReportFormat, ReportRow } from '../types'
 
 // `/api/reports` (Harmonia-BE ReportsController): six paged reports over past data, an export to a file and the list
 // of exports. Service history and song usage are open to the Parish Priest and the Admin, the rest to the Admin; the
@@ -201,4 +206,28 @@ export async function listExports(page: ReportPage): Promise<PagedList<ReportExp
       downloadUrl: dto.downloadUrl,
     })),
   }
+}
+
+type ApiTrendPeriod = 'Week' | 'Month' | 'Year'
+
+const apiPeriod: Record<TrendPeriod, ApiTrendPeriod> = { week: 'Week', month: 'Month', year: 'Year' }
+
+interface ActivityTrendDto extends Omit<ActivityTrendPoint, 'attendanceRate' | 'completionRate'> {
+  attendanceRate: number | null
+  completionRate: number | null
+}
+
+/**
+ * One row per period, oldest first, empty periods included (Admin, Choir Director: their own members; `choirId`
+ * narrows to a choir, CHOIR_NOT_FOUND for a Choir Director's choir of someone else). Weeks start on Monday.
+ */
+export async function getActivityTrend({ groupBy, fromDate, toDate, choirId }: ActivityTrendQuery): Promise<ActivityTrendPoint[]> {
+  const rows = await apiRequest<ActivityTrendDto[]>(
+    `/api/reports/activity-trend${toQuery({ groupBy: apiPeriod[groupBy], fromDate, toDate, choirId })}`,
+  )
+  return rows.map(({ attendanceRate, completionRate, ...rest }) => ({
+    ...rest,
+    attendanceRate: attendanceRate ?? undefined,
+    completionRate: completionRate ?? undefined,
+  }))
 }

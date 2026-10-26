@@ -4,8 +4,10 @@ import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useCatalogOptions } from '@/features/system-categories'
+import { vietnamToday } from '@/lib/api/dates'
 import { PageHeader } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
+import { ActivityTrendCard } from '../components/ActivityTrendCard'
 import { ExportHistory } from '../components/ExportHistory'
 import { ExportReportModal } from '../components/ExportReportModal'
 import { ReportFilterBar } from '../components/ReportFilterBar'
@@ -31,6 +33,13 @@ export function AdminReportsPage() {
   const show = (nextKind: AdminReportKind, nextFilters: ReportFilters) =>
     setParams(writeReportParams(nextKind, nextFilters), { replace: true })
   const [exporting, setExporting] = useState(false)
+  // Twelve months ending with the month chosen in the filters, or the current one.
+  const trendEnd = (filters.month ? dayjs(`${filters.month}-01`) : dayjs(vietnamToday())).endOf('month')
+  const trendQuery = {
+    groupBy: 'month' as const,
+    fromDate: trendEnd.subtract(11, 'month').startOf('month').format('YYYY-MM-DD'),
+    toDate: trendEnd.format('YYYY-MM-DD'),
+  }
 
   const handleExport = (request: ReportExportRequest) => {
     if (exportReport.isPending) return
@@ -56,6 +65,7 @@ export function AdminReportsPage() {
           </Button>
         }
       />
+      <ActivityTrendCard query={trendQuery} title={`Điểm danh và bài tập 12 tháng đến ${trendEnd.format('MM/YYYY')}`} />
       <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={() => show(kind, {})} seasons={seasons} />
       <Flex vertical gap={spacing.lg}>
         <Tabs

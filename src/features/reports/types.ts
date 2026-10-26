@@ -65,3 +65,37 @@ export interface ReportExport {
   /** Short-lived link to the stored file. */
   downloadUrl: string
 }
+
+/** `ReportPeriod` of `GET /api/reports/activity-trend`. */
+export type TrendPeriod = 'week' | 'month' | 'year'
+
+/**
+ * Attendance and practice of the reported members in one period (`ActivityTrendDto`): rehearsals starting in it and
+ * assignments due in it, judged as in the per-member reports. Rates are 0–1, absent when nothing was recorded.
+ */
+export interface ActivityTrendPoint {
+  /** YYYY-MM-DD, clipped to the requested range. */
+  periodStart: string
+  periodEnd: string
+  rehearsalsRecorded: number
+  presentCount: number
+  lateCount: number
+  absentCount: number
+  excusedCount: number
+  attendanceRate?: number
+  assignmentsDue: number
+  assignedCount: number
+  passedCount: number
+  needsRevisionCount: number
+  awaitingReviewCount: number
+  notSubmittedCount: number
+  completionRate?: number
+}
+
+export interface ActivityTrendQuery {
+  groupBy: TrendPeriod
+  /** Inclusive YYYY-MM-DD; at most three years apart. */
+  fromDate: string
+  toDate: string
+  choirId?: string
+}
