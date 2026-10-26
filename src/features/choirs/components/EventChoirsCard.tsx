@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
-import { useEventChoirs, useUpdateEventChoirs } from '../hooks/useChoirs'
+import { useChoirs, useEventChoirs, useUpdateEventChoirs } from '../hooks/useChoirs'
 
 export interface EventChoirsCardProps {
   eventId: string
-  /** Parish Priest: chooses the lead choir and may take choirs off. The Choir Director only reads. */
+  /** Parish Priest: chooses the choirs and the lead one. The Choir Director only reads. */
   canEdit?: boolean
   /** The backend refuses changes once the event date has passed (LITURGICAL_EVENT_ALREADY_PASSED). */
   locked?: boolean
@@ -24,14 +24,15 @@ const muted = { color: colors.textMuted }
 /**
  * The choirs serving a program and the lead one (D7, D8, `/api/liturgical-events/{id}/choirs`). The lead choir's
  * director makes the song list, invitations and roster; the other choirs' directors only read them. The Parish Priest
- * saves the whole set at once. The Parish Priest cannot list the parish's choirs yet (`GET /api/choirs` is Admin and
- * Choir Director only), so a choir can be taken off but not added here.
+ * saves the whole set at once, choosing among the parish's active choirs (`GET /api/choirs`, open to the Priest since
+ * BE c091c07); an inactive choir may stay on the event but cannot be added (CHOIR_INACTIVE).
  */
 export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Readonly<EventChoirsCardProps>) {
   const { message } = App.useApp()
   const serving = useEventChoirs(eventId)
   const update = useUpdateEventChoirs(eventId)
   const [draft, setDraft] = useState<Draft>()
+  const parish = useChoirs(canEdit && Boolean(draft))
   const editButton = useRef<HTMLButtonElement>(null)
   const wasEditing = useRef(false)
   // The button is replaced by the form while editing; give the focus back to it once the form closes.
@@ -67,7 +68,12 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Re
       leadChoirId: previous?.leadChoirId && choirIds.includes(previous.leadChoirId) ? previous.leadChoirId : choirIds.length === 1 ? choirIds[0] : undefined,
     }))
 
-  const options = current.map((choir) => ({ value: choir.choirId, label: choir.isActive ? choir.name : `${choir.name} (ngừng hoạt động)` }))
+  const options = [
+    ...current.map((choir) => ({ value: choir.choirId, label: choir.isActive ? choir.name : `${choir.name} (ngừng hoạt động)` })),
+    ...(parish.data ?? [])
+      .filter((choir) => choir.isActive && !current.some(({ choirId }) => choirId === choir.id))
+      .map((choir) => ({ value: choir.id, label: choir.name })),
+  ]
 
   return (
     <Card
@@ -75,10 +81,10 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Re
       extra={
         canEdit &&
         !locked &&
-        current.length > 0 &&
+        serving.data !== undefined &&
         !draft && (
           <Button ref={editButton} icon={<EditOutlined />} onClick={() => setDraft({ choirIds: current.map((choir) => choir.choirId), leadChoirId: currentLead })}>
-            Chọn ca đoàn phụ trách
+            Sửa ca đoàn phục vụ
           </Button>
         )
       }
@@ -107,9 +113,6 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Re
               Chưa chọn ca đoàn phụ trách: ca trưởng của mọi ca đoàn phục vụ đều lập được danh sách bài, mời tham gia và phân công.
             </Typography.Text>
           )}
-          {canEdit && !locked && (
-            <Typography.Text style={muted}>Thêm ca đoàn mới cho chương trình chưa làm được trên trang này.</Typography.Text>
-          )}
         </Flex>
       )}
       {draft && (
@@ -121,12 +124,16 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Re
                 mode="multiple"
                 optionFilterProp="label"
                 aria-label="Ca đoàn phục vụ"
-                placeholder="Không có ca đoàn"
+                placeholder="Chọn ca đoàn"
+                loading={parish.isPending}
                 value={draft.choirIds}
                 onChange={choose}
                 options={options}
               />
             </Form.Item>
+            {parish.isError && (
+              <Typography.Paragraph type="danger">Không thể tải danh sách ca đoàn của giáo xứ; vẫn sửa được các ca đoàn đang phục vụ.</Typography.Paragraph>
+            )}
             {draft.choirIds.length > 0 && (
               <Form.Item
                 label="Ca đoàn phụ trách"
@@ -145,7 +152,7 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Re
               </Form.Item>
             )}
           </Form>
-          {draft.choirIds.length === 0 && <Alert type="warning" showIcon title="Lưu sẽ gỡ mọi ca đoàn khỏi chương trình." />}
+          {draft.choirIds.length === 0 && current.length > 0 && <Alert type="warning" showIcon title="Lưu sẽ gỡ mọi ca đoàn khỏi chương trình." />}
           <Flex gap={spacing.sm} justify="flex-end">
             <Button onClick={() => setDraft(undefined)} disabled={update.isPending}>
               Hủy

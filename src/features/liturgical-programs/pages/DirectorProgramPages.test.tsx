@@ -146,6 +146,23 @@ describe('ChoirsPage', () => {
     })
   })
 
+  it('lets the Admin add members to a choir', async () => {
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia])
+    vi.spyOn(choirsApi, 'listMembersOfChoir').mockResolvedValue([])
+    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([{ id: 'm2', fullName: 'Simon Phan Văn Đức', skills: [] }])
+    const add = vi.spyOn(choirsApi, 'addChoirMembers').mockResolvedValue()
+    renderPage(<AdminChoirsPage />, '/admin/choirs')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ca viên của Ca đoàn Cecilia' }))
+    expect(await screen.findByText('Thêm ca viên đang sinh hoạt vào ca đoàn này.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Thêm ca viên/ }))
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Ca viên cần thêm' }))
+    fireEvent.click(await screen.findByTitle('Simon Phan Văn Đức'))
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm 1 ca viên' }))
+
+    await waitFor(() => expect(add).toHaveBeenCalledWith('c1', ['m2']))
+  })
+
   it('shows the Choir Director their choirs without add or edit, and lets them add and take out members', async () => {
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia])
     vi.spyOn(choirsApi, 'listMembersOfChoir').mockResolvedValue([

@@ -44,6 +44,7 @@ const confirmDialog = async (title: string) =>
 
 beforeEach(() => {
   vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([])
+  vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
   vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue(preparation)
   vi.spyOn(categoriesApi, 'listLookup').mockImplementation(async (kind) =>
     kind === 'seasons'
@@ -129,7 +130,7 @@ describe('PriestProgramDetailPage', () => {
     renderDetail()
 
     expect(await screen.findByText(/Chưa chọn ca đoàn phụ trách/)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /Chọn ca đoàn phụ trách/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Sửa ca đoàn phục vụ/ }))
     // Saving needs a lead while choirs serve the event.
     expect(screen.getByRole('button', { name: 'Lưu' })).toBeDisabled()
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Ca đoàn phụ trách' }))
@@ -137,6 +138,28 @@ describe('PriestProgramDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
 
     await waitFor(() => expect(update).toHaveBeenCalledWith('e1', { choirIds: ['c1', 'c2'], leadChoirId: 'c2' }))
+  })
+
+  it('adds an active choir of the parish to an event that has none, as its lead', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
+      { id: 'c2', name: 'Ca đoàn Giuse', isActive: false },
+    ])
+    const update = vi.spyOn(choirsApi, 'updateEventChoirs').mockResolvedValue([])
+    renderDetail()
+
+    expect(await screen.findByText('Chưa có ca đoàn phục vụ.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Sửa ca đoàn phục vụ/ }))
+    // Nothing to remove, so no warning about taking every choir off.
+    expect(screen.queryByText('Lưu sẽ gỡ mọi ca đoàn khỏi chương trình.')).toBeNull()
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Ca đoàn phục vụ' }))
+    fireEvent.click(await screen.findByTitle('Ca đoàn Cecilia'))
+    // An inactive choir cannot be added (CHOIR_INACTIVE).
+    expect(screen.queryByTitle('Ca đoàn Giuse')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
+
+    await waitFor(() => expect(update).toHaveBeenCalledWith('e1', { choirIds: ['c1'], leadChoirId: 'c1' }))
   })
 
   it('cancels a published event, warning that members are notified', async () => {

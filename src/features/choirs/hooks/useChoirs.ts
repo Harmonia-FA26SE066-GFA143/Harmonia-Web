@@ -12,8 +12,9 @@ import type { ChoirValues } from '../types'
 
 const choirsKey = ['choirs'] as const
 
-export function useChoirs() {
-  return useQuery({ queryKey: [...choirsKey, 'list'], queryFn: listChoirs })
+/** Admin and Parish Priest: every choir; Choir Director: the choirs they direct. */
+export function useChoirs(enabled = true) {
+  return useQuery({ queryKey: [...choirsKey, 'list'], queryFn: listChoirs, enabled })
 }
 
 export function useMembersOfChoir(choirId?: string) {
