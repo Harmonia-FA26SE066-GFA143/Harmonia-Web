@@ -2,7 +2,7 @@
 
 Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì với BE, đọc trực tiếp sau khi `git pull` repo Harmonia-Web. Nội dung các file viết bằng tiếng Anh để giữ nguyên tên API, mã lỗi và trích dẫn code; file này là bản tóm tắt tiếng Việt.
 
-- Cập nhật lần cuối: 2026-10-26, đối chiếu với Harmonia-BE `main@43dfe31`. Thay đổi hợp đồng phía BE ghi ở `doc/api-changelog.md` của repo BE.
+- Cập nhật lần cuối: 2026-10-26, đối chiếu với Harmonia-BE `main@c091c07`. Thay đổi hợp đồng phía BE ghi ở `doc/api-changelog.md` của repo BE.
 - Cách đọc trích dẫn: `File.cs:12-20` là đường dẫn và số dòng trong code BE ở commit trên; `src/...` là code Web.
 - Web làm theo BE ở mọi chỗ BE đã quy định (trường, trạng thái, ai được làm gì, mã lỗi). Chỗ BE chưa có thì ghi là cần BE bổ sung, kèm quyết định tạm của owner.
 
@@ -24,12 +24,11 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
 
 ## Cần bàn với BE (các mục còn mở trong backlog)
 
-| Mục | Việc cần BE làm | Ghi chú |
-|---|---|---|
-| B37 | Cho Cha xứ xem danh sách ca đoàn (`GET /api/choirs`) | Cha xứ gán ca đoàn cho sự kiện nhưng không đọc được danh sách, nên chưa thêm được ca đoàn mới |
-| B38 | Cho Admin tìm ca viên (`GET /api/member-profiles`) | Admin quản lý mọi ca đoàn nhưng không chọn được ca viên để thêm vào |
+Hiện không còn mục nào mở.
 
-Đã xong ở `718696c` (2026-10-25): B10, B24–B28, B31–B36. Web đã dùng hết, trừ B27 (Web chưa lấy tiêu đề cột báo cáo từ BE) và B31 (Web nối ở #211).
+- Đã xong ở `c091c07` (2026-10-26): B37 (Cha xứ đọc danh sách ca đoàn), B38 (Admin tìm ca viên). Web nối ở #219.
+- Đã xong ở `718696c` (2026-10-25): B10, B24–B28, B31–B36. Web đã dùng hết (B27 ở #215, B31 ở #211).
+- Ghi chú cho BE: `c091c07` chưa có dòng nào trong `doc/api-changelog.md`.
 
 Chi tiết và bằng chứng của từng mục nằm trong [`tbd-backlog.md`](tbd-backlog.md).
 
