@@ -9,17 +9,18 @@ import { StackedBars, type BarSeries, type Bucket } from './StackedBars'
 
 type View = 'attendance' | 'practice'
 
+// Labels are the backend's column titles of the same counts (GET /api/reports/columns), as in the tables below.
 const attendanceSeries: BarSeries<'presentCount' | 'lateCount' | 'excusedCount' | 'absentCount'>[] = [
   { key: 'presentCount', label: 'Có mặt', color: '#389e0d' },
-  { key: 'lateCount', label: 'Đi muộn', color: '#d48806' },
+  { key: 'lateCount', label: 'Đi trễ', color: '#d48806' },
   { key: 'excusedCount', label: 'Vắng có phép', color: '#0958d9' },
-  { key: 'absentCount', label: 'Vắng không phép', color: '#cf1322' },
+  { key: 'absentCount', label: 'Vắng', color: '#cf1322' },
 ]
 
 const practiceSeries: BarSeries<'passedCount' | 'needsRevisionCount' | 'awaitingReviewCount' | 'notSubmittedCount'>[] = [
   { key: 'passedCount', label: 'Đạt', color: '#389e0d' },
   { key: 'needsRevisionCount', label: 'Cần chỉnh sửa', color: '#d46b08' },
-  { key: 'awaitingReviewCount', label: 'Chờ chấm', color: '#0958d9' },
+  { key: 'awaitingReviewCount', label: 'Chờ nhận xét', color: '#0958d9' },
   { key: 'notSubmittedCount', label: 'Chưa nộp', color: '#cf1322' },
 ]
 
@@ -89,7 +90,7 @@ export function ActivityTrendCard({ query, title }: Readonly<{ query: ActivityTr
               />
               <Typography.Text style={{ color: colors.textMuted }}>
                 {view === 'attendance'
-                  ? 'Buổi tập tính vào kỳ có giờ bắt đầu; chuyên cần là có mặt và đi muộn trên tổng lượt điểm danh.'
+                  ? 'Buổi tập tính vào kỳ có giờ bắt đầu; chuyên cần là có mặt và đi trễ trên tổng lượt điểm danh.'
                   : 'Bài tập tính vào kỳ có hạn nộp, theo lần nộp mới nhất của từng ca viên.'}
               </Typography.Text>
             </Flex>
