@@ -1,6 +1,7 @@
 import { App, Button, DatePicker, Flex, Form, Input, Modal, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
+import { useChoirs } from '@/features/choirs'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { useSongs } from '@/features/music-library'
 import { useCatalogOptions } from '@/features/system-categories'
@@ -29,6 +30,7 @@ interface SongOption {
 }
 
 interface FormValues {
+  choirId?: string
   eventId?: string
   date: Dayjs
   time: [Dayjs, Dayjs]
@@ -87,8 +89,9 @@ function SongsField() {
 }
 
 /**
- * Create or edit a rehearsal (FE-26) as Harmonia-BE takes it: date and time required; program, worship location,
- * songs and note (≤ 500) optional. Editing saves the details, then the songs.
+ * Create or edit a rehearsal (FE-26) as Harmonia-BE takes it: a new one belongs to one of the director's choirs (D8,
+ * required, fixed afterwards); date and time required; program, worship location, songs and note (≤ 500) optional.
+ * Editing saves the details, then the songs.
  */
 export function RehearsalFormModal({
   open,
@@ -100,6 +103,8 @@ export function RehearsalFormModal({
   onCancel,
 }: Readonly<RehearsalFormModalProps>) {
   const locations = useCatalogOptions('worshipLocations')
+  const choirs = useChoirs()
+  const activeChoirs = (choirs.data ?? []).filter((choir) => choir.isActive)
   // A session keeps a location switched off since, and a program no longer upcoming; both stay selectable.
   const locationOptions =
     rehearsal?.locationId && !locations.some((option) => option.value === rehearsal.locationId)
@@ -129,6 +134,7 @@ export function RehearsalFormModal({
         <Form<FormValues>
           layout="vertical"
           initialValues={{
+            choirId: activeChoirs.length === 1 ? activeChoirs[0].id : undefined,
             eventId: rehearsal ? rehearsal.eventId : defaultProgramId,
             date: rehearsal ? dayjs(rehearsal.startAt) : undefined,
             time: rehearsal ? [dayjs(rehearsal.startAt), dayjs(rehearsal.endAt)] : undefined,
@@ -138,6 +144,7 @@ export function RehearsalFormModal({
           }}
           onFinish={(values) =>
             onSubmit({
+              choirId: rehearsal ? rehearsal.choirId : values.choirId,
               eventId: values.eventId,
               locationId: values.locationId,
               startAt: withTime(values.date, values.time[0]).toISOString(),
@@ -151,6 +158,24 @@ export function RehearsalFormModal({
         </Form>
       )}
     >
+      {!rehearsal && (
+        <Form.Item
+          label="Ca đoàn"
+          name="choirId"
+          rules={[{ required: true, message: 'Vui lòng chọn ca đoàn.' }]}
+          extra={
+            choirs.isSuccess && activeChoirs.length === 0
+              ? 'Bạn chưa phụ trách ca đoàn nào đang hoạt động. Quản trị viên chọn ca trưởng cho ca đoàn.'
+              : 'Danh sách điểm danh và thông báo chỉ gồm ca viên của ca đoàn này.'
+          }
+        >
+          <Select
+            placeholder="Chọn ca đoàn"
+            loading={choirs.isPending}
+            options={activeChoirs.map((choir) => ({ value: choir.id, label: choir.name }))}
+          />
+        </Form.Item>
+      )}
       <Form.Item label="Chương trình phụng vụ (không bắt buộc)" name="eventId">
         <Select allowClear showSearch optionFilterProp="label" placeholder="Chọn chương trình" options={programOptions} />
       </Form.Item>

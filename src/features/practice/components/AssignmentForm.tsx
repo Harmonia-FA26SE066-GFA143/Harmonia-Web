@@ -2,7 +2,7 @@ import { SendOutlined } from '@ant-design/icons'
 import { App, Button, Card, DatePicker, Flex, Form, Input, Radio, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useSearchParams } from 'react-router'
-import { useChoirMembers } from '@/features/members'
+import { useChoirs, useMembersOfChoir } from '@/features/choirs'
 import { useSongMaterials, useSongs } from '@/features/music-library'
 import { useCatalogOptions } from '@/features/system-categories'
 import { colors, spacing } from '@/styles/tokens'
@@ -25,9 +25,10 @@ const scopeOptions: { value: AssignmentScope; label: string }[] = [
 ]
 
 /**
- * Gives a practice assignment (FE-41; `CreatePracticeAssignmentRequestValidator`): event, song and material are
- * optional, the due date is in the future, and the members are the whole choir, those with chosen skills or chosen
- * members. The backend notifies them; the assignment then appears under "Bài đã giao".
+ * Gives a practice assignment (FE-41; `CreatePracticeAssignmentRequestValidator`) to one of the director's choirs (D8,
+ * required): event, song and material are optional, the due date is in the future, and the members are the whole
+ * choir, its members with chosen skills or chosen members of it. The backend notifies them; the assignment then
+ * appears under "Bài đã giao".
  */
 export function AssignmentForm() {
   const { message } = App.useApp()
@@ -36,13 +37,16 @@ export function AssignmentForm() {
   const [form] = Form.useForm<FormValues>()
   const scope = Form.useWatch('scope', form)
   const songId = Form.useWatch('songId', form)
+  const choirId = Form.useWatch('choirId', form)
   const create = useCreateAssignment()
   const events = useUpcomingEvents()
   // ponytail: the first 100 songs by title; a larger library would need the select to search the server.
   const songs = useSongs({ search: '' }, { pageNumber: 1, pageSize: 100 })
   const materials = useSongMaterials(songId ?? '')
   const skills = useCatalogOptions('skills')
-  const members = useChoirMembers()
+  const choirs = useChoirs()
+  const activeChoirs = (choirs.data ?? []).filter((choir) => choir.isActive)
+  const members = useMembersOfChoir(choirId)
 
   const handleFinish = ({ dueDate, ...values }: FormValues) => {
     if (!dueDate || create.isPending) return
@@ -68,10 +72,27 @@ export function AssignmentForm() {
       <Form<FormValues>
         form={form}
         layout="vertical"
-        initialValues={{ scope: 'all', eventId: urlProgramId }}
+        initialValues={{ scope: 'all', eventId: urlProgramId, choirId: activeChoirs.length === 1 ? activeChoirs[0].id : undefined }}
         onFinish={handleFinish}
         style={{ maxWidth: 720 }}
       >
+        <Form.Item
+          label="Ca đoàn"
+          name="choirId"
+          rules={[{ required: true, message: 'Vui lòng chọn ca đoàn.' }]}
+          extra={
+            choirs.isSuccess && activeChoirs.length === 0
+              ? 'Bạn chưa phụ trách ca đoàn nào đang hoạt động. Quản trị viên chọn ca trưởng cho ca đoàn.'
+              : 'Bài tập chỉ giao cho ca viên của ca đoàn này; nếu gắn sự kiện, ca đoàn phải phục vụ sự kiện đó.'
+          }
+        >
+          <Select
+            placeholder="Chọn ca đoàn"
+            loading={choirs.isPending}
+            onChange={() => form.setFieldValue('memberIds', undefined)}
+            options={activeChoirs.map((choir) => ({ value: choir.id, label: choir.name }))}
+          />
+        </Form.Item>
         <Form.Item
           label="Tiêu đề"
           name="title"
@@ -156,9 +177,10 @@ export function AssignmentForm() {
               mode="multiple"
               showSearch
               optionFilterProp="label"
-              placeholder="Chọn ca viên đang sinh hoạt"
-              loading={members.isPending}
-              options={(members.data ?? []).map((member) => ({ value: member.id, label: member.fullName }))}
+              placeholder={choirId ? 'Chọn ca viên của ca đoàn' : 'Chọn ca đoàn trước'}
+              disabled={!choirId}
+              loading={Boolean(choirId) && members.isPending}
+              options={(members.data ?? []).map((member) => ({ value: member.memberId, label: member.fullName }))}
             />
           </Form.Item>
         )}

@@ -1,10 +1,12 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
-import { ChoirsPage } from '@/features/choirs'
+import { AdminChoirsPage, DirectorChoirsPage } from '@/features/choirs'
 import * as membersApi from '@/features/members/api/membersApi'
+import * as accountsApi from '@/features/users/api/accountsApi'
 import * as client from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
+import { clearSession, setSession } from '@/lib/auth/session'
 import { renderPage } from '@/test/renderPage'
 import { programPage } from '@/test/programs'
 import * as programsApi from '../api/programsApi'
@@ -107,17 +109,25 @@ describe('DirectorProgramDetailPage', () => {
 })
 
 describe('ChoirsPage', () => {
-  const cecilia = { id: 'c1', name: 'Ca đoàn Cecilia', description: 'Lễ Chúa Nhật', isActive: true }
+  const cecilia = { id: 'c1', name: 'Ca đoàn Cecilia', description: 'Lễ Chúa Nhật', isActive: true, directorId: 'u1', directorName: 'Phêrô Lê' }
   const giuse = { id: 'c2', name: 'Ca đoàn Giuse', isActive: false }
 
-  it('lists the choirs and shows a taken name under the name field', async () => {
+  it('lets the Admin add a choir with its director and shows a taken name under the name field', async () => {
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia, giuse])
+    vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue({
+      items: [{ id: 'u2', fullName: 'Giuse Trần', email: 'giuse@giaoxu.org', phone: null, role: 'director', isActive: true, isPasswordChangeRequired: false }],
+      pageNumber: 1,
+      pageSize: 100,
+      totalCount: 1,
+      totalPages: 1,
+    })
     const save = vi
       .spyOn(choirsApi, 'saveChoir')
       .mockRejectedValue(new ApiError(409, { code: 'CHOIR_NAME_ALREADY_EXISTS' }))
-    renderPage(<ChoirsPage />, '/director/choirs')
+    renderPage(<AdminChoirsPage />, '/admin/choirs')
 
     expect(await screen.findByText('Ca đoàn Cecilia')).toBeInTheDocument()
+    expect(screen.getByText('Phêrô Lê')).toBeInTheDocument()
     expect(screen.getByText('Ngừng hoạt động')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Thêm ca đoàn/ }))
@@ -125,13 +135,18 @@ describe('ChoirsPage', () => {
     // A new choir is always active: no switch when adding.
     expect(within(dialog).queryByRole('switch')).toBeNull()
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Tên ca đoàn' }), { target: { value: ' Ca đoàn Cecilia ' } })
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Ca trưởng phụ trách' }))
+    fireEvent.click(await screen.findByTitle('Giuse Trần'))
     fireEvent.click(within(dialog).getByRole('button', { name: 'Thêm' }))
 
     expect(await within(dialog).findByText('Đã có ca đoàn trùng tên.')).toBeInTheDocument()
-    expect(save).toHaveBeenCalledWith({ id: undefined, values: expect.objectContaining({ name: 'Ca đoàn Cecilia', isActive: true }) })
+    expect(save).toHaveBeenCalledWith({
+      id: undefined,
+      values: expect.objectContaining({ name: 'Ca đoàn Cecilia', isActive: true, directorId: 'u2' }),
+    })
   })
 
-  it('adds members not in the choir yet and takes one out after asking', async () => {
+  it('shows the Choir Director their choirs without add or edit, and lets them add and take out members', async () => {
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia])
     vi.spyOn(choirsApi, 'listMembersOfChoir').mockResolvedValue([
       { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', email: 'maria@giaoxu.org', joinedDate: '2026-10-17' },
@@ -142,9 +157,11 @@ describe('ChoirsPage', () => {
     ])
     const add = vi.spyOn(choirsApi, 'addChoirMembers').mockResolvedValue()
     const remove = vi.spyOn(choirsApi, 'removeChoirMember').mockResolvedValue()
-    renderPage(<ChoirsPage />, '/director/choirs')
+    renderPage(<DirectorChoirsPage />, '/director/choirs')
 
     fireEvent.click(await screen.findByRole('button', { name: 'Ca viên của Ca đoàn Cecilia' }))
+    expect(screen.queryByRole('button', { name: /Thêm ca đoàn/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Chỉnh sửa Ca đoàn Cecilia' })).toBeNull()
     expect(await screen.findByText('maria@giaoxu.org')).toBeInTheDocument()
     expect(screen.getByText('17/10/2026')).toBeInTheDocument()
 
@@ -161,30 +178,18 @@ describe('ChoirsPage', () => {
     await waitFor(() => expect(remove).toHaveBeenCalledWith('c1', 'm1'))
   })
 
-  it('chooses the choirs serving an upcoming program', async () => {
-    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia, giuse])
-    vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([giuse])
-    const update = vi.spyOn(choirsApi, 'updateEventChoirs').mockResolvedValue([cecilia, giuse])
+  it('shows the Choir Director the serving choirs read-only and says when another choir leads', async () => {
+    setSession({ accessToken: 't', accessTokenExpiresAt: '2099-01-01T00:00:00Z', refreshToken: 'r', user: { id: 'u1', email: 'a@b.c', roleName: 'ChoirDirector' } })
+    vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([
+      { choirId: 'c2', name: 'Ca đoàn Giuse', isActive: true, isLead: true, directorId: 'u9', directorName: 'Giuse Trần' },
+      { choirId: 'c1', name: 'Ca đoàn Cecilia', isActive: true, isLead: false, directorId: 'u1', directorName: 'Phêrô Lê' },
+    ])
     vi.spyOn(programsApi, 'getProgram').mockResolvedValue({ ...program, date: '2099-01-01' })
     renderDetail()
 
-    expect(await screen.findByText('Ca đoàn Giuse')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /Chọn ca đoàn/ }))
-    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Ca đoàn phục vụ' }))
-    // A switched-off choir stays selectable only while it already serves the program.
-    expect((await screen.findAllByTitle('Ca đoàn Giuse (ngừng hoạt động)')).length).toBeGreaterThan(0)
-    fireEvent.click(await screen.findByTitle('Ca đoàn Cecilia'))
-    fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
-    await waitFor(() => expect(update).toHaveBeenCalledWith('p1', ['c2', 'c1']))
-  })
-
-  it('does not offer to change the choirs of a past program', async () => {
-    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia])
-    vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([])
-    vi.spyOn(programsApi, 'getProgram').mockResolvedValue({ ...program, date: '2020-01-01' })
-    renderDetail()
-
-    expect(await screen.findByText('Chương trình không có ca đoàn phục vụ.')).toBeInTheDocument()
+    expect(await screen.findByText('Ca đoàn Giuse phụ trách chương trình này')).toBeInTheDocument()
+    expect(screen.getByText(/Ca đoàn Giuse · Phụ trách/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Chọn ca đoàn/ })).toBeNull()
+    clearSession()
   })
 })

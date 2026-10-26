@@ -14,6 +14,7 @@ interface RehearsalSongDto {
 
 interface RehearsalDto {
   id: string
+  choirId: string | null
   eventId: string | null
   locationId: string | null
   locationName: string | null
@@ -33,6 +34,7 @@ const toSongs = (songs: RehearsalSongDto[]): RehearsalSong[] =>
 
 const toRehearsal = (dto: RehearsalDto): Rehearsal => ({
   id: dto.id,
+  choirId: dto.choirId ?? undefined,
   eventId: dto.eventId ?? undefined,
   locationId: dto.locationId ?? undefined,
   locationName: dto.locationName ?? undefined,
@@ -65,7 +67,8 @@ export async function saveRehearsal({ id, values }: { id?: string; values: Rehea
   if (!id) {
     await apiRequest<unknown>('/api/rehearsals', {
       method: 'POST',
-      body: JSON.stringify({ ...details, songs: toSongItems(values.songs) }),
+      // D8: a new session belongs to one of the director's choirs, which must serve the program when one is chosen.
+      body: JSON.stringify({ ...details, choirId: values.choirId, songs: toSongItems(values.songs) }),
     })
     return
   }

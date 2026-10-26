@@ -35,6 +35,11 @@ export const adminRoutes: RouteObject[] = [
     async () => (await import('@/features/system-categories')).LiturgicalCategoriesPage,
   ),
   pageRoute(
+    paths.admin.choirs,
+    { title: 'Ca đoàn', breadcrumb: [area, 'Ca đoàn'], phase: 2 },
+    async () => (await import('@/features/choirs')).AdminChoirsPage,
+  ),
+  pageRoute(
     paths.admin.settings,
     { title: 'Cấu hình chung', breadcrumb: [area, 'Cấu hình chung'], phase: 2 },
     async () => (await import('@/features/settings')).SettingsPage,

@@ -1,3 +1,4 @@
 export { EventChoirsCard } from './components/EventChoirsCard'
-export { ChoirsPage } from './pages/ChoirsPage'
-export { useChoirs } from './hooks/useChoirs'
+export { LeadChoirNotice } from './components/LeadChoirNotice'
+export { AdminChoirsPage, DirectorChoirsPage } from './pages/ChoirsPage'
+export { useChoirs, useMembersOfChoir } from './hooks/useChoirs'

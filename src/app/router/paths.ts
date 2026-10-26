@@ -19,6 +19,7 @@ export const paths = {
     roles: '/admin/roles',
     skillCategories: '/admin/skill-categories',
     liturgicalCategories: '/admin/liturgical-categories',
+    choirs: '/admin/choirs',
     settings: '/admin/settings',
     reports: '/admin/reports',
     activityLog: '/admin/activity-log',

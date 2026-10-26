@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as membersApi from '@/features/members/api/membersApi'
 import * as songsApi from '@/features/music-library/api/songsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
@@ -29,6 +30,7 @@ const submission = (fields: Partial<PracticeSubmission> = {}): PracticeSubmissio
 const page = (items: PracticeSubmission[]) => ({ items, pageNumber: 1, pageSize: 20, totalCount: items.length, totalPages: 1 })
 
 beforeEach(() => {
+  vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
   vi.spyOn(practiceApi, 'listUpcomingEvents').mockResolvedValue([])
   vi.spyOn(songsApi, 'listSongs').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 })
   vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([
@@ -103,7 +105,11 @@ describe('PracticePage', () => {
     await waitFor(() => expect(comment).toHaveBeenCalledWith('sub-1', { comment: 'Nghe thêm bản mẫu.', result: undefined }))
   })
 
-  it('asks for the skills of a skill-group assignment before giving it', async () => {
+  it('asks for the choir and the skills of a skill-group assignment before giving it', async () => {
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
+      { id: 'c2', name: 'Ca đoàn Giuse', isActive: true },
+    ])
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
     const create = vi.spyOn(practiceApi, 'createAssignment')
     renderPractice()
@@ -114,6 +120,7 @@ describe('PracticePage', () => {
     expect(await screen.findByRole('combobox', { name: 'Kỹ năng' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Giao bài tập/ }))
 
+    expect(await screen.findByText('Vui lòng chọn ca đoàn.')).toBeInTheDocument()
     expect(await screen.findByText('Vui lòng chọn hạn nộp.')).toBeInTheDocument()
     expect(await screen.findByText('Chọn ít nhất một kỹ năng.')).toBeInTheDocument()
     expect(create).not.toHaveBeenCalled()
