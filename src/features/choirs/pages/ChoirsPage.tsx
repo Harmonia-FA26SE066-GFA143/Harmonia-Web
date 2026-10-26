@@ -62,8 +62,8 @@ function AdminChoirForm({ form, onClose }: Readonly<{ form: FormState; onClose: 
 
 /**
  * The choirs of the parish (D7, D8, `/api/choirs`). Admin: every choir, add, rename, switch off, choose its Choir
- * Director, and see or take out members. Choir Director: their own choirs and their members, added from the whole
- * parish. The Admin cannot list member profiles, so only the Choir Director adds members.
+ * Director, and its members. Choir Director: their own choirs and their members. Both add members from the whole
+ * parish.
  */
 export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
   const admin = role === 'admin'
@@ -162,7 +162,7 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
         </Card>
       )}
       {admin && <AdminChoirForm form={form} onClose={() => setForm({ open: false })} />}
-      <ChoirMembersDrawer choir={membersOf} canAdd={!admin} onClose={() => setMembersOf(undefined)} />
+      <ChoirMembersDrawer choir={membersOf} onClose={() => setMembersOf(undefined)} />
     </>
   )
 }
