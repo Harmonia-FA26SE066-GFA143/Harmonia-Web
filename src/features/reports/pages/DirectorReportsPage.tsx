@@ -7,13 +7,14 @@ import { vietnamToday } from '@/lib/api/dates'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { PageHeader } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
+import { ActivityTrendCard } from '../components/ActivityTrendCard'
 import { ReportPanel } from '../components/ReportPanel'
 import { granularityLabels, periodOf, type Granularity } from '../directorReport'
 import { useExportReport } from '../hooks/useReports'
 import { directorReportKinds, reportDefinitions } from '../reportDefinitions'
 import { reportErrorMessage } from '../reportErrors'
 import { saveFile } from '../saveFile'
-import { reportFormatLabels, type ReportFilters, type ReportFormat } from '../types'
+import { reportFormatLabels, type ActivityTrendQuery, type ReportFilters, type ReportFormat } from '../types'
 
 const granularities: Granularity[] = ['week', 'month', 'year']
 const pickerFormats: Record<Granularity, string> = { week: '[Tuần của] DD/MM/YYYY', month: 'MM/YYYY', year: 'YYYY' }
@@ -37,6 +38,22 @@ export function DirectorReportsPage() {
   const period = periodOf(granularity, anchor)
   const choirId = params.get('choirId') ?? undefined
   const filters: ReportFilters = { fromDate: period.from, toDate: period.to, choirId }
+  // A year by month, a month by week; a single week is shown with the seven before it.
+  const trends: Record<Granularity, { query: ActivityTrendQuery; title: string }> = {
+    year: {
+      query: { groupBy: 'month', fromDate: period.from, toDate: period.to, choirId },
+      title: `Theo tháng trong năm ${anchor.format('YYYY')}`,
+    },
+    month: {
+      query: { groupBy: 'week', fromDate: period.from, toDate: period.to, choirId },
+      title: `Theo tuần trong tháng ${anchor.format('MM/YYYY')}`,
+    },
+    week: {
+      query: { groupBy: 'week', fromDate: dayjs(period.from).subtract(7, 'week').format('YYYY-MM-DD'), toDate: period.to, choirId },
+      title: '8 tuần gần nhất',
+    },
+  }
+  const trend = trends[granularity]
 
   const show = (next: { by?: Granularity; date?: dayjs.Dayjs; choirId?: string | null }) => {
     const query = new URLSearchParams(params)
@@ -121,6 +138,7 @@ export function DirectorReportsPage() {
           Từ {dayjs(period.from).format('DD/MM/YYYY')} đến {dayjs(period.to).format('DD/MM/YYYY')}
         </Typography.Text>
       </Flex>
+      <ActivityTrendCard query={trend.query} title={trend.title} />
       <Tabs
         destroyOnHidden
         activeKey={tab}
