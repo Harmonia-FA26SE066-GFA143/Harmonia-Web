@@ -1,6 +1,6 @@
 # Service Roster
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e` and 2026-10-26 at `main@43dfe31`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 §2, FE-35–FE-40
 
@@ -10,13 +10,14 @@ The Choir Director defines personnel requirements for each song, including numbe
 
 A suggestion is a planning result and not a finalized roster.
 
-## BE contract (verified `a6af23e`, re-checked `42e604e`, `RosterService.cs`, `ServiceRostersController.cs`)
+## BE contract (verified `a6af23e`, re-checked `43dfe31`, `RosterService.cs`, `ServiceRostersController.cs`)
 
 - **Roster statuses**: `Draft`, `Suggested`, `Finalized` (`RosterStatus.cs`). Assignments are `Active` or `Replaced` and come from `Suggested` or `Manual` sources.
 - **Endpoints**: suggestions, shortages, assignments (add, replace, remove), finalization, assignment notifications; personnel requirements per song list item are under `api/song-list-items/{id}/personnel-requirements`.
 - **Finalization** needs an **approved song list** for the event (`ROSTER_SONG_LIST_NOT_APPROVED`) and every assignment still valid: the member is Active, holds the approved skill, and confirmed participation. It does **not** require zero shortages and asks for no reason; the shortages are returned with the finalized roster. A finalized roster is no longer editable (`RosterService.cs:134-167`).
 - The suggestion is produced by the BE (an AI generator); the Web only shows and applies it.
-- Eligibility: only members who answered Confirm for the event and hold an approved matching skill can be assigned.
+- Eligibility: only members who answered Confirm for the event and hold an approved matching skill can be assigned. Since D8 they must also belong to a choir serving the event, when it has choirs (`:338-346`).
+- **Lead choir** (D8): suggestions, assignments, finalization and notifications are the lead choir's director's (`CHOIR_NOT_LEAD`, `:36, 144, 183, 246, 282, 305`); personnel requirements too (`SongPersonnelRequirementService.cs:34`).
 
 ## Owner decisions still standing (BE silent)
 

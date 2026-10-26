@@ -1,6 +1,6 @@
 # Roles and Permissions
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions below stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e` and 2026-10-26 at `main@43dfe31`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions below stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 LI-02, FE-01–FE-54
 
@@ -13,16 +13,17 @@ Report 1 requires a valid registered account and says system functions are provi
 
 LI-03: skill declarations, song-list approval, roster finalization, and practice evaluation depend on authorized users and are not fully automated.
 
-## BE contract (verified `a6af23e`, re-checked `42e604e`)
+## BE contract (verified `a6af23e`, re-checked `43dfe31`)
 
 - **Four roles**: `Admin`, `ParishPriest`, `ChoirDirector`, `ChoirMember`. **One role per account** (`User.RoleId`). Instrumentalist is not a role: it is a Choir Member with instrument skills (owner decision C3). Liturgy Committee is not a separate role.
 - **No public registration.** `AuthController` has no register endpoint. The Admin creates accounts with a role (`UsersController.cs:27-30`); the BE generates a 12-character first password and emails it (`UserService.cs:44-81, 170-180`); the account must replace it at the first sign-in (`isPasswordChangeRequired`, `AuthController.cs:46-52`). Password reset by email link and Google sign-in (existing active accounts only) exist (`AuthController.cs:19-24, 71-83`).
 - **Only the Admin** creates, edits (email, name, phone), deactivates or reactivates accounts and assigns roles (`UsersController.cs:14-15`). The Admin cannot deactivate or change the role of their own account, and the last active Admin cannot be deactivated or moved to another role (`UserService.cs:116-124, 149-157`). A role change or deactivation revokes the user's sessions.
 - **Every user** edits their own full name and phone (`PUT /api/auth/me`); email changes go through the Admin.
 - **Choir Member on the web** signs in but only sees the message to use the mobile app (Web `LoginPage.tsx`). There is no self-registration on mobile either.
-- **Reports** (`ReportsController.cs`, `446f429`): service history and song usage for the Parish Priest and the Admin; user activity and the list of exports for the Admin only; rehearsal attendance, participation and assignment completion, and their export, for the Admin and the Choir Director.
+- **Reports** (`ReportsController.cs`, `446f429`, `718696c`): service history and song usage for the Parish Priest and the Admin; user activity and the list of exports for the Admin only; rehearsal attendance, participation and assignment completion, their export and the activity trend, for the Admin and the Choir Director; report columns for every role that reads reports.
 - **Authorization** is `[Authorize(Roles = …)]` per endpoint; the Web hides what a role cannot do but the BE is authoritative.
-- **Choirs**: the BE models choirs (`api/choirs`) and the choirs serving an event (`api/liturgical-events/{id}/choirs`, Choir Director). Follow the BE.
+- **Choirs (D8, `718696c`)**: only the Admin creates and edits choirs and sets each choir's one director (`ChoirsController.cs:17-30`, `ChoirService.cs:22-80`, `CHOIR_DIRECTOR_INVALID`). The Admin sees every choir, a Choir Director only the choirs they direct; another director's choir answers `404 CHOIR_NOT_FOUND` (`ChoirService.cs:45-50, 284-291`). The Parish Priest sets the choirs serving an event and its lead choir (`LiturgicalEventsController.cs:83-91`); the Choir Director only reads them. The Parish Priest cannot list choirs and the Admin cannot search member profiles (tbd-backlog B37, B38).
+- **Choir scope (D8, `718696c`)**: on an event served by several choirs only the director of the lead choir writes; the others read and get `403 CHOIR_NOT_LEAD`. With choirs but no lead, the director of any serving choir writes; an event with no choir is open to every Choir Director as before (`ChoirScopeService.cs:59-96`).
 
 ## INTERPRETATION
 
