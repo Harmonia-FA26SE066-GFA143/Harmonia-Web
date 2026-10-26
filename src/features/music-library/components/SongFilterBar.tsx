@@ -3,7 +3,7 @@ import { Button, Flex, Input, Select, Typography } from 'antd'
 import { useCatalogOptions, type CatalogOption } from '@/features/system-categories'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { hasActiveSongFilters } from '../songFilters'
-import type { SongFilters } from '../types'
+import { materialKindLabels, materialKinds, type MaterialKind, type SongFilters } from '../types'
 
 export interface SongFilterBarProps {
   value: SongFilters
@@ -13,7 +13,10 @@ export interface SongFilterBarProps {
   resultCount: number
 }
 
-/** Search over title, composer and lyricist, and the FE-29 classification filters of GET /api/songs. */
+/**
+ * Search over title, composer and lyricist (case and Vietnamese diacritics ignored), the FE-29 classification filters
+ * of GET /api/songs, and the library checks: songs not classified yet, songs missing a kind of material.
+ */
 export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonly<SongFilterBarProps>) {
   const seasons = useCatalogOptions('seasons')
   const massTypes = useCatalogOptions('massTypes')
@@ -21,7 +24,7 @@ export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonl
   const themes = useCatalogOptions('songThemes')
   const skills = useCatalogOptions('skills')
 
-  const selects: { key: Exclude<keyof SongFilters, 'search'>; label: string; placeholder: string; options: CatalogOption[] }[] = [
+  const selects: { key: Exclude<keyof SongFilters, 'search' | 'classified' | 'missingMaterial'>; label: string; placeholder: string; options: CatalogOption[] }[] = [
     { key: 'seasonId', label: 'Mùa phụng vụ', placeholder: 'Tất cả mùa phụng vụ', options: seasons },
     { key: 'massTypeId', label: 'Loại Thánh lễ', placeholder: 'Tất cả loại Thánh lễ', options: massTypes },
     { key: 'ceremonyTypeId', label: 'Loại nghi thức', placeholder: 'Tất cả loại nghi thức', options: ceremonyTypes },
@@ -60,6 +63,37 @@ export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonl
             />
           </Flex>
         ))}
+        <Flex vertical gap={4}>
+          <label htmlFor="song-filter-classified" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+            Phân loại
+          </label>
+          <Select
+            id="song-filter-classified"
+            allowClear
+            placeholder="Tất cả bài hát"
+            value={value.classified}
+            onChange={(classified?: 'yes' | 'no') => onChange({ ...value, classified })}
+            options={[
+              { value: 'no', label: 'Chưa phân loại' },
+              { value: 'yes', label: 'Đã phân loại' },
+            ]}
+            style={{ width: '100%' }}
+          />
+        </Flex>
+        <Flex vertical gap={4}>
+          <label htmlFor="song-filter-missingMaterial" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+            Thiếu tài liệu
+          </label>
+          <Select
+            id="song-filter-missingMaterial"
+            allowClear
+            placeholder="Không lọc"
+            value={value.missingMaterial}
+            onChange={(missingMaterial?: MaterialKind) => onChange({ ...value, missingMaterial })}
+            options={materialKinds.map((kind) => ({ value: kind, label: `Chưa có ${materialKindLabels[kind].toLowerCase()}` }))}
+            style={{ width: '100%' }}
+          />
+        </Flex>
       </div>
       <Flex align="center" justify="space-between" wrap gap={spacing.sm}>
         <Typography.Text aria-live="polite" style={{ color: colors.textMuted }}>

@@ -2,7 +2,7 @@ import { Alert, Button, Divider, Flex, Form, Input, Typography } from 'antd'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { contactEmail } from '@/config/contact'
+import { useContactEmail } from '@/features/settings'
 import { spacing } from '@/styles/tokens'
 import type { SignInError, SignInValues } from '../types'
 
@@ -18,6 +18,7 @@ export interface LoginFormProps {
 }
 
 function FeedbackAlert({ feedback }: Readonly<{ feedback: LoginFeedback }>) {
+  const contactEmail = useContactEmail()
   switch (feedback.kind) {
     case 'invalid-credentials':
       return (

@@ -10,7 +10,11 @@ export interface SystemSetting {
   key: string
   value: string
   dataType: SettingDataType
-  /** English, written for developers; the page shows its own wording for known keys. */
+  /** Vietnamese label, section and position on the settings page, from the backend (SystemSettingKeys). */
+  displayName: string
+  group: string
+  order: number
+  /** Vietnamese explanation shown under the field. */
   description?: string
   isPublic: boolean
   minValue?: number
@@ -23,4 +27,6 @@ export interface PublicSettings {
   choirName?: string
   /** Shown to every user; absent when empty. */
   announcement?: string
+  /** For account requests and support; readable before signing in. */
+  contactEmail?: string
 }

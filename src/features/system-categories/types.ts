@@ -110,3 +110,31 @@ export interface MassSchedule {
 }
 
 export type MassScheduleValues = Omit<MassSchedule, 'id'>
+
+/** `LiturgicalNameKind`: what an English word of the liturgical calendar names. */
+export type LiturgicalNameKind = 'Celebration' | 'Rank' | 'Season'
+
+export const liturgicalNameKindLabels: Record<LiturgicalNameKind, string> = {
+  Celebration: 'Tên lễ',
+  Rank: 'Bậc lễ',
+  Season: 'Mùa phụng vụ',
+}
+
+/**
+ * A Vietnamese name for an English word of the liturgical calendar (`LiturgicalNameTranslationDto`, Admin). Unique by
+ * kind + English name; the English name must be written exactly as the calendar returns it.
+ */
+export interface LiturgicalNameTranslation {
+  id: string
+  kind: LiturgicalNameKind
+  englishName: string
+  vietnameseName: string
+}
+
+export type LiturgicalNameTranslationValues = Omit<LiturgicalNameTranslation, 'id'>
+
+/** A name of the synced calendar that still shows in English (`GET …/missing`). */
+export interface UntranslatedLiturgicalName {
+  kind: LiturgicalNameKind
+  englishName: string
+}

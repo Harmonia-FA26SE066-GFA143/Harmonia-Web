@@ -8,6 +8,7 @@ import {
   listLearningProgress,
   listMaterials,
   listSongs,
+  replaceMaterialFile,
   updateMaterial,
   updateSong,
   updateSongClassification,
@@ -80,6 +81,15 @@ export function useDeleteMaterial(songId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (materialId: string) => deleteMaterial(materialId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
+  })
+}
+
+/** The material keeps its id, so only its list (file name, size, link) is reloaded. */
+export function useReplaceMaterialFile(songId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, file, resetProgress }: { id: string; file: File; resetProgress: boolean }) => replaceMaterialFile(id, file, resetProgress),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
   })
 }

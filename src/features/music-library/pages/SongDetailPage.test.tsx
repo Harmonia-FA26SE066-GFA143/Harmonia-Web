@@ -261,6 +261,23 @@ describe('SongDetailPage', () => {
     await waitFor(() => expect(remove).toHaveBeenCalledWith('m1'))
   })
 
+  it('replaces the file of a material, keeping what members marked unless asked', async () => {
+    withSong()
+    const replace = vi.spyOn(songsApi, 'replaceMaterialFile').mockResolvedValue(materials[1])
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thay file Audio mẫu bè Tenor' }))
+    const dialog = await screen.findByRole('dialog')
+    const file = new File(['x'], 'audio-moi.mp3', { type: 'audio/mpeg' })
+    fireEvent.change(dialog.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } })
+    expect(await within(dialog).findByText('File mới: audio-moi.mp3')).toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('checkbox'))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thay file' }))
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('m2', file, true))
+    expect(await screen.findByText('Đã thay file và xoá tiến độ học của ca viên.')).toBeInTheDocument()
+  })
+
   it('edits the title of a material and makes it for the whole choir', async () => {
     withSong()
     const update = vi.spyOn(songsApi, 'updateMaterial').mockResolvedValue()
@@ -311,5 +328,19 @@ describe('SongDetailPage', () => {
 
     await waitFor(() => expect(remove).toHaveBeenCalledWith('s1'))
     expect(await screen.findByTestId('location')).toHaveTextContent('/director/library')
+  })
+
+  it('explains that a song already used cannot be deleted', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'deleteSong').mockRejectedValue(new ApiError(409, { code: 'SONG_IN_USE' }))
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Xoá bài hát/ }))
+    const confirm = (await screen.findAllByText('Xoá bài hát?'))[0].closest('.ant-modal') as HTMLElement
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá bài hát' }))
+
+    expect(
+      await screen.findByText('Bài hát đã được dùng trong danh sách bài hát, buổi tập hoặc bài tập nên không xoá được.'),
+    ).toBeInTheDocument()
   })
 })

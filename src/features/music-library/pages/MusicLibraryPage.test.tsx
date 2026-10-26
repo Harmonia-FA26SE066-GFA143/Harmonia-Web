@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import * as client from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import type { PagedList } from '@/lib/api/paging'
 import { renderPage } from '@/test/renderPage'
@@ -68,6 +69,29 @@ describe('MusicLibraryPage', () => {
       expect.objectContaining({ search: 'không có' }),
       expect.objectContaining({ pageNumber: 1, pageSize: 24 }),
     )
+  })
+
+  it('finds songs not classified yet or missing a material, and shows how each song is used', async () => {
+    const request = vi.spyOn(client, 'apiRequest').mockResolvedValue({
+      ...page([]),
+      totalCount: 1,
+      totalPages: 1,
+      items: [
+        {
+          ...song('s3', 'Kinh Hoà Bình'),
+          materialCounts: { SheetMusic: 1, Lyrics: 0, SampleAudio: 0, RehearsalMaterial: 0 },
+          isClassified: false,
+          timesUsed: 3,
+          lastUsedDate: '2026-10-18',
+        },
+      ],
+    })
+    renderPage(<MusicLibraryPage />, '/director/library', '/director/library?classified=no&missingMaterial=sampleAudio')
+
+    expect(await screen.findByText('Kinh Hoà Bình')).toBeInTheDocument()
+    expect(screen.getByText('Đã dùng 3 lần · 1 tài liệu')).toBeInTheDocument()
+    expect(screen.getByText('Chưa phân loại', { selector: '.ant-tag' })).toBeInTheDocument()
+    expect(request).toHaveBeenCalledWith('/api/songs?isClassified=false&missingMaterialType=SampleAudio&pageNumber=1&pageSize=24')
   })
 
   it('restores the filters and the page from the address, as after Back from a song', async () => {

@@ -33,10 +33,31 @@ function MusicTags({ song }: Readonly<{ song: Song }>) {
   )
 }
 
+/** How often the song served, how many materials it has, and whether it still needs classifying (SongDto counts). */
+function LibraryFacts({ song }: Readonly<{ song: Song }>) {
+  if (song.timesUsed === undefined && song.materialCounts === undefined) return null
+  const facts: string[] = []
+  if (song.timesUsed !== undefined) facts.push(song.timesUsed > 0 ? `Đã dùng ${song.timesUsed} lần` : 'Chưa dùng')
+  if (song.materialCounts) {
+    const materials = Object.values(song.materialCounts).reduce((sum, count) => sum + count, 0)
+    facts.push(materials > 0 ? `${materials} tài liệu` : 'Chưa có tài liệu')
+  }
+  return (
+    <Flex wrap align="center" gap={6}>
+      <Typography.Text style={muted}>{facts.join(' · ')}</Typography.Text>
+      {song.isClassified === false && (
+        <Tag color="warning" style={{ marginInlineEnd: 0 }}>
+          Chưa phân loại
+        </Tag>
+      )}
+    </Flex>
+  )
+}
+
 /**
- * Library overview as song cards. The list endpoint returns song fields only, so classification and materials are
- * shown on the song page. The title is the card's link; it stretches over the card, so the whole card is clickable
- * and the link's name stays the song title.
+ * Library overview as song cards: fields, how often each song served and its materials (SongDto counts); the
+ * classification itself is on the song page. The title is the card's link; it stretches over the card, so the whole
+ * card is clickable and the link's name stays the song title.
  */
 export function SongGrid({ songs, page, pageSize, total, loading, onPageChange }: Readonly<SongGridProps>) {
   const { search } = useLocation()
@@ -78,6 +99,7 @@ export function SongGrid({ songs, page, pageSize, total, loading, onPageChange }
                     {credits.length > 0 ? credits.join(' · ') : 'Chưa ghi nhạc sĩ'}
                   </Typography.Text>
                   <MusicTags song={song} />
+                  <LibraryFacts song={song} />
                 </Flex>
               </Card>
             </li>

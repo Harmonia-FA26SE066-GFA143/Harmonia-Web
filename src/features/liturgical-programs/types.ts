@@ -146,28 +146,14 @@ export interface PreparationStatus {
 }
 
 /**
- * The liturgical day of a date (`LiturgicalDayDto`), synced from the Liturgical Calendar API. `rank` and `seasonName`
- * are the backend's English words (LiturgicalCalendarApiClient), shown through the labels below.
+ * The liturgical day of a date (`LiturgicalDayDto`), synced from the Liturgical Calendar API. Every name is the
+ * backend's Vietnamese one (`…Vi`), e.g. "Chúa nhật XXIX Thường niên"; a name nobody translated yet stays in English.
  */
 export interface LiturgicalDay {
   date: string
-  /** In Vietnamese (celebrationNames.ts), e.g. "Chúa nhật XXIX Thường niên"; English when the name is not listed. */
   celebrationName: string
+  /** E.g. "Lễ trọng"; absent on a weekday. */
   rank?: string
+  /** E.g. "Mùa Thường Niên". */
   seasonName?: string
-}
-
-export const liturgicalRankLabels: Record<string, string> = {
-  Solemnity: 'Lễ trọng',
-  Feast: 'Lễ kính',
-  'Obligatory Memorial': 'Lễ nhớ buộc',
-  'Optional Memorial': 'Lễ nhớ tự do',
-}
-
-export const liturgicalSeasonLabels: Record<string, string> = {
-  Advent: 'Mùa Vọng',
-  Christmas: 'Mùa Giáng Sinh',
-  Lent: 'Mùa Chay',
-  Easter: 'Mùa Phục Sinh',
-  OrdinaryTime: 'Mùa Thường Niên',
 }

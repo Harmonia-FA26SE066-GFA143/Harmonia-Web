@@ -6,10 +6,41 @@ import * as settingsApi from '../api/settingsApi'
 import type { SystemSetting } from '../types'
 import { SettingsPage } from './SettingsPage'
 
+// Labels, sections and order come from the backend (SystemSettingKeys); listed out of order on purpose.
 const settings: SystemSetting[] = [
-  { id: 's1', key: 'Parish.Name', value: 'Giáo xứ Tân Định', dataType: 'string', isPublic: true },
-  { id: 's2', key: 'Roster.RecentServiceDays', value: '60', dataType: 'int', isPublic: false, minValue: 1, maxValue: 365 },
-  { id: 's3', key: 'Practice.AllowLateSubmission', value: 'false', dataType: 'bool', isPublic: false },
+  {
+    id: 's3',
+    key: 'Practice.AllowLateSubmission',
+    value: 'false',
+    dataType: 'bool',
+    displayName: 'Cho nộp bài tập trễ hạn',
+    group: 'Luyện tập',
+    order: 6,
+    isPublic: false,
+  },
+  {
+    id: 's1',
+    key: 'Parish.Name',
+    value: 'Giáo xứ Tân Định',
+    dataType: 'string',
+    displayName: 'Tên giáo xứ',
+    group: 'Thông tin chung',
+    order: 0,
+    description: 'Tên giáo xứ, hiển thị trên ứng dụng.',
+    isPublic: true,
+  },
+  {
+    id: 's2',
+    key: 'Roster.RecentServiceDays',
+    value: '60',
+    dataType: 'int',
+    displayName: 'Số ngày tính là phục vụ gần đây',
+    group: 'Phân công',
+    order: 4,
+    isPublic: false,
+    minValue: 1,
+    maxValue: 365,
+  },
 ]
 
 afterEach(() => {
@@ -30,7 +61,14 @@ describe('SettingsPage', () => {
     renderPage(<SettingsPage />, '/admin/settings')
 
     expect(await screen.findByRole('textbox', { name: 'Tên giáo xứ' })).toHaveValue('Giáo xứ Tân Định')
+    expect(screen.getByText('Tên giáo xứ, hiển thị trên ứng dụng.')).toBeInTheDocument()
     expect(screen.getByText(/Từ 1 đến 365\./)).toBeInTheDocument()
+    // One card per backend section, in the order of the settings.
+    expect(screen.getAllByRole('heading').map((heading) => heading.textContent)).toEqual(
+      expect.arrayContaining(['Thông tin chung', 'Phân công', 'Luyện tập']),
+    )
+    const sectionNames = screen.getAllByRole('heading').map((heading) => heading.textContent ?? '')
+    expect(sectionNames.indexOf('Thông tin chung')).toBeLessThan(sectionNames.indexOf('Luyện tập'))
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
     expect(await screen.findByText('Không có thay đổi nào để lưu.')).toBeInTheDocument()
     expect(update).not.toHaveBeenCalled()
