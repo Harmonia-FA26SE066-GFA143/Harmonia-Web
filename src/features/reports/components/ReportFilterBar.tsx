@@ -16,10 +16,12 @@ export interface ReportFilterBarProps {
   onReset: () => void
   /** Liturgical seasons (FE-50) to filter by. */
   seasons: FilterOption[]
+  /** Choirs to filter the per-member reports by; the filter is shown only when given. */
+  choirs?: FilterOption[]
 }
 
-/** Server-side report filters of SearchReportsRequest: month (FE-53) and liturgical season. */
-export function ReportFilterBar({ value, onChange, onReset, seasons }: Readonly<ReportFilterBarProps>) {
+/** Server-side report filters of SearchReportsRequest: month (FE-53), liturgical season and, for the Admin, choir. */
+export function ReportFilterBar({ value, onChange, onReset, seasons, choirs }: Readonly<ReportFilterBarProps>) {
   // A visible label: once a value is chosen the placeholder is gone and the filters would look alike.
   const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
 
@@ -55,6 +57,24 @@ export function ReportFilterBar({ value, onChange, onReset, seasons }: Readonly<
           style={{ width: '100%' }}
         />
       </Flex>
+      {choirs && (
+        <Flex vertical gap={4} style={{ flex: '0 1 220px', minWidth: 180 }}>
+          <label htmlFor="report-filter-choirId" style={labelStyle}>
+            Ca đoàn
+          </label>
+          <Select
+            id="report-filter-choirId"
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Tất cả ca đoàn"
+            value={value.choirId}
+            onChange={(choirId?: string) => onChange({ ...value, choirId })}
+            options={choirs}
+            style={{ width: '100%' }}
+          />
+        </Flex>
+      )}
       <Button icon={<ReloadOutlined />} onClick={onReset} disabled={!hasActiveReportFilters(value)}>
         Đặt lại bộ lọc
       </Button>
