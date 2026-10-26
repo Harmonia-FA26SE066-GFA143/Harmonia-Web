@@ -2,7 +2,7 @@ import { ArrowLeftOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Typography } from 'antd'
 import { generatePath, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { EventChoirsCard } from '@/features/choirs'
+import { EventChoirsCard, LeadChoirNotice } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
 import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
@@ -69,6 +69,7 @@ export function DirectorProgramDetailPage() {
         <ErrorState title="Không thể cập nhật chương trình" error={program.error} hasData onRetry={() => program.refetch()} retrying={program.isFetching} />
       )}
       <Flex vertical gap={spacing.lg}>
+        <LeadChoirNotice eventId={data.id} />
         <DirectorPreparationHub program={data} onOpenSongList={openProposal} />
 
         <ProgramInfo program={data} />

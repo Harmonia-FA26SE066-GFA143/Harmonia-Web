@@ -1,4 +1,4 @@
-import { Form, Input, Modal, Switch } from 'antd'
+import { Form, Input, Modal, Select, Switch } from 'antd'
 import type { Choir, ChoirValues } from '../types'
 
 export interface ChoirFormModalProps {
@@ -8,15 +8,34 @@ export interface ChoirFormModalProps {
   /** Shown under the name when the backend reports it is taken. */
   nameError?: string
   saving?: boolean
+  /** Active Choir Director accounts (Admin); the choir's current director is offered even if switched off since. */
+  directors: { value: string; label: string }[]
+  directorsLoading?: boolean
   onSubmit: (values: ChoirValues) => void
   onCancel: () => void
 }
 
 /**
- * Add or edit a choir (CreateChoirRequestValidator, UpdateChoirRequestValidator): name ≤ 100, unique across choirs;
- * description ≤ 500. A new choir is always active; switching one off is an edit.
+ * Admin: add or edit a choir (CreateChoirRequestValidator, UpdateChoirRequestValidator): name ≤ 100, unique across
+ * choirs; description ≤ 500; the Choir Director in charge (D8), optional. A new choir is always active; switching one
+ * off is an edit.
  */
-export function ChoirFormModal({ open, choir, nameError, saving = false, onSubmit, onCancel }: Readonly<ChoirFormModalProps>) {
+export function ChoirFormModal({
+  open,
+  choir,
+  nameError,
+  saving = false,
+  directors,
+  directorsLoading = false,
+  onSubmit,
+  onCancel,
+}: Readonly<ChoirFormModalProps>) {
+  const current = choir?.directorId
+  const directorOptions =
+    current && !directors.some(({ value }) => value === current)
+      ? [...directors, { value: current, label: `${choir?.directorName ?? 'Ca trưởng hiện tại'} (ngừng hoạt động)` }]
+      : directors
+
   return (
     <Modal
       open={open}
@@ -49,6 +68,20 @@ export function ChoirFormModal({ open, choir, nameError, saving = false, onSubmi
         ]}
       >
         <Input autoFocus />
+      </Form.Item>
+      <Form.Item
+        label="Ca trưởng phụ trách"
+        name="directorId"
+        extra="Ca trưởng chỉ thấy và quản lý ca đoàn mình phụ trách. Để trống nếu chưa có."
+      >
+        <Select
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          placeholder="Chưa có ca trưởng"
+          loading={directorsLoading}
+          options={directorOptions}
+        />
       </Form.Item>
       <Form.Item label="Mô tả (không bắt buộc)" name="description" rules={[{ max: 500, message: 'Mô tả tối đa 500 ký tự.' }]}>
         <Input.TextArea rows={3} showCount maxLength={500} />

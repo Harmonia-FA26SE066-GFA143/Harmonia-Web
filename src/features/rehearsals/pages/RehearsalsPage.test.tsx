@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as songsApi from '@/features/music-library/api/songsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
@@ -34,6 +35,7 @@ const renderRehearsals = (initialEntry = '/director/rehearsals') =>
   renderPage(<RehearsalsPage />, '/director/rehearsals', initialEntry)
 
 beforeEach(() => {
+  vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
   vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(
     programPage(
       { id: 'p1', eventName: 'Lễ Chúa Nhật', date: '2026-10-04' },
@@ -119,7 +121,11 @@ describe('RehearsalsPage', () => {
     expect(defaults).toHaveBeenCalledWith('p1')
   })
 
-  it('requires the date and time only', async () => {
+  it('requires the choir, date and time only', async () => {
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
+      { id: 'c2', name: 'Ca đoàn Giuse', isActive: true },
+    ])
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(page(rehearsals))
     const save = vi.spyOn(rehearsalsApi, 'saveRehearsal')
     renderRehearsals()
@@ -128,6 +134,8 @@ describe('RehearsalsPage', () => {
     const dialog = await screen.findByRole('dialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo buổi tập' }))
 
+    // D8: a new session belongs to one of the director's choirs; with two choirs none is preselected.
+    expect(await within(dialog).findByText('Vui lòng chọn ca đoàn.')).toBeInTheDocument()
     expect(await within(dialog).findByText('Vui lòng chọn ngày tập.')).toBeInTheDocument()
     expect(await within(dialog).findByText('Vui lòng chọn giờ bắt đầu và kết thúc.')).toBeInTheDocument()
     expect(within(dialog).queryByText(/Vui lòng (nhập|chọn) (địa điểm|chương trình)/)).toBeNull()

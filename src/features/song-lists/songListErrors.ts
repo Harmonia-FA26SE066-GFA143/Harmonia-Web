@@ -2,6 +2,8 @@ import { ApiError } from '@/lib/api/errors'
 
 /** Refusals of saving and submitting a song list (Harmonia-BE SongListService, Create/UpdateSongListItemsRequestValidator). */
 const messages: Record<string, string> = {
+  // D8: only the director of the lead choir plans a program served by several choirs.
+  CHOIR_NOT_LEAD: 'Chỉ ca trưởng của ca đoàn phụ trách chương trình mới làm được việc này.',
   SONG_LIST_EMPTY: 'Thêm ít nhất một bài hát.',
   SONG_LIST_SLOT_DUPLICATE: 'Một bài hát chỉ được chọn một lần trong cùng một phần phụng vụ.',
   SONG_LIST_NOT_EDITABLE: 'Danh sách không còn là bản nháp. Thông tin đã được tải lại.',

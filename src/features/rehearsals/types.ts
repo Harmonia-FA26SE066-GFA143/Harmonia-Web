@@ -5,6 +5,8 @@
  */
 export interface Rehearsal {
   id: string
+  /** The choir holding it (D8); absent on sessions made before choirs had directors. Set on creation only. */
+  choirId?: string
   /** The liturgical program it prepares, if any. */
   eventId?: string
   /** A worship location of the catalog. */

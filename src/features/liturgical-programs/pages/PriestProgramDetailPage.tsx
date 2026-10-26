@@ -3,6 +3,7 @@ import { Alert, App, Button, Flex, Modal } from 'antd'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { EventChoirsCard } from '@/features/choirs'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
@@ -149,6 +150,7 @@ export function PriestProgramDetailPage() {
           />
         )}
         <EventInfo event={data} />
+        <EventChoirsCard eventId={data.id} canEdit locked={cancelled || !upcoming} />
         {data.status === 'published' && <PreparationStatusCard eventId={data.id} />}
       </Flex>
       <Modal

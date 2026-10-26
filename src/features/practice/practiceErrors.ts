@@ -10,6 +10,9 @@ const messages: Record<string, string> = {
   PRACTICE_SUBMISSION_CONFLICT: 'Bản thu vừa thay đổi. Thông tin đã được tải lại.',
   PRACTICE_DUE_DATE_IN_PAST: 'Hạn nộp phải sau thời điểm hiện tại.',
   PRACTICE_TARGET_REQUIRED: 'Chọn ít nhất một kỹ năng hoặc một ca viên.',
+  CHOIR_NOT_FOUND: 'Ca đoàn đã chọn không còn do bạn phụ trách. Vui lòng tải lại trang.',
+  CHOIR_INACTIVE: 'Ca đoàn đã chọn đang ngừng hoạt động.',
+  CHOIR_NOT_SERVING_EVENT: 'Ca đoàn đã chọn không phục vụ chương trình này.',
   LITURGICAL_EVENT_NOT_FOUND: 'Sự kiện đã chọn không còn tồn tại.',
   LITURGICAL_EVENT_CANCELLED: 'Sự kiện đã chọn đã bị hủy.',
   SONG_NOT_FOUND: 'Bài hát đã chọn không còn tồn tại.',
@@ -17,7 +20,7 @@ const messages: Record<string, string> = {
   MATERIAL_NOT_FOUND: 'Tài liệu đã chọn không còn tồn tại hoặc không thuộc bài hát.',
   SKILL_NOT_FOUND: 'Có kỹ năng đã chọn không còn tồn tại.',
   SKILL_INACTIVE: 'Có kỹ năng đã chọn đã ngừng dùng.',
-  MEMBER_NOT_FOUND: 'Có ca viên đã chọn không còn tồn tại.',
+  MEMBER_NOT_FOUND: 'Có ca viên đã chọn không còn tồn tại hoặc không thuộc ca đoàn.',
   MEMBER_NOT_ACTIVE: 'Có ca viên đã chọn không còn sinh hoạt.',
 }
 

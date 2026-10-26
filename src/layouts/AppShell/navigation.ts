@@ -110,6 +110,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
           { path: paths.admin.roles, label: 'Vai trò & Phân quyền', icon: UserSwitchOutlined },
           { path: paths.admin.skillCategories, label: 'Danh mục kỹ năng', icon: TagsOutlined },
           { path: paths.admin.liturgicalCategories, label: 'Danh mục phụng vụ', icon: FileTextOutlined },
+          { path: paths.admin.choirs, label: 'Ca đoàn', icon: ApartmentOutlined },
           { path: paths.admin.settings, label: 'Cấu hình chung', icon: SettingOutlined },
           { path: paths.admin.reports, label: 'Báo cáo', icon: BarChartOutlined },
           { path: paths.admin.activityLog, label: 'Lịch sử hoạt động', icon: HistoryOutlined },

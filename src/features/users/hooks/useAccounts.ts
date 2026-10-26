@@ -23,6 +23,17 @@ export function useAccounts(filters: AccountFilters, page: AccountPage) {
   })
 }
 
+/**
+ * Active Choir Director accounts (first 100 by email), for choosing the director of a choir (D8, CHOIR_DIRECTOR_INVALID
+ * for anyone else).
+ */
+export function useActiveDirectors() {
+  return useQuery({
+    queryKey: [...accountsKey, 'directors'],
+    queryFn: async () => (await listAccounts({ search: '', role: 'director', isActive: true }, { pageNumber: 1, pageSize: 100 })).items,
+  })
+}
+
 /** Accounts per role for the role summary, or undefined until every count has loaded. */
 export function useRoleCounts(): Record<SystemRole, number> | undefined {
   return useQueries({

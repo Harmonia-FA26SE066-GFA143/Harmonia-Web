@@ -28,7 +28,7 @@ export function useEventChoirs(eventId: string) {
   return useQuery({ queryKey: [...choirsKey, 'event', eventId], queryFn: () => listEventChoirs(eventId) })
 }
 
-/** Every attempt reloads the choirs: a refusal usually means another Choir Director changed them meanwhile. */
+/** Every attempt reloads the choirs: a refusal usually means someone else changed them meanwhile. */
 function useChoirMutation<TVariables, TResult>(mutationFn: (variables: TVariables) => Promise<TResult>) {
   const queryClient = useQueryClient()
   return useMutation({ mutationFn, onSettled: () => queryClient.invalidateQueries({ queryKey: choirsKey }) })
@@ -43,4 +43,4 @@ export const useRemoveChoirMember = (choirId: string) =>
   useChoirMutation((memberId: string) => removeChoirMember(choirId, memberId))
 
 export const useUpdateEventChoirs = (eventId: string) =>
-  useChoirMutation((choirIds: string[]) => updateEventChoirs(eventId, choirIds))
+  useChoirMutation((value: { choirIds: string[]; leadChoirId?: string }) => updateEventChoirs(eventId, value))

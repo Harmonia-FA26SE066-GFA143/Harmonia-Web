@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
@@ -42,6 +43,7 @@ const confirmDialog = async (title: string) =>
   (await screen.findAllByText(title))[0].closest('.ant-modal') as HTMLElement
 
 beforeEach(() => {
+  vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([])
   vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue(preparation)
   vi.spyOn(categoriesApi, 'listLookup').mockImplementation(async (kind) =>
     kind === 'seasons'
@@ -115,6 +117,26 @@ describe('PriestProgramDetailPage', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Lễ Chúa Nhật XXVI' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Công bố' })).not.toBeInTheDocument()
+  })
+
+  it('chooses the lead choir among the choirs serving the event', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
+    vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([
+      { choirId: 'c1', name: 'Ca đoàn Cecilia', isActive: true, isLead: false },
+      { choirId: 'c2', name: 'Ca đoàn Giuse', isActive: true, isLead: false },
+    ])
+    const update = vi.spyOn(choirsApi, 'updateEventChoirs').mockResolvedValue([])
+    renderDetail()
+
+    expect(await screen.findByText(/Chưa chọn ca đoàn phụ trách/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Chọn ca đoàn phụ trách/ }))
+    // Saving needs a lead while choirs serve the event.
+    expect(screen.getByRole('button', { name: 'Lưu' })).toBeDisabled()
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Ca đoàn phụ trách' }))
+    fireEvent.click((await screen.findAllByTitle('Ca đoàn Giuse')).find((node) => node.classList.contains('ant-select-item-option')) as HTMLElement)
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
+
+    await waitFor(() => expect(update).toHaveBeenCalledWith('e1', { choirIds: ['c1', 'c2'], leadChoirId: 'c2' }))
   })
 
   it('cancels a published event, warning that members are notified', async () => {

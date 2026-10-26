@@ -12,22 +12,24 @@ import type { Choir, ChoirMembership } from '../types'
 export interface ChoirMembersDrawerProps {
   /** The drawer is open while a choir is set. */
   choir?: Choir
+  /** Choir Director only: the Admin cannot list member profiles (MemberProfilesController), so it sees and takes out. */
+  canAdd: boolean
   onClose: () => void
 }
 
 const muted = { color: colors.textMuted }
 
 /** The members of one choir: add active members, several at once, and take a member out of the choir. */
-export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDrawerProps>) {
+export function ChoirMembersDrawer({ choir, canAdd, onClose }: Readonly<ChoirMembersDrawerProps>) {
   const { message, modal } = App.useApp()
   const choirId = choir?.id ?? ''
   const choirName = choir?.name ?? ''
   const members = useMembersOfChoir(choir?.id)
-  const profiles = useChoirMembers()
   const add = useAddChoirMembers(choirId)
   const remove = useRemoveChoirMember(choirId)
   const [adding, setAdding] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
+  const profiles = useChoirMembers(canAdd && adding)
 
   const current = new Set((members.data ?? []).map((member) => member.memberId))
   const candidates = (profiles.data ?? []).filter((profile) => !current.has(profile.id))
@@ -67,13 +69,15 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
       onClose={onClose}
       size="large"
       extra={
-        <Button type="primary" icon={<PlusOutlined />} disabled={!choir?.isActive} onClick={() => setAdding(true)}>
-          Thêm ca viên
-        </Button>
+        canAdd && (
+          <Button type="primary" icon={<PlusOutlined />} disabled={!choir?.isActive} onClick={() => setAdding(true)}>
+            Thêm ca viên
+          </Button>
+        )
       }
       destroyOnHidden
     >
-      {choir && !choir.isActive && (
+      {canAdd && choir && !choir.isActive && (
         <Typography.Paragraph style={muted}>Ca đoàn đang ngừng hoạt động nên không thêm được ca viên mới.</Typography.Paragraph>
       )}
       {members.isPending && <SectionSkeleton rows={5} label="Đang tải ca viên của ca đoàn" />}
@@ -86,7 +90,11 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
         />
       )}
       {members.data !== undefined && members.data.length === 0 && (
-        <EmptyState headingLevel={3} title="Ca đoàn chưa có ca viên" description="Thêm ca viên đang sinh hoạt vào ca đoàn này." />
+        <EmptyState
+          headingLevel={3}
+          title="Ca đoàn chưa có ca viên"
+          description={canAdd ? 'Thêm ca viên đang sinh hoạt vào ca đoàn này.' : 'Ca trưởng phụ trách thêm ca viên vào ca đoàn.'}
+        />
       )}
       {members.data !== undefined && members.data.length > 0 && (
         <Table<ChoirMembership>

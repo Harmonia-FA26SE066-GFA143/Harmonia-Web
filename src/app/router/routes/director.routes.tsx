@@ -22,8 +22,8 @@ export const directorRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.director.choirs,
-    { title: 'Ca đoàn', breadcrumb: [area, 'Ca đoàn'], phase: 6 },
-    async () => (await import('@/features/choirs')).ChoirsPage,
+    { title: 'Ca đoàn của tôi', breadcrumb: [area, 'Ca đoàn'], phase: 6 },
+    async () => (await import('@/features/choirs')).DirectorChoirsPage,
   ),
   pageRoute(
     paths.director.skillApproval,

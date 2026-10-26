@@ -34,6 +34,8 @@ export interface PracticeAssignment {
 
 /** Body of POST /api/practice-assignments (CreatePracticeAssignmentRequestValidator). */
 export interface AssignmentValues {
+  /** One of the director's choirs (D8); every scope stays inside it, and it must serve the event when one is chosen. */
+  choirId: string
   title: string
   instruction?: string
   eventId?: string
