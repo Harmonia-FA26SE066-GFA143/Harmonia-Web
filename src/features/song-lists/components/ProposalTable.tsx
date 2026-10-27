@@ -2,7 +2,7 @@ import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, PlusOutlined } from
 import { App, Button, Divider, Flex, Input, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { nameConflictMessage, useLookup, useSaveSlot } from '@/features/system-categories'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 
 /** A row of the list being composed; the slot is chosen after the song is picked. */
 export interface DraftItem {
@@ -105,8 +105,8 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
       width: editable ? 120 : 72,
       render: (_, item, index) => (
         <Flex align="center" gap={4}>
-          <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric, color: colors.textMuted, minWidth: 24 }}>
-            {String(index + 1).padStart(2, '0')}
+          <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', color: colors.textMuted, minWidth: 24 }}>
+            {index + 1}
           </Typography.Text>
           {editable && (
             <>

@@ -189,6 +189,12 @@ body {
   animation: harmonia-rise-in 200ms ease-out both;
 }
 
+/* A day holds its celebration and two events on two lines each, without scrolling inside the cell. antd sets the
+   86px height through its own selector, so this one needs !important. */
+.priest-calendar-page .ant-picker-calendar-date-content {
+  height: 112px !important;
+}
+
 .director-dashboard-page > .ant-flex:first-child,
 .priest-calendar-page > .ant-flex:first-child {
   margin-bottom: 16px !important;

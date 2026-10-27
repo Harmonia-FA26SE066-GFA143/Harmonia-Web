@@ -1,11 +1,11 @@
-import { PlusOutlined } from '@ant-design/icons'
+import { EditOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
 import { Alert, Badge, Button, Calendar, Card, Col, Flex, Grid, Radio, Row, Select, Spin, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useId, useMemo, useState, type KeyboardEvent } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { CardTitle, ErrorState, PageHeader, SectionSkeleton, visuallyHidden } from '@/shared/ui'
-import { cardSurface, colors, spacing, typography } from '@/styles/tokens'
+import { cardSurface, colors, spacing } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
 import { LiturgicalDayInfo, SyncCalendarButton } from '../components/LiturgicalDayInfo'
@@ -89,16 +89,22 @@ export function ProgramCalendarPage() {
           </Typography.Text>
         )}
         {items.slice(0, cellLimit).map((event) => (
-          <Typography.Text
+          // Two lines, so the name is read in the cell; the tooltip still gives the whole of a longer one.
+          <Typography.Paragraph
             key={event.id}
-            ellipsis={{ tooltip: true }}
+            ellipsis={{ rows: 2, tooltip: true }}
             delete={event.status === 'cancelled'}
-            style={{ fontSize: 12, color: event.status === 'published' ? colors.primary : colors.textBody }}
+            style={{ margin: 0, fontSize: 12, lineHeight: 1.35, color: event.status === 'published' ? colors.primary : colors.textBody }}
           >
-            {/* Published is the usual state; the others are named so the status does not rest on color alone. */}
-            {event.status !== 'published' && `${eventStatusLabels[event.status]} · `}
+            {/* Published is the usual state; the others carry a named icon, so the status does not rest on color alone
+                and the event's name keeps the cell's two lines. */}
+            {event.status !== 'published' && (
+              <span title={eventStatusLabels[event.status]} style={{ marginInlineEnd: 4 }}>
+                {event.status === 'draft' ? <EditOutlined aria-label={eventStatusLabels.draft} /> : <StopOutlined aria-label={eventStatusLabels.cancelled} />}
+              </span>
+            )}
             {event.time} {eventName(event)}
-          </Typography.Text>
+          </Typography.Paragraph>
         ))}
         {items.length > cellLimit && (
           <Typography.Text style={{ fontSize: 12, color: colors.textBody }}>+{items.length - cellLimit} khác</Typography.Text>
@@ -129,16 +135,11 @@ export function ProgramCalendarPage() {
       )}
       {events.data !== undefined && (
         <Flex vertical gap={spacing.md}>
-          <Card className="calendar-summary-card" style={{ ...cardSurface, borderInlineStart: `4px solid ${colors.primary}` }} styles={{ body: { padding: `${spacing.md}px ${spacing.lg}px` } }}>
+          <Card className="calendar-summary-card" style={cardSurface} styles={{ body: { padding: `${spacing.md}px ${spacing.lg}px` } }}>
             <Flex wrap align="center" justify="space-between" gap={spacing.md}>
-              <div>
-                <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase' }}>
-                  Lịch tháng
-                </Typography.Text>
-                <Typography.Title level={3} style={{ margin: '2px 0 0', fontSize: 19 }}>
-                  {selected.format('[Tháng] M YYYY')}
-                </Typography.Title>
-              </div>
+              <Typography.Title level={3} style={{ margin: 0, fontSize: 19 }}>
+                {selected.format('[Lịch tháng] M YYYY')}
+              </Typography.Title>
               <Flex wrap gap={spacing.lg}>
                 <div>
                   <Typography.Text style={{ display: 'block', color: colors.textMuted, fontSize: 12 }}>Sự kiện trong tháng</Typography.Text>
@@ -153,7 +154,7 @@ export function ProgramCalendarPage() {
           </Card>
           {/* From xl the day panel sits beside the calendar, so picking a day shows its events without scrolling. */}
           <Row gutter={[spacing.md, spacing.md]}>
-            <Col xs={24} xl={16}>
+            <Col xs={24} xl={18}>
               <Card className="calendar-grid-card" style={cardSurface} styles={{ body: { padding: screens.md ? spacing.md : spacing.sm } }}>
               {/* The previous month stays on screen while the next one loads (keepPreviousData), so it is dimmed. */}
               <Spin spinning={events.isPlaceholderData} description="Đang tải tháng…">
@@ -209,7 +210,7 @@ export function ProgramCalendarPage() {
               </Spin>
               </Card>
             </Col>
-            <Col xs={24} xl={8}>
+            <Col xs={24} xl={6}>
               <Flex vertical gap={spacing.md}>
               {/* Kept out of the calendar column so switching between empty and busy months does not move the grid. */}
               {!events.isPlaceholderData && events.data.totalCount === 0 && (
@@ -217,7 +218,7 @@ export function ProgramCalendarPage() {
                   type="info"
                   showIcon
                   title="Chưa có sự kiện nào trong tháng này."
-                  description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình cho ngày này”."
+                  description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình” trong ô ngày bên cạnh."
                 />
               )}
               <Card className="calendar-day-card" title={<CardTitle>{dayTitle(selected)}</CardTitle>}>
@@ -227,14 +228,9 @@ export function ProgramCalendarPage() {
                 <div style={{ marginBottom: spacing.md }}>
                   <LiturgicalDayInfo date={selectedKey} days={days} />
                 </div>
-                {/* The panel is narrow beside the calendar: the label wraps instead of running out of the card. */}
-                <Button
-                  block
-                  icon={<PlusOutlined />}
-                  onClick={createForDate}
-                  style={{ marginBottom: spacing.md, height: 'auto', paddingBlock: spacing.xs, whiteSpace: 'normal' }}
-                >
-                  Tạo chương trình cho ngày này
+                {/* The panel is narrow beside the calendar: a short label on one line; its name says which day. */}
+                <Button block icon={<PlusOutlined />} onClick={createForDate} aria-label="Tạo chương trình cho ngày này" style={{ marginBottom: spacing.md }}>
+                  Tạo chương trình
                 </Button>
                 {events.isPlaceholderData && (
                   <Typography.Text style={{ color: colors.textMuted }}>Đang tải sự kiện…</Typography.Text>

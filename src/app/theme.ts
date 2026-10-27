@@ -31,7 +31,6 @@ export const theme: ThemeConfig = {
     controlItemBgHover: 'rgba(142, 59, 75, 0.04)',
 
     fontFamily: typography.fontFamily,
-    fontFamilyCode: typography.fontFamilyNumeric,
     fontSize: typography.fontSize,
     lineHeight: typography.lineHeight,
     fontSizeHeading1: typography.pageTitle.fontSize,

@@ -1,5 +1,5 @@
 import { Descriptions, Drawer, Table, Typography } from 'antd'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { fieldLabel, fieldValue } from '../activityFields'
 import { actionLabel, actorName, entityLabel } from '../activityFilters'
 import { formatDateTime } from '@/lib/api/dates'
@@ -18,7 +18,7 @@ interface FieldChange {
 }
 
 const muted = { color: colors.textMuted }
-const mono = { fontFamily: typography.fontFamilyNumeric }
+const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 /** The fields of the old and new JSON objects, in words; a value that is not an object is shown under "Giá trị". */
 function changesOf({ oldValue, newValue }: ActivityRecord): FieldChange[] {
@@ -52,7 +52,7 @@ export function ActivityDetailDrawer({ record, onClose }: Readonly<ActivityDetai
             column={1}
             size="small"
             items={[
-              { key: 'time', label: 'Thời gian', children: <span style={mono}>{formatDateTime(record.createdAt)}</span> },
+              { key: 'time', label: 'Thời gian', children: <span style={numeric}>{formatDateTime(record.createdAt)}</span> },
               {
                 key: 'actor',
                 label: 'Người thực hiện',
@@ -60,8 +60,8 @@ export function ActivityDetailDrawer({ record, onClose }: Readonly<ActivityDetai
               },
               { key: 'action', label: 'Thao tác', children: actionLabel(record.action) },
               { key: 'entity', label: 'Dữ liệu', children: entityLabel(record.entityType) },
-              ...(record.entityId ? [{ key: 'entityId', label: 'Mã bản ghi', children: <span style={mono}>{record.entityId}</span> }] : []),
-              ...(record.ipAddress ? [{ key: 'ip', label: 'Địa chỉ IP', children: <span style={mono}>{record.ipAddress}</span> }] : []),
+              ...(record.entityId ? [{ key: 'entityId', label: 'Mã bản ghi', children: <span style={numeric}>{record.entityId}</span> }] : []),
+              ...(record.ipAddress ? [{ key: 'ip', label: 'Địa chỉ IP', children: <span style={numeric}>{record.ipAddress}</span> }] : []),
             ]}
           />
           {changes.length > 0 ? (

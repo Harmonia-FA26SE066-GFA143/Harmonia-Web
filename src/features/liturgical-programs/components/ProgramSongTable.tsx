@@ -1,5 +1,5 @@
 import { Table, Typography, type TableColumnsType } from 'antd'
-import { colors, typography } from '@/styles/tokens'
+import { colors } from '@/styles/tokens'
 import type { ProgramSong } from '../types'
 
 /**
@@ -13,8 +13,8 @@ export function ProgramSongTable({ songs }: Readonly<{ songs: ProgramSong[] }>) 
       title: 'STT',
       width: 72,
       render: (_, song) => (
-        <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric, color: colors.textMuted }}>
-          {String(songs.indexOf(song) + 1).padStart(2, '0')}
+        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', color: colors.textMuted }}>
+          {songs.indexOf(song) + 1}
         </Typography.Text>
       ),
     },

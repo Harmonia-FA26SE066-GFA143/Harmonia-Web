@@ -151,7 +151,7 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
               key: 'joined',
               title: 'Vào ca đoàn',
               render: (_, member) => (
-                <span style={{ fontFamily: typography.fontFamilyNumeric }}>{dayjs(member.joinedDate).format('DD/MM/YYYY')}</span>
+                <span style={{ fontVariantNumeric: 'tabular-nums' }}>{dayjs(member.joinedDate).format('DD/MM/YYYY')}</span>
               ),
             },
             {

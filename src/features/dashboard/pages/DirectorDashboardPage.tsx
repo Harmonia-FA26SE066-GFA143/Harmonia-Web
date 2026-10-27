@@ -65,7 +65,7 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
           <StatusTag color={color} style={{ marginInlineEnd: 0 }}>
             {label}
           </StatusTag>
-          <Typography.Text style={{ ...muted, fontFamily: typography.fontFamilyNumeric }}>{formatProgramDate(program.date)}</Typography.Text>
+          <Typography.Text style={{ ...muted, fontVariantNumeric: 'tabular-nums' }}>{formatProgramDate(program.date)}</Typography.Text>
         </Flex>
         <div>
           <Typography.Title level={3} style={{ margin: 0, fontSize: 16.5, fontWeight: 700 }}>

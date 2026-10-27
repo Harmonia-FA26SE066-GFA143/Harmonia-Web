@@ -3,7 +3,7 @@ import { Button, Card, Flex, Input, Table, Typography, type TableColumnsType } f
 import { useMemo, useState } from 'react'
 import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import type { CatalogEntry } from '../types'
 
 /** Wording for one catalog, e.g. skills or liturgical seasons. */
@@ -88,8 +88,8 @@ export function CatalogTable<T extends CatalogEntry>({
       title: 'STT',
       width: 72,
       render: (_, item) => (
-        <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric, color: colors.textMuted }}>
-          {String(items.indexOf(item) + 1).padStart(2, '0')}
+        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', color: colors.textMuted }}>
+          {items.indexOf(item) + 1}
         </Typography.Text>
       ),
     },

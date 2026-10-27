@@ -2,7 +2,7 @@ import { Flex, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { formatDateTime } from '@/lib/api/dates'
 import { visuallyHidden } from '@/shared/ui'
-import { colors, typography } from '@/styles/tokens'
+import { colors } from '@/styles/tokens'
 import type { DirectorNote } from '../types'
 
 export interface NoteTableProps {
@@ -18,7 +18,7 @@ export interface NoteTableProps {
 }
 
 const muted = { color: colors.textMuted }
-const numeric = { fontFamily: typography.fontFamilyNumeric }
+const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 export function NoteTable({ notes, party, page, pageSize, total, loading, onPageChange }: Readonly<NoteTableProps>) {
   const columns: TableColumnsType<DirectorNote> = [

@@ -44,7 +44,7 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
       title: 'Ngày tham gia',
       dataIndex: 'joinedDate',
       render: (joinedDate: string) => (
-        <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric }}>
+        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums' }}>
           {dayjs(joinedDate).format('DD/MM/YYYY')}
         </Typography.Text>
       ),

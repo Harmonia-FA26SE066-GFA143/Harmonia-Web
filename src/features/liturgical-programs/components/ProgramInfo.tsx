@@ -1,6 +1,6 @@
 import { CardTitle } from '@/shared/ui'
 import { Card, Descriptions, Typography } from 'antd'
-import { colors, typography } from '@/styles/tokens'
+import { colors } from '@/styles/tokens'
 import { formatProgramDate } from '../programFilters'
 import type { LiturgicalProgram } from '../types'
 
@@ -18,7 +18,7 @@ export function ProgramInfo({ program }: Readonly<{ program: LiturgicalProgram }
             key: 'date',
             label: 'Ngày giờ cử hành',
             children: (
-              <span style={{ fontFamily: typography.fontFamilyNumeric }}>
+              <span style={{ fontVariantNumeric: 'tabular-nums' }}>
                 {program.time} · {formatProgramDate(program.date)}
               </span>
             ),

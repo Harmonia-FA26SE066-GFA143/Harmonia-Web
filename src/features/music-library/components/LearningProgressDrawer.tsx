@@ -2,7 +2,7 @@ import { Drawer, Flex, Segmented, Table, Typography, type TableColumnsType } fro
 import { useState } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
 import { EmptyState, ErrorState, StatusTag, type StatusTagColor } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { useLearningProgress } from '../hooks/useSongs'
 import { learningStatusLabels, learningStatuses, type LearningProgress, type LearningStatus, type SongMaterial } from '../types'
 
@@ -40,7 +40,7 @@ function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
       dataIndex: 'updatedAt',
       render: (updatedAt: string | null) =>
         updatedAt ? (
-          <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric }}>
+          <Typography.Text style={{ fontVariantNumeric: 'tabular-nums' }}>
             {formatDateTime(updatedAt)}
           </Typography.Text>
         ) : (

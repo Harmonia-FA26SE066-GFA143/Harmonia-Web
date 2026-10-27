@@ -1,7 +1,7 @@
 import { FolderOpenOutlined } from '@ant-design/icons'
 import { Button, Table, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
-import { colors, typography } from '@/styles/tokens'
+import { colors } from '@/styles/tokens'
 import type { SongListItem } from '../types'
 import { SongMaterialsDrawer } from './SongMaterialsDrawer'
 
@@ -16,8 +16,8 @@ export function SongListItemsTable({ items }: Readonly<{ items: SongListItem[] }
       title: 'Thứ tự',
       width: 72,
       render: (_, __, index) => (
-        <Typography.Text style={{ ...muted, fontFamily: typography.fontFamilyNumeric }}>
-          {String(index + 1).padStart(2, '0')}
+        <Typography.Text style={{ ...muted, fontVariantNumeric: 'tabular-nums' }}>
+          {index + 1}
         </Typography.Text>
       ),
     },

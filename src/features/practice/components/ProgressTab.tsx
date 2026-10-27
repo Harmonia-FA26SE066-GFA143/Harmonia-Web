@@ -8,7 +8,7 @@ import { formatEventOption } from '../practiceFormat'
 import { participationStatusLabels, type MemberProgress, type ParticipationStatus } from '../types'
 
 const muted = { color: colors.textMuted }
-const numeric = { fontFamily: typography.fontFamilyNumeric }
+const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 // Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
 const participationColors: Record<ParticipationStatus, StatusTagColor> = {

@@ -1,14 +1,14 @@
 import { CardTitle } from '@/shared/ui'
 import { Card, Descriptions, Typography } from 'antd'
 import { formatDateTime } from '@/lib/api/dates'
-import { colors, typography } from '@/styles/tokens'
+import { colors } from '@/styles/tokens'
 import { useEventNames } from '../hooks/useEventNames'
 import { formatProgramDate } from '../programFilters'
 import type { LiturgicalEvent } from '../types'
 import { EventStatusTag } from './EventStatusTag'
 
 const orNone = (value?: string) => value || <Typography.Text style={{ color: colors.textMuted }}>Không có</Typography.Text>
-const numeric = { fontFamily: typography.fontFamilyNumeric }
+const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 /** Every field of a liturgical event (`LiturgicalEventDto`). */
 export function EventInfo({ event }: Readonly<{ event: LiturgicalEvent }>) {

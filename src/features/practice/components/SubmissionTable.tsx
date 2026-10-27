@@ -17,7 +17,7 @@ export interface SubmissionTableProps {
 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
-const numeric = { fontFamily: typography.fontFamilyNumeric }
+const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 /** The review queue: each member's newest attempt, oldest first, across every assignment (FE-42). */
 export function SubmissionTable({ submissions, page, pageSize, total, loading, onPageChange, onOpen }: Readonly<SubmissionTableProps>) {

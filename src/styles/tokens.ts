@@ -58,13 +58,12 @@ export const cardSurface = {
 
 /**
  * Be Vietnam Pro keeps Vietnamese diacritics clear at dashboard sizes (DESIGN(2).md §3).
- * Fonts are self-hosted via @fontsource (weights 400–700, JetBrains Mono 400), imported in src/main.tsx.
+ * Fonts are self-hosted via @fontsource (weights 400–700), imported in src/main.tsx. Dates, times and counts stay in
+ * this face with `fontVariantNumeric: 'tabular-nums'`, so their digits line up without a monospace face (#245).
  */
 export const typography = {
   fontFamily:
     "'Be Vietnam Pro', Manrope, 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-  /** Dense numeric metadata (dates, codes) only; use sparingly. */
-  fontFamilyNumeric: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
   fontSize: 14,
   /** Generous line height for Vietnamese diacritics (DESIGN(2).md: 1.55–1.65). */
   lineHeight: 1.6,

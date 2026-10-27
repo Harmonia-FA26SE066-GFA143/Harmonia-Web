@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { useState } from 'react'
 import { formatDateTime, parseUtc } from '@/lib/api/dates'
 import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
-import { colors, typography } from '@/styles/tokens'
+import { colors } from '@/styles/tokens'
 import { useReportExports } from '../hooks/useReports'
 import { reportDefinitions } from '../reportDefinitions'
 import { reportFormatLabels, type ReportExport } from '../types'
@@ -11,7 +11,7 @@ import type { FilterOption } from './ReportFilterBar'
 
 const pageSize = 10
 const muted = { color: colors.textMuted }
-const numeric = { fontFamily: typography.fontFamilyNumeric, whiteSpace: 'nowrap' as const }
+const numeric = { fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' as const }
 const day = (date: string) => dayjs(date).format('DD/MM/YYYY')
 
 /** Files the Admins exported (`GET /api/reports/exports`), newest first; each link expires soon after loading. */
