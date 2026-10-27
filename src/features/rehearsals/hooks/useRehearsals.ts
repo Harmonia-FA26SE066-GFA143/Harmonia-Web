@@ -15,6 +15,14 @@ export function useRehearsals(filters: RehearsalFilters, page: RehearsalPage) {
   })
 }
 
+/** How many rehearsals an event has, past and upcoming: one row of one page, read for its total. */
+export function useRehearsalCount(eventId: string) {
+  return useQuery({
+    queryKey: [...rehearsalsKey, 'count', eventId],
+    queryFn: async () => (await listRehearsals({ eventId }, { pageNumber: 1, pageSize: 1 })).totalCount,
+  })
+}
+
 /**
  * Sessions from 30 days back to 7 days ahead, earliest first, for the attendance picker.
  * ponytail: fixed window of one page of 100; widen or page it if older sheets need correcting from the picker.

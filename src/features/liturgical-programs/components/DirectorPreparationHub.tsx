@@ -17,7 +17,7 @@ import { useSongList } from '@/features/song-lists'
 import { parseUtc } from '@/lib/api/dates'
 import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
-import { usePreparationStatus } from '../hooks/useEvents'
+import { useDirectorPreparation } from '../hooks/useDirectorPreparation'
 import type { LiturgicalProgramDetail } from '../types'
 
 interface DirectorPreparationHubProps {
@@ -30,7 +30,7 @@ const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<DirectorPreparationHubProps>) {
   const navigate = useNavigate()
-  const prepStatus = usePreparationStatus(program.id)
+  const prepStatus = useDirectorPreparation(program.id)
   const songList = useSongList(program.id)
 
   const prep = prepStatus.data

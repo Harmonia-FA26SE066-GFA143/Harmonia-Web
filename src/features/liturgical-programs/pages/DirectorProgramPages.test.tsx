@@ -3,12 +3,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
 import { AdminChoirsPage, DirectorChoirsPage } from '@/features/choirs'
 import * as membersApi from '@/features/members/api/membersApi'
+import * as practiceApi from '@/features/practice/api/practiceApi'
+import * as rehearsalsApi from '@/features/rehearsals/api/rehearsalsApi'
+import * as rosterApi from '@/features/roster/api/rosterApi'
+import * as songListsApi from '@/features/song-lists/api/songListsApi'
 import * as accountsApi from '@/features/users/api/accountsApi'
 import * as client from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import { clearSession, setSession } from '@/lib/auth/session'
 import { renderPage } from '@/test/renderPage'
 import { programPage } from '@/test/programs'
+import * as eventsApi from '../api/eventsApi'
 import * as programsApi from '../api/programsApi'
 import type { LiturgicalProgramDetail } from '../types'
 import { DirectorProgramDetailPage } from './DirectorProgramDetailPage'
@@ -94,6 +99,32 @@ describe('DirectorProgramDetailPage', () => {
     expect(screen.getByText(/Lịch tập/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Chỉnh sửa danh sách bài hát' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/director/programs/p1/song-list')
+  })
+
+  it('sums the preparation from what the Choir Director may read, never the Priest-only status (#246)', async () => {
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue({ ...program, songListStatus: 'approved' })
+    vi.spyOn(songListsApi, 'getSongList').mockResolvedValue(null)
+    const status = vi.spyOn(eventsApi, 'getPreparationStatus')
+    const member = { rehearsalsHeld: 2, assignmentsTotal: 2, assignmentsPassed: 1, assignmentsOverdue: 0 }
+    vi.spyOn(practiceApi, 'listPreparationProgress').mockResolvedValue([
+      { ...member, memberId: 'm1', fullName: 'An', participationStatus: 'confirmed', rehearsalsAttended: 2 },
+      { ...member, memberId: 'm2', fullName: 'Bình', participationStatus: 'confirmed', rehearsalsAttended: 1 },
+      { ...member, memberId: 'm3', fullName: 'Chi', participationStatus: 'invited', rehearsalsAttended: 0 },
+    ])
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 1, totalCount: 3, totalPages: 3 })
+    vi.spyOn(rosterApi, 'getRoster').mockResolvedValue(null)
+    vi.spyOn(rosterApi, 'getShortages').mockResolvedValue([
+      { songListItemId: null, songTitle: null, skillId: 's1', skillName: 'Đàn organ', requiredCount: 1, assignedCount: 0 },
+    ])
+    renderDetail()
+
+    expect(await screen.findByText('2 đã xác nhận')).toBeInTheDocument()
+    expect(screen.getByText('2/3 buổi đã tập')).toBeInTheDocument()
+    // 3 of 6 attendances (2 held × 3 members), 3 of 6 practice submissions passed.
+    expect(screen.getByText(/Tỷ lệ có mặt/)).toHaveTextContent('Tỷ lệ có mặt: 50% (3/6 lượt)')
+    expect(screen.getByText(/lượt nộp/)).toHaveTextContent('Đạt 3 / 6 lượt nộp')
+    expect(screen.getByText(/Còn thiếu nhân sự cho/)).toHaveTextContent('Còn thiếu nhân sự cho 1 vị trí')
+    expect(status).not.toHaveBeenCalled()
   })
 
   it.each([
