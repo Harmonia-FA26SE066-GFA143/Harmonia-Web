@@ -50,3 +50,22 @@ export interface SongListItemInput {
   slotId: string
   note?: string
 }
+
+/**
+ * A library song proposed for an event (`SongSuggestionResponse`, BE d1ca63e), best first. The score is 3 for the
+ * slot, 2 for the Mass or ceremony type, 2 for the season; a song classified only under another season or slot is
+ * left out, and a song with no classification at all is never proposed.
+ */
+export interface SongSuggestion {
+  songId: string
+  title: string
+  composer?: string
+  score: number
+  matchesSlot: boolean
+  matchesEventType: boolean
+  matchesSeason: boolean
+  /** Past published programs whose approved list had the song. */
+  timesUsed: number
+  /** YYYY-MM-DD; absent when never sung. */
+  lastUsedDate?: string
+}

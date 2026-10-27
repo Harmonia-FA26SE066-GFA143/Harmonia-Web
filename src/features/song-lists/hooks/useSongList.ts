@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getSongList, saveSongList, submitSongList } from '../api/songListsApi'
+import { getSongList, listSongSuggestions, saveSongList, submitSongList } from '../api/songListsApi'
 import type { SongList, SongListItemInput } from '../types'
 
 const songListKey = (programId: string) => ['song-lists', programId] as const
@@ -25,5 +25,17 @@ export function useSaveSongList(programId: string, current: SongList | null) {
       queryClient.invalidateQueries({ queryKey: songListKey(programId) })
       queryClient.invalidateQueries({ queryKey: ['liturgical-programs'] })
     },
+  })
+}
+
+// ponytail: the first 50 suggestions; the list says when there are more, narrowed by choosing another slot.
+const suggestionPage = { pageNumber: 1, pageSize: 50 }
+
+/** Songs proposed for one slot of the program; nothing is asked before a slot is chosen. */
+export function useSongSuggestions(programId: string, slotId?: string) {
+  return useQuery({
+    queryKey: ['song-lists', programId, 'suggestions', slotId],
+    queryFn: () => listSongSuggestions(programId, slotId, suggestionPage),
+    enabled: Boolean(slotId),
   })
 }

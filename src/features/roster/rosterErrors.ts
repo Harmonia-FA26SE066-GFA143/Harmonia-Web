@@ -17,6 +17,8 @@ const messages: Record<string, string> = {
   MEMBER_NOT_FOUND: 'Ca viên không thuộc ca đoàn phục vụ chương trình.',
   PERSONNEL_REQUIREMENT_NOT_FOUND: 'Lưu yêu cầu nhân sự của bài trước khi phân công.',
   PERSONNEL_REQUIREMENT_DUPLICATE: 'Mỗi kỹ năng chỉ có một dòng yêu cầu trong một bài.',
+  // BE d1ca63e: a skill with someone assigned cannot be taken off the song's requirements.
+  PERSONNEL_REQUIREMENT_IN_USE: 'Kỹ năng này đang có người được phân công. Gỡ người khỏi dòng phân công trước khi bỏ yêu cầu.',
   SONG_LIST_NOT_LATEST_VERSION: 'Danh sách bài hát đã có phiên bản mới. Vui lòng tải lại trang.',
   SKILL_INACTIVE: 'Kỹ năng đã chọn đã ngừng dùng.',
   SKILL_NOT_FOUND: 'Kỹ năng đã chọn không còn tồn tại.',
