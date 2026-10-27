@@ -36,4 +36,6 @@ The "Finalize Program" action with a required reason when positions are short, l
 
 ## Open questions (the BE decides where it covers them; the rest belong in `tbd-backlog.md`)
 
-Limits on how many positions one member can hold; whether a member may be assigned to two events at overlapping times (no such check today, `RosterService.cs:437-457`); what happens to an assignment when the member changes the answer or loses the skill before finalization; roster changes while the event is cancelled or past; timing of assignment notifications. Report 1 FE-35 / FE-37 name vocal-part counts and warnings; since `d1ca63e` they are possible only as whole-service requirements (owner to confirm, see `open-business-decisions.md`).
+Limits on how many positions one member can hold; what happens to an assignment when the member changes the answer or loses the skill before finalization; roster changes while the event is cancelled or past; timing of assignment notifications.
+
+Decided 2026-10-27 (`open-business-decisions.md`): vocal-part counts and warnings (Report 1 FE-35 / FE-37) are set as whole-service requirements; a member assigned to two events at overlapping times should be refused by the BE (tbd-backlog B40, no such check today, `RosterService.cs:437-457`).
