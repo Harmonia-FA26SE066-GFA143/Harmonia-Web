@@ -34,6 +34,26 @@ export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonl
     { key: 'skillId', label: 'Bè giọng hoặc nhạc cụ', placeholder: 'Tất cả bè giọng, nhạc cụ', options: skills },
   ]
 
+  // A visible label: once a value is chosen the placeholder is gone and the selects would look alike.
+  const renderSelect = (select: (typeof selects)[number]) => (
+    <Flex key={select.key} vertical gap={4}>
+      <label htmlFor={`song-filter-${select.key}`} style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+        {select.label}
+      </label>
+      <Select
+        id={`song-filter-${select.key}`}
+        allowClear
+        showSearch
+        optionFilterProp="label"
+        placeholder={select.placeholder}
+        value={value[select.key]}
+        onChange={(selected?: string) => onChange({ ...value, [select.key]: selected })}
+        options={select.options}
+        style={{ width: '100%' }}
+      />
+    </Flex>
+  )
+
   return (
     <Flex vertical gap={spacing.md} style={{ padding: spacing.md }}>
       <Input
@@ -46,25 +66,8 @@ export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonl
         style={{ maxWidth: 420 }}
       />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: spacing.sm }}>
-        {selects.map((select) => (
-          // A visible label: once a value is chosen the placeholder is gone and the five selects would look alike.
-          <Flex key={select.key} vertical gap={4}>
-            <label htmlFor={`song-filter-${select.key}`} style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
-              {select.label}
-            </label>
-            <Select
-              id={`song-filter-${select.key}`}
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder={select.placeholder}
-              value={value[select.key]}
-              onChange={(selected?: string) => onChange({ ...value, [select.key]: selected })}
-              options={select.options}
-              style={{ width: '100%' }}
-            />
-          </Flex>
-        ))}
+        {selects.slice(0, 3).map(renderSelect)}
+        {/* The theme sits with the liturgical filters, as a tree: a theme also finds its sub-themes' songs. */}
         <Flex vertical gap={4}>
           <label htmlFor="song-filter-themeId" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
             Chủ đề
@@ -82,6 +85,7 @@ export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonl
             style={{ width: '100%' }}
           />
         </Flex>
+        {selects.slice(3).map(renderSelect)}
         <Flex vertical gap={4}>
           <label htmlFor="song-filter-classified" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
             Phân loại
