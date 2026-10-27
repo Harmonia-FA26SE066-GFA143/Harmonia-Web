@@ -5,7 +5,7 @@ import { spacing } from '@/styles/tokens'
 import type { SkillRequirementValue, SongClassification, SongClassificationValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
-export interface SongClassificationModalProps {
+export interface SongClassificationDrawerProps {
   open: boolean
   classification: SongClassification
   saving?: boolean
@@ -94,7 +94,7 @@ function RequirementList({ name, label, addLabel, options }: Readonly<{
 }
 
 /** Edits every FE-29 dimension of a song at once (PUT /api/songs/{id}/classification replaces the whole set). */
-export function SongClassificationModal({ open, classification, saving = false, onSubmit, onCancel }: Readonly<SongClassificationModalProps>) {
+export function SongClassificationDrawer({ open, classification, saving = false, onSubmit, onCancel }: Readonly<SongClassificationDrawerProps>) {
   const seasons = withCurrent(useCatalogOptions('seasons'), refOptions(classification.liturgicalSeasons))
   const massTypes = withCurrent(useCatalogOptions('massTypes'), refOptions(classification.massTypes))
   const ceremonyTypes = withCurrent(useCatalogOptions('ceremonyTypes'), refOptions(classification.ceremonyTypes))

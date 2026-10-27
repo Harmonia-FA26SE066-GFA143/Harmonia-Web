@@ -12,7 +12,7 @@ import { accountErrorMessage } from '../accountErrors'
 import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
 import { AccountFilterBar } from '../components/AccountFilterBar'
 import { AccountTable } from '../components/AccountTable'
-import { AssignRoleModal } from '../components/AssignRoleModal'
+import { AssignRoleDrawer } from '../components/AssignRoleDrawer'
 import { RoleSummary } from '../components/RoleSummary'
 import { useAccounts, useChangeAccountRole, useRoleCounts } from '../hooks/useAccounts'
 import { accountName, type Account, type AccountFilters } from '../types'
@@ -125,7 +125,7 @@ export function RolesPage() {
         </Flex>
       )}
 
-      <AssignRoleModal
+      <AssignRoleDrawer
         account={changing}
         saving={changeRole.isPending}
         onSubmit={handleChangeRole}

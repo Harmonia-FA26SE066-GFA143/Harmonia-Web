@@ -6,7 +6,7 @@ import { ApiError } from '@/lib/api/errors'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
-import { ChoirFormModal } from '../components/ChoirFormModal'
+import { ChoirFormDrawer } from '../components/ChoirFormDrawer'
 import { ChoirMembersDrawer } from '../components/ChoirMembersDrawer'
 import { useChoirs, useSaveChoir } from '../hooks/useChoirs'
 import type { Choir, ChoirValues } from '../types'
@@ -44,7 +44,7 @@ function AdminChoirForm({ form, onClose }: Readonly<{ form: FormState; onClose: 
   }
 
   return (
-    <ChoirFormModal
+    <ChoirFormDrawer
       open={form.open}
       choir={editing}
       nameError={nameError}

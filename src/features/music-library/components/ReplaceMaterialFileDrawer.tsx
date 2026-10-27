@@ -6,8 +6,8 @@ import { materialFileProblem } from '../songErrors'
 import { materialExtensions, materialKindLabels, type SongMaterial } from '../types'
 import { FormDrawer } from '@/shared/ui'
 
-export interface ReplaceMaterialFileModalProps {
-  /** The modal is open while a material is set. */
+export interface ReplaceMaterialFileDrawerProps {
+  /** The drawer is open while a material is set. */
   material?: SongMaterial
   saving?: boolean
   onSubmit: (file: File, resetProgress: boolean) => void
@@ -18,7 +18,7 @@ export interface ReplaceMaterialFileModalProps {
  * Replaces the file of a material (`PUT /api/music-materials/{id}/file`): same kind, title, target skill and
  * assignments. What members marked ("đã học", "cần luyện thêm") is kept unless the content changed enough to clear it.
  */
-export function ReplaceMaterialFileModal({ material, saving = false, onSubmit, onCancel }: Readonly<ReplaceMaterialFileModalProps>) {
+export function ReplaceMaterialFileDrawer({ material, saving = false, onSubmit, onCancel }: Readonly<ReplaceMaterialFileDrawerProps>) {
   const [file, setFile] = useState<File>()
   const [resetProgress, setResetProgress] = useState(false)
   // Set when "Thay file" is pressed before a file is picked; the button stays clickable and says what is missing.

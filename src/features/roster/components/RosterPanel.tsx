@@ -15,7 +15,7 @@ import {
 } from '../hooks/useRoster'
 import { rosterErrorMessage } from '../rosterErrors'
 import { rosterStatusLabels, type EligibleMember, type RosterAssignment } from '../types'
-import { NotifyModal } from './NotifyModal'
+import { NotifyDrawer } from './NotifyDrawer'
 import { StaffingCard, type RosterSong } from './StaffingCard'
 
 export interface RosterPanelProps {
@@ -231,7 +231,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
             />
           ))
         : songListNotice}
-      <NotifyModal
+      <NotifyDrawer
         open={notifying}
         members={announceable}
         sending={notify.isPending}

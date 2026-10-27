@@ -8,7 +8,7 @@ import { colors, radius, spacing, typography } from '@/styles/tokens'
 // One page of the largest size the backend allows; a longer library is narrowed by searching and filtering.
 const pickerPage = { pageNumber: 1, pageSize: 100 }
 
-export interface SongPickerModalProps {
+export interface SongPickerDrawerProps {
   /** Songs already in the list; they are not offered again. */
   excludedSongIds: string[]
   /** The event's own classification, applied when the picker opens; the Choir Director may clear it. */
@@ -21,7 +21,7 @@ export interface SongPickerModalProps {
  * Choose songs from the music library (FE-27) to add to a program's proposed list (FE-30), searched and filtered by the
  * FE-29 classification. Mounted only while open, so each opening starts from the event's suggestion with nothing picked.
  */
-export function SongPickerModal({ excludedSongIds, suggestedFilters, onAdd, onCancel }: Readonly<SongPickerModalProps>) {
+export function SongPickerDrawer({ excludedSongIds, suggestedFilters, onAdd, onCancel }: Readonly<SongPickerDrawerProps>) {
   const [filters, setFilters] = useState(suggestedFilters)
   const keyword = useDebouncedValue(filters.search)
   const songs = useSongs({ ...filters, search: keyword }, pickerPage)

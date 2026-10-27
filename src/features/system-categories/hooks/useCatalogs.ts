@@ -20,7 +20,7 @@ import {
 import { themePath } from '../songThemeTree'
 import type { BasicCatalog, CatalogItemValues, LookupKind, MassScheduleValues, SlotRequirementValue } from '../types'
 
-/** Values for the add/edit modal; `id` is present when editing an existing entry. */
+/** Values for the add/edit drawer; `id` is present when editing an existing entry. */
 export interface SaveCatalogEntry<V> {
   id?: string
   values: V

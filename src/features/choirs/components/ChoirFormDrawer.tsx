@@ -2,7 +2,7 @@ import { Input, Select, Switch } from 'antd'
 import type { Choir, ChoirValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
-export interface ChoirFormModalProps {
+export interface ChoirFormDrawerProps {
   open: boolean
   /** The choir being edited; absent when adding one. */
   choir?: Choir
@@ -21,7 +21,7 @@ export interface ChoirFormModalProps {
  * choirs; description ≤ 500; the Choir Director in charge (D8), optional. A new choir is always active; switching one
  * off is an edit.
  */
-export function ChoirFormModal({
+export function ChoirFormDrawer({
   open,
   choir,
   nameError,
@@ -30,7 +30,7 @@ export function ChoirFormModal({
   directorsLoading = false,
   onSubmit,
   onCancel,
-}: Readonly<ChoirFormModalProps>) {
+}: Readonly<ChoirFormDrawerProps>) {
   const current = choir?.directorId
   const directorOptions =
     current && !directors.some(({ value }) => value === current)

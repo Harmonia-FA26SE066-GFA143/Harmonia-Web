@@ -10,7 +10,7 @@ import { Form, FormDrawer } from '@/shared/ui'
 
 const muted = { color: colors.textMuted }
 
-function SlotRequirementsModal({
+function SlotRequirementsDrawer({
   slot,
   requirements,
   onClose,
@@ -136,7 +136,7 @@ export function SlotRequirementsCell({ slot }: Readonly<{ slot: LiturgicalSlot }
         Sửa
       </Button>
       {editing && requirements.data && (
-        <SlotRequirementsModal slot={slot} requirements={requirements.data} onClose={() => setEditing(false)} />
+        <SlotRequirementsDrawer slot={slot} requirements={requirements.data} onClose={() => setEditing(false)} />
       )}
     </Flex>
   )

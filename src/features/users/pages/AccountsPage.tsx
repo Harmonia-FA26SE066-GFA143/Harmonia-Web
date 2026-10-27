@@ -8,7 +8,7 @@ import { colors, spacing } from '@/styles/tokens'
 import { accountErrorMessage, duplicateEmailMessage, isDuplicateEmail } from '../accountErrors'
 import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
 import { AccountFilterBar } from '../components/AccountFilterBar'
-import { AccountFormModal } from '../components/AccountFormModal'
+import { AccountFormDrawer } from '../components/AccountFormDrawer'
 import { AccountTable } from '../components/AccountTable'
 import { useAccounts, useCreateAccount, useSetAccountActive, useUpdateAccount } from '../hooks/useAccounts'
 import { accountName, type Account, type AccountFilters, type CreateAccountValues, type UpdateAccountValues } from '../types'
@@ -161,7 +161,7 @@ export function AccountsPage() {
         </Card>
       )}
 
-      <AccountFormModal
+      <AccountFormDrawer
         open={form.open}
         account={form.account}
         saving={create.isPending || update.isPending}

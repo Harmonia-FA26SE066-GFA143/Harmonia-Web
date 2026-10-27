@@ -4,7 +4,7 @@ import { EmptyState, ErrorState, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { useSubmissions } from '../hooks/usePractice'
 import { practiceStatusLabels, practiceStatuses, type PracticeStatus } from '../types'
-import { ReviewModal } from './ReviewModal'
+import { ReviewDrawer } from './ReviewDrawer'
 import { SubmissionTable } from './SubmissionTable'
 
 const pageSize = 20
@@ -15,7 +15,7 @@ export interface SubmissionListProps {
   defaultStatus: PracticeStatus | 'all'
 }
 
-/** Each member's newest attempt, filtered by status and paged on the server, reviewed in the review modal (FE-42). */
+/** Each member's newest attempt, filtered by status and paged on the server, reviewed in the review drawer (FE-42). */
 export function SubmissionList({ assignmentId, defaultStatus }: Readonly<SubmissionListProps>) {
   const [status, setStatus] = useState(defaultStatus)
   const [page, setPage] = useState(1)
@@ -61,7 +61,7 @@ export function SubmissionList({ assignmentId, defaultStatus }: Readonly<Submiss
           />
         </Card>
       )}
-      <ReviewModal submissionId={openId} onClose={() => setOpenId(undefined)} />
+      <ReviewDrawer submissionId={openId} onClose={() => setOpenId(undefined)} />
     </Flex>
   )
 }

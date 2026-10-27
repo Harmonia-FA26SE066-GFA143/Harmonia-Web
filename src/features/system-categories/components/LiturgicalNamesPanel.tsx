@@ -33,7 +33,7 @@ type FormState =
   | { open: false }
   | { open: true; translation?: LiturgicalNameTranslation; untranslated?: LiturgicalNameTranslationValues }
 
-function TranslationModal({ form, onClose }: Readonly<{ form: FormState; onClose: () => void }>) {
+function TranslationDrawer({ form, onClose }: Readonly<{ form: FormState; onClose: () => void }>) {
   const { message } = App.useApp()
   const save = useSaveLiturgicalName()
   const [englishError, setEnglishError] = useState<string>()
@@ -265,7 +265,7 @@ export function LiturgicalNamesPanel() {
           />
         )}
       </Card>
-      <TranslationModal form={form} onClose={() => setForm({ open: false })} />
+      <TranslationDrawer form={form} onClose={() => setForm({ open: false })} />
     </>
   )
 }

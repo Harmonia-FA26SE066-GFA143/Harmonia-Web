@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { emptyActivityFilters, hasActiveActivityFilters, readActivityState, toActivityQuery, writeActivityState } from '../activityFilters'
-import { ActivityDetailModal } from '../components/ActivityDetailModal'
+import { ActivityDetailDrawer } from '../components/ActivityDetailDrawer'
 import { ActivityFilterBar } from '../components/ActivityFilterBar'
 import { ActivityTable } from '../components/ActivityTable'
 import { useActivityLog } from '../hooks/useActivityLog'
@@ -73,7 +73,7 @@ export function ActivityLogPage() {
         </Card>
       )}
 
-      <ActivityDetailModal record={selected} onClose={() => setSelected(undefined)} />
+      <ActivityDetailDrawer record={selected} onClose={() => setSelected(undefined)} />
     </>
   )
 }

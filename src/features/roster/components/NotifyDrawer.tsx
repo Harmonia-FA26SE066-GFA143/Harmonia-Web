@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { colors, spacing } from '@/styles/tokens'
 import { FormDrawer } from '@/shared/ui'
 
-export interface NotifyModalProps {
+export interface NotifyDrawerProps {
   open: boolean
   /** Assigned members, once each. */
   members: { memberId: string; fullName: string }[]
@@ -13,7 +13,7 @@ export interface NotifyModalProps {
 }
 
 /** Choose the assigned members who receive the assignment notification (FE-40); all are selected by default. */
-export function NotifyModal({ open, members, sending = false, onSend, onCancel }: Readonly<NotifyModalProps>) {
+export function NotifyDrawer({ open, members, sending = false, onSend, onCancel }: Readonly<NotifyDrawerProps>) {
   const [deselected, setDeselected] = useState<string[]>([])
   const selected = members.filter((member) => !deselected.includes(member.memberId)).map((member) => member.memberId)
 

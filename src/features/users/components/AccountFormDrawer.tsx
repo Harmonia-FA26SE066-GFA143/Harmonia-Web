@@ -4,7 +4,7 @@ import { assignableRoles } from '../roles'
 import type { Account, CreateAccountValues, UpdateAccountValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
-export interface AccountFormModalProps {
+export interface AccountFormDrawerProps {
   open: boolean
   /** The account being edited; absent when creating one. */
   account?: Account
@@ -23,7 +23,7 @@ type FormValues = { fullName?: string; email: string; phone?: string; role?: Cre
  * phone (Harmonia-BE CreateUserRequestValidator / UpdateUserRequestValidator). The backend generates the first
  * password and emails it. The role is changed on the Roles page.
  */
-export function AccountFormModal({ open, account, saving = false, emailError, onSubmit, onCancel }: Readonly<AccountFormModalProps>) {
+export function AccountFormDrawer({ open, account, saving = false, emailError, onSubmit, onCancel }: Readonly<AccountFormDrawerProps>) {
   return (
     <FormDrawer
       open={open}

@@ -10,8 +10,8 @@ import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/s
 import { colors, spacing } from '@/styles/tokens'
 import { ProposalTable, type DraftItem } from '../components/ProposalTable'
 import { SongListStatusAlert } from '../components/SongListStatusAlert'
-import { SongPickerModal } from '../components/SongPickerModal'
-import { SongSuggestionModal } from '../components/SongSuggestionModal'
+import { SongPickerDrawer } from '../components/SongPickerDrawer'
+import { SongSuggestionDrawer } from '../components/SongSuggestionDrawer'
 import { useSaveSongList, useSongList } from '../hooks/useSongList'
 import { songListErrorMessage } from '../songListErrors'
 import type { SongList } from '../types'
@@ -158,7 +158,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
       </Flex>
 
       {picking && (
-        <SongPickerModal
+        <SongPickerDrawer
           excludedSongIds={items.map((item) => item.songId)}
           suggestedFilters={suggestedFilters}
           onCancel={() => setPicking(false)}
@@ -169,7 +169,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
         />
       )}
       {suggesting && (
-        <SongSuggestionModal
+        <SongSuggestionDrawer
           programId={program.id}
           takenBySlot={takenBySlot}
           onCancel={() => setSuggesting(false)}

@@ -8,14 +8,14 @@ import { parseUtc } from '@/lib/api/dates'
 import { ApiError, requestFailureMessage } from '@/lib/api/errors'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
-import { LearningProgressModal } from '../components/LearningProgressModal'
+import { LearningProgressDrawer } from '../components/LearningProgressDrawer'
 import { SongClassificationPanel } from '../components/SongClassificationPanel'
-import { SongClassificationModal } from '../components/SongClassificationModal'
-import { SongFormModal } from '../components/SongFormModal'
+import { SongClassificationDrawer } from '../components/SongClassificationDrawer'
+import { SongFormDrawer } from '../components/SongFormDrawer'
 import { SongInfoPanel } from '../components/SongInfoPanel'
 import { SongMaterialsPanel } from '../components/SongMaterialsPanel'
-import { ReplaceMaterialFileModal } from '../components/ReplaceMaterialFileModal'
-import { UploadMaterialModal } from '../components/UploadMaterialModal'
+import { ReplaceMaterialFileDrawer } from '../components/ReplaceMaterialFileDrawer'
+import { UploadMaterialDrawer } from '../components/UploadMaterialDrawer'
 import {
   useDeleteMaterial,
   useDeleteSong,
@@ -312,7 +312,7 @@ export function SongDetailPage() {
         />
       </Card>
 
-      <SongFormModal
+      <SongFormDrawer
         open={editing}
         song={data}
         saving={save.isPending}
@@ -320,27 +320,27 @@ export function SongDetailPage() {
         onSubmit={handleSave}
         onCancel={closeForm}
       />
-      <UploadMaterialModal
+      <UploadMaterialDrawer
         pending={picked}
         saving={upload.isPending}
         onSubmit={handleUpload}
         onCancel={() => setPicked(undefined)}
       />
-      <UploadMaterialModal
+      <UploadMaterialDrawer
         material={editingMaterial}
         saving={updateMaterial.isPending}
         onSubmit={handleUpdateMaterial}
         onCancel={() => setEditingMaterial(undefined)}
       />
-      <ReplaceMaterialFileModal
+      <ReplaceMaterialFileDrawer
         material={replacing}
         saving={replaceFile.isPending}
         onSubmit={handleReplaceFile}
         onCancel={() => setReplacing(undefined)}
       />
-      <LearningProgressModal material={progressOf} onClose={() => setProgressOf(undefined)} />
+      <LearningProgressDrawer material={progressOf} onClose={() => setProgressOf(undefined)} />
       {classification.data && (
-        <SongClassificationModal
+        <SongClassificationDrawer
           open={classifying}
           classification={classification.data}
           saving={saveClassification.isPending}
