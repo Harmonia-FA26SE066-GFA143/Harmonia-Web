@@ -133,6 +133,53 @@ describe('SongListProposalPage', () => {
     expect(save).toHaveBeenCalledWith('p1', null, [{ songId: 'song-2', slotId: 'slot-3', note: undefined }])
   })
 
+  it('adds suggested songs to the first part with no song, showing why they fit and when they were last sung', async () => {
+    withList(songList({ items: [item('1', 'Con Bước Lên Bàn Thờ')] }))
+    const suggest = vi.spyOn(songListsApi, 'listSongSuggestions').mockResolvedValue({
+      items: [
+        {
+          songId: 'song-2',
+          title: 'Lễ Vật Tâm Tình',
+          composer: 'Lm. Thái Nguyên',
+          score: 5,
+          matchesSlot: true,
+          matchesEventType: false,
+          matchesSeason: true,
+          timesUsed: 3,
+          lastUsedDate: '2026-09-27',
+        },
+        { songId: 'song-4', title: 'Dâng Lễ', score: 3, matchesSlot: true, matchesEventType: false, matchesSeason: false, timesUsed: 0 },
+      ],
+      pageNumber: 1,
+      pageSize: 50,
+      totalCount: 2,
+      totalPages: 1,
+    })
+    const save = vi.spyOn(songListsApi, 'saveSongList').mockResolvedValue(songList({}))
+    renderProposal()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Gợi ý bài theo phần/ }))
+    const dialog = await screen.findByRole('dialog')
+    // Ca nhập lễ already has a song, so the next part is proposed first.
+    await waitFor(() => expect(suggest).toHaveBeenCalledWith('p1', 'slot-3', { pageNumber: 1, pageSize: 50 }))
+    expect(await within(dialog).findByText('· Đã hát 3 lần, gần nhất 27/09/2026')).toBeInTheDocument()
+    expect(within(dialog).getByText('· Chưa hát lần nào')).toBeInTheDocument()
+    expect(within(dialog).getAllByText('Đúng phần phụng vụ')).toHaveLength(2)
+    expect(within(dialog).getByText('Đúng mùa')).toBeInTheDocument()
+
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: /Lễ Vật Tâm Tình/ }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thêm 1 bài vào Ca dâng lễ' }))
+    expect(await screen.findByText(/yêu cầu nhân sự của từng bài được điền sẵn/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Lưu nháp/ }))
+
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith('p1', expect.objectContaining({ id: 'l1' }), [
+        { songId: 'song-1', slotId: 'slot-1', note: undefined },
+        { songId: 'song-2', slotId: 'slot-3', note: undefined },
+      ]),
+    )
+  })
+
   it('adds a liturgical slot of its own and uses it for the song', async () => {
     withList(null)
     withLibrary()

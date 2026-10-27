@@ -1,7 +1,8 @@
 import type { SongListStatus } from '@/features/liturgical-programs'
 import { apiRequest } from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
-import type { ReviewDecision, SongList, SongListItemInput } from '../types'
+import { toQuery, type PagedList } from '@/lib/api/paging'
+import type { ReviewDecision, SongList, SongListItemInput, SongSuggestion } from '../types'
 
 // `/api/song-lists` (Harmonia-BE SongListsController), the Choir Director's side: the newest version of an event's
 // list (drafts included), a new version, the items of a draft, and the submission.
@@ -94,4 +95,32 @@ export async function saveSongList(eventId: string, current: SongList | null, it
 /** Draft → Submitted; the Parish Priests are notified. */
 export async function submitSongList(id: string): Promise<void> {
   await apiRequest<unknown>(`/api/song-lists/${id}/submit`, { method: 'POST' })
+}
+
+interface SongSuggestionDto extends Omit<SongSuggestion, 'composer' | 'lastUsedDate'> {
+  composer: string | null
+  lastUsedDate: string | null
+}
+
+/**
+ * Library songs that fit the event and, with `slotId`, one part of the Mass (`GET api/liturgical-events/{id}/
+ * song-suggestions`, Parish Priest and Choir Director). Ranked on the server: score, then songs matching on more
+ * dimensions, then the longest unsung.
+ */
+export async function listSongSuggestions(
+  eventId: string,
+  slotId: string | undefined,
+  page: { pageNumber: number; pageSize: number },
+): Promise<PagedList<SongSuggestion>> {
+  const result = await apiRequest<PagedList<SongSuggestionDto>>(
+    `/api/liturgical-events/${eventId}/song-suggestions${toQuery({ slotId, ...page })}`,
+  )
+  return {
+    ...result,
+    items: result.items.map(({ composer, lastUsedDate, ...rest }) => ({
+      ...rest,
+      composer: composer ?? undefined,
+      lastUsedDate: lastUsedDate ?? undefined,
+    })),
+  }
 }

@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, FileSearchOutlined, PlusOutlined, SaveOutlined, SendOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, BulbOutlined, FileSearchOutlined, PlusOutlined, SaveOutlined, SendOutlined } from '@ant-design/icons'
 import { App, Button, Card, Flex, Modal, Typography } from 'antd'
 import { useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router'
@@ -7,10 +7,11 @@ import { canEditSongList, formatProgramDate, ProgramInfo, useProgram, type Litur
 import type { SongFilters } from '@/features/music-library'
 import { useCatalogOptions, type CatalogOption } from '@/features/system-categories'
 import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { ProposalTable, type DraftItem } from '../components/ProposalTable'
 import { SongListStatusAlert } from '../components/SongListStatusAlert'
 import { SongPickerModal } from '../components/SongPickerModal'
+import { SongSuggestionModal } from '../components/SongSuggestionModal'
 import { useSaveSongList, useSongList } from '../hooks/useSongList'
 import { songListErrorMessage } from '../songListErrors'
 import type { SongList } from '../types'
@@ -51,6 +52,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
   const [items, setItems] = useState<DraftItem[]>(() => toDraft(list))
   const [dirty, setDirty] = useState(false)
   const [picking, setPicking] = useState(false)
+  const [suggesting, setSuggesting] = useState(false)
   const suggestedFilters = useEventSongFilters(program)
   const [confirming, setConfirming] = useState(false)
 
@@ -93,6 +95,13 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
       Thêm bài hát từ kho
     </Button>
   )
+  const suggestButton = (
+    <Button icon={<BulbOutlined />} onClick={() => setSuggesting(true)}>
+      Gợi ý bài theo phần
+    </Button>
+  )
+  const takenBySlot = new Map<string, Set<string>>()
+  for (const { slotId, songId } of items) if (slotId) takenBySlot.set(slotId, (takenBySlot.get(slotId) ?? new Set()).add(songId))
 
   return (
     <>
@@ -104,6 +113,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
           extra={
             editable && (
               <Flex wrap gap={spacing.sm}>
+                {suggestButton}
                 {addButton}
                 <Button
                   icon={<SaveOutlined />}
@@ -128,10 +138,23 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
               headingLevel={3}
               title="Chưa có bài hát nào trong đề xuất"
               description="Chọn các bài hát phù hợp từ kho bài hát của ca đoàn rồi gán phần phụng vụ cho từng bài; một phần có thể có nhiều bài."
-              action={editable ? addButton : undefined}
+              action={
+                editable ? (
+                  <Flex wrap justify="center" gap={spacing.sm}>
+                    {suggestButton}
+                    {addButton}
+                  </Flex>
+                ) : undefined
+              }
             />
           )}
         </Card>
+        {editable && items.length > 0 && (
+          <Typography.Text style={{ color: colors.textMuted }}>
+            Khi lưu, yêu cầu nhân sự của từng bài được điền sẵn theo kho bài hát và phần phụng vụ (ví dụ Đáp ca cần 1 người
+            xướng); xem và sửa ở trang Phân công phục vụ.
+          </Typography.Text>
+        )}
       </Flex>
 
       {picking && (
@@ -142,6 +165,26 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
           onAdd={(songs) => {
             change([...items, ...songs.map((song) => ({ key: `new-${song.id}`, songId: song.id, songTitle: song.title }))])
             setPicking(false)
+          }}
+        />
+      )}
+      {suggesting && (
+        <SongSuggestionModal
+          programId={program.id}
+          takenBySlot={takenBySlot}
+          onCancel={() => setSuggesting(false)}
+          onAdd={(slot, songs) => {
+            change([
+              ...items,
+              ...songs.map((song) => ({
+                key: `new-${slot.id}-${song.songId}`,
+                songId: song.songId,
+                songTitle: song.title,
+                slotId: slot.id,
+                slotName: slot.name,
+              })),
+            ])
+            setSuggesting(false)
           }}
         />
       )}
