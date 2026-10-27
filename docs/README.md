@@ -2,7 +2,7 @@
 
 Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì với BE, đọc trực tiếp sau khi `git pull` repo Harmonia-Web. Nội dung các file viết bằng tiếng Anh để giữ nguyên tên API, mã lỗi và trích dẫn code; file này là bản tóm tắt tiếng Việt.
 
-- Cập nhật lần cuối: 2026-10-26, đối chiếu với Harmonia-BE `main@c091c07`. Thay đổi hợp đồng phía BE ghi ở `doc/api-changelog.md` của repo BE.
+- Cập nhật lần cuối: 2026-10-27, đối chiếu với Harmonia-BE `main@d1ca63e`. Thay đổi hợp đồng phía BE ghi ở `doc/api-changelog.md` của repo BE.
 - Cách đọc trích dẫn: `File.cs:12-20` là đường dẫn và số dòng trong code BE ở commit trên; `src/...` là code Web.
 - Web làm theo BE ở mọi chỗ BE đã quy định (trường, trạng thái, ai được làm gì, mã lỗi). Chỗ BE chưa có thì ghi là cần BE bổ sung, kèm quyết định tạm của owner.
 
@@ -24,8 +24,13 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
 
 ## Cần bàn với BE (các mục còn mở trong backlog)
 
-Hiện không còn mục nào mở.
+| Mục | Việc cần BE làm | Ghi chú |
+|---|---|---|
+| B39 | `GET api/service-rosters/shortages` trả danh sách rỗng khi sự kiện chưa có vị trí nào cần người | Hiện trả 409 `ROSTER_SONG_LIST_NOT_APPROVED`; Web đang tự đổi thành rỗng. Ưu tiên thấp |
 
+Owner còn cần chốt (ghi ở `open-business-decisions.md`): thứ tự gợi ý bài (BE xếp bài chưa hát lần nào lên trước), khai bè S/A/T/B ở cấp cả buổi lễ, và kiểm tra một người bị phân công hai lễ trùng giờ.
+
+- Đã xong ở `d1ca63e` (2026-10-27): phân loại bài theo phần phụng vụ, cây chủ đề, số người; gợi ý bài; phân công 3 tầng. Web nối ở #223, #225, #227.
 - Đã xong ở `c091c07` (2026-10-26): B37 (Cha xứ đọc danh sách ca đoàn), B38 (Admin tìm ca viên). Web nối ở #219.
 - Đã xong ở `718696c` (2026-10-25): B10, B24–B28, B31–B36. Web đã dùng hết (B27 ở #215, B31 ở #211).
 - Ghi chú cho BE: `c091c07` chưa có dòng nào trong `doc/api-changelog.md`.

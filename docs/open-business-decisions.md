@@ -37,6 +37,16 @@ Stored in the business files (`roles-permissions.md`, `choir-skills.md`, `liturg
 - **Trend charts**: attendance and practice by period for the Choir Director and the Admin, from `GET /api/reports/activity-trend` (Web #209).
 - **Delivery**: fewer, larger Web PRs per BE update.
 
+## Owner decisions 2026-10-27
+
+- **Song classification and three-tier roster** (BE `d1ca63e`): the Web follows the BE, delivered in three PRs (Web #223 Admin and library, #225 song suggestions, #227 roster tiers). The BE answered the Web's questions on 2026-10-26 (extra people per song, replacing after early finalization, earlier data kept, theme tree rules, suggestion ranking).
+
+## Still open (owner to decide)
+
+- **Suggestion ranking**: at equal score the BE puts never-sung songs first (`SongSuggestionService.cs:53`, `doc/api.md`). A choir may prefer songs it already knows; the Web shows how often and when each song was sung so the director can judge.
+- **Vocal parts at the whole-service level**: Report 1 FE-35 / FE-37 ask for singers per vocal part and warnings for missing vocal skills. The BE pre-fills song requirements without the vocal parts, but accepts any skill, vocal parts included, as a whole-service requirement; the Web offers them there (following the BE) until the owner decides otherwise.
+- **Overlapping events**: no check stops a member from being assigned to two events at the same time (`RosterService.cs:437-457`).
+
 ## Confirmed BA decisions — Daniel, 2026-10-01
 
 The owner's "Confirmed Business Decisions" of 2026-10-01 (kept locally, not published) is the owner-supplied record of intent for the event lifecycle, music program versioning, readiness and emergency handling. It carries a BE-override note at the top; follow the BE where they differ.
