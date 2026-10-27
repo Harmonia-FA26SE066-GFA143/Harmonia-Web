@@ -2,14 +2,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addAssignment,
   finalizeRoster,
+  finalizeWholeService,
+  getEventRequirements,
   getPersonnelRequirements,
   getRoster,
   getShortages,
   removeAssignment,
   replaceAssignment,
+  saveEventRequirements,
   savePersonnelRequirements,
   sendRosterNotifications,
   suggestRoster,
+  updateAssignmentNote,
   type NewAssignment,
 } from '../api/rosterApi'
 import type { PersonnelRequirement } from '../types'
@@ -34,10 +38,11 @@ export function useShortages(programId?: string) {
   })
 }
 
-export function usePersonnelRequirements(programId: string, songListItemId: string) {
+/** Requirements of one song of the approved list, or of the whole service when no song is given. */
+export function usePersonnelRequirements(programId: string, songListItemId?: string) {
   return useQuery({
-    queryKey: [...rosterKey(programId), 'requirements', songListItemId],
-    queryFn: () => getPersonnelRequirements(songListItemId),
+    queryKey: [...rosterKey(programId), 'requirements', songListItemId ?? 'whole-service'],
+    queryFn: () => (songListItemId ? getPersonnelRequirements(songListItemId) : getEventRequirements(programId)),
   })
 }
 
@@ -46,8 +51,10 @@ function useRosterChange<TVariables, TResult>(programId: string, mutationFn: (va
   return useMutation({ mutationFn, onSuccess: () => queryClient.invalidateQueries({ queryKey: rosterKey(programId) }) })
 }
 
-export const useSavePersonnelRequirements = (programId: string, songListItemId: string) =>
-  useRosterChange(programId, (rows: PersonnelRequirement[]) => savePersonnelRequirements(songListItemId, rows))
+export const useSavePersonnelRequirements = (programId: string, songListItemId?: string) =>
+  useRosterChange(programId, (rows: PersonnelRequirement[]) =>
+    songListItemId ? savePersonnelRequirements(songListItemId, rows) : saveEventRequirements(programId, rows),
+  )
 
 export const useSuggestRoster = (programId: string) => useRosterChange(programId, () => suggestRoster(programId))
 
@@ -61,6 +68,12 @@ export const useReplaceAssignment = (programId: string) =>
 
 export const useRemoveAssignment = (programId: string) =>
   useRosterChange(programId, (assignmentId: string) => removeAssignment(assignmentId))
+
+export const useUpdateAssignmentNote = (programId: string) =>
+  useRosterChange(programId, ({ assignmentId, note }: { assignmentId: string; note: string }) => updateAssignmentNote(assignmentId, note))
+
+export const useFinalizeWholeService = (programId: string) =>
+  useRosterChange(programId, (rosterId: string) => finalizeWholeService(rosterId))
 
 export const useFinalizeRoster = (programId: string) =>
   useRosterChange(programId, (rosterId: string) => finalizeRoster(rosterId))

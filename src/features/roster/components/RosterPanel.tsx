@@ -1,35 +1,55 @@
-import { BulbOutlined, LockOutlined, NotificationOutlined } from '@ant-design/icons'
+import { BulbOutlined, LockOutlined, NotificationOutlined, SoundOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Flex, Tooltip, Typography } from 'antd'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import { formatDateTime } from '@/lib/api/dates'
 import { ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
-import { useFinalizeRoster, useRoster, useSendRosterNotifications, useShortages, useSuggestRoster } from '../hooks/useRoster'
+import {
+  useFinalizeRoster,
+  useFinalizeWholeService,
+  usePersonnelRequirements,
+  useRoster,
+  useSendRosterNotifications,
+  useShortages,
+  useSuggestRoster,
+} from '../hooks/useRoster'
 import { rosterErrorMessage } from '../rosterErrors'
-import { rosterStatusLabels, type EligibleMember } from '../types'
+import { rosterStatusLabels, type EligibleMember, type RosterAssignment } from '../types'
 import { NotifyModal } from './NotifyModal'
-import { SongStaffingCard, type RosterSong } from './SongStaffingCard'
+import { StaffingCard, type RosterSong } from './StaffingCard'
 
 export interface RosterPanelProps {
   programId: string
-  /** Songs of the approved list, in order. */
+  /** The song list is approved: song positions open, and the whole roster can be finalized. */
+  approved: boolean
+  /** Songs of the approved list, in order; empty until it is approved. */
   songs: RosterSong[]
+  /** Shown instead of the songs while the list is not approved. */
+  songListNotice?: ReactNode
   eligible: EligibleMember[]
   skills: { id: string; name: string }[]
 }
 
 const statusColors = { draft: 'default', suggested: 'blue', finalized: 'green' } as const
 
+const uniqueMembers = (lines: RosterAssignment[]) => [
+  ...new Map(lines.map((line) => [line.memberId, { memberId: line.memberId, fullName: line.memberName }])).values(),
+]
+
 /**
- * The roster of one program (FE-35–FE-40), following Harmonia-BE: requirements per song, suggestion (FE-36),
- * shortages computed by the backend (FE-37), manual lines (FE-38), finalization that locks everything (FE-39) and
- * the assignment notification, sent only once finalized (FE-40).
+ * The roster of one program (FE-35–FE-40), in Harmonia-BE's three tiers (BE d1ca63e): choral singing needs no line,
+ * whole-service roles are staffed once (and may be finalized and announced early), song roles per song of the approved
+ * list. Suggestion (FE-36), shortages computed by the backend (FE-37), manual lines (FE-38), finalization that locks
+ * everything (FE-39) and the assignment notification (FE-40).
  */
-export function RosterPanel({ programId, songs, eligible, skills }: Readonly<RosterPanelProps>) {
+export function RosterPanel({ programId, approved, songs, songListNotice, eligible, skills }: Readonly<RosterPanelProps>) {
   const { message, modal } = App.useApp()
   const roster = useRoster(programId)
   const shortages = useShortages(programId)
+  const wholeService = usePersonnelRequirements(programId)
   const suggest = useSuggestRoster(programId)
   const finalize = useFinalizeRoster(programId)
+  const finalizeWholeService = useFinalizeWholeService(programId)
   const notify = useSendRosterNotifications()
   const [notifying, setNotifying] = useState(false)
 
@@ -45,9 +65,13 @@ export function RosterPanel({ programId, songs, eligible, skills }: Readonly<Ros
 
   const current = roster.data
   const locked = current?.status === 'finalized'
-  const assignedMembers = [
-    ...new Map((current?.assignments ?? []).map((line) => [line.memberId, { memberId: line.memberId, fullName: line.memberName }])).values(),
-  ]
+  const wholeServiceLocked = Boolean(current?.wholeServiceFinalizedAt)
+  const lines = current?.assignments ?? []
+  const wholeServiceLines = lines.filter((line) => line.songListItemId === null)
+  const songLines = lines.filter((line) => line.songListItemId !== null)
+  const wholeServiceCounts = new Map((wholeService.data ?? []).map((row) => [row.skillId, row.requiredCount]))
+  // Before the full finalization only the whole-service lines may be announced.
+  const announceable = uniqueMembers(locked ? lines : wholeServiceLines)
   const failed = (fallback: string) => (error: Error) => message.error(rosterErrorMessage(error, fallback))
 
   const runSuggestion = () =>
@@ -57,10 +81,10 @@ export function RosterPanel({ programId, songs, eligible, skills }: Readonly<Ros
       onError: failed('Không thể gợi ý phân công. Vui lòng thử lại.'),
     })
   const handleSuggest = () =>
-    current?.assignments.some((line) => line.source === 'suggested')
+    lines.some((line) => line.source === 'suggested')
       ? modal.confirm({
           title: 'Gợi ý lại phân công?',
-          content: 'Các dòng gợi ý trước sẽ được thay bằng gợi ý mới; các dòng bạn tự thêm được giữ nguyên.',
+          content: 'Các dòng gợi ý trước sẽ được thay bằng gợi ý mới; các dòng bạn tự thêm và các dòng nhạc công đã chốt được giữ nguyên.',
           okText: 'Gợi ý lại',
           cancelText: 'Hủy',
           onOk: runSuggestion,
@@ -81,6 +105,22 @@ export function RosterPanel({ programId, songs, eligible, skills }: Readonly<Ros
           .mutateAsync(current.id)
           .then(() => message.success('Đã chốt phân công.'))
           .catch(failed('Không thể chốt phân công. Vui lòng thử lại.')),
+    })
+  }
+
+  const handleFinalizeWholeService = () => {
+    if (!current) return
+    const short = shortages.data.filter((item) => item.songListItemId === null).length
+    modal.confirm({
+      title: 'Chốt nhạc công?',
+      content: `${short ? `Cả buổi lễ còn ${short} vai thiếu người. ` : ''}Sau khi chốt, vai cả buổi lễ chỉ còn thay người được, và bạn gửi được thông báo cho họ ngay, trước khi danh sách bài được duyệt.`,
+      okText: 'Chốt nhạc công',
+      cancelText: 'Hủy',
+      onOk: () =>
+        finalizeWholeService
+          .mutateAsync(current.id)
+          .then(() => message.success('Đã chốt nhạc công.'))
+          .catch(failed('Không thể chốt nhạc công. Vui lòng thử lại.')),
     })
   }
 
@@ -115,14 +155,25 @@ export function RosterPanel({ programId, songs, eligible, skills }: Readonly<Ros
           <Button icon={<BulbOutlined />} onClick={handleSuggest} disabled={locked} loading={suggest.isPending}>
             Gợi ý phân công
           </Button>
-          <Button icon={<LockOutlined />} onClick={handleFinalize} disabled={!current || locked}>
-            Chốt phân công
-          </Button>
-          <Tooltip title={locked ? undefined : 'Chốt phân công trước khi gửi thông báo.'}>
+          {(wholeService.data?.length ?? 0) > 0 && (
+            <Button
+              icon={<SoundOutlined />}
+              onClick={handleFinalizeWholeService}
+              disabled={!current || locked || wholeServiceLocked || wholeServiceLines.length === 0}
+            >
+              Chốt nhạc công
+            </Button>
+          )}
+          <Tooltip title={approved ? undefined : 'Chốt phân công được sau khi danh sách bài hát được duyệt.'}>
+            <Button icon={<LockOutlined />} onClick={handleFinalize} disabled={!current || locked || !approved}>
+              Chốt phân công
+            </Button>
+          </Tooltip>
+          <Tooltip title={locked || wholeServiceLocked ? undefined : 'Chốt phân công (hoặc chốt nhạc công) trước khi gửi thông báo.'}>
             <Button
               icon={<NotificationOutlined />}
               onClick={() => setNotifying(true)}
-              disabled={!locked || assignedMembers.length === 0}
+              disabled={!(locked || wholeServiceLocked) || announceable.length === 0}
             >
               Gửi thông báo phân công
             </Button>
@@ -130,6 +181,14 @@ export function RosterPanel({ programId, songs, eligible, skills }: Readonly<Ros
         </Flex>
       </Flex>
       {locked && <Alert type="success" showIcon title="Phân công đã chốt. Yêu cầu nhân sự và phân công chỉ còn xem." />}
+      {!locked && wholeServiceLocked && current?.wholeServiceFinalizedAt && (
+        <Alert
+          type="info"
+          showIcon
+          title={`Đã chốt nhạc công lúc ${formatDateTime(current.wholeServiceFinalizedAt)}.`}
+          description="Vai cả buổi lễ chỉ còn thay người được; gửi thông báo được cho họ ngay. Phần theo bài vẫn sửa được."
+        />
+      )}
       {shortages.data.length > 0 && (
         <Alert
           type="warning"
@@ -138,29 +197,43 @@ export function RosterPanel({ programId, songs, eligible, skills }: Readonly<Ros
           description={
             <ul style={{ margin: 0, paddingInlineStart: 18 }}>
               {shortages.data.map((item) => (
-                <li key={`${item.songListItemId}-${item.skillId}`}>
-                  {item.songTitle}: thiếu {item.requiredCount - item.assignedCount} {item.skillName}
+                <li key={`${item.songListItemId ?? 'whole-service'}-${item.skillId}`}>
+                  {item.songTitle ?? 'Cả buổi lễ'}: thiếu {item.requiredCount - item.assignedCount} {item.skillName}
                 </li>
               ))}
             </ul>
           }
         />
       )}
-      {songs.map((song) => (
-        <SongStaffingCard
-          key={song.id}
-          programId={programId}
-          song={song}
-          assignments={(current?.assignments ?? []).filter((line) => line.songListItemId === song.id)}
-          shortages={shortages.data.filter((item) => item.songListItemId === song.id)}
-          eligible={eligible}
-          skills={skills}
-          locked={locked}
-        />
-      ))}
+      <StaffingCard
+        programId={programId}
+        assignments={wholeServiceLines}
+        otherLines={songLines}
+        shortages={shortages.data.filter((item) => item.songListItemId === null)}
+        eligible={eligible}
+        skills={skills}
+        locked={locked}
+        linesLocked={wholeServiceLocked}
+      />
+      {approved
+        ? songs.map((song) => (
+            <StaffingCard
+              key={song.id}
+              programId={programId}
+              song={song}
+              assignments={songLines.filter((line) => line.songListItemId === song.id)}
+              otherLines={wholeServiceLines}
+              shortages={shortages.data.filter((item) => item.songListItemId === song.id)}
+              wholeServiceCounts={wholeServiceCounts}
+              eligible={eligible}
+              skills={skills}
+              locked={locked}
+            />
+          ))
+        : songListNotice}
       <NotifyModal
         open={notifying}
-        members={assignedMembers}
+        members={announceable}
         sending={notify.isPending}
         onSend={handleNotify}
         onCancel={() => setNotifying(false)}

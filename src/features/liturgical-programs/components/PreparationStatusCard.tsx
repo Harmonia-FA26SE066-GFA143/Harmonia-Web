@@ -25,12 +25,16 @@ function participation({ invited, confirmed, declined, unsure }: PreparationStat
 
 function shortageLines(shortages: PreparationStatus['rosterShortages']) {
   if (shortages === undefined) {
-    return <Typography.Text style={muted}>Chưa tính được nhu cầu nhân sự: danh sách bài hát chưa được duyệt.</Typography.Text>
+    return (
+      <Typography.Text style={muted}>
+        Chưa tính được nhu cầu nhân sự: danh sách bài hát chưa được duyệt và chưa khai vai cả buổi lễ.
+      </Typography.Text>
+    )
   }
-  if (shortages.length === 0) return <Typography.Text style={muted}>Đủ người cho mọi bài hát.</Typography.Text>
+  if (shortages.length === 0) return <Typography.Text style={muted}>Đủ người cho các vị trí đã khai.</Typography.Text>
   return shortages.map((shortage) => (
-    <Typography.Text key={`${shortage.songTitle}-${shortage.skillName}`} type="danger">
-      Thiếu {shortage.skillName} cho {shortage.songTitle}: {shortage.assignedCount}/{shortage.requiredCount} người
+    <Typography.Text key={`${shortage.songTitle ?? 'whole-service'}-${shortage.skillName}`} type="danger">
+      Thiếu {shortage.skillName} cho {shortage.songTitle ?? 'cả buổi lễ'}: {shortage.assignedCount}/{shortage.requiredCount} người
     </Typography.Text>
   ))
 }

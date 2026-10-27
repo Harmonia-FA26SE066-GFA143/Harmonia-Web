@@ -7,9 +7,11 @@ const messages: Record<string, string> = {
   ROSTER_ALREADY_FINALIZED: 'Phân công đã chốt, không thể thay đổi.',
   ROSTER_NOT_FINALIZED: 'Chốt phân công trước khi gửi thông báo.',
   ROSTER_NOT_FOUND: 'Chương trình chưa có phân công. Vui lòng tải lại trang.',
-  ROSTER_SONG_LIST_NOT_APPROVED: 'Danh sách bài hát chưa được duyệt.',
+  ROSTER_SONG_LIST_NOT_APPROVED: 'Danh sách bài hát chưa được duyệt. Khai vai cả buổi lễ để gợi ý trước phần đó.',
   ROSTER_NO_PERSONNEL_REQUIREMENT: 'Thêm yêu cầu nhân sự cho ít nhất một bài trước khi gợi ý.',
-  ROSTER_ASSIGNMENT_DUPLICATE: 'Ca viên này đã được phân công vào vị trí này.',
+  // BE d1ca63e: also a member holding the skill for the whole service and for a song at once.
+  ROSTER_ASSIGNMENT_DUPLICATE:
+    'Ca viên này đã giữ kỹ năng này ở vị trí này, hoặc ở cả buổi lễ và ở một bài cùng lúc. Gỡ dòng kia trước.',
   ROSTER_ASSIGNMENT_MEMBER_NOT_CONFIRMED: 'Ca viên chưa trả lời Xác nhận hoặc Chưa chắc chắn cho chương trình.',
   ROSTER_ASSIGNMENT_MEMBER_SKILL_NOT_APPROVED: 'Ca viên chưa được duyệt kỹ năng này.',
   ROSTER_ASSIGNMENT_NOT_FOUND: 'Dòng phân công không còn tồn tại. Vui lòng tải lại trang.',
