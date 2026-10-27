@@ -1,5 +1,6 @@
-import { Form, Input, Modal, Typography } from 'antd'
+import { Input, Modal, Typography } from 'antd'
 import type { PendingSkill } from '../types'
+import { Form } from '@/shared/ui'
 
 export interface RejectSkillModalProps {
   /** The declaration being rejected; the modal is closed without one. */

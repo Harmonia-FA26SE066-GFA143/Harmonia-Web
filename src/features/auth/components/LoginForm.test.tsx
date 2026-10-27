@@ -12,7 +12,11 @@ describe('LoginForm', () => {
     expect(await screen.findByText('Vui lòng nhập email.')).toBeInTheDocument()
     expect(screen.getByText('Vui lòng nhập mật khẩu.')).toBeInTheDocument()
 
+    // Typing clears the field's error; the format is checked when the field is left, not on every keystroke.
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'khong-hop-le' } })
+    await waitFor(() => expect(screen.queryByText('Vui lòng nhập email.')).toBeNull())
+    expect(screen.queryByText('Email không hợp lệ.')).toBeNull()
+    fireEvent.blur(screen.getByLabelText('Email'))
     expect(await screen.findByText('Email không hợp lệ.')).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
   })

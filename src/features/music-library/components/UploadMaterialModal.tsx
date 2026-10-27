@@ -1,7 +1,7 @@
-import { Form, Input, Select, Typography } from 'antd'
+import { Input, Select, Typography } from 'antd'
 import { useCatalogOptions } from '@/features/system-categories'
 import { materialKindLabels, type MaterialKind, type MaterialValues, type SongMaterial } from '../types'
-import { FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer } from '@/shared/ui'
 
 export interface UploadMaterialModalProps {
   /** The file picked for this kind: the modal asks for the details before uploading. */

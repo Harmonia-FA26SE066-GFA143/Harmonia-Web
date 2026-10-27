@@ -245,7 +245,7 @@ export function ProgramCalendarPage() {
                 {!events.isPlaceholderData && selectedEvents.length > 0 && (
                   <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                     {selectedEvents.map((event, index) => (
-                      <Flex component="li" className="calendar-event-row" key={event.id} wrap align="center" justify="space-between" gap={spacing.sm} style={{ animationDelay: `${index * 60}ms` }}>
+                      <Flex component="li" className="calendar-event-row" key={event.id} wrap align="center" justify="space-between" gap={spacing.sm} style={{ animationDelay: `${Math.min(index, 6) * 30}ms` }}>
                         <Flex vertical>
                           <Typography.Text strong>
                             {event.time} · {eventName(event)}

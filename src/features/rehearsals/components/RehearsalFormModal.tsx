@@ -1,4 +1,4 @@
-import { App, Button, DatePicker, Flex, Form, Input, Select, TimePicker } from 'antd'
+import { App, Button, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
 import { useChoirs } from '@/features/choirs'
@@ -10,7 +10,7 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { spacing } from '@/styles/tokens'
 import { useDefaultSongs } from '../hooks/useRehearsals'
 import type { Rehearsal, RehearsalValues } from '../types'
-import { FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer } from '@/shared/ui'
 
 export interface RehearsalFormModalProps {
   open: boolean

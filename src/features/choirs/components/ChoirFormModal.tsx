@@ -1,6 +1,6 @@
-import { Form, Input, Select, Switch } from 'antd'
+import { Input, Select, Switch } from 'antd'
 import type { Choir, ChoirValues } from '../types'
-import { FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer } from '@/shared/ui'
 
 export interface ChoirFormModalProps {
   open: boolean

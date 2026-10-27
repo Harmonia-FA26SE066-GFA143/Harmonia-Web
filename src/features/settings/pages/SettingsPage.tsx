@@ -1,6 +1,6 @@
-import { App, Button, Card, Flex, Form, Input, InputNumber, Switch } from 'antd'
+import { App, Button, Card, Flex, Input, InputNumber, Switch } from 'antd'
 import type { ReactNode } from 'react'
-import { CardTitle, EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, EmptyState, ErrorState, Form, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { useSettings, useUpdateSettings } from '../hooks/useSettings'
 import { settingErrorMessage } from '../settingsErrors'

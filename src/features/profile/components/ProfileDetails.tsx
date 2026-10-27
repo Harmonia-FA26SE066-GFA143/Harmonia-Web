@@ -1,9 +1,10 @@
 import { EditOutlined } from '@ant-design/icons'
-import { Button, Descriptions, Flex, Form, Input, Tag, Typography } from 'antd'
+import { Button, Descriptions, Flex, Input, Tag, Typography } from 'antd'
 import { useEffect, useRef } from 'react'
 import { roleLabels } from '@/shared/types/account'
 import { colors, radius, spacing } from '@/styles/tokens'
 import type { Profile, ProfileUpdateValues } from '../types'
+import { Form } from '@/shared/ui'
 
 export interface ProfileDetailsProps {
   profile: Profile

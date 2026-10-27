@@ -1,8 +1,9 @@
-import { Button, Descriptions, Drawer, Flex, Form, Radio, Tag, Typography } from 'antd'
+import { Button, Descriptions, Drawer, Flex, Radio, Tag, Typography } from 'antd'
 import { roleLabels, type SystemRole } from '@/shared/types/account'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { assignableRoles, roleDescriptions } from '../roles'
 import type { Account } from '../types'
+import { Form } from '@/shared/ui'
 
 export interface AssignRoleModalProps {
   /** Account whose role is changed; the modal is open while set. */

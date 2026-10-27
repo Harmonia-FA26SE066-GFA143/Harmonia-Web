@@ -1,8 +1,8 @@
-import { Form, Input, Select } from 'antd'
+import { Input, Select } from 'antd'
 import { roleLabels } from '@/shared/types/account'
 import { assignableRoles } from '../roles'
 import type { Account, CreateAccountValues, UpdateAccountValues } from '../types'
-import { FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer } from '@/shared/ui'
 
 export interface AccountFormModalProps {
   open: boolean

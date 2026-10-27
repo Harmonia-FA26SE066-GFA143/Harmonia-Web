@@ -45,7 +45,7 @@ body {
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   transform: translateY(-200%);
-  transition: transform 0.2s ease;
+  transition: transform 150ms ease-out;
 }
 
 .skip-link:focus {
@@ -68,12 +68,10 @@ body {
   color: #71717a;
 }
 
-/* Glassmorphism for sticky header */
+/* Sticky header: an opaque surface over a hairline (AppShell), not a blurred see-through one, so text scrolling under
+   it never shows through. */
 .ant-layout-header {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.88) !important;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  background: #ffffff !important;
 }
 
 /* Enhanced Primary Buttons. Danger buttons keep antd's red and disabled ones its grey, so neither reads as the brand
@@ -81,13 +79,14 @@ body {
 .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled) {
   background: linear-gradient(135deg, #8E3B4B 0%, #A24557 100%) !important;
   border: none !important;
-  box-shadow: 0 3px 10px rgba(142, 59, 75, 0.22) !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+  /* Only the lift moves; the colour and shadow change at once. */
+  transition: transform 150ms ease-out !important;
 }
 
 .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):hover {
   background: linear-gradient(135deg, #7A2E3D 0%, #8E3B4B 100%) !important;
-  box-shadow: 0 6px 18px rgba(142, 59, 75, 0.35) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07) !important;
   transform: translateY(-1px);
 }
 
@@ -95,14 +94,14 @@ body {
   transform: translateY(0);
 }
 
-/* Card hover lift effect */
+/* Card hover lift: only the lift moves (transform); the shadow and border change at once. */
 .ant-card {
-  transition: box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease !important;
+  transition: transform 150ms ease-out !important;
 }
 
 .ant-card-hoverable:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03) !important;
   border-color: rgba(142, 59, 75, 0.25) !important;
 }
 
@@ -117,19 +116,10 @@ body {
   }
 }
 
-@keyframes harmonia-glow-drift {
-  from {
-    transform: translate3d(10%, -8%, 0) scale(0.92);
-  }
-  to {
-    transform: translate3d(-4%, 8%, 0) scale(1.08);
-  }
-}
-
 .director-hero {
   position: relative;
   isolation: isolate;
-  animation: harmonia-rise-in 550ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: harmonia-rise-in 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .director-hero::after {
@@ -143,7 +133,6 @@ body {
   background: radial-gradient(circle, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 70%);
   content: '';
   pointer-events: none;
-  animation: harmonia-glow-drift 9s ease-in-out infinite alternate;
 }
 
 .director-hero .ant-card-body {
@@ -157,50 +146,47 @@ body {
 }
 
 /* A metric is a card or a link around one, so the stagger targets the row's children. */
+/* Entrances: 300ms ease-out, staggered 30ms per item. */
 .director-metrics-enter > .ant-flex > * {
-  animation: harmonia-rise-in 450ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: harmonia-rise-in 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .director-metrics-enter > .ant-flex > :nth-child(2) {
-  animation-delay: 70ms;
+  animation-delay: 30ms;
 }
 
 .director-metrics-enter > .ant-flex > :nth-child(3) {
-  animation-delay: 140ms;
+  animation-delay: 60ms;
 }
 
 .director-todo-card {
-  animation: harmonia-rise-in 400ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: harmonia-rise-in 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   animation-fill-mode: backwards;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  transition: transform 150ms ease-out;
 }
 
 .director-todo-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: rgba(142, 59, 75, 0.25) !important;
-  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03) !important;
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03) !important;
 }
 
 .calendar-summary-card,
 .calendar-grid-card,
 .calendar-day-card {
-  animation: harmonia-rise-in 450ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: harmonia-rise-in 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .calendar-grid-card {
-  animation-delay: 70ms;
+  animation-delay: 30ms;
 }
 
 .calendar-day-card {
-  animation-delay: 130ms;
+  animation-delay: 60ms;
 }
 
 .calendar-event-row {
-  animation: harmonia-rise-in 300ms ease both;
-}
-
-.priest-calendar-page .ant-picker-calendar-date {
-  transition: background-color 160ms ease, border-color 160ms ease;
+  animation: harmonia-rise-in 200ms ease-out both;
 }
 
 .director-dashboard-page > .ant-flex:first-child,
@@ -230,7 +216,6 @@ body {
 
 /* Sider Menu refinements */
 .ant-menu-inline .ant-menu-item {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   font-weight: 500;
 }
 

@@ -1,6 +1,7 @@
-import { Alert, Button, Flex, Form, Input } from 'antd'
+import { Alert, Button, Flex, Input } from 'antd'
 import { spacing } from '@/styles/tokens'
 import type { NewPasswordFormValues } from '../types'
+import { Form } from '@/shared/ui'
 
 /** Backend rule for a new password (Harmonia-BE PasswordRuleExtensions.StrongPassword). */
 export const passwordRuleMessage = 'Mật khẩu cần ít nhất 8 ký tự, gồm cả chữ và số.'
