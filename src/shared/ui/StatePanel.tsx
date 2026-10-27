@@ -52,7 +52,6 @@ export function StatePanel({
           background: danger ? token.colorErrorBg : 'rgba(142, 59, 75, 0.06)',
           border: `1px solid ${danger ? 'rgba(207, 19, 34, 0.15)' : 'rgba(142, 59, 75, 0.12)'}`,
           color: danger ? token.colorError : colors.primary,
-          boxShadow: `0 4px 16px ${danger ? 'rgba(207, 19, 34, 0.08)' : 'rgba(142, 59, 75, 0.06)'}`,
         }}
       >
         {icon}

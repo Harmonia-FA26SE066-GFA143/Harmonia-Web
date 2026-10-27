@@ -37,7 +37,6 @@ export function AuthCard({ title, description, icon, children, footer }: Readonl
             background: colors.surface,
             border: '1px solid rgba(0, 0, 0, 0.06)',
             borderRadius: 16,
-            boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.03)',
           }}
         >
           {icon && (

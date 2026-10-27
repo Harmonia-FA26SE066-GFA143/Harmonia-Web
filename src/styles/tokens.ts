@@ -14,7 +14,8 @@ export const colors = {
   textPrimary: '#111827',
   textBody: '#374151',
   textMuted: '#6B7280',
-  textDisabled: '#9CA3AF',
+  /** Still 5.5:1 on the grey of a disabled control: a disabled button must be readable, only not clickable. */
+  textDisabled: '#5F6368',
   primary: '#8E3B4B',
   primaryHover: '#762E3D',
   primarySoft: 'rgba(142, 59, 75, 0.08)',
@@ -49,11 +50,11 @@ export const shadows = {
   xl: '0 20px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
 } as const
 
-/** Raised card look: hairline border, faint shadow, near-white gradient. The Card theme gives the radius. */
+/** Card look: flat white on the grey ground, one quiet 1px border, no shadow. The Card theme gives the radius. */
 export const cardSurface = {
-  border: '1px solid rgba(0, 0, 0, 0.06)',
-  boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.02)',
-  background: 'linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%)',
+  border: '1px solid rgba(0, 0, 0, 0.07)',
+  boxShadow: 'none',
+  background: colors.surface,
 } as const
 
 /**

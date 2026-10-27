@@ -83,7 +83,7 @@ export function SongGrid({ songs, page, pageSize, total, loading, onPageChange }
                 style={{ height: '100%', position: 'relative', overflow: 'hidden' }}
                 styles={{ body: { padding: 0, height: '100%' } }}
               >
-                <div style={{ background: 'linear-gradient(135deg, rgba(142,59,75,0.07), rgba(142,59,75,0.02))', padding: `${spacing.sm}px 0` }}>
+                <div style={{ background: 'rgba(142, 59, 75, 0.05)', padding: `${spacing.sm}px 0` }}>
                   <StaffMotif seed={song.id} height={48} />
                 </div>
                 <Flex vertical gap={spacing.xs} style={{ padding: spacing.md }}>
