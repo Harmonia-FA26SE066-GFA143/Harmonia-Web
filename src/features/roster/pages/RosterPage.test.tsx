@@ -186,6 +186,21 @@ describe('RosterPage', () => {
     await waitFor(() => expect(notify).toHaveBeenCalledWith('r1', ['m4']))
   })
 
+  it('replaces a member in place, with no dialog, among members who accepted', async () => {
+    withRoster(roster)
+    const replace = vi.spyOn(rosterApi, 'replaceAssignment').mockResolvedValue()
+    renderRoster()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Giuse Vũ Đình Khôi, Tenor/ }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Thay người' }))
+    expect(await screen.findByRole('combobox', { name: 'Thay Giuse Vũ Đình Khôi (Tenor) bằng' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('option', { name: 'Vinhsơn Nguyễn Văn Hưng' })).toBeNull()
+
+    fireEvent.click(await screen.findByTitle('Giuse Nguyễn Hoàng Long'))
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('a1', 'm2'))
+  })
+
   it('writes a role note for a member', async () => {
     withRoster(roster)
     const note = vi.spyOn(rosterApi, 'updateAssignmentNote').mockResolvedValue()

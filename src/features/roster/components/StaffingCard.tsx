@@ -1,6 +1,6 @@
 import { DeleteOutlined, DownOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import { App, Button, Card, Dropdown, Flex, Input, InputNumber, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { CardTitle, FormDrawer, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import {
@@ -80,7 +80,8 @@ export function StaffingCard({
   const [draft, setDraft] = useState<PersonnelRequirement[]>()
   const [newSkillId, setNewSkillId] = useState<string>()
   const [replacing, setReplacing] = useState<RosterAssignment>()
-  const [replacement, setReplacement] = useState<string>()
+  // Member buttons by skill and member, so focus can return to the person now holding the position.
+  const chips = useRef(new Map<string, HTMLElement>())
   const [noting, setNoting] = useState<RosterAssignment>()
   const [note, setNote] = useState('')
 
@@ -133,16 +134,26 @@ export function StaffingCard({
           .catch(failed('Không thể gỡ ca viên. Vui lòng thử lại.')),
     })
 
-  const handleReplace = () => {
-    if (!replacing || !replacement) return
+  const chipKey = (skillId: string, memberId: string) => `${skillId}:${memberId}`
+  /** Ends the in-place replacement; with `focusMemberId` the keyboard focus goes back to that member's button. */
+  const endReplace = (skillId: string, focusMemberId?: string) => {
+    setReplacing(undefined)
+    if (focusMemberId) requestAnimationFrame(() => chips.current.get(chipKey(skillId, focusMemberId))?.focus())
+  }
+
+  const handleReplace = (line: RosterAssignment, memberId: string) => {
+    if (replace.isPending) return
     replace.mutate(
-      { assignmentId: replacing.id, memberId: replacement },
+      { assignmentId: line.id, memberId },
       {
         onSuccess: () => {
-          message.success('Đã thay người.')
-          setReplacing(undefined)
+          message.success(line.note ? `Đã thay người; người mới giữ ghi chú vai “${line.note}”.` : 'Đã thay người.')
+          endReplace(line.skillId, memberId)
         },
-        onError: failed('Không thể thay người. Vui lòng thử lại.'),
+        onError: (error) => {
+          failed('Không thể thay người. Vui lòng thử lại.')(error)
+          endReplace(line.skillId, line.memberId)
+        },
       },
     )
   }
@@ -215,39 +226,72 @@ export function StaffingCard({
                   </Tag>
                 )
               }
+              const inReplace = replacing?.id === line.id
+              // The member button and the replacement select share one box (stacked in a grid cell), so choosing
+              // "Thay người" swaps them in place and the neighbouring members do not move.
               return (
-                <Dropdown
-                  key={line.id}
-                  trigger={['click']}
-                  menu={{
-                    // Once the whole-service lines are finalized early, a member can only be replaced.
-                    items: [
-                      { key: 'replace', label: 'Thay người' },
-                      ...(linesLocked
-                        ? []
-                        : [
-                            { key: 'note', label: line.note ? 'Sửa ghi chú vai' : 'Ghi chú vai' },
-                            { key: 'remove', label: 'Gỡ khỏi vị trí', danger: true },
-                          ]),
-                    ],
-                    onClick: ({ key }) => {
-                      if (key === 'remove') handleRemove(line)
-                      else if (key === 'note') {
-                        setNote(line.note ?? '')
-                        setNoting(line)
-                      } else {
-                        setReplacement(undefined)
-                        setReplacing(line)
-                      }
-                    },
-                  }}
-                >
-                  <Button size="small" aria-label={`${label}, ${row.skillName}: thay, ghi chú hoặc gỡ`}>
-                    {label}
-                    {line.source === 'suggested' && <Typography.Text style={muted}>· gợi ý</Typography.Text>}
-                    <DownOutlined aria-hidden />
-                  </Button>
-                </Dropdown>
+                <span key={line.id} style={{ display: 'inline-grid' }}>
+                  <Dropdown
+                    trigger={['click']}
+                    menu={{
+                      // Once the whole-service lines are finalized early, a member can only be replaced.
+                      items: [
+                        { key: 'replace', label: 'Thay người' },
+                        ...(linesLocked
+                          ? []
+                          : [
+                              { key: 'note', label: line.note ? 'Sửa ghi chú vai' : 'Ghi chú vai' },
+                              { key: 'remove', label: 'Gỡ khỏi vị trí', danger: true },
+                            ]),
+                      ],
+                      onClick: ({ key }) => {
+                        if (key === 'remove') handleRemove(line)
+                        else if (key === 'note') {
+                          setNote(line.note ?? '')
+                          setNoting(line)
+                        } else setReplacing(line)
+                      },
+                    }}
+                  >
+                    <Button
+                      ref={(node) => {
+                        const key = chipKey(line.skillId, line.memberId)
+                        if (node) chips.current.set(key, node)
+                        else chips.current.delete(key)
+                      }}
+                      size="small"
+                      aria-label={`${label}, ${row.skillName}: thay, ghi chú hoặc gỡ`}
+                      style={{ gridArea: '1 / 1', visibility: inReplace ? 'hidden' : undefined }}
+                    >
+                      {label}
+                      {line.source === 'suggested' && <Typography.Text style={muted}>· gợi ý</Typography.Text>}
+                      <DownOutlined aria-hidden />
+                    </Button>
+                  </Dropdown>
+                  {inReplace && (
+                    <Select
+                      autoFocus
+                      defaultOpen
+                      showSearch
+                      optionFilterProp="label"
+                      size="small"
+                      aria-label={`Thay ${line.memberName} (${row.skillName}) bằng`}
+                      placeholder={`Thay ${line.memberName}`}
+                      loading={replace.isPending}
+                      disabled={replace.isPending}
+                      popupMatchSelectWidth={260}
+                      notFoundContent="Không có ca viên đã nhận lời (Xác nhận hoặc Chưa chắc chắn) có kỹ năng này"
+                      options={candidates(line)}
+                      onChange={(memberId: string) => handleReplace(line, memberId)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape') endReplace(line.skillId, line.memberId)
+                      }}
+                      // Leaving the field cancels; the focus stays where the user moved it.
+                      onBlur={() => !replace.isPending && endReplace(line.skillId)}
+                      style={{ gridArea: '1 / 1', width: '100%', minWidth: 0 }}
+                    />
+                  )}
+                </span>
               )
             })}
             {editable &&
@@ -390,36 +434,6 @@ export function StaffingCard({
           )}
         </Flex>
       )}
-      <FormDrawer
-        open={Boolean(replacing)}
-        title="Thay người"
-        okText="Thay người"
-        cancelText="Hủy"
-        okButtonProps={{ disabled: !replacement, loading: replace.isPending }}
-        cancelButtonProps={{ disabled: replace.isPending }}
-        onOk={handleReplace}
-        onCancel={() => setReplacing(undefined)}
-        destroyOnHidden
-      >
-        {replacing && (
-          <Flex vertical gap={spacing.sm}>
-            <Typography.Text>
-              {replacing.skillName} · {place}: thay {replacing.memberName} bằng
-            </Typography.Text>
-            <Select
-              showSearch
-              optionFilterProp="label"
-              aria-label="Ca viên thay thế"
-              placeholder="Chọn ca viên"
-              value={replacement}
-              onChange={setReplacement}
-              notFoundContent="Không có ca viên đã nhận lời (Xác nhận hoặc Chưa chắc chắn) có kỹ năng này"
-              options={candidates(replacing)}
-            />
-            {replacing.note && <Typography.Text style={muted}>Người mới giữ ghi chú vai “{replacing.note}”.</Typography.Text>}
-          </Flex>
-        )}
-      </FormDrawer>
       <FormDrawer
         open={Boolean(noting)}
         title="Ghi chú vai"
