@@ -1,12 +1,12 @@
 import { DeleteOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons'
-import { App, Button, Flex, Form, InputNumber, Select, Tag, Typography } from 'antd'
+import { App, Button, Flex, InputNumber, Select, Tag, Typography } from 'antd'
 import { useState } from 'react'
 import { colors, spacing } from '@/styles/tokens'
 import { catalogErrorMessage } from '../catalogErrors'
 import { useCatalogOptions } from '../hooks/useCatalogOptions'
 import { useSaveSlotRequirements, useSlotRequirements } from '../hooks/useCatalogs'
 import type { LiturgicalSlot, SlotRequirement, SlotRequirementValue } from '../types'
-import { FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer } from '@/shared/ui'
 
 const muted = { color: colors.textMuted }
 

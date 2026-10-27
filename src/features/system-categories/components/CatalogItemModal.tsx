@@ -1,7 +1,7 @@
-import { Form, Input, Switch } from 'antd'
+import { Input, Switch } from 'antd'
 import type { ReactNode } from 'react'
 import type { CatalogEntry } from '../types'
-import { FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer } from '@/shared/ui'
 
 export interface CatalogItemModalProps<T extends CatalogEntry, V> {
   open: boolean

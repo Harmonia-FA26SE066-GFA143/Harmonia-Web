@@ -1,10 +1,10 @@
-import { DatePicker, Flex, Form, Input, Select, Typography } from 'antd'
+import { DatePicker, Flex, Input, Select, Typography } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { vietnamToday } from '@/lib/api/dates'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { spacing } from '@/styles/tokens'
 import { memberStatuses, memberStatusLabels, type MemberProfile, type MemberProfileValues } from '../types'
-import { FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer } from '@/shared/ui'
 
 export interface MemberFormModalProps {
   /** The member being edited; the modal is closed without one. */

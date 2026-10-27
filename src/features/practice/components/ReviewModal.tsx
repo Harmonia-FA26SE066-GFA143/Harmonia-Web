@@ -1,5 +1,5 @@
-import { App, Flex, Form, Input, Radio, Typography } from 'antd'
-import { ErrorState, FormDrawer, SectionSkeleton } from '@/shared/ui'
+import { App, Flex, Input, Radio, Typography } from 'antd'
+import { ErrorState, Form, FormDrawer, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { useCommentSubmission, useReviewSubmission, useSubmission } from '../hooks/usePractice'
 import { practiceErrorMessage } from '../practiceErrors'

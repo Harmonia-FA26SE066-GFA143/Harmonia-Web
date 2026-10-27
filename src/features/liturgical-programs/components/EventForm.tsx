@@ -1,8 +1,9 @@
-import { Button, DatePicker, Flex, Form, Input, Select, TimePicker } from 'antd'
+import { Button, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useCatalogOptions } from '@/features/system-categories'
 import { spacing } from '@/styles/tokens'
 import type { EventFormValues, LiturgicalEvent } from '../types'
+import { Form } from '@/shared/ui'
 
 interface FormFields {
   date?: Dayjs

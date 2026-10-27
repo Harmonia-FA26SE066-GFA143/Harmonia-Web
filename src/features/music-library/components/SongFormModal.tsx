@@ -1,7 +1,7 @@
-import { Flex, Form, Input } from 'antd'
+import { Flex, Input } from 'antd'
 import { spacing } from '@/styles/tokens'
 import type { Song, SongValues } from '../types'
-import { FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer } from '@/shared/ui'
 
 export interface SongFormModalProps {
   open: boolean

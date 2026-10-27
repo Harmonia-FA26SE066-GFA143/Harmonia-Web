@@ -1,6 +1,7 @@
-import { Alert, Button, Flex, Form, Input } from 'antd'
+import { Alert, Button, Flex, Input } from 'antd'
 import { spacing } from '@/styles/tokens'
 import type { PasswordResetRequestValues } from '../types'
+import { Form } from '@/shared/ui'
 
 export interface ForgotPasswordFormProps {
   onSubmit: (values: PasswordResetRequestValues) => void

@@ -1,10 +1,11 @@
-import { Alert, Button, Divider, Flex, Form, Input, Typography } from 'antd'
+import { Alert, Button, Divider, Flex, Input, Typography } from 'antd'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useContactEmail } from '@/features/settings'
 import { spacing } from '@/styles/tokens'
 import type { SignInError, SignInValues } from '../types'
+import { Form } from '@/shared/ui'
 
 /** Feedback shown above the sign-in form. */
 export type LoginFeedback = SignInError | { kind: 'member-web' } | { kind: 'session-ended' }

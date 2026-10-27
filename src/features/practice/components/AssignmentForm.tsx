@@ -1,5 +1,5 @@
 import { SendOutlined } from '@ant-design/icons'
-import { App, Button, Card, DatePicker, Flex, Form, Input, Radio, Select, Typography } from 'antd'
+import { App, Button, Card, DatePicker, Flex, Input, Radio, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useSearchParams } from 'react-router'
 import { useChoirs, useMembersOfChoir } from '@/features/choirs'
@@ -11,6 +11,7 @@ import { practiceErrorMessage } from '../practiceErrors'
 import { formatEventOption } from '../practiceFormat'
 import { MaterialPicker } from './MaterialPicker'
 import type { AssignmentScope, AssignmentValues } from '../types'
+import { Form } from '@/shared/ui'
 
 interface FormValues extends Omit<AssignmentValues, 'dueDate'> {
   dueDate?: Dayjs

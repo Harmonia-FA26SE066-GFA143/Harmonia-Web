@@ -1,9 +1,9 @@
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Checkbox, Flex, Form, InputNumber, Select, TreeSelect } from 'antd'
+import { Button, Checkbox, Flex, InputNumber, Select, TreeSelect } from 'antd'
 import { themeTreeData, useCatalogOptions, useLookup, useSkillOptions, type CatalogOption } from '@/features/system-categories'
 import { spacing } from '@/styles/tokens'
 import type { SkillRequirementValue, SongClassification, SongClassificationValues } from '../types'
-import { FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer } from '@/shared/ui'
 
 export interface SongClassificationModalProps {
   open: boolean
