@@ -1,6 +1,7 @@
 export { nameConflictMessage } from './catalogErrors'
 export { useCatalogOptions, useLookup, useSkillOptions, type CatalogOption } from './hooks/useCatalogOptions'
 export { useSaveSlot } from './hooks/useCatalogs'
+export { themeTreeData } from './songThemeTree'
 export { LiturgicalCategoriesPage } from './pages/LiturgicalCategoriesPage'
 export { SkillCategoriesPage } from './pages/SkillCategoriesPage'
 export { useMassSchedules } from './hooks/useCatalogs'

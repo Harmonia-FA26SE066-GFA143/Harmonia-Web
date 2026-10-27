@@ -25,7 +25,8 @@ const classification: SongClassification = {
   massTypes: [],
   ceremonyTypes: [],
   songThemes: [],
-  vocalRequirements: [{ skillId: 'sk1', skillName: 'Soprano', isMandatory: true }],
+  liturgicalSlots: [{ id: 'slot-2', name: 'Đáp ca' }],
+  vocalRequirements: [{ skillId: 'sk1', skillName: 'Soprano', isMandatory: true, requiredCount: 1 }],
   instrumentRequirements: [],
 }
 
@@ -80,7 +81,8 @@ describe('SongDetailPage', () => {
     expect(screen.getByText('Rê trưởng')).toBeInTheDocument()
     expect(await screen.findByText('Mùa Thường Niên')).toBeInTheDocument()
     expect(screen.getByText('Mùa Chay')).toBeInTheDocument()
-    expect(screen.getByText('Soprano (bắt buộc)')).toBeInTheDocument()
+    expect(screen.getByText('Đáp ca')).toBeInTheDocument()
+    expect(screen.getByText('Soprano ×1 (bắt buộc)')).toBeInTheDocument()
     expect(screen.getAllByText('Chưa phân loại')).toHaveLength(4)
     for (const kind of ['Bản nhạc', 'Lời bài hát', 'Audio mẫu', 'Tài liệu tập luyện']) {
       expect(await screen.findByRole('heading', { level: 3, name: kind })).toBeInTheDocument()
@@ -150,7 +152,7 @@ describe('SongDetailPage', () => {
       return screen.findByRole('dialog')
     }
 
-    it('saves the whole set, offering only instrument skills for instrument requirements', async () => {
+    it('saves the whole set with the number of people, offering only instrument skills for instrument requirements', async () => {
       withSong()
       withLookups()
       const update = vi.spyOn(songsApi, 'updateSongClassification').mockResolvedValue(classification)
@@ -163,6 +165,7 @@ describe('SongDetailPage', () => {
       expect(screen.queryByRole('option', { name: 'Soprano' })).toBeNull()
       fireEvent.click(screen.getByTitle('Organ'))
       fireEvent.click(within(dialog).getAllByRole('checkbox', { name: 'Bắt buộc' })[1])
+      fireEvent.change(within(dialog).getByRole('spinbutton', { name: 'Số người yêu cầu nhạc cụ 1' }), { target: { value: '2' } })
       fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu phân loại' }))
 
       await waitFor(() =>
@@ -172,8 +175,10 @@ describe('SongDetailPage', () => {
           massTypeIds: [],
           ceremonyTypeIds: [],
           songThemeIds: [],
-          vocalRequirements: [{ skillId: 'sk1', isMandatory: true }],
-          instrumentRequirements: [{ skillId: 'sk2', isMandatory: true }],
+          // A slot no longer offered by the lookup is kept, like the seasons.
+          liturgicalSlotIds: ['slot-2'],
+          vocalRequirements: [{ skillId: 'sk1', isMandatory: true, requiredCount: 1 }],
+          instrumentRequirements: [{ skillId: 'sk2', isMandatory: true, requiredCount: 2 }],
         }),
       )
     })

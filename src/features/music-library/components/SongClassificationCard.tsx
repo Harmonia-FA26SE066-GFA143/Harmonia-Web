@@ -24,7 +24,7 @@ function tags(labels: string[]): ReactNode {
 
 const names = (refs: NamedRef[]) => refs.map((ref) => ref.name)
 const requirements = (items: SkillRequirement[]) =>
-  items.map((item) => (item.isMandatory ? `${item.skillName} (bắt buộc)` : item.skillName))
+  items.map((item) => `${item.skillName} ×${item.requiredCount}${item.isMandatory ? ' (bắt buộc)' : ''}`)
 
 export interface SongClassificationCardProps {
   classification?: SongClassification | null
@@ -61,6 +61,7 @@ export function SongClassificationCard({ classification, loading, failed, error,
             { key: 'massType', label: 'Loại Thánh lễ', children: tags(names(classification.massTypes)) },
             { key: 'ceremonyType', label: 'Loại nghi thức', children: tags(names(classification.ceremonyTypes)) },
             { key: 'theme', label: 'Chủ đề', children: tags(names(classification.songThemes)) },
+            { key: 'slot', label: 'Phần phụng vụ', children: tags(names(classification.liturgicalSlots)) },
             { key: 'vocal', label: 'Yêu cầu bè giọng', children: tags(requirements(classification.vocalRequirements)) },
             {
               key: 'instrument',

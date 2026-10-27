@@ -9,6 +9,8 @@ import { CatalogManager } from '../components/CatalogManager'
 import { descriptionColumn, descriptionField } from '../components/description'
 import { LiturgicalNamesPanel } from '../components/LiturgicalNamesPanel'
 import { MassSchedulesPanel } from '../components/MassSchedulesPanel'
+import { SlotRequirementsCell } from '../components/SlotRequirements'
+import { SongThemesPanel } from '../components/SongThemesPanel'
 import {
   useCatalogItems,
   useLocations,
@@ -19,7 +21,7 @@ import {
   useSeasons,
   useSlots,
 } from '../hooks/useCatalogs'
-import type { BasicCatalog, LiturgicalCatalog, LiturgicalSeason } from '../types'
+import type { BasicCatalog, LiturgicalCatalog, LiturgicalSeason, LiturgicalSlot } from '../types'
 
 const formatDate = (value: string) => dayjs(value).format('DD/MM/YYYY')
 
@@ -121,7 +123,10 @@ function SlotsPanel() {
       query={useSlots()}
       save={useSaveSlot()}
       nameMax={100}
-      columns={[{ key: 'order', title: 'Thứ tự mặc định', dataIndex: 'defaultOrder' }]}
+      columns={[
+        { key: 'order', title: 'Thứ tự mặc định', dataIndex: 'defaultOrder' },
+        { key: 'requirements', title: 'Người cần mặc định', render: (_, slot: LiturgicalSlot) => <SlotRequirementsCell slot={slot} /> },
+      ]}
       fields={
         <Form.Item
           label="Thứ tự mặc định"
@@ -190,7 +195,7 @@ const tabs: { key: LiturgicalCatalog | 'massSchedules' | 'liturgicalNames'; labe
     label: 'Danh mục sự kiện',
     children: <BasicCatalogPanel catalog="eventCategories" noun="danh mục sự kiện" />,
   },
-  { key: 'songThemes', label: 'Chủ đề bài hát', children: <BasicCatalogPanel catalog="songThemes" noun="chủ đề bài hát" /> },
+  { key: 'songThemes', label: 'Chủ đề bài hát', children: <SongThemesPanel /> },
   { key: 'liturgicalSlots', label: 'Phần phụng vụ', children: <SlotsPanel /> },
   { key: 'worshipLocations', label: 'Nơi cử hành', children: <LocationsPanel /> },
   { key: 'massSchedules', label: 'Giờ lễ cố định', children: <MassSchedulesPanel /> },

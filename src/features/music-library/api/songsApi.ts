@@ -47,6 +47,7 @@ export async function listSongs(filters: SongFilters, page: SongPage): Promise<P
       massTypeId: filters.massTypeId,
       ceremonyTypeId: filters.ceremonyTypeId,
       songThemeId: filters.themeId,
+      liturgicalSlotId: filters.slotId,
       skillId: filters.skillId,
       isClassified: filters.classified === undefined ? undefined : filters.classified === 'yes',
       missingMaterialType: filters.missingMaterial && typeByKind[filters.missingMaterial],

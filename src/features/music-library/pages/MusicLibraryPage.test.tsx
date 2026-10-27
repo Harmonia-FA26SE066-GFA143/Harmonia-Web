@@ -96,12 +96,12 @@ describe('MusicLibraryPage', () => {
 
   it('restores the filters and the page from the address, as after Back from a song', async () => {
     const list = vi.spyOn(songsApi, 'listSongs').mockResolvedValue({ ...page(songs), totalCount: 45, totalPages: 3, pageNumber: 2 })
-    renderPage(<MusicLibraryPage />, '/director/library', '/director/library?search=xin&seasonId=a1&page=2')
+    renderPage(<MusicLibraryPage />, '/director/library', '/director/library?search=xin&seasonId=a1&slotId=s2&page=2')
 
     expect(await screen.findByText('Xin Vâng')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Tìm bài hát' })).toHaveValue('xin')
     expect(list).toHaveBeenLastCalledWith(
-      expect.objectContaining({ search: 'xin', seasonId: 'a1' }),
+      expect.objectContaining({ search: 'xin', seasonId: 'a1', slotId: 's2' }),
       expect.objectContaining({ pageNumber: 2, pageSize: 24 }),
     )
   })

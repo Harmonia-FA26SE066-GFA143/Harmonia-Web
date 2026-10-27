@@ -12,7 +12,7 @@ export const songListState = (listSearch: string): SongListState => ({ listSearc
 export const listSearchOf = (state: unknown): string =>
   typeof state === 'object' && state !== null && 'listSearch' in state && typeof state.listSearch === 'string' ? state.listSearch : ''
 
-const selectKeys = ['seasonId', 'massTypeId', 'ceremonyTypeId', 'themeId', 'skillId'] as const
+const selectKeys = ['seasonId', 'massTypeId', 'ceremonyTypeId', 'themeId', 'slotId', 'skillId'] as const
 
 /** The list's filters and page live in the query string, so Back from a song shows the list as it was left. */
 export function readSongListState(params: URLSearchParams): { filters: SongFilters; page: number } {
