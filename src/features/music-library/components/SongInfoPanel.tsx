@@ -33,7 +33,7 @@ export function SongInfoPanel({ song }: Readonly<{ song: Song }>) {
           style={{
             padding: `${spacing.sm}px ${spacing.md}px`,
             borderRadius: radius.lg,
-            background: 'linear-gradient(135deg, rgba(142,59,75,0.07), rgba(142,59,75,0.015))',
+            background: 'rgba(142, 59, 75, 0.05)',
           }}
         >
           <Flex vertical align="center" style={{ flexShrink: 0, minWidth: 72 }}>

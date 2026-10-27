@@ -74,35 +74,10 @@ body {
   background: #ffffff !important;
 }
 
-/* Enhanced Primary Buttons. Danger buttons keep antd's red and disabled ones its grey, so neither reads as the brand
-   action (a disabled one would otherwise show grey text on the gradient). */
-.ant-btn-primary:not(.ant-btn-dangerous):not(:disabled) {
-  background: linear-gradient(135deg, #8E3B4B 0%, #A24557 100%) !important;
-  border: none !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
-  /* Only the lift moves; the colour and shadow change at once. */
-  transition: transform 150ms ease-out !important;
-}
-
-.ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):hover {
-  background: linear-gradient(135deg, #7A2E3D 0%, #8E3B4B 100%) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07) !important;
-  transform: translateY(-1px);
-}
-
-.ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):active {
-  transform: translateY(0);
-}
-
-/* Card hover lift: only the lift moves (transform); the shadow and border change at once. */
-.ant-card {
-  transition: transform 150ms ease-out !important;
-}
-
+/* A linked card says it is clickable by its border, not by lifting or casting a shadow. */
 .ant-card-hoverable:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03) !important;
-  border-color: rgba(142, 59, 75, 0.25) !important;
+  border-color: rgba(142, 59, 75, 0.35) !important;
+  box-shadow: none !important;
 }
 
 @keyframes harmonia-rise-in {
@@ -162,13 +137,6 @@ body {
 .director-todo-card {
   animation: harmonia-rise-in 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   animation-fill-mode: backwards;
-  transition: transform 150ms ease-out;
-}
-
-.director-todo-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(142, 59, 75, 0.25) !important;
-  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03) !important;
 }
 
 .calendar-summary-card,
@@ -203,7 +171,6 @@ body {
   background: #ffffff;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
 }
 
 .ant-table-thead > tr > th {
@@ -221,15 +188,6 @@ body {
 
 .ant-menu-inline .ant-menu-item-selected {
   font-weight: 600;
-  box-shadow: inset 3px 0 0 #8E3B4B;
-}
-
-.ant-menu-item-group-title {
-  font-size: 11px !important;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 700 !important;
-  color: #6B7280 !important;
 }
 
 /* Hover lifts and fades are decoration: people who ask for less motion get none. */

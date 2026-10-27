@@ -259,7 +259,6 @@ export function LandingPage() {
                   ...cardSurface,
                   padding: spacing.xl,
                   borderRadius: radius.lg,
-                  boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.03)',
                   display: 'flex',
                   flexDirection: 'column',
                 }}
@@ -327,7 +326,7 @@ export function LandingPage() {
         aria-labelledby="contact-heading"
         style={{
           padding: spacing.xl,
-          background: 'linear-gradient(135deg, rgba(142, 59, 75, 0.04) 0%, rgba(248, 249, 250, 0.6) 100%)',
+          background: 'rgba(142, 59, 75, 0.04)',
           border: '1px solid rgba(142, 59, 75, 0.12)',
           borderRadius: radius.lg,
         }}

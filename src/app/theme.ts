@@ -58,7 +58,11 @@ export const theme: ThemeConfig = {
       siderBg: colors.surface,
     },
     Menu: {
+      // The active row is a pale tint with the hue's dark ink; no accent bar on top of it.
       itemSelectedBg: colors.primarySoft,
+      itemSelectedColor: colors.primaryHover,
+      groupTitleColor: colors.textMuted,
+      groupTitleFontSize: typography.metadata.fontSize,
       itemHoverBg: 'rgba(142, 59, 75, 0.04)',
       itemHoverColor: colors.primary,
       itemHeight: 42,
@@ -67,16 +71,18 @@ export const theme: ThemeConfig = {
       itemMarginInline: spacing.sm,
       itemMarginBlock: 4,
     },
+    // Flat controls and cards: only what floats (menus, popovers, dialogs) casts a shadow.
     Button: {
-      defaultShadow: shadows.sm,
-      dangerShadow: '0 4px 14px 0 rgba(207, 19, 34, 0.25)',
+      defaultShadow: 'none',
+      primaryShadow: 'none',
+      dangerShadow: 'none',
       fontWeight: 500,
     },
     Card: {
       colorBorderSecondary: 'rgba(0, 0, 0, 0.07)',
     },
     Table: {
-      headerBg: '#F9FAFB',
+      headerBg: colors.surface,
       headerSplitColor: 'transparent',
       rowHoverBg: 'rgba(142, 59, 75, 0.025)',
       cellPaddingBlock: spacing.md,

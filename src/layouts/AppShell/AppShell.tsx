@@ -117,7 +117,6 @@ export function AppShell() {
             scrollbarWidth: 'thin',
             scrollbarColor: `${colors.mutedBorder} transparent`,
             borderInlineEnd: '1px solid rgba(0, 0, 0, 0.06)',
-            boxShadow: '1px 0 4px 0 rgba(0, 0, 0, 0.02)',
           }}
         >
           <div style={{ padding: `${spacing.lg}px ${spacing.lg}px ${spacing.md}px` }}>
@@ -138,7 +137,6 @@ export function AppShell() {
             gap: spacing.md,
             paddingInline: isMobile ? layout.contentPaddingXMobile : layout.contentPaddingX,
             borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.02)',
           }}
         >
           <Flex align="center" gap={spacing.sm} style={{ minWidth: 0 }}>
