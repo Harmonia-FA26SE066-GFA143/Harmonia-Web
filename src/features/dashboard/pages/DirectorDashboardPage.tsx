@@ -1,4 +1,4 @@
-import { ArrowRightOutlined, CalendarOutlined, CustomerServiceOutlined, FileTextOutlined, ReadOutlined, TeamOutlined, TrophyOutlined } from '@ant-design/icons'
+import { ArrowRightOutlined } from '@ant-design/icons'
 import { Button, Card, Col, Flex, Row, Typography } from 'antd'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -7,17 +7,16 @@ import { useSubmissions } from '@/features/practice'
 import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
 import { EmptyState, ErrorState, MetricSummary, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
-import { brandGradient, cardSurface, colors, radius, spacing, typography } from '@/styles/tokens'
-import { ShortcutCards, type Shortcut } from '../components/ShortcutCards'
+import { cardSurface, colors, radius, spacing, typography } from '@/styles/tokens'
 
 const upcomingLimit = 5
 const todoLimit = 4
 const countOnly = { pageNumber: 1, pageSize: 1 }
 
 const metrics = [
-  { key: 'upcoming', label: 'Chương trình sắp tới', icon: CalendarOutlined },
-  { key: 'skills', label: 'Kỹ năng chờ duyệt', icon: TrophyOutlined, to: paths.director.skillApproval },
-  { key: 'submissions', label: 'Bản thu chờ chấm', icon: CustomerServiceOutlined, to: paths.director.practice },
+  { key: 'upcoming', label: 'Chương trình sắp tới' },
+  { key: 'skills', label: 'Kỹ năng chờ duyệt', to: paths.director.skillApproval },
+  { key: 'submissions', label: 'Bản thu chờ chấm', to: paths.director.practice },
 ]
 
 type Todo = 'none' | 'draft' | 'needsRevision' | 'rejected'
@@ -113,17 +112,19 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
   )
 }
 
-const shortcuts: Shortcut[] = [
-  { path: paths.director.programs, title: 'Chương trình phụng vụ', description: 'Các chương trình Cha xứ đã công bố.', icon: FileTextOutlined },
-  { path: paths.director.library, title: 'Kho bài hát', description: 'Tra cứu bài hát và tài liệu tập hát.', icon: ReadOutlined },
-  { path: paths.director.rehearsals, title: 'Lịch tập', description: 'Lên lịch các buổi tập cho lễ sắp tới.', icon: CalendarOutlined },
-  { path: paths.director.members, title: 'Ca viên & kỹ năng', description: 'Hồ sơ ca viên và kỹ năng đã duyệt.', icon: TeamOutlined },
-]
+/** The line under the title: what to do next, read from the upcoming programs once they load. */
+function nextStep(upcoming: LiturgicalProgram[] | undefined, todoCount: number) {
+  if (upcoming === undefined) return 'Việc chuẩn bị của ca đoàn cho các chương trình sắp tới.'
+  if (todoCount > 0) return `${todoCount} chương trình sắp tới cần chuẩn bị danh sách bài hát.`
+  const next = upcoming[0]
+  if (!next) return 'Chưa có chương trình sắp tới.'
+  return `Không có danh sách bài hát cần chuẩn bị. Chương trình gần nhất: ${next.eventName}, ${formatProgramDate(next.date)}.`
+}
 
 /**
- * Choir Director dashboard (Stitch "Tổng quan Ca trưởng"): counts, the upcoming programs whose song list waits on the
- * Director (none yet, a draft, rejected or sent back for revision), the next programs and shortcuts. Each section
- * loads and fails on its own. The Stitch "Chuẩn bị" column is not shown: the Choir Director reads readiness per member
+ * Choir Director dashboard: the next step under the title, counts, the upcoming programs whose song list waits on the
+ * Director (none yet, a draft, rejected or sent back for revision) and the next programs. Each section loads and fails
+ * on its own. No banner and no shortcut cards: the sidebar already lists every area (#244). The Stitch "Chuẩn bị" column is not shown: the Choir Director reads readiness per member
  * (practice "Tiến độ"), not per program.
  */
 export function DirectorDashboardPage() {
@@ -143,43 +144,18 @@ export function DirectorDashboardPage() {
       <PageHeader
         title="Tổng quan"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Tổng quan' }]}
-        description="Quản lý các chương trình và công việc chuẩn bị của ca đoàn."
+        description={nextStep(programs.data, todos.length)}
+        extra={
+          <Button icon={<ArrowRightOutlined />} iconPlacement="end" onClick={() => navigate(paths.director.programs)}>
+            Mở chương trình phụng vụ
+          </Button>
+        }
       />
       <Flex vertical gap={spacing.lg}>
-        <Card
-          className="director-hero"
-          style={{ border: 0, overflow: 'hidden', background: brandGradient, color: '#fff' }}
-          styles={{ body: { padding: '24px 28px' } }}
-        >
-          <Flex wrap align="center" justify="space-between" gap={spacing.lg}>
-            <div style={{ maxWidth: 600 }}>
-              <Typography.Text style={{ color: 'rgba(255,255,255,.76)', fontSize: 12, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>
-                Không gian điều hành ca đoàn
-              </Typography.Text>
-              <Typography.Title level={2} style={{ color: '#fff', margin: '8px 0 4px', fontSize: 25 }}>
-                Sẵn sàng cho những ngày phục vụ
-              </Typography.Title>
-              <Typography.Text style={{ color: 'rgba(255,255,255,.82)' }}>
-                Theo dõi chương trình, hoàn thiện danh sách bài hát và giữ nhịp chuẩn bị của ca đoàn.
-              </Typography.Text>
-            </div>
-            <Button
-              size="large"
-              icon={<ArrowRightOutlined />}
-              iconPlacement="end"
-              onClick={() => navigate(paths.director.programs)}
-              style={{ height: 46, border: 0, color: colors.primary, fontWeight: 600 }}
-            >
-              Mở chương trình phụng vụ
-            </Button>
-          </Flex>
-        </Card>
-        <div className="director-metrics-enter">
-          <MetricSummary
-            definitions={metrics}
-            values={{ upcoming: programs.data?.length, skills: skills.data?.totalCount, submissions: submissions.data?.totalCount }}
-          />
-        </div>
+        <MetricSummary
+          definitions={metrics}
+          values={{ upcoming: programs.data?.length, skills: skills.data?.totalCount, submissions: submissions.data?.totalCount }}
+        />
 
         <section aria-labelledby="todo-heading">
           <Flex wrap align="baseline" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
@@ -239,13 +215,6 @@ export function DirectorDashboardPage() {
               />
             </Card>
           )}
-        </section>
-
-        <section aria-labelledby="shortcuts-heading">
-          <Typography.Title id="shortcuts-heading" level={2} style={{ marginBottom: spacing.md }}>
-            Truy cập nhanh
-          </Typography.Title>
-          <ShortcutCards shortcuts={shortcuts} />
         </section>
       </Flex>
     </div>

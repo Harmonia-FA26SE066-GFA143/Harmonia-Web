@@ -181,7 +181,7 @@ export function ParticipationPage() {
             />
           )}
           {participation.data !== undefined && requests.length > 0 && (
-            <>
+            <Flex vertical gap={spacing.lg}>
               <MetricSummary definitions={metrics} values={counts} />
               <Card styles={{ body: { padding: 0 } }}>
                 <Flex vertical gap={spacing.sm} style={{ padding: spacing.md }}>
@@ -244,7 +244,7 @@ export function ParticipationPage() {
                   />
                 )}
               </Card>
-            </>
+            </Flex>
           )}
         </Flex>
       )}

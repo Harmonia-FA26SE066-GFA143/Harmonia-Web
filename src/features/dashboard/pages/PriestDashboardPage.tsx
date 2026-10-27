@@ -1,4 +1,4 @@
-import { BarChartOutlined, CalendarOutlined, PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Skeleton, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { generatePath, useNavigate } from 'react-router'
@@ -6,13 +6,13 @@ import { paths } from '@/app/router/paths'
 import { EventTable, formatProgramDate, useEvent, useEventNames, useEvents } from '@/features/liturgical-programs'
 import { usePendingSongLists } from '@/features/song-list-review'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
-import { EmptyState, ErrorState, IconTile, MetricSummary, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, MetricSummary, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { cardSurface, colors, spacing } from '@/styles/tokens'
 
 const upcomingLimit = 5
 
 const metrics = [
-  { key: 'upcoming', label: 'Sự kiện sắp tới', icon: CalendarOutlined },
+  { key: 'upcoming', label: 'Sự kiện sắp tới' },
   { key: 'pending', label: 'Danh sách bài hát chờ xem xét' },
 ]
 
@@ -60,8 +60,8 @@ function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: 
 
 /**
  * Priest dashboard: upcoming liturgical events from `GET /api/liturgical-events` and the song lists waiting for review
- * from `GET /api/song-lists/pending` (FE-15, FE-17), with a link to reports (FE-22). Each section loads and fails on
- * its own. "Preparation status" from Stitch is not shown here; a published event shows it on its page.
+ * from `GET /api/song-lists/pending` (FE-15, FE-17); reports (FE-22) are in the sidebar. Each section loads and fails
+ * on its own. "Preparation status" from Stitch is not shown here; a published event shows it on its page.
  */
 export function PriestDashboardPage() {
   const navigate = useNavigate()
@@ -151,27 +151,6 @@ export function PriestDashboardPage() {
           )}
         </section>
 
-        <Card
-          style={cardSurface}
-          styles={{ body: { padding: spacing.lg } }}
-        >
-          <Flex wrap align="center" justify="space-between" gap={spacing.md}>
-            <Flex align="center" gap={spacing.md}>
-              <IconTile size={44}>
-                <BarChartOutlined />
-              </IconTile>
-              <div>
-                <Typography.Text strong style={{ fontSize: 15 }}>
-                  Báo cáo
-                </Typography.Text>
-                <Typography.Paragraph style={{ margin: 0, color: colors.textMuted, fontSize: 13.5 }}>
-                  Lịch sử phục vụ, sử dụng bài hát và tình trạng chuẩn bị của ca đoàn.
-                </Typography.Paragraph>
-              </div>
-            </Flex>
-            <Button onClick={() => navigate(paths.priest.reports)}>Xem báo cáo</Button>
-          </Flex>
-        </Card>
       </Flex>
     </>
   )

@@ -132,7 +132,7 @@ export function AttendanceSheet({ rehearsalId, records, editable }: Readonly<Att
   ]
 
   return (
-    <>
+    <Flex vertical gap={spacing.lg}>
       <MetricSummary definitions={metrics} values={counts} />
       <Card styles={{ body: { padding: 0 } }}>
         {/* Sticky under the app header so Save stays reachable on long lists. */}
@@ -194,6 +194,6 @@ export function AttendanceSheet({ rehearsalId, records, editable }: Readonly<Att
       >
         Các thay đổi điểm danh chưa lưu sẽ bị mất.
       </Modal>
-    </>
+    </Flex>
   )
 }

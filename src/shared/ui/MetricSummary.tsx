@@ -1,67 +1,42 @@
-import { AppstoreOutlined, ArrowRightOutlined } from '@ant-design/icons'
-import { Card, Flex } from 'antd'
-import type { ComponentType } from 'react'
+import { ArrowRightOutlined } from '@ant-design/icons'
+import { Card } from 'antd'
 import { Link } from 'react-router'
-import { cardSurface, colors, spacing } from '@/styles/tokens'
-import { IconTile } from './IconTile'
+import { cardSurface, colors } from '@/styles/tokens'
 
 export interface MetricSummaryProps {
-  /** `to` turns the card into a link to the page where the counted items are handled. */
-  definitions: { key: string; label: string; icon?: ComponentType; to?: string }[]
+  /** `to` adds a link to the page where the counted items are handled. */
+  definitions: { key: string; label: string; to?: string }[]
   values: Record<string, number | undefined>
 }
 
-const cardFlex = '1 1 200px'
-
-/** Row of summary counts; a missing value shows "—" instead of a guess. Each card is a term and its value (dl). */
+/**
+ * Summary counts in one card, split into equal columns by 1px rules: a grey label over the figure, no icons. A missing
+ * value shows "—" instead of a guess. The cells are the terms and values of one list (dl).
+ */
 export function MetricSummary({ definitions, values }: Readonly<MetricSummaryProps>) {
   if (definitions.length === 0) return null
   return (
-    <Flex wrap gap={spacing.md} style={{ margin: `0 0 ${spacing.lg}px` }}>
-      {definitions.map(({ key, label, icon: Icon = AppstoreOutlined, to }) => {
-        const card = (
-          <Card
+    <Card style={cardSurface} styles={{ body: { padding: 0 } }}>
+      <dl style={{ display: 'grid', gridTemplateColumns: `repeat(${definitions.length}, minmax(0, 1fr))`, margin: 0 }}>
+        {definitions.map(({ key, label, to }, index) => (
+          <div
             key={key}
-            hoverable={!!to}
-            style={{ ...cardSurface, ...(to ? { height: '100%' } : { flex: cardFlex }) }}
-            styles={{ body: { padding: '20px 22px' } }}
+            style={{ padding: '16px 20px', borderInlineStart: index > 0 ? `1px solid ${colors.border}` : undefined }}
           >
-            <Flex justify="space-between" align="flex-start" gap={spacing.sm}>
-              <dl style={{ margin: 0, flex: 1, minWidth: 0 }}>
-                <dt style={{ color: colors.textMuted, fontSize: 13, fontWeight: 500, marginBottom: 8 }}>{label}</dt>
-                <dd
-                  style={{
-                    margin: 0,
-                    // JetBrains Mono ships at 400 only, so a bold count was faux-bolded; tabular figures keep digits aligned.
-                    fontVariantNumeric: 'tabular-nums',
-                    fontSize: 32,
-                    fontWeight: 700,
-                    lineHeight: 1.15,
-                    letterSpacing: '-0.02em',
-                  }}
-                >
-                  {values[key] ?? '—'}
-                </dd>
-              </dl>
-              <IconTile size={44}>
-                <Icon />
-              </IconTile>
-            </Flex>
+            <dt style={{ color: colors.textMuted, fontSize: 13, fontWeight: 500 }}>{label}</dt>
+            <dd style={{ margin: '4px 0 0', fontSize: 24, fontWeight: 600, lineHeight: 1.25, fontVariantNumeric: 'tabular-nums' }}>
+              {values[key] ?? '—'}
+            </dd>
             {to && (
-              <Flex align="center" gap={6} style={{ marginTop: spacing.sm, color: colors.primary, fontSize: 13, fontWeight: 500 }}>
-                Xem và xử lý <ArrowRightOutlined aria-hidden />
-              </Flex>
+              <dd style={{ margin: '4px 0 0', fontSize: 13 }}>
+                <Link to={to} aria-label={`${label}: ${values[key] ?? 'chưa có số liệu'}. Xem và xử lý`} style={{ fontWeight: 500 }}>
+                  Xem và xử lý <ArrowRightOutlined aria-hidden />
+                </Link>
+              </dd>
             )}
-          </Card>
-        )
-        return to ? (
-          <Link key={key} to={to} aria-label={`${label}: ${values[key] ?? 'chưa có số liệu'}. Xem và xử lý`} style={{ flex: cardFlex, textDecoration: 'none' }}>
-            {card}
-          </Link>
-        ) : (
-          card
-        )
-      })}
-    </Flex>
+          </div>
+        ))}
+      </dl>
+    </Card>
   )
 }
