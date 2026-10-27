@@ -7,7 +7,7 @@ import { SignOutModal } from '@/features/auth'
 import { useMyProfile } from '@/features/profile'
 import { getSession } from '@/lib/auth/session'
 import { roleByApiName, roleLabels } from '@/shared/types/account'
-import { brandGradient, colors, spacing } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { surfaces, type Surface } from './navigation'
 
 /**
@@ -65,10 +65,7 @@ export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
             <Avatar
               size={32}
               icon={<UserOutlined />}
-              style={{
-                background: brandGradient,
-                boxShadow: '0 2px 6px rgba(142, 59, 75, 0.3)',
-              }}
+              style={{ background: colors.primary }}
             />
             {/* Small screens keep the avatar only, so the brand still fits beside it. */}
             {!compact && (

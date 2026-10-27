@@ -48,6 +48,7 @@ export const entityTypeLabels: Record<string, string> = {
   LiturgicalSeason: 'Mùa phụng vụ',
   SongTheme: 'Chủ đề bài hát',
   LiturgicalSlot: 'Phần phụng vụ',
+  LiturgicalSlotRequirement: 'Người cần cho phần phụng vụ',
   WorshipLocation: 'Nơi cử hành',
 }
 
