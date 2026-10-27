@@ -1,8 +1,9 @@
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Checkbox, Flex, Form, InputNumber, Modal, Select, TreeSelect } from 'antd'
+import { Button, Checkbox, Flex, Form, InputNumber, Select, TreeSelect } from 'antd'
 import { themeTreeData, useCatalogOptions, useLookup, useSkillOptions, type CatalogOption } from '@/features/system-categories'
 import { spacing } from '@/styles/tokens'
 import type { SkillRequirementValue, SongClassification, SongClassificationValues } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 export interface SongClassificationModalProps {
   open: boolean
@@ -119,7 +120,7 @@ export function SongClassificationModal({ open, classification, saving = false, 
     items.map(({ skillId, isMandatory, requiredCount }) => ({ skillId, isMandatory, requiredCount }))
 
   return (
-    <Modal
+    <FormDrawer
       open={open}
       title="Chỉnh sửa phân loại"
       okText="Lưu phân loại"
@@ -127,10 +128,9 @@ export function SongClassificationModal({ open, classification, saving = false, 
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      mask={{ closable: !saving }}
-      width={720}
+      size={720}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<SongClassificationValues>
           layout="vertical"
           initialValues={{
@@ -175,6 +175,6 @@ export function SongClassificationModal({ open, classification, saving = false, 
       </div>
       <RequirementList name="vocalRequirements" label="Yêu cầu bè giọng" addLabel="Thêm bè giọng" options={vocal} />
       <RequirementList name="instrumentRequirements" label="Yêu cầu nhạc cụ" addLabel="Thêm nhạc cụ" options={instrument} />
-    </Modal>
+    </FormDrawer>
   )
 }

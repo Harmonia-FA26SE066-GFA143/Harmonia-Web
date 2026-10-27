@@ -1,9 +1,10 @@
-import { DatePicker, Form, Modal, Radio, Select, Typography } from 'antd'
+import { DatePicker, Form, Radio, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { colors } from '@/styles/tokens'
 import { adminReportKinds, reportDefinitions } from '../reportDefinitions'
 import { reportFormatLabels, type AdminReportKind, type ReportExportRequest, type ReportFilters, type ReportFormat } from '../types'
 import type { FilterOption } from './ReportFilterBar'
+import { FormDrawer } from '@/shared/ui'
 
 export interface ExportReportModalProps {
   open: boolean
@@ -38,7 +39,7 @@ export function ExportReportModal({
   onCancel,
 }: Readonly<ExportReportModalProps>) {
   return (
-    <Modal
+    <FormDrawer
       open={open}
       title="Xuất báo cáo"
       okText="Xuất báo cáo"
@@ -46,9 +47,8 @@ export function ExportReportModal({
       okButtonProps={{ htmlType: 'submit', loading: exporting }}
       cancelButtonProps={{ disabled: exporting }}
       onCancel={onCancel}
-      mask={{ closable: !exporting }}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<ExportFormValues>
           layout="vertical"
           disabled={exporting}
@@ -110,6 +110,6 @@ export function ExportReportModal({
         File gồm mọi dòng của báo cáo trong phạm vi đã chọn và được lưu vào lịch sử xuất.
         {filters.choirId && ' Điểm danh, xác nhận tham gia và bài tập chỉ gồm ca viên của ca đoàn đang lọc trên trang.'}
       </Typography.Paragraph>
-    </Modal>
+    </FormDrawer>
   )
 }

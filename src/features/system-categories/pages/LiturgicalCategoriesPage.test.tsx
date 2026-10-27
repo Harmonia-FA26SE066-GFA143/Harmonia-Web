@@ -263,7 +263,7 @@ describe('LiturgicalCategoriesPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Xoá bản dịch Christ the King' }))
     const confirm = (await screen.findAllByText(/Xoá bản dịch/))[0].closest('.ant-modal') as HTMLElement
-    fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá' }))
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá bản dịch' }))
     await waitFor(() => expect(remove).toHaveBeenCalledWith('t1'))
   })
 })

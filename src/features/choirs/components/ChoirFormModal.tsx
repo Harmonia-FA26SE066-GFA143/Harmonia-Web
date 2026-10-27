@@ -1,5 +1,6 @@
-import { Form, Input, Modal, Select, Switch } from 'antd'
+import { Form, Input, Select, Switch } from 'antd'
 import type { Choir, ChoirValues } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 export interface ChoirFormModalProps {
   open: boolean
@@ -37,7 +38,7 @@ export function ChoirFormModal({
       : directors
 
   return (
-    <Modal
+    <FormDrawer
       open={open}
       title={choir ? 'Chỉnh sửa ca đoàn' : 'Thêm ca đoàn'}
       okText={choir ? 'Lưu thay đổi' : 'Thêm'}
@@ -45,9 +46,8 @@ export function ChoirFormModal({
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      mask={{ closable: !saving }}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<ChoirValues>
           layout="vertical"
           initialValues={choir ?? { isActive: true }}
@@ -96,6 +96,6 @@ export function ChoirFormModal({
           <Switch />
         </Form.Item>
       )}
-    </Modal>
+    </FormDrawer>
   )
 }

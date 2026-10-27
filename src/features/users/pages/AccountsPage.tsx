@@ -68,13 +68,15 @@ export function AccountsPage() {
   const handleToggleActive = (account: Account) => {
     const active = !account.isActive
     modal.confirm({
-      title: active ? 'Kích hoạt lại tài khoản?' : 'Ngừng hoạt động tài khoản?',
+      title: active ? `Kích hoạt lại tài khoản ${accountName(account)}?` : `Ngừng hoạt động tài khoản ${accountName(account)}?`,
       content: active
         ? `${accountName(account)} sẽ đăng nhập lại được.`
         : `${accountName(account)} sẽ bị đăng xuất và không đăng nhập được cho tới khi được kích hoạt lại.`,
       okText: active ? 'Kích hoạt' : 'Ngừng hoạt động',
       okButtonProps: { danger: !active },
       cancelText: 'Hủy',
+      // Enter on the deactivation must not run it.
+      autoFocusButton: active ? 'ok' : 'cancel',
       onOk: () =>
         setActive
           .mutateAsync({ id: account.id, active })

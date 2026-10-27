@@ -1,6 +1,7 @@
-import { Checkbox, Flex, Modal, Typography } from 'antd'
+import { Checkbox, Flex, Typography } from 'antd'
 import { useState } from 'react'
 import { colors, spacing } from '@/styles/tokens'
+import { FormDrawer } from '@/shared/ui'
 
 export interface NotifyModalProps {
   open: boolean
@@ -17,7 +18,7 @@ export function NotifyModal({ open, members, sending = false, onSend, onCancel }
   const selected = members.filter((member) => !deselected.includes(member.memberId)).map((member) => member.memberId)
 
   return (
-    <Modal
+    <FormDrawer
       open={open}
       title="Gửi thông báo phân công"
       okText={selected.length ? `Gửi cho ${selected.length} thành viên` : 'Gửi thông báo'}
@@ -27,7 +28,6 @@ export function NotifyModal({ open, members, sending = false, onSend, onCancel }
       onOk={() => onSend(selected)}
       onCancel={onCancel}
       afterClose={() => setDeselected([])}
-      mask={{ closable: !sending }}
       destroyOnHidden
     >
       <Typography.Paragraph style={{ color: colors.textMuted }}>
@@ -48,6 +48,6 @@ export function NotifyModal({ open, members, sending = false, onSend, onCancel }
           style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}
         />
       </Flex>
-    </Modal>
+    </FormDrawer>
   )
 }

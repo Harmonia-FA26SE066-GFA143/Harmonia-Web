@@ -112,6 +112,8 @@ export function SongListReviewPage() {
       okText: 'Gửi quyết định',
       okButtonProps: { danger: values.decision === 'reject' },
       cancelText: 'Hủy',
+      // Enter on a rejection must not send it.
+      autoFocusButton: values.decision === 'reject' ? 'cancel' : 'ok',
       onOk: () =>
         review
           .mutateAsync({ id: list.id, values })

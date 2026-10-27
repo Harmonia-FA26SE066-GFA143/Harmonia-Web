@@ -1,10 +1,11 @@
-import { DatePicker, Form, Input, Modal, Select } from 'antd'
+import { DatePicker, Form, Input, Select } from 'antd'
 import dayjs from 'dayjs'
 import { useEventNames, useEvents } from '@/features/liturgical-programs'
 import { vietnamToday } from '@/lib/api/dates'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { useNoteRecipients } from '../hooks/useNotes'
 import type { DirectorNoteValues } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 export interface SendNoteModalProps {
   open: boolean
@@ -84,7 +85,7 @@ function NoteFields() {
  */
 export function SendNoteModal({ open, saving = false, onSubmit, onCancel }: Readonly<SendNoteModalProps>) {
   return (
-    <Modal
+    <FormDrawer
       open={open}
       title="Gửi ghi chú cho Ca trưởng"
       okText="Gửi ghi chú"
@@ -92,9 +93,8 @@ export function SendNoteModal({ open, saving = false, onSubmit, onCancel }: Read
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      mask={{ closable: !saving }}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<DirectorNoteValues>
           layout="vertical"
           onFinish={(values) => onSubmit({ ...values, content: values.content.trim() })}
@@ -104,6 +104,6 @@ export function SendNoteModal({ open, saving = false, onSubmit, onCancel }: Read
       )}
     >
       <NoteFields />
-    </Modal>
+    </FormDrawer>
   )
 }

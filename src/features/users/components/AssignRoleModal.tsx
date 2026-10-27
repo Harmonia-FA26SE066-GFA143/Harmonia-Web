@@ -1,4 +1,4 @@
-import { Button, Descriptions, Flex, Form, Modal, Radio, Tag, Typography } from 'antd'
+import { Button, Descriptions, Drawer, Flex, Form, Radio, Tag, Typography } from 'antd'
 import { roleLabels, type SystemRole } from '@/shared/types/account'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { assignableRoles, roleDescriptions } from '../roles'
@@ -18,7 +18,7 @@ interface FooterProps {
   onCancel: () => void
 }
 
-/** Rendered inside the modal's Form (see modalRender), so it can watch the selected role. */
+/** Rendered inside the drawer's Form (see drawerRender), so it can watch the selected role. */
 function AssignRoleFooter({ current, saving, onCancel }: Readonly<FooterProps>) {
   const selected = Form.useWatch<SystemRole | undefined>('role', Form.useFormInstance())
   return (
@@ -41,14 +41,17 @@ export function AssignRoleModal({ account, saving = false, onSubmit, onCancel }:
   const current = account?.role
 
   return (
-    <Modal
+    <Drawer
       open={Boolean(account)}
       title="Thay đổi vai trò"
+      size={480}
       footer={<AssignRoleFooter current={current} saving={saving} onCancel={onCancel} />}
-      onCancel={onCancel}
+      onClose={onCancel}
+      closable={!saving}
+      keyboard={!saving}
       mask={{ closable: !saving }}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<{ role: SystemRole }>
           layout="vertical"
           initialValues={{ role: current }}
@@ -91,6 +94,6 @@ export function AssignRoleModal({ account, saving = false, onSubmit, onCancel }:
           ))}
         </Radio.Group>
       </Form.Item>
-    </Modal>
+    </Drawer>
   )
 }

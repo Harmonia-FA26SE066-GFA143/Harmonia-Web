@@ -1,4 +1,4 @@
-import { Flex, Modal, Segmented, Table, Typography, type TableColumnsType } from 'antd'
+import { Drawer, Flex, Segmented, Table, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
 import { EmptyState, ErrorState, StatusTag, type StatusTagColor } from '@/shared/ui'
@@ -100,15 +100,8 @@ function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
 /** Choir Director: who has learned a material, as members mark it in the mobile app (FE-09). */
 export function LearningProgressModal({ material, onClose }: Readonly<LearningProgressModalProps>) {
   return (
-    <Modal
-      open={Boolean(material)}
-      title={material ? `Tiến độ học: ${material.title}` : undefined}
-      footer={null}
-      onCancel={onClose}
-      width={640}
-      destroyOnHidden
-    >
+    <Drawer open={Boolean(material)} title={material ? `Tiến độ học: ${material.title}` : undefined} onClose={onClose} size={640} destroyOnHidden>
       {material && <ProgressList material={material} />}
-    </Modal>
+    </Drawer>
   )
 }

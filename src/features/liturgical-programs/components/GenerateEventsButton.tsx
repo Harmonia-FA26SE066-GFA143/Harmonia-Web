@@ -1,5 +1,5 @@
 import { ThunderboltOutlined } from '@ant-design/icons'
-import { Alert, App, Button, DatePicker, Flex, Modal, Typography } from 'antd'
+import { Alert, App, Button, DatePicker, Flex, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
 import { dayOfWeekLabels, useLookup, useMassSchedules } from '@/features/system-categories'
@@ -7,6 +7,7 @@ import { vietnamToday } from '@/lib/api/dates'
 import { colors, spacing } from '@/styles/tokens'
 import { eventErrorMessage } from '../eventErrors'
 import { useGenerateEvents } from '../hooks/useEvents'
+import { FormDrawer } from '@/shared/ui'
 
 /** GenerateLiturgicalEventsRequestValidator.MaxDays: both ends count. */
 const maxDays = 62
@@ -57,7 +58,7 @@ function GenerateEventsModal({ onClose }: Readonly<{ onClose: () => void }>) {
   }
 
   return (
-    <Modal
+    <FormDrawer
       open
       title="Tạo sự kiện nháp từ giờ lễ cố định"
       okText="Tạo sự kiện nháp"
@@ -119,6 +120,6 @@ function GenerateEventsModal({ onClose }: Readonly<{ onClose: () => void }>) {
           </div>
         )}
       </Flex>
-    </Modal>
+    </FormDrawer>
   )
 }

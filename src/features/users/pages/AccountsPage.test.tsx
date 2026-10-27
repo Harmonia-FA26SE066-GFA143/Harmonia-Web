@@ -168,12 +168,12 @@ describe('AccountsPage', () => {
     const setActive = vi.spyOn(accountsApi, 'setAccountActive').mockResolvedValue()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Ngừng hoạt động Giuse Trần Minh Tâm' }))
-    const deactivate = (await screen.findAllByText('Ngừng hoạt động tài khoản?'))[0].closest('.ant-modal') as HTMLElement
+    const deactivate = (await screen.findAllByText(/^Ngừng hoạt động tài khoản .+?$/))[0].closest('.ant-modal') as HTMLElement
     fireEvent.click(within(deactivate).getByRole('button', { name: 'Ngừng hoạt động' }))
     await waitFor(() => expect(setActive).toHaveBeenCalledWith('a2', false))
 
     fireEvent.click(screen.getByRole('button', { name: 'Kích hoạt Phêrô Lê Văn Bình' }))
-    const activate = (await screen.findAllByText('Kích hoạt lại tài khoản?'))[0].closest('.ant-modal') as HTMLElement
+    const activate = (await screen.findAllByText(/^Kích hoạt lại tài khoản .+?$/))[0].closest('.ant-modal') as HTMLElement
     fireEvent.click(within(activate).getByRole('button', { name: 'Kích hoạt' }))
     await waitFor(() => expect(setActive).toHaveBeenCalledWith('a3', true))
   })

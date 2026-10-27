@@ -1,7 +1,7 @@
-import { Checkbox, Flex, Modal, Typography } from 'antd'
+import { Checkbox, Flex, Typography } from 'antd'
 import { useState } from 'react'
 import { SkillTags, useChoirMembers } from '@/features/members'
-import { EmptyState, ErrorState, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, FormDrawer, SectionSkeleton } from '@/shared/ui'
 import { colors, radius, spacing } from '@/styles/tokens'
 
 export interface SendRequestModalProps {
@@ -24,7 +24,7 @@ export function SendRequestModal({ open, excludedMemberIds, sending = false, onS
   const toggleAll = (checked: boolean) => setDeselected(checked ? [] : available.map((member) => member.id))
 
   return (
-    <Modal
+    <FormDrawer
       open={open}
       title="Gửi yêu cầu xác nhận tham gia"
       okText={selected.length ? `Gửi cho ${selected.length} thành viên` : 'Gửi yêu cầu'}
@@ -34,8 +34,7 @@ export function SendRequestModal({ open, excludedMemberIds, sending = false, onS
       onOk={() => onSend(selected)}
       onCancel={onCancel}
       afterClose={() => setDeselected([])}
-      mask={{ closable: !sending }}
-      width={600}
+      size={600}
       destroyOnHidden
     >
       {members.isPending && <SectionSkeleton rows={5} label="Đang tải thành viên" />}
@@ -72,6 +71,6 @@ export function SendRequestModal({ open, excludedMemberIds, sending = false, onS
           </Checkbox.Group>
         </Flex>
       )}
-    </Modal>
+    </FormDrawer>
   )
 }

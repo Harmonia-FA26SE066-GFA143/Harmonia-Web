@@ -1,7 +1,7 @@
 import { DeleteOutlined, DownOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
-import { App, Button, Card, Dropdown, Flex, Input, InputNumber, Modal, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { App, Button, Card, Dropdown, Flex, Input, InputNumber, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
-import { CardTitle, SectionSkeleton, StatusTag } from '@/shared/ui'
+import { CardTitle, FormDrawer, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import {
   useAddAssignment,
@@ -119,11 +119,13 @@ export function StaffingCard({
 
   const handleRemove = (line: RosterAssignment) =>
     modal.confirm({
-      title: 'Gỡ ca viên khỏi vị trí?',
+      title: `Gỡ ${line.memberName} khỏi ${line.skillName}?`,
       content: `${line.memberName} sẽ không còn phục vụ ${line.skillName} cho ${place}.`,
-      okText: 'Gỡ',
+      okText: 'Gỡ khỏi vị trí',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
+      // Enter on a destructive dialog must not run it.
+      autoFocusButton: 'cancel',
       onOk: () =>
         remove
           .mutateAsync(line.id)
@@ -388,7 +390,7 @@ export function StaffingCard({
           )}
         </Flex>
       )}
-      <Modal
+      <FormDrawer
         open={Boolean(replacing)}
         title="Thay người"
         okText="Thay người"
@@ -417,8 +419,8 @@ export function StaffingCard({
             {replacing.note && <Typography.Text style={muted}>Người mới giữ ghi chú vai “{replacing.note}”.</Typography.Text>}
           </Flex>
         )}
-      </Modal>
-      <Modal
+      </FormDrawer>
+      <FormDrawer
         open={Boolean(noting)}
         title="Ghi chú vai"
         okText="Lưu ghi chú"
@@ -446,7 +448,7 @@ export function StaffingCard({
             <Typography.Text style={muted}>Để trống để xoá ghi chú. Ca viên thấy ghi chú này trong thông báo phân công.</Typography.Text>
           </Flex>
         )}
-      </Modal>
+      </FormDrawer>
     </Card>
   )
 }

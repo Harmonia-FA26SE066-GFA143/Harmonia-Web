@@ -1,4 +1,4 @@
-import { Button, Descriptions, Modal, Table, Typography } from 'antd'
+import { Descriptions, Drawer, Table, Typography } from 'antd'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { fieldLabel, fieldValue } from '../activityFields'
 import { actionLabel, actorName, entityLabel } from '../activityFilters'
@@ -45,14 +45,7 @@ export function ActivityDetailModal({ record, onClose }: Readonly<ActivityDetail
   const changes = record ? changesOf(record) : []
 
   return (
-    <Modal
-      open={Boolean(record)}
-      title="Chi tiết hoạt động"
-      onCancel={onClose}
-      footer={<Button onClick={onClose}>Đóng</Button>}
-      width={720}
-      destroyOnHidden
-    >
+    <Drawer open={Boolean(record)} title="Chi tiết hoạt động" onClose={onClose} size={720} destroyOnHidden>
       {record && (
         <>
           <Descriptions
@@ -95,6 +88,6 @@ export function ActivityDetailModal({ record, onClose }: Readonly<ActivityDetail
           </Typography.Paragraph>
         </>
       )}
-    </Modal>
+    </Drawer>
   )
 }

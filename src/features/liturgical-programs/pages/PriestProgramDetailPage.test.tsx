@@ -39,7 +39,7 @@ const preparation: PreparationStatus = {
 // The page reads :programId, so it is rendered under the parameterised route.
 const renderDetail = () => renderPage(<PriestProgramDetailPage />, '/priest/programs/:programId', '/priest/programs/e1')
 
-const confirmDialog = async (title: string) =>
+const confirmDialog = async (title: string | RegExp) =>
   (await screen.findAllByText(title))[0].closest('.ant-modal') as HTMLElement
 
 beforeEach(() => {
@@ -170,7 +170,7 @@ describe('PriestProgramDetailPage', () => {
     expect(await screen.findByText('Đã công bố')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Công bố' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /Hủy sự kiện/ }))
-    const dialog = await confirmDialog('Hủy sự kiện?')
+    const dialog = await confirmDialog(/^Hủy sự kiện “.+”?$/)
     expect(within(dialog).getByText(/sẽ nhận thông báo hủy/)).toBeInTheDocument()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Hủy sự kiện' }))
 
