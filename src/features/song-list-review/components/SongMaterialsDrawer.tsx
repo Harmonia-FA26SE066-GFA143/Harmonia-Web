@@ -1,5 +1,5 @@
 import { Drawer } from 'antd'
-import { SongMaterialsCard, useSongMaterials } from '@/features/music-library'
+import { SongMaterialsPanel, useSongMaterials } from '@/features/music-library'
 import { ApiError } from '@/lib/api/errors'
 import { EmptyState, ErrorState, SectionSkeleton } from '@/shared/ui'
 import type { SongListItem } from '../types'
@@ -33,7 +33,7 @@ export function SongMaterialsDrawer({ item, onClose }: Readonly<{ item?: SongLis
           retrying={materials.isFetching}
         />
       )}
-      {materials.isSuccess && <SongMaterialsCard materials={materials.data} />}
+      {materials.isSuccess && <SongMaterialsPanel materials={materials.data} />}
     </Drawer>
   )
 }

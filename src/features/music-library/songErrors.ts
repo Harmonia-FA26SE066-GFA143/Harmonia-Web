@@ -4,7 +4,7 @@ import { materialExtensions, materialKindLabels, maxMaterialBytes, type Material
 /** POST/PUT /api/songs answer 409 SONG_TITLE_DUPLICATE when an active song has the same title and composer. */
 export const isDuplicateTitle = (error: Error) => error instanceof ApiError && error.code === 'SONG_TITLE_DUPLICATE'
 
-export const duplicateTitleMessage = 'Kho đã có bài hát cùng tên và cùng nhạc sĩ.'
+export const duplicateTitleMessage = 'Kho đã có bài hát cùng tên và cùng nhạc sĩ. Đổi tên bài hoặc ghi rõ nhạc sĩ rồi lưu lại.'
 
 /**
  * PUT /api/songs/{id}/classification: a newly chosen entry or skill was deactivated or deleted meanwhile
@@ -22,7 +22,7 @@ export function materialFileProblem(kind: MaterialKind, file: File): string | un
     return `${materialKindLabels[kind]} chỉ nhận tệp ${accepted.join(', ')}.`
   }
   if (file.size === 0) return 'Tệp rỗng, vui lòng chọn tệp khác.'
-  if (file.size > maxMaterialBytes) return 'Tệp vượt quá 20 MB.'
+  if (file.size > maxMaterialBytes) return 'Tệp vượt quá 20 MB. Vui lòng chọn tệp nhỏ hơn.'
   return undefined
 }
 
@@ -30,14 +30,14 @@ export function materialFileProblem(kind: MaterialKind, file: File): string | un
 export function uploadErrorMessage(error: Error): string {
   switch (error instanceof ApiError ? error.code : undefined) {
     case 'MATERIAL_FILE_TYPE_NOT_ALLOWED':
-      return 'Định dạng tệp không được hỗ trợ cho loại tài liệu này.'
+      return 'Định dạng tệp không được hỗ trợ cho loại tài liệu này. Vui lòng chọn tệp đúng định dạng.'
     case 'MATERIAL_FILE_TOO_LARGE':
-      return 'Tệp vượt quá 20 MB.'
+      return 'Tệp vượt quá 20 MB. Vui lòng chọn tệp nhỏ hơn.'
     case 'MATERIAL_FILE_REQUIRED':
       return 'Tệp rỗng, vui lòng chọn tệp khác.'
     case 'SKILL_INACTIVE':
     case 'SKILL_NOT_FOUND':
-      return 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại.'
+      return 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại. Vui lòng chọn kỹ năng khác.'
     case 'EXTERNAL_STORAGE_FAILED':
       return 'Không thể lưu tệp lúc này. Vui lòng thử lại sau.'
     default:
@@ -58,7 +58,7 @@ export function materialUpdateErrorMessage(error: Error): string {
       return 'Tài liệu không còn tồn tại. Vui lòng tải lại trang.'
     case 'SKILL_INACTIVE':
     case 'SKILL_NOT_FOUND':
-      return 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại.'
+      return 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại. Vui lòng chọn kỹ năng khác.'
     default:
       return requestFailureMessage(error, 'Không thể lưu tài liệu. Vui lòng thử lại.')
   }

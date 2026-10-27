@@ -10,7 +10,7 @@ import {
   SwapOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
-import { Button, Card, Divider, Flex, Image, Tag, Typography, Upload } from 'antd'
+import { Button, Divider, Flex, Image, Tag, Tooltip, Typography, Upload } from 'antd'
 import dayjs from 'dayjs'
 import { Fragment, type ComponentType } from 'react'
 import { parseUtc } from '@/lib/api/dates'
@@ -23,11 +23,10 @@ import {
   type MaterialKind,
   type SongMaterial,
 } from '../types'
-import { CardTitle } from '@/shared/ui'
 import { AudioWaveform } from './AudioWaveform'
 
 /** Without the handlers the card is read-only (the Parish Priest reviewing a song list): view and download only. */
-export interface SongMaterialsCardProps {
+export interface SongMaterialsPanelProps {
   materials: SongMaterial[]
   /** Kind currently being uploaded, to show progress on its button. */
   uploadingKind?: MaterialKind
@@ -86,7 +85,7 @@ function UploadButton({ kind, loading, label, hintId, onPick }: Readonly<{
   )
 }
 
-type MaterialActions = Pick<SongMaterialsCardProps, 'onDelete' | 'onEdit' | 'onProgress' | 'onReplace'>
+type MaterialActions = Pick<SongMaterialsPanelProps, 'onDelete' | 'onEdit' | 'onProgress' | 'onReplace'>
 
 function MaterialRow({ material, onDelete, onEdit, onProgress, onReplace }: Readonly<{ material: SongMaterial } & MaterialActions>) {
   const Icon = kindIcons[material.kind]
@@ -135,24 +134,31 @@ function MaterialRow({ material, onDelete, onEdit, onProgress, onReplace }: Read
           Xem/Tải xuống
         </Button>
         {onProgress && (
-          <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Tiến độ học ${material.title}`}>
-            Tiến độ học
+          <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Xem tiến độ học ${material.title}`}>
+            Xem tiến độ học
           </Button>
         )}
+        {/* Icon-only actions: the tooltip shows on hover and keyboard focus what the aria-label says. */}
         {onReplace && (
-          <Button type="text" icon={<SwapOutlined />} onClick={() => onReplace(material)} aria-label={`Thay file ${material.title}`} />
+          <Tooltip title="Thay file" trigger={['hover', 'focus']}>
+            <Button type="text" icon={<SwapOutlined />} onClick={() => onReplace(material)} aria-label={`Thay file ${material.title}`} />
+          </Tooltip>
         )}
         {onEdit && (
-          <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
+          <Tooltip title="Sửa tài liệu" trigger={['hover', 'focus']}>
+            <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
+          </Tooltip>
         )}
         {onDelete && (
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => onDelete(material)}
-            aria-label={`Xoá ${material.title}`}
-          />
+          <Tooltip title="Xoá tài liệu" trigger={['hover', 'focus']}>
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => onDelete(material)}
+              aria-label={`Xoá ${material.title}`}
+            />
+          </Tooltip>
         )}
       </Flex>
       {isAudio(material) && <AudioWaveform url={material.url} title={material.title} />}
@@ -160,10 +166,13 @@ function MaterialRow({ material, onDelete, onEdit, onProgress, onReplace }: Read
   )
 }
 
-/** Materials grouped by the four FE-08/FE-28 kinds, each with its own upload action. */
-export function SongMaterialsCard({ materials, uploadingKind, onPick, ...actions }: Readonly<SongMaterialsCardProps>) {
+/**
+ * Materials grouped by the four FE-08/FE-28 kinds, each with its own upload action: the "Tài liệu" tab of the song page
+ * and the body of the Parish Priest's materials drawer.
+ */
+export function SongMaterialsPanel({ materials, uploadingKind, onPick, ...actions }: Readonly<SongMaterialsPanelProps>) {
   return (
-    <Card title={<CardTitle>Tài liệu</CardTitle>}>
+    <div>
       {materialKinds.map((kind, index) => {
         const items = materials.filter((material) => material.kind === kind)
         const headingId = `materials-${kind}`
@@ -173,7 +182,7 @@ export function SongMaterialsCard({ materials, uploadingKind, onPick, ...actions
             {index > 0 && <Divider />}
             <section aria-labelledby={headingId}>
               <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.xs }}>
-                <Typography.Title id={headingId} level={3} style={{ margin: 0 }}>
+                <Typography.Title id={headingId} level={2} style={{ margin: 0, fontSize: typography.cardHeading.fontSize }}>
                   {materialKindLabels[kind]}
                 </Typography.Title>
                 {onPick && <UploadButton kind={kind} label="Tải lên" hintId={hintId} loading={uploadingKind === kind} onPick={onPick} />}
@@ -213,6 +222,6 @@ export function SongMaterialsCard({ materials, uploadingKind, onPick, ...actions
           </Fragment>
         )
       })}
-    </Card>
+    </div>
   )
 }

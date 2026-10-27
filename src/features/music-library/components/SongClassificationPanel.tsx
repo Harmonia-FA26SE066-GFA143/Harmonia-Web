@@ -1,8 +1,8 @@
 import { EditOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Flex, Tag, Typography } from 'antd'
+import { Button, Descriptions, Flex, Tag, Typography } from 'antd'
 import type { ReactNode } from 'react'
-import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
-import { colors } from '@/styles/tokens'
+import { ErrorState, SectionSkeleton } from '@/shared/ui'
+import { colors, spacing } from '@/styles/tokens'
 import type { NamedRef, SkillRequirement, SongClassification } from '../types'
 
 const unclassified = (
@@ -26,7 +26,7 @@ const names = (refs: NamedRef[]) => refs.map((ref) => ref.name)
 const requirements = (items: SkillRequirement[]) =>
   items.map((item) => `${item.skillName} ×${item.requiredCount}${item.isMandatory ? ' (bắt buộc)' : ''}`)
 
-export interface SongClassificationCardProps {
+export interface SongClassificationPanelProps {
   classification?: SongClassification | null
   loading?: boolean
   failed?: boolean
@@ -36,21 +36,20 @@ export interface SongClassificationCardProps {
   onEdit?: () => void
 }
 
-/** The FE-29 dimensions of one song, each with any number of values (GET /api/songs/{id}/classification). */
-export function SongClassificationCard({ classification, loading, failed, error, hasData, onRetry, onEdit }: Readonly<SongClassificationCardProps>) {
+/**
+ * The FE-29 dimensions of one song, each with any number of values (GET /api/songs/{id}/classification). The
+ * "Phân loại" tab of the song page.
+ */
+export function SongClassificationPanel({ classification, loading, failed, error, hasData, onRetry, onEdit }: Readonly<SongClassificationPanelProps>) {
   return (
-    <Card
-      title={<CardTitle>Phân loại</CardTitle>}
-      extra={
-        onEdit && (
-          <Button icon={<EditOutlined />} onClick={onEdit} disabled={!classification}>
-            Chỉnh sửa phân loại
-          </Button>
-        )
-      }
-    >
+    <Flex vertical gap={spacing.md}>
+      {onEdit && (
+        <Button icon={<EditOutlined />} onClick={onEdit} disabled={!classification} style={{ alignSelf: 'flex-end' }}>
+          Chỉnh sửa phân loại
+        </Button>
+      )}
       {loading && <SectionSkeleton rows={2} label="Đang tải phân loại" />}
-      {failed && <ErrorState headingLevel={3} title="Không thể tải phân loại" error={error} hasData={hasData} onRetry={onRetry} />}
+      {failed && <ErrorState headingLevel={2} title="Không thể tải phân loại" error={error} hasData={hasData} onRetry={onRetry} />}
       {classification && (
         <Descriptions
           layout="vertical"
@@ -71,6 +70,6 @@ export function SongClassificationCard({ classification, loading, failed, error,
           ]}
         />
       )}
-    </Card>
+    </Flex>
   )
 }

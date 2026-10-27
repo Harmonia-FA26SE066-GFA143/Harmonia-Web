@@ -20,11 +20,14 @@ export interface ReplaceMaterialFileModalProps {
 export function ReplaceMaterialFileModal({ material, saving = false, onSubmit, onCancel }: Readonly<ReplaceMaterialFileModalProps>) {
   const [file, setFile] = useState<File>()
   const [resetProgress, setResetProgress] = useState(false)
+  // Set when "Thay file" is pressed before a file is picked; the button stays clickable and says what is missing.
+  const [missing, setMissing] = useState(false)
   const problem = material && file ? materialFileProblem(material.kind, file) : undefined
 
   const close = () => {
     setFile(undefined)
     setResetProgress(false)
+    setMissing(false)
     onCancel()
   }
 
@@ -34,13 +37,17 @@ export function ReplaceMaterialFileModal({ material, saving = false, onSubmit, o
       title={material ? `Thay file: ${material.title}` : 'Thay file'}
       okText="Thay file"
       cancelText="Hủy"
-      okButtonProps={{ disabled: !file || Boolean(problem), loading: saving }}
+      okButtonProps={{ loading: saving }}
       cancelButtonProps={{ disabled: saving }}
-      onOk={() => file && !problem && onSubmit(file, resetProgress)}
+      onOk={() => {
+        if (!file) setMissing(true)
+        else if (!problem) onSubmit(file, resetProgress)
+      }}
       onCancel={close}
       afterClose={() => {
         setFile(undefined)
         setResetProgress(false)
+        setMissing(false)
       }}
       destroyOnHidden
     >
@@ -55,6 +62,7 @@ export function ReplaceMaterialFileModal({ material, saving = false, onSubmit, o
             showUploadList={false}
             beforeUpload={(picked) => {
               setFile(picked)
+              setMissing(false)
               return false
             }}
           >
@@ -62,6 +70,7 @@ export function ReplaceMaterialFileModal({ material, saving = false, onSubmit, o
           </Upload>
           {file && !problem && <Typography.Text>File mới: {file.name}</Typography.Text>}
           {problem && <Alert type="error" showIcon title={problem} />}
+          {missing && <Alert type="error" showIcon title="Vui lòng chọn file mới." />}
           <Checkbox checked={resetProgress} onChange={(event) => setResetProgress(event.target.checked)}>
             Xoá tiến độ học của ca viên với tài liệu này (khi nội dung đã đổi nhiều)
           </Checkbox>

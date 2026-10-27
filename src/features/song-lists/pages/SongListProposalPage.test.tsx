@@ -107,7 +107,7 @@ describe('SongListProposalPage', () => {
       expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ seasonId: 'season-ot', massTypeId: 'mass-sunday' }), expect.anything()),
     )
 
-    fireEvent.click(within(picker).getByRole('button', { name: /Đặt lại bộ lọc/ }))
+    fireEvent.click(within(picker).getByRole('button', { name: 'Xoá tất cả bộ lọc' }))
     await waitFor(() => expect(list).toHaveBeenLastCalledWith({ search: '' }, expect.anything()))
   })
 

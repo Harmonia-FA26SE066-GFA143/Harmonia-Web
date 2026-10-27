@@ -106,6 +106,19 @@ describe('MusicLibraryPage', () => {
     )
   })
 
+  it('shows the active filters as chips that remove them, with the filter panel shut', async () => {
+    const list = vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page(songs))
+    renderPage(<MusicLibraryPage />, '/director/library', '/director/library?classified=no')
+
+    expect(await screen.findByRole('button', { name: /Bộ lọc \(1\)$/ })).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(screen.getByRole('button', { name: 'Bỏ lọc Phân loại: Chưa phân loại' }))
+
+    expect(list).toHaveBeenCalledWith(expect.objectContaining({ classified: 'no' }), expect.anything())
+    await waitFor(() => expect(list.mock.lastCall?.[0].classified).toBeUndefined())
+    // The removed chip's focus lands on the filter button, not the page start.
+    expect(screen.getByRole('button', { name: /Bộ lọc$/ })).toHaveFocus()
+  })
+
   it('links each title to its song page', async () => {
     vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page(songs))
     renderPage(<MusicLibraryPage />, '/director/library')
@@ -141,7 +154,7 @@ describe('MusicLibraryPage', () => {
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Tên bài hát' }), { target: { value: 'Xin Vâng' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu bài hát' }))
 
-    expect(await within(dialog).findByText('Kho đã có bài hát cùng tên và cùng nhạc sĩ.')).toBeInTheDocument()
+    expect(await within(dialog).findByText(/^Kho đã có bài hát cùng tên và cùng nhạc sĩ./)).toBeInTheDocument()
     expect(within(dialog).getByRole('textbox', { name: 'Tên bài hát' })).toHaveValue('Xin Vâng')
   })
 })
