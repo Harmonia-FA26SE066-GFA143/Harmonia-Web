@@ -129,6 +129,72 @@ describe('LiturgicalCategoriesPage', () => {
     await waitFor(() => expect(save).toHaveBeenCalledWith(undefined, { name: 'Đáp ca', defaultOrder: 2, isActive: true }))
   })
 
+  it('sets the people a liturgical slot always needs, one row per skill', async () => {
+    vi.spyOn(categoriesApi, 'listSeasons').mockResolvedValue([])
+    vi.spyOn(categoriesApi, 'listSlots').mockResolvedValue([{ id: 'sl2', name: 'Đáp ca', defaultOrder: 2, isActive: true }])
+    vi.spyOn(categoriesApi, 'getSlotRequirements').mockResolvedValue([{ skillId: 'k1', skillName: 'Xướng đáp ca', requiredCount: 1 }])
+    vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([
+      { id: 'k1', name: 'Xướng đáp ca' },
+      { id: 'k2', name: 'Đàn organ' },
+    ])
+    const save = vi.spyOn(categoriesApi, 'saveSlotRequirements').mockResolvedValue([])
+    renderPage(<LiturgicalCategoriesPage />, '/admin/liturgical-categories', '/admin/liturgical-categories?tab=liturgicalSlots')
+
+    expect(await screen.findByText('Xướng đáp ca ×1')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Sửa người cần cho Đáp ca' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: /Thêm kỹ năng/ }))
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Kỹ năng 2' }))
+    fireEvent.click(await screen.findByTitle('Đàn organ'))
+    fireEvent.change(within(dialog).getByRole('spinbutton', { name: 'Số người 2' }), { target: { value: '2' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu' }))
+
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith('sl2', [
+        { skillId: 'k1', requiredCount: 1 },
+        { skillId: 'k2', requiredCount: 2 },
+      ]),
+    )
+    expect(await screen.findByText('Đã lưu người cần cho Đáp ca.')).toBeInTheDocument()
+  })
+
+  it('places a song theme under another, never under one of its own sub-themes, and explains a refusal', async () => {
+    vi.spyOn(categoriesApi, 'listSeasons').mockResolvedValue([])
+    vi.spyOn(categoriesApi, 'listSongThemes').mockResolvedValue([
+      { id: 't1', name: 'Kính Chúa', description: null, isActive: true, parentId: null },
+      { id: 't2', name: 'Thánh Thể', description: null, isActive: true, parentId: 't1' },
+      { id: 't3', name: 'Đức Maria', description: null, isActive: true, parentId: null },
+    ])
+    const save = vi.spyOn(categoriesApi, 'saveSongTheme').mockResolvedValue({
+      id: 't1',
+      name: 'Kính Chúa',
+      description: null,
+      isActive: true,
+      parentId: 't3',
+    })
+    renderPage(<LiturgicalCategoriesPage />, '/admin/liturgical-categories', '/admin/liturgical-categories?tab=songThemes')
+
+    // A sub-theme shows where it sits.
+    const subTheme = (await screen.findByText('Thánh Thể')).closest('tr') as HTMLElement
+    expect(within(subTheme).getByText('Kính Chúa')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chỉnh sửa Kính Chúa' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Chủ đề cha (không bắt buộc)' }))
+    const subThemeNode = (await screen.findAllByTitle('Thánh Thể')).find((node) => node.closest('.ant-select-tree-treenode'))
+    expect(subThemeNode?.closest('.ant-select-tree-treenode')).toHaveClass('ant-select-tree-treenode-disabled')
+    fireEvent.click((await screen.findAllByTitle('Đức Maria')).find((node) => node.closest('.ant-select-tree-treenode')) as HTMLElement)
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu thay đổi' }))
+    await waitFor(() => expect(save).toHaveBeenCalledWith('t1', expect.objectContaining({ name: 'Kính Chúa', parentId: 't3' })))
+
+    save.mockRejectedValue(new ApiError(409, { code: 'SONG_THEME_HAS_ACTIVE_CHILDREN' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Chỉnh sửa Kính Chúa' }))
+    const again = await screen.findByRole('dialog')
+    fireEvent.click(within(again).getByRole('switch', { name: 'Đang sử dụng' }))
+    fireEvent.click(within(again).getByRole('button', { name: 'Lưu thay đổi' }))
+    expect(await screen.findByText('Chủ đề này còn chủ đề con đang dùng. Ngừng dùng các chủ đề con trước.')).toBeInTheDocument()
+  })
+
   it('lists the fixed Mass times with their catalog names and switches one off', async () => {
     vi.spyOn(categoriesApi, 'listSeasons').mockResolvedValue([])
     vi.spyOn(categoriesApi, 'listCatalogItems').mockResolvedValue([{ id: 'm1', name: 'Lễ Chúa Nhật', description: null, isActive: true }])

@@ -2,6 +2,7 @@ import { App, Card, Modal } from 'antd'
 import { useRef, useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { useCatalogOptions } from '@/features/system-categories'
 import { PageHeader } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
@@ -19,6 +20,7 @@ export function CreateProgramPage() {
   const { message } = App.useApp()
   const [searchParams] = useSearchParams()
   const create = useCreateEvent()
+  const seasons = useCatalogOptions('seasons')
   const [dirty, setDirty] = useState(false)
   // Set once the event is saved; read at navigation time so the redirect to the new event is not blocked.
   const saved = useRef(false)
@@ -33,7 +35,11 @@ export function CreateProgramPage() {
   const handleSubmit = (values: EventFormValues) =>
     create.mutate(values, {
       onSuccess: (event) => {
-        message.success('Đã tạo bản nháp sự kiện.')
+        // Left empty, the season is filled by the backend with the one covering the date (BE d1ca63e).
+        const filled = !values.seasonId && event.seasonId && seasons.find((season) => season.value === event.seasonId)
+        message.success(
+          filled ? `Đã tạo bản nháp sự kiện, mùa phụng vụ được điền là ${filled.label}.` : 'Đã tạo bản nháp sự kiện.',
+        )
         saved.current = true
         navigate(generatePath(paths.priest.programDetail, { programId: event.id }))
       },

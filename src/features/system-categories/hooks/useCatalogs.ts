@@ -1,19 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  getSlotRequirements,
   listCatalogItems,
   listLocations,
   listMassSchedules,
   listSeasons,
   listSkills,
   listSlots,
+  listSongThemes,
   saveCatalogItem,
   saveLocation,
   saveMassSchedule,
   saveSeason,
   saveSkill,
   saveSlot,
+  saveSlotRequirements,
+  saveSongTheme,
 } from '../api/categoriesApi'
-import type { BasicCatalog, CatalogItemValues, LookupKind, MassScheduleValues } from '../types'
+import { themePath } from '../songThemeTree'
+import type { BasicCatalog, CatalogItemValues, LookupKind, MassScheduleValues, SlotRequirementValue } from '../types'
 
 /** Values for the add/edit modal; `id` is present when editing an existing entry. */
 export interface SaveCatalogEntry<V> {
@@ -43,6 +48,29 @@ export function useLocations() {
   return useQuery({ queryKey: catalogKey('worshipLocations'), queryFn: listLocations })
 }
 
+/** Every theme, each sub-theme right after its parent (sorted by the path from the top). */
+export function useSongThemes() {
+  return useQuery({
+    queryKey: catalogKey('songThemes'),
+    queryFn: listSongThemes,
+    select: (themes) => [...themes].sort((a, b) => themePath(themes, a.id).localeCompare(themePath(themes, b.id), 'vi')),
+  })
+}
+
+const slotRequirementsKey = (slotId: string) => ['system-categories', 'slot-requirements', slotId] as const
+
+export function useSlotRequirements(slotId: string) {
+  return useQuery({ queryKey: slotRequirementsKey(slotId), queryFn: () => getSlotRequirements(slotId) })
+}
+
+export function useSaveSlotRequirements(slotId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (requirements: SlotRequirementValue[]) => saveSlotRequirements(slotId, requirements),
+    onSuccess: (saved) => queryClient.setQueryData(slotRequirementsKey(slotId), saved),
+  })
+}
+
 function useSave<T, V>(kind: LookupKind, save: (id: string | undefined, values: V) => Promise<T>) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -70,6 +98,10 @@ export function useSaveSeason() {
 
 export function useSaveSlot() {
   return useSave('liturgicalSlots', saveSlot)
+}
+
+export function useSaveSongTheme() {
+  return useSave('songThemes', saveSongTheme)
 }
 
 export function useSaveLocation() {

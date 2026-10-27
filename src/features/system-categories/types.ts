@@ -26,6 +26,18 @@ export interface Skill extends CatalogItem {
 export type SkillValues = Omit<Skill, 'id'>
 
 /**
+ * A song theme (`SongThemeDto`): themes form a tree of any depth (BE d1ca63e), and filtering songs by a theme also
+ * finds the songs of its sub-themes. A theme never sits under itself or a descendant, and an active one never under a
+ * switched-off one (SONG_THEME_PARENT_INVALID); a theme with active sub-themes cannot be switched off
+ * (SONG_THEME_HAS_ACTIVE_CHILDREN).
+ */
+export interface SongTheme extends CatalogItem {
+  parentId: string | null
+}
+
+export type SongThemeValues = Omit<SongTheme, 'id'>
+
+/**
  * A liturgical season (`SaveLiturgicalSeasonRequest`): dates (`DateOnly`, YYYY-MM-DD) and a colour instead of a
  * description. Names repeat every year; the dates must not overlap another active season.
  */
@@ -45,6 +57,18 @@ export interface LiturgicalSlot extends CatalogEntry {
 
 export type LiturgicalSlotValues = Omit<LiturgicalSlot, 'id'>
 
+/**
+ * People a liturgical slot needs whatever song fills it, e.g. a psalmist for the psalm (`LiturgicalSlotRequirementDto`).
+ * Pre-filled into the personnel requirements of a song list; one row per skill, 1–50 people.
+ */
+export interface SlotRequirement {
+  skillId: string
+  skillName: string
+  requiredCount: number
+}
+
+export type SlotRequirementValue = Pick<SlotRequirement, 'skillId' | 'requiredCount'>
+
 /** A worship location (`SaveWorshipLocationRequest`) with an optional address. */
 export interface WorshipLocation extends CatalogEntry {
   address: string | null
@@ -63,7 +87,7 @@ export type LiturgicalCatalog =
   | 'worshipLocations'
 
 /** Catalogs whose entries have only a name and a description. */
-export type BasicCatalog = 'massTypes' | 'ceremonyTypes' | 'eventCategories' | 'songThemes' | 'skillCategories'
+export type BasicCatalog = 'massTypes' | 'ceremonyTypes' | 'eventCategories' | 'skillCategories'
 
 /** Backend lookups, every one editable by the Admin. */
 export type LookupKind = LiturgicalCatalog | 'skillCategories' | 'skills'
@@ -75,6 +99,8 @@ export interface LookupItem {
   categoryId?: string
   /** Liturgical slots only: place in the Mass. */
   defaultOrder?: number
+  /** Song themes only: the theme above it, or null at the top. */
+  parentId?: string | null
 }
 
 /** Fixed on every environment (Harmonia-BE doc/api.md, Lookups); instrument requirements accept only this category. */

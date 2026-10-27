@@ -20,6 +20,14 @@ const messages: Record<string, string> = {
   LOOKUP_IN_USE: 'Nhóm kỹ năng mặc định không thể ngừng dùng; chỉ đổi được tên và mô tả.',
   LOOKUP_INACTIVE: 'Nhóm kỹ năng đã chọn đã ngừng dùng.',
   SKILL_IN_USE: 'Kỹ năng đang được bài hát dùng nên không chuyển được giữa nhóm Nhạc cụ và nhóm khác.',
+  // Song themes (LookupService.SaveSongThemeAsync, BE d1ca63e).
+  SONG_THEME_PARENT_INVALID:
+    'Không đặt được dưới chủ đề cha này: không chọn chính chủ đề này hay chủ đề con của nó, và chủ đề đang dùng không nằm dưới chủ đề đã ngừng dùng.',
+  SONG_THEME_HAS_ACTIVE_CHILDREN: 'Chủ đề này còn chủ đề con đang dùng. Ngừng dùng các chủ đề con trước.',
+  // People a liturgical slot needs (LookupService.UpdateLiturgicalSlotRequirementsAsync).
+  SKILL_INACTIVE: 'Kỹ năng đã chọn đã ngừng dùng. Vui lòng chọn kỹ năng khác.',
+  PERSONNEL_REQUIREMENT_DUPLICATE: 'Mỗi kỹ năng chỉ khai một lần.',
+  PERSONNEL_REQUIRED_COUNT_INVALID: 'Số người cần từ 1 đến 50.',
 }
 
 export function catalogErrorMessage(error: Error, fallback: string): string {

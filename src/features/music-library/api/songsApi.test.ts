@@ -20,13 +20,14 @@ describe('songsApi', () => {
   it('sends the search, the filters set and the page as query parameters', async () => {
     fetchMock.mockResolvedValueOnce(reply(200, { items: [], pageNumber: 2, pageSize: 20, totalCount: 0, totalPages: 0 }))
 
-    await listSongs({ search: '  xin vâng ', seasonId: 'season-1', themeId: 'theme-2' }, { pageNumber: 2, pageSize: 20 })
+    await listSongs({ search: '  xin vâng ', seasonId: 'season-1', themeId: 'theme-2', slotId: 'slot-3' }, { pageNumber: 2, pageSize: 20 })
     const url = new URL(String(fetchMock.mock.calls[0][0]), 'http://localhost')
     expect(url.pathname).toBe('/api/songs')
     expect(Object.fromEntries(url.searchParams)).toEqual({
       keyword: 'xin vâng',
       liturgicalSeasonId: 'season-1',
       songThemeId: 'theme-2',
+      liturgicalSlotId: 'slot-3',
       pageNumber: '2',
       pageSize: '20',
     })
@@ -47,7 +48,8 @@ describe('songsApi', () => {
       massTypeIds: [],
       ceremonyTypeIds: [],
       songThemeIds: [],
-      vocalRequirements: [{ skillId: 'sk1', isMandatory: true }],
+      liturgicalSlotIds: ['slot-1'],
+      vocalRequirements: [{ skillId: 'sk1', isMandatory: true, requiredCount: 2 }],
       instrumentRequirements: [],
     }
 

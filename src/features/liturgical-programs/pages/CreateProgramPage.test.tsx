@@ -25,7 +25,9 @@ beforeEach(() => {
       ? [{ id: 'loc-1', name: 'Nhà thờ chính' }]
       : kind === 'massTypes'
         ? [{ id: 'mass-1', name: 'Thánh lễ Chúa Nhật' }]
-        : [],
+        : kind === 'seasons'
+          ? [{ id: 's-ot', name: 'Mùa Thường Niên' }]
+          : [],
   )
 })
 
@@ -84,6 +86,19 @@ describe('CreateProgramPage', () => {
       }),
     )
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/new-1')
+  })
+
+  it('tells which season the backend filled in when none was chosen', async () => {
+    vi.spyOn(eventsApi, 'createEvent').mockResolvedValue({ ...created, seasonId: 's-ot' })
+    renderPage(<CreateProgramPage />, route, `${route}?date=2026-10-04`)
+
+    expect(screen.getByText(/Để trống thì hệ thống điền mùa/)).toBeInTheDocument()
+    enterTime('18:30')
+    await choose('Nơi cử hành', 'Nhà thờ chính')
+    await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
+
+    expect(await screen.findByText('Đã tạo bản nháp sự kiện, mùa phụng vụ được điền là Mùa Thường Niên.')).toBeInTheDocument()
   })
 
   it('explains a taken slot and keeps the entered values', async () => {

@@ -1,6 +1,6 @@
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Flex, Input, Select, Typography } from 'antd'
-import { useCatalogOptions, type CatalogOption } from '@/features/system-categories'
+import { Button, Flex, Input, Select, TreeSelect, Typography } from 'antd'
+import { themeTreeData, useCatalogOptions, useLookup, type CatalogOption } from '@/features/system-categories'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { hasActiveSongFilters } from '../songFilters'
 import { materialKindLabels, materialKinds, type MaterialKind, type SongFilters } from '../types'
@@ -15,20 +15,22 @@ export interface SongFilterBarProps {
 
 /**
  * Search over title, composer and lyricist (case and Vietnamese diacritics ignored), the FE-29 classification filters
- * of GET /api/songs, and the library checks: songs not classified yet, songs missing a kind of material.
+ * of GET /api/songs (a theme also finds its sub-themes' songs), and the library checks: songs not classified yet, songs
+ * missing a kind of material.
  */
 export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonly<SongFilterBarProps>) {
   const seasons = useCatalogOptions('seasons')
   const massTypes = useCatalogOptions('massTypes')
   const ceremonyTypes = useCatalogOptions('ceremonyTypes')
-  const themes = useCatalogOptions('songThemes')
+  const slots = useCatalogOptions('liturgicalSlots')
+  const themes = themeTreeData(useLookup('songThemes').data ?? [])
   const skills = useCatalogOptions('skills')
 
-  const selects: { key: Exclude<keyof SongFilters, 'search' | 'classified' | 'missingMaterial'>; label: string; placeholder: string; options: CatalogOption[] }[] = [
+  const selects: { key: Exclude<keyof SongFilters, 'search' | 'classified' | 'missingMaterial' | 'themeId'>; label: string; placeholder: string; options: CatalogOption[] }[] = [
     { key: 'seasonId', label: 'Mùa phụng vụ', placeholder: 'Tất cả mùa phụng vụ', options: seasons },
     { key: 'massTypeId', label: 'Loại Thánh lễ', placeholder: 'Tất cả loại Thánh lễ', options: massTypes },
     { key: 'ceremonyTypeId', label: 'Loại nghi thức', placeholder: 'Tất cả loại nghi thức', options: ceremonyTypes },
-    { key: 'themeId', label: 'Chủ đề', placeholder: 'Tất cả chủ đề', options: themes },
+    { key: 'slotId', label: 'Phần phụng vụ', placeholder: 'Tất cả phần phụng vụ', options: slots },
     { key: 'skillId', label: 'Bè giọng hoặc nhạc cụ', placeholder: 'Tất cả bè giọng, nhạc cụ', options: skills },
   ]
 
@@ -63,6 +65,23 @@ export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonl
             />
           </Flex>
         ))}
+        <Flex vertical gap={4}>
+          <label htmlFor="song-filter-themeId" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+            Chủ đề
+          </label>
+          <TreeSelect
+            id="song-filter-themeId"
+            allowClear
+            showSearch
+            treeNodeFilterProp="title"
+            treeDefaultExpandAll
+            placeholder="Tất cả chủ đề"
+            value={value.themeId}
+            onChange={(themeId?: string) => onChange({ ...value, themeId })}
+            treeData={themes}
+            style={{ width: '100%' }}
+          />
+        </Flex>
         <Flex vertical gap={4}>
           <label htmlFor="song-filter-classified" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
             Phân loại

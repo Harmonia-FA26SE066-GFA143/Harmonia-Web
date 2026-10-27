@@ -118,7 +118,16 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
         </Form.Item>
       </Flex>
       <Flex wrap gap={spacing.md}>
-        <Form.Item label="Mùa phụng vụ" name="seasonId" style={{ flex: '1 1 200px' }}>
+        <Form.Item
+          label="Mùa phụng vụ"
+          name="seasonId"
+          extra={
+            event
+              ? undefined
+              : 'Để trống thì hệ thống điền mùa có khoảng ngày chứa ngày cử hành. Lễ Vọng tối 24/12 nên chọn Mùa Giáng Sinh.'
+          }
+          style={{ flex: '1 1 200px' }}
+        >
           <Select allowClear placeholder="Chọn mùa phụng vụ" options={seasons} />
         </Form.Item>
         <Form.Item label="Loại sự kiện" name="categoryId" style={{ flex: '1 1 200px' }}>

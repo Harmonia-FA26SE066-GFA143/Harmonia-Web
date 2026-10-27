@@ -35,7 +35,7 @@ export interface Song {
   notes: string | null
   /** Active materials per kind (0 when none); absent on a song the Web just saved. */
   materialCounts?: Record<MaterialKind, number>
-  /** Has a season, Mass type, ceremony type or theme. */
+  /** Has a season, Mass type, ceremony type, theme or liturgical slot. */
   isClassified?: boolean
   /** Past published programs whose approved list has the song, as the song-usage report counts them. */
   timesUsed?: number
@@ -53,7 +53,7 @@ export interface SongValues {
   notes?: string
 }
 
-/** A lookup entry a song is classified under (season, Mass type, ceremony type, theme). */
+/** A lookup entry a song is classified under (season, Mass type, ceremony type, theme, liturgical slot). */
 export interface NamedRef {
   id: string
   name: string
@@ -63,6 +63,8 @@ export interface SkillRequirement {
   skillId: string
   skillName: string
   isMandatory: boolean
+  /** People needed, 1–50 (BE d1ca63e); 1 when the song does not say. */
+  requiredCount: number
 }
 
 /** GET /api/songs/{id}/classification: the FE-29 dimensions, each with any number of values. */
@@ -71,6 +73,8 @@ export interface SongClassification {
   massTypes: NamedRef[]
   ceremonyTypes: NamedRef[]
   songThemes: NamedRef[]
+  /** Where in the Mass the song fits (Nhập lễ, Đáp ca…); the song suggestions match on it. */
+  liturgicalSlots: NamedRef[]
   vocalRequirements: SkillRequirement[]
   instrumentRequirements: SkillRequirement[]
 }
@@ -78,6 +82,7 @@ export interface SongClassification {
 export interface SkillRequirementValue {
   skillId: string
   isMandatory: boolean
+  requiredCount: number
 }
 
 /** Body of PUT /api/songs/{id}/classification: the full desired set; anything left out is removed from the song. */
@@ -86,6 +91,7 @@ export interface SongClassificationValues {
   massTypeIds: string[]
   ceremonyTypeIds: string[]
   songThemeIds: string[]
+  liturgicalSlotIds: string[]
   vocalRequirements: SkillRequirementValue[]
   instrumentRequirements: SkillRequirementValue[]
 }
@@ -121,10 +127,12 @@ export interface SongFilters {
   seasonId?: string
   massTypeId?: string
   ceremonyTypeId?: string
+  /** Also finds the songs of its sub-themes. */
   themeId?: string
+  slotId?: string
   /** Matches a vocal or an instrument requirement. */
   skillId?: string
-  /** 'no': songs with no season, Mass type, ceremony type or theme yet. */
+  /** 'no': songs with no season, Mass type, ceremony type, theme or slot yet. */
   classified?: 'yes' | 'no'
   /** Songs with no active material of this kind. */
   missingMaterial?: MaterialKind

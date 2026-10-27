@@ -14,6 +14,10 @@ import type {
   MassScheduleValues,
   Skill,
   SkillValues,
+  SlotRequirement,
+  SlotRequirementValue,
+  SongTheme,
+  SongThemeValues,
   WorshipLocation,
   WorshipLocationValues,
 } from '../types'
@@ -73,6 +77,15 @@ export function saveSkill(id: string | undefined, values: SkillValues): Promise<
   return save('skills', id, withDescription(values))
 }
 
+/** Sorted by name on the server; the tree comes from `parentId`. */
+export function listSongThemes(): Promise<SongTheme[]> {
+  return listAll('songThemes')
+}
+
+export function saveSongTheme(id: string | undefined, values: SongThemeValues): Promise<SongTheme> {
+  return save('songThemes', id, { ...withDescription(values), parentId: values.parentId ?? null })
+}
+
 /** Sorted by start date on the server. */
 export function listSeasons(): Promise<LiturgicalSeason[]> {
   return listAll('seasons')
@@ -89,6 +102,18 @@ export function listSlots(): Promise<LiturgicalSlot[]> {
 
 export function saveSlot(id: string | undefined, values: LiturgicalSlotValues): Promise<LiturgicalSlot> {
   return save('liturgicalSlots', id, values)
+}
+
+/** Any signed-in role reads; only the Admin writes (`PUT` replaces the whole set). */
+export function getSlotRequirements(slotId: string): Promise<SlotRequirement[]> {
+  return apiRequest<SlotRequirement[]>(`/api/lookups/liturgical-slots/${slotId}/requirements`)
+}
+
+export function saveSlotRequirements(slotId: string, requirements: SlotRequirementValue[]): Promise<SlotRequirement[]> {
+  return apiRequest<SlotRequirement[]>(`/api/lookups/liturgical-slots/${slotId}/requirements`, {
+    method: 'PUT',
+    body: JSON.stringify({ requirements }),
+  })
 }
 
 /** Sorted by name on the server. */

@@ -1,8 +1,8 @@
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Checkbox, Flex, Form, Modal, Select } from 'antd'
-import { useCatalogOptions, useSkillOptions, type CatalogOption } from '@/features/system-categories'
+import { Button, Checkbox, Flex, Form, InputNumber, Modal, Select, TreeSelect } from 'antd'
+import { themeTreeData, useCatalogOptions, useLookup, useSkillOptions, type CatalogOption } from '@/features/system-categories'
 import { spacing } from '@/styles/tokens'
-import type { SongClassification, SongClassificationValues } from '../types'
+import type { SkillRequirementValue, SongClassification, SongClassificationValues } from '../types'
 
 export interface SongClassificationModalProps {
   open: boolean
@@ -25,6 +25,12 @@ const skillOptions = (items: { skillId: string; skillName: string }[]) =>
   items.map((item) => ({ value: item.skillId, label: item.skillName }))
 
 type RequirementField = 'vocalRequirements' | 'instrumentRequirements'
+
+const toRequirement = (row: SkillRequirementValue): SkillRequirementValue => ({
+  ...row,
+  isMandatory: Boolean(row.isMandatory),
+  requiredCount: row.requiredCount ?? 1,
+})
 
 function RequirementList({ name, label, addLabel, options }: Readonly<{
   name: RequirementField
@@ -58,6 +64,13 @@ function RequirementList({ name, label, addLabel, options }: Readonly<{
                     }))}
                   />
                 </Form.Item>
+                <Form.Item
+                  name={[field.name, 'requiredCount']}
+                  rules={[{ required: true, message: 'Nhập số người.' }]}
+                  style={{ margin: 0 }}
+                >
+                  <InputNumber min={1} max={50} precision={0} addonAfter="người" aria-label={`Số người ${label.toLowerCase()} ${index + 1}`} style={{ width: 130 }} />
+                </Form.Item>
                 <Form.Item name={[field.name, 'isMandatory']} valuePropName="checked" style={{ margin: 0 }}>
                   <Checkbox style={{ paddingTop: 5 }}>Bắt buộc</Checkbox>
                 </Form.Item>
@@ -69,7 +82,7 @@ function RequirementList({ name, label, addLabel, options }: Readonly<{
                 />
               </Flex>
             ))}
-            <Button type="dashed" icon={<PlusOutlined />} onClick={() => add({ isMandatory: false })} style={{ alignSelf: 'flex-start' }}>
+            <Button type="dashed" icon={<PlusOutlined />} onClick={() => add({ isMandatory: false, requiredCount: 1 })} style={{ alignSelf: 'flex-start' }}>
               {addLabel}
             </Button>
           </Flex>
@@ -84,7 +97,13 @@ export function SongClassificationModal({ open, classification, saving = false, 
   const seasons = withCurrent(useCatalogOptions('seasons'), refOptions(classification.liturgicalSeasons))
   const massTypes = withCurrent(useCatalogOptions('massTypes'), refOptions(classification.massTypes))
   const ceremonyTypes = withCurrent(useCatalogOptions('ceremonyTypes'), refOptions(classification.ceremonyTypes))
-  const themes = withCurrent(useCatalogOptions('songThemes'), refOptions(classification.songThemes))
+  const slots = withCurrent(useCatalogOptions('liturgicalSlots'), refOptions(classification.liturgicalSlots))
+  // A theme switched off later stays on the song; it is offered at the top so saving keeps it.
+  const activeThemes = useLookup('songThemes').data ?? []
+  const themes = themeTreeData([
+    ...activeThemes,
+    ...classification.songThemes.filter((theme) => !activeThemes.some((active) => active.id === theme.id)),
+  ])
   const skills = useSkillOptions()
   const vocal = withCurrent(skills.vocal, skillOptions(classification.vocalRequirements))
   const instrument = withCurrent(skills.instrument, skillOptions(classification.instrumentRequirements))
@@ -93,11 +112,11 @@ export function SongClassificationModal({ open, classification, saving = false, 
     { name: 'liturgicalSeasonIds', label: 'Mùa phụng vụ', options: seasons },
     { name: 'massTypeIds', label: 'Loại Thánh lễ', options: massTypes },
     { name: 'ceremonyTypeIds', label: 'Loại nghi thức', options: ceremonyTypes },
-    { name: 'songThemeIds', label: 'Chủ đề', options: themes },
+    { name: 'liturgicalSlotIds', label: 'Phần phụng vụ', options: slots },
   ]
 
   const requirementValues = (items: SongClassification['vocalRequirements']) =>
-    items.map(({ skillId, isMandatory }) => ({ skillId, isMandatory }))
+    items.map(({ skillId, isMandatory, requiredCount }) => ({ skillId, isMandatory, requiredCount }))
 
   return (
     <Modal
@@ -119,6 +138,7 @@ export function SongClassificationModal({ open, classification, saving = false, 
             massTypeIds: classification.massTypes.map((ref) => ref.id),
             ceremonyTypeIds: classification.ceremonyTypes.map((ref) => ref.id),
             songThemeIds: classification.songThemes.map((ref) => ref.id),
+            liturgicalSlotIds: classification.liturgicalSlots.map((ref) => ref.id),
             vocalRequirements: requirementValues(classification.vocalRequirements),
             instrumentRequirements: requirementValues(classification.instrumentRequirements),
           }}
@@ -128,11 +148,9 @@ export function SongClassificationModal({ open, classification, saving = false, 
               massTypeIds: values.massTypeIds ?? [],
               ceremonyTypeIds: values.ceremonyTypeIds ?? [],
               songThemeIds: values.songThemeIds ?? [],
-              vocalRequirements: (values.vocalRequirements ?? []).map((row) => ({ ...row, isMandatory: Boolean(row.isMandatory) })),
-              instrumentRequirements: (values.instrumentRequirements ?? []).map((row) => ({
-                ...row,
-                isMandatory: Boolean(row.isMandatory),
-              })),
+              liturgicalSlotIds: values.liturgicalSlotIds ?? [],
+              vocalRequirements: (values.vocalRequirements ?? []).map(toRequirement),
+              instrumentRequirements: (values.instrumentRequirements ?? []).map(toRequirement),
             })
           }
         >
@@ -152,6 +170,9 @@ export function SongClassificationModal({ open, classification, saving = false, 
             />
           </Form.Item>
         ))}
+        <Form.Item label="Chủ đề" name="songThemeIds" extra="Lọc theo một chủ đề cũng ra bài của các chủ đề con.">
+          <TreeSelect multiple allowClear showSearch treeNodeFilterProp="title" treeDefaultExpandAll placeholder="Chọn chủ đề" treeData={themes} />
+        </Form.Item>
       </div>
       <RequirementList name="vocalRequirements" label="Yêu cầu bè giọng" addLabel="Thêm bè giọng" options={vocal} />
       <RequirementList name="instrumentRequirements" label="Yêu cầu nhạc cụ" addLabel="Thêm nhạc cụ" options={instrument} />
