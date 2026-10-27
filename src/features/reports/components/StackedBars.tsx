@@ -1,5 +1,5 @@
 import { Flex, Tooltip, Typography } from 'antd'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { colors, radius, spacing } from '@/styles/tokens'
 /** One column: a short label under it and a long name for screen readers and tooltips. */
 export interface Bucket {
   label: string
@@ -37,7 +37,7 @@ export function StackedBars<K extends string>({
             : 'không có dữ liệu'
           return (
             <Flex key={bucket.title} vertical align="center" justify="flex-end" style={{ flex: '1 0 28px', height: '100%' }}>
-              <Typography.Text style={{ fontSize: 12, color: colors.textMuted, fontFamily: typography.fontFamilyNumeric }}>
+              <Typography.Text style={{ fontSize: 12, color: colors.textMuted, fontVariantNumeric: 'tabular-nums' }}>
                 {total || ''}
               </Typography.Text>
               <Tooltip title={`${bucket.title}: ${description}`}>

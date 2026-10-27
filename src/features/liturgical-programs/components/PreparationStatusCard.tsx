@@ -2,13 +2,13 @@ import { Button, Card, Descriptions, Flex, Typography } from 'antd'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { usePreparationStatus } from '../hooks/useEvents'
 import type { PreparationStatus } from '../types'
 import { SongListStatusTag } from './SongListStatusTag'
 
 const muted = { color: colors.textMuted }
-const numeric = { fontFamily: typography.fontFamilyNumeric }
+const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 /** "a/b" with the share in percent once there is something to count. */
 const ratio = (part: number, whole: number) => (

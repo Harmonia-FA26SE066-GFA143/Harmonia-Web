@@ -25,7 +25,7 @@ export function ActivityTable({ records, onShowDetail, onPickUser, pagination, l
       key: 'time',
       title: 'Thời gian',
       render: (_, record) => (
-        <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric, whiteSpace: 'nowrap' }}>
+        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
           {formatDateTime(record.createdAt)}
         </Typography.Text>
       ),

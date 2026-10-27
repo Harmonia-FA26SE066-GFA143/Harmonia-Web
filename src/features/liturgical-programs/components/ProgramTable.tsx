@@ -38,7 +38,7 @@ export function ProgramTable({ programs, onOpen, pagination = false, loading }: 
       key: 'date',
       title: 'Ngày giờ',
       render: (_, program) => (
-        <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric, whiteSpace: 'nowrap' }}>
+        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
           {program.time} · {formatProgramDate(program.date)}
         </Typography.Text>
       ),

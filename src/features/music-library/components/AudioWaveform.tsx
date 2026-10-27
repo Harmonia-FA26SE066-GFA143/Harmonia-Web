@@ -2,7 +2,7 @@ import { CaretRightFilled, PauseOutlined } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type WaveSurfer from 'wavesurfer.js'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { colors, radius, spacing } from '@/styles/tokens'
 
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
 
@@ -102,7 +102,7 @@ export function AudioWaveform({ url, title }: Readonly<{ url: string; title: str
         {/* wavesurfer draws here; clicking the wave seeks, the button covers keyboard use. */}
         <div ref={container} aria-hidden style={{ display: state === 'idle' ? 'none' : 'block', minHeight: 40 }} />
       </div>
-      <Typography.Text style={{ color: colors.textMuted, fontFamily: typography.fontFamilyNumeric, fontSize: 12.5, flexShrink: 0 }}>
+      <Typography.Text style={{ color: colors.textMuted, fontVariantNumeric: 'tabular-nums', fontSize: 12.5, flexShrink: 0 }}>
         {state === 'ready' ? `${clock(time)} / ${clock(duration)}` : '–:–'}
       </Typography.Text>
     </Flex>

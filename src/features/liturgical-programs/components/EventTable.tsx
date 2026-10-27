@@ -13,7 +13,7 @@ export interface EventTableProps {
   loading?: boolean
 }
 
-const numeric = { fontFamily: typography.fontFamilyNumeric, whiteSpace: 'nowrap' } as const
+const numeric = { fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' } as const
 
 /** Liturgical events of the Priest with date, time, place and status. */
 export function EventTable({ events, onOpen, pagination = false, loading }: Readonly<EventTableProps>) {

@@ -35,7 +35,7 @@ const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<Participa
     key: 'requestedAt',
     title: 'Gửi yêu cầu lúc',
     render: (_, request) => (
-      <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric }}>{formatDateTime(request.requestedAt)}</Typography.Text>
+      <Typography.Text style={{ fontVariantNumeric: 'tabular-nums' }}>{formatDateTime(request.requestedAt)}</Typography.Text>
     ),
   },
   {

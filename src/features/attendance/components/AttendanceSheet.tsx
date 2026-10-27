@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBeforeUnload, useBlocker } from 'react-router'
 import { MetricSummary, NoFilterResults } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
-import { colors, layout, radius, spacing, typography } from '@/styles/tokens'
+import { colors, layout, radius, spacing } from '@/styles/tokens'
 import { attendanceErrorMessage } from '../attendanceErrors'
 import { useSaveAttendance } from '../hooks/useAttendance'
 import { attendanceLabels, attendanceShortLabels, attendanceValues, type AttendanceRecord, type AttendanceValue } from '../types'
@@ -107,8 +107,8 @@ export function AttendanceSheet({ rehearsalId, records, editable }: Readonly<Att
       title: 'STT',
       width: 64,
       render: (_, _record, index) => (
-        <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric, color: colors.textMuted }}>
-          {String(index + 1).padStart(2, '0')}
+        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', color: colors.textMuted }}>
+          {index + 1}
         </Typography.Text>
       ),
     },

@@ -26,7 +26,7 @@ interface DirectorPreparationHubProps {
 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
-const numeric = { fontFamily: typography.fontFamilyNumeric }
+const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<DirectorPreparationHubProps>) {
   const navigate = useNavigate()

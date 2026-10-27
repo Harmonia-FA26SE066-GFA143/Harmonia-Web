@@ -64,7 +64,7 @@ export function AssignmentsTab() {
       key: 'due',
       title: 'Hạn nộp',
       render: (_, assignment) => (
-        <Typography.Text style={{ fontFamily: typography.fontFamilyNumeric, whiteSpace: 'nowrap' }}>
+        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
           {formatDateTime(assignment.dueDate)}
         </Typography.Text>
       ),
