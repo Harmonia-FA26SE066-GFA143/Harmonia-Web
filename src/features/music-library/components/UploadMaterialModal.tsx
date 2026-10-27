@@ -56,7 +56,7 @@ export function UploadMaterialModal({ pending, material, saving = false, onSubmi
       {(pending || editing) && (
         <Typography.Paragraph type="secondary" ellipsis={{ tooltip: pending?.file.name ?? editing?.fileName }}>
           Tệp: {pending?.file.name ?? editing?.fileName}
-          {editing && ` (${materialKindLabels[editing.kind]}; muốn đổi tệp thì xoá rồi tải lên lại)`}
+          {editing && ` (${materialKindLabels[editing.kind]}; muốn đổi tệp thì dùng nút Thay file)`}
         </Typography.Paragraph>
       )}
       <Form.Item

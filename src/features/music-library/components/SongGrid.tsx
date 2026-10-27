@@ -22,7 +22,7 @@ const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize 
 function MusicTags({ song }: Readonly<{ song: Song }>) {
   if (!song.musicalKey && !song.tempo) return null
   return (
-    <Flex wrap gap={6}>
+    <Flex wrap gap={spacing.sm}>
       {song.musicalKey && (
         <Tag variant="filled" style={{ marginInlineEnd: 0, background: colors.primarySoft, color: colors.primary, fontWeight: 600 }}>
           Giọng {song.musicalKey}
@@ -43,7 +43,7 @@ function LibraryFacts({ song }: Readonly<{ song: Song }>) {
     facts.push(materials > 0 ? `${materials} tài liệu` : 'Chưa có tài liệu')
   }
   return (
-    <Flex wrap align="center" gap={6}>
+    <Flex wrap align="center" gap={spacing.sm}>
       <Typography.Text style={muted}>{facts.join(' · ')}</Typography.Text>
       {song.isClassified === false && (
         <Tag color="warning" style={{ marginInlineEnd: 0 }}>
@@ -62,7 +62,7 @@ function LibraryFacts({ song }: Readonly<{ song: Song }>) {
 export function SongGrid({ songs, page, pageSize, total, loading, onPageChange }: Readonly<SongGridProps>) {
   const { search } = useLocation()
   return (
-    <Spin spinning={!!loading}>
+    <Spin spinning={!!loading} delay={100}>
       <ul
         style={{
           listStyle: 'none',
@@ -106,11 +106,10 @@ export function SongGrid({ songs, page, pageSize, total, loading, onPageChange }
           )
         })}
       </ul>
-      {total > pageSize && (
-        <Flex justify="flex-end" style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
-          <Pagination current={page} pageSize={pageSize} total={total} showSizeChanger={false} onChange={onPageChange} />
-        </Flex>
-      )}
+      {/* Shown on a single page too, so the end of the list reads as the end. */}
+      <Flex justify="flex-end" style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+        <Pagination current={page} pageSize={pageSize} total={total} showSizeChanger={false} onChange={onPageChange} />
+      </Flex>
     </Spin>
   )
 }

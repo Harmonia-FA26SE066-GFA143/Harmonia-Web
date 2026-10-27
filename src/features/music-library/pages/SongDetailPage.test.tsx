@@ -45,7 +45,9 @@ const materials: SongMaterial[] = [
   material({ id: 'm2', kind: 'sampleAudio', title: 'Audio mẫu bè Tenor', fileName: 'audio-mau.mp3', targetSkillName: 'Tenor' }),
 ]
 
-const renderDetail = () => renderPage(<SongDetailPage />, '/director/library/:songId', '/director/library/s1')
+/** Opens the song page on one of its tabs (`?tab=`), as a link or reload would. */
+const renderDetail = (tab?: 'classification' | 'materials') =>
+  renderPage(<SongDetailPage />, '/director/library/:songId', `/director/library/s1${tab ? `?tab=${tab}` : ''}`)
 
 function withSong() {
   vi.spyOn(songsApi, 'getSong').mockResolvedValue(song)
@@ -79,23 +81,25 @@ describe('SongDetailPage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Con Bước Lên Bàn Thờ' })).toBeInTheDocument()
     expect(screen.getByText('Lm. Kim Long')).toBeInTheDocument()
     expect(screen.getByText('Rê trưởng')).toBeInTheDocument()
+    // Key metadata stands under the title on every tab.
+    expect(screen.getByText('Giọng Rê trưởng · Nhạc: Lm. Kim Long')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Phân loại' }))
     expect(await screen.findByText('Mùa Thường Niên')).toBeInTheDocument()
     expect(screen.getByText('Mùa Chay')).toBeInTheDocument()
     expect(screen.getByText('Đáp ca')).toBeInTheDocument()
     expect(screen.getByText('Soprano ×1 (bắt buộc)')).toBeInTheDocument()
     expect(screen.getAllByText('Chưa phân loại')).toHaveLength(4)
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Tài liệu (2)' }))
     for (const kind of ['Bản nhạc', 'Lời bài hát', 'Audio mẫu', 'Tài liệu tập luyện']) {
-      expect(await screen.findByRole('heading', { level: 3, name: kind })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { level: 2, name: kind })).toBeInTheDocument()
     }
     expect(screen.getByText('Bản nhạc SATB')).toBeInTheDocument()
     expect(screen.getByText('con-buoc_SATB.pdf · 2.4 MB · tải lên 12/08/2026')).toBeInTheDocument()
     expect(screen.getByText('Tenor')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Phát Audio mẫu bè Tenor' })).toBeInTheDocument()
 
-    // The cards are sections of the page (h2), the kinds of material sit under Tài liệu (h3).
-    for (const name of ['Thông tin bài hát', 'Phân loại', 'Tài liệu']) {
-      expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument()
-    }
     // Each file link names its material and says it opens a new tab; the accepted files are told before picking one.
     expect(screen.getByRole('link', { name: 'Xem/Tải xuống Bản nhạc SATB (mở tab mới)' })).toHaveAttribute('target', '_blank')
     expect(screen.getAllByText(/tối đa 20 MB/)).toHaveLength(4)
@@ -105,7 +109,7 @@ describe('SongDetailPage', () => {
     vi.spyOn(songsApi, 'getSong').mockResolvedValue(song)
     vi.spyOn(songsApi, 'getSongClassification').mockResolvedValue(classification)
     vi.spyOn(songsApi, 'listMaterials').mockRejectedValue(new ApiError(403, undefined))
-    renderDetail()
+    renderDetail('materials')
 
     expect(await screen.findByRole('heading', { name: 'Không thể tải tài liệu' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1, name: 'Con Bước Lên Bàn Thờ' })).toBeInTheDocument()
@@ -156,7 +160,7 @@ describe('SongDetailPage', () => {
       withSong()
       withLookups()
       const update = vi.spyOn(songsApi, 'updateSongClassification').mockResolvedValue(classification)
-      renderDetail()
+      renderDetail('classification')
 
       const dialog = await openEditor()
       fireEvent.click(within(dialog).getByRole('button', { name: /Thêm nhạc cụ/ }))
@@ -189,7 +193,7 @@ describe('SongDetailPage', () => {
       vi.spyOn(songsApi, 'updateSongClassification').mockRejectedValue(
         new ApiError(400, { code: 'SONG_CLASSIFICATION_TARGET_INVALID' }),
       )
-      renderDetail()
+      renderDetail('classification')
 
       const dialog = await openEditor()
       fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu phân loại' }))
@@ -204,9 +208,9 @@ describe('SongDetailPage', () => {
     const upload = vi
       .spyOn(songsApi, 'uploadMaterial')
       .mockResolvedValue(material({ id: 'm3', kind: 'lyrics', title: 'Lời 2 bè', fileName: 'loi.pdf' }))
-    renderDetail()
+    renderDetail('materials')
 
-    const lyrics = (await screen.findByRole('heading', { level: 3, name: 'Lời bài hát' })).closest('section')!
+    const lyrics = (await screen.findByRole('heading', { level: 2, name: 'Lời bài hát' })).closest('section')!
     const input = lyrics.querySelector('input[type="file"]') as HTMLInputElement
     expect(input.accept).toBe('.pdf,.png,.jpg')
     const file = new File(['lời'], 'loi.pdf', { type: 'application/pdf' })
@@ -226,9 +230,9 @@ describe('SongDetailPage', () => {
   it('refuses a file the backend would reject without uploading it', async () => {
     withSong()
     const upload = vi.spyOn(songsApi, 'uploadMaterial')
-    renderDetail()
+    renderDetail('materials')
 
-    const audio = (await screen.findByRole('heading', { level: 3, name: 'Audio mẫu' })).closest('section')!
+    const audio = (await screen.findByRole('heading', { level: 2, name: 'Audio mẫu' })).closest('section')!
     const input = audio.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['x'], 'ban-nhac.pdf', { type: 'application/pdf' })] } })
 
@@ -240,36 +244,37 @@ describe('SongDetailPage', () => {
   it('explains an upload the backend refuses and keeps the dialog open', async () => {
     withSong()
     vi.spyOn(songsApi, 'uploadMaterial').mockRejectedValue(new ApiError(413, { code: 'MATERIAL_FILE_TOO_LARGE' }))
-    renderDetail()
+    renderDetail('materials')
 
-    const sheet = (await screen.findByRole('heading', { level: 3, name: 'Bản nhạc' })).closest('section')!
+    const sheet = (await screen.findByRole('heading', { level: 2, name: 'Bản nhạc' })).closest('section')!
     const input = sheet.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['x'], 'ban-nhac.pdf', { type: 'application/pdf' })] } })
     const dialog = await screen.findByRole('dialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Tải lên' }))
 
-    expect(await screen.findByText('Tệp vượt quá 20 MB.')).toBeInTheDocument()
+    expect(await screen.findByText('Tệp vượt quá 20 MB. Vui lòng chọn tệp nhỏ hơn.')).toBeInTheDocument()
     expect(within(dialog).getByRole('textbox', { name: 'Tiêu đề' })).toHaveValue('ban-nhac')
   })
 
   it('deletes a material only after confirmation', async () => {
     withSong()
     const remove = vi.spyOn(songsApi, 'deleteMaterial').mockResolvedValue()
-    renderDetail()
+    renderDetail('materials')
 
     fireEvent.click(await screen.findByRole('button', { name: 'Xoá Bản nhạc SATB' }))
-    const dialog = await screen.findByRole('dialog')
-    expect(within(dialog).getByText('Xoá tài liệu này?')).toBeInTheDocument()
+    // The dialog names the material and focuses Cancel, so Enter does not delete.
+    const confirm = (await screen.findAllByText('Xoá tài liệu “Bản nhạc SATB”?'))[0].closest('.ant-modal') as HTMLElement
+    await waitFor(() => expect(within(confirm).getByRole('button', { name: 'Hủy' })).toHaveFocus())
     expect(remove).not.toHaveBeenCalled()
 
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Xoá' }))
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá tài liệu' }))
     await waitFor(() => expect(remove).toHaveBeenCalledWith('m1'))
   })
 
   it('replaces the file of a material, keeping what members marked unless asked', async () => {
     withSong()
     const replace = vi.spyOn(songsApi, 'replaceMaterialFile').mockResolvedValue(materials[1])
-    renderDetail()
+    renderDetail('materials')
 
     fireEvent.click(await screen.findByRole('button', { name: 'Thay file Audio mẫu bè Tenor' }))
     const dialog = await screen.findByRole('dialog')
@@ -286,7 +291,7 @@ describe('SongDetailPage', () => {
   it('edits the title of a material and makes it for the whole choir', async () => {
     withSong()
     const update = vi.spyOn(songsApi, 'updateMaterial').mockResolvedValue()
-    renderDetail()
+    renderDetail('materials')
 
     fireEvent.click(await screen.findByRole('button', { name: 'Sửa Audio mẫu bè Tenor' }))
     const dialog = await screen.findByRole('dialog')
@@ -308,9 +313,9 @@ describe('SongDetailPage', () => {
       totalCount: 1,
       totalPages: 1,
     })
-    renderDetail()
+    renderDetail('materials')
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Tiến độ học Bản nhạc SATB' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Xem tiến độ học Bản nhạc SATB' }))
     const dialog = await screen.findByRole('dialog')
     expect(await within(dialog).findByText('Giuse Vũ Đình Khôi')).toBeInTheDocument()
     expect(within(dialog).getAllByText('Đã thuộc').length).toBeGreaterThan(0)
@@ -327,7 +332,7 @@ describe('SongDetailPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Xoá bài hát/ }))
     // Ant Design renders a confirm title twice; the first one sits in the visible dialog.
-    const confirm = (await screen.findAllByText('Xoá bài hát?'))[0].closest('.ant-modal') as HTMLElement
+    const confirm = (await screen.findAllByText(/^Xoá bài hát “.+”?$/))[0].closest('.ant-modal') as HTMLElement
     expect(remove).not.toHaveBeenCalled()
     fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá bài hát' }))
 
@@ -341,7 +346,7 @@ describe('SongDetailPage', () => {
     renderDetail()
 
     fireEvent.click(await screen.findByRole('button', { name: /Xoá bài hát/ }))
-    const confirm = (await screen.findAllByText('Xoá bài hát?'))[0].closest('.ant-modal') as HTMLElement
+    const confirm = (await screen.findAllByText(/^Xoá bài hát “.+”?$/))[0].closest('.ant-modal') as HTMLElement
     fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá bài hát' }))
 
     expect(

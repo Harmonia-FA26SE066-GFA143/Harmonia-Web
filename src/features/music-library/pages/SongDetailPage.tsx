@@ -1,19 +1,19 @@
 import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, FileSearchOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Modal, Typography } from 'antd'
+import { App, Button, Card, Tabs } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
 import { ApiError, requestFailureMessage } from '@/lib/api/errors'
-import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
+import { useUrlTab } from '@/shared/hooks/useUrlTab'
+import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { LearningProgressModal } from '../components/LearningProgressModal'
-import { SongClassificationCard } from '../components/SongClassificationCard'
+import { SongClassificationPanel } from '../components/SongClassificationPanel'
 import { SongClassificationModal } from '../components/SongClassificationModal'
 import { SongFormModal } from '../components/SongFormModal'
-import { SongInfoCard } from '../components/SongInfoCard'
-import { SongMaterialsCard } from '../components/SongMaterialsCard'
+import { SongInfoPanel } from '../components/SongInfoPanel'
+import { SongMaterialsPanel } from '../components/SongMaterialsPanel'
 import { ReplaceMaterialFileModal } from '../components/ReplaceMaterialFileModal'
 import { UploadMaterialModal } from '../components/UploadMaterialModal'
 import {
@@ -46,18 +46,22 @@ import {
   type SongValues,
 } from '../types'
 
+const tabs = ['info', 'classification', 'materials'] as const
+
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { title: 'Chi tiết bài hát' }]
 
 /**
  * Choir Director: one song with its fields, FE-29 classification and FE-08/FE-28 materials, their learning progress
  * (FE-09) and deletion of the song. The backend refuses to delete a song any song list, rehearsal or practice
  * assignment uses (409 SONG_IN_USE, BE 718696c), as "only if never selected for a Mass" (song-approval.md, 5a.5) asks.
+ * The three parts are tabs kept in `?tab=`, each with its own loading, empty and error states.
  */
 export function SongDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { message, modal } = App.useApp()
   const { songId = '' } = useParams()
+  const [tab, setTab] = useUrlTab(tabs, 'info')
   const song = useSong(songId)
   const classification = useSongClassification(songId)
   const materials = useSongMaterials(songId)
@@ -74,7 +78,6 @@ export function SongDetailPage() {
   const [editing, setEditing] = useState(false)
   const [classifying, setClassifying] = useState(false)
   const [titleError, setTitleError] = useState<string>()
-  const [deleting, setDeleting] = useState<SongMaterial>()
   const [picked, setPicked] = useState<{ kind: MaterialKind; file: File }>()
 
   const backButton = (
@@ -104,6 +107,10 @@ export function SongDetailPage() {
   }
 
   const { data } = song
+  // Key metadata in place of a description sentence; the Thông tin tab has every field.
+  const metadata = [data.musicalKey && `Giọng ${data.musicalKey}`, data.composer && `Nhạc: ${data.composer}`, data.lyricist && `Lời: ${data.lyricist}`]
+    .filter(Boolean)
+    .join(' · ')
 
   const closeForm = () => {
     setEditing(false)
@@ -196,11 +203,13 @@ export function SongDetailPage() {
 
   const handleDeleteSong = () =>
     modal.confirm({
-      title: 'Xoá bài hát?',
-      content: `“${data.title}” sẽ không còn trong kho bài hát. Bài đã có trong danh sách bài hát, buổi tập hoặc bài tập thì không xoá được.`,
+      title: `Xoá bài hát “${data.title}”?`,
+      content: 'Bài hát sẽ không còn trong kho bài hát. Bài đã có trong danh sách bài hát, buổi tập hoặc bài tập thì không xoá được.',
       okText: 'Xoá bài hát',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
+      // Enter on a destructive dialog must not delete.
+      autoFocusButton: 'cancel',
       onOk: () =>
         deleteSong
           .mutateAsync(data.id)
@@ -218,22 +227,27 @@ export function SongDetailPage() {
           ),
     })
 
-  const handleDelete = () => {
-    if (!deleting) return
-    remove.mutate(deleting.id, {
-      onSuccess: () => {
-        message.success('Đã xoá tài liệu.')
-        setDeleting(undefined)
-      },
-      onError: (error) => message.error(requestFailureMessage(error, 'Không thể xoá tài liệu. Vui lòng thử lại.')),
+  const handleDelete = (material: SongMaterial) =>
+    modal.confirm({
+      title: `Xoá tài liệu “${material.title}”?`,
+      content: `${materialKindLabels[material.kind]}, tải lên ${dayjs(parseUtc(material.createdAt)).format('DD/MM/YYYY')}, sẽ bị xoá khỏi bài hát “${data.title}”.`,
+      okText: 'Xoá tài liệu',
+      okButtonProps: { danger: true },
+      cancelText: 'Hủy',
+      autoFocusButton: 'cancel',
+      onOk: () =>
+        remove
+          .mutateAsync(material.id)
+          .then(() => message.success('Đã xoá tài liệu.'))
+          .catch((error: Error) => message.error(requestFailureMessage(error, 'Không thể xoá tài liệu. Vui lòng thử lại.'))),
     })
-  }
 
   return (
     <>
       <PageHeader
         title={data.title}
         breadcrumb={breadcrumb}
+        description={metadata || undefined}
         extra={
           <>
             {backButton}
@@ -249,35 +263,54 @@ export function SongDetailPage() {
       {song.isError && (
         <ErrorState title="Không thể cập nhật bài hát" error={song.error} hasData onRetry={() => song.refetch()} retrying={song.isFetching} />
       )}
-      <Flex vertical gap={spacing.lg}>
-        <SongInfoCard song={data} />
-        <SongClassificationCard
-          classification={classification.data}
-          loading={classification.isPending}
-          failed={classification.isError}
-          error={classification.error}
-          hasData={classification.data !== undefined}
-          onRetry={() => classification.refetch()}
-          onEdit={() => setClassifying(true)}
+      <Card styles={{ body: { paddingTop: 0 } }}>
+        <Tabs
+          destroyOnHidden
+          activeKey={tab}
+          onChange={setTab}
+          items={[
+            { key: 'info', label: 'Thông tin', children: <SongInfoPanel song={data} /> },
+            {
+              key: 'classification',
+              label: 'Phân loại',
+              children: (
+                <SongClassificationPanel
+                  classification={classification.data}
+                  loading={classification.isPending}
+                  failed={classification.isError}
+                  error={classification.error}
+                  hasData={classification.data !== undefined}
+                  onRetry={() => classification.refetch()}
+                  onEdit={() => setClassifying(true)}
+                />
+              ),
+            },
+            {
+              key: 'materials',
+              label: materials.data ? `Tài liệu (${materials.data.length})` : 'Tài liệu',
+              children: (
+                <>
+                  {materials.isPending && <SectionSkeleton rows={3} label="Đang tải tài liệu" />}
+                  {materials.isError && (
+                    <ErrorState headingLevel={2} title="Không thể tải tài liệu" error={materials.error} hasData={materials.data !== undefined} onRetry={() => materials.refetch()} retrying={materials.isFetching} />
+                  )}
+                  {materials.data !== undefined && (
+                    <SongMaterialsPanel
+                      materials={materials.data}
+                      uploadingKind={upload.isPending ? picked?.kind : undefined}
+                      onPick={handlePick}
+                      onDelete={handleDelete}
+                      onEdit={setEditingMaterial}
+                      onReplace={setReplacing}
+                      onProgress={setProgressOf}
+                    />
+                  )}
+                </>
+              ),
+            },
+          ]}
         />
-        {materials.isPending && <SectionSkeleton rows={3} label="Đang tải tài liệu" />}
-        {materials.isError && (
-          <Card title={<CardTitle>Tài liệu</CardTitle>}>
-            <ErrorState headingLevel={3} title="Không thể tải tài liệu" error={materials.error} hasData={materials.data !== undefined} onRetry={() => materials.refetch()} retrying={materials.isFetching} />
-          </Card>
-        )}
-        {materials.data !== undefined && (
-          <SongMaterialsCard
-            materials={materials.data}
-            uploadingKind={upload.isPending ? picked?.kind : undefined}
-            onPick={handlePick}
-            onDelete={setDeleting}
-            onEdit={setEditingMaterial}
-            onReplace={setReplacing}
-            onProgress={setProgressOf}
-          />
-        )}
-      </Flex>
+      </Card>
 
       <SongFormModal
         open={editing}
@@ -315,23 +348,6 @@ export function SongDetailPage() {
           onCancel={() => setClassifying(false)}
         />
       )}
-      <Modal
-        open={Boolean(deleting)}
-        title="Xoá tài liệu này?"
-        okText="Xoá"
-        cancelText="Hủy"
-        okButtonProps={{ danger: true, loading: remove.isPending }}
-        cancelButtonProps={{ disabled: remove.isPending }}
-        onOk={handleDelete}
-        onCancel={() => setDeleting(undefined)}
-      >
-        {deleting && (
-          <Typography.Paragraph style={{ margin: 0 }}>
-            Tài liệu <strong>{deleting.title}</strong> ({materialKindLabels[deleting.kind]}, tải lên{' '}
-            {dayjs(parseUtc(deleting.createdAt)).format('DD/MM/YYYY')}) sẽ bị xoá khỏi bài hát “{data.title}”.
-          </Typography.Paragraph>
-        )}
-      </Modal>
     </>
   )
 }

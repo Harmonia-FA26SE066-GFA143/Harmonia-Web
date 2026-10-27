@@ -1,7 +1,7 @@
 import { DashboardOutlined, EditOutlined, UserOutlined } from '@ant-design/icons'
-import { Card, Flex, Typography } from 'antd'
+import { Flex, Typography } from 'antd'
 import type { ReactNode } from 'react'
-import { CardTitle, IconTile } from '@/shared/ui'
+import { IconTile } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import type { Song } from '../types'
 import { StaffMotif } from './StaffMotif'
@@ -22,12 +22,11 @@ function Fact({ icon, label, value }: Readonly<{ icon: ReactNode; label: string;
 
 /**
  * Song fields of GET /api/songs/{id}, laid out like the head of a score: the musical key large beside a staff, then
- * tempo and credits.
+ * tempo and credits. The "Thông tin" tab of the song page.
  */
-export function SongInfoCard({ song }: Readonly<{ song: Song }>) {
+export function SongInfoPanel({ song }: Readonly<{ song: Song }>) {
   return (
-    <Card title={<CardTitle>Thông tin bài hát</CardTitle>}>
-      <Flex vertical gap={spacing.lg}>
+    <Flex vertical gap={spacing.lg}>
         <Flex
           align="center"
           gap={spacing.lg}
@@ -41,7 +40,7 @@ export function SongInfoCard({ song }: Readonly<{ song: Song }>) {
             <Typography.Text style={{ color: colors.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.06em' }}>
               Giọng
             </Typography.Text>
-            <Typography.Text style={{ fontSize: song.musicalKey ? 26 : 15, fontWeight: 700, color: song.musicalKey ? colors.primary : colors.textMuted, lineHeight: 1.2 }}>
+            <Typography.Text style={{ fontSize: song.musicalKey ? 26 : 15, fontWeight: 600, color: song.musicalKey ? colors.primary : colors.textMuted, lineHeight: 1.2 }}>
               {song.musicalKey || 'Chưa ghi'}
             </Typography.Text>
           </Flex>
@@ -60,7 +59,6 @@ export function SongInfoCard({ song }: Readonly<{ song: Song }>) {
             <Typography.Paragraph style={{ margin: 0, whiteSpace: 'pre-line' }}>{song.notes}</Typography.Paragraph>
           </div>
         )}
-      </Flex>
-    </Card>
+    </Flex>
   )
 }

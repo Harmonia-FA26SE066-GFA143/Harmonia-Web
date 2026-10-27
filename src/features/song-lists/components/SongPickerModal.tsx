@@ -52,7 +52,7 @@ export function SongPickerModal({ excludedSongIds, suggestedFilters, onAdd, onCa
     >
       {hasActiveSongFilters(suggestedFilters) && (
         <Typography.Paragraph style={{ color: colors.textMuted, margin: 0 }}>
-          Bộ lọc được đặt sẵn theo mùa phụng vụ và loại lễ của sự kiện. Đặt lại bộ lọc để xem cả kho.
+          Bộ lọc được đặt sẵn theo mùa phụng vụ và loại lễ của sự kiện. Bấm “Xoá tất cả bộ lọc” để xem cả kho.
         </Typography.Paragraph>
       )}
       <SongFilterBar value={filters} onChange={setFilters} onReset={clearFilters} resultCount={songs.data?.totalCount ?? 0} />

@@ -165,13 +165,12 @@ export function SongClassificationModal({ open, classification, saving = false, 
               mode="multiple"
               allowClear
               optionFilterProp="label"
-              placeholder={`Chọn ${select.label.toLowerCase()}`}
               options={select.options}
             />
           </Form.Item>
         ))}
         <Form.Item label="Chủ đề" name="songThemeIds" extra="Lọc theo một chủ đề cũng ra bài của các chủ đề con.">
-          <TreeSelect multiple allowClear showSearch treeNodeFilterProp="title" treeDefaultExpandAll placeholder="Chọn chủ đề" treeData={themes} />
+          <TreeSelect multiple allowClear showSearch treeNodeFilterProp="title" treeDefaultExpandAll treeData={themes} />
         </Form.Item>
       </div>
       <RequirementList name="vocalRequirements" label="Yêu cầu bè giọng" addLabel="Thêm bè giọng" options={vocal} />

@@ -1,5 +1,5 @@
 export { SongFilterBar } from './components/SongFilterBar'
-export { SongMaterialsCard } from './components/SongMaterialsCard'
+export { SongMaterialsPanel } from './components/SongMaterialsPanel'
 export { useSongMaterials, useSongs } from './hooks/useSongs'
 export { MusicLibraryPage } from './pages/MusicLibraryPage'
 export { SongDetailPage } from './pages/SongDetailPage'
