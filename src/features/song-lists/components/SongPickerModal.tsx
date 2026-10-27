@@ -1,8 +1,8 @@
-import { Checkbox, Flex, Modal, Typography } from 'antd'
+import { Checkbox, Flex, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { hasActiveSongFilters, SongFilterBar, useSongs, type Song, type SongFilters } from '@/features/music-library'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { ErrorState, NoFilterResults, SectionSkeleton } from '@/shared/ui'
+import { ErrorState, FormDrawer, NoFilterResults, SectionSkeleton } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 
 // One page of the largest size the backend allows; a longer library is narrowed by searching and filtering.
@@ -40,7 +40,7 @@ export function SongPickerModal({ excludedSongIds, suggestedFilters, onAdd, onCa
     ])
 
   return (
-    <Modal
+    <FormDrawer
       open
       title="Thêm bài hát từ kho"
       okText={picked.length ? `Thêm ${picked.length} bài hát` : 'Thêm bài hát'}
@@ -48,7 +48,7 @@ export function SongPickerModal({ excludedSongIds, suggestedFilters, onAdd, onCa
       okButtonProps={{ disabled: picked.length === 0 }}
       onOk={() => onAdd(picked)}
       onCancel={onCancel}
-      width={760}
+      size={760}
     >
       {hasActiveSongFilters(suggestedFilters) && (
         <Typography.Paragraph style={{ color: colors.textMuted, margin: 0 }}>
@@ -99,6 +99,6 @@ export function SongPickerModal({ excludedSongIds, suggestedFilters, onAdd, onCa
           Còn {more} bài hát khác, hãy tìm theo tên hoặc lọc để thu hẹp danh sách.
         </Typography.Paragraph>
       )}
-    </Modal>
+    </FormDrawer>
   )
 }

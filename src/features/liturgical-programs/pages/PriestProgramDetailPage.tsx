@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, EditOutlined, FileSearchOutlined, StopOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Flex, Modal } from 'antd'
+import { Alert, App, Button, Drawer, Flex } from 'antd'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -95,7 +95,7 @@ export function PriestProgramDetailPage() {
 
   const confirmCancel = () =>
     modal.confirm({
-      title: 'Hủy sự kiện?',
+      title: `Hủy sự kiện “${eventName(data)}”?`,
       content:
         data.status === 'published'
           ? 'Sự kiện đã công bố: Ca trưởng và ca viên sẽ nhận thông báo hủy. Không thể hoàn tác.'
@@ -103,6 +103,8 @@ export function PriestProgramDetailPage() {
       okText: 'Hủy sự kiện',
       okButtonProps: { danger: true },
       cancelText: 'Quay lại',
+      // Enter on a destructive dialog must not run it.
+      autoFocusButton: 'cancel',
       onOk: () =>
         cancel
           .mutateAsync(data.id)
@@ -153,12 +155,14 @@ export function PriestProgramDetailPage() {
         <EventChoirsCard eventId={data.id} canEdit locked={cancelled || !upcoming} />
         {data.status === 'published' && <PreparationStatusCard eventId={data.id} />}
       </Flex>
-      <Modal
+      {/* The form has its own Save and Cancel; while saving the drawer cannot be closed. */}
+      <Drawer
         open={editing}
         title="Sửa sự kiện"
-        footer={null}
-        width={760}
-        onCancel={() => setEditing(false)}
+        size={760}
+        onClose={() => setEditing(false)}
+        closable={!update.isPending}
+        keyboard={!update.isPending}
         mask={{ closable: !update.isPending }}
         destroyOnHidden
       >
@@ -169,7 +173,7 @@ export function PriestProgramDetailPage() {
           onSubmit={handleUpdate}
           onCancel={() => setEditing(false)}
         />
-      </Modal>
+      </Drawer>
     </>
   )
 }

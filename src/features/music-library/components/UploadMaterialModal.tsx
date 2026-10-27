@@ -1,6 +1,7 @@
-import { Form, Input, Modal, Select, Typography } from 'antd'
+import { Form, Input, Select, Typography } from 'antd'
 import { useCatalogOptions } from '@/features/system-categories'
 import { materialKindLabels, type MaterialKind, type MaterialValues, type SongMaterial } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 export interface UploadMaterialModalProps {
   /** The file picked for this kind: the modal asks for the details before uploading. */
@@ -29,7 +30,7 @@ export function UploadMaterialModal({ pending, material, saving = false, onSubmi
   const editing = pending ? undefined : material
 
   return (
-    <Modal
+    <FormDrawer
       open={Boolean(pending || material)}
       title={pending ? `Tải lên ${materialKindLabels[pending.kind].toLowerCase()}` : 'Sửa tài liệu'}
       okText={editing ? 'Lưu thay đổi' : 'Tải lên'}
@@ -37,9 +38,8 @@ export function UploadMaterialModal({ pending, material, saving = false, onSubmi
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      mask={{ closable: !saving }}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<MaterialValues>
           layout="vertical"
           initialValues={
@@ -76,6 +76,6 @@ export function UploadMaterialModal({ pending, material, saving = false, onSubmi
       >
         <Select allowClear showSearch optionFilterProp="label" placeholder="Cả ca đoàn" options={skills} />
       </Form.Item>
-    </Modal>
+    </FormDrawer>
   )
 }

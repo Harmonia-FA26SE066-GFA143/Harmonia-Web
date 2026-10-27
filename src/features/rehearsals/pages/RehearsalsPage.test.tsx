@@ -151,7 +151,7 @@ describe('RehearsalsPage', () => {
     const buttons = screen.getAllByRole('button', { name: /^Xoá buổi tập/ })
     fireEvent.click(buttons[buttons.length - 1])
     // Ant Design renders a confirm title twice; the first one sits in the visible dialog.
-    const confirm = (await screen.findAllByText('Xoá buổi tập?'))[0].closest('.ant-modal') as HTMLElement
+    const confirm = (await screen.findAllByText(/^Xoá buổi tập .+?$/))[0].closest('.ant-modal') as HTMLElement
     fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá buổi tập' }))
 
     expect(await screen.findByText('Buổi tập đã có điểm danh nên không thể xoá.')).toBeInTheDocument()

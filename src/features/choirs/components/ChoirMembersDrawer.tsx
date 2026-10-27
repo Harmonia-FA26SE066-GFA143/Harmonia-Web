@@ -1,10 +1,10 @@
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
-import { App, Button, Drawer, Flex, Modal, Select, Table, Typography } from 'antd'
+import { App, Button, Drawer, Flex, Select, Table, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useChoirMembers } from '@/features/members'
 import { EmptyState, ErrorState, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, radius, spacing, typography } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { useAddChoirMembers, useMembersOfChoir, useRemoveChoirMember } from '../hooks/useChoirs'
 import type { Choir, ChoirMembership } from '../types'
@@ -56,6 +56,8 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
       okText: 'Rút khỏi ca đoàn',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
+      // Enter on a destructive dialog must not run it.
+      autoFocusButton: 'cancel',
       onOk: () =>
         remove
           .mutateAsync(member.memberId)
@@ -70,7 +72,7 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
       onClose={onClose}
       size="large"
       extra={
-        <Button type="primary" icon={<PlusOutlined />} disabled={!choir?.isActive} onClick={() => setAdding(true)}>
+        <Button type="primary" icon={<PlusOutlined />} disabled={!choir?.isActive || adding} onClick={() => setAdding(true)}>
           Thêm ca viên
         </Button>
       }
@@ -78,6 +80,39 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
     >
       {choir && !choir.isActive && (
         <Typography.Paragraph style={muted}>Ca đoàn đang ngừng hoạt động nên không thêm được ca viên mới.</Typography.Paragraph>
+      )}
+      {/* Added in place, not in a dialog over the drawer: the list stays in view while picking. */}
+      {adding && (
+        <Flex
+          vertical
+          gap={spacing.sm}
+          style={{ padding: spacing.md, marginBottom: spacing.md, border: `1px solid ${colors.border}`, borderRadius: radius.md, background: colors.background }}
+        >
+          <Typography.Text strong>Thêm ca viên vào {choirName}</Typography.Text>
+          <Typography.Text style={muted}>Chỉ ca viên đang sinh hoạt; một ca viên có thể thuộc nhiều ca đoàn.</Typography.Text>
+          <Select
+            autoFocus
+            mode="multiple"
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            aria-label="Ca viên cần thêm"
+            placeholder="Chọn ca viên"
+            loading={profiles.isPending}
+            value={picked}
+            onChange={setPicked}
+            options={candidates.map((profile) => ({ value: profile.id, label: profile.fullName }))}
+            notFoundContent="Mọi ca viên đang sinh hoạt đã ở trong ca đoàn này"
+          />
+          <Flex justify="flex-end" gap={spacing.sm}>
+            <Button onClick={closeAdding} disabled={add.isPending}>
+              Hủy
+            </Button>
+            <Button type="primary" onClick={handleAdd} disabled={picked.length === 0} loading={add.isPending}>
+              {picked.length ? `Thêm ${picked.length} ca viên` : 'Thêm ca viên'}
+            </Button>
+          </Flex>
+        </Flex>
       )}
       {members.isPending && <SectionSkeleton rows={5} label="Đang tải ca viên của ca đoàn" />}
       {members.isError && (
@@ -136,36 +171,6 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
           ]}
         />
       )}
-      <Modal
-        open={adding}
-        title={`Thêm ca viên vào ${choirName}`}
-        okText={picked.length ? `Thêm ${picked.length} ca viên` : 'Thêm ca viên'}
-        cancelText="Hủy"
-        okButtonProps={{ disabled: picked.length === 0, loading: add.isPending }}
-        cancelButtonProps={{ disabled: add.isPending }}
-        onOk={handleAdd}
-        onCancel={closeAdding}
-        destroyOnHidden
-      >
-        <Typography.Paragraph style={{ ...muted, marginBottom: spacing.sm }}>
-          Chỉ ca viên đang sinh hoạt; một ca viên có thể thuộc nhiều ca đoàn.
-        </Typography.Paragraph>
-        <Select
-          autoFocus
-          mode="multiple"
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          aria-label="Ca viên cần thêm"
-          placeholder="Chọn ca viên"
-          loading={profiles.isPending}
-          value={picked}
-          onChange={setPicked}
-          options={candidates.map((profile) => ({ value: profile.id, label: profile.fullName }))}
-          notFoundContent="Mọi ca viên đang sinh hoạt đã ở trong ca đoàn này"
-          style={{ width: '100%' }}
-        />
-      </Modal>
     </Drawer>
   )
 }

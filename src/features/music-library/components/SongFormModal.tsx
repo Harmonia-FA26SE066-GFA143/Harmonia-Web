@@ -1,6 +1,7 @@
-import { Flex, Form, Input, Modal } from 'antd'
+import { Flex, Form, Input } from 'antd'
 import { spacing } from '@/styles/tokens'
 import type { Song, SongValues } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 export interface SongFormModalProps {
   open: boolean
@@ -21,7 +22,7 @@ const clean = (value?: string) => value?.trim() || undefined
  */
 export function SongFormModal({ open, song, saving = false, titleError, onSubmit, onCancel }: Readonly<SongFormModalProps>) {
   return (
-    <Modal
+    <FormDrawer
       open={open}
       title={song ? 'Chỉnh sửa bài hát' : 'Thêm bài hát'}
       okText={song ? 'Lưu thay đổi' : 'Lưu bài hát'}
@@ -29,10 +30,9 @@ export function SongFormModal({ open, song, saving = false, titleError, onSubmit
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      mask={{ closable: !saving }}
-      width={640}
+      size={640}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<SongValues>
           layout="vertical"
           initialValues={{
@@ -89,6 +89,6 @@ export function SongFormModal({ open, song, saving = false, titleError, onSubmit
       <Form.Item label="Ghi chú" name="notes" rules={[{ max: 1000, message: 'Tối đa 1000 ký tự.' }]}>
         <Input.TextArea rows={3} showCount maxLength={1000} />
       </Form.Item>
-    </Modal>
+    </FormDrawer>
   )
 }

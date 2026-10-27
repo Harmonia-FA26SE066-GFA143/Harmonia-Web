@@ -1,4 +1,4 @@
-import { App, Button, DatePicker, Flex, Form, Input, Modal, Select, TimePicker } from 'antd'
+import { App, Button, DatePicker, Flex, Form, Input, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
 import { useChoirs } from '@/features/choirs'
@@ -10,6 +10,7 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { spacing } from '@/styles/tokens'
 import { useDefaultSongs } from '../hooks/useRehearsals'
 import type { Rehearsal, RehearsalValues } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 export interface RehearsalFormModalProps {
   open: boolean
@@ -119,7 +120,7 @@ export function RehearsalFormModal({
   }
 
   return (
-    <Modal
+    <FormDrawer
       open={open}
       title={rehearsal ? 'Sửa buổi tập' : 'Tạo buổi tập'}
       okText={rehearsal ? 'Lưu thay đổi' : 'Tạo buổi tập'}
@@ -127,10 +128,9 @@ export function RehearsalFormModal({
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      mask={{ closable: !saving }}
-      width={640}
+      size={640}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<FormValues>
           layout="vertical"
           initialValues={{
@@ -207,6 +207,6 @@ export function RehearsalFormModal({
       <Form.Item label="Ghi chú (không bắt buộc)" name="note">
         <Input.TextArea rows={3} maxLength={500} showCount placeholder="Nội dung chính của buổi tập" />
       </Form.Item>
-    </Modal>
+    </FormDrawer>
   )
 }

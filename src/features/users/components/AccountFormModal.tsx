@@ -1,7 +1,8 @@
-import { Form, Input, Modal, Select } from 'antd'
+import { Form, Input, Select } from 'antd'
 import { roleLabels } from '@/shared/types/account'
 import { assignableRoles } from '../roles'
 import type { Account, CreateAccountValues, UpdateAccountValues } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 export interface AccountFormModalProps {
   open: boolean
@@ -24,7 +25,7 @@ type FormValues = { fullName?: string; email: string; phone?: string; role?: Cre
  */
 export function AccountFormModal({ open, account, saving = false, emailError, onSubmit, onCancel }: Readonly<AccountFormModalProps>) {
   return (
-    <Modal
+    <FormDrawer
       open={open}
       title={account ? 'Sửa tài khoản' : 'Tạo tài khoản'}
       okText={account ? 'Lưu thay đổi' : 'Tạo tài khoản'}
@@ -32,9 +33,8 @@ export function AccountFormModal({ open, account, saving = false, emailError, on
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      mask={{ closable: !saving }}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<FormValues>
           layout="vertical"
           initialValues={account && { fullName: account.fullName, email: account.email, phone: account.phone ?? undefined }}
@@ -86,6 +86,6 @@ export function AccountFormModal({ open, account, saving = false, emailError, on
           />
         </Form.Item>
       )}
-    </Modal>
+    </FormDrawer>
   )
 }

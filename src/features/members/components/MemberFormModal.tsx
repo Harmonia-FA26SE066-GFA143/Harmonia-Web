@@ -1,9 +1,10 @@
-import { DatePicker, Flex, Form, Input, Modal, Select, Typography } from 'antd'
+import { DatePicker, Flex, Form, Input, Select, Typography } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { vietnamToday } from '@/lib/api/dates'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { spacing } from '@/styles/tokens'
 import { memberStatuses, memberStatusLabels, type MemberProfile, type MemberProfileValues } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 export interface MemberFormModalProps {
   /** The member being edited; the modal is closed without one. */
@@ -27,7 +28,7 @@ const notAfterToday = (message: string) => ({
  */
 export function MemberFormModal({ member, saving = false, onSubmit, onCancel }: Readonly<MemberFormModalProps>) {
   return (
-    <Modal
+    <FormDrawer
       open={Boolean(member)}
       title="Sửa thông tin ca viên"
       okText="Lưu thay đổi"
@@ -35,9 +36,8 @@ export function MemberFormModal({ member, saving = false, onSubmit, onCancel }: 
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      mask={{ closable: !saving }}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<MemberProfileValues>
           layout="vertical"
           initialValues={
@@ -88,6 +88,6 @@ export function MemberFormModal({ member, saving = false, onSubmit, onCancel }: 
       <Form.Item label="Trạng thái" name="status" rules={[{ required: true, message: 'Vui lòng chọn trạng thái.' }]}>
         <Select options={memberStatuses.map((status) => ({ value: status, label: memberStatusLabels[status] }))} />
       </Form.Item>
-    </Modal>
+    </FormDrawer>
   )
 }

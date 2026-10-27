@@ -1,11 +1,12 @@
 import { DeleteOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons'
-import { App, Button, Flex, Form, InputNumber, Modal, Select, Tag, Typography } from 'antd'
+import { App, Button, Flex, Form, InputNumber, Select, Tag, Typography } from 'antd'
 import { useState } from 'react'
 import { colors, spacing } from '@/styles/tokens'
 import { catalogErrorMessage } from '../catalogErrors'
 import { useCatalogOptions } from '../hooks/useCatalogOptions'
 import { useSaveSlotRequirements, useSlotRequirements } from '../hooks/useCatalogs'
 import type { LiturgicalSlot, SlotRequirement, SlotRequirementValue } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 const muted = { color: colors.textMuted }
 
@@ -28,7 +29,7 @@ function SlotRequirementsModal({
   const chosen: (string | undefined)[] = (Form.useWatch('requirements', form) ?? []).map((row?: { skillId?: string }) => row?.skillId)
 
   return (
-    <Modal
+    <FormDrawer
       open
       title={`Người cần cho ${slot.name}`}
       okText="Lưu"
@@ -36,9 +37,8 @@ function SlotRequirementsModal({
       okButtonProps={{ htmlType: 'submit', loading: save.isPending }}
       cancelButtonProps={{ disabled: save.isPending }}
       onCancel={onClose}
-      mask={{ closable: !save.isPending }}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form
           form={form}
           layout="vertical"
@@ -100,7 +100,7 @@ function SlotRequirementsModal({
           </Flex>
         )}
       </Form.List>
-    </Modal>
+    </FormDrawer>
   )
 }
 

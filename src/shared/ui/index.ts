@@ -1,6 +1,7 @@
 export { BrandMark } from './BrandMark'
 export { CardTitle } from './CardTitle'
 export { EmptyState, type EmptyStateProps } from './EmptyState'
+export { FormDrawer, type FormDrawerProps } from './FormDrawer'
 export { visuallyHidden } from './visuallyHidden'
 export { ErrorState, type ErrorStateProps } from './ErrorState'
 export { IconTile } from './IconTile'

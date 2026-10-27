@@ -1,9 +1,9 @@
 import { EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Form, Input, Modal, Select, Switch, Table, TimePicker, Typography } from 'antd'
+import { App, Button, Card, Flex, Form, Input, Select, Switch, Table, TimePicker, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
 import { ApiError } from '@/lib/api/errors'
-import { EmptyState, ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
+import { EmptyState, ErrorState, FormDrawer, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { useCatalogItems, useLocations, useMassSchedules, useSaveMassSchedule } from '../hooks/useCatalogs'
 import { dayOfWeekLabels, type CatalogEntry, type DayOfWeek, type MassSchedule, type MassScheduleValues } from '../types'
@@ -145,7 +145,7 @@ export function MassSchedulesPanel() {
   return (
     <>
       {content}
-      <Modal
+      <FormDrawer
         open={modal.open}
         title={editing ? 'Chỉnh sửa giờ lễ cố định' : 'Thêm giờ lễ cố định'}
         okText={editing ? 'Lưu thay đổi' : 'Thêm'}
@@ -153,9 +153,8 @@ export function MassSchedulesPanel() {
         okButtonProps={{ htmlType: 'submit', loading: save.isPending }}
         cancelButtonProps={{ disabled: save.isPending }}
         onCancel={() => setModal({ open: false })}
-        mask={{ closable: !save.isPending }}
         destroyOnHidden
-        modalRender={(dom) => (
+        drawerRender={(dom) => (
           <Form<FormValues>
             layout="vertical"
             initialValues={
@@ -196,7 +195,7 @@ export function MassSchedulesPanel() {
             <Switch />
           </Form.Item>
         )}
-      </Modal>
+      </FormDrawer>
     </>
   )
 }

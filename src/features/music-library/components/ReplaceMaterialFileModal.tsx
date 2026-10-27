@@ -1,9 +1,10 @@
 import { UploadOutlined } from '@ant-design/icons'
-import { Alert, Button, Checkbox, Flex, Modal, Typography, Upload } from 'antd'
+import { Alert, Button, Checkbox, Flex, Typography, Upload } from 'antd'
 import { useState } from 'react'
 import { colors, spacing } from '@/styles/tokens'
 import { materialFileProblem } from '../songErrors'
 import { materialExtensions, materialKindLabels, type SongMaterial } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 export interface ReplaceMaterialFileModalProps {
   /** The modal is open while a material is set. */
@@ -32,7 +33,7 @@ export function ReplaceMaterialFileModal({ material, saving = false, onSubmit, o
   }
 
   return (
-    <Modal
+    <FormDrawer
       open={Boolean(material)}
       title={material ? `Thay file: ${material.title}` : 'Thay file'}
       okText="Thay file"
@@ -76,6 +77,6 @@ export function ReplaceMaterialFileModal({ material, saving = false, onSubmit, o
           </Checkbox>
         </Flex>
       )}
-    </Modal>
+    </FormDrawer>
   )
 }

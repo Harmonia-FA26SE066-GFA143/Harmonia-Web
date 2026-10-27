@@ -1,9 +1,9 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined, TranslationOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Form, Input, Modal, Select, Table, Tag, Typography } from 'antd'
+import { App, Button, Card, Flex, Form, Input, Select, Table, Tag, Typography } from 'antd'
 import { useState } from 'react'
 import { ApiError, requestFailureMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { CardTitle, EmptyState, ErrorState, NoFilterResults, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, EmptyState, ErrorState, FormDrawer, NoFilterResults, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { useDeleteLiturgicalName, useLiturgicalNames, useSaveLiturgicalName, useUntranslatedNames } from '../hooks/useLiturgicalNames'
 import {
@@ -61,7 +61,7 @@ function TranslationModal({ form, onClose }: Readonly<{ form: FormState; onClose
   }
 
   return (
-    <Modal
+    <FormDrawer
       open={form.open}
       title={editing ? 'Sửa bản dịch' : 'Thêm bản dịch'}
       okText={editing ? 'Lưu thay đổi' : 'Thêm'}
@@ -72,9 +72,8 @@ function TranslationModal({ form, onClose }: Readonly<{ form: FormState; onClose
         setEnglishError(undefined)
         onClose()
       }}
-      mask={{ closable: !save.isPending }}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<LiturgicalNameTranslationValues>
           layout="vertical"
           initialValues={editing ?? (form.open ? form.untranslated : undefined) ?? { kind: 'Celebration' }}
@@ -110,7 +109,7 @@ function TranslationModal({ form, onClose }: Readonly<{ form: FormState; onClose
       >
         <Input autoFocus />
       </Form.Item>
-    </Modal>
+    </FormDrawer>
   )
 }
 
@@ -172,8 +171,10 @@ export function LiturgicalNamesPanel() {
     modal.confirm({
       title: `Xoá bản dịch "${translation.vietnameseName}"?`,
       content: 'Lịch phụng vụ sẽ hiện lại tên tiếng Anh cho tên này, trừ khi tên được dịch tự động theo quy tắc.',
-      okText: 'Xoá',
+      okText: 'Xoá bản dịch',
       okButtonProps: { danger: true },
+      // Enter on a destructive dialog must not run it.
+      autoFocusButton: 'cancel',
       cancelText: 'Hủy',
       onOk: () =>
         remove

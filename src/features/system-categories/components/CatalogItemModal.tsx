@@ -1,6 +1,7 @@
-import { Form, Input, Modal, Switch } from 'antd'
+import { Form, Input, Switch } from 'antd'
 import type { ReactNode } from 'react'
 import type { CatalogEntry } from '../types'
+import { FormDrawer } from '@/shared/ui'
 
 export interface CatalogItemModalProps<T extends CatalogEntry, V> {
   open: boolean
@@ -34,7 +35,7 @@ export function CatalogItemModal<T extends CatalogEntry, V extends { name: strin
   onCancel,
 }: Readonly<CatalogItemModalProps<T, V>>) {
   return (
-    <Modal
+    <FormDrawer
       open={open}
       title={item ? titles.edit : titles.create}
       okText={item ? 'Lưu thay đổi' : 'Thêm'}
@@ -42,9 +43,8 @@ export function CatalogItemModal<T extends CatalogEntry, V extends { name: strin
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      mask={{ closable: !saving }}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         // Unmounted on close (destroyOnHidden): each opening gets a fresh form store seeded from `item`.
         <Form<V>
           layout="vertical"
@@ -76,6 +76,6 @@ export function CatalogItemModal<T extends CatalogEntry, V extends { name: strin
       >
         <Switch />
       </Form.Item>
-    </Modal>
+    </FormDrawer>
   )
 }

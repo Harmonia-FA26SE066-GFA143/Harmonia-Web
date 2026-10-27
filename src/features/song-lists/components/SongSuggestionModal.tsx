@@ -1,8 +1,8 @@
-import { Checkbox, Flex, Modal, Select, Tag, Typography } from 'antd'
+import { Checkbox, Flex, Select, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useLookup } from '@/features/system-categories'
-import { EmptyState, ErrorState, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, FormDrawer, SectionSkeleton } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import { useSongSuggestions } from '../hooks/useSongList'
 import type { SongSuggestion } from '../types'
@@ -45,7 +45,7 @@ export function SongSuggestionModal({ programId, takenBySlot, onAdd, onCancel }:
   const more = (suggestions.data?.totalCount ?? 0) - (suggestions.data?.items.length ?? 0)
 
   return (
-    <Modal
+    <FormDrawer
       open
       title="Gợi ý bài hát"
       okText={picked.length && slot ? `Thêm ${picked.length} bài vào ${slot.name}` : 'Thêm bài hát'}
@@ -53,7 +53,7 @@ export function SongSuggestionModal({ programId, takenBySlot, onAdd, onCancel }:
       okButtonProps={{ disabled: picked.length === 0 || !slot }}
       onOk={() => slot && onAdd(slot, available.filter((song) => picked.includes(song.songId)))}
       onCancel={onCancel}
-      width={760}
+      size={760}
     >
       <Flex vertical gap={spacing.md}>
         <Flex vertical gap={4}>
@@ -126,6 +126,6 @@ export function SongSuggestionModal({ programId, takenBySlot, onAdd, onCancel }:
           <Typography.Text style={muted}>Còn {more} bài gợi ý khác; thêm bài từ kho để tìm theo tên.</Typography.Text>
         )}
       </Flex>
-    </Modal>
+    </FormDrawer>
   )
 }

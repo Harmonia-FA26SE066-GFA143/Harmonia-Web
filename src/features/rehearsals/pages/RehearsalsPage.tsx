@@ -59,11 +59,13 @@ export function RehearsalsPage() {
 
   const handleDelete = (rehearsal: Rehearsal) =>
     modal.confirm({
-      title: 'Xoá buổi tập?',
-      content: `Buổi tập ${rehearsalLabel(rehearsal)} sẽ bị xoá khỏi lịch tập. Buổi tập đã có điểm danh thì không xoá được.`,
+      title: `Xoá buổi tập ${rehearsalLabel(rehearsal)}?`,
+      content: `Buổi tập sẽ bị xoá khỏi lịch tập. Buổi tập đã có điểm danh thì không xoá được.`,
       okText: 'Xoá buổi tập',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
+      // Enter on a destructive dialog must not run it.
+      autoFocusButton: 'cancel',
       onOk: () =>
         remove
           .mutateAsync(rehearsal.id)

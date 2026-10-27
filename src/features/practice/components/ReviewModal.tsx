@@ -1,5 +1,5 @@
-import { App, Flex, Form, Input, Modal, Radio, Typography } from 'antd'
-import { ErrorState, SectionSkeleton } from '@/shared/ui'
+import { App, Flex, Form, Input, Radio, Typography } from 'antd'
+import { ErrorState, FormDrawer, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { useCommentSubmission, useReviewSubmission, useSubmission } from '../hooks/usePractice'
 import { practiceErrorMessage } from '../practiceErrors'
@@ -55,7 +55,7 @@ export function ReviewModal({ submissionId, onClose }: Readonly<ReviewModalProps
   }
 
   return (
-    <Modal
+    <FormDrawer
       open={Boolean(submissionId)}
       title={reviewed ? 'Nhận xét thêm' : 'Chấm bài nộp'}
       okText={reviewed ? 'Gửi nhận xét' : 'Lưu kết quả'}
@@ -63,10 +63,9 @@ export function ReviewModal({ submissionId, onClose }: Readonly<ReviewModalProps
       okButtonProps={{ htmlType: 'submit', loading: saving, disabled: !data }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onClose}
-      mask={{ closable: !saving }}
-      width={600}
+      size={600}
       destroyOnHidden
-      modalRender={(dom) => (
+      drawerRender={(dom) => (
         <Form<FormValues> layout="vertical" initialValues={{ result: undefined }} onFinish={handleFinish}>
           {dom}
         </Form>
@@ -132,6 +131,6 @@ export function ReviewModal({ submissionId, onClose }: Readonly<ReviewModalProps
           </Form.Item>
         </Flex>
       )}
-    </Modal>
+    </FormDrawer>
   )
 }
