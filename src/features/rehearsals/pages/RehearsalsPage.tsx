@@ -7,7 +7,7 @@ import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, sizes, spacing } from '@/styles/tokens'
-import { RehearsalFormModal } from '../components/RehearsalFormModal'
+import { RehearsalFormDrawer } from '../components/RehearsalFormDrawer'
 import { RehearsalTable } from '../components/RehearsalTable'
 import { useDeleteRehearsal, useRehearsals, useSaveRehearsal } from '../hooks/useRehearsals'
 import { rehearsalLabel } from '../rehearsalFormat'
@@ -188,7 +188,7 @@ export function RehearsalsPage() {
           )}
         </Card>
       )}
-      <RehearsalFormModal
+      <RehearsalFormDrawer
         open={editing !== undefined}
         programs={programs.data ?? []}
         rehearsal={editing ?? undefined}

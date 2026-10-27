@@ -31,7 +31,7 @@ interface FormValues {
 const optionsOf = (entries: CatalogEntry[] | undefined, current?: string) =>
   (entries ?? []).filter((entry) => entry.isActive || entry.id === current).map(({ id, name }) => ({ value: id, label: name }))
 
-type ModalState = { open: false } | { open: true; schedule?: MassSchedule }
+type DrawerState = { open: false } | { open: true; schedule?: MassSchedule }
 
 /**
  * Admin: the parish's fixed weekly Mass times (`api/mass-schedules`). The Parish Priest generates draft events from the
@@ -43,8 +43,8 @@ export function MassSchedulesPanel() {
   const massTypes = useCatalogItems('massTypes')
   const locations = useLocations()
   const save = useSaveMassSchedule()
-  const [modal, setModal] = useState<ModalState>({ open: false })
-  const editing = modal.open ? modal.schedule : undefined
+  const [drawer, setDrawer] = useState<DrawerState>({ open: false })
+  const editing = drawer.open ? drawer.schedule : undefined
 
   const nameIn = (entries: CatalogEntry[] | undefined, id: string) => entries?.find((entry) => entry.id === id)?.name ?? '—'
 
@@ -63,9 +63,9 @@ export function MassSchedulesPanel() {
       {
         onSuccess: () => {
           message.success(editing ? 'Đã lưu thay đổi.' : 'Đã thêm giờ lễ cố định.')
-          setModal({ open: false })
+          setDrawer({ open: false })
         },
-        // The modal stays open so the entered values are not lost.
+        // The drawer stays open so the entered values are not lost.
         onError: (error) =>
           message.error(
             (error instanceof ApiError && error.code && messages[error.code]) || 'Không thể lưu giờ lễ cố định. Vui lòng thử lại.',
@@ -75,7 +75,7 @@ export function MassSchedulesPanel() {
   }
 
   const addButton = (
-    <Button type="primary" icon={<PlusOutlined />} onClick={() => setModal({ open: true })}>
+    <Button type="primary" icon={<PlusOutlined />} onClick={() => setDrawer({ open: true })}>
       Thêm giờ lễ cố định
     </Button>
   )
@@ -130,7 +130,7 @@ export function MassSchedulesPanel() {
               render: (_, schedule) => (
                 <Button
                   icon={<EditOutlined />}
-                  onClick={() => setModal({ open: true, schedule })}
+                  onClick={() => setDrawer({ open: true, schedule })}
                   aria-label={`Chỉnh sửa giờ lễ ${dayOfWeekLabels[schedule.dayOfWeek]} ${schedule.time}`}
                 >
                   Chỉnh sửa
@@ -146,13 +146,13 @@ export function MassSchedulesPanel() {
     <>
       {content}
       <FormDrawer
-        open={modal.open}
+        open={drawer.open}
         title={editing ? 'Chỉnh sửa giờ lễ cố định' : 'Thêm giờ lễ cố định'}
         okText={editing ? 'Lưu thay đổi' : 'Thêm'}
         cancelText="Hủy"
         okButtonProps={{ htmlType: 'submit', loading: save.isPending }}
         cancelButtonProps={{ disabled: save.isPending }}
-        onCancel={() => setModal({ open: false })}
+        onCancel={() => setDrawer({ open: false })}
         destroyOnHidden
         drawerRender={(dom) => (
           <Form<FormValues>

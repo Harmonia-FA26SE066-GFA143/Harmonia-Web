@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react'
 import { catalogErrorMessage, nameConflictMessage } from '../catalogErrors'
 import type { SaveCatalogEntry } from '../hooks/useCatalogs'
 import type { CatalogEntry } from '../types'
-import { CatalogItemModal } from './CatalogItemModal'
+import { CatalogItemDrawer } from './CatalogItemDrawer'
 import { CatalogTable, type CatalogLabels } from './CatalogTable'
 
 export interface CatalogManagerProps<T extends CatalogEntry, V> {
@@ -19,7 +19,7 @@ export interface CatalogManagerProps<T extends CatalogEntry, V> {
   nameMax?: number
 }
 
-type ModalState<T> = { open: false } | { open: true; item?: T }
+type DrawerState<T> = { open: false } | { open: true; item?: T }
 
 const labelsFor = (noun: string): CatalogLabels => ({
   noun,
@@ -41,15 +41,15 @@ export function CatalogManager<T extends CatalogEntry, V extends { name: string 
 }: Readonly<CatalogManagerProps<T, V>>) {
   const labels = labelsFor(noun)
   const { message } = App.useApp()
-  const [modal, setModal] = useState<ModalState<T>>({ open: false })
+  const [drawer, setDrawer] = useState<DrawerState<T>>({ open: false })
   const [nameError, setNameError] = useState<string>()
-  const editing = modal.open ? modal.item : undefined
+  const editing = drawer.open ? drawer.item : undefined
 
   const open = (item?: T) => {
     setNameError(undefined)
-    setModal({ open: true, item })
+    setDrawer({ open: true, item })
   }
-  const close = () => setModal({ open: false })
+  const close = () => setDrawer({ open: false })
 
   return (
     <>
@@ -64,8 +64,8 @@ export function CatalogManager<T extends CatalogEntry, V extends { name: string 
         onAdd={() => open()}
         onEdit={open}
       />
-      <CatalogItemModal<T, V>
-        open={modal.open}
+      <CatalogItemDrawer<T, V>
+        open={drawer.open}
         item={editing}
         titles={{ create: `Thêm ${noun}`, edit: `Chỉnh sửa ${noun}` }}
         nameLabel={labels.nameColumn}
@@ -84,7 +84,7 @@ export function CatalogManager<T extends CatalogEntry, V extends { name: string 
                 message.success(editing ? 'Đã lưu thay đổi.' : `Đã thêm ${labels.noun}.`)
                 close()
               },
-              // The modal stays open so the entered values are not lost.
+              // The drawer stays open so the entered values are not lost.
               onError: (error) => {
                 const conflict = nameConflictMessage(error)
                 if (conflict) setNameError(conflict)

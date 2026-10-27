@@ -8,7 +8,7 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { SongFilterBar } from '../components/SongFilterBar'
-import { SongFormModal } from '../components/SongFormModal'
+import { SongFormDrawer } from '../components/SongFormDrawer'
 import { SongGrid } from '../components/SongGrid'
 import { useSaveSong, useSongs } from '../hooks/useSongs'
 import { duplicateTitleMessage, isDuplicateTitle } from '../songErrors'
@@ -108,7 +108,7 @@ export function MusicLibraryPage() {
           )}
         </Card>
       )}
-      <SongFormModal
+      <SongFormDrawer
         open={adding}
         saving={save.isPending}
         titleError={titleError}

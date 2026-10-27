@@ -5,7 +5,7 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { MemberFilterBar } from '../components/MemberFilterBar'
-import { MemberFormModal } from '../components/MemberFormModal'
+import { MemberFormDrawer } from '../components/MemberFormDrawer'
 import { MemberTable } from '../components/MemberTable'
 import { useMemberProfiles, useUpdateMemberProfile } from '../hooks/useMemberProfiles'
 import { emptyMemberFilters, hasActiveMemberFilters } from '../memberFilters'
@@ -45,7 +45,7 @@ export function MembersPage() {
           message.success('Đã lưu thông tin ca viên.')
           setEditing(undefined)
         },
-        // The modal stays open so the entered values are not lost.
+        // The drawer stays open so the entered values are not lost.
         onError: (error) =>
           message.error(
             error instanceof ApiError && error.code === 'MEMBER_NOT_FOUND'
@@ -95,7 +95,7 @@ export function MembersPage() {
         </Card>
       )}
 
-      <MemberFormModal
+      <MemberFormDrawer
         member={editing}
         saving={update.isPending}
         onSubmit={handleSubmit}

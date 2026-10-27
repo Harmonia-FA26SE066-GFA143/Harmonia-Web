@@ -6,7 +6,7 @@ import { reportFormatLabels, type AdminReportKind, type ReportExportRequest, typ
 import type { FilterOption } from './ReportFilterBar'
 import { Form, FormDrawer } from '@/shared/ui'
 
-export interface ExportReportModalProps {
+export interface ExportReportDrawerProps {
   open: boolean
   initialKind: AdminReportKind
   /** The page's filters: the export starts from the month or season already chosen there. */
@@ -29,7 +29,7 @@ interface ExportFormValues {
  * Exports a report by month or liturgical season (FE-53) to a file (`GET /api/reports/export`): every matching row,
  * in the chosen format. The backend records each export.
  */
-export function ExportReportModal({
+export function ExportReportDrawer({
   open,
   initialKind,
   filters = {},
@@ -37,7 +37,7 @@ export function ExportReportModal({
   exporting = false,
   onSubmit,
   onCancel,
-}: Readonly<ExportReportModalProps>) {
+}: Readonly<ExportReportDrawerProps>) {
   return (
     <FormDrawer
       open={open}

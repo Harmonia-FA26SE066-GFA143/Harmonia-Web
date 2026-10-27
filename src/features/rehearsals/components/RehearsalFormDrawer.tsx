@@ -12,7 +12,7 @@ import { useDefaultSongs } from '../hooks/useRehearsals'
 import type { Rehearsal, RehearsalValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
-export interface RehearsalFormModalProps {
+export interface RehearsalFormDrawerProps {
   open: boolean
   /** Upcoming published programs a session can prepare. */
   programs: LiturgicalProgram[]
@@ -94,7 +94,7 @@ function SongsField() {
  * required, fixed afterwards); date and time required; program, worship location, songs and note (≤ 500) optional.
  * Editing saves the details, then the songs.
  */
-export function RehearsalFormModal({
+export function RehearsalFormDrawer({
   open,
   programs,
   rehearsal,
@@ -102,7 +102,7 @@ export function RehearsalFormModal({
   saving = false,
   onSubmit,
   onCancel,
-}: Readonly<RehearsalFormModalProps>) {
+}: Readonly<RehearsalFormDrawerProps>) {
   const locations = useCatalogOptions('worshipLocations')
   const choirs = useChoirs()
   const activeChoirs = (choirs.data ?? []).filter((choir) => choir.isActive)

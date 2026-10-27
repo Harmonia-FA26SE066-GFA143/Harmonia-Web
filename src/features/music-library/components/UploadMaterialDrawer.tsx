@@ -3,8 +3,8 @@ import { useCatalogOptions } from '@/features/system-categories'
 import { materialKindLabels, type MaterialKind, type MaterialValues, type SongMaterial } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
-export interface UploadMaterialModalProps {
-  /** The file picked for this kind: the modal asks for the details before uploading. */
+export interface UploadMaterialDrawerProps {
+  /** The file picked for this kind: the drawer asks for the details before uploading. */
   pending?: { kind: MaterialKind; file: File }
   /** A material being edited (PUT /api/music-materials/{id}); used when no file is pending. */
   material?: SongMaterial
@@ -20,7 +20,7 @@ const titleFrom = (fileName: string) => fileName.replace(/\.[^.]+$/, '').slice(0
  * Title (required by the backend) and optional target skill of a material, before it is uploaded or when it is
  * edited. The file and the kind cannot change: another file is a new material.
  */
-export function UploadMaterialModal({ pending, material, saving = false, onSubmit, onCancel }: Readonly<UploadMaterialModalProps>) {
+export function UploadMaterialDrawer({ pending, material, saving = false, onSubmit, onCancel }: Readonly<UploadMaterialDrawerProps>) {
   const activeSkills = useCatalogOptions('skills')
   // A material may target a skill switched off since; keep it selectable so saving does not drop it silently.
   const skills =

@@ -6,8 +6,8 @@ import { colors, spacing, typography } from '@/styles/tokens'
 import { useLearningProgress } from '../hooks/useSongs'
 import { learningStatusLabels, learningStatuses, type LearningProgress, type LearningStatus, type SongMaterial } from '../types'
 
-export interface LearningProgressModalProps {
-  /** The material whose progress is shown; the modal is closed without one. */
+export interface LearningProgressDrawerProps {
+  /** The material whose progress is shown; the drawer is closed without one. */
   material?: SongMaterial
   onClose: () => void
 }
@@ -98,7 +98,7 @@ function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
 }
 
 /** Choir Director: who has learned a material, as members mark it in the mobile app (FE-09). */
-export function LearningProgressModal({ material, onClose }: Readonly<LearningProgressModalProps>) {
+export function LearningProgressDrawer({ material, onClose }: Readonly<LearningProgressDrawerProps>) {
   return (
     <Drawer open={Boolean(material)} title={material ? `Tiến độ học: ${material.title}` : undefined} onClose={onClose} size={640} destroyOnHidden>
       {material && <ProgressList material={material} />}

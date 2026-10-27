@@ -4,7 +4,7 @@ import { SkillTags, useChoirMembers } from '@/features/members'
 import { EmptyState, ErrorState, FormDrawer, SectionSkeleton } from '@/shared/ui'
 import { colors, radius, spacing } from '@/styles/tokens'
 
-export interface SendRequestModalProps {
+export interface SendRequestDrawerProps {
   open: boolean
   /** Members already asked for this program; the backend asks each member once. */
   excludedMemberIds: string[]
@@ -14,7 +14,7 @@ export interface SendRequestModalProps {
 }
 
 /** Choose who is asked to serve (FE-33) among members not asked yet; all of them are selected by default. */
-export function SendRequestModal({ open, excludedMemberIds, sending = false, onSend, onCancel }: Readonly<SendRequestModalProps>) {
+export function SendRequestDrawer({ open, excludedMemberIds, sending = false, onSend, onCancel }: Readonly<SendRequestDrawerProps>) {
   const members = useChoirMembers()
   // Track deselected members so everyone is selected by default, including members loaded later.
   const [deselected, setDeselected] = useState<string[]>([])

@@ -7,8 +7,8 @@ import { formatDateTime } from '@/lib/api/dates'
 import { formatDuration } from '../practiceFormat'
 import { practiceStatusLabels, type ReviewResult } from '../types'
 
-export interface ReviewModalProps {
-  /** The submission to open; the modal is closed without one. */
+export interface ReviewDrawerProps {
+  /** The submission to open; the drawer is closed without one. */
   submissionId?: string
   onClose: () => void
 }
@@ -28,7 +28,7 @@ const resultOptions = [
  * chỉnh sửa", a comment required for the latter (POST …/feedback); later comments may change the result on the
  * member's newest attempt (POST …/comments). Earlier reviews stay as history.
  */
-export function ReviewModal({ submissionId, onClose }: Readonly<ReviewModalProps>) {
+export function ReviewDrawer({ submissionId, onClose }: Readonly<ReviewDrawerProps>) {
   const { message } = App.useApp()
   const submission = useSubmission(submissionId)
   const review = useReviewSubmission()

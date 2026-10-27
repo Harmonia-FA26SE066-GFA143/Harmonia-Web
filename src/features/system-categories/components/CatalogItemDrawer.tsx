@@ -3,11 +3,11 @@ import type { ReactNode } from 'react'
 import type { CatalogEntry } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
-export interface CatalogItemModalProps<T extends CatalogEntry, V> {
+export interface CatalogItemDrawerProps<T extends CatalogEntry, V> {
   open: boolean
   /** Entry being edited; absent when adding a new one. */
   item?: T
-  /** Modal titles, e.g. { create: 'Thêm kỹ năng', edit: 'Chỉnh sửa kỹ năng' }. */
+  /** Drawer titles, e.g. { create: 'Thêm kỹ năng', edit: 'Chỉnh sửa kỹ năng' }. */
   titles: { create: string; edit: string }
   nameLabel: string
   /** Harmonia-BE validators: 50 for most catalogs, 100 for liturgical seasons. */
@@ -22,7 +22,7 @@ export interface CatalogItemModalProps<T extends CatalogEntry, V> {
 }
 
 /** Add/edit form of a catalog entry: name, the catalog's own fields, and whether the entry is in use. */
-export function CatalogItemModal<T extends CatalogEntry, V extends { name: string }>({
+export function CatalogItemDrawer<T extends CatalogEntry, V extends { name: string }>({
   open,
   item,
   titles,
@@ -33,7 +33,7 @@ export function CatalogItemModal<T extends CatalogEntry, V extends { name: strin
   saving = false,
   onSubmit,
   onCancel,
-}: Readonly<CatalogItemModalProps<T, V>>) {
+}: Readonly<CatalogItemDrawerProps<T, V>>) {
   return (
     <FormDrawer
       open={open}

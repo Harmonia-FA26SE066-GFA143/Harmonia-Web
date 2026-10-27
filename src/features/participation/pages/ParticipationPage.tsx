@@ -10,7 +10,7 @@ import { formatDateTime } from '@/lib/api/dates'
 import { EmptyState, ErrorState, MetricSummary, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
-import { SendRequestModal } from '../components/SendRequestModal'
+import { SendRequestDrawer } from '../components/SendRequestDrawer'
 import { useParticipation, useSendParticipationRequests } from '../hooks/useParticipation'
 import { participationErrorMessage } from '../participationErrors'
 import { participationResponseLabels, type ParticipationRequest, type ParticipationResponse } from '../types'
@@ -248,7 +248,7 @@ export function ParticipationPage() {
           )}
         </Flex>
       )}
-      <SendRequestModal
+      <SendRequestDrawer
         open={picking}
         excludedMemberIds={requests.map((request) => request.memberId)}
         sending={send.isPending}

@@ -3,7 +3,7 @@ import { App, Button, Card } from 'antd'
 import { useState } from 'react'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { NoteTable } from '../components/NoteTable'
-import { SendNoteModal } from '../components/SendNoteModal'
+import { SendNoteDrawer } from '../components/SendNoteDrawer'
 import { useNotes, useSendNote } from '../hooks/useNotes'
 import { noteErrorMessage } from '../notesErrors'
 import type { DirectorNoteValues } from '../types'
@@ -81,7 +81,7 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
       )}
 
       {sender && (
-        <SendNoteModal open={sending} saving={send.isPending} onSubmit={handleSend} onCancel={() => setSending(false)} />
+        <SendNoteDrawer open={sending} saving={send.isPending} onSubmit={handleSend} onCancel={() => setSending(false)} />
       )}
     </>
   )

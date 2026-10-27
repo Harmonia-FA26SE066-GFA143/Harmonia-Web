@@ -5,8 +5,8 @@ import { actionLabel, actorName, entityLabel } from '../activityFilters'
 import { formatDateTime } from '@/lib/api/dates'
 import type { ActivityRecord } from '../types'
 
-export interface ActivityDetailModalProps {
-  /** Record shown; the modal is open while set. */
+export interface ActivityDetailDrawerProps {
+  /** Record shown; the drawer is open while set. */
   record?: ActivityRecord
   onClose: () => void
 }
@@ -41,7 +41,7 @@ function changesOf({ oldValue, newValue }: ActivityRecord): FieldChange[] {
 }
 
 /** Read-only detail of one recorded change, with its field values before and after. */
-export function ActivityDetailModal({ record, onClose }: Readonly<ActivityDetailModalProps>) {
+export function ActivityDetailDrawer({ record, onClose }: Readonly<ActivityDetailDrawerProps>) {
   const changes = record ? changesOf(record) : []
 
   return (

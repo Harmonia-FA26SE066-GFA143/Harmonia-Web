@@ -5,8 +5,8 @@ import { assignableRoles, roleDescriptions } from '../roles'
 import type { Account } from '../types'
 import { Form } from '@/shared/ui'
 
-export interface AssignRoleModalProps {
-  /** Account whose role is changed; the modal is open while set. */
+export interface AssignRoleDrawerProps {
+  /** Account whose role is changed; the drawer is open while set. */
   account?: Account
   saving?: boolean
   onSubmit: (role: SystemRole) => void
@@ -38,7 +38,7 @@ function AssignRoleFooter({ current, saving, onCancel }: Readonly<FooterProps>) 
  * Picks one FE-48 role (`PUT /api/users/{id}/role`: one role per account). Saving is blocked until a different role
  * is chosen. The backend refuses the Admin's own account and removing the last active Admin.
  */
-export function AssignRoleModal({ account, saving = false, onSubmit, onCancel }: Readonly<AssignRoleModalProps>) {
+export function AssignRoleDrawer({ account, saving = false, onSubmit, onCancel }: Readonly<AssignRoleDrawerProps>) {
   const current = account?.role
 
   return (

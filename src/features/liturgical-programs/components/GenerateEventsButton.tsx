@@ -25,12 +25,12 @@ export function GenerateEventsButton() {
         Tạo từ giờ lễ cố định
       </Button>
       {/* Mounted while open only, so the pages do not load the Mass times until they are needed. */}
-      {open && <GenerateEventsModal onClose={() => setOpen(false)} />}
+      {open && <GenerateEventsDrawer onClose={() => setOpen(false)} />}
     </>
   )
 }
 
-function GenerateEventsModal({ onClose }: Readonly<{ onClose: () => void }>) {
+function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
   const { message } = App.useApp()
   const today = dayjs(vietnamToday())
   // Four weeks by default.

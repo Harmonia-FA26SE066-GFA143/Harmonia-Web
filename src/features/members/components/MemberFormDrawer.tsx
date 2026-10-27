@@ -6,8 +6,8 @@ import { spacing } from '@/styles/tokens'
 import { memberStatuses, memberStatusLabels, type MemberProfile, type MemberProfileValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
-export interface MemberFormModalProps {
-  /** The member being edited; the modal is closed without one. */
+export interface MemberFormDrawerProps {
+  /** The member being edited; the drawer is closed without one. */
   member?: MemberProfile
   saving?: boolean
   onSubmit: (values: MemberProfileValues) => void
@@ -26,7 +26,7 @@ const notAfterToday = (message: string) => ({
  * The Choir Director edits what the member record holds: phone, birth date, joining date and status. Name and email
  * belong to the account (the member or the Admin edits them), so they are shown read-only.
  */
-export function MemberFormModal({ member, saving = false, onSubmit, onCancel }: Readonly<MemberFormModalProps>) {
+export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }: Readonly<MemberFormDrawerProps>) {
   return (
     <FormDrawer
       open={Boolean(member)}

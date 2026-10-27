@@ -10,7 +10,7 @@ import { PageHeader } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { ActivityTrendCard } from '../components/ActivityTrendCard'
 import { ExportHistory } from '../components/ExportHistory'
-import { ExportReportModal } from '../components/ExportReportModal'
+import { ExportReportDrawer } from '../components/ExportReportDrawer'
 import { ReportFilterBar } from '../components/ReportFilterBar'
 import { ReportPanel } from '../components/ReportPanel'
 import { useExportReport } from '../hooks/useReports'
@@ -96,7 +96,7 @@ export function AdminReportsPage() {
         />
         <ExportHistory seasons={seasons} />
       </Flex>
-      <ExportReportModal
+      <ExportReportDrawer
         open={exporting}
         initialKind={kind}
         filters={filters}

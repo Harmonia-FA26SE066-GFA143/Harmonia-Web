@@ -7,7 +7,7 @@ import { colors, radius, spacing, typography } from '@/styles/tokens'
 import { useSongSuggestions } from '../hooks/useSongList'
 import type { SongSuggestion } from '../types'
 
-export interface SongSuggestionModalProps {
+export interface SongSuggestionDrawerProps {
   programId: string
   /** Songs already in each slot of the list (slot id → song ids); a song appears once per slot. */
   takenBySlot: Map<string, Set<string>>
@@ -32,7 +32,7 @@ const reasons = (song: SongSuggestion) =>
  * Songs the backend proposes for one part of the program (BE d1ca63e), with why they fit and how recently the choir
  * sang them; the chosen ones join the list in that part. Mounted only while open, so each opening starts afresh.
  */
-export function SongSuggestionModal({ programId, takenBySlot, onAdd, onCancel }: Readonly<SongSuggestionModalProps>) {
+export function SongSuggestionDrawer({ programId, takenBySlot, onAdd, onCancel }: Readonly<SongSuggestionDrawerProps>) {
   const slots = useLookup('liturgicalSlots').data ?? []
   const [chosen, setChosen] = useState<string>()
   // Until the Director picks one: the first part of the Mass with no song yet.

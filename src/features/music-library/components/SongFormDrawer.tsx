@@ -3,7 +3,7 @@ import { spacing } from '@/styles/tokens'
 import type { Song, SongValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
-export interface SongFormModalProps {
+export interface SongFormDrawerProps {
   open: boolean
   /** Song being edited; absent when adding. */
   song?: Song
@@ -20,7 +20,7 @@ const clean = (value?: string) => value?.trim() || undefined
  * Add/edit the song fields of POST/PUT /api/songs. Only the title is required; maximum lengths follow the backend
  * validator. Classification is edited on the song page.
  */
-export function SongFormModal({ open, song, saving = false, titleError, onSubmit, onCancel }: Readonly<SongFormModalProps>) {
+export function SongFormDrawer({ open, song, saving = false, titleError, onSubmit, onCancel }: Readonly<SongFormDrawerProps>) {
   return (
     <FormDrawer
       open={open}

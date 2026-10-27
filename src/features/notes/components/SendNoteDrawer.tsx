@@ -7,14 +7,14 @@ import { useNoteRecipients } from '../hooks/useNotes'
 import type { DirectorNoteValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
-export interface SendNoteModalProps {
+export interface SendNoteDrawerProps {
   open: boolean
   saving?: boolean
   onSubmit: (values: DirectorNoteValues) => void
   onCancel: () => void
 }
 
-/** Rendered only while the modal is open, so recipients and events load when they are needed. */
+/** Rendered only while the drawer is open, so recipients and events load when they are needed. */
 function NoteFields() {
   const recipients = useNoteRecipients()
   // ponytail: the first 100 events from today; a note about an older or later event would need a searchable select.
@@ -83,7 +83,7 @@ function NoteFields() {
  * Parish Priest: a note or request to Choir Directors (FE-23; Harmonia-BE CreateDirectorNoteRequestValidator). Each
  * chosen Choir Director gets their own copy and a notification.
  */
-export function SendNoteModal({ open, saving = false, onSubmit, onCancel }: Readonly<SendNoteModalProps>) {
+export function SendNoteDrawer({ open, saving = false, onSubmit, onCancel }: Readonly<SendNoteDrawerProps>) {
   return (
     <FormDrawer
       open={open}
