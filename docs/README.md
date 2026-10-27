@@ -27,8 +27,9 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
 | Mục | Việc cần BE làm | Ghi chú |
 |---|---|---|
 | B39 | `GET api/service-rosters/shortages` trả danh sách rỗng khi sự kiện chưa có vị trí nào cần người | Hiện trả 409 `ROSTER_SONG_LIST_NOT_APPROVED`; Web đang tự đổi thành rỗng. Ưu tiên thấp |
+| B40 | Chặn phân công một ca viên vào hai lễ trùng giờ | Owner quyết 2026-10-27. Sự kiện chỉ có giờ bắt đầu, nên cần một khoảng thời gian cấu hình được |
 
-Owner còn cần chốt (ghi ở `open-business-decisions.md`): thứ tự gợi ý bài (BE xếp bài chưa hát lần nào lên trước), khai bè S/A/T/B ở cấp cả buổi lễ, và kiểm tra một người bị phân công hai lễ trùng giờ.
+Owner đã chốt ngày 2026-10-27 (ghi ở `open-business-decisions.md`): giữ thứ tự gợi ý bài như BE; giữ cho khai bè S/A/T/B ở vai cả buổi lễ; đề nghị BE chặn phân công trùng giờ (B40).
 
 - Đã xong ở `d1ca63e` (2026-10-27): phân loại bài theo phần phụng vụ, cây chủ đề, số người; gợi ý bài; phân công 3 tầng. Web nối ở #223, #225, #227.
 - Đã xong ở `c091c07` (2026-10-26): B37 (Cha xứ đọc danh sách ca đoàn), B38 (Admin tìm ca viên). Web nối ở #219.

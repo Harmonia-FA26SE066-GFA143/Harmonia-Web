@@ -41,11 +41,9 @@ Stored in the business files (`roles-permissions.md`, `choir-skills.md`, `liturg
 
 - **Song classification and three-tier roster** (BE `d1ca63e`): the Web follows the BE, delivered in three PRs (Web #223 Admin and library, #225 song suggestions, #227 roster tiers). The BE answered the Web's questions on 2026-10-26 (extra people per song, replacing after early finalization, earlier data kept, theme tree rules, suggestion ranking).
 
-## Still open (owner to decide)
-
-- **Suggestion ranking**: at equal score the BE puts never-sung songs first (`SongSuggestionService.cs:53`, `doc/api.md`). A choir may prefer songs it already knows; the Web shows how often and when each song was sung so the director can judge.
-- **Vocal parts at the whole-service level**: Report 1 FE-35 / FE-37 ask for singers per vocal part and warnings for missing vocal skills. The BE pre-fills song requirements without the vocal parts, but accepts any skill, vocal parts included, as a whole-service requirement; the Web offers them there (following the BE) until the owner decides otherwise.
-- **Overlapping events**: no check stops a member from being assigned to two events at the same time (`RosterService.cs:437-457`).
+- **Suggestion ranking** (decided 2026-10-27): keep the BE's order, never-sung songs first at equal score (`SongSuggestionService.cs:53`). The Web shows how often and when each song was sung, so the director weighs a familiar song against a fresh one.
+- **Vocal parts at the whole-service level** (decided 2026-10-27): keep them. The BE pre-fills song requirements without the vocal parts but accepts any skill as a whole-service requirement; the Web offers the vocal parts there, which covers Report 1 FE-35 / FE-37 (singers per vocal part, warnings for missing vocal skills).
+- **Overlapping events** (decided 2026-10-27): the BE should refuse to assign a member to two events at overlapping times; requested as tbd-backlog B40.
 
 ## Confirmed BA decisions — Daniel, 2026-10-01
 
