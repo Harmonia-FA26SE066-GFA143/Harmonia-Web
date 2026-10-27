@@ -112,9 +112,9 @@ export interface EventFilters {
   toDate?: string
 }
 
-/** A song / skill pair of the approved list still short of people (`RosterShortageDto`). */
+/** A position still short of people (`RosterShortageDto`); no song for a whole-service role (BE d1ca63e). */
 export interface StaffingShortage {
-  songTitle: string
+  songTitle?: string
   skillName: string
   requiredCount: number
   assignedCount: number

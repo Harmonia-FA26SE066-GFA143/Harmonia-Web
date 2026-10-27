@@ -13,8 +13,8 @@ import { RosterPanel } from '../components/RosterPanel'
 
 /**
  * Choir Director: staffing requirements and service roster of a program (FE-35–FE-40), as Harmonia-BE builds them
- * (see types.ts). The backend works on the approved song list only (ROSTER_SONG_LIST_NOT_APPROVED), so the page waits
- * for one.
+ * (see types.ts). Whole-service roles are staffed at any time; song positions wait for the approved song list
+ * (ROSTER_SONG_LIST_NOT_APPROVED), which the page explains in their place.
  * `?programId=` selects the program (link from the program detail); otherwise the next upcoming program.
  * TBD: assigned-program filtering for the Director (C4) comes with the auth/assignment contract.
  */
@@ -28,7 +28,8 @@ export function RosterPage() {
   const programId = program?.id ?? ''
   const songList = useSongList(programId, { enabled: Boolean(programId) })
   const approved = songList.data?.status === 'approved'
-  const participation = useParticipation(approved ? programId : undefined)
+  // Whole-service roles are staffed before the song list is approved, so the answers are read for every program.
+  const participation = useParticipation(programId || undefined)
   const skills = useLookup('skills')
   const members = useChoirMembers()
   // Members who answered Confirmed or Unsure can be assigned (ServiceRosterRepository); skills from their profiles.
@@ -39,15 +40,17 @@ export function RosterPage() {
       .map(({ memberId, fullName }) => ({ memberId, fullName, skills: skillsOf.get(memberId) ?? [] }))
   }, [participation.data, members.data])
 
-  const loading = songList.isPending || (approved && (participation.isPending || skills.isPending || members.isPending))
+  const loading = songList.isPending || participation.isPending || skills.isPending || members.isPending
   const failed = [songList, participation, skills, members].find((query) => query.isError)
+  const lastNotes = songList.data?.reviews.at(-1)?.notes
+  const revise = songList.data?.status === 'needsRevision' || songList.data?.status === 'rejected'
 
   return (
     <>
       <PageHeader
         title="Yêu cầu nhân sự & Phân công"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Phân công phục vụ' }]}
-        description="Thiết lập yêu cầu kỹ năng theo từng bài hát, gợi ý và điều chỉnh phân công, chốt rồi gửi thông báo cho ca viên."
+        description="Khai vai cả buổi lễ (nhạc công, bắt nhịp) và yêu cầu kỹ năng theo từng bài, gợi ý và điều chỉnh phân công, chốt rồi gửi thông báo cho ca viên. Bè đồng ca không cần phân công, chỉ cần xác nhận tham gia."
       />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
       {programs.isError && (
@@ -84,31 +87,7 @@ export function RosterPage() {
             />
           )}
           {!failed && loading && <SectionSkeleton rows={8} label="Đang tải phân công" />}
-          {!failed && songList.isSuccess && !approved && (
-            <EmptyState
-              title="Chưa có danh sách bài hát đã duyệt"
-              description={
-                songList.data?.status === 'needsRevision'
-                  ? `Cha xứ yêu cầu chỉnh sửa danh sách bài hát${songList.data.reviews.at(-1)?.notes ? `: “${songList.data.reviews.at(-1)?.notes}”` : ''}. Vui lòng cập nhật và gửi duyệt lại trước khi lập phân công.`
-                  : songList.data?.status === 'rejected'
-                    ? `Danh sách bài hát đã bị từ chối${songList.data.reviews.at(-1)?.notes ? `: “${songList.data.reviews.at(-1)?.notes}”` : ''}. Vui lòng biên soạn lại danh sách trước khi lập phân công.`
-                    : songList.data?.status === 'submitted'
-                      ? 'Danh sách bài hát đang chờ Cha xứ phê duyệt. Phân công sẽ mở sau khi được duyệt.'
-                      : 'Phân công được thực hiện sau khi danh sách bài hát được duyệt.'
-              }
-              action={
-                <Button
-                  type={songList.data?.status === 'needsRevision' || songList.data?.status === 'rejected' ? 'primary' : 'default'}
-                  onClick={() => navigate(generatePath(paths.director.songListProposal, { programId: program.id }))}
-                >
-                  {songList.data?.status === 'needsRevision' || songList.data?.status === 'rejected'
-                    ? 'Cập nhật danh sách bài hát'
-                    : 'Mở danh sách bài hát'}
-                </Button>
-              }
-            />
-          )}
-          {!failed && !loading && approved && participation.data?.length === 0 && (
+          {!failed && !loading && participation.data?.length === 0 && (
             <Alert
               type="info"
               showIcon
@@ -121,14 +100,37 @@ export function RosterPage() {
               }
             />
           )}
-          {!failed && !loading && approved && (
+          {!failed && !loading && (
             <RosterPanel
               // A program change starts from that program's saved requirements.
               key={program.id}
               programId={program.id}
-              songs={(songList.data?.items ?? []).map(({ id, songTitle, slotName }) => ({ id, title: songTitle, liturgicalPart: slotName }))}
+              approved={approved}
+              songs={approved ? (songList.data?.items ?? []).map(({ id, songTitle, slotName }) => ({ id, title: songTitle, liturgicalPart: slotName })) : []}
               eligible={eligible}
               skills={(skills.data ?? []).map(({ id, name }) => ({ id, name }))}
+              songListNotice={
+                <EmptyState
+                  title="Chưa có danh sách bài hát đã duyệt"
+                  description={
+                    songList.data?.status === 'needsRevision'
+                      ? `Cha xứ yêu cầu chỉnh sửa danh sách bài hát${lastNotes ? `: “${lastNotes}”` : ''}. Vui lòng cập nhật và gửi duyệt lại trước khi phân công theo bài.`
+                      : songList.data?.status === 'rejected'
+                        ? `Danh sách bài hát đã bị từ chối${lastNotes ? `: “${lastNotes}”` : ''}. Vui lòng biên soạn lại danh sách trước khi phân công theo bài.`
+                        : songList.data?.status === 'submitted'
+                          ? 'Danh sách bài hát đang chờ Cha xứ phê duyệt. Phân công theo bài sẽ mở sau khi được duyệt.'
+                          : 'Phân công theo bài được thực hiện sau khi danh sách bài hát được duyệt.'
+                  }
+                  action={
+                    <Button
+                      type={revise ? 'primary' : 'default'}
+                      onClick={() => navigate(generatePath(paths.director.songListProposal, { programId: program.id }))}
+                    >
+                      {revise ? 'Cập nhật danh sách bài hát' : 'Mở danh sách bài hát'}
+                    </Button>
+                  }
+                />
+              }
             />
           )}
         </Flex>

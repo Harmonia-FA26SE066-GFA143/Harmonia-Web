@@ -10,7 +10,7 @@ import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import { programPage } from '@/test/programs'
 import * as rosterApi from '../api/rosterApi'
-import type { ServiceRoster } from '../types'
+import type { PersonnelRequirement, RosterShortage, ServiceRoster } from '../types'
 import { RosterPage } from './RosterPage'
 
 const renderRoster = () => renderPage(<RosterPage />, '/director/roster', '/director/roster?programId=p1')
@@ -52,12 +52,15 @@ const withApprovedList = () =>
     reviews: [],
   })
 
-const withRoster = (value: ServiceRoster | null, shortages = [tenorShort]) => {
+const withRoster = (value: ServiceRoster | null, shortages: RosterShortage[] = [tenorShort], wholeService: PersonnelRequirement[] = []) => {
   withApprovedList()
   vi.spyOn(rosterApi, 'getRoster').mockResolvedValue(value)
   vi.spyOn(rosterApi, 'getShortages').mockResolvedValue(shortages)
   vi.spyOn(rosterApi, 'getPersonnelRequirements').mockResolvedValue([{ skillId: 'k-tenor', skillName: 'Tenor', requiredCount: 2 }])
+  vi.spyOn(rosterApi, 'getEventRequirements').mockResolvedValue(wholeService)
 }
+
+const organ: PersonnelRequirement = { skillId: 'k-organ', skillName: 'Organ', requiredCount: 1 }
 
 // Ant Design renders a confirm title twice; the first one sits in the visible dialog.
 const confirmDialog = async (title: string) => (await screen.findAllByText(title))[0].closest('.ant-modal') as HTMLElement
@@ -88,7 +91,7 @@ beforeEach(() => {
     { id: 'm1', fullName: 'Giuse Vũ Đình Khôi', skills: ['Tenor'] },
     { id: 'm2', fullName: 'Giuse Nguyễn Hoàng Long', skills: ['Tenor'] },
     { id: 'm3', fullName: 'Vinhsơn Nguyễn Văn Hưng', skills: ['Tenor'] },
-    { id: 'm4', fullName: 'Simon Phan Văn Đức', skills: ['Bass'] },
+    { id: 'm4', fullName: 'Simon Phan Văn Đức', skills: ['Bass', 'Organ'] },
     { id: 'm5', fullName: 'Phêrô Lê Minh Tâm', skills: ['Tenor'] },
   ])
 })
@@ -98,17 +101,109 @@ afterEach(() => {
 })
 
 describe('RosterPage', () => {
-  it('needs an approved song list', async () => {
+  it('staffs the whole service before the song list is approved, while the songs wait for it', async () => {
     vi.spyOn(songListsApi, 'getSongList').mockResolvedValue({ id: 'l1', eventId: 'p1', version: 1, status: 'submitted', items: [], reviews: [] })
+    vi.spyOn(rosterApi, 'getRoster').mockResolvedValue(null)
+    vi.spyOn(rosterApi, 'getShortages').mockResolvedValue([
+      { songListItemId: null, songTitle: null, skillId: 'k-organ', skillName: 'Organ', requiredCount: 1, assignedCount: 0 },
+    ])
+    vi.spyOn(rosterApi, 'getEventRequirements').mockResolvedValue([organ])
+    const add = vi.spyOn(rosterApi, 'addAssignment').mockResolvedValue()
     renderRoster()
 
     expect(await screen.findByRole('heading', { name: 'Chưa có danh sách bài hát đã duyệt' })).toBeInTheDocument()
+    expect(screen.getByText('Cả buổi lễ: thiếu 1 Organ')).toBeInTheDocument()
+    // The whole roster is finalized only once the list is approved.
+    expect(screen.getByRole('button', { name: /Chốt phân công/ })).toBeDisabled()
+
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Thêm ca viên cho Organ (cả buổi lễ)' }))
+    fireEvent.click(await screen.findByTitle('Simon Phan Văn Đức'))
+    await waitFor(() =>
+      expect(add).toHaveBeenCalledWith({ eventId: 'p1', songListItemId: undefined, skillId: 'k-organ', memberId: 'm4' }),
+    )
+  })
+
+  it('counts the whole-service people for a song and keeps a member to one tier per skill', async () => {
+    const organist = {
+      id: 'a2',
+      memberId: 'm4',
+      memberName: 'Simon Phan Văn Đức',
+      skillId: 'k-organ',
+      skillName: 'Organ',
+      songListItemId: null,
+      note: 'Đàn chính',
+      source: 'manual' as const,
+    }
+    withRoster({ ...roster, assignments: [...roster.assignments, organist] }, [tenorShort], [organ])
+    vi.spyOn(rosterApi, 'getPersonnelRequirements').mockResolvedValue([
+      { skillId: 'k-tenor', skillName: 'Tenor', requiredCount: 2 },
+      { skillId: 'k-organ', skillName: 'Organ', requiredCount: 1 },
+    ])
+    renderRoster()
+
+    // The note shows next to the member; the song's organ is covered by the whole-service organist.
+    expect(await screen.findByRole('button', { name: /Simon Phan Văn Đức · Đàn chính/ })).toBeInTheDocument()
+    expect(await screen.findByText('Đủ (cả buổi lễ)')).toBeInTheDocument()
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Thêm ca viên cho Organ' }))
+    const option = await screen.findByTitle('Simon Phan Văn Đức (đã giữ cả buổi lễ)')
+    expect(option.closest('.ant-select-item-option')).toHaveClass('ant-select-item-option-disabled')
+  })
+
+  it('finalizes the whole service early, then only replaces its members and announces them', async () => {
+    const organist = {
+      id: 'a2',
+      memberId: 'm4',
+      memberName: 'Simon Phan Văn Đức',
+      skillId: 'k-organ',
+      skillName: 'Organ',
+      songListItemId: null,
+      source: 'manual' as const,
+    }
+    withRoster({ ...roster, assignments: [...roster.assignments, organist] }, [tenorShort], [organ])
+    const finalize = vi.spyOn(rosterApi, 'finalizeWholeService').mockResolvedValue()
+    const { unmount } = renderRoster()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Chốt nhạc công/ }))
+    const confirm = await confirmDialog('Chốt nhạc công?')
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Chốt nhạc công' }))
+    await waitFor(() => expect(finalize).toHaveBeenCalledWith('r1'))
+    unmount()
+
+    withRoster({ ...roster, wholeServiceFinalizedAt: '2026-10-27T03:00:00Z', assignments: [...roster.assignments, organist] }, [tenorShort], [organ])
+    const notify = vi.spyOn(rosterApi, 'sendRosterNotifications').mockResolvedValue()
+    renderRoster()
+
+    expect(await screen.findByText(/Đã chốt nhạc công lúc/)).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Thêm ca viên cho Organ (cả buổi lễ)' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Simon Phan Văn Đức, Organ/ }))
+    expect(await screen.findByRole('menuitem', { name: 'Thay người' })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: 'Gỡ khỏi vị trí' })).toBeNull()
+
+    // Before the full finalization only the whole-service members are announced.
+    fireEvent.click(screen.getByRole('button', { name: /Gửi thông báo phân công/ }))
+    const dialog = (await screen.findAllByRole('dialog')).at(-1) as HTMLElement
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi cho 1 thành viên' }))
+    await waitFor(() => expect(notify).toHaveBeenCalledWith('r1', ['m4']))
+  })
+
+  it('writes a role note for a member', async () => {
+    withRoster(roster)
+    const note = vi.spyOn(rosterApi, 'updateAssignmentNote').mockResolvedValue()
+    renderRoster()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Giuse Vũ Đình Khôi, Tenor/ }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Ghi chú vai' }))
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Ghi chú vai' }), { target: { value: 'Người dẫn truyện' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu ghi chú' }))
+
+    await waitFor(() => expect(note).toHaveBeenCalledWith('a1', 'Người dẫn truyện'))
   })
 
   it('shows a recoverable error when the roster cannot be loaded', async () => {
     withApprovedList()
     vi.spyOn(rosterApi, 'getRoster').mockRejectedValue(new ApiError(403, undefined))
     vi.spyOn(rosterApi, 'getShortages').mockResolvedValue([])
+    vi.spyOn(rosterApi, 'getEventRequirements').mockResolvedValue([])
     renderRoster()
 
     expect(await screen.findByRole('heading', { name: 'Không thể tải phân công' })).toBeInTheDocument()
