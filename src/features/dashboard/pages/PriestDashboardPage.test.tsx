@@ -113,8 +113,8 @@ describe('DirectorDashboardPage', () => {
     expect(await screen.findByText('4')).toBeInTheDocument()
     expect(screen.getByText('7')).toBeInTheDocument()
     // The pending counts lead to the pages where they are handled.
-    expect(screen.getByRole('link', { name: /^Kỹ năng chờ duyệt: \d+\. Xem và xử lý$/ })).toHaveAttribute('href', '/director/skill-approval')
-    expect(screen.getByRole('link', { name: /^Bản thu chờ chấm: \d+\. Xem và xử lý$/ })).toHaveAttribute('href', '/director/practice')
+    expect(screen.getByRole('link', { name: /^Kỹ năng chờ duyệt: \d+\. Xem$/ })).toHaveAttribute('href', '/director/skill-approval')
+    expect(screen.getByRole('link', { name: /^Bản thu chờ chấm: \d+\. Xem$/ })).toHaveAttribute('href', '/director/practice')
 
     fireEvent.click(screen.getByRole('button', { name: 'Đề xuất danh sách bài hát: Lễ Bổn mạng' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/director/programs/p2/song-list')
@@ -127,7 +127,9 @@ describe('DirectorDashboardPage', () => {
     )
     renderPage(<DirectorDashboardPage />, '/director')
     expect(await screen.findByRole('heading', { name: 'Không có danh sách bài hát cần chuẩn bị' })).toBeInTheDocument()
-    expect(screen.getByText('Lễ Các Đẳng')).toBeInTheDocument()
+    // The next program leads the page, and is the first row of the upcoming table too.
+    expect(screen.getByRole('heading', { name: 'Lễ Các Đẳng' })).toBeInTheDocument()
+    expect(screen.getAllByText('Lễ Các Đẳng')).toHaveLength(2)
   })
 
   it('shows a recoverable error when the programs cannot be loaded', async () => {

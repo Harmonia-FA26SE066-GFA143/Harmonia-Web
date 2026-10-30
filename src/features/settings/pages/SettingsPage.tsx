@@ -96,7 +96,6 @@ export function SettingsPage() {
       <PageHeader
         title="Cấu hình chung"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Cấu hình chung' }]}
-        description="Quản lý các thiết lập chung của hệ thống Harmonia."
       />
       {settings.isPending && <SectionSkeleton rows={6} label="Đang tải cấu hình" />}
       {settings.isError && (

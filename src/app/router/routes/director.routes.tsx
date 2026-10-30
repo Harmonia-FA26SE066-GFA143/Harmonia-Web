@@ -62,6 +62,11 @@ export const directorRoutes: RouteObject[] = [
     async () => (await import('@/features/rehearsals')).RehearsalsPage,
   ),
   pageRoute(
+    paths.director.rehearsalDetail,
+    { title: 'Chi tiết buổi tập', breadcrumb: [area, 'Lịch tập', 'Chi tiết buổi tập'], phase: 6 },
+    async () => (await import('@/features/rehearsals')).RehearsalPracticeRoomPage,
+  ),
+  pageRoute(
     paths.director.attendance,
     { title: 'Điểm danh', breadcrumb: [area, 'Điểm danh'], phase: 6 },
     async () => (await import('@/features/attendance')).AttendancePage,

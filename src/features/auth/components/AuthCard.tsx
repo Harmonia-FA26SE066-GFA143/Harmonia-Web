@@ -1,6 +1,6 @@
 import { Flex, Typography } from 'antd'
 import type { ReactNode } from 'react'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { cardSurface, colors, radius, spacing, typography } from '@/styles/tokens'
 import { SignInImage } from './SignInImage'
 
 export interface AuthCardProps {
@@ -20,6 +20,7 @@ export interface AuthCardProps {
 export function AuthCard({ title, description, icon, children, footer }: Readonly<AuthCardProps>) {
   return (
     <div
+      className="auth-layout"
       style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
@@ -34,9 +35,8 @@ export function AuthCard({ title, description, icon, children, footer }: Readonl
             width: '100%',
             maxWidth: 440,
             padding: '36px 32px',
-            background: colors.surface,
-            border: '1px solid rgba(0, 0, 0, 0.06)',
-            borderRadius: 16,
+            ...cardSurface,
+            borderRadius: radius.lg,
           }}
         >
           {icon && (

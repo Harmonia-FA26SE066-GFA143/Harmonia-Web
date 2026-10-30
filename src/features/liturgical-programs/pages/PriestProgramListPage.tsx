@@ -39,7 +39,6 @@ export function PriestProgramListPage() {
       <PageHeader
         title="Danh sách chương trình phụng vụ"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }]}
-        description="Theo dõi các sự kiện phụng vụ, tạo bản nháp và công bố cho ca đoàn."
         extra={
           <Flex wrap gap={spacing.sm}>
             <GenerateEventsButton />

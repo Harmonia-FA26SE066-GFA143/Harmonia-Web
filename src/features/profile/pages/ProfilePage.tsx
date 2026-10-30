@@ -34,7 +34,6 @@ export function ProfilePage() {
     <>
       <PageHeader
         title="Hồ sơ cá nhân"
-        description="Xem và cập nhật thông tin cá nhân của tài khoản."
         extra={
           <Flex wrap gap={spacing.sm}>
             <Button icon={<KeyOutlined />} onClick={() => navigate(paths.changePassword)}>

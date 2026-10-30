@@ -31,8 +31,8 @@ const rehearsals: Rehearsal[] = [
 
 const page = (items: Rehearsal[]) => ({ items, pageNumber: 1, pageSize: 20, totalCount: items.length, totalPages: 1 })
 
-const renderRehearsals = (initialEntry = '/director/rehearsals') =>
-  renderPage(<RehearsalsPage />, '/director/rehearsals', initialEntry)
+const renderRehearsals = (initialEntry = '/director/rehearsals?view=list') =>
+  renderPage(<RehearsalsPage />, '/director/rehearsals', initialEntry.includes('?view=') ? initialEntry : `${initialEntry}${initialEntry.includes('?') ? '&' : '?'}view=list`)
 
 beforeEach(() => {
   vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
@@ -67,6 +67,18 @@ describe('RehearsalsPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Chưa có buổi tập nào' })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /Tạo buổi tập/ }).length).toBeGreaterThan(0)
+  })
+
+  it('keeps the empty week calendar visible and creates no repeated day empty states', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(page([]))
+    renderRehearsals('/director/rehearsals?view=week')
+
+    expect(await screen.findByText('Tuần này chưa có buổi tập nào.')).toBeInTheDocument()
+    expect(screen.getByRole('grid', { name: 'Lịch tập theo tuần' })).toBeInTheDocument()
+    expect(screen.getAllByRole('gridcell')).toHaveLength(7)
+    expect(screen.getAllByLabelText('Không có buổi tập')).toHaveLength(7)
+    expect(screen.getAllByRole('button', { name: /Tạo buổi tập/ }).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Không tìm thấy buổi tập phù hợp.')).toBeNull()
   })
 
   it('filters by the program of the link on the server and names known programs', async () => {

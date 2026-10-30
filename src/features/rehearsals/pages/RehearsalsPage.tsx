@@ -1,15 +1,18 @@
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Card, DatePicker, Flex, Select, Typography } from 'antd'
+import { LeftOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons'
+import { Alert, App, Button, Card, Flex, Segmented, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
+import { vietnamToday } from '@/lib/api/dates'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, sizes, spacing } from '@/styles/tokens'
+import { sizes, spacing } from '@/styles/tokens'
+import { RehearsalDetailDrawer } from '../components/RehearsalDetailDrawer'
 import { RehearsalFormDrawer } from '../components/RehearsalFormDrawer'
 import { RehearsalTable } from '../components/RehearsalTable'
-import { useDeleteRehearsal, useRehearsals, useSaveRehearsal } from '../hooks/useRehearsals'
+import { RehearsalWeek } from '../components/RehearsalWeek'
+import { useAllRehearsals, useDeleteRehearsal, useRehearsals, useSaveRehearsal } from '../hooks/useRehearsals'
 import { rehearsalLabel } from '../rehearsalFormat'
 import { rehearsalErrorMessage } from '../rehearsalErrors'
 import type { Rehearsal, RehearsalFilters, RehearsalValues } from '../types'
@@ -24,10 +27,19 @@ const pageSize = 20
 export function RehearsalsPage() {
   const navigate = useNavigate()
   const { message, modal } = App.useApp()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialWeekAnchor = searchParams.get('week') && dayjs(searchParams.get('week')).isValid()
+    ? dayjs(searchParams.get('week'))
+    : dayjs(vietnamToday())
+  const initialWeek = initialWeekAnchor.subtract((initialWeekAnchor.day() + 6) % 7, 'day')
+  const [view, setView] = useState<'week' | 'list'>((searchParams.get('view') === 'list' ? 'list' : 'week'))
+  const [weekStart, setWeekStart] = useState(initialWeek.format('YYYY-MM-DD'))
   const [filters, setFilters] = useState<RehearsalFilters>({ eventId: searchParams.get('programId') ?? undefined })
   const [page, setPage] = useState(1)
+  const weekFilters = { ...filters, fromDate: weekStart, toDate: dayjs(weekStart).add(6, 'day').format('YYYY-MM-DD') }
   const rehearsals = useRehearsals(filters, { pageNumber: page, pageSize })
+  const weekRehearsals = useAllRehearsals(weekFilters)
+  const [detail, setDetail] = useState<Rehearsal>()
   const programs = useUpcomingPrograms()
   const save = useSaveRehearsal()
   const remove = useDeleteRehearsal()
@@ -42,6 +54,35 @@ export function RehearsalsPage() {
     setFilters(next)
     setPage(1)
   }
+  const changeWeek = (days: number) => {
+    const next = dayjs(weekStart).add(days, 'day').format('YYYY-MM-DD')
+    setWeekStart(next)
+    setSearchParams((current) => {
+      const nextParams = new URLSearchParams(current)
+      nextParams.set('week', next)
+      return nextParams
+    })
+  }
+  const goToday = () => {
+    const todayAnchor = dayjs(vietnamToday())
+    const today = todayAnchor.subtract((todayAnchor.day() + 6) % 7, 'day').format('YYYY-MM-DD')
+    setWeekStart(today)
+    setSearchParams((current) => {
+      const nextParams = new URLSearchParams(current)
+      nextParams.set('week', today)
+      return nextParams
+    })
+  }
+  const changeView = (next: 'week' | 'list') => {
+    setView(next)
+    setSearchParams((current) => {
+      const nextParams = new URLSearchParams(current)
+      nextParams.set('view', next)
+      return nextParams
+    })
+  }
+  const openPracticeRoom = (rehearsal: Rehearsal) =>
+    navigate(generatePath(paths.director.rehearsalDetail, { rehearsalId: rehearsal.id }), { state: { rehearsal } })
 
   const handleSave = (values: RehearsalValues) => {
     if (save.isPending) return
@@ -84,7 +125,6 @@ export function RehearsalsPage() {
       <PageHeader
         title="Lịch tập"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Lịch tập' }]}
-        description="Tạo và quản lý các buổi tập để chuẩn bị cho từng chương trình phụng vụ."
         extra={createButton}
       />
       {activeProgram && (
@@ -119,75 +159,97 @@ export function RehearsalsPage() {
           style={{ marginBottom: spacing.md }}
         />
       )}
-      {rehearsals.isPending && <SectionSkeleton rows={6} label="Đang tải lịch tập" />}
-      {rehearsals.isError && (
-        <ErrorState title="Không thể tải lịch tập" error={rehearsals.error} hasData={rehearsals.data !== undefined} onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
-      )}
-      {rehearsals.data !== undefined && total === 0 && !filtered && (
-        <EmptyState
-          title="Chưa có buổi tập nào"
-          description="Tạo buổi tập để lên kế hoạch luyện tập và điểm danh."
-          action={createButton}
-        />
-      )}
-      {rehearsals.data !== undefined && (total > 0 || filtered) && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <Flex wrap gap={spacing.sm} align="center" style={{ padding: spacing.md }}>
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              aria-label="Lọc theo chương trình phụng vụ"
-              placeholder="Tất cả chương trình"
-              value={filters.eventId}
-              onChange={(eventId?: string) => changeFilters({ ...filters, eventId })}
-              options={(programs.data ?? []).map((program) => ({
-                value: program.id,
-                label: `${program.eventName} · ${formatProgramDate(program.date)}`,
-              }))}
-              style={{ flex: '1 1 240px', maxWidth: 360, minWidth: 0 }}
-            />
-            <DatePicker.RangePicker
-              aria-label="Lọc theo ngày tập"
-              format="DD/MM/YYYY"
-              placeholder={['Từ ngày', 'Đến ngày']}
-              allowEmpty={[true, true]}
-              value={[filters.fromDate ? dayjs(filters.fromDate) : null, filters.toDate ? dayjs(filters.toDate) : null]}
-              onChange={(range) =>
-                changeFilters({
-                  ...filters,
-                  fromDate: range?.[0]?.format('YYYY-MM-DD'),
-                  toDate: range?.[1]?.format('YYYY-MM-DD'),
-                })
-              }
-              style={{ flex: '1 1 260px', maxWidth: 320 }}
-            />
-            <Button icon={<ReloadOutlined />} onClick={() => changeFilters({})} disabled={!filtered}>
-              Đặt lại bộ lọc
-            </Button>
-            <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
-              {total} buổi tập
-            </Typography.Text>
+      <Card styles={{ body: { padding: 0 } }}>
+          <Flex vertical gap={spacing.sm} style={{ padding: spacing.md }}>
+            <Flex wrap gap={spacing.sm} align="center">
+              <Flex gap={4} align="center">
+                <Button icon={<LeftOutlined />} aria-label="Tuần trước" onClick={() => changeWeek(-7)} />
+                <Button onClick={goToday}>Hôm nay</Button>
+                <Button icon={<RightOutlined />} aria-label="Tuần sau" onClick={() => changeWeek(7)} />
+              </Flex>
+              <Typography.Text strong style={{ fontVariantNumeric: 'tabular-nums', lineHeight: `${sizes.controlHeight}px` }}>
+                {dayjs(weekStart).format('DD/MM')} – {dayjs(weekStart).add(6, 'day').format('DD/MM/YYYY')}
+              </Typography.Text>
+              <Segmented
+                value={view}
+                onChange={(value: string | number) => changeView(value === 'list' ? 'list' : 'week')}
+                options={[{ label: 'Tuần', value: 'week' }, { label: 'Danh sách', value: 'list' }]}
+              />
+            </Flex>
+            <Flex wrap gap={spacing.sm} align="center">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                aria-label="Lọc theo chương trình phụng vụ"
+                placeholder="Tất cả chương trình"
+                value={filters.eventId}
+                onChange={(eventId?: string) => changeFilters({ ...filters, eventId })}
+                options={(programs.data ?? []).map((program) => ({
+                  value: program.id,
+                  label: `${program.eventName} · ${formatProgramDate(program.date)}`,
+                }))}
+                style={{ flex: '1 1 240px', maxWidth: 360, minWidth: 0 }}
+              />
+              {filtered && view === 'week' && <Button onClick={() => changeFilters({})}>Đặt lại bộ lọc</Button>}
+            </Flex>
           </Flex>
-          {total === 0 ? (
-            <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
-              <NoFilterResults onClearFilters={() => changeFilters({})} />
-            </div>
+          {view === 'week' && weekRehearsals.isPending && <SectionSkeleton rows={4} label="Đang tải lịch tuần" />}
+          {view === 'week' && weekRehearsals.isError && <ErrorState title="Không thể tải lịch tập" error={weekRehearsals.error} onRetry={() => weekRehearsals.refetch()} retrying={weekRehearsals.isFetching} />}
+          {view === 'week' ? (
+            weekRehearsals.data !== undefined ? (
+              weekRehearsals.data.items.length === 0 && filtered ? (
+                <div style={{ padding: spacing.md }}><NoFilterResults onClearFilters={() => changeFilters({})} /></div>
+              ) : (
+                <>
+                  {weekRehearsals.data.items.length === 0 && (
+                    <Typography.Text type="secondary" style={{ display: 'block', padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+                      Tuần này chưa có buổi tập nào.
+                    </Typography.Text>
+                  )}
+                  <RehearsalWeek weekStart={weekStart} rehearsals={weekRehearsals.data.items} programs={programMap} onSelect={openPracticeRoom} />
+                </>
+              )
+            ) : null
           ) : (
-            <RehearsalTable
-              rehearsals={rehearsals.data.items}
-              programs={programMap}
-              loading={rehearsals.isPlaceholderData}
-              pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
-              onTakeAttendance={(rehearsal) =>
-                navigate(`${paths.director.attendance}?rehearsalId=${rehearsal.id}${rehearsal.eventId ? `&programId=${rehearsal.eventId}` : ''}`)
-              }
-              onEdit={setEditing}
-              onDelete={handleDelete}
-            />
+            rehearsals.isPending ? <SectionSkeleton rows={6} label="Đang tải lịch tập" /> : rehearsals.isError ? (
+              <ErrorState title="Không thể tải lịch tập" error={rehearsals.error} hasData={rehearsals.data !== undefined} onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
+            ) : total === 0 && !filtered ? (
+              <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><EmptyState title="Chưa có buổi tập nào" description="Tạo buổi tập để lên kế hoạch luyện tập." action={createButton} /></div>
+            ) : total === 0 ? (
+              <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><NoFilterResults onClearFilters={() => changeFilters({})} /></div>
+            ) : (
+              <RehearsalTable
+                rehearsals={rehearsals.data.items}
+                programs={programMap}
+                loading={rehearsals.isPlaceholderData}
+                pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
+                onTakeAttendance={(rehearsal) =>
+                  navigate(`${paths.director.attendance}?rehearsalId=${rehearsal.id}${rehearsal.eventId ? `&programId=${rehearsal.eventId}` : ''}`)
+                }
+                onEdit={setEditing}
+                onDelete={handleDelete}
+              />
+            )
           )}
-        </Card>
-      )}
+      </Card>
+      <RehearsalDetailDrawer
+        rehearsal={detail}
+        program={detail?.eventId ? programMap.get(detail.eventId) : undefined}
+        onClose={() => setDetail(undefined)}
+        onAttendance={(rehearsal) => {
+          setDetail(undefined)
+          navigate(`${paths.director.attendance}?rehearsalId=${rehearsal.id}${rehearsal.eventId ? `&programId=${rehearsal.eventId}` : ''}`)
+        }}
+        onEdit={(rehearsal) => {
+          setDetail(undefined)
+          setEditing(rehearsal)
+        }}
+        onDelete={(rehearsal) => {
+          setDetail(undefined)
+          handleDelete(rehearsal)
+        }}
+      />
       <RehearsalFormDrawer
         open={editing !== undefined}
         programs={programs.data ?? []}

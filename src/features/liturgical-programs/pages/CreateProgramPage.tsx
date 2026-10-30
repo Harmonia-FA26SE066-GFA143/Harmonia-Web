@@ -50,9 +50,9 @@ export function CreateProgramPage() {
   return (
     <>
       <PageHeader
-        title="Tạo chương trình phụng vụ"
+        title="Tạo chương trình"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }, { title: 'Tạo chương trình' }]}
-        description="Nhập thông tin sự kiện phụng vụ. Sự kiện được lưu dưới dạng bản nháp; công bố ở trang chi tiết."
+        description="Lưu dưới dạng bản nháp; công bố ở trang chi tiết."
       />
       <Card style={{ maxWidth: 720 + spacing.lg * 2 }}>
         <EventForm

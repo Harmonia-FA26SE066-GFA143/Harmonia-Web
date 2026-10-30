@@ -84,7 +84,6 @@ export function DirectorReportsPage() {
       <PageHeader
         title="Báo cáo ca đoàn"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Báo cáo' }]}
-        description="Điểm danh, xác nhận tham gia và hoàn thành bài tập của từng ca viên theo tuần, tháng hoặc năm."
         extra={
           <Dropdown
             trigger={['click']}

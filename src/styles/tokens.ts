@@ -6,14 +6,18 @@
  * Single source for colors and sizes; the Ant Design theme and custom styles both read from here.
  */
 export const colors = {
-  background: '#F8F9FA',
+  /** A warm off-white page; colour is kept for the data, not the ground (2026-10-30). */
+  background: '#F7F4F4',
   surface: '#FFFFFF',
-  softSurface: '#F3F4F6',
-  border: '#E5E7EB',
-  mutedBorder: '#D1D5DB',
-  textPrimary: '#111827',
-  textBody: '#374151',
-  textMuted: '#6B7280',
+  softSurface: '#F5F1F1',
+  /** The selected row of the navigation and of lists: one grey step, ink text. */
+  selectedSurface: '#EEE8E9',
+  border: '#E6DEDF',
+  mutedBorder: '#D3C8CA',
+  /** Ink, never pure black. */
+  textPrimary: '#1E1A1C',
+  textBody: '#3F3639',
+  textMuted: '#6B5F62',
   /** Still 5.5:1 on the grey of a disabled control: a disabled button must be readable, only not clickable. */
   textDisabled: '#5F6368',
   primary: '#8E3B4B',
@@ -35,9 +39,42 @@ export const media = {
   heroScrim: 'linear-gradient(90deg, rgba(28, 12, 17, 0.8) 0%, rgba(28, 12, 17, 0.66) 50%, rgba(28, 12, 17, 0.2) 100%)',
   /** Sign-in image: clear at the top, dark under the brand at the bottom. */
   imageScrim: 'linear-gradient(180deg, rgba(28, 12, 17, 0.05) 30%, rgba(28, 12, 17, 0.82) 100%)',
-  /** Controls drawn on the media (pause button, pill). */
-  controlFill: 'rgba(255, 255, 255, 0.14)',
+  /** Edge of controls drawn on the media (pause button). */
   controlBorder: 'rgba(255, 255, 255, 0.4)',
+} as const
+
+/**
+ * One colour per area of work, used on its data only (readiness steps, chips, waiting counts), never on the shell
+ * (2026-10-30). Each area has its cloth (marks, filled steps), a pale tint with a darker edge (chips, waiting cells)
+ * and a dark ink for text on the tint (7:1 or more).
+ */
+export type SectionKey = 'liturgy' | 'rehearsal' | 'practice' | 'roster' | 'attention'
+
+export interface SectionColors {
+  cloth: string
+  tint: string
+  border: string
+  ink: string
+}
+
+export const sections: Record<SectionKey, SectionColors> = {
+  /** Liturgical events and programs: what the Parish Priest made. */
+  liturgy: { cloth: '#8E3B4B', tint: '#F6EBED', border: 'rgba(142, 59, 75, 0.32)', ink: '#762E3D' },
+  /** Rehearsals and attendance. */
+  rehearsal: { cloth: '#2F6150', tint: '#E7F1EC', border: 'rgba(47, 97, 80, 0.32)', ink: '#24503F' },
+  /** Practice assignments and submissions. */
+  practice: { cloth: '#2E4D72', tint: '#E8EEF6', border: 'rgba(46, 77, 114, 0.3)', ink: '#24405F' },
+  /** Service roster: tan leather bookcloth (owner choice 2026-10-28). */
+  roster: { cloth: '#6B4A33', tint: '#F3ECE6', border: 'rgba(107, 74, 51, 0.3)', ink: '#5A3E2B' },
+  /** Something waiting on the viewer. */
+  attention: { cloth: '#A8741A', tint: '#FBF3E2', border: '#EBCF97', ink: '#7A4F0C' },
+}
+
+/** An event the Parish Priest made, on his calendar: a liturgy chip, apart from the synced liturgical days (grey). */
+export const priestEvent = {
+  background: sections.liturgy.tint,
+  border: sections.liturgy.border,
+  text: sections.liturgy.ink,
 } as const
 
 export const shadows = {
@@ -65,10 +102,10 @@ export const typography = {
   fontSize: 14,
   /** Generous line height for Vietnamese diacritics (DESIGN(2).md: 1.55–1.65). */
   lineHeight: 1.6,
-  pageTitle: { fontSize: 28, lineHeight: 1.25, fontWeight: 700 },
+  pageTitle: { fontSize: 24, lineHeight: 1.3, fontWeight: 600 },
   /** Title inside a standalone panel such as the sign-in card. */
   panelTitle: { fontSize: 24, lineHeight: 1.3 },
-  sectionHeading: { fontSize: 19, lineHeight: 1.4 },
+  sectionHeading: { fontSize: 18, lineHeight: 1.4 },
   cardHeading: { fontSize: 16, lineHeight: 1.4 },
   metadata: { fontSize: 12 },
 } as const
@@ -82,12 +119,13 @@ export const spacing = {
   xxl: 48,
 } as const
 
+/** Tight corners, chosen once (2026-10-30): 4 for chips, 6 for controls, 8 for containers. */
 export const radius = {
-  sm: 6,
-  /** Buttons and inputs (DESIGN(2).md: 8–10px). */
-  md: 10,
-  /** Containers: cards, modals, state panels. */
-  lg: 14,
+  sm: 4,
+  /** Buttons, inputs, navigation rows. */
+  md: 6,
+  /** Containers: cards, modals, state panels, tables. */
+  lg: 8,
 } as const
 
 export const sizes = {
@@ -98,7 +136,7 @@ export const sizes = {
 } as const
 
 export const layout = {
-  sidebarWidth: 260,
+  sidebarWidth: 256,
   headerHeight: 64,
   contentMaxWidth: 1360,
   contentPaddingX: 32,

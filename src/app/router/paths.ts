@@ -47,6 +47,7 @@ export const paths = {
     library: '/director/library',
     songDetail: '/director/library/:songId',
     rehearsals: '/director/rehearsals',
+    rehearsalDetail: '/director/rehearsals/:rehearsalId',
     attendance: '/director/attendance',
     participation: '/director/participation',
     roster: '/director/roster',

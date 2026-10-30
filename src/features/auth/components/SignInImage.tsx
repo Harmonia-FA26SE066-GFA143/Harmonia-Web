@@ -8,7 +8,10 @@ import { media, radius, spacing, typography } from '@/styles/tokens'
 /** Left column of the sign-in page: a church interior (decorative) with the brand over its darkened foot. */
 export function SignInImage() {
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: radius.lg, minHeight: 560 }}>
+    <div
+      className="auth-media"
+      style={{ position: 'relative', overflow: 'hidden', borderRadius: radius.lg, minHeight: 560 }}
+    >
       <img
         src={churchInterior}
         alt=""

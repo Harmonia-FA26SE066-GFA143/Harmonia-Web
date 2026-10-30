@@ -50,7 +50,7 @@ export function RosterPage() {
       <PageHeader
         title="Yêu cầu nhân sự & Phân công"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Phân công phục vụ' }]}
-        description="Khai vai cả buổi lễ (nhạc công, bắt nhịp) và yêu cầu kỹ năng theo từng bài, gợi ý và điều chỉnh phân công, chốt rồi gửi thông báo cho ca viên. Bè đồng ca không cần phân công, chỉ cần xác nhận tham gia."
+        description="Bè đồng ca không cần phân công, chỉ cần xác nhận tham gia."
       />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
       {programs.isError && (

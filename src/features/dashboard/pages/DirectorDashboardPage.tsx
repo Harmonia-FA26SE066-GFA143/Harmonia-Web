@@ -2,12 +2,20 @@ import { ArrowRightOutlined } from '@ant-design/icons'
 import { Button, Card, Col, Flex, Row, Typography } from 'antd'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { formatProgramDate, ProgramTable, useUpcomingPrograms, type LiturgicalProgram } from '@/features/liturgical-programs'
+import dayjs from 'dayjs'
+import {
+  formatProgramDate,
+  ProgramTable,
+  songListStatusLabels,
+  useDirectorPreparation,
+  useUpcomingPrograms,
+  type LiturgicalProgram,
+} from '@/features/liturgical-programs'
 import { useSubmissions } from '@/features/practice'
 import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
 import { EmptyState, ErrorState, MetricSummary, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
-import { cardSurface, colors, radius, spacing, typography } from '@/styles/tokens'
+import { cardSurface, colors, radius, sections, spacing, typography, type SectionColors } from '@/styles/tokens'
 
 const upcomingLimit = 5
 const todoLimit = 4
@@ -15,8 +23,8 @@ const countOnly = { pageNumber: 1, pageSize: 1 }
 
 const metrics = [
   { key: 'upcoming', label: 'Chương trình sắp tới' },
-  { key: 'skills', label: 'Kỹ năng chờ duyệt', to: paths.director.skillApproval },
-  { key: 'submissions', label: 'Bản thu chờ chấm', to: paths.director.practice },
+  { key: 'skills', label: 'Kỹ năng chờ duyệt', to: paths.director.skillApproval, attention: true },
+  { key: 'submissions', label: 'Bản thu chờ chấm', to: paths.director.practice, attention: true },
 ]
 
 type Todo = 'none' | 'draft' | 'needsRevision' | 'rejected'
@@ -55,7 +63,6 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
 
   return (
     <Card
-      className="director-todo-card"
       style={{ ...cardSurface, height: '100%' }}
       styles={{ body: { padding: spacing.lg, height: '100%' } }}
     >
@@ -74,7 +81,7 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
         </div>
         <div
           style={{
-            background: sentBack ? 'rgba(207, 19, 34, 0.04)' : '#F9FAFB',
+            background: sentBack ? 'rgba(207, 19, 34, 0.04)' : colors.softSurface,
             border: `1px solid ${sentBack ? 'rgba(207, 19, 34, 0.12)' : colors.border}`,
             borderRadius: radius.md,
             padding: spacing.md,
@@ -108,6 +115,120 @@ function TodoCard({ program, todo }: Readonly<{ program: LiturgicalProgram; todo
           </Button>
         </Flex>
       </Flex>
+    </Card>
+  )
+}
+
+/** Readiness on the fixed four-step ramp used across the web; the text beside it states the value. */
+function Ramp({ filled, cloth }: Readonly<{ filled: number; cloth: SectionColors }>) {
+  return (
+    <Flex aria-hidden gap={3}>
+      {[0, 1, 2, 3].map((step) => (
+        <span
+          key={step}
+          style={{ flex: 1, height: 8, borderRadius: 2, border: `1px solid ${cloth.cloth}`, background: step < filled ? cloth.cloth : cloth.tint }}
+        />
+      ))}
+    </Flex>
+  )
+}
+
+const quarters = (done: number, total: number) => (total > 0 ? Math.round((Math.min(done, total) / total) * 4) : 0)
+const songListFill = { draft: 1, rejected: 1, needsRevision: 1, submitted: 3, approved: 4 } as const
+
+/**
+ * The next published program and how far each part of its preparation has come: song list, rehearsals, roster and
+ * practice, each in its area's colour. Counts come from what the Choir Director may read
+ * (useDirectorPreparation, #246). A part that waits on the Director turns amber.
+ */
+function NextProgram({ program }: Readonly<{ program: LiturgicalProgram }>) {
+  const navigate = useNavigate()
+  const prep = useDirectorPreparation(program.id)
+  const date = dayjs(program.date)
+  const weekday = date.format('dddd')
+  const place = [`${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${formatProgramDate(program.date)}`, program.time, program.locationName, program.seasonName]
+    .filter(Boolean)
+    .join(' · ')
+
+  const data = prep.data
+  const songList = program.songListStatus
+  const shortages = data?.rosterShortages?.length ?? 0
+  const steps = [
+    {
+      label: 'Danh sách bài hát',
+      cloth: sections.liturgy,
+      value: songList ? songListStatusLabels[songList] : 'Chưa đề xuất',
+      filled: songList ? songListFill[songList] : 0,
+      waiting: !songList || songList === 'draft' || songList === 'needsRevision' || songList === 'rejected',
+    },
+    {
+      label: 'Buổi tập',
+      cloth: sections.rehearsal,
+      value: data && (data.rehearsalsTotal > 0 ? `${data.rehearsalsHeld}/${data.rehearsalsTotal} buổi đã tập` : 'Chưa có buổi tập'),
+      filled: data ? quarters(data.rehearsalsHeld, data.rehearsalsTotal) : 0,
+      waiting: data?.rehearsalsTotal === 0,
+    },
+    {
+      label: 'Phân công',
+      cloth: shortages > 0 ? sections.attention : sections.roster,
+      value: data && (data.rosterFinalized === undefined ? 'Chưa lập' : shortages > 0 ? `Thiếu ${shortages} vị trí` : data.rosterFinalized ? 'Đã chốt' : 'Đang soạn'),
+      filled: data ? (data.rosterFinalized === undefined ? 0 : shortages > 0 ? 2 : data.rosterFinalized ? 4 : 3) : 0,
+      waiting: shortages > 0,
+    },
+    {
+      label: 'Luyện tập',
+      cloth: sections.practice,
+      value: data && (data.practiceExpected > 0 ? `${data.practicePassed}/${data.practiceExpected} lượt đạt` : 'Chưa giao bài'),
+      filled: data ? quarters(data.practicePassed, data.practiceExpected) : 0,
+      waiting: (data?.practiceOverdue ?? 0) > 0,
+    },
+  ]
+
+  return (
+    <Card style={cardSurface} styles={{ body: { padding: spacing.lg } }}>
+      <Flex wrap align="flex-start" justify="space-between" gap={spacing.md} style={{ marginBottom: spacing.lg }}>
+        <div style={{ minWidth: 0 }}>
+          <Typography.Title level={3} style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
+            {program.eventName}
+          </Typography.Title>
+          <Typography.Text style={{ color: colors.textMuted, fontVariantNumeric: 'tabular-nums' }}>{place}</Typography.Text>
+        </div>
+        <Button onClick={() => navigate(generatePath(paths.director.programDetail, { programId: program.id }))}>
+          Xem tình hình chuẩn bị
+        </Button>
+      </Flex>
+      {prep.isError ? (
+        <Flex align="center" gap={spacing.sm} wrap>
+          <Typography.Text type="danger">Không thể tải tình hình chuẩn bị.</Typography.Text>
+          <Button size="small" onClick={() => prep.refetch()} loading={prep.isFetching}>
+            Thử lại
+          </Button>
+        </Flex>
+      ) : (
+        // What is still missing is the biggest thing on the screen: one column per part of the preparation.
+        <dl style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: spacing.lg, margin: 0 }}>
+          {steps.map((step) => (
+            <div key={step.label}>
+              <dt style={{ fontSize: 13, fontWeight: 500, color: colors.textMuted }}>{step.label}</dt>
+              <dd
+                style={{
+                  margin: '4px 0 10px',
+                  fontSize: 20,
+                  fontWeight: 600,
+                  lineHeight: 1.3,
+                  fontVariantNumeric: 'tabular-nums',
+                  color: step.waiting ? sections.attention.ink : colors.textPrimary,
+                }}
+              >
+                {step.value ?? <span style={{ color: colors.textMuted, fontWeight: 400, fontSize: 14 }}>Đang tải…</span>}
+              </dd>
+              <dd style={{ margin: 0 }}>
+                <Ramp filled={step.filled} cloth={step.cloth} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </Card>
   )
 }
@@ -152,6 +273,14 @@ export function DirectorDashboardPage() {
         }
       />
       <Flex vertical gap={spacing.lg}>
+        {upcoming[0] && (
+          <section aria-labelledby="next-heading">
+            <Typography.Title id="next-heading" level={2} style={{ marginBottom: spacing.md }}>
+              Chương trình kế tiếp
+            </Typography.Title>
+            <NextProgram program={upcoming[0]} />
+          </section>
+        )}
         <MetricSummary
           definitions={metrics}
           values={{ upcoming: programs.data?.length, skills: skills.data?.totalCount, submissions: submissions.data?.totalCount }}

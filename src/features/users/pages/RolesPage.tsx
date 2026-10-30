@@ -63,7 +63,6 @@ export function RolesPage() {
       <PageHeader
         title="Vai trò & Phân quyền"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Vai trò & Phân quyền' }]}
-        description="Gán vai trò hệ thống cho tài khoản. Chức năng mỗi người dùng được sử dụng tuân theo vai trò được gán."
       />
 
       {accounts.isPending && <SectionSkeleton rows={6} label="Đang tải vai trò và tài khoản" />}

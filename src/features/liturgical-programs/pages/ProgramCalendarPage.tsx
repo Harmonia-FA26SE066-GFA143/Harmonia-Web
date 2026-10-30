@@ -1,11 +1,11 @@
 import { EditOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
 import { Alert, Badge, Button, Calendar, Card, Col, Flex, Grid, Radio, Row, Select, Spin, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useId, useMemo, useState, type KeyboardEvent } from 'react'
+import { useId, useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { CardTitle, ErrorState, PageHeader, SectionSkeleton, visuallyHidden } from '@/shared/ui'
-import { cardSurface, colors, spacing } from '@/styles/tokens'
+import { cardSurface, colors, priestEvent, radius, spacing } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
 import { LiturgicalDayInfo, SyncCalendarButton } from '../components/LiturgicalDayInfo'
@@ -32,6 +32,18 @@ const keySteps: Record<string, [number, 'day' | 'month']> = {
   PageUp: [-1, 'month'],
   PageDown: [1, 'month'],
 }
+/**
+ * The Priest's own events are chips: filled once published, a dashed outline while a draft, and no chip once
+ * cancelled (struck through). The liturgical day above them stays plain grey text.
+ */
+const eventChip = (status: LiturgicalEvent['status']): CSSProperties => ({
+  padding: '0 3px',
+  borderRadius: radius.sm,
+  border: status === 'cancelled' ? '1px solid transparent' : `1px ${status === 'draft' ? 'dashed' : 'solid'} ${priestEvent.border}`,
+  background: status === 'published' ? priestEvent.background : 'transparent',
+  color: status === 'published' ? priestEvent.text : colors.textBody,
+})
+
 // ponytail: one page of 100 events per month (the backend maximum); a busier month would need a second page.
 const monthPage = { pageNumber: 1, pageSize: 100 }
 
@@ -94,7 +106,7 @@ export function ProgramCalendarPage() {
             key={event.id}
             ellipsis={{ rows: 2, tooltip: true }}
             delete={event.status === 'cancelled'}
-            style={{ margin: 0, fontSize: 12, lineHeight: 1.35, color: event.status === 'published' ? colors.primary : colors.textBody }}
+            style={{ ...eventChip(event.status), margin: 0, fontSize: 12, lineHeight: 1.35 }}
           >
             {/* Published is the usual state; the others carry a named icon, so the status does not rest on color alone
                 and the event's name keeps the cell's two lines. */}
@@ -118,7 +130,6 @@ export function ProgramCalendarPage() {
       <PageHeader
         title="Lịch phụng vụ"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Lịch phụng vụ' }]}
-        description="Xem các sự kiện phụng vụ theo tháng, ngày phụng vụ của ngày đang chọn, và tạo sự kiện cho một ngày."
         extra={
           <Flex wrap gap={spacing.sm}>
             <SyncCalendarButton year={selected.year()} />
@@ -135,7 +146,7 @@ export function ProgramCalendarPage() {
       )}
       {events.data !== undefined && (
         <Flex vertical gap={spacing.md}>
-          <Card className="calendar-summary-card" style={cardSurface} styles={{ body: { padding: `${spacing.md}px ${spacing.lg}px` } }}>
+          <Card style={cardSurface} styles={{ body: { padding: `${spacing.md}px ${spacing.lg}px` } }}>
             <Flex wrap align="center" justify="space-between" gap={spacing.md}>
               <Typography.Title level={3} style={{ margin: 0, fontSize: 19 }}>
                 {selected.format('[Lịch tháng] M YYYY')}
@@ -155,7 +166,7 @@ export function ProgramCalendarPage() {
           {/* From xl the day panel sits beside the calendar, so picking a day shows its events without scrolling. */}
           <Row gutter={[spacing.md, spacing.md]}>
             <Col xs={24} xl={18}>
-              <Card className="calendar-grid-card" style={cardSurface} styles={{ body: { padding: screens.md ? spacing.md : spacing.sm } }}>
+              <Card style={cardSurface} styles={{ body: { padding: screens.md ? spacing.md : spacing.sm } }}>
               {/* The previous month stays on screen while the next one loads (keepPreviousData), so it is dimmed. */}
               <Spin spinning={events.isPlaceholderData} description="Đang tải tháng…">
                 <div role="group" aria-label="Lịch sự kiện phụng vụ" aria-describedby={hintId} onKeyDown={moveByKey}>
@@ -169,9 +180,18 @@ export function ProgramCalendarPage() {
                     onSelect={setSelected}
                     onPanelChange={(_, next) => setMode(next)}
                     headerRender={({ value, type, onChange, onTypeChange }) => (
-                      <Flex justify="flex-end" wrap gap={spacing.sm} style={{ paddingBlockEnd: spacing.sm }}>
+                      <Flex justify="space-between" align="center" wrap gap={spacing.sm} style={{ paddingBlockEnd: spacing.sm }}>
+                        {/* Each key is drawn the way the cells draw it. */}
+                        {type === 'month' && screens.md ? (
+                          <Flex component="ul" aria-label="Chú thích lịch" align="center" wrap gap={spacing.md} style={{ listStyle: 'none', margin: 0, padding: 0, fontSize: 12 }}>
+                            <li style={eventChip('published')}>Sự kiện do cha xứ tạo</li>
+                            <li style={{ fontSize: 11, color: colors.textBody }}>Ngày phụng vụ đồng bộ từ lịch trực tuyến</li>
+                          </Flex>
+                        ) : (
+                          <span />
+                        )}
+                        <Flex wrap gap={spacing.sm}>
                         <Select
-                          size="small"
                           aria-label="Năm"
                           value={value.year()}
                           onChange={(year: number) => onChange(value.year(year))}
@@ -180,7 +200,6 @@ export function ProgramCalendarPage() {
                         />
                         {type === 'month' && (
                           <Select
-                            size="small"
                             aria-label="Tháng"
                             value={value.month()}
                             onChange={(monthIndex: number) => onChange(value.month(monthIndex))}
@@ -188,11 +207,10 @@ export function ProgramCalendarPage() {
                             style={{ minWidth: 112 }}
                           />
                         )}
-                        <Button size="small" onClick={() => setSelected(dayjs())}>
+                        <Button onClick={() => setSelected(dayjs())}>
                           Hôm nay
                         </Button>
                         <Radio.Group
-                          size="small"
                           optionType="button"
                           aria-label="Chế độ xem lịch"
                           value={type}
@@ -202,6 +220,7 @@ export function ProgramCalendarPage() {
                             { value: 'year', label: 'Năm' },
                           ]}
                         />
+                        </Flex>
                       </Flex>
                     )}
                     cellRender={(date, info) => (info.type === 'date' ? renderDate(date) : info.originNode)}
@@ -221,7 +240,7 @@ export function ProgramCalendarPage() {
                   description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình” trong ô ngày bên cạnh."
                 />
               )}
-              <Card className="calendar-day-card" title={<CardTitle>{dayTitle(selected)}</CardTitle>}>
+              <Card title={<CardTitle>{dayTitle(selected)}</CardTitle>}>
                 <span role="status" style={visuallyHidden}>
                   {events.isPlaceholderData ? '' : `Ngày ${selected.format('DD/MM/YYYY')}: ${selectedEvents.length} sự kiện`}
                 </span>
@@ -240,8 +259,8 @@ export function ProgramCalendarPage() {
                 )}
                 {!events.isPlaceholderData && selectedEvents.length > 0 && (
                   <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                    {selectedEvents.map((event, index) => (
-                      <Flex component="li" className="calendar-event-row" key={event.id} wrap align="center" justify="space-between" gap={spacing.sm} style={{ animationDelay: `${Math.min(index, 6) * 30}ms` }}>
+                    {selectedEvents.map((event) => (
+                      <Flex component="li" key={event.id} wrap align="center" justify="space-between" gap={spacing.sm}>
                         <Flex vertical>
                           <Typography.Text strong>
                             {event.time} · {eventName(event)}

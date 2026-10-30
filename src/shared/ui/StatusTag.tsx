@@ -7,6 +7,11 @@ export type StatusTagColor = 'default' | 'green' | 'gold' | 'red' | 'orange' | '
 
 export interface StatusTagProps extends Omit<TagProps, 'color' | 'children'> {
   color?: StatusTagColor
+  /**
+   * The printed mark of the state (songbook world, 2026-10-28): `draft` is a dashed outline with no fill, `struck` is
+   * struck through (cancelled). Without it the tag is filled.
+   */
+  mark?: 'draft' | 'struck'
   children: ReactNode
 }
 
@@ -15,11 +20,11 @@ export interface StatusTagProps extends Omit<TagProps, 'color' | 'children'> {
  * tags put the -7 shade on the -1 background: green 3.4:1 and gold 2.8:1 fall short, so those use the -8 / -9 shade.
  * The label, not the color, still carries the meaning.
  */
-export function StatusTag({ color = 'default', style, children, ...props }: Readonly<StatusTagProps>) {
+export function StatusTag({ color = 'default', mark, style, children, ...props }: Readonly<StatusTagProps>) {
   const { token } = theme.useToken()
   // [text, background, border]
   const tones = {
-    default: ['#4B5563', colors.softSurface, colors.border],
+    default: [colors.textBody, colors.softSurface, colors.border],
     green: [token.green8, token.green1, token.green3],
     gold: [token.gold9, token.gold1, token.gold3],
     red: [token.red8, token.red1, token.red3],
@@ -38,8 +43,10 @@ export function StatusTag({ color = 'default', style, children, ...props }: Read
         lineHeight: '18px',
         letterSpacing: '0.01em',
         color: text,
-        background,
-        borderColor: border,
+        background: mark === 'draft' ? 'transparent' : background,
+        borderColor: mark === 'draft' ? colors.mutedBorder : border,
+        borderStyle: mark === 'draft' ? 'dashed' : 'solid',
+        textDecoration: mark === 'struck' ? 'line-through' : undefined,
         ...style,
       }}
       {...props}

@@ -96,7 +96,6 @@ export function SkillApprovalPage() {
       <PageHeader
         title="Duyệt kỹ năng"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Duyệt kỹ năng' }]}
-        description="Kỹ năng ca viên khai báo trên ứng dụng di động, chờ Ca trưởng duyệt. Khai báo cũ nhất ở trên cùng."
       />
 
       <section ref={results} tabIndex={-1} aria-label="Kỹ năng chờ duyệt" style={{ outline: 'none' }}>

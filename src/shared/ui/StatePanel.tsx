@@ -13,7 +13,7 @@ export interface StatePanelProps {
   headingLevel?: 2 | 3
 }
 
-/** Shared layout for empty / error / no-result states: icon, heading, explanation, actions. */
+/** Shared layout for empty / error / no-result states: a quiet icon, heading, one sentence, actions. */
 export function StatePanel({
   icon,
   title,
@@ -33,37 +33,24 @@ export function StatePanel({
       vertical
       align="center"
       style={{
-        padding: `${spacing.xxl}px ${spacing.xl}px`,
+        padding: `${spacing.xl}px ${spacing.lg}px`,
         textAlign: 'center',
         ...cardSurface,
         borderRadius: radius.lg,
       }}
     >
-      <Flex
-        aria-hidden
-        align="center"
-        justify="center"
-        style={{
-          width: 72,
-          height: 72,
-          marginBottom: spacing.lg,
-          borderRadius: '50%',
-          fontSize: 28,
-          background: danger ? token.colorErrorBg : 'rgba(142, 59, 75, 0.06)',
-          border: `1px solid ${danger ? 'rgba(207, 19, 34, 0.15)' : 'rgba(142, 59, 75, 0.12)'}`,
-          color: danger ? token.colorError : colors.primary,
-        }}
-      >
+      {/* A plain monochrome icon: no tinted circle around it. */}
+      <span aria-hidden style={{ fontSize: 24, lineHeight: 1, marginBottom: spacing.sm, color: danger ? token.colorError : colors.textMuted }}>
         {icon}
-      </Flex>
-      <Typography.Title level={headingLevel} style={{ margin: 0, letterSpacing: '-0.01em' }}>
+      </span>
+      <Typography.Title level={headingLevel} style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
         {title}
       </Typography.Title>
       {description && (
         <Typography.Paragraph
           style={{
             maxWidth: 520,
-            margin: `${spacing.sm}px 0 0`,
+            margin: `${spacing.xs}px 0 0`,
             color: colors.textMuted,
             lineHeight: 1.55,
           }}

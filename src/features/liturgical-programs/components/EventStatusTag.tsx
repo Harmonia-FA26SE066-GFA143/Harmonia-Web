@@ -10,7 +10,11 @@ const statusColors: Record<EventStatus, StatusTagColor> = {
 
 export function EventStatusTag({ status }: Readonly<{ status: EventStatus }>) {
   return (
-    <StatusTag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
+    <StatusTag
+      color={statusColors[status]}
+      mark={status === 'draft' ? 'draft' : status === 'cancelled' ? 'struck' : undefined}
+      style={{ marginInlineEnd: 0 }}
+    >
       {eventStatusLabels[status]}
     </StatusTag>
   )

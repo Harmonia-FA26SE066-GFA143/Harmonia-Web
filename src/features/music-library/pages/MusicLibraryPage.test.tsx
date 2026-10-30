@@ -53,7 +53,7 @@ describe('MusicLibraryPage', () => {
     renderPage(<MusicLibraryPage />, '/director/library')
 
     expect(await screen.findByText('Con Bước Lên Bàn Thờ')).toBeInTheDocument()
-    expect(screen.getByText('Nhạc: Lm. Kim Long')).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: /Con Bước Lên Bàn Thờ/ })).toHaveTextContent('Lm. Kim Long')
     expect(screen.getByText('2 bài hát')).toBeInTheDocument()
   })
 
@@ -89,7 +89,10 @@ describe('MusicLibraryPage', () => {
     renderPage(<MusicLibraryPage />, '/director/library', '/director/library?classified=no&missingMaterial=sampleAudio')
 
     expect(await screen.findByText('Kinh Hoà Bình')).toBeInTheDocument()
-    expect(screen.getByText('Đã dùng 3 lần · 1 tài liệu')).toBeInTheDocument()
+    const cells = screen.getByRole('row', { name: /Kinh Hoà Bình/ }).querySelectorAll('td')
+    // Times used, then materials, as right-aligned figures.
+    expect(cells[4]).toHaveTextContent('3')
+    expect(cells[5]).toHaveTextContent('1')
     expect(screen.getByText('Chưa phân loại', { selector: '.ant-tag' })).toBeInTheDocument()
     expect(request).toHaveBeenCalledWith('/api/songs?isClassified=false&missingMaterialType=SampleAudio&pageNumber=1&pageSize=24')
   })

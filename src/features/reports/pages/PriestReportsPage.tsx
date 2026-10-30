@@ -29,7 +29,6 @@ export function PriestReportsPage() {
       <PageHeader
         title="Báo cáo"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Báo cáo' }]}
-        description="Theo dõi lịch sử phục vụ và tần suất sử dụng bài hát của ca đoàn."
       />
       <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={clearFilters} seasons={seasons} />
       <Tabs
