@@ -34,7 +34,6 @@ export function AdminDashboardPage() {
       <PageHeader
         title="Tổng quan"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Tổng quan' }]}
-        description="Quản lý tài khoản, cấu hình và theo dõi hoạt động của hệ thống Harmonia."
       />
       <Flex vertical gap={spacing.xl}>
         <section aria-labelledby="recent-activity-heading">

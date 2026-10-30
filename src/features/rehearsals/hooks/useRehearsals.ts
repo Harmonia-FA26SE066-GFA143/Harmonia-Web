@@ -15,6 +15,23 @@ export function useRehearsals(filters: RehearsalFilters, page: RehearsalPage) {
   })
 }
 
+/** Loads every page for a bounded week; no rehearsal is silently omitted by the paging limit. */
+export function useAllRehearsals(filters: RehearsalFilters) {
+  return useQuery({
+    queryKey: [...rehearsalsKey, 'all', filters],
+    queryFn: async () => {
+      const pageSize = 100
+      const first = await listRehearsals(filters, { pageNumber: 1, pageSize })
+      const items = [...first.items]
+      for (let pageNumber = 2; pageNumber <= first.totalPages; pageNumber += 1) {
+        const next = await listRehearsals(filters, { pageNumber, pageSize })
+        items.push(...next.items)
+      }
+      return { items, totalCount: first.totalCount }
+    },
+  })
+}
+
 /** How many rehearsals an event has, past and upcoming: one row of one page, read for its total. */
 export function useRehearsalCount(eventId: string) {
   return useQuery({

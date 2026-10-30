@@ -40,7 +40,6 @@ export function PracticePage() {
       <PageHeader
         title="Bài tập & Tiến độ luyện tập"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Luyện tập' }]}
-        description="Nghe và chấm bản thu ca viên nộp trên ứng dụng di động, giao bài tập mới và theo dõi tiến độ chuẩn bị của ca viên."
         extra={
           activeEvent ? (
             <Button

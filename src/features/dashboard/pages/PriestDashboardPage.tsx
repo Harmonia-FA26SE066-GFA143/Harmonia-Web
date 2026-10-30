@@ -13,7 +13,7 @@ const upcomingLimit = 5
 
 const metrics = [
   { key: 'upcoming', label: 'Sự kiện sắp tới' },
-  { key: 'pending', label: 'Danh sách bài hát chờ xem xét' },
+  { key: 'pending', label: 'Danh sách bài hát chờ xem xét', attention: true },
 ]
 
 /** A submitted list, named after its event (the pending lists carry only the event id). */
@@ -79,7 +79,6 @@ export function PriestDashboardPage() {
       <PageHeader
         title="Tổng quan"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Tổng quan' }]}
-        description="Theo dõi các sự kiện phụng vụ sắp tới và danh sách bài hát cần xem xét."
         extra={createButton}
       />
       <Flex vertical gap={spacing.xl}>

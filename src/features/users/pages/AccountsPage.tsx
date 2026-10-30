@@ -121,7 +121,6 @@ export function AccountsPage() {
       <PageHeader
         title="Tài khoản"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Tài khoản' }]}
-        description="Tạo và quản lý tài khoản người dùng của hệ thống."
         extra={createButton}
       />
 

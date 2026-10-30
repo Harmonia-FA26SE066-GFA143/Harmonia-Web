@@ -9,7 +9,7 @@ import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } 
 import { spacing } from '@/styles/tokens'
 import { SongFilterBar } from '../components/SongFilterBar'
 import { SongFormDrawer } from '../components/SongFormDrawer'
-import { SongGrid } from '../components/SongGrid'
+import { SongTable } from '../components/SongTable'
 import { useSaveSong, useSongs } from '../hooks/useSongs'
 import { duplicateTitleMessage, isDuplicateTitle } from '../songErrors'
 import { emptySongFilters, hasActiveSongFilters, readSongListState, songListState, writeSongListState } from '../songFilters'
@@ -75,7 +75,6 @@ export function MusicLibraryPage() {
       <PageHeader
         title="Kho bài hát"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }]}
-        description="Bài hát của ca đoàn cùng bản nhạc, lời và audio mẫu; tìm bài theo phân loại phụng vụ."
         extra={addButton}
       />
       {songs.isPending && <SectionSkeleton rows={8} label="Đang tải kho bài hát" />}
@@ -85,7 +84,7 @@ export function MusicLibraryPage() {
       {songs.data !== undefined && total === 0 && !filtered && (
         <EmptyState
           title="Chưa có bài hát nào"
-          description="Thêm bài hát để phân loại và tải lên bản nhạc, lời, audio mẫu và tài liệu tập luyện."
+          description="Thêm bài hát để bắt đầu quản lý kho nhạc."
           action={addButton}
         />
       )}
@@ -97,7 +96,7 @@ export function MusicLibraryPage() {
               <NoFilterResults onClearFilters={resetFilters} />
             </div>
           ) : (
-            <SongGrid
+            <SongTable
               songs={songs.data.items}
               page={page}
               pageSize={pageSize}

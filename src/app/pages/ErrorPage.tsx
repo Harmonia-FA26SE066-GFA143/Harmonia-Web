@@ -1,7 +1,7 @@
 import { WarningOutlined } from '@ant-design/icons'
 import { Button, Flex, Result } from 'antd'
 import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router'
-import { IconTile } from '@/shared/ui'
+import { colors } from '@/styles/tokens'
 import { NotFoundPage } from './NotFoundPage'
 
 /**
@@ -18,11 +18,9 @@ export function ErrorPage() {
       <title>Đã xảy ra lỗi · Harmonia</title>
       <Result
         icon={
-          // A burgundy tile, as in the empty states; the antd status pictures are purple.
+          // A plain monochrome icon; the antd status pictures are purple.
           <Flex justify="center">
-            <IconTile size={72}>
-              <WarningOutlined />
-            </IconTile>
+            <span aria-hidden style={{ fontSize: 40, color: colors.textMuted }}><WarningOutlined /></span>
           </Flex>
         }
         title="Đã xảy ra lỗi"

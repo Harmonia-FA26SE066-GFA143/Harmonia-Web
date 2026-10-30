@@ -20,7 +20,7 @@ afterAll(() => new Promise<void>((resolve) => setTimeout(resolve, 50)))
 if (!window.matchMedia) {
   window.matchMedia = (query: string) =>
     ({
-      matches: false,
+      matches: !/max-width/.test(query) && !/max-height/.test(query),
       media: query,
       onchange: null,
       addListener: () => {},

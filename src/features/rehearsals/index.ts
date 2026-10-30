@@ -1,4 +1,5 @@
 export { useRecentRehearsals, useRehearsalCount } from './hooks/useRehearsals'
 export { RehearsalsPage } from './pages/RehearsalsPage'
+export { RehearsalPracticeRoomPage } from './pages/RehearsalPracticeRoomPage'
 export { formatRehearsalTime, rehearsalLabel } from './rehearsalFormat'
 export { isRehearsalDay, type Rehearsal } from './types'

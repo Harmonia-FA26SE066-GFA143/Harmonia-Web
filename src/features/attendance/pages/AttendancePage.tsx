@@ -63,7 +63,6 @@ export function AttendancePage() {
       <PageHeader
         title="Điểm danh"
         breadcrumb={breadcrumb}
-        description="Ghi nhận thành viên có mặt thực tế tại buổi tập hoặc buổi chuẩn bị phục vụ."
         extra={scheduleButton}
       />
       {programId && !sessions.some((r) => r.eventId === programId) && (

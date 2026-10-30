@@ -57,14 +57,14 @@ export const theme: ThemeConfig = {
       siderBg: colors.surface,
     },
     Menu: {
-      // The active row is a pale tint with the hue's dark ink; no accent bar on top of it.
-      itemSelectedBg: colors.primarySoft,
-      itemSelectedColor: colors.primaryHover,
+      // Neutral chrome (2026-10-30): the selected row is a grey step with ink text, no accent on the navigation.
+      itemSelectedBg: colors.selectedSurface,
+      itemSelectedColor: colors.textPrimary,
       groupTitleColor: colors.textMuted,
       groupTitleFontSize: typography.metadata.fontSize,
-      itemHoverBg: 'rgba(142, 59, 75, 0.04)',
-      itemHoverColor: colors.primary,
-      itemHeight: 42,
+      itemHoverBg: colors.softSurface,
+      itemHoverColor: colors.textPrimary,
+      itemHeight: 40,
       itemBorderRadius: radius.md,
       activeBarBorderWidth: 0,
       itemMarginInline: spacing.sm,
@@ -83,7 +83,7 @@ export const theme: ThemeConfig = {
     Table: {
       headerBg: colors.surface,
       headerSplitColor: 'transparent',
-      rowHoverBg: 'rgba(142, 59, 75, 0.025)',
+      rowHoverBg: colors.softSurface,
       cellPaddingBlock: spacing.md,
       borderRadius: radius.lg,
     },

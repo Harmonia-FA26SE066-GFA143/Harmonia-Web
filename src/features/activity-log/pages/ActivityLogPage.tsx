@@ -34,7 +34,6 @@ export function ActivityLogPage() {
       <PageHeader
         title="Lịch sử hoạt động"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Lịch sử hoạt động' }]}
-        description="Theo dõi ai đã thay đổi dữ liệu nào, khi nào, cùng giá trị trước và sau thay đổi."
       />
 
       {log.isPending && <SectionSkeleton rows={8} label="Đang tải lịch sử hoạt động" />}

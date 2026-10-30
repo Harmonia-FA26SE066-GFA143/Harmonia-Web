@@ -61,7 +61,7 @@ export function MembersPage() {
       <PageHeader
         title="Danh sách ca viên"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Danh sách ca viên' }]}
-        description="Tìm và cập nhật thông tin sinh hoạt của ca viên. Tài khoản ca viên do Quản trị viên tạo."
+        description="Tài khoản ca viên do Quản trị viên tạo."
       />
 
       {members.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách ca viên" />}

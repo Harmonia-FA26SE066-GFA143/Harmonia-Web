@@ -16,7 +16,7 @@ const statusColors: Record<SongListStatus, StatusTagColor> = {
 export function SongListStatusTag({ status }: Readonly<{ status?: SongListStatus }>) {
   if (!status) return <Typography.Text style={{ color: colors.textMuted }}>Chưa có</Typography.Text>
   return (
-    <StatusTag color={statusColors[status]} style={{ marginInlineEnd: 0 }}>
+    <StatusTag color={statusColors[status]} mark={status === 'draft' ? 'draft' : undefined} style={{ marginInlineEnd: 0 }}>
       {songListStatusLabels[status]}
     </StatusTag>
   )

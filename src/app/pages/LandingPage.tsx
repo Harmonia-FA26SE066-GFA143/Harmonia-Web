@@ -1,25 +1,19 @@
 import {
-  AppstoreOutlined,
   CheckCircleFilled,
-  CustomerServiceOutlined,
   MailOutlined,
-  MobileOutlined,
-  ReadOutlined,
-  SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
-import type { ComponentType, MouseEvent } from 'react'
+import type { MouseEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useContactEmail } from '@/features/settings'
-import { BrandMark, IconTile, StatusTag } from '@/shared/ui'
-import { cardSurface, colors, media, radius, spacing, typography } from '@/styles/tokens'
+import { BrandMark } from '@/shared/ui'
+import { cardSurface, colors, media, radius, sizes, spacing, typography } from '@/styles/tokens'
 import { HeroVideo } from './HeroVideo'
 
 interface RoleSummary {
   title: string
   platform: string
-  icon: ComponentType
   duties: string[]
 }
 
@@ -27,7 +21,6 @@ const roleSummaries: RoleSummary[] = [
   {
     title: 'Cha xứ',
     platform: 'Web',
-    icon: ReadOutlined,
     duties: [
       'Lập hoặc xem xét chương trình phụng vụ hằng tuần.',
       'Phê duyệt, từ chối hoặc yêu cầu chỉnh sửa danh sách bài hát đề xuất, kèm ghi chú.',
@@ -38,7 +31,6 @@ const roleSummaries: RoleSummary[] = [
   {
     title: 'Ca trưởng',
     platform: 'Web',
-    icon: CustomerServiceOutlined,
     duties: [
       'Quản lý thành viên ca đoàn và duyệt kỹ năng đã khai báo.',
       'Quản lý kho bài hát, tài liệu tập và phân loại bài hát.',
@@ -49,7 +41,6 @@ const roleSummaries: RoleSummary[] = [
   {
     title: 'Thành viên ca đoàn / Nhạc công',
     platform: 'Ứng dụng di động',
-    icon: MobileOutlined,
     duties: [
       'Xem hồ sơ cá nhân, khai báo kỹ năng và theo dõi trạng thái duyệt.',
       'Xem sự kiện sắp tới và phản hồi tham gia.',
@@ -60,7 +51,6 @@ const roleSummaries: RoleSummary[] = [
   {
     title: 'Quản trị viên',
     platform: 'Web',
-    icon: SafetyCertificateOutlined,
     duties: [
       'Quản lý tài khoản và xác nhận vai trò người dùng.',
       'Cấu hình danh mục kỹ năng, mùa phụng vụ, loại Thánh lễ, loại nghi lễ và loại sự kiện.',
@@ -89,7 +79,7 @@ export function LandingPage() {
       onClick={goToSignIn}
       style={{
         paddingInline: spacing.lg,
-        height: 42,
+        height: sizes.controlHeight,
         fontWeight: 600,
       }}
     >
@@ -105,7 +95,7 @@ export function LandingPage() {
       href={`mailto:${contactEmail}`}
       style={{
         paddingInline: spacing.lg,
-        height: 42,
+        height: sizes.controlHeight,
         borderRadius: radius.md,
         fontWeight: 500,
       }}
@@ -124,7 +114,7 @@ export function LandingPage() {
         gap={spacing.md}
         style={{
           paddingBlock: spacing.md,
-          borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+          borderBottom: `1px solid ${colors.border}`,
         }}
       >
         <Flex align="center" gap={spacing.sm}>
@@ -153,7 +143,7 @@ export function LandingPage() {
           isolation: 'isolate',
           display: 'flex',
           alignItems: 'center',
-          minHeight: 560,
+          minHeight: 520,
           borderRadius: radius.lg,
           background: media.backdrop,
         }}
@@ -161,25 +151,6 @@ export function LandingPage() {
         <HeroVideo />
         <div aria-hidden style={{ position: 'absolute', inset: 0, background: media.heroScrim }} />
         <div style={{ position: 'relative', zIndex: 1, padding: spacing.xxl + spacing.sm }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: spacing.xs,
-              padding: '4px 12px',
-              borderRadius: 9999,
-              background: media.controlFill,
-              border: `1px solid ${media.controlBorder}`,
-              color: media.text,
-              fontSize: 12.5,
-              fontWeight: 600,
-              marginBottom: spacing.md,
-            }}
-          >
-            <AppstoreOutlined />
-            Hệ thống Quản lý Thánh nhạc & Điều phối Phụng vụ
-          </div>
-
           <Typography.Title
             id="hero-heading"
             level={1}
@@ -214,7 +185,7 @@ export function LandingPage() {
               className="landing-hero-sign-in"
               href={paths.login}
               onClick={goToSignIn}
-              style={{ paddingInline: spacing.lg, height: 42, fontWeight: 600 }}
+              style={{ paddingInline: spacing.lg, height: sizes.controlHeight, fontWeight: 600 }}
             >
               Đăng nhập
             </Button>
@@ -251,7 +222,6 @@ export function LandingPage() {
           }}
         >
           {roleSummaries.map((role) => {
-            const Icon = role.icon
             return (
               <article
                 key={role.title}
@@ -263,13 +233,6 @@ export function LandingPage() {
                   flexDirection: 'column',
                 }}
               >
-                <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
-                  <IconTile size={44}>
-                    <Icon />
-                  </IconTile>
-                  <StatusTag color={role.platform === 'Web' ? 'blue' : 'green'}>{role.platform}</StatusTag>
-                </Flex>
-
                 <Typography.Title
                   level={3}
                   style={{
@@ -281,6 +244,7 @@ export function LandingPage() {
                 >
                   {role.title}
                 </Typography.Title>
+                <Typography.Text style={{ color: colors.textMuted }}>Dùng trên {role.platform === 'Web' ? 'web' : 'ứng dụng di động'}</Typography.Text>
 
                 <ul
                   style={{
@@ -326,8 +290,8 @@ export function LandingPage() {
         aria-labelledby="contact-heading"
         style={{
           padding: spacing.xl,
-          background: 'rgba(142, 59, 75, 0.04)',
-          border: '1px solid rgba(142, 59, 75, 0.12)',
+          background: colors.primarySoft,
+          border: `1px solid ${colors.primaryFocus}`,
           borderRadius: radius.lg,
         }}
       >
@@ -358,7 +322,7 @@ export function LandingPage() {
 
       <footer
         style={{
-          borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+          borderTop: `1px solid ${colors.border}`,
           paddingTop: spacing.lg,
           textAlign: 'center',
         }}

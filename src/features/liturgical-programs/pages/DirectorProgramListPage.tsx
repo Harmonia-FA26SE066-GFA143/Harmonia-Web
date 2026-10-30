@@ -34,7 +34,6 @@ export function DirectorProgramListPage() {
       <PageHeader
         title="Danh sách chương trình phụng vụ"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Chương trình phụng vụ' }]}
-        description="Chọn chương trình để đề xuất danh sách bài hát và theo dõi kết quả duyệt."
       />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách chương trình" />}
       {programs.isError && (

@@ -12,22 +12,24 @@ export interface PageHeaderProps {
   extra?: ReactNode
 }
 
-/** Page title block: breadcrumb → title → description, with actions on the right. */
+/**
+ * Page title block: title, an optional one-line description, actions on the right. The breadcrumb shows only on pages
+ * below a section (three levels or more); on a section's own page the sidebar already says where you are.
+ */
 export function PageHeader({ title, description, breadcrumb, tags, extra }: Readonly<PageHeaderProps>) {
   return (
     <Flex
       component="header"
       wrap
-      align="flex-end"
+      align="center"
       justify="space-between"
       gap={spacing.md}
       style={{
-        marginBottom: spacing.xl,
-        paddingBottom: spacing.sm,
+        marginBottom: spacing.lg,
       }}
     >
       <div style={{ minWidth: 0, flex: '1 1 auto' }}>
-        {breadcrumb && breadcrumb.length > 0 && (
+        {breadcrumb && breadcrumb.length > 2 && (
           <Breadcrumb
             items={breadcrumb}
             style={{

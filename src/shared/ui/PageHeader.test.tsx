@@ -9,7 +9,7 @@ describe('PageHeader', () => {
       <PageHeader
         title="Tài khoản"
         description="Quản lý tài khoản người dùng."
-        breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Tài khoản' }]}
+        breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Tài khoản' }, { title: 'Chi tiết' }]}
         extra={<Button type="primary">Tạo tài khoản</Button>}
       />,
     )
@@ -22,6 +22,11 @@ describe('PageHeader', () => {
 
   it('omits the breadcrumb when none is given', () => {
     const { container } = render(<PageHeader title="Tổng quan" />)
+    expect(container.querySelector('.ant-breadcrumb')).toBeNull()
+  })
+
+  it("omits the breadcrumb on a section's own page, which the sidebar already names", () => {
+    const { container } = render(<PageHeader title="Tổng quan" breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Tổng quan' }]} />)
     expect(container.querySelector('.ant-breadcrumb')).toBeNull()
   })
 })

@@ -29,26 +29,12 @@ function toMenuItems(sections: NavSection[]): MenuProps['items'] {
 function Brand({ subtitle }: Readonly<{ subtitle: string }>) {
   return (
     <Flex align="center" gap={spacing.sm}>
-      <BrandMark size={38} />
+      <BrandMark size={32} />
       <Flex vertical style={{ lineHeight: 1.25, minWidth: 0 }}>
-        <Typography.Text
-          strong
-          style={{
-            fontSize: typography.sectionHeading.fontSize,
-            color: colors.primary,
-            letterSpacing: '-0.02em',
-          }}
-        >
+        <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize, color: colors.textPrimary }}>
           Harmonia
         </Typography.Text>
-        <Typography.Text
-          ellipsis
-          style={{
-            fontSize: typography.metadata.fontSize,
-            color: colors.textMuted,
-            fontWeight: 500,
-          }}
-        >
+        <Typography.Text ellipsis style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
           {subtitle}
         </Typography.Text>
       </Flex>
@@ -58,6 +44,7 @@ function Brand({ subtitle }: Readonly<{ subtitle: string }>) {
 
 /**
  * Authenticated application frame: role sidebar, header with user menu, and page content.
+ * The sidebar is a white panel beside the page with neutral chrome; colour is kept for the data (2026-10-30).
  * Below the md breakpoint (768px) the sidebar moves into a drawer.
  */
 export function AppShell() {
@@ -86,7 +73,7 @@ export function AppShell() {
           setDrawerOpen(false)
           navigate(key)
         }}
-        style={{ borderInlineEnd: 0 }}
+        style={{ borderInlineEnd: 0, background: 'transparent' }}
       />
     </nav>
   )
@@ -113,10 +100,11 @@ export function AppShell() {
             top: 0,
             height: '100vh',
             overflow: 'auto',
-            // The Choir Director menu is taller than a laptop screen: a thin, quiet scrollbar instead of the default one.
+            background: colors.surface,
+            borderInlineEnd: `1px solid ${colors.border}`,
+            // The Choir Director menu is taller than a laptop screen: a thin, quiet scrollbar.
             scrollbarWidth: 'thin',
             scrollbarColor: `${colors.mutedBorder} transparent`,
-            borderInlineEnd: '1px solid rgba(0, 0, 0, 0.06)',
           }}
         >
           <div style={{ padding: `${spacing.lg}px ${spacing.lg}px ${spacing.md}px` }}>
@@ -136,7 +124,9 @@ export function AppShell() {
             justifyContent: 'space-between',
             gap: spacing.md,
             paddingInline: isMobile ? layout.contentPaddingXMobile : layout.contentPaddingX,
-            borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+            borderBottom: `1px solid ${colors.border}`,
+            // An opaque band of the page ground (owner choice 2026-10-28), so nothing scrolling under it shows through.
+            background: colors.background,
           }}
         >
           <Flex align="center" gap={spacing.sm} style={{ minWidth: 0 }}>
@@ -164,7 +154,7 @@ export function AppShell() {
           style={{
             padding: isMobile
               ? `${spacing.lg}px ${layout.contentPaddingXMobile}px`
-              : `${spacing.xl}px ${layout.contentPaddingX}px`,
+              : `${spacing.lg}px ${layout.contentPaddingX}px ${spacing.xl}px`,
           }}
         >
           <div style={{ maxWidth: layout.contentMaxWidth, marginInline: 'auto' }}>

@@ -72,7 +72,6 @@ export function SkillCategoriesPage() {
       <PageHeader
         title="Danh mục kỹ năng"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Danh mục kỹ năng' }]}
-        description="Cấu hình danh mục kỹ năng như bè giọng, nhạc cụ, đơn ca, xướng Thánh vịnh và hỗ trợ điều khiển."
       />
       <Tabs
         destroyOnHidden

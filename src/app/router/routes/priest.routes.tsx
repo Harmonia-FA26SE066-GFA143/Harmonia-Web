@@ -28,7 +28,7 @@ export const priestRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.priest.programCreate,
-    { title: 'Tạo chương trình phụng vụ', breadcrumb: [area, programs, 'Tạo chương trình'], phase: 4 },
+    { title: 'Tạo chương trình', breadcrumb: [area, programs, 'Tạo chương trình'], phase: 4 },
     async () => (await loadPrograms()).CreateProgramPage,
   ),
   pageRoute(

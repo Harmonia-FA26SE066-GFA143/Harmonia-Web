@@ -81,9 +81,9 @@ export function HeroVideo() {
               width: sizes.touchTarget,
               height: sizes.touchTarget,
               color: media.text,
-              background: media.controlFill,
+              // Near-opaque scrim ink, no blur: the button reads on the brightest frame.
+              background: 'rgba(28, 12, 17, 0.72)',
               borderColor: media.controlBorder,
-              backdropFilter: 'blur(4px)',
             }}
           />
         </>

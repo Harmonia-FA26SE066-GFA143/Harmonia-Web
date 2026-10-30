@@ -66,7 +66,6 @@ export function AdminReportsPage() {
       <PageHeader
         title="Báo cáo"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Báo cáo' }]}
-        description="Theo dõi hoạt động người dùng, điểm danh, xác nhận tham gia, bài tập, lịch sử phục vụ và sử dụng bài hát."
         extra={
           <Button type="primary" icon={<DownloadOutlined />} onClick={() => setExporting(true)}>
             Xuất báo cáo

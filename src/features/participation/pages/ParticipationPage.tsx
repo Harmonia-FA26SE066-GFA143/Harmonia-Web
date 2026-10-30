@@ -125,7 +125,6 @@ export function ParticipationPage() {
       <PageHeader
         title="Xác nhận tham gia"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Xác nhận tham gia' }]}
-        description="Gửi yêu cầu xác nhận tham gia phục vụ và theo dõi phản hồi."
         // The first send is offered here; later ones reach members not asked yet, from the list toolbar.
         extra={program && !isPast && participation.data !== undefined && requests.length === 0 && sendButton}
       />
