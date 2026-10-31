@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getLatestSongList, listPendingSongLists, reviewSongList } from '../api/songListReviewApi'
+import { getLatestSongList, getSongList, listPendingSongLists, reviewSongList } from '../api/songListReviewApi'
 import type { ReviewValues } from '../types'
 
 const reviewKey = ['song-list-review'] as const
@@ -10,6 +10,11 @@ export function usePendingSongLists() {
 
 export function useLatestSongList(eventId: string) {
   return useQuery({ queryKey: [...reviewKey, 'latest', eventId], queryFn: () => getLatestSongList(eventId) })
+}
+
+/** An earlier version of a list; a decided version no longer changes. */
+export function useSongListVersion(id: string) {
+  return useQuery({ queryKey: [...reviewKey, 'version', id], queryFn: () => getSongList(id), staleTime: Infinity })
 }
 
 /**
