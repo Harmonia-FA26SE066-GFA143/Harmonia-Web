@@ -9,7 +9,17 @@ import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } 
 import { spacing } from '@/styles/tokens'
 import { SongFilterBar } from '../components/SongFilterBar'
 import { SongFormDrawer } from '../components/SongFormDrawer'
+import { SongIndexList } from '../components/SongIndexList'
 import { SongTable } from '../components/SongTable'
+import {
+  getStoredDensityMode,
+  getStoredViewMode,
+  setStoredDensityMode,
+  setStoredViewMode,
+  type DensityMode,
+  type ViewMode,
+} from '../components/viewStorage'
+import { ViewSwitcher } from '../components/ViewSwitcher'
 import { useSaveSong, useSongs } from '../hooks/useSongs'
 import { duplicateTitleMessage, isDuplicateTitle } from '../songErrors'
 import { emptySongFilters, hasActiveSongFilters, readSongListState, songListState, writeSongListState } from '../songFilters'
@@ -31,6 +41,18 @@ export function MusicLibraryPage() {
   const save = useSaveSong()
   const [adding, setAdding] = useState(false)
   const [titleError, setTitleError] = useState<string>()
+  const [viewMode, setViewMode] = useState<ViewMode>(getStoredViewMode)
+  const [density, setDensity] = useState<DensityMode>(getStoredDensityMode)
+
+  const handleViewChange = (nextView: ViewMode) => {
+    setViewMode(nextView)
+    setStoredViewMode(nextView)
+  }
+
+  const handleDensityChange = (nextDensity: DensityMode) => {
+    setDensity(nextDensity)
+    setStoredDensityMode(nextDensity)
+  }
 
   const total = songs.data?.totalCount ?? 0
   const filtered = hasActiveSongFilters(query)
@@ -90,17 +112,43 @@ export function MusicLibraryPage() {
       )}
       {songs.data !== undefined && (total > 0 || filtered) && (
         <Card styles={{ body: { padding: 0 } }}>
-          <SongFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
+          <SongFilterBar
+            value={filters}
+            onChange={changeFilters}
+            onReset={resetFilters}
+            resultCount={total}
+            extra={
+              total > 0 ? (
+                <ViewSwitcher
+                  view={viewMode}
+                  density={density}
+                  onViewChange={handleViewChange}
+                  onDensityChange={handleDensityChange}
+                />
+              ) : undefined
+            }
+          />
           {total === 0 ? (
             <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
               <NoFilterResults onClearFilters={resetFilters} />
             </div>
-          ) : (
+          ) : viewMode === 'table' ? (
             <SongTable
               songs={songs.data.items}
               page={page}
               pageSize={pageSize}
               total={total}
+              density={density}
+              loading={songs.isPlaceholderData}
+              onPageChange={setPage}
+            />
+          ) : (
+            <SongIndexList
+              songs={songs.data.items}
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              density={density}
               loading={songs.isPlaceholderData}
               onPageChange={setPage}
             />

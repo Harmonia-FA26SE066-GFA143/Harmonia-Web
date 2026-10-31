@@ -11,6 +11,8 @@ export interface SongFilterBarProps {
   onReset: () => void
   /** Songs matching the filters on the server, across all pages. */
   resultCount: number
+  /** Additional controls placed on the right of the result count row (e.g. ViewSwitcher). */
+  extra?: ReactNode
 }
 
 type FilterKey = Exclude<keyof SongFilters, 'search'>
@@ -37,7 +39,7 @@ const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textM
  * FE-29 classification filters of GET /api/songs (a theme also finds its sub-themes' songs) and the library checks:
  * songs not classified yet, songs missing a kind of material. Active filters show as chips, so the panel can stay shut.
  */
-export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonly<SongFilterBarProps>) {
+export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: Readonly<SongFilterBarProps>) {
   const [open, setOpen] = useState(false)
   // A removed chip takes the keyboard focus with it; it moves to the Bộ lọc button instead of the page start.
   const filterButton = useRef<HTMLButtonElement>(null)
@@ -208,9 +210,12 @@ export function SongFilterBar({ value, onChange, onReset, resultCount }: Readonl
         </Flex>
       )}
 
-      <Typography.Text role="status" aria-atomic style={{ color: colors.textMuted }}>
-        {resultCount} bài hát
-      </Typography.Text>
+      <Flex justify="space-between" align="center" wrap gap={spacing.sm}>
+        <Typography.Text role="status" aria-atomic style={{ color: colors.textMuted }}>
+          {resultCount} bài hát
+        </Typography.Text>
+        {extra}
+      </Flex>
     </Flex>
   )
 }
