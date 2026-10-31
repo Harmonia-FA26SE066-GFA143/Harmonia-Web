@@ -24,6 +24,44 @@ export const colors = {
   primaryHover: '#762E3D',
   primarySoft: 'rgba(142, 59, 75, 0.08)',
   primaryFocus: 'rgba(142, 59, 75, 0.25)',
+  /** Reading surfaces (redesign brief 2026-10-31): season banner, event detail, song-list review. Not a page ground. */
+  ivory: '#F7F4ED',
+  parchment: '#EEE8DC',
+} as const
+
+/**
+ * The sidebar as the songbook's dark burgundy spine (owner 2026-10-31, DESIGN.md "Navigation"). Text 10.4:1, selected
+ * row 10.3:1, group titles 6.5:1.
+ */
+export const spine = {
+  background: '#4A1D27',
+  hover: '#5A2431',
+  selected: '#6A2C39',
+  text: '#EADADD',
+  groupTitle: '#C9A9B0',
+} as const
+
+/**
+ * Decorative gold (brief 2026-10-31): ribbon edges, hairlines, Christmas and Easter banners. `line` is never text
+ * (2.15:1 on ivory) and gold never marks a status. `ink` is the only gold for text: 5.8:1 on ivory but 4.46:1 on
+ * `soft`, so text on `soft` stays `colors.textPrimary`.
+ */
+export const gold = {
+  line: '#C5A46D',
+  soft: '#E6D7B5',
+  ink: '#7A5A1E',
+} as const
+
+/**
+ * Liturgical-season colours, only in the season banner and a season chip, always beside the season name. `cloth`
+ * carries white text (purple 5.9:1, green 4.6:1, red 6.3:1); `ink` is the season's text colour on ivory (7.6:1, 6.4:1).
+ * Season green stays apart from the rehearsal cloth (ΔE 16, hue 140° against 168°).
+ */
+export const seasonColors = {
+  purple: { cloth: '#765A83', ink: '#5E4469' },
+  green: { cloth: '#657B62', ink: '#4A5E48' },
+  /** Easter Triduum (interpreted, awaiting the owner). Unused: the backend files the Triduum under Lent. */
+  red: { cloth: '#A53D3D', ink: '#A53D3D' },
 } as const
 
 /**
@@ -77,6 +115,15 @@ export const priestEvent = {
   text: sections.liturgy.ink,
 } as const
 
+/**
+ * The one motion moment (brief §12.9): the bookmark ribbon slides to the next preparation step after the Priest
+ * approves. Everything else changes at once; with `prefers-reduced-motion: reduce` the slide is dropped too.
+ */
+export const motion = {
+  bookmarkMs: 320,
+  easeOut: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
+} as const
+
 export const shadows = {
   sm: '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
   md: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
@@ -94,11 +141,17 @@ export const cardSurface = {
 /**
  * Be Vietnam Pro keeps Vietnamese diacritics clear at dashboard sizes (DESIGN(2).md §3).
  * Fonts are self-hosted via @fontsource (weights 400–700), imported in src/main.tsx. Dates, times and counts stay in
- * this face with `fontVariantNumeric: 'tabular-nums'`, so their digits line up without a monospace face (#245).
+ * this face. It has no `tnum` feature, so `tabular-nums` does nothing; figures are proportional and line up by layout
+ * (owner, 2026-10-31).
  */
 export const typography = {
   fontFamily:
     "'Be Vietnam Pro', Manrope, 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+  /**
+   * Season and celebration titles only, 24px or larger (brief 2026-10-31). Cormorant Garamond 600 passed the Vietnamese
+   * check ("Chúa Nhật Thứ Ba Mùa Vọng"); everything else stays in Be Vietnam Pro.
+   */
+  displayFontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
   fontSize: 14,
   /** Generous line height for Vietnamese diacritics (DESIGN(2).md: 1.55–1.65). */
   lineHeight: 1.6,
