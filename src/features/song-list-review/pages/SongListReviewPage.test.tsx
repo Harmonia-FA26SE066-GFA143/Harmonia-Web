@@ -162,4 +162,25 @@ describe('SongListReviewPage', () => {
     expect(screen.getByText('“Đổi bài Ca dâng lễ.”')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Yêu cầu sửa' })).toBeNull()
   })
+
+  it('follows previousVersionId to show the decisions on every earlier version', async () => {
+    vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue({ ...submitted, previousVersionId: 'sl-1' })
+    const version = vi.spyOn(reviewApi, 'getSongList').mockResolvedValue({
+      ...submitted,
+      id: 'sl-1',
+      version: 1,
+      status: 'needsRevision',
+      reviews: [{ id: 'r1', decision: 'requestRevision', notes: 'Đổi bài Ca dâng lễ.', reviewedAt: '2026-10-08T02:00:00Z' }],
+    })
+    renderReview()
+
+    const current = await screen.findByRole('region', { name: 'Phiên bản 2' })
+    expect(within(current).getByText('Chưa có quyết định nào cho phiên bản này.')).toBeInTheDocument()
+    const earlier = await screen.findByRole('region', { name: 'Phiên bản 1' })
+    expect(within(earlier).getByText('Yêu cầu sửa')).toBeInTheDocument()
+    expect(within(earlier).getByText('“Đổi bài Ca dâng lễ.”')).toBeInTheDocument()
+    // Version 1 has no previous version, so the chain stops there.
+    expect(version).toHaveBeenCalledTimes(1)
+    expect(version).toHaveBeenCalledWith('sl-1')
+  })
 })

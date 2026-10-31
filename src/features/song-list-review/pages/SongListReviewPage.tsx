@@ -28,7 +28,7 @@ import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSke
 import { cardSurface, colors, sections, spacing } from '@/styles/tokens'
 import { ReviewForm } from '../components/ReviewForm'
 import { SongMaterialsDrawer } from '../components/SongMaterialsDrawer'
-import { useLatestSongList, useReviewSongList } from '../hooks/useSongListReview'
+import { useLatestSongList, useReviewSongList, useSongListVersion } from '../hooks/useSongListReview'
 import { reviewErrorMessage } from '../songListReviewErrors'
 import { reviewDecisionLabels, type ReviewDecision, type ReviewValues, type SongList, type SongListItem } from '../types'
 
@@ -95,13 +95,11 @@ function ListState({ list }: Readonly<{ list: SongList }>) {
   )
 }
 
-/**
- * The decisions on this version and their notes. Earlier versions: TBD: Backend API missing (no endpoint lists an
- * event's song-list versions; `latest` returns the newest only).
- */
-function ReviewHistory({ list }: Readonly<{ list: SongList }>) {
+/** The decisions on one version and their notes; with earlier versions, headed by its number. */
+function VersionDecisions({ list, headed }: Readonly<{ list: SongList; headed: boolean }>) {
   return (
-    <Card style={cardSurface} title={<CardTitle>Lịch sử duyệt</CardTitle>}>
+    <section aria-label={`Phiên bản ${list.version}`}>
+      {headed && <Typography.Text style={{ display: 'block', fontWeight: 600 }}>{`Phiên bản ${list.version}`}</Typography.Text>}
       {list.reviews.length === 0 ? (
         <Typography.Text style={{ color: colors.textMuted }}>Chưa có quyết định nào cho phiên bản này.</Typography.Text>
       ) : (
@@ -120,6 +118,49 @@ function ReviewHistory({ list }: Readonly<{ list: SongList }>) {
           ))}
         </ol>
       )}
+    </section>
+  )
+}
+
+/**
+ * An earlier version, then the one before it. No endpoint lists an event's versions, so each is read by the
+ * `previousVersionId` of the next (one call per version, newest first).
+ */
+function EarlierVersion({ id }: Readonly<{ id: string }>) {
+  const version = useSongListVersion(id)
+  const divider = { borderTop: `1px solid ${colors.border}`, paddingTop: spacing.md }
+  if (version.isPending) {
+    return <Typography.Text style={{ ...divider, display: 'block', color: colors.textMuted }}>Đang tải phiên bản trước…</Typography.Text>
+  }
+  if (version.isError) {
+    return (
+      <Flex align="center" gap={spacing.sm} style={divider}>
+        <Typography.Text type="danger">Không thể tải phiên bản trước.</Typography.Text>
+        <Button size="small" onClick={() => version.refetch()} loading={version.isFetching}>
+          Thử lại
+        </Button>
+      </Flex>
+    )
+  }
+  return (
+    <>
+      <div style={divider}>
+        <VersionDecisions list={version.data} headed />
+      </div>
+      {version.data.previousVersionId && <EarlierVersion id={version.data.previousVersionId} />}
+    </>
+  )
+}
+
+/** The decisions on this version and on every earlier one, newest first. */
+function ReviewHistory({ list }: Readonly<{ list: SongList }>) {
+  const earlier = list.previousVersionId
+  return (
+    <Card style={cardSurface} title={<CardTitle>Lịch sử duyệt</CardTitle>}>
+      <Flex vertical gap={spacing.md}>
+        <VersionDecisions list={list} headed={Boolean(earlier)} />
+        {earlier && <EarlierVersion id={earlier} />}
+      </Flex>
     </Card>
   )
 }

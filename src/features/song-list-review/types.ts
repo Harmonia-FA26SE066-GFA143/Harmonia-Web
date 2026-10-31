@@ -44,6 +44,8 @@ export interface SongList {
   id: string
   eventId: string
   version: number
+  /** The version this one replaced; absent on the first. */
+  previousVersionId?: string
   status: SongListStatus
   /** Backend `DateTime`s; read them with `parseUtc`. */
   submittedAt?: string

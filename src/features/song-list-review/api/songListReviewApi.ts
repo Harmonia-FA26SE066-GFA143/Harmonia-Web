@@ -4,7 +4,7 @@ import { ApiError } from '@/lib/api/errors'
 import type { ReviewDecision, ReviewValues, SongList } from '../types'
 
 // `/api/song-lists` (Harmonia-BE SongListsController), the Parish Priest's side: lists waiting for review, the newest
-// list of an event that is not a draft, and the decision.
+// list of an event that is not a draft, one version by id, and the decision.
 
 type ApiStatus = 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'NeedsRevision'
 type ApiDecision = 'Approve' | 'Reject' | 'RequestRevision'
@@ -32,6 +32,7 @@ interface SongListDto {
   id: string
   eventId: string
   version: number
+  previousVersionId: string | null
   status: ApiStatus
   submittedAt: string | null
   decidedAt: string | null
@@ -43,6 +44,7 @@ const toSongList = (dto: SongListDto): SongList => ({
   id: dto.id,
   eventId: dto.eventId,
   version: dto.version,
+  previousVersionId: dto.previousVersionId ?? undefined,
   status: statusByApi[dto.status],
   submittedAt: dto.submittedAt ?? undefined,
   decidedAt: dto.decidedAt ?? undefined,
@@ -74,6 +76,14 @@ export async function getLatestSongList(eventId: string): Promise<SongList | nul
     if (error instanceof ApiError && error.status === 404) return null
     throw error
   }
+}
+
+/**
+ * One version of a list (GET /api/song-lists/{id}, Choir Director and Parish Priest of the event's choirs). No endpoint
+ * lists an event's versions; earlier ones are reached through `previousVersionId`.
+ */
+export async function getSongList(id: string): Promise<SongList> {
+  return toSongList(await apiRequest<SongListDto>(`/api/song-lists/${id}`))
 }
 
 /** The Choir Director who proposed the list is notified of the decision. */
