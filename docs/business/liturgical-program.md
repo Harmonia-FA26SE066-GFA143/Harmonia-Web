@@ -23,7 +23,7 @@ The Parish Priest creates or reviews liturgical programs (FE-15) and defines the
 
 - Only the Priest edits, publishes and cancels events (also the BE rule).
 - The Choir Director also uses the liturgical calendar (4.7).
-- Preparation status of a published event is shown to the Priest as progress of song list, participation, roster, rehearsals and practice (`GET …/preparation-status`).
+- Preparation status of a published event is shown to the Priest as progress of song list, participation, roster, rehearsals and practice (`GET …/preparation-status`, Priest only). The Choir Director sees the same summary, added up by the Web from four endpoints it may read (Web #246); tbd-backlog B41 asks the BE to admit the director on that route.
 
 ## Not in the BE (do not build)
 
