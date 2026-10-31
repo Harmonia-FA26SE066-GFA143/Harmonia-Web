@@ -37,6 +37,8 @@ interface FormValues {
   time: [Dayjs, Dayjs]
   locationId?: string
   songs?: SongOption[]
+  /** Note per chosen song, by song id. */
+  songNotes?: Record<string, string | undefined>
   note?: string
 }
 
@@ -47,6 +49,7 @@ function SongsField() {
   const { message } = App.useApp()
   const form = Form.useFormInstance<FormValues>()
   const eventId: string | undefined = Form.useWatch('eventId', form)
+  const chosen: SongOption[] | undefined = Form.useWatch('songs', form)
   const [search, setSearch] = useState('')
   const songs = useSongs({ search: useDebouncedValue(search) }, { pageNumber: 1, pageSize: 50 })
   const defaults = useDefaultSongs()
@@ -58,7 +61,10 @@ function SongsField() {
       onSuccess: (list) =>
         list.length === 0
           ? message.info('Chương trình chưa có danh sách bài hát đã duyệt.')
-          : form.setFieldValue('songs', list.map((song) => ({ value: song.songId, label: song.songTitle }))),
+          : form.setFieldsValue({
+              songs: list.map((song) => ({ value: song.songId, label: song.songTitle })),
+              songNotes: Object.fromEntries(list.map((song) => [song.songId, song.note])),
+            }),
       onError: (error) => message.error(requestFailureMessage(error, 'Không thể lấy danh sách bài hát của chương trình. Vui lòng thử lại.')),
     })
 
@@ -84,6 +90,16 @@ function SongsField() {
             Lấy bài hát từ danh sách đã duyệt của chương trình
           </Button>
         </div>
+        {/* Removing a song keeps its note in the form, but only the notes of chosen songs are sent. */}
+        {chosen?.map((song) => (
+          <Form.Item key={song.value} name={['songNotes', song.value]} noStyle>
+            <Input
+              maxLength={500}
+              aria-label={`Ghi chú cho bài ${song.label}`}
+              placeholder={`${song.label}: cần tập phần nào (không bắt buộc)`}
+            />
+          </Form.Item>
+        ))}
       </Flex>
     </Form.Item>
   )
@@ -140,6 +156,7 @@ export function RehearsalFormDrawer({
             time: rehearsal ? [dayjs(rehearsal.startAt), dayjs(rehearsal.endAt)] : undefined,
             locationId: rehearsal?.locationId,
             songs: rehearsal?.songs.map((song) => ({ value: song.songId, label: song.songTitle })),
+            songNotes: Object.fromEntries((rehearsal?.songs ?? []).map((song) => [song.songId, song.note])),
             note: rehearsal?.note,
           }}
           onFinish={(values) =>
@@ -149,7 +166,11 @@ export function RehearsalFormDrawer({
               locationId: values.locationId,
               startAt: withTime(values.date, values.time[0]).toISOString(),
               endAt: withTime(values.date, values.time[1]).toISOString(),
-              songs: (values.songs ?? []).map((song) => ({ songId: song.value, songTitle: song.label })),
+              songs: (values.songs ?? []).map((song) => ({
+                songId: song.value,
+                songTitle: song.label,
+                note: values.songNotes?.[song.value]?.trim() || undefined,
+              })),
               note: values.note?.trim() || undefined,
             })
           }

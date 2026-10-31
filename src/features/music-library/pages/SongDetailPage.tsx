@@ -15,10 +15,11 @@ import { SongFormDrawer } from '../components/SongFormDrawer'
 import { SongInfoPanel } from '../components/SongInfoPanel'
 import { SongMaterialsPanel } from '../components/SongMaterialsPanel'
 import { ReplaceMaterialFileDrawer } from '../components/ReplaceMaterialFileDrawer'
-import { UploadMaterialDrawer } from '../components/UploadMaterialDrawer'
+import { UploadMaterialDrawer, type MaterialFormValues, type PendingMaterial } from '../components/UploadMaterialDrawer'
 import {
   useDeleteMaterial,
   useDeleteSong,
+  useExtractLyrics,
   useSaveSong,
   useSaveSongClassification,
   useSong,
@@ -32,6 +33,7 @@ import { listSearchOf } from '../songFilters'
 import {
   classificationErrorMessage,
   duplicateTitleMessage,
+  extractLyricsErrorMessage,
   isDuplicateTitle,
   materialFileProblem,
   materialUpdateErrorMessage,
@@ -40,7 +42,7 @@ import {
 import {
   materialKindLabels,
   type MaterialKind,
-  type MaterialValues,
+  type PlaybackInstrument,
   type SongClassificationValues,
   type SongMaterial,
   type SongValues,
@@ -71,6 +73,7 @@ export function SongDetailPage() {
   const remove = useDeleteMaterial(songId)
   const updateMaterial = useUpdateMaterial(songId)
   const replaceFile = useReplaceMaterialFile(songId)
+  const extract = useExtractLyrics()
   const deleteSong = useDeleteSong()
   const [editingMaterial, setEditingMaterial] = useState<SongMaterial>()
   const [replacing, setReplacing] = useState<SongMaterial>()
@@ -78,7 +81,7 @@ export function SongDetailPage() {
   const [editing, setEditing] = useState(false)
   const [classifying, setClassifying] = useState(false)
   const [titleError, setTitleError] = useState<string>()
-  const [picked, setPicked] = useState<{ kind: MaterialKind; file: File }>()
+  const [picked, setPicked] = useState<PendingMaterial>()
 
   const backButton = (
     // The list's filters and page travel with the song (router state), so coming back shows the list as it was.
@@ -152,14 +155,23 @@ export function SongDetailPage() {
     else setPicked({ kind, file })
   }
 
-  const handleUpload = (values: { title: string; targetSkillId?: string }) => {
+  const lyricsTitle = `Lời ${data.title}`.slice(0, 200)
+
+  // The draft is not saved: the director reads it in the lyrics form and saves it as typed lyrics.
+  const handleExtractLyrics = (material: SongMaterial) =>
+    extract.mutate(material.id, {
+      onSuccess: (lyricsText) => setPicked({ kind: 'lyrics', lyricsText, title: lyricsTitle }),
+      onError: (error) => message.error(extractLyricsErrorMessage(error)),
+    })
+
+  const handleUpload = (values: MaterialFormValues) => {
     if (!picked || upload.isPending) return
     const { kind, file } = picked
     upload.mutate(
       { kind, file, ...values },
       {
         onSuccess: () => {
-          message.success(`Đã tải lên ${materialKindLabels[kind].toLowerCase()}.`)
+          message.success(file ? `Đã tải lên ${materialKindLabels[kind].toLowerCase()}.` : 'Đã lưu lời bài hát.')
           setPicked(undefined)
         },
         onError: (error) => message.error(uploadErrorMessage(error)),
@@ -167,10 +179,10 @@ export function SongDetailPage() {
     )
   }
 
-  const handleUpdateMaterial = (values: MaterialValues) => {
+  const handleUpdateMaterial = ({ title, targetSkillId, lyricsText }: MaterialFormValues) => {
     if (!editingMaterial || updateMaterial.isPending) return
     updateMaterial.mutate(
-      { id: editingMaterial.id, values },
+      { id: editingMaterial.id, values: { title, targetSkillId, lyricsText } },
       {
         onSuccess: () => {
           message.success('Đã lưu tài liệu.')
@@ -181,10 +193,10 @@ export function SongDetailPage() {
     )
   }
 
-  const handleReplaceFile = (file: File, resetProgress: boolean) => {
+  const handleReplaceFile = (file: File, resetProgress: boolean, instrument?: PlaybackInstrument) => {
     if (!replacing || replaceFile.isPending) return
     replaceFile.mutate(
-      { id: replacing.id, file, resetProgress },
+      { id: replacing.id, file, resetProgress, instrument },
       {
         onSuccess: () => {
           message.success(resetProgress ? 'Đã thay file và xoá tiến độ học của ca viên.' : 'Đã thay file tài liệu.')
@@ -297,8 +309,11 @@ export function SongDetailPage() {
                   {materials.data !== undefined && (
                     <SongMaterialsPanel
                       materials={materials.data}
-                      uploadingKind={upload.isPending ? picked?.kind : undefined}
+                      uploadingKind={upload.isPending && picked?.file ? picked.kind : undefined}
                       onPick={handlePick}
+                      onTypeLyrics={() => setPicked({ kind: 'lyrics', title: lyricsTitle })}
+                      onExtractLyrics={handleExtractLyrics}
+                      extractingId={extract.isPending ? extract.variables : undefined}
                       onDelete={handleDelete}
                       onEdit={setEditingMaterial}
                       onReplace={setReplacing}

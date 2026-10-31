@@ -3,6 +3,7 @@ import {
   createSong,
   deleteMaterial,
   deleteSong,
+  extractLyrics,
   getSong,
   getSongClassification,
   listLearningProgress,
@@ -18,6 +19,7 @@ import {
 import type {
   LearningStatus,
   MaterialValues,
+  PlaybackInstrument,
   SongClassificationValues,
   SongFilters,
   SongValues,
@@ -85,11 +87,17 @@ export function useDeleteMaterial(songId: string) {
   })
 }
 
+/** Nothing is cached: each run asks the AI again, and the draft goes to the upload form. */
+export function useExtractLyrics() {
+  return useMutation({ mutationFn: extractLyrics })
+}
+
 /** The material keeps its id, so only its list (file name, size, link) is reloaded. */
 export function useReplaceMaterialFile(songId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, file, resetProgress }: { id: string; file: File; resetProgress: boolean }) => replaceMaterialFile(id, file, resetProgress),
+    mutationFn: ({ id, file, resetProgress, instrument }: { id: string; file: File; resetProgress: boolean; instrument?: PlaybackInstrument }) =>
+      replaceMaterialFile(id, file, resetProgress, instrument),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
   })
 }

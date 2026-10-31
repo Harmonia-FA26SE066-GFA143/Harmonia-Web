@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { vietnamToday } from '@/lib/api/dates'
-import { deleteRehearsal, getDefaultSongs, listRehearsals, saveRehearsal, type RehearsalPage } from '../api/rehearsalsApi'
+import { deleteRehearsal, getDefaultSongs, getRehearsal, listRehearsals, saveRehearsal, type RehearsalPage } from '../api/rehearsalsApi'
 import type { RehearsalFilters, RehearsalValues } from '../types'
 
 const rehearsalsKey = ['rehearsals'] as const
@@ -13,6 +13,11 @@ export function useRehearsals(filters: RehearsalFilters, page: RehearsalPage) {
     queryFn: () => listRehearsals(filters, page),
     placeholderData: keepPreviousData,
   })
+}
+
+/** One rehearsal, for a page opened by its link; no id: nothing is fetched. */
+export function useRehearsal(id: string | undefined) {
+  return useQuery({ queryKey: [...rehearsalsKey, 'detail', id], queryFn: () => getRehearsal(id ?? ''), enabled: Boolean(id) })
 }
 
 /** Loads every page for a bounded week; no rehearsal is silently omitted by the paging limit. */

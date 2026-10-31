@@ -14,7 +14,7 @@ export function usePracticeRoom(rehearsal: Rehearsal | undefined, fixture?: Prac
       locationName: rehearsal.locationName,
       note: rehearsal.note,
       songs: rehearsal.songs.length
-        ? rehearsal.songs.map((song, index) => fixture?.songs[index] ? { ...fixture.songs[index], id: song.songId, title: song.songTitle } : { id: song.songId, title: song.songTitle, durationSeconds: 0, localState: 'notStarted' as const, lyrics: [] })
+        ? rehearsal.songs.map((song, index) => fixture?.songs[index] ? { ...fixture.songs[index], id: song.songId, title: song.songTitle, note: song.note } : { id: song.songId, title: song.songTitle, note: song.note, durationSeconds: 0, localState: 'notStarted' as const, lyrics: [] })
         : (fixture?.songs ?? []),
     }
   }, [fixture, rehearsal])

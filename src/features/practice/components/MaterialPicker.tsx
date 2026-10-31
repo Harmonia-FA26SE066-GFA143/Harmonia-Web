@@ -1,7 +1,7 @@
 import { CustomerServiceOutlined, ExportOutlined, FileTextOutlined, FolderOpenOutlined, ReadOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Flex, Tag, Typography } from 'antd'
 import type { ComponentType } from 'react'
-import { materialKindLabels, type SongMaterial } from '@/features/music-library'
+import { isPlayableAudio, materialKindLabels, type SongMaterial } from '@/features/music-library'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 
 const kindIcons: Record<SongMaterial['kind'], ComponentType> = {
@@ -10,8 +10,6 @@ const kindIcons: Record<SongMaterial['kind'], ComponentType> = {
   sampleAudio: CustomerServiceOutlined,
   rehearsalMaterial: FolderOpenOutlined,
 }
-
-const isAudio = ({ fileName }: SongMaterial) => /\.(mp3|m4a|wav)$/i.test(fileName)
 
 /**
  * The song's materials as choices, each with its kind and a preview (play the audio, open the sheet), so the Director
@@ -57,9 +55,11 @@ export function MaterialPicker({
                   {material.targetSkillName && <Tag style={{ marginInlineEnd: 0 }}>{material.targetSkillName}</Tag>}
                 </Flex>
               </Checkbox>
-              {isAudio(material) ? (
+              {/* Typed lyrics have no file to open; members read them in the app. */}
+              {material.url && isPlayableAudio(material) && (
                 <audio controls preload="none" src={material.url} aria-label={`Nghe ${material.title}`} style={{ height: 36, maxWidth: '100%' }} />
-              ) : (
+              )}
+              {material.url && !isPlayableAudio(material) && (
                 <Button
                   type="link"
                   icon={<ExportOutlined />}
@@ -70,6 +70,9 @@ export function MaterialPicker({
                 >
                   Mở
                 </Button>
+              )}
+              {material.lyricsText !== null && (
+                <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>Lời gõ trực tiếp</Typography.Text>
               )}
             </Flex>
           )

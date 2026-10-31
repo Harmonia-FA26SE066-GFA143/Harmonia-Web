@@ -23,6 +23,8 @@ export interface Rehearsal {
 export interface RehearsalSong {
   songId: string
   songTitle: string
+  /** What to work on in this song (≤ 500, UpdateRehearsalSongRequestValidator). */
+  note?: string
 }
 
 export type RehearsalValues = Omit<Rehearsal, 'id' | 'locationName'>

@@ -16,7 +16,7 @@ import { RosterPanel } from '../components/RosterPanel'
  * (see types.ts). Whole-service roles are staffed at any time; song positions wait for the approved song list
  * (ROSTER_SONG_LIST_NOT_APPROVED), which the page explains in their place.
  * `?programId=` selects the program (link from the program detail); otherwise the next upcoming program.
- * TBD: assigned-program filtering for the Director (C4) comes with the auth/assignment contract.
+ * The backend lists only the programs served by the director's choirs (LiturgicalEventService, choir scope).
  */
 export function RosterPage() {
   const navigate = useNavigate()

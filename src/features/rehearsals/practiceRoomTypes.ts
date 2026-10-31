@@ -13,6 +13,8 @@ export interface PracticeRoomSong {
   title: string
   section?: string
   audioUrl?: string
+  /** What to work on in this song, from the rehearsal. */
+  note?: string
   durationSeconds: number
   lyrics: PracticeRoomLyricLine[]
   localState: PracticeSongLocalState

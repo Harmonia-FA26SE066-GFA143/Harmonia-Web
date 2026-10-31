@@ -6,6 +6,7 @@ import type {
   LearningStatus,
   MaterialKind,
   MaterialValues,
+  PlaybackInstrument,
   Song,
   SongClassification,
   SongClassificationValues,
@@ -107,7 +108,14 @@ const kindByType = Object.fromEntries(Object.entries(typeByKind).map(([kind, typ
 
 interface MusicMaterialDto extends Omit<SongMaterial, 'kind' | 'url'> {
   materialType: ApiMaterialType
-  fileUrl: string
+  fileUrl: string | null
+}
+
+const apiInstrument: Record<PlaybackInstrument, string> = {
+  piano: 'Piano',
+  organ: 'Organ',
+  guitar: 'Guitar',
+  stringEnsemble: 'StringEnsemble',
 }
 
 const toMaterial = ({ materialType, fileUrl, ...rest }: MusicMaterialDto): SongMaterial => ({
@@ -130,8 +138,18 @@ export async function uploadMaterial(songId: string, values: UploadMaterialValue
   form.append('title', values.title)
   form.append('materialType', typeByKind[values.kind])
   if (values.targetSkillId) form.append('targetSkillId', values.targetSkillId)
-  form.append('file', values.file)
+  if (values.file) form.append('file', values.file)
+  if (values.lyricsText) form.append('lyricsText', values.lyricsText)
+  if (values.instrument) form.append('instrument', apiInstrument[values.instrument])
   return toMaterial(await apiRequest<MusicMaterialDto>('/api/music-materials', { method: 'POST', body: form }))
+}
+
+/** Draft lyrics read by AI from a sheet music file (Choir Director); nothing is saved until it is uploaded as lyrics. */
+export async function extractLyrics(materialId: string): Promise<string> {
+  const { lyricsText } = await apiRequest<{ lyricsText: string }>(`/api/music-materials/${materialId}/extract-lyrics`, {
+    method: 'POST',
+  })
+  return lyricsText
 }
 
 /** Deletes a material; FE-54 records deleted materials in the activity history. */
@@ -143,14 +161,20 @@ export function deleteMaterial(materialId: string): Promise<void> {
  * Replaces the file of a material (`PUT /api/music-materials/{id}/file`), keeping its id, title, kind, target skill
  * and the assignments it is attached to. Members keep what they marked unless `resetProgress` clears it.
  */
-export async function replaceMaterialFile(materialId: string, file: File, resetProgress: boolean): Promise<SongMaterial> {
+export async function replaceMaterialFile(
+  materialId: string,
+  file: File,
+  resetProgress: boolean,
+  instrument?: PlaybackInstrument,
+): Promise<SongMaterial> {
   const form = new FormData()
   form.append('file', file)
   form.append('resetProgress', String(resetProgress))
+  if (instrument) form.append('instrument', apiInstrument[instrument])
   return toMaterial(await apiRequest<MusicMaterialDto>(`/api/music-materials/${materialId}/file`, { method: 'PUT', body: form }))
 }
 
-/** Replaces title and target skill; leaving the skill out makes the material for the whole choir. */
+/** Replaces title, target skill and typed lyrics; leaving the skill out makes the material for the whole choir. */
 export async function updateMaterial(materialId: string, values: MaterialValues): Promise<void> {
   await apiRequest<unknown>(`/api/music-materials/${materialId}`, { method: 'PUT', body: JSON.stringify(values) })
 }

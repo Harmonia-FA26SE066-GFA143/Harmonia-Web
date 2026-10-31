@@ -65,6 +65,7 @@ describe('SongListReviewPage', () => {
         targetSkillId: null,
         targetSkillName: null,
         url: 'https://files.example/loi.pdf',
+        lyricsText: null,
         createdAt: '2026-10-01T02:00:00Z',
       },
     ])

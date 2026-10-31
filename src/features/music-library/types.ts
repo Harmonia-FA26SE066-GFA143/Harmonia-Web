@@ -12,17 +12,43 @@ export const materialKindLabels: Record<MaterialKind, string> = {
 
 const documentExtensions = ['.pdf', '.png', '.jpg']
 const audioExtensions = ['.mp3', '.m4a', '.wav']
+// The backend renders MIDI for the mobile piano roll; browsers cannot play it, so the Web only offers the download.
+const midiExtensions = ['.mid', '.midi']
 
-/** Accepted file extensions per kind (Harmonia-BE MusicMaterialService); the backend checks them again. */
+/**
+ * Accepted file extensions per kind (Harmonia-BE MusicMaterialService, BE d394db4); the backend checks them again.
+ * Lyrics are a Word file or typed text; pdf/png/jpg lyrics uploaded earlier stay readable but cannot be uploaded.
+ */
 export const materialExtensions: Record<MaterialKind, string[]> = {
   sheetMusic: documentExtensions,
-  lyrics: documentExtensions,
-  sampleAudio: audioExtensions,
-  rehearsalMaterial: [...documentExtensions, ...audioExtensions],
+  lyrics: ['.docx'],
+  sampleAudio: [...audioExtensions, ...midiExtensions],
+  rehearsalMaterial: [...documentExtensions, ...audioExtensions, ...midiExtensions],
 }
 
 /** 20 MiB, the backend limit (MusicMaterialService.MaxFileSizeBytes). */
 export const maxMaterialBytes = 20 * 1024 * 1024
+
+/** UploadMusicMaterialRequestValidator.MaxLyricsTextLength. */
+export const maxLyricsTextLength = 20_000
+
+export const fileExtension = (fileName: string) => fileName.slice(fileName.lastIndexOf('.')).toLowerCase()
+
+export const isMidiFile = (fileName: string | null) => fileName !== null && midiExtensions.includes(fileExtension(fileName))
+
+/** Audio the browser plays; a MIDI file is downloaded instead. */
+export const isPlayableAudio = ({ fileName }: Pick<SongMaterial, 'fileName'>) =>
+  fileName !== null && audioExtensions.includes(fileExtension(fileName))
+
+/** `PlaybackInstrument` of Harmonia-BE: what the mobile app plays a MIDI file with. */
+export type PlaybackInstrument = 'piano' | 'organ' | 'guitar' | 'stringEnsemble'
+
+export const playbackInstrumentLabels: Record<PlaybackInstrument, string> = {
+  piano: 'Piano',
+  organ: 'Đàn organ',
+  guitar: 'Guitar',
+  stringEnsemble: 'Dàn dây',
+}
 
 /** A song of the choir's music library (FE-27), as `SongDto` of GET /api/songs. Missing texts arrive as null. */
 export interface Song {
@@ -101,23 +127,28 @@ export interface SongMaterial {
   id: string
   kind: MaterialKind
   title: string
-  /** Original name, for display only. */
-  fileName: string
+  /** Original name, for display only; null for typed lyrics. */
+  fileName: string | null
   fileSizeBytes: number | null
   targetSkillId: string | null
   targetSkillName: string | null
-  /** Short-lived signed URL: never stored, the list is fetched again instead. */
-  url: string
+  /** Short-lived signed URL: never stored, the list is fetched again instead. Null for typed lyrics. */
+  url: string | null
+  /** Lyrics typed as text; null for every material with a file. */
+  lyricsText: string | null
   /** Backend `DateTime`; read it with `parseUtc`. */
   createdAt: string
 }
 
-/** Form fields of the multipart upload; the song comes from the page. */
+/** Form fields of the multipart upload; the song comes from the page. Lyrics send a file or the text, never both. */
 export interface UploadMaterialValues {
   kind: MaterialKind
   title: string
   targetSkillId?: string
-  file: File
+  file?: File
+  lyricsText?: string
+  /** MIDI files only; the backend renders with piano when it is left out. */
+  instrument?: PlaybackInstrument
 }
 
 /** Search and classification filters of GET /api/songs; they combine with AND on the server. */
@@ -138,11 +169,13 @@ export interface SongFilters {
   missingMaterial?: MaterialKind
 }
 
-/** Body of PUT /api/music-materials/{id}: metadata only; the file and the kind stay as uploaded. */
+/** Body of PUT /api/music-materials/{id}: the file and the kind stay as uploaded. */
 export interface MaterialValues {
   title: string
   /** Absent: the material is for the whole choir. */
   targetSkillId?: string
+  /** Required for typed lyrics, which have no file to replace; absent for every other material. */
+  lyricsText?: string
 }
 
 /** `LearningStatus` of Harmonia-BE; the wording follows the mobile app. NotStarted: the member never marked it. */

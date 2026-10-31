@@ -13,6 +13,8 @@ const messages: Record<string, string> = {
   ROSTER_ASSIGNMENT_DUPLICATE:
     'Ca viên này đã giữ kỹ năng này ở vị trí này, hoặc ở cả buổi lễ và ở một bài cùng lúc. Gỡ dòng kia trước.',
   ROSTER_ASSIGNMENT_MEMBER_NOT_CONFIRMED: 'Ca viên chưa trả lời Xác nhận hoặc Chưa chắc chắn cho chương trình.',
+  // BE c8ba80f (B40): another event the same day starts within Roster.EventOverlapMinutes (Admin setting).
+  ROSTER_MEMBER_TIME_CONFLICT: 'Ca viên đã được phân công ở một lễ khác gần giờ này. Chọn người khác.',
   ROSTER_ASSIGNMENT_MEMBER_SKILL_NOT_APPROVED: 'Ca viên chưa được duyệt kỹ năng này.',
   ROSTER_ASSIGNMENT_NOT_FOUND: 'Dòng phân công không còn tồn tại. Vui lòng tải lại trang.',
   MEMBER_NOT_ACTIVE: 'Ca viên không còn sinh hoạt.',
@@ -22,6 +24,8 @@ const messages: Record<string, string> = {
   // BE d1ca63e: a skill with someone assigned cannot be taken off the song's requirements.
   PERSONNEL_REQUIREMENT_IN_USE: 'Kỹ năng này đang có người được phân công. Gỡ người khỏi dòng phân công trước khi bỏ yêu cầu.',
   SONG_LIST_NOT_LATEST_VERSION: 'Danh sách bài hát đã có phiên bản mới. Vui lòng tải lại trang.',
+  // `/api/song-list-items/{id}/personnel-requirements` of a song the list no longer has.
+  SONG_LIST_ITEM_NOT_FOUND: 'Bài này không còn trong danh sách bài hát. Vui lòng tải lại trang.',
   SKILL_INACTIVE: 'Kỹ năng đã chọn đã ngừng dùng.',
   SKILL_NOT_FOUND: 'Kỹ năng đã chọn không còn tồn tại.',
   LITURGICAL_EVENT_CANCELLED: 'Sự kiện đã bị hủy.',
