@@ -30,6 +30,8 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
 | B41 | Cho Ca trưởng đọc `GET …/preparation-status` của sự kiện ca đoàn mình phục vụ | Hiện chỉ Cha xứ; Web phải gọi 4 API rồi tự cộng. Ưu tiên thấp |
 | B42 | Lời bài hát có mốc thời gian từng câu, chạy theo audio mẫu | Cho phòng luyện tập. Chờ owner quyết ai nhập mốc thời gian |
 | B43 | Thu âm trong phòng luyện tập của buổi tập | BE chỉ nhận bản thu của ca viên khi nộp bài tập. Chờ owner quyết ai thu và có lưu lại không |
+| B44 | Hạn chót nộp danh sách bài hát của một sự kiện | Tổng quan Ca trưởng muốn ghi hạn chót cạnh mỗi việc; hiện chỉ có ngày cử hành. Chờ owner quyết cách tính hạn |
+| B45 | Màu phụng vụ theo ngày, hoặc Tam Nhật Vượt Qua là một mùa riêng | BE gộp Tam Nhật vào Mùa Chay và không trả màu, nên Web chưa hiện được ngày đỏ và ngày hồng. Ưu tiên thấp |
 
 Hai việc BE cần xem (không phải mục backlog, chi tiết ở cuối `tbd-backlog.md`):
 
