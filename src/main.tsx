@@ -5,6 +5,8 @@ import '@fontsource/be-vietnam-pro/400.css'
 import '@fontsource/be-vietnam-pro/500.css'
 import '@fontsource/be-vietnam-pro/600.css'
 import '@fontsource/be-vietnam-pro/700.css'
+// Season and celebration titles only (typography.displayFontFamily).
+import '@fontsource/cormorant-garamond/600.css'
 import '@/styles/global.css'
 import { App } from '@/app/App'
 
