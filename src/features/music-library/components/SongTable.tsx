@@ -4,6 +4,7 @@ import { paths } from '@/app/router/paths'
 import { colors } from '@/styles/tokens'
 import { songListState } from '../songFilters'
 import type { Song } from '../types'
+import type { DensityMode } from './viewStorage'
 
 export interface SongTableProps {
   songs: Song[]
@@ -12,6 +13,7 @@ export interface SongTableProps {
   pageSize: number
   total: number
   loading?: boolean
+  density?: DensityMode
   onPageChange: (page: number) => void
 }
 
@@ -25,7 +27,7 @@ const materials = (song: Song) =>
  * The music library as a table (2026-10-30): one row per song of GET /api/songs, its credits, key and tempo, how
  * often it served and how many materials it has (SongDto counts). The title links to the song page.
  */
-export function SongTable({ songs, page, pageSize, total, loading, onPageChange }: Readonly<SongTableProps>) {
+export function SongTable({ songs, page, pageSize, total, loading, density = 'comfortable', onPageChange }: Readonly<SongTableProps>) {
   const { search } = useLocation()
   const columns: TableColumnsType<Song> = [
     {
@@ -89,6 +91,7 @@ export function SongTable({ songs, page, pageSize, total, loading, onPageChange 
   return (
     <Table<Song>
       rowKey="id"
+      size={density === 'compact' ? 'small' : 'middle'}
       columns={columns}
       dataSource={songs}
       loading={loading}
