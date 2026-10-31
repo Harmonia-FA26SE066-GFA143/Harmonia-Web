@@ -1,5 +1,5 @@
 import type { ThemeConfig } from 'antd'
-import { colors, layout, radius, shadows, sizes, spacing, typography } from '@/styles/tokens'
+import { colors, layout, radius, shadows, sizes, spacing, spine, typography } from '@/styles/tokens'
 
 /**
  * Maps Harmonia design tokens onto Ant Design theme tokens.
@@ -54,10 +54,11 @@ export const theme: ThemeConfig = {
       bodyBg: colors.background,
       headerHeight: layout.headerHeight,
       headerPadding: `0 ${layout.contentPaddingX}px`,
-      siderBg: colors.surface,
+      siderBg: spine.background,
     },
     Menu: {
-      // Neutral chrome (2026-10-30): the selected row is a grey step with ink text, no accent on the navigation.
+      // The light menu of the mobile drawer: the selected row is a grey step with ink text. The desktop sidebar wears
+      // spineTheme below.
       itemSelectedBg: colors.selectedSurface,
       itemSelectedColor: colors.textPrimary,
       groupTitleColor: colors.textMuted,
@@ -97,6 +98,40 @@ export const theme: ThemeConfig = {
     },
     Modal: {
       boxShadow: shadows.xl,
+    },
+  },
+}
+
+/**
+ * Ivory reading surfaces (brief §12.10): event detail and song-list review. Layout, container and elevated
+ * backgrounds all take ivory, so a dropdown or modal opened inside does not flash pure white. Nested under the root
+ * ConfigProvider, which still owns every other token.
+ */
+export const readingTheme: ThemeConfig = {
+  token: {
+    colorBgLayout: colors.ivory,
+    colorBgContainer: colors.ivory,
+    colorBgElevated: colors.ivory,
+  },
+}
+
+/**
+ * The desktop sidebar as the songbook's burgundy spine (owner 2026-10-31, replacing the neutral chrome of 2026-10-30;
+ * no thumb tabs or area grounds). AppShell applies it around the sidebar only. The focus ring takes the pale spine
+ * text: burgundy on the spine is 1.9:1.
+ */
+export const spineTheme: ThemeConfig = {
+  components: {
+    Menu: {
+      itemBg: 'transparent',
+      itemColor: spine.text,
+      itemHoverBg: spine.hover,
+      itemHoverColor: colors.surface,
+      itemActiveBg: spine.selected,
+      itemSelectedBg: spine.selected,
+      itemSelectedColor: colors.surface,
+      groupTitleColor: spine.groupTitle,
+      colorPrimaryBorder: spine.text,
     },
   },
 }
