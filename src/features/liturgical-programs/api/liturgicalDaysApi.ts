@@ -11,6 +11,8 @@ interface LiturgicalDayDto {
   date: string
   celebrationNameVi: string
   rankVi: string | null
+  /** Advent, Christmas, Lent, Easter or OrdinaryTime (LiturgicalCalendarApiClient.ToSeason); the Triduum is Lent. */
+  seasonName: string | null
   seasonNameVi: string | null
 }
 
@@ -21,6 +23,7 @@ export async function listLiturgicalDays(fromDate: string, toDate: string): Prom
     date: dto.date,
     celebrationName: dto.celebrationNameVi,
     rank: dto.rankVi ?? undefined,
+    seasonKey: dto.seasonName ?? undefined,
     seasonName: dto.seasonNameVi ?? undefined,
   }))
 }

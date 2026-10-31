@@ -1,7 +1,7 @@
 import { apiRequest } from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import { toQuery, type PagedList } from '@/lib/api/paging'
-import type { EventFilters, LiturgicalProgram, LiturgicalProgramDetail } from '../types'
+import type { EventFilters, LiturgicalProgram, LiturgicalProgramDetail, SongCredits } from '../types'
 import {
   apiStatus,
   songListStatusByApi,
@@ -34,7 +34,7 @@ interface EventListItemDto extends ProgramFields {
 
 interface SongListDto {
   status: ApiSongListStatus
-  items: { id: string; songTitle: string; slotName: string; displayOrder: number }[]
+  items: { id: string; songId: string; songTitle: string; slotName: string; displayOrder: number; note: string | null }[]
 }
 
 const toProgram = (dto: ProgramFields, status: ApiEventStatus, songListStatus: ApiSongListStatus | null): LiturgicalProgram => ({
@@ -82,6 +82,25 @@ export async function getProgram(id: string): Promise<LiturgicalProgramDetail | 
     // The backend does not order the items.
     songs: (songList?.items ?? [])
       .toSorted((a, b) => a.displayOrder - b.displayOrder)
-      .map(({ id: itemId, songTitle, slotName }) => ({ id: itemId, title: songTitle, liturgicalPart: slotName })),
+      .map(({ id: itemId, songId, songTitle, slotName, note }) => ({ id: itemId, songId, title: songTitle, liturgicalPart: slotName, note: note ?? undefined })),
+  }
+}
+
+interface SongCreditsDto {
+  composer: string | null
+  lyricist: string | null
+  materialCounts: Record<string, number>
+}
+
+/**
+ * Composer, lyricist and attached material count of one song (`GET /api/songs/{id}`, every role), for the program's
+ * reading list. ponytail: a call per listed song; the song-list item carries only the title (SongListItemDto).
+ */
+export async function getSongCredits(songId: string): Promise<SongCredits> {
+  const dto = await apiRequest<SongCreditsDto>(`/api/songs/${songId}`)
+  return {
+    composer: dto.composer ?? undefined,
+    lyricist: dto.lyricist ?? undefined,
+    materials: Object.values(dto.materialCounts).reduce((total, count) => total + count, 0),
   }
 }

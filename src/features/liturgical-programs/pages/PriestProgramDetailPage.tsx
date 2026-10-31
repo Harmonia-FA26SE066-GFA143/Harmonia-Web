@@ -1,22 +1,89 @@
 import { ArrowLeftOutlined, EditOutlined, FileSearchOutlined, StopOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Drawer, Flex } from 'antd'
+import { Alert, App, Button, Card, ConfigProvider, Drawer, Flex, Typography } from 'antd'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { generatePath, Link, useNavigate, useParams } from 'react-router'
+import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
 import { EventChoirsCard } from '@/features/choirs'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
+import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
+import { cardSurface, colors, spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
-import { EventInfo } from '../components/EventInfo'
+import { EventStatusTag } from '../components/EventStatusTag'
 import { PreparationStatusCard } from '../components/PreparationStatusCard'
+import { PreparationSteps } from '../components/PreparationSteps'
+import { ProgramHeader } from '../components/ProgramHeader'
+import { ProgramItemList } from '../components/ProgramItemList'
+import { SongListStatusTag } from '../components/SongListStatusTag'
 import { eventErrorMessage } from '../eventErrors'
-import { useCancelEvent, useEvent, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
+import { useCancelEvent, useEvent, usePreparationStatus, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
 import { useEventNames } from '../hooks/useEventNames'
-import { vietnamToday } from '@/lib/api/dates'
-import { formatProgramDate } from '../programFilters'
+import { useProgram } from '../hooks/usePrograms'
+import { formatDateTime, vietnamToday } from '@/lib/api/dates'
+import { preparationSteps } from '../preparationSteps'
 import type { EventFormValues, LiturgicalEvent } from '../types'
 
 const breadcrumb = [{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }, { title: 'Chi tiết chương trình' }]
+
+/** The six numbered steps and the page's one bookmark ribbon, from FE-21 (`preparation-status`, Priest only). */
+function PriestSteps({ event }: Readonly<{ event: LiturgicalEvent }>) {
+  const status = usePreparationStatus(event.id)
+  const steps = preparationSteps({
+    date: event.date,
+    songListStatus: status.data?.songListStatus,
+    status: status.data,
+    failed: status.isError,
+    viewer: 'priest',
+  })
+  return (
+    <Card style={cardSurface} title={<CardTitle>Tiến trình chuẩn bị</CardTitle>}>
+      {status.isPending && <SectionSkeleton rows={2} label="Đang tải tiến trình chuẩn bị" />}
+      {status.isError && (
+        <ErrorState headingLevel={3} title="Không thể tải tiến trình chuẩn bị" error={status.error} hasData={false} onRetry={() => status.refetch()} retrying={status.isFetching} />
+      )}
+      {status.isSuccess && <PreparationSteps steps={steps} bookmark />}
+    </Card>
+  )
+}
+
+/**
+ * The songs of the newest list in order (`/api/song-lists/event/{id}/latest` through useProgram), read on ivory;
+ * their materials, the Choir Director's notes and the review history are on the review page.
+ */
+function PriestProgramSongs({ eventId }: Readonly<{ eventId: string }>) {
+  const program = useProgram(eventId)
+  const songs = program.data?.songs ?? []
+  const reviewPath = generatePath(paths.priest.songListReview, { programId: eventId })
+  return (
+    <ConfigProvider theme={readingTheme}>
+      <Card
+        style={{ border: cardSurface.border, boxShadow: 'none' }}
+        title={
+          <Flex align="center" gap={spacing.sm} wrap>
+            <CardTitle>Chương trình</CardTitle> {program.data && <SongListStatusTag status={program.data.songListStatus} />}
+          </Flex>
+        }
+        extra={
+          songs.length > 0 && (
+            <Link to={reviewPath} style={{ fontWeight: 500 }}>
+              {program.data?.songListStatus === 'submitted' ? 'Duyệt danh sách bài hát' : 'Xem tài liệu và lịch sử duyệt'}
+            </Link>
+          )
+        }
+      >
+        {program.isPending && <SectionSkeleton rows={3} label="Đang tải danh sách bài hát" />}
+        {program.isError && (
+          <ErrorState headingLevel={3} title="Không thể tải danh sách bài hát" error={program.error} hasData={false} onRetry={() => program.refetch()} retrying={program.isFetching} />
+        )}
+        {program.isSuccess && songs.length === 0 && (
+          <Typography.Text style={{ color: colors.textMuted }}>Ca trưởng chưa gửi danh sách bài hát cho chương trình này.</Typography.Text>
+        )}
+        {songs.length > 0 && (
+          <ProgramItemList items={songs.map(({ id, songId, liturgicalPart, title, note }) => ({ id, songId, slotName: liturgicalPart, title, note }))} />
+        )}
+      </Card>
+    </ConfigProvider>
+  )
+}
 
 /**
  * Priest: one liturgical event (FE-15–FE-16) with the actions the backend allows (LiturgicalEventService): edit
@@ -32,7 +99,7 @@ export function PriestProgramDetailPage() {
   const update = useUpdateEvent()
   const publish = usePublishEvent()
   const cancel = useCancelEvent()
-  const { eventName } = useEventNames()
+  const { eventName, name } = useEventNames()
   const [editing, setEditing] = useState(false)
 
   const backButton = (
@@ -67,6 +134,15 @@ export function PriestProgramDetailPage() {
   // The backend refuses to publish a past event, or one without a season (LITURGICAL_EVENT_SEASON_REQUIRED).
   const canPublish = data.status === 'draft' && upcoming
   const needsSeason = canPublish && !data.seasonId
+  const type = name('massType', data.massTypeId) || name('ceremonyType', data.ceremonyTypeId)
+  const details = [
+    data.title && type,
+    name('category', data.categoryId),
+    data.specialRequirements && `Yêu cầu đặc biệt: ${data.specialRequirements}`,
+    data.publishedAt && `Công bố lúc ${formatDateTime(data.publishedAt)}`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   const handleUpdate = (values: EventFormValues) =>
     update.mutate(
@@ -114,12 +190,17 @@ export function PriestProgramDetailPage() {
 
   return (
     <>
-      <PageHeader
+      <ProgramHeader
         title={eventName(data)}
+        date={data.date}
+        time={data.time}
+        place={data.locationName}
+        seasonName={name('season', data.seasonId)}
+        status={<EventStatusTag status={data.status} />}
+        details={details || undefined}
         breadcrumb={breadcrumb}
-        description={`${formatProgramDate(data.date)} · ${data.time} · ${data.locationName}`}
-        extra={
-          <Flex wrap gap={spacing.sm}>
+        actions={
+          <>
             {backButton}
             {!cancelled && (
               <Button icon={<EditOutlined />} onClick={() => setEditing(true)}>
@@ -136,7 +217,7 @@ export function PriestProgramDetailPage() {
                 Công bố
               </Button>
             )}
-          </Flex>
+          </>
         }
       />
       {event.isError && (
@@ -151,7 +232,8 @@ export function PriestProgramDetailPage() {
             description="Sự kiện cần có mùa phụng vụ trước khi công bố. Bấm “Sửa” để chọn mùa."
           />
         )}
-        <EventInfo event={data} />
+        {data.status === 'published' && <PriestSteps event={data} />}
+        {data.status === 'published' && <PriestProgramSongs eventId={data.id} />}
         <EventChoirsCard eventId={data.id} canEdit locked={cancelled || !upcoming} />
         {data.status === 'published' && <PreparationStatusCard eventId={data.id} />}
       </Flex>

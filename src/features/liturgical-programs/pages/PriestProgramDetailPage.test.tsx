@@ -84,8 +84,8 @@ describe('PriestProgramDetailPage', () => {
     expect(get).toHaveBeenCalledWith('e1')
     expect(screen.getByText('Bản nháp')).toBeInTheDocument()
     expect(await screen.findByText('Mùa Thường Niên')).toBeInTheDocument()
-    expect(screen.getByText('Thánh lễ Chúa Nhật')).toBeInTheDocument()
-    expect(screen.getByText('Ưu tiên bài hát theo chủ đề Lời Chúa.')).toBeInTheDocument()
+    // Type and special requirements share the quiet line under the title.
+    expect(screen.getByText(/Thánh lễ Chúa Nhật .*Yêu cầu đặc biệt: Ưu tiên bài hát theo chủ đề Lời Chúa./)).toBeInTheDocument()
   })
 
   it('publishes a draft after confirmation', async () => {

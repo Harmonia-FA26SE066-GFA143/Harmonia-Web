@@ -85,7 +85,8 @@ describe('DirectorProgramDetailPage', () => {
     renderDetail()
 
     expect(await screen.findByRole('heading', { name: 'Lễ Chúa Nhật' })).toBeInTheDocument()
-    expect(screen.getByText('Nhà thờ chính')).toBeInTheDocument()
+    expect(screen.getByText(/Nhà thờ chính/)).toBeInTheDocument()
+    expect(screen.getByText('Mùa Thường Niên')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Đề xuất danh sách bài hát' })).toBeInTheDocument()
   })
 
@@ -95,7 +96,7 @@ describe('DirectorProgramDetailPage', () => {
     renderDetail()
 
     expect(await screen.findByText('Con Bước Lên Bàn Thờ')).toBeInTheDocument()
-    expect(screen.getByText('Yêu cầu chỉnh sửa')).toBeInTheDocument()
+    expect(screen.getByText('Yêu cầu chỉnh sửa', { selector: '.ant-tag' })).toBeInTheDocument()
     expect(screen.getByText(/Lịch tập/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Chỉnh sửa danh sách bài hát' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/director/programs/p1/song-list')
@@ -119,7 +120,9 @@ describe('DirectorProgramDetailPage', () => {
     renderDetail()
 
     expect(await screen.findByText('2 đã xác nhận')).toBeInTheDocument()
-    expect(screen.getByText('2/3 buổi đã tập')).toBeInTheDocument()
+    // Once in the numbered steps, once in the preparation hub.
+    expect(screen.getAllByText('2/3 buổi đã tập')).toHaveLength(2)
+    expect(screen.getByText(/Bước 3\/6/)).toBeInTheDocument()
     // 3 of 6 attendances (2 held × 3 members), 3 of 6 practice submissions passed.
     expect(screen.getByText(/Tỷ lệ có mặt/)).toHaveTextContent('Tỷ lệ có mặt: 50% (3/6 lượt)')
     expect(screen.getByText(/lượt nộp/)).toHaveTextContent('Đạt 3 / 6 lượt nộp')

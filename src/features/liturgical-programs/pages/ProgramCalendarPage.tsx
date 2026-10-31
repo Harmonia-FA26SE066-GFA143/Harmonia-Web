@@ -1,10 +1,10 @@
 import { EditOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
-import { Alert, Badge, Button, Calendar, Card, Col, Flex, Grid, Radio, Row, Select, Spin, Typography } from 'antd'
+import { Alert, Badge, Button, Calendar, Card, Col, Flex, Grid, Radio, Row, Select, Spin, Tag, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useId, useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { CardTitle, ErrorState, PageHeader, SectionSkeleton, visuallyHidden } from '@/shared/ui'
+import { CardTitle, ErrorState, PageHeader, SeasonChip, SectionSkeleton, visuallyHidden } from '@/shared/ui'
 import { cardSurface, colors, priestEvent, radius, spacing } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
@@ -12,7 +12,9 @@ import { LiturgicalDayInfo, SyncCalendarButton } from '../components/LiturgicalD
 import { useEventNames } from '../hooks/useEventNames'
 import { useEvents } from '../hooks/useEvents'
 import { useLiturgicalDays } from '../hooks/useLiturgicalDays'
-import { eventStatusLabels, type LiturgicalEvent } from '../types'
+import { eventStatusLabels, type EventStatus, type LiturgicalEvent } from '../types'
+
+const statusFilters: (EventStatus | 'all')[] = ['all', 'published', 'draft', 'cancelled']
 
 const cellLimit = 2
 const monthOptions = Array.from({ length: 12 }, (_, index) => ({ value: index, label: `Tháng ${index + 1}` }))
@@ -62,6 +64,8 @@ export function ProgramCalendarPage() {
   const selected = useMemo(() => (dateParam && isoDate.test(dateParam) && dayjs(dateParam).isValid() ? dayjs(dateParam) : dayjs()), [dateParam])
   const setSelected = (date: Dayjs) => setSearchParams(date.isSame(dayjs(), 'day') ? {} : { date: date.format('YYYY-MM-DD') }, { replace: true })
   const [mode, setMode] = useState<'month' | 'year'>('month')
+  // Filters only the loaded month on screen; the backend query stays the whole month.
+  const [statusFilter, setStatusFilter] = useState<EventStatus | 'all'>('all')
   const hintId = useId()
   const month = useMemo(
     () => ({ fromDate: selected.startOf('month').format('YYYY-MM-DD'), toDate: selected.endOf('month').format('YYYY-MM-DD') }),
@@ -72,9 +76,13 @@ export function ProgramCalendarPage() {
 
   const byDate = useMemo(() => {
     const map = new Map<string, LiturgicalEvent[]>()
-    for (const event of events.data?.items ?? []) map.set(event.date, [...(map.get(event.date) ?? []), event])
+    for (const event of events.data?.items ?? []) {
+      if (statusFilter === 'all' || event.status === statusFilter) map.set(event.date, [...(map.get(event.date) ?? []), event])
+    }
     return map
-  }, [events.data])
+  }, [events.data, statusFilter])
+  const countOf = (status: EventStatus | 'all') =>
+    (events.data?.items ?? []).filter((event) => status === 'all' || event.status === status).length
 
   const selectedKey = selected.format('YYYY-MM-DD')
   const selectedEvents = byDate.get(selectedKey) ?? []
@@ -92,9 +100,15 @@ export function ProgramCalendarPage() {
     const key = date.format('YYYY-MM-DD')
     const items = byDate.get(key) ?? []
     if (!screens.md) return items.length > 0 ? <Badge color={colors.primary} aria-label={`${items.length} sự kiện`} /> : null
-    const celebration = days.data?.get(key)?.celebrationName
+    const day = days.data?.get(key)
+    const celebration = day?.celebrationName
+    // Interpreted: a season chip on the first day of the month and where the season changes, so the name is always
+    // there without repeating it in thirty cells.
+    const previousSeason = days.data?.get(date.subtract(1, 'day').format('YYYY-MM-DD'))?.seasonKey
+    const showSeason = day?.seasonName && date.isSame(selected, 'month') && (date.date() === 1 || previousSeason !== day.seasonKey)
     return (
       <Flex vertical gap={2}>
+        {showSeason && day?.seasonName && <SeasonChip size="small" seasonKey={day.seasonKey} seasonName={day.seasonName} />}
         {celebration && (
           <Typography.Text ellipsis={{ tooltip: true }} style={{ fontSize: 11, color: colors.textBody }}>
             {celebration}
@@ -146,23 +160,24 @@ export function ProgramCalendarPage() {
       )}
       {events.data !== undefined && (
         <Flex vertical gap={spacing.md}>
-          <Card style={cardSurface} styles={{ body: { padding: `${spacing.md}px ${spacing.lg}px` } }}>
-            <Flex wrap align="center" justify="space-between" gap={spacing.md}>
-              <Typography.Title level={3} style={{ margin: 0, fontSize: 19 }}>
-                {selected.format('[Lịch tháng] M YYYY')}
-              </Typography.Title>
-              <Flex wrap gap={spacing.lg}>
-                <div>
-                  <Typography.Text style={{ display: 'block', color: colors.textMuted, fontSize: 12 }}>Sự kiện trong tháng</Typography.Text>
-                  <Typography.Text strong style={{ fontSize: 20, fontVariantNumeric: 'tabular-nums' }}>{events.data.totalCount}</Typography.Text>
-                </div>
-                <div>
-                  <Typography.Text style={{ display: 'block', color: colors.textMuted, fontSize: 12 }}>Ngày đang chọn</Typography.Text>
-                  <Typography.Text strong style={{ fontSize: 20, fontVariantNumeric: 'tabular-nums' }}>{selected.format('DD/MM')}</Typography.Text>
-                </div>
-              </Flex>
+          <Flex wrap align="center" justify="space-between" gap={spacing.md}>
+            <Typography.Title level={2} style={{ margin: 0 }}>
+              {selected.format('[Tháng] M, YYYY')}
+            </Typography.Title>
+            <Flex component="ul" aria-label="Lọc theo trạng thái" wrap gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {statusFilters.map((status) => (
+                <li key={status}>
+                  <Tag.CheckableTag
+                    checked={statusFilter === status}
+                    onChange={() => setStatusFilter(status)}
+                    style={{ border: `1px solid ${statusFilter === status ? colors.primary : colors.mutedBorder}`, padding: '2px 10px', fontSize: 13, marginInlineEnd: 0 }}
+                  >
+                    {status === 'all' ? 'Tất cả' : eventStatusLabels[status]} ({countOf(status)})
+                  </Tag.CheckableTag>
+                </li>
+              ))}
             </Flex>
-          </Card>
+          </Flex>
           {/* From xl the day panel sits beside the calendar, so picking a day shows its events without scrolling. */}
           <Row gutter={[spacing.md, spacing.md]}>
             <Col xs={24} xl={18}>
