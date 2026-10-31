@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as eventsApi from '@/features/liturgical-programs/api/eventsApi'
+import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as songsApi from '@/features/music-library/api/songsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { renderPage } from '@/test/renderPage'
@@ -29,9 +30,21 @@ const confirmDialog = async (title: string) =>
 
 beforeEach(() => {
   vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([])
+  vi.spyOn(programsApi, 'getSongCredits').mockResolvedValue({ composer: 'Kim Long', materials: 2 })
+  vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue({
+    participation: { invited: 0, confirmed: 0, declined: 0, unsure: 0 },
+    rosterActiveAssignments: 0,
+    rehearsalsTotal: 0,
+    rehearsalsHeld: 0,
+    attendanceExpected: 0,
+    attendancePresent: 0,
+    practiceExpected: 0,
+    practicePassed: 0,
+    practiceOverdue: 0,
+  })
   vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({
     id: 'e1',
-    date: '2026-10-18',
+    date: '2099-10-18',
     time: '08:00',
     title: 'Lễ Chúa Nhật XXIX',
     locationId: 'loc-1',
@@ -71,7 +84,7 @@ describe('SongListReviewPage', () => {
     ])
     renderReview()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Xem tài liệu của Lễ Vật Tâm Tình' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Xem bản nhạc và tài liệu của Lễ Vật Tâm Tình' }))
 
     const drawer = await screen.findByRole('dialog', { name: 'Lễ Vật Tâm Tình' })
     expect(await within(drawer).findByText('Lời bài hát bản in')).toBeInTheDocument()
@@ -80,26 +93,29 @@ describe('SongListReviewPage', () => {
     expect(materials).toHaveBeenCalledWith('s2')
   })
 
-  it('requires a note to request a revision of the whole list', async () => {
+  it('requires a note to request a revision of the whole list, then stays on the page', async () => {
     vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue(submitted)
     const review = vi.spyOn(reviewApi, 'reviewSongList').mockResolvedValue()
     renderReview()
 
     expect(await screen.findByText('Toàn ca đoàn hát.')).toBeInTheDocument()
-    expect(screen.getByText(/phiên bản 2/)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('radio', { name: 'Yêu cầu chỉnh sửa' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Gửi quyết định' }))
+    expect(screen.getByText(/Phiên bản 2/)).toBeInTheDocument()
+    // Who wrote each song comes from the song itself (SongDto).
+    await waitFor(() => expect(screen.getAllByText('Nhạc: Kim Long · 2 tài liệu đính kèm')).toHaveLength(2))
+    fireEvent.click(screen.getByRole('button', { name: 'Yêu cầu sửa' }))
     expect(await screen.findByText('Vui lòng nhập nội dung cần chỉnh sửa.')).toBeInTheDocument()
+    expect(review).not.toHaveBeenCalled()
 
-    fireEvent.change(screen.getByRole('textbox', { name: 'Ghi chú gửi Ca trưởng' }), { target: { value: ' Đổi bài Ca dâng lễ. ' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Gửi quyết định' }))
-    const dialog = await confirmDialog('Yêu cầu Ca trưởng chỉnh sửa?')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi quyết định' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Nhận xét gửi Ca trưởng' }), { target: { value: ' Đổi bài Ca dâng lễ. ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Yêu cầu sửa' }))
+    const dialog = await confirmDialog('Yêu cầu Ca trưởng sửa danh sách?')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi yêu cầu sửa' }))
 
-    await waitFor(() =>
-      expect(review).toHaveBeenCalledWith('sl-2', { decision: 'requestRevision', notes: 'Đổi bài Ca dâng lễ.' }),
-    )
-    expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/e1')
+    await waitFor(() => expect(review).toHaveBeenCalledWith('sl-2', { decision: 'requestRevision', notes: 'Đổi bài Ca dâng lễ.' }))
+    expect(await screen.findByText('Đã gửi yêu cầu sửa cho Ca trưởng.')).toBeInTheDocument()
+    // Still on the review page: the program heading stays, no navigation happened.
+    expect(screen.queryByTestId('location')).toBeNull()
+    expect(screen.getByRole('heading', { level: 1, name: 'Lễ Chúa Nhật XXIX' })).toBeInTheDocument()
   })
 
   it('approves without a note', async () => {
@@ -107,15 +123,16 @@ describe('SongListReviewPage', () => {
     const review = vi.spyOn(reviewApi, 'reviewSongList').mockResolvedValue()
     renderReview()
 
-    fireEvent.click(await screen.findByRole('radio', { name: 'Phê duyệt' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Gửi quyết định' }))
-    const dialog = await confirmDialog('Phê duyệt danh sách bài hát?')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi quyết định' }))
+    // The list is written, so the current step is the Priest's review.
+    expect(await screen.findByText(/Bước 2\/6/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Duyệt' }))
+    const dialog = await confirmDialog('Duyệt danh sách bài hát?')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Duyệt' }))
 
     await waitFor(() => expect(review).toHaveBeenCalledWith('sl-2', { decision: 'approve', notes: undefined }))
   })
 
-  it('shows the approved list read-only', async () => {
+  it('shows the approved list read-only, with its history', async () => {
     vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue({
       ...submitted,
       status: 'approved',
@@ -124,10 +141,12 @@ describe('SongListReviewPage', () => {
     })
     renderReview()
 
-    expect(await screen.findByText(/Danh sách đã được phê duyệt/)).toBeInTheDocument()
-    expect(screen.getByText('Ghi chú: “Hợp chủ đề.”')).toBeInTheDocument()
+    expect(await screen.findByText('Đã duyệt')).toBeInTheDocument()
+    expect(screen.getByText('“Hợp chủ đề.”')).toBeInTheDocument()
     expect(screen.getByText('Lễ Vật Tâm Tình')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Gửi quyết định' })).toBeNull()
+    // Approved: steps 1 and 2 are done, so the current step is 3.
+    expect(await screen.findByText(/Bước 3\/6/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Duyệt' })).toBeNull()
   })
 
   it('shows a list sent back for revision read-only, with the note', async () => {
@@ -139,8 +158,8 @@ describe('SongListReviewPage', () => {
     })
     renderReview()
 
-    expect(await screen.findByText(/Đã yêu cầu Ca trưởng chỉnh sửa \(phiên bản 2\)/)).toBeInTheDocument()
-    expect(screen.getByText(/Ghi chú: “Đổi bài Ca dâng lễ.” Ca trưởng sẽ gửi một phiên bản mới./)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Gửi quyết định' })).toBeNull()
+    expect(await screen.findByText('Đã yêu cầu chỉnh sửa')).toBeInTheDocument()
+    expect(screen.getByText('“Đổi bài Ca dâng lễ.”')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Yêu cầu sửa' })).toBeNull()
   })
 })

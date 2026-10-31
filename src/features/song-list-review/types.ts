@@ -8,8 +8,8 @@ import type { SongListStatus } from '@/features/liturgical-programs'
 export type ReviewDecision = 'approve' | 'requestRevision' | 'reject'
 
 export const reviewDecisionLabels: Record<ReviewDecision, string> = {
-  approve: 'Phê duyệt',
-  requestRevision: 'Yêu cầu chỉnh sửa',
+  approve: 'Duyệt',
+  requestRevision: 'Yêu cầu sửa',
   reject: 'Từ chối',
 }
 
