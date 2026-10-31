@@ -10,6 +10,7 @@ interface RehearsalSongDto {
   songId: string
   songTitle: string
   displayOrder: number
+  note: string | null
 }
 
 interface RehearsalDto {
@@ -30,7 +31,9 @@ export interface RehearsalPage {
 }
 
 const toSongs = (songs: RehearsalSongDto[]): RehearsalSong[] =>
-  songs.toSorted((a, b) => a.displayOrder - b.displayOrder).map(({ songId, songTitle }) => ({ songId, songTitle }))
+  songs
+    .toSorted((a, b) => a.displayOrder - b.displayOrder)
+    .map(({ songId, songTitle, note }) => ({ songId, songTitle, note: note ?? undefined }))
 
 const toRehearsal = (dto: RehearsalDto): Rehearsal => ({
   id: dto.id,
@@ -44,7 +47,7 @@ const toRehearsal = (dto: RehearsalDto): Rehearsal => ({
   songs: toSongs(dto.songs),
 })
 
-const toSongItems = (songs: RehearsalSong[]) => songs.map(({ songId }) => ({ songId }))
+const toSongItems = (songs: RehearsalSong[]) => songs.map(({ songId, note }) => ({ songId, note }))
 
 /** Newest start first. */
 export async function listRehearsals(filters: RehearsalFilters, page: RehearsalPage): Promise<PagedList<Rehearsal>> {
@@ -82,6 +85,15 @@ export async function saveRehearsal({ id, values }: { id?: string; values: Rehea
 /** Refused once attendance was recorded (REHEARSAL_HAS_ATTENDANCE). */
 export async function deleteRehearsal(id: string): Promise<void> {
   await apiRequest<unknown>(`/api/rehearsals/${id}`, { method: 'DELETE' })
+}
+
+/**
+ * One rehearsal by id (GET /api/schedule/rehearsals/{id}, any signed-in role; a director sees the rehearsals of the
+ * choirs they lead, 404 REHEARSAL_NOT_FOUND otherwise). It carries no choir, program or location id.
+ */
+export async function getRehearsal(id: string): Promise<Rehearsal> {
+  const dto = await apiRequest<Omit<RehearsalDto, 'choirId' | 'eventId' | 'locationId'>>(`/api/schedule/rehearsals/${id}`)
+  return toRehearsal({ ...dto, choirId: null, eventId: null, locationId: null })
 }
 
 /** The songs of the event's approved list, once each; empty without one. Nothing is saved. */

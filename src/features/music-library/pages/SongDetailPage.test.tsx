@@ -35,6 +35,7 @@ const material = (fields: Partial<SongMaterial> & Pick<SongMaterial, 'id' | 'kin
   targetSkillId: null,
   targetSkillName: null,
   url: `https://files.example/${fields.fileName}`,
+  lyricsText: null,
   // Read back from the database without the Z suffix (tbd-backlog B7).
   createdAt: '2026-08-12T08:00:00',
   ...fields,
@@ -207,13 +208,13 @@ describe('SongDetailPage', () => {
     withSong()
     const upload = vi
       .spyOn(songsApi, 'uploadMaterial')
-      .mockResolvedValue(material({ id: 'm3', kind: 'lyrics', title: 'Lời 2 bè', fileName: 'loi.pdf' }))
+      .mockResolvedValue(material({ id: 'm3', kind: 'lyrics', title: 'Lời 2 bè', fileName: 'loi.docx' }))
     renderDetail('materials')
 
     const lyrics = (await screen.findByRole('heading', { level: 2, name: 'Lời bài hát' })).closest('section')!
     const input = lyrics.querySelector('input[type="file"]') as HTMLInputElement
-    expect(input.accept).toBe('.pdf,.png,.jpg')
-    const file = new File(['lời'], 'loi.pdf', { type: 'application/pdf' })
+    expect(input.accept).toBe('.docx')
+    const file = new File(['lời'], 'loi.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
     fireEvent.change(input, { target: { files: [file] } })
 
     const dialog = await screen.findByRole('dialog')
@@ -227,6 +228,29 @@ describe('SongDetailPage', () => {
     )
   })
 
+  it('drafts the lyrics of a sheet with AI, then saves them as typed lyrics', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'extractLyrics').mockResolvedValue('Con bước lên bàn thờ Chúa')
+    const upload = vi
+      .spyOn(songsApi, 'uploadMaterial')
+      .mockResolvedValue(material({ id: 'm3', kind: 'lyrics', title: 'Lời', fileName: null, url: null, lyricsText: 'Con bước' }))
+    renderDetail('materials')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Trích lời từ Bản nhạc SATB' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('textbox', { name: 'Lời bài hát' })).toHaveValue('Con bước lên bàn thờ Chúa')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu lời bài hát' }))
+
+    await waitFor(() =>
+      expect(upload).toHaveBeenCalledWith('s1', {
+        kind: 'lyrics',
+        title: 'Lời Con Bước Lên Bàn Thờ',
+        lyricsText: 'Con bước lên bàn thờ Chúa',
+      }),
+    )
+    expect(await screen.findByText('Đã lưu lời bài hát.')).toBeInTheDocument()
+  })
+
   it('refuses a file the backend would reject without uploading it', async () => {
     withSong()
     const upload = vi.spyOn(songsApi, 'uploadMaterial')
@@ -236,7 +260,7 @@ describe('SongDetailPage', () => {
     const input = audio.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['x'], 'ban-nhac.pdf', { type: 'application/pdf' })] } })
 
-    expect(await screen.findByText('Audio mẫu chỉ nhận tệp .mp3, .m4a, .wav.')).toBeInTheDocument()
+    expect(await screen.findByText('Audio mẫu chỉ nhận tệp .mp3, .m4a, .wav, .mid, .midi.')).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(upload).not.toHaveBeenCalled()
   })
@@ -284,7 +308,7 @@ describe('SongDetailPage', () => {
     fireEvent.click(within(dialog).getByRole('checkbox'))
     fireEvent.click(within(dialog).getByRole('button', { name: 'Thay file' }))
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith('m2', file, true))
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('m2', file, true, undefined))
     expect(await screen.findByText('Đã thay file và xoá tiến độ học của ca viên.')).toBeInTheDocument()
   })
 

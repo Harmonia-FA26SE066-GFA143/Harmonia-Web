@@ -45,7 +45,7 @@ export interface SurfaceConfig {
 
 /**
  * Sidebar per role, derived from the Stitch sidebars and limited to pages in the screen map.
- * Filtering by the signed-in user's role is TBD until the auth contract is available.
+ * RoleGuard admits each role to its own workspace only, so each role sees its own sidebar.
  */
 export const surfaces: Record<Surface, SurfaceConfig> = {
   priest: {

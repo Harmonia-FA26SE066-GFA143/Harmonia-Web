@@ -5,9 +5,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { env } from '@/config/env'
+import { isPlayableAudio, useSongMaterials } from '@/features/music-library'
 import { colors, spacing } from '@/styles/tokens'
 import type { PracticeRoomView } from '../practiceRoomTypes'
 import { usePracticeRoom } from '../hooks/usePracticeRoom'
+import { useRehearsal } from '../hooks/useRehearsals'
 import type { Rehearsal } from '../types'
 
 const stateLabels = { notStarted: 'Chưa bắt đầu', inProgress: 'Đang luyện', listened: 'Đã nghe' } as const
@@ -17,8 +19,10 @@ export function RehearsalPracticeRoomPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const rehearsal = (location.state as { rehearsal?: Rehearsal } | null)?.rehearsal
-  const fallbackRehearsal = rehearsalId === 'rehearsal-demo-1' ? undefined : rehearsal
   const demoFixture = rehearsalId === 'rehearsal-demo-1' || rehearsalId === 'demo'
+  // Opened from the schedule, the rehearsal travels in the router state; opened by its link, it is fetched.
+  const fetched = useRehearsal(demoFixture || rehearsal ? undefined : rehearsalId)
+  const fallbackRehearsal = demoFixture ? undefined : (rehearsal ?? fetched.data)
   const [fixture, setFixture] = useState<PracticeRoomView>()
 
   useEffect(() => {
@@ -37,7 +41,19 @@ export function RehearsalPracticeRoomPage() {
   const room = usePracticeRoom(roomSource, fixture)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [part, setPart] = useState('Tất cả')
+  // Sample audio per voice part and typed lyrics come from the song's materials (GET /api/music-materials).
+  const selectedSongId = demoFixture ? '' : (room?.songs[selectedIndex]?.id ?? '')
+  const materials = useSongMaterials(selectedSongId)
+  const audios = (materials.data ?? []).filter((material) => material.url && isPlayableAudio(material))
+  const parts = ['Tất cả', ...new Set(audios.flatMap((material) => (material.targetSkillName ? [material.targetSkillName] : [])))]
+  const shownPart = parts.includes(part) ? part : 'Tất cả'
+  const partAudio =
+    shownPart === 'Tất cả'
+      ? (audios.find((material) => !material.targetSkillName) ?? audios[0])
+      : audios.find((material) => material.targetSkillName === shownPart)
+  const typedLyrics = materials.data?.find((material) => material.kind === 'lyrics' && material.lyricsText !== null)?.lyricsText
 
+  if (fetched.isLoading) return <Skeleton active paragraph={{ rows: 12 }} />
   if (demoFixture && fixture === undefined && import.meta.env.DEV && env.useDevFixtures) return <Skeleton active paragraph={{ rows: 12 }} />
   if (!room) return (
     <div>
@@ -47,6 +63,7 @@ export function RehearsalPracticeRoomPage() {
   )
 
   const song = room.songs[selectedIndex]
+  const audioUrl = partAudio?.url ?? song.audioUrl
   const previous = () => setSelectedIndex((index) => Math.max(0, index - 1))
   const next = () => setSelectedIndex((index) => Math.min(room.songs.length - 1, index + 1))
 
@@ -100,18 +117,19 @@ export function RehearsalPracticeRoomPage() {
 
           <Card className="practice-room-player" styles={{ body: { padding: spacing.lg } }}>
             <Typography.Title level={2} style={{ marginTop: 0 }}>{song.title}</Typography.Title>
+            {song.note && <Typography.Paragraph type="secondary">Cần tập: {song.note}</Typography.Paragraph>}
             <Flex wrap justify="space-between" align="center" gap={spacing.sm}>
-              <Segmented value={part} onChange={(value) => setPart(String(value))} options={['Tất cả', 'Soprano', 'Alto', 'Tenor', 'Bass']} />
+              <Segmented value={shownPart} onChange={(value) => setPart(String(value))} options={parts} aria-label="Audio mẫu theo bè" />
               <Flex gap={4}><Button icon={<LeftOutlined />} aria-label="Bài trước" disabled={selectedIndex === 0} onClick={previous} /><Button icon={<RightOutlined />} aria-label="Bài sau" disabled={selectedIndex === room.songs.length - 1} onClick={next} /></Flex>
             </Flex>
 
             <div className="karaoke-lyrics" aria-live="off">
-              {song.lyrics.length ? <><Typography.Title level={2}>{song.lyrics[0].text}</Typography.Title><Typography.Text type="secondary">{song.lyrics[1]?.text}</Typography.Text></> : <Typography.Text type="secondary">Bài hát chưa có lời đồng bộ</Typography.Text>}
+              {song.lyrics.length ? <><Typography.Title level={2}>{song.lyrics[0].text}</Typography.Title><Typography.Text type="secondary">{song.lyrics[1]?.text}</Typography.Text></> : typedLyrics ? <Typography.Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>{typedLyrics}</Typography.Paragraph> : <Typography.Text type="secondary">Bài hát chưa có lời dạng văn bản</Typography.Text>}
             </div>
 
-            {!song.audioUrl ? (
+            {!audioUrl ? (
               <Card size="small" style={{ background: colors.softSurface }}><Flex gap={spacing.sm} align="center"><AudioOutlined /><Typography.Text type="secondary">Chưa có audio mẫu cho bài hát này</Typography.Text></Flex></Card>
-            ) : <audio controls src={song.audioUrl} aria-label={`Nghe ${song.title}`} style={{ width: '100%' }} />}
+            ) : <audio key={audioUrl} controls src={audioUrl} aria-label={`Nghe ${song.title}${shownPart === 'Tất cả' ? '' : `, bè ${shownPart}`}`} style={{ width: '100%' }} />}
 
             <Flex wrap gap={spacing.sm} style={{ marginTop: spacing.md }}>
               <Button disabled icon={<AudioOutlined />}>Thu âm</Button>

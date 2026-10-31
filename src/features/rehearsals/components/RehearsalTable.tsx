@@ -72,7 +72,10 @@ export function RehearsalTable({
         ) : (
           <ul style={{ margin: 0, paddingInlineStart: 18 }}>
             {rehearsal.songs.map((song) => (
-              <li key={song.songId}>{song.songTitle}</li>
+              <li key={song.songId}>
+                {song.songTitle}
+                {song.note && <Typography.Text style={{ color: colors.textMuted }}> · {song.note}</Typography.Text>}
+              </li>
             ))}
           </ul>
         ),

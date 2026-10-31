@@ -33,7 +33,7 @@ export function RehearsalDetailDrawer({ rehearsal, program, onClose, onAttendanc
         {rehearsal.note && <div><Typography.Text type="secondary">Ghi chú</Typography.Text><Typography.Paragraph style={{ marginBottom: 0 }}>{rehearsal.note}</Typography.Paragraph></div>}
         <div>
           <Typography.Text type="secondary">Bài hát · {rehearsal.songs.length}</Typography.Text>
-          {rehearsal.songs.length ? <List size="small" dataSource={rehearsal.songs} renderItem={(song) => <List.Item>{song.songTitle}</List.Item>} /> : <Typography.Paragraph style={{ marginBottom: 0 }}>Chưa có bài hát</Typography.Paragraph>}
+          {rehearsal.songs.length ? <List size="small" dataSource={rehearsal.songs} renderItem={(song) => <List.Item><List.Item.Meta title={song.songTitle} description={song.note} /></List.Item>} /> : <Typography.Paragraph style={{ marginBottom: 0 }}>Chưa có bài hát</Typography.Paragraph>}
         </div>
         <Flex wrap gap={8}>
           <Button type="primary" onClick={() => onAttendance(rehearsal)}>{isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}</Button>

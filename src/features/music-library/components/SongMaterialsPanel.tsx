@@ -1,11 +1,14 @@
 import {
   BarChartOutlined,
+  BulbOutlined,
   CustomerServiceOutlined,
   DeleteOutlined,
   EditOutlined,
+  DownloadOutlined,
   ExportOutlined,
   FileTextOutlined,
   FolderOpenOutlined,
+  FormOutlined,
   ReadOutlined,
   SwapOutlined,
   UploadOutlined,
@@ -16,6 +19,9 @@ import { Fragment, type ComponentType } from 'react'
 import { parseUtc } from '@/lib/api/dates'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import {
+  fileExtension,
+  isMidiFile,
+  isPlayableAudio,
   materialExtensions,
   materialKindLabels,
   materialKinds,
@@ -38,6 +44,12 @@ export interface SongMaterialsPanelProps {
   onReplace?: (material: SongMaterial) => void
   /** Opens who has learned the material (FE-09). */
   onProgress?: (material: SongMaterial) => void
+  /** Adds lyrics typed as text instead of a Word file. */
+  onTypeLyrics?: () => void
+  /** Asks the AI for a draft of the lyrics printed on a sheet music file. */
+  onExtractLyrics?: (material: SongMaterial) => void
+  /** Sheet music whose lyrics are being read. */
+  extractingId?: string
 }
 
 function formatSize(bytes: number | null): string | undefined {
@@ -45,9 +57,16 @@ function formatSize(bytes: number | null): string | undefined {
   return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
 }
 
-const extension = (fileName: string) => fileName.slice(fileName.lastIndexOf('.')).toLowerCase()
-const isAudio = ({ fileName }: SongMaterial) => ['.mp3', '.m4a', '.wav'].includes(extension(fileName))
-const isImage = ({ fileName }: SongMaterial) => ['.png', '.jpg', '.jpeg'].includes(extension(fileName))
+const isImage = ({ fileName }: SongMaterial) => fileName !== null && ['.png', '.jpg', '.jpeg'].includes(fileExtension(fileName))
+
+/** What is under the title: file name, size and date, or what kind of text it is. */
+function details(material: SongMaterial) {
+  const source = material.lyricsText === null ? material.fileName : 'Lời gõ trực tiếp'
+  const midi = isMidiFile(material.fileName) ? 'MIDI, nghe trên ứng dụng di động' : undefined
+  return [source, midi, formatSize(material.fileSizeBytes), `tải lên ${dayjs(parseUtc(material.createdAt)).format('DD/MM/YYYY')}`]
+    .filter(Boolean)
+    .join(' · ')
+}
 
 const kindIcons:Record<MaterialKind, ComponentType> = {
   sheetMusic: ReadOutlined,
@@ -85,9 +104,17 @@ function UploadButton({ kind, loading, label, hintId, onPick }: Readonly<{
   )
 }
 
-type MaterialActions = Pick<SongMaterialsPanelProps, 'onDelete' | 'onEdit' | 'onProgress' | 'onReplace'>
+type MaterialActions = Pick<SongMaterialsPanelProps, 'onDelete' | 'onEdit' | 'onProgress' | 'onReplace' | 'onExtractLyrics' | 'extractingId'>
 
-function MaterialRow({ material, onDelete, onEdit, onProgress, onReplace }: Readonly<{ material: SongMaterial } & MaterialActions>) {
+function MaterialRow({
+  material,
+  onDelete,
+  onEdit,
+  onProgress,
+  onReplace,
+  onExtractLyrics,
+  extractingId,
+}: Readonly<{ material: SongMaterial } & MaterialActions>) {
   const Icon = kindIcons[material.kind]
   return (
     <Flex component="li" vertical gap={spacing.sm} style={{ padding: spacing.md, background: colors.background, borderRadius: radius.md }}>
@@ -95,7 +122,7 @@ function MaterialRow({ material, onDelete, onEdit, onProgress, onReplace }: Read
         {isImage(material) ? (
           // A sheet or lyrics page is recognised at a glance; the preview opens it full size.
           <Image
-            src={material.url}
+            src={material.url ?? undefined}
             alt={`Trang đầu của ${material.title}`}
             width={48}
             height={60}
@@ -114,32 +141,49 @@ function MaterialRow({ material, onDelete, onEdit, onProgress, onReplace }: Read
             {material.targetSkillName && <Tag style={{ marginInlineEnd: 0 }}>{material.targetSkillName}</Tag>}
           </Flex>
           <Typography.Text
-            ellipsis={{ tooltip: material.fileName }}
+            ellipsis={{ tooltip: material.fileName ?? undefined }}
             style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}
           >
-            {[material.fileName, formatSize(material.fileSizeBytes), `tải lên ${dayjs(parseUtc(material.createdAt)).format('DD/MM/YYYY')}`]
-              .filter(Boolean)
-              .join(' · ')}
+            {details(material)}
           </Typography.Text>
         </Flex>
         {/* Signed URLs expire; the list is refetched when the window regains focus, which renews them. */}
-        <Button
-          type="link"
-          icon={<ExportOutlined />}
-          href={material.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Xem/Tải xuống ${material.title} (mở tab mới)`}
-        >
-          Xem/Tải xuống
-        </Button>
+        {material.url &&
+          (isMidiFile(material.fileName) ? (
+            <Button type="link" icon={<DownloadOutlined />} href={material.url} aria-label={`Tải xuống ${material.title}`}>
+              Tải xuống
+            </Button>
+          ) : (
+            <Button
+              type="link"
+              icon={<ExportOutlined />}
+              href={material.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Xem/Tải xuống ${material.title} (mở tab mới)`}
+            >
+              Xem/Tải xuống
+            </Button>
+          ))}
+        {onExtractLyrics && material.kind === 'sheetMusic' && material.url && (
+          <Button
+            icon={<BulbOutlined />}
+            loading={extractingId === material.id}
+            disabled={extractingId !== undefined && extractingId !== material.id}
+            onClick={() => onExtractLyrics(material)}
+            aria-label={`Trích lời từ ${material.title}`}
+          >
+            Trích lời
+          </Button>
+        )}
         {onProgress && (
           <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Xem tiến độ học ${material.title}`}>
             Xem tiến độ học
           </Button>
         )}
         {/* Icon-only actions: the tooltip shows on hover and keyboard focus what the aria-label says. */}
-        {onReplace && (
+        {/* Typed lyrics have no file to replace; they are edited as text. */}
+        {onReplace && material.lyricsText === null && (
           <Tooltip title="Thay file" trigger={['hover', 'focus']}>
             <Button type="text" icon={<SwapOutlined />} onClick={() => onReplace(material)} aria-label={`Thay file ${material.title}`} />
           </Tooltip>
@@ -161,7 +205,15 @@ function MaterialRow({ material, onDelete, onEdit, onProgress, onReplace }: Read
           </Tooltip>
         )}
       </Flex>
-      {isAudio(material) && <AudioWaveform url={material.url} title={material.title} />}
+      {material.url && isPlayableAudio(material) && <AudioWaveform url={material.url} title={material.title} />}
+      {material.lyricsText !== null && (
+        <Typography.Paragraph
+          ellipsis={{ rows: 4, expandable: 'collapsible', symbol: (expanded) => (expanded ? 'Thu gọn' : 'Xem hết lời') }}
+          style={{ margin: 0, whiteSpace: 'pre-line' }}
+        >
+          {material.lyricsText}
+        </Typography.Paragraph>
+      )}
     </Flex>
   )
 }
@@ -170,7 +222,7 @@ function MaterialRow({ material, onDelete, onEdit, onProgress, onReplace }: Read
  * Materials grouped by the four FE-08/FE-28 kinds, each with its own upload action: the "Tài liệu" tab of the song page
  * and the body of the Parish Priest's materials drawer.
  */
-export function SongMaterialsPanel({ materials, uploadingKind, onPick, ...actions }: Readonly<SongMaterialsPanelProps>) {
+export function SongMaterialsPanel({ materials, uploadingKind, onPick, onTypeLyrics, ...actions }: Readonly<SongMaterialsPanelProps>) {
   return (
     <div>
       {materialKinds.map((kind, index) => {
@@ -185,7 +237,14 @@ export function SongMaterialsPanel({ materials, uploadingKind, onPick, ...action
                 <Typography.Title id={headingId} level={2} style={{ margin: 0, fontSize: typography.cardHeading.fontSize }}>
                   {materialKindLabels[kind]}
                 </Typography.Title>
-                {onPick && <UploadButton kind={kind} label="Tải lên" hintId={hintId} loading={uploadingKind === kind} onPick={onPick} />}
+                <Flex gap={spacing.xs}>
+                  {kind === 'lyrics' && onTypeLyrics && (
+                    <Button icon={<FormOutlined />} onClick={onTypeLyrics}>
+                      Gõ lời
+                    </Button>
+                  )}
+                  {onPick && <UploadButton kind={kind} label="Tải lên" hintId={hintId} loading={uploadingKind === kind} onPick={onPick} />}
+                </Flex>
               </Flex>
               {/* The limits are known before a file is picked, not only when a wrong one is refused. */}
               {onPick && (
@@ -193,7 +252,9 @@ export function SongMaterialsPanel({ materials, uploadingKind, onPick, ...action
                   id={hintId}
                   style={{ margin: `0 0 ${spacing.sm}px`, color: colors.textMuted, fontSize: typography.metadata.fontSize }}
                 >
-                  Nhận tệp {materialExtensions[kind].join(', ')}, tối đa {maxMaterialBytes / 1024 / 1024} MB.
+                  Nhận tệp {materialExtensions[kind].join(', ')}, tối đa {maxMaterialBytes / 1024 / 1024} MB
+                  {kind === 'lyrics' && ', hoặc gõ lời trực tiếp'}
+                  {kind === 'sheetMusic' && actions.onExtractLyrics && '. Nút Trích lời nhờ AI đọc lời trên bản nhạc'}.
                 </Typography.Paragraph>
               )}
               {items.length > 0 ? (

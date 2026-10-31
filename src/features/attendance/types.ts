@@ -1,7 +1,6 @@
 /**
  * Actual attendance at a rehearsal session (FE-45): `AttendanceStatus` of Harmonia-BE (Present, Absent, Late,
  * Excused), which settles the late / excused question left open on 2026-09-29 (rehearsal-attendance.md).
- * TBD: Backend API missing – the entity has no controller yet.
  */
 export type AttendanceValue = 'present' | 'absent' | 'late' | 'excused'
 

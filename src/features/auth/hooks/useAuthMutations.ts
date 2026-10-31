@@ -26,5 +26,5 @@ export function useChangePassword() {
 export function useSignOut() {
   const queryClient = useQueryClient()
   // Cached data belongs to the signed-out user; the next account must not see it.
-  return useMutation({ mutationFn: signOut, onSuccess: () => queryClient.clear() })
+  return useMutation({ mutationFn: (everywhere?: boolean) => signOut(everywhere), onSuccess: () => queryClient.clear() })
 }

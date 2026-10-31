@@ -60,12 +60,15 @@ export async function resetPassword(values: PasswordResetValues): Promise<void> 
 }
 
 /**
- * Revokes the refresh token on the server, then forgets the session on this device. The local session is
- * cleared even when the server call fails, so the user is never stuck signed in.
+ * Revokes the refresh token on the server (`everywhere`: every refresh token of the account, POST
+ * /api/auth/logout-all), then forgets the session on this device. The local session is cleared even when the server
+ * call fails, so the user is never stuck signed in.
  */
-export async function signOut(): Promise<void> {
+export async function signOut(everywhere = false): Promise<void> {
   try {
-    if (getSession()?.refreshToken) {
+    if (everywhere) {
+      await apiRequest<void>('/api/auth/logout-all', { method: 'POST' })
+    } else if (getSession()?.refreshToken) {
       // Built per attempt: logout requires a valid access token, so an expired one is refreshed first and the
       // retry must revoke the rotated refresh token, not the one the refresh already revoked.
       await apiRequest<void>('/api/auth/logout', () => ({
@@ -74,8 +77,8 @@ export async function signOut(): Promise<void> {
       }))
     }
   } catch {
-    // ponytail: a failed revoke leaves the refresh token valid on the server until it expires; retrying
-    // or calling /api/auth/logout-all would close that gap if it matters.
+    // ponytail: a failed revoke leaves the refresh token valid on the server until it expires; retrying would
+    // close that gap if it matters.
   } finally {
     clearSession()
   }
