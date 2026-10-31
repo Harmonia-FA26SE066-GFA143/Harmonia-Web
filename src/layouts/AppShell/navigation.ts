@@ -57,7 +57,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
         label: 'Phụng vụ & lịch',
         items: [
           { path: paths.priest.calendar, label: 'Lịch phụng vụ', icon: CalendarOutlined },
-          { path: paths.priest.programs, label: 'Danh sách chương trình', icon: UnorderedListOutlined },
+          { path: paths.priest.programs, label: 'Chương trình phụng vụ', icon: UnorderedListOutlined },
         ],
       },
       { label: 'Trao đổi', items: [{ path: paths.priest.notes, label: 'Ghi chú cho Ca trưởng', icon: MessageOutlined }] },
@@ -90,7 +90,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
           { path: paths.director.rehearsals, label: 'Lịch tập', icon: ScheduleOutlined },
           { path: paths.director.attendance, label: 'Điểm danh', icon: CheckSquareOutlined },
           { path: paths.director.participation, label: 'Xác nhận tham gia', icon: UsergroupAddOutlined },
-          { path: paths.director.roster, label: 'Phân công phục vụ', icon: TeamOutlined },
+          { path: paths.director.roster, label: 'Phân công', icon: TeamOutlined },
           { path: paths.director.practice, label: 'Luyện tập', icon: SoundOutlined },
         ],
       },
