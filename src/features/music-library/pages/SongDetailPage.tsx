@@ -157,10 +157,14 @@ export function SongDetailPage() {
 
   const lyricsTitle = `Lời ${data.title}`.slice(0, 200)
 
-  // The draft is not saved: the director reads it in the lyrics form and saves it as typed lyrics.
+  // The draft is not saved: the director reads it in the lyrics form and saves it as typed lyrics. A sheet with no
+  // printed lyrics answers an empty text (GeminiLyricsExtractor), so there is nothing to open.
   const handleExtractLyrics = (material: SongMaterial) =>
     extract.mutate(material.id, {
-      onSuccess: (lyricsText) => setPicked({ kind: 'lyrics', lyricsText, title: lyricsTitle }),
+      onSuccess: (lyricsText) =>
+        lyricsText.trim()
+          ? setPicked({ kind: 'lyrics', lyricsText, title: lyricsTitle })
+          : message.info(`Không tìm thấy lời trên “${material.title}”. Bạn có thể gõ lời trực tiếp.`),
       onError: (error) => message.error(extractLyricsErrorMessage(error)),
     })
 
