@@ -1,9 +1,10 @@
 import { MenuOutlined } from '@ant-design/icons'
-import { Button, Drawer, Flex, Grid, Layout, Menu, Typography, type MenuProps } from 'antd'
+import { Button, ConfigProvider, Drawer, Flex, Grid, Layout, Menu, Typography, type MenuProps } from 'antd'
 import { createElement, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { BrandMark, OfflineNotice } from '@/shared/ui'
-import { colors, layout, sizes, spacing, typography } from '@/styles/tokens'
+import { spineTheme } from '@/app/theme'
+import { colors, layout, sizes, spacing, spine, typography } from '@/styles/tokens'
 import { getSession } from '@/lib/auth/session'
 import { roleByApiName } from '@/shared/types/account'
 import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection, type Surface } from './navigation'
@@ -26,15 +27,21 @@ function toMenuItems(sections: NavSection[]): MenuProps['items'] {
   }))
 }
 
-function Brand({ subtitle }: Readonly<{ subtitle: string }>) {
+function Brand({ subtitle, onSpine }: Readonly<{ subtitle: string; onSpine?: boolean }>) {
   return (
     <Flex align="center" gap={spacing.sm}>
       <BrandMark size={32} />
       <Flex vertical style={{ lineHeight: 1.25, minWidth: 0 }}>
-        <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize, color: colors.textPrimary }}>
+        <Typography.Text
+          strong
+          style={{ fontSize: typography.cardHeading.fontSize, color: onSpine ? colors.surface : colors.textPrimary }}
+        >
           Harmonia
         </Typography.Text>
-        <Typography.Text ellipsis style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+        <Typography.Text
+          ellipsis
+          style={{ fontSize: typography.metadata.fontSize, color: onSpine ? spine.groupTitle : colors.textMuted }}
+        >
           {subtitle}
         </Typography.Text>
       </Flex>
@@ -44,7 +51,8 @@ function Brand({ subtitle }: Readonly<{ subtitle: string }>) {
 
 /**
  * Authenticated application frame: role sidebar, header with user menu, and page content.
- * The sidebar is a white panel beside the page with neutral chrome; colour is kept for the data (2026-10-30).
+ * The desktop sidebar is the songbook's burgundy spine (owner 2026-10-31); area colours stay on the data, not on the
+ * navigation or the page ground (2026-10-30).
  * Below the md breakpoint (768px) the sidebar moves into a drawer.
  */
 export function AppShell() {
@@ -100,17 +108,16 @@ export function AppShell() {
             top: 0,
             height: '100vh',
             overflow: 'auto',
-            background: colors.surface,
-            borderInlineEnd: `1px solid ${colors.border}`,
+            background: spine.background,
             // The Choir Director menu is taller than a laptop screen: a thin, quiet scrollbar.
             scrollbarWidth: 'thin',
-            scrollbarColor: `${colors.mutedBorder} transparent`,
+            scrollbarColor: `${spine.selected} transparent`,
           }}
         >
           <div style={{ padding: `${spacing.lg}px ${spacing.lg}px ${spacing.md}px` }}>
-            <Brand subtitle={subtitle} />
+            <Brand subtitle={subtitle} onSpine />
           </div>
-          {menu}
+          <ConfigProvider theme={spineTheme}>{menu}</ConfigProvider>
         </Sider>
       )}
       <Layout>
