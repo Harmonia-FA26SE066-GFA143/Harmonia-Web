@@ -24,6 +24,8 @@ export function useReviewSongList() {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: reviewKey }),
         queryClient.invalidateQueries({ queryKey: ['liturgical-events'] }),
+        // The program pages read the same list's status and songs.
+        queryClient.invalidateQueries({ queryKey: ['liturgical-programs'] }),
       ]),
   })
 }
