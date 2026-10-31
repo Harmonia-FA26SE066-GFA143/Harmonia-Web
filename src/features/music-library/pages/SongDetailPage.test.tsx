@@ -251,6 +251,17 @@ describe('SongDetailPage', () => {
     expect(await screen.findByText('Đã lưu lời bài hát.')).toBeInTheDocument()
   })
 
+  it('says so when the AI finds no lyrics on the sheet, without opening an empty form', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'extractLyrics').mockResolvedValue('')
+    renderDetail('materials')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Trích lời từ Bản nhạc SATB' }))
+
+    expect(await screen.findByText('Không tìm thấy lời trên “Bản nhạc SATB”. Bạn có thể gõ lời trực tiếp.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
   it('refuses a file the backend would reject without uploading it', async () => {
     withSong()
     const upload = vi.spyOn(songsApi, 'uploadMaterial')
