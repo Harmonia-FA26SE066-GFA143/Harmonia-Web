@@ -1,6 +1,6 @@
 # Song-List Approval and Music Library
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@43dfe31` and 2026-10-27 at `main@d1ca63e`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@43dfe31`, 2026-10-27 at `main@d1ca63e` and 2026-10-31 at `main@d394db4`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 FE-17–FE-20, FE-30–FE-32, LI-03
 
@@ -9,7 +9,7 @@ Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at 
 - The Choir Director revises the list based on feedback (FE-32); the final approved list is available for the event (FE-20).
 - Approval depends on authorized users and is not fully automated (LI-03).
 
-## BE contract (verified `a6af23e`, re-checked `d1ca63e`, `SongListService.cs`)
+## BE contract (verified `a6af23e`, re-checked `d394db4`, `SongListService.cs`)
 
 - **Statuses**: `Draft`, `Submitted`, `Approved`, `Rejected`, `NeedsRevision` (`SongListStatus.cs`). There is no Suspended, Superseded or Finalized state for a song list.
 - **Versions**: each event has numbered versions. A new version is created only when there is none or the newest was Rejected or NeedsRevision; the new version starts as Draft, links to the previous one, and carries its own items (`:68-133`). A Draft is edited in place by replacing its items (`:135-179`). An event with an Approved version accepts no new version (`SONG_LIST_EVENT_HAS_APPROVED_VERSION`).
@@ -23,11 +23,12 @@ Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at 
 - **Classification** (`d1ca63e`): besides season, Mass type, ceremony type and theme, a song is classified by **liturgical slot** (Nhập lễ, Đáp ca…, `ClassificationTarget.LiturgicalSlot`). **Themes form a tree** of any depth (`SongTheme.ParentId`): no cycle, no active theme under a switched-off one (`SONG_THEME_PARENT_INVALID`), no switching off a theme with active sub-themes (`SONG_THEME_HAS_ACTIVE_CHILDREN`) (`LookupService.cs:170-198`); filtering songs by a theme also finds its sub-themes' songs. Each vocal and instrument requirement of a song has a **count** (`requiredCount`, 1–50, default 1).
 - **Song suggestions** for an event (`GET api/liturgical-events/{id}/song-suggestions?slotId=`, Parish Priest and Choir Director): +3 for the slot, +2 for the Mass or ceremony type, +2 for the season; a song classified only under another season or slot is left out, and a song with no classification at all is never suggested; ties go first to songs matching on more dimensions, then to the longest unsung, **never-sung first** (`SongSuggestionService.cs:14-54`). Suggestions are only proposals; any library song can still be chosen.
 - **Personnel requirements are pre-filled** on create and edit of a list (see `roster.md`), so editing a list no longer drops the requirements already set.
+- **Materials** (`d394db4`, `MusicMaterialService.cs`): at most 20 MB; sheet music `.pdf`, `.png`, `.jpg`; **lyrics** a `.docx` file **or** typed text (`lyricsText`, ≤ 20 000 characters, exactly one of the two, `MATERIAL_LYRICS_SOURCE_INVALID`); sample audio `.mp3`, `.m4a`, `.wav`, `.mid`, `.midi`; rehearsal material any of these (`:25-36, 361-366`). Lyrics in `.pdf`/`.png`/`.jpg` uploaded before stay readable; replacing their file needs a `.docx`; typed lyrics have no file and are edited as text. A **MIDI** file is rendered on upload into audio and note data for the mobile player, with an `instrument` (Piano, Organ, Guitar, StringEnsemble); a file the renderer refuses answers `422 MIDI_*` (`ErrorStatusMap.cs:107-110`); browsers cannot play MIDI, so the Web offers it as a download. The Choir Director can ask the AI for a **draft of the lyrics** printed on a sheet music file (`POST …/{id}/extract-lyrics`, nothing saved, `:255-267`). Searching songs by keyword also matches the text of active typed lyrics (`SongRepository.cs`).
 
 ## Owner decisions still standing (BE silent)
 
 - Each song is classified from catalogs (5a.1); the BE now covers the dimensions (season, Mass type, ceremony type, theme tree, liturgical slot) and the requirements with counts, see above. Song title is required; an author/composer field exists (5a.4).
-- Materials: sample audio as MP3, sheet music as PDF (5a.3); size limits for other material types are not decided.
+- Materials: the owner's "sample audio as MP3, sheet music as PDF" (5a.3) is superseded by the BE formats above.
 - No revision-round limit (5b.7).
 
 ## Not in the BE (do not build)
