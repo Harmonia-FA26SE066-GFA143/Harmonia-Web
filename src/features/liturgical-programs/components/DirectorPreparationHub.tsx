@@ -236,7 +236,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                   <Flex align="center" gap={spacing.xs}>
                     <UsergroupAddOutlined style={{ color: colors.primary, fontSize: 17 }} />
                     <Typography.Text strong style={{ fontSize: 15 }}>
-                      1. Xác nhận tham gia
+                      Xác nhận tham gia
                     </Typography.Text>
                   </Flex>
                   {totalInvited === 0 ? (
@@ -287,7 +287,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
             </Card>
           </Col>
 
-          {/* Step 2: Buổi tập & Điểm danh */}
+          {/* Step 2: Buổi tập và điểm danh */}
           <Col xs={24} lg={12}>
             <Card
               size="small"
@@ -306,7 +306,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                   <Flex align="center" gap={spacing.xs}>
                     <ScheduleOutlined style={{ color: colors.primary, fontSize: 17 }} />
                     <Typography.Text strong style={{ fontSize: 15 }}>
-                      2. Buổi tập & Điểm danh
+                      Buổi tập và điểm danh
                     </Typography.Text>
                   </Flex>
                   {rehearsalsTotal === 0 ? (
@@ -356,7 +356,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
             </Card>
           </Col>
 
-          {/* Step 3: Bài tập & Luyện tập */}
+          {/* Step 3: Bài tập và luyện tập */}
           <Col xs={24} lg={12}>
             <Card
               size="small"
@@ -375,7 +375,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                   <Flex align="center" gap={spacing.xs}>
                     <SoundOutlined style={{ color: colors.primary, fontSize: 17 }} />
                     <Typography.Text strong style={{ fontSize: 15 }}>
-                      3. Bài tập & Luyện tập
+                      Bài tập và luyện tập
                     </Typography.Text>
                   </Flex>
                   {practiceExpected === 0 ? (
@@ -459,7 +459,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                   <Flex align="center" gap={spacing.xs}>
                     <TeamOutlined style={{ color: colors.primary, fontSize: 17 }} />
                     <Typography.Text strong style={{ fontSize: 15 }}>
-                      4. Phân công phục vụ
+                      Phân công phục vụ
                     </Typography.Text>
                   </Flex>
                   {!songListApproved ? (
@@ -487,7 +487,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                         <strong style={numeric}>{activeAssignments}</strong> lượt ca viên
                       </Typography.Text>
                       {shortages.length > 0 && (
-                        <Typography.Text type="danger" style={{ fontSize: 13 }}>
+                        <Typography.Text style={{ fontSize: 13 }}>
                           Còn thiếu nhân sự cho <strong style={numeric}>{shortages.length}</strong> vị trí
                         </Typography.Text>
                       )}

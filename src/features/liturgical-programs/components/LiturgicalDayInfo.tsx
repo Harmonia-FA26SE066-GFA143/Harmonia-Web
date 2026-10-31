@@ -1,6 +1,7 @@
 import { SyncOutlined } from '@ant-design/icons'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { App, Button, Flex, Tag, Typography } from 'antd'
+import { SeasonChip } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { calendarErrorMessage } from '../calendarErrors'
 import { useSyncLiturgicalDays } from '../hooks/useLiturgicalDays'
@@ -29,12 +30,12 @@ export function LiturgicalDayInfo({ date, days }: Readonly<{ date: string; days:
     return <Typography.Text style={muted}>Chưa có ngày phụng vụ cho ngày này. Đồng bộ lịch phụng vụ của năm để hiển thị.</Typography.Text>
   }
 
-  const { celebrationName, rank, seasonName } = day
+  const { celebrationName, rank, seasonKey, seasonName } = day
   return (
     <Flex align="center" gap={spacing.xs} wrap>
       <Typography.Text strong>{celebrationName}</Typography.Text>
       {rank && <Tag style={{ marginInlineEnd: 0 }}>{rank}</Tag>}
-      {seasonName && <Tag style={{ marginInlineEnd: 0 }}>{seasonName}</Tag>}
+      {seasonName && <SeasonChip seasonKey={seasonKey} seasonName={seasonName} />}
     </Flex>
   )
 }

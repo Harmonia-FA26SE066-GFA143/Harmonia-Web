@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { vietnamToday } from '@/lib/api/dates'
-import { getProgram, listPrograms } from '../api/programsApi'
+import { getProgram, getSongCredits, listPrograms } from '../api/programsApi'
 import type { EventPage } from '../api/eventsApi'
 import type { EventFilters } from '../types'
 
@@ -30,4 +30,14 @@ export function useUpcomingPrograms() {
 
 export function useProgram(id: string) {
   return useQuery({ queryKey: [...programsKey, id], queryFn: () => getProgram(id) })
+}
+
+/** Composer, lyricist and material count of a listed song; they rarely change while a list is read. */
+export function useSongCredits(songId?: string) {
+  return useQuery({
+    queryKey: ['songs', 'credits', songId],
+    queryFn: () => getSongCredits(songId ?? ''),
+    enabled: Boolean(songId),
+    staleTime: 5 * 60_000,
+  })
 }

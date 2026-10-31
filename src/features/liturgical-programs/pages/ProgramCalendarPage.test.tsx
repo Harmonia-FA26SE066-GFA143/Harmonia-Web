@@ -93,7 +93,8 @@ describe('ProgramCalendarPage', () => {
       [`/api/liturgical-days?fromDate=${today.startOf('month').format('YYYY-MM-DD')}&toDate=${today.endOf('month').format('YYYY-MM-DD')}`],
     ])
     expect(screen.getByText('Lễ trọng')).toBeInTheDocument()
-    expect(screen.getByText('Mùa Thường Niên')).toBeInTheDocument()
+    // The season chip of the day panel, and the one opening the season in its cell.
+    expect(screen.getAllByText('Mùa Thường Niên')).toHaveLength(2)
   })
 
   it('syncs the year on view after asking, since the backend overwrites it', async () => {

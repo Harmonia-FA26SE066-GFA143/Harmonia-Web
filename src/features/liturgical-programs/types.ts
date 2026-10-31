@@ -46,9 +46,19 @@ export interface LiturgicalProgram {
 
 export interface ProgramSong {
   id: string
+  songId?: string
   /** Liturgical slot (Ca nhập lễ, Đáp ca…). */
   liturgicalPart?: string
   title: string
+  /** The Choir Director's note on this song. */
+  note?: string
+}
+
+/** Who wrote a song and how many materials it has (`SongDto`), for a program's reading list. */
+export interface SongCredits {
+  composer?: string
+  lyricist?: string
+  materials: number
 }
 
 export interface LiturgicalProgramDetail extends LiturgicalProgram {
@@ -154,6 +164,8 @@ export interface LiturgicalDay {
   celebrationName: string
   /** E.g. "Lễ trọng"; absent on a weekday. */
   rank?: string
+  /** The calendar's season code, kept in English: Advent, Christmas, Lent, Easter or OrdinaryTime. */
+  seasonKey?: string
   /** E.g. "Mùa Thường Niên". */
   seasonName?: string
 }

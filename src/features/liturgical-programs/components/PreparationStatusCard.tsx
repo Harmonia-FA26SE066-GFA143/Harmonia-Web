@@ -33,7 +33,8 @@ function shortageLines(shortages: PreparationStatus['rosterShortages']) {
   }
   if (shortages.length === 0) return <Typography.Text style={muted}>Đủ người cho các vị trí đã khai.</Typography.Text>
   return shortages.map((shortage) => (
-    <Typography.Text key={`${shortage.songTitle ?? 'whole-service'}-${shortage.skillName}`} type="danger">
+    // A shortage is said in words, not in red (brief §12.7).
+    <Typography.Text key={`${shortage.songTitle ?? 'whole-service'}-${shortage.skillName}`}>
       Thiếu {shortage.skillName} cho {shortage.songTitle ?? 'cả buổi lễ'}: {shortage.assignedCount}/{shortage.requiredCount} người
     </Typography.Text>
   ))
