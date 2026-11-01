@@ -13,12 +13,13 @@ Report 1 requires a valid registered account and says system functions are provi
 
 LI-03: skill declarations, song-list approval, roster finalization, and practice evaluation depend on authorized users and are not fully automated.
 
-## BE contract (verified `a6af23e`, re-checked `d1ca63e`)
+## BE contract (verified `a6af23e`, re-checked `90af733`)
 
 - **Four roles**: `Admin`, `ParishPriest`, `ChoirDirector`, `ChoirMember`. **One role per account** (`User.RoleId`). Instrumentalist is not a role: it is a Choir Member with instrument skills (owner decision C3). Liturgy Committee is not a separate role.
 - **No public registration.** `AuthController` has no register endpoint. The Admin creates accounts with a role (`UsersController.cs:27-30`); the BE generates a 12-character first password and emails it (`UserService.cs:44-81, 170-180`); the account must replace it at the first sign-in (`isPasswordChangeRequired`, `AuthController.cs:46-52`). Password reset by email link and Google sign-in (existing active accounts only) exist (`AuthController.cs:19-24, 71-83`).
 - **Only the Admin** creates, edits (email, name, phone), deactivates or reactivates accounts and assigns roles (`UsersController.cs:14-15`). The Admin cannot deactivate or change the role of their own account, and the last active Admin cannot be deactivated or moved to another role (`UserService.cs:116-124, 149-157`). A role change or deactivation revokes the user's sessions.
-- **Every user** edits their own full name and phone (`PUT /api/auth/me`); email changes go through the Admin.
+- **Every user** edits their own full name and phone (`PUT /api/auth/me`) and replaces or removes their own picture (`PUT` / `DELETE /api/auth/me/avatar`, `.jpg`, `.jpeg`, `.png`, `.webp` ≤ 2 MB, `90af733`); email changes go through the Admin.
+- **Choir Director** (`90af733`): reads the preparation status of the events their choirs serve (B41) and records rehearsal takes (B43).
 - **Choir Member on the web** signs in but only sees the message to use the mobile app (Web `LoginPage.tsx`). There is no self-registration on mobile either.
 - **Reports** (`ReportsController.cs`, `446f429`, `718696c`): service history and song usage for the Parish Priest and the Admin; user activity and the list of exports for the Admin only; rehearsal attendance, participation and assignment completion, their export and the activity trend, for the Admin and the Choir Director; report columns for every role that reads reports.
 - **Song classification and roster tiers** (`d1ca63e`): the Admin edits the people a liturgical slot always needs (`PUT api/lookups/liturgical-slots/{id}/requirements`; every role reads) and the song theme tree; the Parish Priest and the Choir Director read song suggestions and an event's whole-service roles; the lead choir's director sets those roles, notes assignments and finalizes the whole-service lines early (`LookupsController.cs:141-151`, `LiturgicalEventsController.cs:99-120`, `ServiceRostersController.cs:55-66`).

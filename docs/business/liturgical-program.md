@@ -1,12 +1,12 @@
 # Liturgical Programs and Events
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@c091c07` and 2026-10-27 at `main@d1ca63e`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@c091c07`, 2026-10-27 at `main@d1ca63e` and 2026-11-01 at `main@90af733`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 §2, FE-05, FE-15–FE-16, FE-30
 
 The Parish Priest creates or reviews liturgical programs (FE-15) and defines the information of liturgical events (FE-16): event name, date, liturgical season, Mass type, ceremony type, special requirements. Masses, ceremonies, feast days, parish events and performances appear as contexts (§2, FE-05, FE-30).
 
-## BE contract (verified `a6af23e`, re-checked `d1ca63e`)
+## BE contract (verified `a6af23e`, re-checked `90af733`)
 
 - **No weekly program object.** Each liturgical event is its own record. A program on the Web is an event.
 - **Event status**: `Draft` → `Published` → `Cancelled` (`EventStatus.cs`). Create, edit and generate produce or change Drafts without notifying anyone; **publish** notifies the active Choir Directors and Choir Members of the choirs serving the event, or everyone when no choir is set; cancelling a published event notifies the same people; a Draft cancel sends nothing (`LiturgicalEventService.cs:123-239`, `UserRepository.cs:158-170`).
@@ -17,13 +17,14 @@ The Parish Priest creates or reviews liturgical programs (FE-15) and defines the
 - **Liturgical days**: the Priest syncs a civil year from an online Liturgical Calendar API, which overwrites the cached days (`LiturgicalDayService.cs:38-70`). EX-08 (third-party calendar integration out of core scope) is superseded by this implemented endpoint.
 - **Visibility**: the Choir Director lists only published and cancelled events; drafts are the Priest's (`LiturgicalEventsController.cs:21-28`). Since D8 a Choir Director sees only events served by one of their choirs, or with no choir (`ChoirScopeService.cs:59-68`).
 - **Serving choirs** (D8, `718696c`): the Parish Priest replaces the choirs of an event and names the lead (`PUT …/{id}/choirs`, `{ choirIds, leadChoirId }`), choosing among every choir of the parish (`GET /api/choirs`, open to the Priest since `c091c07`). The event must not be cancelled or past; an inactive choir may stay but cannot be added; the lead must be one of the choirs and is empty when there are none (`CHOIR_LEAD_INVALID` inside `VALIDATION_FAILED`) (`ChoirService.cs:198-250`, `UpdateEventChoirsRequestValidator.cs`). The lead choir's director prepares the event (see `roles-permissions.md`).
+- **Liturgical colour** of each day (`90af733`, B45): `LiturgicalDayDto.color` is `white`, `red`, `green`, `purple`, `rose` or `black`, `null` until the year is synced again. The Triduum is still filed under Lent.
 - **Liturgical day names** arrive in Vietnamese too (`celebrationNameVi`, `rankVi`, `seasonNameVi`, `LiturgicalDayDto.cs:17-21`), from a translation table the Admin edits (`api/liturgical-name-translations`).
 
 ## Owner decisions still standing (BE silent)
 
 - Only the Priest edits, publishes and cancels events (also the BE rule).
 - The Choir Director also uses the liturgical calendar (4.7).
-- Preparation status of a published event is shown to the Priest as progress of song list, participation, roster, rehearsals and practice (`GET …/preparation-status`, Priest only). The Choir Director sees the same summary, added up by the Web from four endpoints it may read (Web #246); tbd-backlog B41 asks the BE to admit the director on that route.
+- Preparation status of a published event is shown to the Priest as progress of song list, participation, roster, rehearsals and practice (`GET …/preparation-status`). Since `90af733` (B41) the Choir Director reads it too, for the events their choirs serve.
 
 ## Not in the BE (do not build)
 
