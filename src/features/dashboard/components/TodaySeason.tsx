@@ -17,7 +17,7 @@ export function TodaySeason() {
     return (
       <Flex align="center" gap={spacing.sm}>
         <Typography.Text type="danger">Không thể tải mùa phụng vụ hôm nay.</Typography.Text>
-        <Button size="small" onClick={() => days.refetch()} loading={days.isFetching}>
+        <Button onClick={() => days.refetch()} loading={days.isFetching}>
           Thử lại
         </Button>
       </Flex>
