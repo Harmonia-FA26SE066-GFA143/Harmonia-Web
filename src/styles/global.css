@@ -168,6 +168,77 @@ body {
   color: #fff !important;
 }
 
+/*
+ * Motion (owner 2026-11-01: light continuous motion beside the two moments of brief §12.9). Transform and opacity
+ * only, decelerating like `motion.easeOut` in tokens.ts; the reduced-motion rule above makes each one instant.
+ */
+@keyframes hm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes hm-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes hm-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+@keyframes hm-unroll {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes hm-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* A list arriving as a list: its rows rise in turn, the delay capped at the eighth row. */
+.hm-stagger > * {
+  animation: hm-rise 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hm-stagger > :nth-child(2) { animation-delay: 30ms; }
+.hm-stagger > :nth-child(3) { animation-delay: 60ms; }
+.hm-stagger > :nth-child(4) { animation-delay: 90ms; }
+.hm-stagger > :nth-child(5) { animation-delay: 120ms; }
+.hm-stagger > :nth-child(6) { animation-delay: 150ms; }
+.hm-stagger > :nth-child(7) { animation-delay: 180ms; }
+.hm-stagger > :nth-child(n + 8) { animation-delay: 210ms; }
+
+/* The rehearsal week slides in from the side it was paged to. */
+.hm-week-next {
+  animation: hm-from-right 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hm-week-prev {
+  animation: hm-from-left 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* The season banner's missal ribbon unrolls from the top edge once. */
+.hm-unroll {
+  transform-origin: top;
+  animation: hm-unroll 480ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+}
+
+/* A small acknowledgement: the result appears in place of the button that made it. */
+.hm-pop {
+  animation: hm-pop 150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* A form drawer wraps its panel in the Form (drawerRender), so the footer's submit button submits it; the Form must
    fill the drawer's height, or the panel ends under the footer. */
 .ant-drawer-content-wrapper > form {
@@ -184,16 +255,6 @@ textarea {
   caret-color: #8e3b4b;
 }
 
-.rehearsal-week-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  border-bottom: 1px solid #e6dedf;
-}
-
-.rehearsal-week-day:last-child {
-  border-right: 0 !important;
-}
-
 @media (max-width: 900px) {
   .auth-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -202,22 +263,6 @@ textarea {
 
   .auth-media {
     min-height: 240px;
-  }
-}
-
-@media (max-width: 1100px) {
-  .rehearsal-week-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .rehearsal-week-day {
-    border-bottom: 1px solid #e6dedf;
-  }
-}
-
-@media (max-width: 640px) {
-  .rehearsal-week-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 

@@ -1,4 +1,4 @@
-import { colors, radius } from '@/styles/tokens'
+import { colors, radius, spacing, typography } from '@/styles/tokens'
 import { seasonTone } from './seasonTones'
 
 export interface SeasonChipProps {
@@ -20,15 +20,16 @@ export function SeasonChip({ seasonName, seasonKey, size = 'default' }: Readonly
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: small ? 4 : 6,
+        gap: small ? spacing.xs : spacing.sm,
         maxWidth: '100%',
-        padding: small ? '0 4px' : '0 8px',
+        padding: `0 ${small ? spacing.xs : spacing.sm}px`,
         borderRadius: radius.sm,
         border: `1px solid ${colors.border}`,
         background: colors.ivory,
         color: colors.textBody,
-        fontSize: small ? 11 : 12,
-        lineHeight: small ? '18px' : '22px',
+        // 12px is the smallest text of the scale, even in a calendar cell.
+        fontSize: typography.metadata.fontSize,
+        lineHeight: small ? '20px' : '22px',
         whiteSpace: 'nowrap',
       }}
     >
