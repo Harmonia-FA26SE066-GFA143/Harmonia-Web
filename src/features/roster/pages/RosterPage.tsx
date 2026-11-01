@@ -48,8 +48,8 @@ export function RosterPage() {
   return (
     <>
       <PageHeader
-        title="Yêu cầu nhân sự & Phân công"
-        breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Phân công phục vụ' }]}
+        title="Phân công"
+        breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Phân công' }]}
         description="Bè đồng ca không cần phân công, chỉ cần xác nhận tham gia."
       />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}

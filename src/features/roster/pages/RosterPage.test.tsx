@@ -230,6 +230,8 @@ describe('RosterPage', () => {
     renderRoster()
 
     expect(await screen.findByText('Con Bước Lên Bàn Thờ: thiếu 1 Tenor')).toBeInTheDocument()
+    // The empty position is a dashed slot in words, holding the picker.
+    expect(await screen.findByText('Thiếu 1')).toBeInTheDocument()
     fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Thêm ca viên cho Tenor' }))
     expect(await screen.findByRole('option', { name: 'Giuse Nguyễn Hoàng Long' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Phêrô Lê Minh Tâm' })).toBeInTheDocument()
