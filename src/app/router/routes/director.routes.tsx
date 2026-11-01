@@ -78,7 +78,7 @@ export const directorRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.director.roster,
-    { title: 'Yêu cầu nhân sự & Phân công', breadcrumb: [area, 'Phân công phục vụ'], phase: 6 },
+    { title: 'Phân công', breadcrumb: [area, 'Phân công'], phase: 6 },
     async () => (await import('@/features/roster')).RosterPage,
   ),
   pageRoute(

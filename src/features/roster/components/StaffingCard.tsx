@@ -2,7 +2,7 @@ import { DeleteOutlined, DownOutlined, PlusOutlined, SaveOutlined } from '@ant-d
 import { App, Button, Card, Dropdown, Flex, Input, InputNumber, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import { useRef, useState } from 'react'
 import { CardTitle, FormDrawer, SectionSkeleton, StatusTag } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, radius, spacing, typography } from '@/styles/tokens'
 import {
   useAddAssignment,
   usePersonnelRequirements,
@@ -183,7 +183,7 @@ export function StaffingCard({
         <Flex vertical>
           <Typography.Text strong>{row.skillName}</Typography.Text>
           {coveredByWholeService(row) > 0 && (
-            <Typography.Text style={{ ...muted, fontSize: 12 }}>Cả buổi lễ: {coveredByWholeService(row)} người</Typography.Text>
+            <Typography.Text style={{ ...muted, fontSize: typography.metadata.fontSize }}>Cả buổi lễ: {coveredByWholeService(row)} người</Typography.Text>
           )}
         </Flex>
       ),
@@ -215,6 +215,11 @@ export function StaffingCard({
       render: (_, row) => {
         const isSaved = saved.some((item) => item.skillId === row.skillId)
         const options = candidates(row)
+        const shortage = isSaved ? shortages.find((item) => item.skillId === row.skillId) : undefined
+        const missing = shortage ? shortage.requiredCount - shortage.assignedCount : 0
+        // A song asking more than the whole service has only needs the extra people.
+        const gap = missing > 0 && (coveredByWholeService(row) > 0 ? `Cần thêm ${missing}` : `Thiếu ${missing}`)
+        const covered = isSaved && !shortage
         return (
           <Flex wrap gap={spacing.xs} align="center">
             {linesOf(row.skillId).map((line) => {
@@ -294,47 +299,48 @@ export function StaffingCard({
                 </span>
               )
             })}
-            {editable &&
-              (isSaved ? (
-                <Select
-                  showSearch
-                  optionFilterProp="label"
-                  size="small"
-                  value={null}
-                  aria-label={song ? `Thêm ca viên cho ${row.skillName}` : `Thêm ca viên cho ${row.skillName} (cả buổi lễ)`}
-                  placeholder={options.some((option) => !option.disabled) ? 'Thêm ca viên' : 'Không còn ca viên phù hợp'}
-                  notFoundContent="Không có ca viên đã nhận lời (Xác nhận hoặc Chưa chắc chắn) có kỹ năng này"
-                  options={options}
-                  onChange={(memberId: string) =>
-                    !add.isPending &&
-                    add.mutate(
-                      { songListItemId: song?.id, skillId: row.skillId, memberId },
-                      { onError: failed('Không thể phân công ca viên. Vui lòng thử lại.') },
-                    )
-                  }
-                  style={{ minWidth: 200 }}
-                />
-              ) : (
-                <Typography.Text style={muted}>Lưu yêu cầu trước khi phân công.</Typography.Text>
-              ))}
+            {/* The empty position is the thing to act on (brief §12.7): a dashed slot in words, never red. */}
+            {(gap || (editable && isSaved)) && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: spacing.sm,
+                  padding: gap ? `${spacing.xs}px ${spacing.xs}px ${spacing.xs}px ${spacing.sm}px` : 0,
+                  border: gap ? `1px dashed ${colors.textMuted}` : undefined,
+                  borderRadius: radius.md,
+                }}
+              >
+                {gap && <Typography.Text style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{gap}</Typography.Text>}
+                {editable && isSaved && (
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    size="small"
+                    value={null}
+                    aria-label={song ? `Thêm ca viên cho ${row.skillName}` : `Thêm ca viên cho ${row.skillName} (cả buổi lễ)`}
+                    placeholder={options.some((option) => !option.disabled) ? 'Thêm ca viên' : 'Không còn ca viên phù hợp'}
+                    notFoundContent="Không có ca viên đã nhận lời (Xác nhận hoặc Chưa chắc chắn) có kỹ năng này"
+                    options={options}
+                    onChange={(memberId: string) =>
+                      !add.isPending &&
+                      add.mutate(
+                        { songListItemId: song?.id, skillId: row.skillId, memberId },
+                        { onError: failed('Không thể phân công ca viên. Vui lòng thử lại.') },
+                      )
+                    }
+                    style={{ minWidth: 200 }}
+                  />
+                )}
+              </span>
+            )}
+            {covered && (
+              <StatusTag color="green" style={{ marginInlineEnd: 0 }}>
+                {coveredByWholeService(row) >= row.requiredCount ? 'Đủ (cả buổi lễ)' : 'Đủ người'}
+              </StatusTag>
+            )}
+            {editable && !isSaved && <Typography.Text style={muted}>Lưu yêu cầu trước khi phân công.</Typography.Text>}
           </Flex>
-        )
-      },
-    },
-    {
-      key: 'status',
-      title: 'Tình trạng',
-      width: 130,
-      render: (_, row) => {
-        if (!saved.some((item) => item.skillId === row.skillId)) return <Typography.Text style={muted}>—</Typography.Text>
-        const shortage = shortages.find((item) => item.skillId === row.skillId)
-        if (shortage) {
-          const missing = shortage.requiredCount - shortage.assignedCount
-          // A song asking more than the whole service has only needs the extra people.
-          return <StatusTag color="orange">{coveredByWholeService(row) > 0 ? `Cần thêm ${missing}` : `Thiếu ${missing}`}</StatusTag>
-        }
-        return (
-          <StatusTag color="green">{coveredByWholeService(row) >= row.requiredCount ? 'Đủ (cả buổi lễ)' : 'Đủ người'}</StatusTag>
         )
       },
     },
