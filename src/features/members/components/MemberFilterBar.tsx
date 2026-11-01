@@ -18,16 +18,20 @@ export function MemberFilterBar({ value, onChange, onReset, resultCount }: Reado
   const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
   return (
     <Flex wrap align="end" gap={spacing.sm} style={{ padding: spacing.md }}>
-      <Input
-        allowClear
-        prefix={<SearchOutlined aria-hidden />}
-        placeholder="Tìm theo họ tên hoặc email…"
-        aria-label="Tìm ca viên theo họ tên hoặc email"
-        value={value.search}
-        onChange={(event) => onChange({ ...value, search: event.target.value })}
-        style={{ flex: '1 1 260px', maxWidth: 360 }}
-      />
-      {/* Visible labels: once a value is chosen the placeholder is gone and the two filters would look alike. */}
+      {/* Visible labels: once a value is typed or chosen the placeholder is gone and the fields would look alike. */}
+      <Flex vertical gap={4} style={{ flex: '1 1 260px', maxWidth: 360 }}>
+        <label htmlFor="member-filter-search" style={labelStyle}>
+          Tìm ca viên
+        </label>
+        <Input
+          id="member-filter-search"
+          allowClear
+          prefix={<SearchOutlined aria-hidden />}
+          placeholder="Họ tên hoặc email…"
+          value={value.search}
+          onChange={(event) => onChange({ ...value, search: event.target.value })}
+        />
+      </Flex>
       <Flex vertical gap={4} style={{ flex: '0 1 200px', minWidth: 170 }}>
         <label htmlFor="member-filter-status" style={labelStyle}>
           Trạng thái
