@@ -10,6 +10,9 @@ import { practiceStatusLabels, type ReviewResult } from '../types'
 export interface ReviewDrawerProps {
   /** The submission to open; the drawer is closed without one. */
   submissionId?: string
+  /** A first review started from the row: "Cần sửa" preselected, the comment starting at the moment heard. */
+  initialResult?: ReviewResult
+  initialComment?: string
   onClose: () => void
 }
 
@@ -28,7 +31,7 @@ const resultOptions = [
  * chỉnh sửa", a comment required for the latter (POST …/feedback); later comments may change the result on the
  * member's newest attempt (POST …/comments). Earlier reviews stay as history.
  */
-export function ReviewDrawer({ submissionId, onClose }: Readonly<ReviewDrawerProps>) {
+export function ReviewDrawer({ submissionId, initialResult, initialComment, onClose }: Readonly<ReviewDrawerProps>) {
   const { message } = App.useApp()
   const submission = useSubmission(submissionId)
   const review = useReviewSubmission()
@@ -66,7 +69,7 @@ export function ReviewDrawer({ submissionId, onClose }: Readonly<ReviewDrawerPro
       size={600}
       destroyOnHidden
       drawerRender={(dom) => (
-        <Form<FormValues> layout="vertical" initialValues={{ result: undefined }} onFinish={handleFinish}>
+        <Form<FormValues> layout="vertical" initialValues={{ result: initialResult, comment: initialComment }} onFinish={handleFinish}>
           {dom}
         </Form>
       )}
@@ -120,7 +123,9 @@ export function ReviewDrawer({ submissionId, onClose }: Readonly<ReviewDrawerPro
               { max: 1000, message: 'Nhận xét tối đa 1000 ký tự.' },
               ({ getFieldValue }) => ({
                 validator: (_, value?: string) => {
-                  if (value?.trim() || (!reviewed && getFieldValue('result') !== 'needsRevision')) return Promise.resolve()
+                  // The moment mark alone is not a comment.
+                  const words = value?.replace(/^\[\d+:\d{2}\]/, '').trim()
+                  if (words || (!reviewed && getFieldValue('result') !== 'needsRevision')) return Promise.resolve()
                   const required = reviewed ? 'Vui lòng nhập nhận xét.' : 'Vui lòng nhập nhận xét khi cần chỉnh sửa.'
                   return Promise.reject(new Error(required))
                 },
