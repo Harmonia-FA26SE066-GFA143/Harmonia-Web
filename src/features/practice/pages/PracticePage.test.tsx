@@ -59,8 +59,32 @@ describe('PracticePage', () => {
     expect(await screen.findByText('Giuse Vũ Đình Khôi')).toBeInTheDocument()
     expect(list).toHaveBeenCalledWith('submitted', { pageNumber: 1, pageSize: 20 })
 
-    fireEvent.click(screen.getByText('Cần chỉnh sửa'))
+    fireEvent.click(screen.getByRole('radio', { name: 'Cần chỉnh sửa' }))
     await waitFor(() => expect(list).toHaveBeenCalledWith('needsRevision', { pageNumber: 1, pageSize: 20 }))
+  })
+
+  it('plays a recording in its row with a fresh signed URL', async () => {
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission({ audioUrl: 'https://files.example/old.mp3' })]))
+    const fresh = vi.spyOn(practiceApi, 'getSubmission').mockResolvedValue(submission({ audioUrl: 'https://files.example/fresh.mp3' }))
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+    renderPractice()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Nghe bản thu của Giuse Vũ Đình Khôi' }))
+    await waitFor(() => expect(play).toHaveBeenCalled())
+    expect(fresh).toHaveBeenCalledWith('sub-1')
+    expect(document.querySelector('audio')?.src).toBe('https://files.example/fresh.mp3')
+  })
+
+  it('marks a recording "Đạt" from its row in one click', async () => {
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission()]))
+    const review = vi.spyOn(practiceApi, 'reviewSubmission').mockResolvedValue()
+    renderPractice()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Chấm đạt bản thu của Giuse Vũ Đình Khôi' }))
+    await waitFor(() => expect(review).toHaveBeenCalledWith('sub-1', { result: 'passed' }))
+    // The button becomes its result in the row; no dialog.
+    expect(await screen.findByText('Đã chấm Đạt')).toHaveAttribute('role', 'status')
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('requires a comment for "Cần chỉnh sửa" and records the review', async () => {
@@ -69,10 +93,10 @@ describe('PracticePage', () => {
     const review = vi.spyOn(practiceApi, 'reviewSubmission').mockResolvedValue()
     renderPractice()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Nghe và chấm bản thu của Giuse Vũ Đình Khôi' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
     const dialog = await screen.findByRole('dialog')
     expect(await within(dialog).findByLabelText('Bản thu của Giuse Vũ Đình Khôi')).toBeInTheDocument()
-    fireEvent.click(within(dialog).getByText('Cần chỉnh sửa'))
+    // "Cần chỉnh sửa" comes preselected from the row.
     fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu kết quả' }))
     expect(await within(dialog).findByText('Vui lòng nhập nhận xét khi cần chỉnh sửa.')).toBeInTheDocument()
     expect(review).not.toHaveBeenCalled()

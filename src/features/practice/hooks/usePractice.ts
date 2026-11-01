@@ -46,10 +46,32 @@ export function useSubmission(id?: string) {
   })
 }
 
+/** Reads a submission now, for a fresh signed audio URL right before playback (the URL expires). */
+export function useFetchSubmission() {
+  const queryClient = useQueryClient()
+  return (id: string) => queryClient.fetchQuery({ queryKey: [...practiceKey, 'submission', id], queryFn: () => getSubmission(id), staleTime: 0 })
+}
+
 /** Reloads the queue and the open submission after every attempt: a refusal usually means it changed meanwhile. */
 function usePracticeChange<TVariables>(mutationFn: (variables: TVariables) => Promise<void>) {
   const queryClient = useQueryClient()
   return useMutation({ mutationFn, onSettled: () => queryClient.invalidateQueries({ queryKey: practiceKey }) })
+}
+
+/**
+ * "Đạt" from a row of the queue (brief §12.9): the row shows its ✓ for `holdMs` before the queue reloads and the row
+ * leaves it; a refusal reloads at once.
+ */
+export function usePassSubmission(holdMs = 900) {
+  const queryClient = useQueryClient()
+  const reload = () => queryClient.invalidateQueries({ queryKey: practiceKey })
+  return useMutation({
+    mutationFn: (id: string) => reviewSubmission(id, { result: 'passed' }),
+    onSuccess: () => {
+      setTimeout(reload, holdMs)
+    },
+    onError: reload,
+  })
 }
 
 export const useReviewSubmission = () =>
