@@ -9,6 +9,7 @@ import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSke
 import { cardSurface, colors, spacing } from '@/styles/tokens'
 import { DirectorPreparationHub } from '../components/DirectorPreparationHub'
 import { PreparationSteps } from '../components/PreparationSteps'
+import { DirectorAdjacentNav } from '../components/AdjacentProgramNav'
 import { ProgramHeader } from '../components/ProgramHeader'
 import { ProgramItemList } from '../components/ProgramItemList'
 import { SongListStatusTag } from '../components/SongListStatusTag'
@@ -104,7 +105,12 @@ export function DirectorProgramDetailPage() {
         seasonName={data.seasonName}
         details={details || undefined}
         breadcrumb={breadcrumb}
-        actions={backButton}
+        actions={
+          <>
+            <DirectorAdjacentNav id={data.id} date={data.date} />
+            {backButton}
+          </>
+        }
       />
       {program.isError && (
         <ErrorState title="Không thể cập nhật chương trình" error={program.error} hasData onRetry={() => program.refetch()} retrying={program.isFetching} />

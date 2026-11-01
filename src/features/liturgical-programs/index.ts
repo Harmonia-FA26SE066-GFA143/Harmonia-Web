@@ -1,4 +1,5 @@
 export { DirectorPreparationHub } from './components/DirectorPreparationHub'
+export { EventStatusTag } from './components/EventStatusTag'
 export { EventTable } from './components/EventTable'
 export { ProgramTable } from './components/ProgramTable'
 export { ProgramInfo } from './components/ProgramInfo'
