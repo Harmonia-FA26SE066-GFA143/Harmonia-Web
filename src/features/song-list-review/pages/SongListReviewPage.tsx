@@ -136,7 +136,7 @@ function EarlierVersion({ id }: Readonly<{ id: string }>) {
     return (
       <Flex align="center" gap={spacing.sm} style={divider}>
         <Typography.Text type="danger">Không thể tải phiên bản trước.</Typography.Text>
-        <Button size="small" onClick={() => version.refetch()} loading={version.isFetching}>
+        <Button onClick={() => version.refetch()} loading={version.isFetching}>
           Thử lại
         </Button>
       </Flex>
