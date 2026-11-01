@@ -206,9 +206,9 @@ body {
   }
 }
 
-/* A list arriving as a list: its rows rise in turn, the delay capped at the eighth row. */
+/* A list arriving as a list: its rows rise in turn, 30ms apart, the delay capped at 180ms (seventh row on). */
 .hm-stagger > * {
-  animation: hm-rise 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hm-rise 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .hm-stagger > :nth-child(2) { animation-delay: 30ms; }
@@ -217,21 +217,21 @@ body {
 .hm-stagger > :nth-child(5) { animation-delay: 120ms; }
 .hm-stagger > :nth-child(6) { animation-delay: 150ms; }
 .hm-stagger > :nth-child(7) { animation-delay: 180ms; }
-.hm-stagger > :nth-child(n + 8) { animation-delay: 210ms; }
+.hm-stagger > :nth-child(n + 8) { animation-delay: 180ms; }
 
 /* The rehearsal week slides in from the side it was paged to. */
 .hm-week-next {
-  animation: hm-from-right 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hm-from-right 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .hm-week-prev {
-  animation: hm-from-left 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hm-from-left 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* The season banner's missal ribbon unrolls from the top edge once. */
 .hm-unroll {
   transform-origin: top;
-  animation: hm-unroll 480ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+  animation: hm-unroll 300ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
 }
 
 /* A small acknowledgement: the result appears in place of the button that made it. */
@@ -243,6 +243,12 @@ body {
    fill the drawer's height, or the panel ends under the footer. */
 .ant-drawer-content-wrapper > form {
   height: 100%;
+}
+
+/* The type scale stops at 600; `<strong>` (antd Typography `strong`) would otherwise take the browser's 700. */
+strong,
+b {
+  font-weight: 600;
 }
 
 /* Browser surfaces in the brand colour. */
