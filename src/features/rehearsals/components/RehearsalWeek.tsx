@@ -1,5 +1,5 @@
 import { CheckSquareOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Flex, Typography } from 'antd'
+import { Button, Flex, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { generatePath, Link } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -81,8 +81,15 @@ function Session({ rehearsal, programs, onOpen, onTakeAttendance, onEdit, onDele
           {isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
         </Button>
         {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
-        {isUpcoming(rehearsal) && <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${label}`} />}
-        <Button type="text" danger icon={<DeleteOutlined />} onClick={() => onDelete(rehearsal)} aria-label={`Xoá buổi tập ${label}`} />
+        {/* Icon-only: a tooltip on hover and keyboard focus names the action. */}
+        {isUpcoming(rehearsal) && (
+          <Tooltip title="Sửa buổi tập" trigger={['hover', 'focus']}>
+            <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${label}`} />
+          </Tooltip>
+        )}
+        <Tooltip title="Xoá buổi tập" trigger={['hover', 'focus']}>
+          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => onDelete(rehearsal)} aria-label={`Xoá buổi tập ${label}`} />
+        </Tooltip>
       </Flex>
     </Flex>
   )
