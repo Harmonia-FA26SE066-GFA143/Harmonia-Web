@@ -66,19 +66,46 @@ describe('RehearsalsPage', () => {
     renderRehearsals()
 
     expect(await screen.findByRole('heading', { name: 'Chưa có buổi tập nào' })).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /Tạo buổi tập/ }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: /Lên lịch buổi tập/ }).length).toBeGreaterThan(0)
   })
 
-  it('keeps the empty week calendar visible and creates no repeated day empty states', async () => {
+  it('keeps the empty week visible and creates no repeated day empty states', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(page([]))
     renderRehearsals('/director/rehearsals?view=week')
 
     expect(await screen.findByText('Tuần này chưa có buổi tập nào.')).toBeInTheDocument()
-    expect(screen.getByRole('grid', { name: 'Lịch tập theo tuần' })).toBeInTheDocument()
-    expect(screen.getAllByRole('gridcell')).toHaveLength(7)
+    const week = screen.getByRole('list', { name: 'Lịch tập theo tuần' })
+    expect(within(week).getAllByRole('listitem')).toHaveLength(7)
     expect(screen.getAllByLabelText('Không có buổi tập')).toHaveLength(7)
-    expect(screen.getAllByRole('button', { name: /Tạo buổi tập/ }).length).toBeGreaterThan(0)
+    // One action under the sentence besides the header's.
+    expect(screen.getAllByRole('button', { name: /Lên lịch buổi tập/ })).toHaveLength(2)
     expect(screen.queryByText('Không tìm thấy buổi tập phù hợp.')).toBeNull()
+  })
+
+  it('lays the week out as a timeline: sessions of one day by start time, each with its state, program and actions', async () => {
+    const monday = dayjs().subtract((dayjs().day() + 6) % 7, 'day').startOf('day')
+    const inWeek = (day: number, hour: number) => monday.add(day, 'day').hour(hour).toISOString()
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(
+      page([
+        { id: 'w1', eventId: 'p2', locationName: 'Phòng tập nhà xứ', startAt: inWeek(2, 18), endAt: inWeek(2, 20), songs: [{ songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ' }] },
+        { id: 'w2', startAt: inWeek(2, 8), endAt: inWeek(2, 9), songs: [] },
+      ]),
+    )
+    renderRehearsals('/director/rehearsals?view=week')
+
+    const week = await screen.findByRole('list', { name: 'Lịch tập theo tuần' })
+    expect(within(week).getAllByRole('listitem')).toHaveLength(7)
+    const early = within(week).getByText('08:00–09:00')
+    const late = within(week).getByText('18:00–20:00')
+    expect(early.compareDocumentPosition(late) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(await within(week).findByRole('link', { name: 'Lễ Bổn mạng' })).toBeInTheDocument()
+    expect(within(week).getByText('Phòng tập nhà xứ · 1 bài cần tập: Con Bước Lên Bàn Thờ')).toBeInTheDocument()
+    expect(within(week).getByText('Không gắn chương trình')).toBeInTheDocument()
+    expect(within(week).getByText('Chưa chọn bài tập')).toBeInTheDocument()
+    // States are words read from the times; the BE has none.
+    expect(within(week).getAllByText(/^(Sắp tới|Hôm nay|Đã qua)$/)).toHaveLength(2)
+    expect(within(week).getAllByRole('button', { name: /^Xoá buổi tập/ })).toHaveLength(2)
+    expect(screen.queryByText('Tuần này chưa có buổi tập nào.')).toBeNull()
   })
 
   it('filters by the program of the link on the server and names known programs', async () => {
@@ -125,7 +152,7 @@ describe('RehearsalsPage', () => {
       .mockResolvedValue([{ songId: 's9', songTitle: 'Hiệp Lễ Tạ Ơn' }])
     renderRehearsals('/director/rehearsals?programId=p1')
 
-    fireEvent.click(await screen.findByRole('button', { name: /Tạo buổi tập/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Lên lịch buổi tập/ }))
     const dialog = await screen.findByRole('dialog')
     fireEvent.click(within(dialog).getByRole('button', { name: /Lấy bài hát từ danh sách đã duyệt/ }))
 
@@ -142,9 +169,9 @@ describe('RehearsalsPage', () => {
     const save = vi.spyOn(rehearsalsApi, 'saveRehearsal')
     renderRehearsals()
 
-    fireEvent.click(await screen.findByRole('button', { name: /Tạo buổi tập/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Lên lịch buổi tập/ }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo buổi tập' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lên lịch buổi tập' }))
 
     // D8: a new session belongs to one of the director's choirs; with two choirs none is preselected.
     expect(await within(dialog).findByText('Vui lòng chọn ca đoàn.')).toBeInTheDocument()

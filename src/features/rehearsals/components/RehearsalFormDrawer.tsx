@@ -138,8 +138,8 @@ export function RehearsalFormDrawer({
   return (
     <FormDrawer
       open={open}
-      title={rehearsal ? 'Sửa buổi tập' : 'Tạo buổi tập'}
-      okText={rehearsal ? 'Lưu thay đổi' : 'Tạo buổi tập'}
+      title={rehearsal ? 'Sửa buổi tập' : 'Lên lịch buổi tập'}
+      okText={rehearsal ? 'Lưu thay đổi' : 'Lên lịch buổi tập'}
       cancelText="Hủy"
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
