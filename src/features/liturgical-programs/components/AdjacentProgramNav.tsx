@@ -22,7 +22,7 @@ export function AdjacentProgramNav({ previous, next, detailPath }: Readonly<Adja
 
   return (
     <Flex gap={spacing.xs} role="group" aria-label="Chuyển chương trình">
-      <Tooltip title={previous && describe(previous)}>
+      <Tooltip title={previous && describe(previous)} trigger={['hover', 'focus']}>
         <Button
           icon={<LeftOutlined />}
           disabled={!previous}
@@ -32,7 +32,7 @@ export function AdjacentProgramNav({ previous, next, detailPath }: Readonly<Adja
           Lễ trước
         </Button>
       </Tooltip>
-      <Tooltip title={next && describe(next)}>
+      <Tooltip title={next && describe(next)} trigger={['hover', 'focus']}>
         <Button
           icon={<RightOutlined />}
           iconPlacement="end"

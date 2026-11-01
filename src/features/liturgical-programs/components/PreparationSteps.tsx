@@ -15,9 +15,12 @@ export interface PreparationStepsProps {
 
 const ribbonHeight = 36
 
-/** A step fills once the sliding ribbon has reached the next one: the stamp follows the bookmark. */
+/**
+ * A step fills once the sliding ribbon has reached the next one: the stamp follows the bookmark. The colours switch at
+ * that moment without fading, since motion moves only transform and opacity (ux-audit 2026-11-01).
+ */
 const settle = (reduced: boolean) =>
-  reduced ? 'none' : ['background-color', 'border-color', 'color'].map((property) => `${property} 200ms ${motion.easeOut} ${motion.bookmarkMs}ms`).join(', ')
+  reduced ? 'none' : ['background-color', 'border-color', 'color'].map((property) => `${property} 0ms linear ${motion.bookmarkMs}ms`).join(', ')
 
 const markerStyle = (state: StepState, current: boolean, reduced: boolean) => {
   const tone = state === 'waiting' ? sections.attention.cloth : state === 'done' || current ? colors.primary : colors.mutedBorder
