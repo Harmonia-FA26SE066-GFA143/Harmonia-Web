@@ -30,6 +30,7 @@ interface ProgramFields {
 interface EventListItemDto extends ProgramFields {
   status: ApiEventStatus
   latestSongListStatus: ApiSongListStatus | null
+  songListDueDate: string
 }
 
 interface SongListDto {
@@ -61,7 +62,13 @@ export async function listPrograms(filters: EventFilters, page: EventPage): Prom
       ...page,
     })}`,
   )
-  return { ...result, items: result.items.map((dto) => toProgram(dto, dto.status, dto.latestSongListStatus)) }
+  return {
+    ...result,
+    items: result.items.map((dto) => ({
+      ...toProgram(dto, dto.status, dto.latestSongListStatus),
+      songListDueDate: dto.songListDueDate,
+    })),
+  }
 }
 
 const orNullOn404 = <T>(request: Promise<T>): Promise<T | null> =>

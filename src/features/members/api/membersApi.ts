@@ -22,6 +22,7 @@ interface MemberProfileSummaryDto {
   joinedDate: string
   status: ApiMemberStatus
   approvedSkills: { skillId: string; skillName: string }[]
+  avatarUrl: string | null
 }
 
 const skillNames = (dto: MemberProfileSummaryDto) => dto.approvedSkills.map((skill) => skill.skillName)
@@ -61,6 +62,7 @@ const toMemberProfile = (dto: MemberProfileSummaryDto): MemberProfile => ({
   joinedDate: dto.joinedDate,
   status: statusByApi[dto.status],
   skills: skillNames(dto),
+  avatarUrl: dto.avatarUrl ?? undefined,
 })
 
 export async function updateMember(id: string, values: MemberProfileValues): Promise<void> {

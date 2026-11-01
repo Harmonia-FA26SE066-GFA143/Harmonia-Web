@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, AudioOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { Button, Card, Flex, Segmented, Skeleton, Tag, Typography } from 'antd'
+import { Button, Card, Flex, Segmented, Skeleton, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
@@ -7,6 +7,7 @@ import { paths } from '@/app/router/paths'
 import { env } from '@/config/env'
 import { isPlayableAudio, useSongMaterials } from '@/features/music-library'
 import { colors, spacing } from '@/styles/tokens'
+import { RecordingPanel } from '../components/RecordingPanel'
 import type { PracticeRoomView } from '../practiceRoomTypes'
 import { usePracticeRoom } from '../hooks/usePracticeRoom'
 import { useRehearsal } from '../hooks/useRehearsals'
@@ -131,12 +132,8 @@ export function RehearsalPracticeRoomPage() {
               <Card size="small" style={{ background: colors.softSurface }}><Flex gap={spacing.sm} align="center"><AudioOutlined /><Typography.Text type="secondary">Chưa có audio mẫu cho bài hát này</Typography.Text></Flex></Card>
             ) : <audio key={audioUrl} controls src={audioUrl} aria-label={`Nghe ${song.title}${shownPart === 'Tất cả' ? '' : `, bè ${shownPart}`}`} style={{ width: '100%' }} />}
 
-            <Flex wrap gap={spacing.sm} style={{ marginTop: spacing.md }}>
-              <Button disabled icon={<AudioOutlined />}>Thu âm</Button>
-              <Button disabled>Lặp đoạn</Button>
-              <Tag>1x</Tag>
-              <Typography.Text type="secondary">Thu âm tạm thời chưa có hỗ trợ API</Typography.Text>
-            </Flex>
+            {/* The demo room has no rehearsal on the server, so nothing can be recorded there. */}
+            <RecordingPanel rehearsalId={demoFixture ? undefined : room.rehearsalId} songId={song.id} songTitle={song.title} />
           </Card>
         </div>
       )}

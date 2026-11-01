@@ -30,12 +30,12 @@ export function LiturgicalDayInfo({ date, days }: Readonly<{ date: string; days:
     return <Typography.Text style={muted}>Chưa có ngày phụng vụ cho ngày này. Đồng bộ lịch phụng vụ của năm để hiển thị.</Typography.Text>
   }
 
-  const { celebrationName, rank, seasonKey, seasonName } = day
+  const { celebrationName, rank, seasonKey, color, seasonName } = day
   return (
     <Flex align="center" gap={spacing.xs} wrap>
       <Typography.Text strong>{celebrationName}</Typography.Text>
       {rank && <Tag style={{ marginInlineEnd: 0 }}>{rank}</Tag>}
-      {seasonName && <SeasonChip seasonKey={seasonKey} seasonName={seasonName} />}
+      {seasonName && <SeasonChip seasonKey={seasonKey} color={color} seasonName={seasonName} />}
     </Flex>
   )
 }

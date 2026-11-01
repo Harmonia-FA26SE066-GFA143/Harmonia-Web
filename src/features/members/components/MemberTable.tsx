@@ -38,7 +38,7 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
             style={{ display: 'flex', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderTop: `1px solid ${colors.border}` }}
           >
             {/* Neutral: burgundy belongs to the brand and the liturgy, not to member data. */}
-            <Avatar aria-hidden size={40} style={{ flexShrink: 0, background: colors.softSurface, color: colors.textBody, fontWeight: 600 }}>
+            <Avatar aria-hidden size={40} src={member.avatarUrl} style={{ flexShrink: 0, background: colors.softSurface, color: colors.textBody, fontWeight: 600 }}>
               {initial(member.fullName)}
             </Avatar>
             <Flex vertical style={{ flex: 1, minWidth: 0 }}>

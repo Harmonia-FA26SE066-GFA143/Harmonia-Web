@@ -13,7 +13,7 @@ import { DirectorAdjacentNav } from '../components/AdjacentProgramNav'
 import { ProgramHeader } from '../components/ProgramHeader'
 import { ProgramItemList } from '../components/ProgramItemList'
 import { SongListStatusTag } from '../components/SongListStatusTag'
-import { useDirectorPreparation } from '../hooks/useDirectorPreparation'
+import { usePreparationStatus } from '../hooks/useEvents'
 import { useProgram } from '../hooks/usePrograms'
 import { preparationSteps } from '../preparationSteps'
 import { canEditSongList, type LiturgicalProgramDetail, type SongListStatus } from '../types'
@@ -27,7 +27,7 @@ function songListAction(status?: SongListStatus): string {
 
 /** The six numbered steps with the page's one bookmark ribbon, from what the Choir Director may read (#246). */
 function DirectorSteps({ program }: Readonly<{ program: LiturgicalProgramDetail }>) {
-  const prep = useDirectorPreparation(program.id)
+  const prep = usePreparationStatus(program.id)
   const steps = preparationSteps({
     date: program.date,
     songListStatus: program.songListStatus,

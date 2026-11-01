@@ -60,8 +60,12 @@ export const gold = {
 export const seasonColors = {
   purple: { cloth: '#765A83', ink: '#5E4469' },
   green: { cloth: '#657B62', ink: '#4A5E48' },
-  /** Easter Triduum (interpreted, awaiting the owner). Unused: the backend files the Triduum under Lent. */
+  /** Red days (Palm Sunday, Good Friday, Pentecost, martyrs), from the day's liturgical colour (BE 90af733, B45). */
   red: { cloth: '#A53D3D', ink: '#A53D3D' },
+  /** Gaudete and Laetare Sundays: white text 5.1:1 on the cloth, ink 6.2:1 on ivory. */
+  rose: { cloth: '#A55570', ink: '#8A4559' },
+  /** Black (Masses for the dead, where used): white text 12:1, ink on ivory 11:1. */
+  black: { cloth: '#3A3436', ink: '#3A3436' },
 } as const
 
 /**

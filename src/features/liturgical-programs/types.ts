@@ -42,6 +42,11 @@ export interface LiturgicalProgram {
   specialRequirements?: string
   /** Newest song-list version; absent until the Choir Director proposes one. */
   songListStatus?: SongListStatus
+  /**
+   * YYYY-MM-DD: the celebration date minus the `SongList.LeadDays` setting (BE 90af733, B44). A reminder, not enforced.
+   * Only on lists of events (`GET /api/liturgical-events`).
+   */
+  songListDueDate?: string
 }
 
 export interface ProgramSong {
@@ -141,8 +146,8 @@ export interface PreparationStatus {
   /** Absent while the event has no roster. */
   rosterFinalized?: boolean
   rosterActiveAssignments: number
-  /** Absent until the song list is approved: the staffing needs are not known before. */
-  rosterShortages?: StaffingShortage[]
+  /** Empty when every position is staffed, or while there is nothing to staff yet (BE 90af733, B39). */
+  rosterShortages: StaffingShortage[]
   rehearsalsTotal: number
   /** Rehearsals that have already started. */
   rehearsalsHeld: number
@@ -168,4 +173,6 @@ export interface LiturgicalDay {
   seasonKey?: string
   /** E.g. "Mùa Thường Niên". */
   seasonName?: string
+  /** Liturgical colour of the day: white, red, green, purple, rose or black; absent until the year is synced again. */
+  color?: string
 }

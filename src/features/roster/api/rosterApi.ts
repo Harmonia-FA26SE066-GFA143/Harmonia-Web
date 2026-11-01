@@ -125,16 +125,11 @@ export async function getRoster(eventId: string): Promise<ServiceRoster | null> 
 }
 
 /**
- * Positions not fully staffed, also before the event has a roster (FE-37). None while there is neither an approved
- * song list nor a whole-service role (ROSTER_SONG_LIST_NOT_APPROVED).
+ * Positions not fully staffed, also before the event has a roster (FE-37). Empty while there is neither an approved
+ * song list nor a whole-service role (BE 90af733, B39).
  */
-export async function getShortages(eventId: string): Promise<RosterShortage[]> {
-  try {
-    return await apiRequest<RosterShortage[]>(`/api/service-rosters/shortages${toQuery({ eventId })}`)
-  } catch (error) {
-    if (error instanceof ApiError && error.code === 'ROSTER_SONG_LIST_NOT_APPROVED') return []
-    throw error
-  }
+export function getShortages(eventId: string): Promise<RosterShortage[]> {
+  return apiRequest<RosterShortage[]>(`/api/service-rosters/shortages${toQuery({ eventId })}`)
 }
 
 /**

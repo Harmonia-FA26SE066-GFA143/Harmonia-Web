@@ -79,11 +79,11 @@ export async function getLatestSongList(eventId: string): Promise<SongList | nul
 }
 
 /**
- * One version of a list (GET /api/song-lists/{id}, Choir Director and Parish Priest of the event's choirs). No endpoint
- * lists an event's versions; earlier ones are reached through `previousVersionId`.
+ * Every version of the event's list with its items and decisions, newest first (BE 90af733,
+ * `GET /api/song-lists/event/{eventId}/versions`); the Parish Priest does not see drafts.
  */
-export async function getSongList(id: string): Promise<SongList> {
-  return toSongList(await apiRequest<SongListDto>(`/api/song-lists/${id}`))
+export async function listSongListVersions(eventId: string): Promise<SongList[]> {
+  return (await apiRequest<SongListDto[]>(`/api/song-lists/event/${eventId}/versions`)).map(toSongList)
 }
 
 /** The Choir Director who proposed the list is notified of the decision. */

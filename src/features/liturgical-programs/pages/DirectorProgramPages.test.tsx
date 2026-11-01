@@ -102,21 +102,26 @@ describe('DirectorProgramDetailPage', () => {
     expect(await screen.findByTestId('location')).toHaveTextContent('/director/programs/p1/song-list')
   })
 
-  it('sums the preparation from what the Choir Director may read, never the Priest-only status (#246)', async () => {
+  it('shows the preparation status the Choir Director now reads from the backend (BE 90af733, B41)', async () => {
     vi.spyOn(programsApi, 'getProgram').mockResolvedValue({ ...program, songListStatus: 'approved' })
     vi.spyOn(songListsApi, 'getSongList').mockResolvedValue(null)
-    const status = vi.spyOn(eventsApi, 'getPreparationStatus')
-    const member = { rehearsalsHeld: 2, assignmentsTotal: 2, assignmentsPassed: 1, assignmentsOverdue: 0 }
-    vi.spyOn(practiceApi, 'listPreparationProgress').mockResolvedValue([
-      { ...member, memberId: 'm1', fullName: 'An', participationStatus: 'confirmed', rehearsalsAttended: 2 },
-      { ...member, memberId: 'm2', fullName: 'Bình', participationStatus: 'confirmed', rehearsalsAttended: 1 },
-      { ...member, memberId: 'm3', fullName: 'Chi', participationStatus: 'invited', rehearsalsAttended: 0 },
-    ])
+    const status = vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue({
+      songListStatus: 'approved',
+      participation: { invited: 1, confirmed: 2, declined: 0, unsure: 0 },
+      rosterActiveAssignments: 0,
+      rosterShortages: [{ skillName: 'Đàn organ', requiredCount: 1, assignedCount: 0 }],
+      rehearsalsTotal: 3,
+      rehearsalsHeld: 2,
+      attendanceExpected: 6,
+      attendancePresent: 3,
+      practiceExpected: 6,
+      practicePassed: 3,
+      practiceOverdue: 0,
+    })
+    vi.spyOn(practiceApi, 'listPreparationProgress').mockResolvedValue([])
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 1, totalCount: 3, totalPages: 3 })
     vi.spyOn(rosterApi, 'getRoster').mockResolvedValue(null)
-    vi.spyOn(rosterApi, 'getShortages').mockResolvedValue([
-      { songListItemId: null, songTitle: null, skillId: 's1', skillName: 'Đàn organ', requiredCount: 1, assignedCount: 0 },
-    ])
+    vi.spyOn(rosterApi, 'getShortages').mockResolvedValue([])
     renderDetail()
 
     expect(await screen.findByText('2 đã xác nhận')).toBeInTheDocument()
@@ -127,7 +132,7 @@ describe('DirectorProgramDetailPage', () => {
     expect(screen.getByText(/Tỷ lệ có mặt/)).toHaveTextContent('Tỷ lệ có mặt: 50% (3/6 lượt)')
     expect(screen.getByText(/lượt nộp/)).toHaveTextContent('Đạt 3 / 6 lượt nộp')
     expect(screen.getByText(/Còn thiếu nhân sự cho/)).toHaveTextContent('Còn thiếu nhân sự cho 1 vị trí')
-    expect(status).not.toHaveBeenCalled()
+    expect(status).toHaveBeenCalledWith('p1')
   })
 
   it.each([

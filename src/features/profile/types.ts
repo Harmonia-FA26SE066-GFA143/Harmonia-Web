@@ -8,6 +8,8 @@ export interface Profile {
   fullName: string
   email: string
   phone?: string
+  /** Public URL that does not expire (BE 90af733); absent without a picture. */
+  avatarUrl?: string
   role: SystemRole
 }
 

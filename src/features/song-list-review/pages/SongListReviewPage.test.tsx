@@ -34,6 +34,7 @@ beforeEach(() => {
   vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue({
     participation: { invited: 0, confirmed: 0, declined: 0, unsure: 0 },
     rosterActiveAssignments: 0,
+    rosterShortages: [],
     rehearsalsTotal: 0,
     rehearsalsHeld: 0,
     attendanceExpected: 0,
@@ -163,15 +164,18 @@ describe('SongListReviewPage', () => {
     expect(screen.queryByRole('button', { name: 'Yêu cầu sửa' })).toBeNull()
   })
 
-  it('follows previousVersionId to show the decisions on every earlier version', async () => {
+  it('shows the decisions on every earlier version, read in one call (BE 90af733)', async () => {
     vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue({ ...submitted, previousVersionId: 'sl-1' })
-    const version = vi.spyOn(reviewApi, 'getSongList').mockResolvedValue({
+    const earlierVersion = {
       ...submitted,
       id: 'sl-1',
       version: 1,
-      status: 'needsRevision',
-      reviews: [{ id: 'r1', decision: 'requestRevision', notes: 'Đổi bài Ca dâng lễ.', reviewedAt: '2026-10-08T02:00:00Z' }],
-    })
+      status: 'needsRevision' as const,
+      reviews: [{ id: 'r1', decision: 'requestRevision' as const, notes: 'Đổi bài Ca dâng lễ.', reviewedAt: '2026-10-08T02:00:00Z' }],
+    }
+    const versions = vi
+      .spyOn(reviewApi, 'listSongListVersions')
+      .mockResolvedValue([{ ...submitted, previousVersionId: 'sl-1' }, earlierVersion])
     renderReview()
 
     const current = await screen.findByRole('region', { name: 'Phiên bản 2' })
@@ -179,8 +183,9 @@ describe('SongListReviewPage', () => {
     const earlier = await screen.findByRole('region', { name: 'Phiên bản 1' })
     expect(within(earlier).getByText('Yêu cầu sửa')).toBeInTheDocument()
     expect(within(earlier).getByText('“Đổi bài Ca dâng lễ.”')).toBeInTheDocument()
-    // Version 1 has no previous version, so the chain stops there.
-    expect(version).toHaveBeenCalledTimes(1)
-    expect(version).toHaveBeenCalledWith('sl-1')
+    // The current version is listed once, above the history; every earlier one comes from a single call.
+    expect(screen.getAllByRole('region', { name: 'Phiên bản 2' })).toHaveLength(1)
+    expect(versions).toHaveBeenCalledTimes(1)
+    expect(versions).toHaveBeenCalledWith(submitted.eventId)
   })
 })

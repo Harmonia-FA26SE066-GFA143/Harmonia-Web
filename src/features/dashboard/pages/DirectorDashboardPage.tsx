@@ -9,14 +9,14 @@ import {
   PreparationSteps,
   preparationSteps,
   SongListStatusTag,
-  useDirectorPreparation,
+  usePreparationStatus,
   useUpcomingPrograms,
   type LiturgicalProgram,
 } from '@/features/liturgical-programs'
 import { useSubmissions } from '@/features/practice'
 import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
-import { parseUtc } from '@/lib/api/dates'
+import { parseUtc, vietnamToday } from '@/lib/api/dates'
 import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { cardSurface, colors, spacing, typography } from '@/styles/tokens'
 import { TodaySeason } from '../components/TodaySeason'
@@ -46,8 +46,10 @@ interface Task {
   key: string
   /** Starts with the verb. */
   text: ReactNode
-  /** The celebration date the task serves. Not a deadline: the BE has none for song lists (TBD). */
+  /** The celebration date the task serves. */
   when?: string
+  /** When the song list should be sent (`songListDueDate`, B44); a reminder, sending later is accepted. */
+  due?: { date: string; overdue: boolean }
   detail?: ReactNode
   action: ReactNode
 }
@@ -77,6 +79,9 @@ function songListTask(program: LiturgicalProgram, open: () => void): Task | unde
       </>
     ),
     when: formatProgramDate(program.date),
+    due: program.songListDueDate
+      ? { date: formatProgramDate(program.songListDueDate), overdue: program.songListDueDate < vietnamToday() }
+      : undefined,
     detail: sentBack ? (
       <PriestNote programId={program.id} />
     ) : (
@@ -99,7 +104,17 @@ function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: numbe
             <Flex align="center" justify="space-between" gap={spacing.md}>
               <Flex vertical gap={spacing.xs} style={{ minWidth: 0, maxWidth: '72ch' }}>
                 <Typography.Text>{task.text}</Typography.Text>
-                {task.when && <Typography.Text style={muted}>Lễ cử hành {task.when}</Typography.Text>}
+                {(task.due || task.when) && (
+                  <Typography.Text style={muted}>
+                    {task.due && (
+                      <Typography.Text strong={task.due.overdue} style={{ color: task.due.overdue ? colors.primary : 'inherit' }}>
+                        {task.due.overdue ? 'Quá hạn gửi' : 'Hạn gửi'} {task.due.date}
+                      </Typography.Text>
+                    )}
+                    {task.due && task.when && ' · '}
+                    {task.when && `Lễ cử hành ${task.when}`}
+                  </Typography.Text>
+                )}
                 {task.detail}
               </Flex>
               <div style={{ flexShrink: 0 }}>{task.action}</div>
@@ -119,7 +134,7 @@ function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: numbe
 }
 
 /** The next program: date, name, place and season, how far its preparation has come (Bước n/6), and a link out. */
-function NextProgram({ program, prep }: Readonly<{ program: LiturgicalProgram; prep: ReturnType<typeof useDirectorPreparation> }>) {
+function NextProgram({ program, prep }: Readonly<{ program: LiturgicalProgram; prep: ReturnType<typeof usePreparationStatus> }>) {
   const navigate = useNavigate()
   const date = dayjs(program.date)
   const steps = preparationSteps({ date: program.date, songListStatus: program.songListStatus, status: prep.data, failed: prep.isError, viewer: 'director' })
@@ -159,7 +174,7 @@ function NextProgram({ program, prep }: Readonly<{ program: LiturgicalProgram; p
 }
 
 /** The next program's positions still short of people, as dashed "Thiếu N" boxes (brief §12.7: words and a dashed edge, no red). */
-function Parts({ program, prep }: Readonly<{ program: LiturgicalProgram; prep: ReturnType<typeof useDirectorPreparation> }>) {
+function Parts({ program, prep }: Readonly<{ program: LiturgicalProgram; prep: ReturnType<typeof usePreparationStatus> }>) {
   if (prep.isPending) return <SectionSkeleton rows={2} label="Đang tải các vị trí phục vụ" />
   if (prep.isError) {
     return <ErrorState headingLevel={3} title="Không thể tải các vị trí phục vụ" error={prep.error} hasData={false} onRetry={() => prep.refetch()} retrying={prep.isFetching} />
@@ -279,7 +294,7 @@ function Section({ id, title, extra, children }: Readonly<{ id: string; title: s
 
 /** The sections that need the next program's preparation counts, so they are read once for both. */
 function NextProgramSections({ program }: Readonly<{ program: LiturgicalProgram }>) {
-  const prep = useDirectorPreparation(program.id)
+  const prep = usePreparationStatus(program.id)
   return (
     <>
       <Section id="next-heading" title="Lễ sắp tới">

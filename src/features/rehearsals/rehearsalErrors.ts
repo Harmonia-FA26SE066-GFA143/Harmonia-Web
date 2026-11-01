@@ -17,6 +17,11 @@ const messages: Record<string, string> = {
   LITURGICAL_EVENT_CANCELLED: 'Chương trình đã chọn đã bị hủy.',
   SONG_NOT_FOUND: 'Có bài hát đã chọn không còn trong kho.',
   SONG_INACTIVE: 'Có bài hát đã chọn đã bị xoá khỏi kho.',
+  // Practice-room takes (BE 90af733, B43).
+  REHEARSAL_RECORDING_NOT_FOUND: 'Bản thu không còn tồn tại. Danh sách đã được tải lại.',
+  REHEARSAL_RECORDING_REQUIRED: 'Bản thu rỗng. Vui lòng thu lại.',
+  REHEARSAL_RECORDING_TYPE_NOT_ALLOWED: 'Trình duyệt này ghi âm theo định dạng máy chủ chưa nhận. Hãy thử Chrome, Edge hoặc Firefox.',
+  REHEARSAL_RECORDING_TOO_LARGE: 'Bản thu vượt quá 20 MB. Hãy thu đoạn ngắn hơn.',
 }
 
 /** The message of the error code, or of the first field error code (400 VALIDATION_FAILED), else `fallback`. */

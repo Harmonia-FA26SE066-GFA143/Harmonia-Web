@@ -14,6 +14,8 @@ interface LiturgicalDayDto {
   /** Advent, Christmas, Lent, Easter or OrdinaryTime (LiturgicalCalendarApiClient.ToSeason); the Triduum is Lent. */
   seasonName: string | null
   seasonNameVi: string | null
+  /** BE 90af733 (B45); null for days cached before it, until the year is synced again. */
+  color: string | null
 }
 
 /** The cached days between the two dates (YYYY-MM-DD, inclusive); a day of a year not synced yet is absent. */
@@ -25,6 +27,7 @@ export async function listLiturgicalDays(fromDate: string, toDate: string): Prom
     rank: dto.rankVi ?? undefined,
     seasonKey: dto.seasonName ?? undefined,
     seasonName: dto.seasonNameVi ?? undefined,
+    color: dto.color ?? undefined,
   }))
 }
 
