@@ -38,7 +38,7 @@ function Credits({ songId }: Readonly<{ songId?: string }>) {
  */
 export function ProgramItemList({ items, renderAction }: Readonly<ProgramItemListProps>) {
   return (
-    <ol aria-label="Các bài hát theo thứ tự trong lễ" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+    <ol aria-label="Các bài hát theo thứ tự trong lễ" className="hm-stagger" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
       {items.map((item, index) => (
         <li
           key={item.id}

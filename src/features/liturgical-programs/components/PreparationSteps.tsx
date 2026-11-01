@@ -15,7 +15,11 @@ export interface PreparationStepsProps {
 
 const ribbonHeight = 36
 
-const markerStyle = (state: StepState, current: boolean) => {
+/** A step fills once the sliding ribbon has reached the next one: the stamp follows the bookmark. */
+const settle = (reduced: boolean) =>
+  reduced ? 'none' : ['background-color', 'border-color', 'color'].map((property) => `${property} 200ms ${motion.easeOut} ${motion.bookmarkMs}ms`).join(', ')
+
+const markerStyle = (state: StepState, current: boolean, reduced: boolean) => {
   const tone = state === 'waiting' ? sections.attention.cloth : state === 'done' || current ? colors.primary : colors.mutedBorder
   return {
     display: 'inline-flex',
@@ -30,14 +34,15 @@ const markerStyle = (state: StepState, current: boolean) => {
     color: state === 'done' ? colors.surface : state === 'waiting' ? sections.attention.ink : current ? colors.primary : colors.textMuted,
     fontSize: 13,
     fontWeight: 600,
+    transition: settle(reduced),
   } as const
 }
 
 /**
  * The six preparation steps, numbered 1–6, with the current one marked and named in words ("Bước 3/6"), never a
  * percentage. A done step shows a check, a step waiting on the viewer an ochre ring; each step's value states it in
- * words. The optional bookmark ribbon hangs over the current step and slides when it moves (the one motion of the
- * redesign); with reduced motion it moves at once.
+ * words. The optional bookmark ribbon hangs over the current step and slides when it moves (the redesign's focal
+ * motion); the step it leaves fills and takes its check as the ribbon lands. With reduced motion all of it is instant.
  */
 export function PreparationSteps({ steps, bookmark = false }: Readonly<PreparationStepsProps>) {
   const reduced = useReducedMotion()
@@ -87,13 +92,24 @@ export function PreparationSteps({ steps, bookmark = false }: Readonly<Preparati
             return (
               <li key={item.label} aria-current={isCurrent ? 'step' : undefined} style={{ minWidth: 0, paddingInlineEnd: spacing.sm }}>
                 <Flex align="center" style={{ marginBottom: spacing.sm }}>
-                  <span aria-hidden style={markerStyle(item.state, isCurrent)}>
-                    {item.state === 'done' ? <CheckOutlined /> : index + 1}
+                  <span aria-hidden style={markerStyle(item.state, isCurrent, reduced)}>
+                    {/* Keyed by state, so the check pops in when the step is done. */}
+                    {item.state === 'done' ? (
+                      <CheckOutlined key="done" className="hm-pop" style={{ animationDelay: `${motion.bookmarkMs}ms` }} />
+                    ) : (
+                      index + 1
+                    )}
                   </span>
                   {index < steps.length - 1 && (
                     <span
                       aria-hidden
-                      style={{ flex: 1, height: 2, marginInline: spacing.sm, background: item.state === 'done' ? colors.primary : colors.border }}
+                      style={{
+                        flex: 1,
+                        height: 2,
+                        marginInline: spacing.sm,
+                        background: item.state === 'done' ? colors.primary : colors.border,
+                        transition: settle(reduced),
+                      }}
                     />
                   )}
                 </Flex>

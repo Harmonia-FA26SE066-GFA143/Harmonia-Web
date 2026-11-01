@@ -42,7 +42,11 @@ const renderDetail = () => renderPage(<PriestProgramDetailPage />, '/priest/prog
 const confirmDialog = async (title: string | RegExp) =>
   (await screen.findAllByText(title))[0].closest('.ant-modal') as HTMLElement
 
+const eventPage = (items: LiturgicalEvent[]) => ({ items, pageNumber: 1, pageSize: 100, totalCount: items.length, totalPages: 1 })
+
 beforeEach(() => {
+  // The header's "Lễ trước / Lễ sau" read the events around the date.
+  vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(eventPage([]))
   vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([])
   vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
   vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue(preparation)
@@ -67,6 +71,23 @@ describe('PriestProgramDetailPage', () => {
     renderDetail()
 
     expect(await screen.findByRole('heading', { name: 'Không thể tải chương trình' })).toBeInTheDocument()
+  })
+
+  it('moves to the program before or after from the header, in date order', async () => {
+    const get = vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(
+      eventPage([
+        { ...draft, id: 'e0', date: '2099-09-20', title: 'Lễ Chúa Nhật XXV' },
+        draft,
+        { ...draft, id: 'e2', date: '2099-10-04', title: 'Lễ Chúa Nhật XXVII' },
+      ]),
+    )
+    renderDetail()
+
+    expect(await screen.findByRole('button', { name: 'Lễ trước: Lễ Chúa Nhật XXV · 20/09/2099' })).toBeEnabled()
+    fireEvent.click(await screen.findByRole('button', { name: 'Lễ sau: Lễ Chúa Nhật XXVII · 04/10/2099' }))
+    // Same route, next program: the page reads the new id.
+    await waitFor(() => expect(get).toHaveBeenCalledWith('e2'))
   })
 
   it('shows the not-found state for an unknown event', async () => {

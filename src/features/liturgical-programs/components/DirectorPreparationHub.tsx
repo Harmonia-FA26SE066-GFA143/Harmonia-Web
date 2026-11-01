@@ -16,7 +16,7 @@ import { paths } from '@/app/router/paths'
 import { useSongList } from '@/features/song-lists'
 import { parseUtc } from '@/lib/api/dates'
 import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { colors, radius, sections, spacing, typography } from '@/styles/tokens'
 import { useDirectorPreparation } from '../hooks/useDirectorPreparation'
 import type { LiturgicalProgramDetail } from '../types'
 
@@ -76,7 +76,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
           showIcon
           icon={<ExclamationCircleOutlined />}
           title={
-            <Typography.Text strong style={{ fontSize: 15 }}>
+            <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
               Cha xứ yêu cầu chỉnh sửa danh sách bài hát {decidedAt ? `(lúc ${decidedAt})` : ''}
             </Typography.Text>
           }
@@ -109,7 +109,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
           showIcon
           icon={<ExclamationCircleOutlined />}
           title={
-            <Typography.Text strong style={{ fontSize: 15 }}>
+            <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
               Danh sách bài hát đã bị từ chối {decidedAt ? `(lúc ${decidedAt})` : ''}
             </Typography.Text>
           }
@@ -140,7 +140,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
           showIcon
           icon={<ClockCircleOutlined />}
           title={
-            <Typography.Text strong style={{ fontSize: 15 }}>
+            <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
               Danh sách bài hát đang chờ Cha xứ phê duyệt
             </Typography.Text>
           }
@@ -160,7 +160,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
           showIcon
           icon={<CheckCircleOutlined />}
           title={
-            <Typography.Text strong style={{ fontSize: 15 }}>
+            <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
               Danh sách bài hát đã được Cha xứ phê duyệt {decidedAt ? `(lúc ${decidedAt})` : ''}
             </Typography.Text>
           }
@@ -178,7 +178,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
           type="info"
           showIcon
           title={
-            <Typography.Text strong style={{ fontSize: 15 }}>
+            <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
               Chưa đề xuất danh sách bài hát
             </Typography.Text>
           }
@@ -225,7 +225,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               style={{
                 height: '100%',
                 borderRadius: radius.md,
-                background: '#FAFAFA',
+                background: colors.softSurface,
                 display: 'flex',
                 flexDirection: 'column',
               }}
@@ -234,8 +234,8 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               <div>
                 <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
                   <Flex align="center" gap={spacing.xs}>
-                    <UsergroupAddOutlined style={{ color: colors.primary, fontSize: 17 }} />
-                    <Typography.Text strong style={{ fontSize: 15 }}>
+                    <UsergroupAddOutlined style={{ color: colors.primary, fontSize: typography.cardHeading.fontSize }} />
+                    <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
                       Xác nhận tham gia
                     </Typography.Text>
                   </Flex>
@@ -259,7 +259,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                     </Typography.Text>
                   ) : (
                     <Flex vertical gap={2}>
-                      <Typography.Text style={{ fontSize: 13.5 }}>
+                      <Typography.Text style={{ fontSize: typography.fontSize }}>
                         <strong style={numeric}>{confirmedCount}</strong> xác nhận ·{' '}
                         <span style={numeric}>{prep?.participation.unsure ?? 0}</span> chưa chắc chắn ·{' '}
                         <span style={numeric}>{prep?.participation.declined ?? 0}</span> từ chối
@@ -295,7 +295,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               style={{
                 height: '100%',
                 borderRadius: radius.md,
-                background: '#FAFAFA',
+                background: colors.softSurface,
                 display: 'flex',
                 flexDirection: 'column',
               }}
@@ -304,8 +304,8 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               <div>
                 <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
                   <Flex align="center" gap={spacing.xs}>
-                    <ScheduleOutlined style={{ color: colors.primary, fontSize: 17 }} />
-                    <Typography.Text strong style={{ fontSize: 15 }}>
+                    <ScheduleOutlined style={{ color: colors.primary, fontSize: typography.cardHeading.fontSize }} />
+                    <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
                       Buổi tập và điểm danh
                     </Typography.Text>
                   </Flex>
@@ -325,7 +325,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                     </Typography.Text>
                   ) : (
                     <Flex vertical gap={2}>
-                      <Typography.Text style={{ fontSize: 13.5 }}>
+                      <Typography.Text style={{ fontSize: typography.fontSize }}>
                         Đã lên lịch <strong style={numeric}>{rehearsalsTotal}</strong> buổi tập
                       </Typography.Text>
                       {attendanceRate !== undefined && (
@@ -364,7 +364,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               style={{
                 height: '100%',
                 borderRadius: radius.md,
-                background: '#FAFAFA',
+                background: colors.softSurface,
                 display: 'flex',
                 flexDirection: 'column',
               }}
@@ -373,8 +373,8 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               <div>
                 <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
                   <Flex align="center" gap={spacing.xs}>
-                    <SoundOutlined style={{ color: colors.primary, fontSize: 17 }} />
-                    <Typography.Text strong style={{ fontSize: 15 }}>
+                    <SoundOutlined style={{ color: colors.primary, fontSize: typography.cardHeading.fontSize }} />
+                    <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
                       Bài tập và luyện tập
                     </Typography.Text>
                   </Flex>
@@ -399,7 +399,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                   ) : (
                     <Flex vertical gap={4}>
                       <Flex align="center" justify="space-between">
-                        <Typography.Text style={{ fontSize: 13.5 }}>
+                        <Typography.Text style={{ fontSize: typography.fontSize }}>
                           Đạt <strong style={numeric}>{practicePassed}</strong> / {practiceExpected} lượt nộp
                         </Typography.Text>
                         {practiceRate !== undefined && (
@@ -413,7 +413,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                           percent={practiceRate}
                           size="small"
                           showInfo={false}
-                          strokeColor={practiceRate >= 70 ? '#389e0d' : '#d48806'}
+                          strokeColor={sections.practice.cloth}
                         />
                       )}
                     </Flex>
@@ -448,7 +448,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               style={{
                 height: '100%',
                 borderRadius: radius.md,
-                background: '#FAFAFA',
+                background: colors.softSurface,
                 display: 'flex',
                 flexDirection: 'column',
               }}
@@ -457,8 +457,8 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               <div>
                 <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
                   <Flex align="center" gap={spacing.xs}>
-                    <TeamOutlined style={{ color: colors.primary, fontSize: 17 }} />
-                    <Typography.Text strong style={{ fontSize: 15 }}>
+                    <TeamOutlined style={{ color: colors.primary, fontSize: typography.cardHeading.fontSize }} />
+                    <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
                       Phân công phục vụ
                     </Typography.Text>
                   </Flex>
@@ -482,7 +482,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                     </Typography.Text>
                   ) : (
                     <Flex vertical gap={2}>
-                      <Typography.Text style={{ fontSize: 13.5 }}>
+                      <Typography.Text style={{ fontSize: typography.fontSize }}>
                         {rosterFinalized ? 'Đã chốt' : 'Đang phân công'} ·{' '}
                         <strong style={numeric}>{activeAssignments}</strong> lượt ca viên
                       </Typography.Text>

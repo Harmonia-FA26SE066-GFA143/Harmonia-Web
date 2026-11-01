@@ -11,6 +11,7 @@ import { EventForm } from '../components/EventForm'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { PreparationStatusCard } from '../components/PreparationStatusCard'
 import { PreparationSteps } from '../components/PreparationSteps'
+import { PriestAdjacentNav } from '../components/AdjacentProgramNav'
 import { ProgramHeader } from '../components/ProgramHeader'
 import { ProgramItemList } from '../components/ProgramItemList'
 import { SongListStatusTag } from '../components/SongListStatusTag'
@@ -201,6 +202,7 @@ export function PriestProgramDetailPage() {
         breadcrumb={breadcrumb}
         actions={
           <>
+            <PriestAdjacentNav id={data.id} date={data.date} />
             {backButton}
             {!cancelled && (
               <Button icon={<EditOutlined />} onClick={() => setEditing(true)}>

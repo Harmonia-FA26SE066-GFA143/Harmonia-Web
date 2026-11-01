@@ -5,7 +5,7 @@ import { useId, useMemo, useState, type CSSProperties, type KeyboardEvent } from
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { CardTitle, ErrorState, PageHeader, SeasonChip, SectionSkeleton, visuallyHidden } from '@/shared/ui'
-import { cardSurface, colors, priestEvent, radius, spacing } from '@/styles/tokens'
+import { cardSurface, colors, priestEvent, radius, spacing, typography } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
 import { LiturgicalDayInfo, SyncCalendarButton } from '../components/LiturgicalDayInfo'
@@ -110,7 +110,7 @@ export function ProgramCalendarPage() {
       <Flex vertical gap={2}>
         {showSeason && day?.seasonName && <SeasonChip size="small" seasonKey={day.seasonKey} seasonName={day.seasonName} />}
         {celebration && (
-          <Typography.Text ellipsis={{ tooltip: true }} style={{ fontSize: 11, color: colors.textBody }}>
+          <Typography.Text ellipsis={{ tooltip: true }} style={{ fontSize: typography.metadata.fontSize, color: colors.textBody }}>
             {celebration}
           </Typography.Text>
         )}
@@ -120,7 +120,7 @@ export function ProgramCalendarPage() {
             key={event.id}
             ellipsis={{ rows: 2, tooltip: true }}
             delete={event.status === 'cancelled'}
-            style={{ ...eventChip(event.status), margin: 0, fontSize: 12, lineHeight: 1.35 }}
+            style={{ ...eventChip(event.status), margin: 0, fontSize: typography.metadata.fontSize, lineHeight: 1.35 }}
           >
             {/* Published is the usual state; the others carry a named icon, so the status does not rest on color alone
                 and the event's name keeps the cell's two lines. */}
@@ -133,7 +133,7 @@ export function ProgramCalendarPage() {
           </Typography.Paragraph>
         ))}
         {items.length > cellLimit && (
-          <Typography.Text style={{ fontSize: 12, color: colors.textBody }}>+{items.length - cellLimit} khác</Typography.Text>
+          <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textBody }}>+{items.length - cellLimit} khác</Typography.Text>
         )}
       </Flex>
     )
@@ -198,9 +198,9 @@ export function ProgramCalendarPage() {
                       <Flex justify="space-between" align="center" wrap gap={spacing.sm} style={{ paddingBlockEnd: spacing.sm }}>
                         {/* Each key is drawn the way the cells draw it. */}
                         {type === 'month' && screens.md ? (
-                          <Flex component="ul" aria-label="Chú thích lịch" align="center" wrap gap={spacing.md} style={{ listStyle: 'none', margin: 0, padding: 0, fontSize: 12 }}>
+                          <Flex component="ul" aria-label="Chú thích lịch" align="center" wrap gap={spacing.md} style={{ listStyle: 'none', margin: 0, padding: 0, fontSize: typography.metadata.fontSize }}>
                             <li style={eventChip('published')}>Sự kiện do cha xứ tạo</li>
-                            <li style={{ fontSize: 11, color: colors.textBody }}>Ngày phụng vụ đồng bộ từ lịch trực tuyến</li>
+                            <li style={{ fontSize: typography.metadata.fontSize, color: colors.textBody }}>Ngày phụng vụ đồng bộ từ lịch trực tuyến</li>
                           </Flex>
                         ) : (
                           <span />
