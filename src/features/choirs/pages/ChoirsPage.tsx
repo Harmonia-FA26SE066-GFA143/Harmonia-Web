@@ -136,8 +136,8 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
         breadcrumb={admin ? [{ title: 'Quản trị hệ thống' }, { title: 'Ca đoàn' }] : [{ title: 'Ca trưởng' }, { title: 'Ca đoàn' }]}
         description={
           admin
-            ? 'Quản lý các ca đoàn của giáo xứ và ca trưởng phụ trách từng ca đoàn. Một ca viên có thể thuộc nhiều ca đoàn.'
-            : 'Các ca đoàn bạn phụ trách và ca viên trong từng ca đoàn. Một ca viên có thể thuộc nhiều ca đoàn.'
+            ? 'Ca đoàn của giáo xứ và ca trưởng phụ trách. Một ca viên có thể thuộc nhiều ca đoàn.'
+            : 'Ca đoàn bạn phụ trách. Một ca viên có thể thuộc nhiều ca đoàn.'
         }
         extra={addButton}
       />
