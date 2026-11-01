@@ -7,7 +7,7 @@ import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { vietnamToday } from '@/lib/api/dates'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { sizes, spacing } from '@/styles/tokens'
+import { colors, sizes, spacing } from '@/styles/tokens'
 import { RehearsalDetailDrawer } from '../components/RehearsalDetailDrawer'
 import { RehearsalFormDrawer } from '../components/RehearsalFormDrawer'
 import { RehearsalTable } from '../components/RehearsalTable'
@@ -34,6 +34,7 @@ export function RehearsalsPage() {
   const initialWeek = initialWeekAnchor.subtract((initialWeekAnchor.day() + 6) % 7, 'day')
   const [view, setView] = useState<'week' | 'list'>((searchParams.get('view') === 'list' ? 'list' : 'week'))
   const [weekStart, setWeekStart] = useState(initialWeek.format('YYYY-MM-DD'))
+  const [direction, setDirection] = useState<'next' | 'prev'>()
   const [filters, setFilters] = useState<RehearsalFilters>({ eventId: searchParams.get('programId') ?? undefined })
   const [page, setPage] = useState(1)
   const weekFilters = { ...filters, fromDate: weekStart, toDate: dayjs(weekStart).add(6, 'day').format('YYYY-MM-DD') }
@@ -56,6 +57,7 @@ export function RehearsalsPage() {
   }
   const changeWeek = (days: number) => {
     const next = dayjs(weekStart).add(days, 'day').format('YYYY-MM-DD')
+    setDirection(days > 0 ? 'next' : 'prev')
     setWeekStart(next)
     setSearchParams((current) => {
       const nextParams = new URLSearchParams(current)
@@ -66,6 +68,7 @@ export function RehearsalsPage() {
   const goToday = () => {
     const todayAnchor = dayjs(vietnamToday())
     const today = todayAnchor.subtract((todayAnchor.day() + 6) % 7, 'day').format('YYYY-MM-DD')
+    if (today !== weekStart) setDirection(today > weekStart ? 'next' : 'prev')
     setWeekStart(today)
     setSearchParams((current) => {
       const nextParams = new URLSearchParams(current)
@@ -83,6 +86,8 @@ export function RehearsalsPage() {
   }
   const openPracticeRoom = (rehearsal: Rehearsal) =>
     navigate(generatePath(paths.director.rehearsalDetail, { rehearsalId: rehearsal.id }), { state: { rehearsal } })
+  const takeAttendance = (rehearsal: Rehearsal) =>
+    navigate(`${paths.director.attendance}?rehearsalId=${rehearsal.id}${rehearsal.eventId ? `&programId=${rehearsal.eventId}` : ''}`)
 
   const handleSave = (values: RehearsalValues) => {
     if (save.isPending) return
@@ -116,7 +121,7 @@ export function RehearsalsPage() {
 
   const createButton = (
     <Button type="primary" icon={<PlusOutlined />} onClick={() => setEditing(null)}>
-      Tạo buổi tập
+      Lên lịch buổi tập
     </Button>
   )
 
@@ -202,12 +207,28 @@ export function RehearsalsPage() {
                 <div style={{ padding: spacing.md }}><NoFilterResults onClearFilters={() => changeFilters({})} /></div>
               ) : (
                 <>
-                  {weekRehearsals.data.items.length === 0 && (
-                    <Typography.Text type="secondary" style={{ display: 'block', padding: `0 ${spacing.md}px ${spacing.md}px` }}>
-                      Tuần này chưa có buổi tập nào.
-                    </Typography.Text>
+                  {/* A week that has ended needs no schedule. */}
+                  {weekRehearsals.data.items.length === 0 && !dayjs(weekStart).add(6, 'day').isBefore(dayjs(vietnamToday()), 'day') && (
+                    <Flex align="center" justify="space-between" gap={spacing.md} wrap style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+                      <div>
+                        <Typography.Text style={{ display: 'block', fontWeight: 600 }}>Tuần này chưa có buổi tập nào.</Typography.Text>
+                        <Typography.Text style={{ color: colors.textMuted }}>Lên lịch để ca đoàn kịp tập các bài của lễ sắp tới.</Typography.Text>
+                      </div>
+                      <Button icon={<PlusOutlined />} onClick={() => setEditing(null)}>
+                        Lên lịch buổi tập
+                      </Button>
+                    </Flex>
                   )}
-                  <RehearsalWeek weekStart={weekStart} rehearsals={weekRehearsals.data.items} programs={programMap} onSelect={openPracticeRoom} />
+                  <RehearsalWeek
+                    weekStart={weekStart}
+                    direction={direction}
+                    rehearsals={weekRehearsals.data.items}
+                    programs={programMap}
+                    onOpen={openPracticeRoom}
+                    onTakeAttendance={takeAttendance}
+                    onEdit={setEditing}
+                    onDelete={handleDelete}
+                  />
                 </>
               )
             ) : null
@@ -215,7 +236,7 @@ export function RehearsalsPage() {
             rehearsals.isPending ? <SectionSkeleton rows={6} label="Đang tải lịch tập" /> : rehearsals.isError ? (
               <ErrorState title="Không thể tải lịch tập" error={rehearsals.error} hasData={rehearsals.data !== undefined} onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
             ) : total === 0 && !filtered ? (
-              <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><EmptyState title="Chưa có buổi tập nào" description="Tạo buổi tập để lên kế hoạch luyện tập." action={createButton} /></div>
+              <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><EmptyState title="Chưa có buổi tập nào" description="Lên lịch buổi tập để ca đoàn chuẩn bị cho các lễ sắp tới." action={createButton} /></div>
             ) : total === 0 ? (
               <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><NoFilterResults onClearFilters={() => changeFilters({})} /></div>
             ) : (
@@ -224,9 +245,7 @@ export function RehearsalsPage() {
                 programs={programMap}
                 loading={rehearsals.isPlaceholderData}
                 pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
-                onTakeAttendance={(rehearsal) =>
-                  navigate(`${paths.director.attendance}?rehearsalId=${rehearsal.id}${rehearsal.eventId ? `&programId=${rehearsal.eventId}` : ''}`)
-                }
+                onTakeAttendance={takeAttendance}
                 onEdit={setEditing}
                 onDelete={handleDelete}
               />
@@ -239,7 +258,7 @@ export function RehearsalsPage() {
         onClose={() => setDetail(undefined)}
         onAttendance={(rehearsal) => {
           setDetail(undefined)
-          navigate(`${paths.director.attendance}?rehearsalId=${rehearsal.id}${rehearsal.eventId ? `&programId=${rehearsal.eventId}` : ''}`)
+          takeAttendance(rehearsal)
         }}
         onEdit={(rehearsal) => {
           setDetail(undefined)

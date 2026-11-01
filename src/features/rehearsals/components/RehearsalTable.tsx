@@ -86,7 +86,12 @@ export function RehearsalTable({
       align: 'right',
       render: (_, rehearsal) => (
         <Flex justify="flex-end" gap={4}>
-          <Button type="link" icon={<CheckSquareOutlined />} onClick={() => onTakeAttendance(rehearsal)}>
+          <Button
+            type="link"
+            icon={<CheckSquareOutlined />}
+            onClick={() => onTakeAttendance(rehearsal)}
+            aria-label={`${isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${rehearsalLabel(rehearsal)}`}
+          >
             {isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
           </Button>
           {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
