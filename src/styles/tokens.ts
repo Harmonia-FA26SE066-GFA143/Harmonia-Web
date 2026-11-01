@@ -120,7 +120,8 @@ export const priestEvent = {
  * approves. Everything else changes at once; with `prefers-reduced-motion: reduce` the slide is dropped too.
  */
 export const motion = {
-  bookmarkMs: 320,
+  /** On the 100/150/200/300ms scale of the motion skill (ux-audit 2026-11-01). */
+  bookmarkMs: 300,
   easeOut: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
 } as const
 
