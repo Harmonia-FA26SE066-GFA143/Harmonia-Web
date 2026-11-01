@@ -264,9 +264,9 @@ export function StaffingCard({
                         if (node) chips.current.set(key, node)
                         else chips.current.delete(key)
                       }}
-                      size="small"
                       aria-label={`${label}, ${row.skillName}: thay, ghi chú hoặc gỡ`}
-                      style={{ gridArea: '1 / 1', visibility: inReplace ? 'hidden' : undefined }}
+                      // No transition: antd's `transition: all` would keep it hidden in the frame where Escape focuses it.
+                      style={{ gridArea: '1 / 1', visibility: inReplace ? 'hidden' : undefined, transition: 'none' }}
                     >
                       {label}
                       {line.source === 'suggested' && <Typography.Text style={muted}>· gợi ý</Typography.Text>}
@@ -279,7 +279,6 @@ export function StaffingCard({
                       defaultOpen
                       showSearch
                       optionFilterProp="label"
-                      size="small"
                       aria-label={`Thay ${line.memberName} (${row.skillName}) bằng`}
                       placeholder={`Thay ${line.memberName}`}
                       loading={replace.isPending}
@@ -293,7 +292,9 @@ export function StaffingCard({
                       }}
                       // Leaving the field cancels; the focus stays where the user moved it.
                       onBlur={() => !replace.isPending && endReplace(line.skillId)}
-                      style={{ gridArea: '1 / 1', width: '100%', minWidth: 0 }}
+                      // Width 0: the longer placeholder does not widen the shared cell, so the members after it stay put;
+                      // the select then fills the member button's width.
+                      style={{ gridArea: '1 / 1', width: 0, minWidth: '100%' }}
                     />
                   )}
                 </span>
@@ -316,7 +317,6 @@ export function StaffingCard({
                   <Select
                     showSearch
                     optionFilterProp="label"
-                    size="small"
                     value={null}
                     aria-label={song ? `Thêm ca viên cho ${row.skillName}` : `Thêm ca viên cho ${row.skillName} (cả buổi lễ)`}
                     placeholder={options.some((option) => !option.disabled) ? 'Thêm ca viên' : 'Không còn ca viên phù hợp'}
@@ -393,7 +393,7 @@ export function StaffingCard({
       {requirements.isError && (
         <Typography.Text type="danger">
           Không thể tải yêu cầu nhân sự.{' '}
-          <Button type="link" size="small" onClick={() => requirements.refetch()}>
+          <Button type="link" onClick={() => requirements.refetch()}>
             Thử lại
           </Button>
         </Typography.Text>
