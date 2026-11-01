@@ -7,7 +7,7 @@ import { SignOutModal } from '@/features/auth'
 import { useMyProfile } from '@/features/profile'
 import { getSession } from '@/lib/auth/session'
 import { roleByApiName, roleLabels } from '@/shared/types/account'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { surfaces, type Surface } from './navigation'
 
 /**
@@ -73,7 +73,7 @@ export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
                 <Typography.Text strong ellipsis style={{ maxWidth: 180, fontSize: 13 }}>
                   {name}
                 </Typography.Text>
-                <Typography.Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: 500 }}>
+                <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted, fontWeight: 500 }}>
                   {role}
                 </Typography.Text>
               </Flex>
