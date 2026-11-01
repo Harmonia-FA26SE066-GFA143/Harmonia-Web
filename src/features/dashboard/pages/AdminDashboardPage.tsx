@@ -5,6 +5,7 @@ import { paths } from '@/app/router/paths'
 import { ActivityTable, useActivityLog } from '@/features/activity-log'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
+import { TodaySeason } from '../components/TodaySeason'
 
 // Enough rows to fill the first screen, which now holds only this list.
 const recentLimit = 10
@@ -36,6 +37,8 @@ export function AdminDashboardPage() {
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Tổng quan' }]}
       />
       <Flex vertical gap={spacing.xl}>
+        {/* The Admin keeps the liturgical calendar in sync; every overview opens on the same season. */}
+        <TodaySeason />
         <section aria-labelledby="recent-activity-heading">
           <SectionTitle
             id="recent-activity-heading"

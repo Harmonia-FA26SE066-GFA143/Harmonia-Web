@@ -10,7 +10,6 @@ import {
   preparationSteps,
   SongListStatusTag,
   useDirectorPreparation,
-  useLiturgicalDays,
   useUpcomingPrograms,
   type LiturgicalProgram,
 } from '@/features/liturgical-programs'
@@ -18,8 +17,9 @@ import { useSubmissions } from '@/features/practice'
 import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
 import { parseUtc } from '@/lib/api/dates'
-import { ErrorState, PageHeader, SeasonRibbon, SectionSkeleton } from '@/shared/ui'
+import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { cardSurface, colors, spacing, typography } from '@/styles/tokens'
+import { TodaySeason } from '../components/TodaySeason'
 
 const taskLimit = 5
 const laterLimit = 4
@@ -93,7 +93,7 @@ function songListTask(program: LiturgicalProgram, open: () => void): Task | unde
 function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: number }>) {
   return (
     <Card style={cardSurface} styles={{ body: { padding: 0 } }}>
-      <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+      <ul className="hm-stagger" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
         {tasks.map((task, index) => (
           <li key={task.key} style={rowStyle(index)}>
             <Flex align="center" justify="space-between" gap={spacing.md}>
@@ -304,9 +304,6 @@ export function DirectorDashboardPage() {
   const programs = useUpcomingPrograms()
   const skills = usePendingSkills({ pageNumber: 1, pageSize: 1 })
   const submissions = useSubmissions('submitted', firstFive)
-  const today = dayjs().format('YYYY-MM-DD')
-  const days = useLiturgicalDays(today, today)
-  const day = days.data?.get(today)
 
   const upcoming = programs.data ?? []
   const songListTasks: Task[] = upcoming.flatMap((program) => {
@@ -338,15 +335,7 @@ export function DirectorDashboardPage() {
     <div className="director-dashboard-page">
       <PageHeader title="Tổng quan" breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Tổng quan' }]} />
       <Flex vertical gap={spacing.xl}>
-        {day?.seasonName && <SeasonRibbon seasonKey={day.seasonKey} seasonName={day.seasonName} celebrationName={day.celebrationName} />}
-        {days.isError && (
-          <Flex align="center" gap={spacing.sm}>
-            <Typography.Text type="danger">Không thể tải mùa phụng vụ hôm nay.</Typography.Text>
-            <Button size="small" onClick={() => days.refetch()} loading={days.isFetching}>
-              Thử lại
-            </Button>
-          </Flex>
-        )}
+        <TodaySeason />
 
         <Section id="todo-heading" title="Cần bạn xử lý">
           {programs.isPending && <SectionSkeleton rows={3} label="Đang tải việc cần xử lý" />}
