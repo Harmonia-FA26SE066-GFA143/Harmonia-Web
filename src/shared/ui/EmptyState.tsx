@@ -1,5 +1,5 @@
-import { InboxOutlined } from '@ant-design/icons'
 import type { ReactNode } from 'react'
+import { CandleMark } from './CandleMark'
 import { StatePanel } from './StatePanel'
 
 export interface EmptyStateProps {
@@ -9,6 +9,7 @@ export interface EmptyStateProps {
   description?: ReactNode
   /** Optional action (e.g. a create button) when one exists for the user. */
   action?: ReactNode
+  /** A subject icon when one names what is missing; otherwise the candle motif of the redesign. */
   icon?: ReactNode
   /** 3 when the panel sits inside a section that has its own level 2 heading. */
   headingLevel?: 2 | 3
@@ -18,7 +19,7 @@ export function EmptyState({
   title,
   description,
   action,
-  icon = <InboxOutlined />,
+  icon = <CandleMark />,
   headingLevel,
 }: Readonly<EmptyStateProps>) {
   return (

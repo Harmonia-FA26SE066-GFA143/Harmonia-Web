@@ -35,6 +35,7 @@ export function SeasonRibbon({ seasonKey, seasonName, celebrationName }: Readonl
     >
       <span
         aria-hidden
+        className="hm-unroll"
         style={{
           position: 'absolute',
           top: 0,

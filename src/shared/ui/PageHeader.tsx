@@ -33,8 +33,8 @@ export function PageHeader({ title, description, breadcrumb, tags, extra }: Read
           <Breadcrumb
             items={breadcrumb}
             style={{
-              marginBottom: 6,
-              fontSize: 12.5,
+              marginBottom: spacing.xs,
+              fontSize: typography.metadata.fontSize,
               fontWeight: 500,
             }}
           />
