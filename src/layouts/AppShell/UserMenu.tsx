@@ -64,7 +64,9 @@ export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
           <Flex align="center" gap={spacing.sm}>
             <Avatar
               size={32}
+              src={profile.data?.avatarUrl}
               icon={<UserOutlined />}
+              alt=""
               style={{ background: colors.primary }}
             />
             {/* Small screens keep the avatar only, so the brand still fits beside it. */}

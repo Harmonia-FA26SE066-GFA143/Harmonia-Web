@@ -132,7 +132,7 @@ interface EventPreparationStatusDto {
   participationUnsure: number
   rosterStatus: 'Draft' | 'Suggested' | 'Finalized' | null
   rosterActiveAssignments: number
-  rosterShortages: { songTitle: string | null; skillName: string; requiredCount: number; assignedCount: number }[] | null
+  rosterShortages: { songTitle: string | null; skillName: string; requiredCount: number; assignedCount: number }[]
   rehearsalsTotal: number
   rehearsalsHeld: number
   attendanceExpected: number
@@ -155,7 +155,7 @@ export async function getPreparationStatus(id: string): Promise<PreparationStatu
     },
     rosterFinalized: dto.rosterStatus ? dto.rosterStatus === 'Finalized' : undefined,
     rosterActiveAssignments: dto.rosterActiveAssignments,
-    rosterShortages: dto.rosterShortages?.map(({ songTitle, skillName, requiredCount, assignedCount }) => ({
+    rosterShortages: dto.rosterShortages.map(({ songTitle, skillName, requiredCount, assignedCount }) => ({
       songTitle: songTitle ?? undefined,
       skillName,
       requiredCount,

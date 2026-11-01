@@ -9,11 +9,13 @@ export interface SeasonChipProps {
    * a program's season is the Admin's catalog name, which carries no colour (owner choice 2026-10-31).
    */
   seasonKey?: string
+  /** The day's liturgical colour, for a chip that stands for one day; it wins over the season's. */
+  color?: string
   size?: 'default' | 'small'
 }
 
 /** The season as a small chip: a swatch in the season's colour beside its name. Season colour lives only here and in SeasonRibbon. */
-export function SeasonChip({ seasonName, seasonKey, size = 'default' }: Readonly<SeasonChipProps>) {
+export function SeasonChip({ seasonName, seasonKey, color, size = 'default' }: Readonly<SeasonChipProps>) {
   const small = size === 'small'
   return (
     <span
@@ -34,7 +36,7 @@ export function SeasonChip({ seasonName, seasonKey, size = 'default' }: Readonly
       }}
     >
       {seasonKey && (
-        <span aria-hidden style={{ width: small ? 6 : 8, height: small ? 10 : 12, flexShrink: 0, background: seasonTone(seasonKey).ribbon }} />
+        <span aria-hidden style={{ width: small ? 6 : 8, height: small ? 10 : 12, flexShrink: 0, background: seasonTone(seasonKey, color).ribbon }} />
       )}
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{seasonName}</span>
     </span>

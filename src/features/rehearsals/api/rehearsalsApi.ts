@@ -1,7 +1,7 @@
 import { apiRequest } from '@/lib/api/client'
 import { parseUtc } from '@/lib/api/dates'
 import { toQuery, type PagedList } from '@/lib/api/paging'
-import type { Rehearsal, RehearsalFilters, RehearsalSong, RehearsalValues } from '../types'
+import type { RecordingValues, Rehearsal, RehearsalFilters, RehearsalRecording, RehearsalSong, RehearsalValues } from '../types'
 
 // `/api/rehearsals` (Harmonia-BE RehearsalsController), Choir Director only: search, create, update, delete, the
 // songs of a session and the suggested songs of an event. Times are sent and read as UTC.
@@ -99,4 +99,42 @@ export async function getRehearsal(id: string): Promise<Rehearsal> {
 /** The songs of the event's approved list, once each; empty without one. Nothing is saved. */
 export async function getDefaultSongs(eventId: string): Promise<RehearsalSong[]> {
   return toSongs(await apiRequest<RehearsalSongDto[]>(`/api/rehearsals/default-songs${toQuery({ eventId })}`))
+}
+
+interface RehearsalRecordingDto {
+  id: string
+  songId: string | null
+  title: string | null
+  fileSizeBytes: number
+  durationSeconds: number | null
+  audioUrl: string
+  createdAt: string
+}
+
+// `/api/rehearsals/{id}/recordings` (BE 90af733, RehearsalsController.cs:83-109): the Choir Director records and deletes
+// takes of a rehearsal of their choirs; `.webm`, `.ogg`, `.m4a`, `.mp3`, `.wav`, at most 20 MB.
+
+/** Every take of the rehearsal. */
+export async function listRecordings(rehearsalId: string): Promise<RehearsalRecording[]> {
+  const dtos = await apiRequest<RehearsalRecordingDto[]>(`/api/rehearsals/${rehearsalId}/recordings`)
+  return dtos.map(({ songId, title, durationSeconds, ...rest }) => ({
+    ...rest,
+    songId: songId ?? undefined,
+    title: title ?? undefined,
+    durationSeconds: durationSeconds ?? undefined,
+  }))
+}
+
+export async function createRecording(rehearsalId: string, { file, songId, title, durationSeconds }: RecordingValues): Promise<void> {
+  const form = new FormData()
+  form.append('file', file)
+  if (songId) form.append('songId', songId)
+  if (title) form.append('title', title)
+  // CreateRehearsalRecordingRequestValidator: 1–14 400 seconds when given.
+  if (durationSeconds) form.append('durationSeconds', String(Math.min(14_400, Math.max(1, durationSeconds))))
+  await apiRequest<unknown>(`/api/rehearsals/${rehearsalId}/recordings`, { method: 'POST', body: form })
+}
+
+export async function deleteRecording(rehearsalId: string, recordingId: string): Promise<void> {
+  await apiRequest<unknown>(`/api/rehearsals/${rehearsalId}/recordings/${recordingId}`, { method: 'DELETE' })
 }

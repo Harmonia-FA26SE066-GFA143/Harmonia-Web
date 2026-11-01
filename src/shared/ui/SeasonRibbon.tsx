@@ -5,6 +5,8 @@ import { seasonTone } from './seasonTones'
 export interface SeasonRibbonProps {
   /** The calendar's season code (`LiturgicalDayDto.SeasonName`): Advent, Christmas, Lent, Easter or OrdinaryTime. */
   seasonKey?: string
+  /** The day's liturgical colour (white, red, green, purple, rose, black); it wins over the season's. */
+  color?: string
   /** The season in words, as the backend names it; always shown, so colour never carries the season alone. */
   seasonName: string
   /** The day's celebration, e.g. "Thứ Bảy tuần XXX Thường niên". */
@@ -18,8 +20,8 @@ const staffLines = [0.5, 3.5, 6.5, 9.5, 12.5]
  * display serif, the day's celebration under it, and a faint arch over five staff lines. Season colour appears only
  * here and in a season chip (brief 2026-10-31).
  */
-export function SeasonRibbon({ seasonKey, seasonName, celebrationName }: Readonly<SeasonRibbonProps>) {
-  const tone = seasonTone(seasonKey)
+export function SeasonRibbon({ seasonKey, color, seasonName, celebrationName }: Readonly<SeasonRibbonProps>) {
+  const tone = seasonTone(seasonKey, color)
 
   return (
     <section

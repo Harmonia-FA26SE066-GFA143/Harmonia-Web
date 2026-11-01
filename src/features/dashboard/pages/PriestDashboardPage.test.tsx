@@ -5,8 +5,6 @@ import * as eventsApi from '@/features/liturgical-programs/api/eventsApi'
 import * as liturgicalDaysApi from '@/features/liturgical-programs/api/liturgicalDaysApi'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as practiceApi from '@/features/practice/api/practiceApi'
-import * as rehearsalsApi from '@/features/rehearsals/api/rehearsalsApi'
-import * as rosterApi from '@/features/roster/api/rosterApi'
 import * as memberSkillsApi from '@/features/skill-approval/api/memberSkillsApi'
 import * as songListsApi from '@/features/song-lists/api/songListsApi'
 import * as reviewApi from '@/features/song-list-review/api/songListReviewApi'
@@ -140,16 +138,19 @@ describe('DirectorDashboardPage', () => {
         { id: 'p4', eventName: 'Lễ Thánh Giuse', date: '2099-11-09', songListStatus: 'approved' },
       ),
     )
-    const member = { rehearsalsHeld: 1, rehearsalsAttended: 1, assignmentsTotal: 0, assignmentsPassed: 0, assignmentsOverdue: 0 }
-    vi.spyOn(practiceApi, 'listPreparationProgress').mockResolvedValue([
-      { ...member, memberId: 'm1', fullName: 'An', participationStatus: 'confirmed' },
-      { ...member, memberId: 'm2', fullName: 'Bình', participationStatus: 'invited' },
-    ])
-    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue({ ...emptyPage, totalCount: 2 })
-    vi.spyOn(rosterApi, 'getRoster').mockResolvedValue(null)
-    vi.spyOn(rosterApi, 'getShortages').mockResolvedValue([
-      { songListItemId: null, songTitle: null, skillId: 's1', skillName: 'Bè Alto', requiredCount: 3, assignedCount: 1 },
-    ])
+    // The Choir Director reads the event's preparation status (BE 90af733, B41).
+    vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue({
+      participation: { invited: 1, confirmed: 1, declined: 0, unsure: 0 },
+      rosterActiveAssignments: 0,
+      rosterShortages: [{ skillName: 'Bè Alto', requiredCount: 3, assignedCount: 1 }],
+      rehearsalsTotal: 2,
+      rehearsalsHeld: 1,
+      attendanceExpected: 2,
+      attendancePresent: 2,
+      practiceExpected: 0,
+      practicePassed: 0,
+      practiceOverdue: 0,
+    })
     renderPage(<DirectorDashboardPage />, '/director')
 
     expect(await screen.findByText('Mọi việc đã xong. Không có việc nào đang chờ bạn.')).toBeInTheDocument()

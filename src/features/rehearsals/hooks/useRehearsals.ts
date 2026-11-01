@@ -1,8 +1,18 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { vietnamToday } from '@/lib/api/dates'
-import { deleteRehearsal, getDefaultSongs, getRehearsal, listRehearsals, saveRehearsal, type RehearsalPage } from '../api/rehearsalsApi'
-import type { RehearsalFilters, RehearsalValues } from '../types'
+import {
+  createRecording,
+  deleteRecording,
+  deleteRehearsal,
+  getDefaultSongs,
+  getRehearsal,
+  listRecordings,
+  listRehearsals,
+  saveRehearsal,
+  type RehearsalPage,
+} from '../api/rehearsalsApi'
+import type { RecordingValues, RehearsalFilters, RehearsalValues } from '../types'
 
 const rehearsalsKey = ['rehearsals'] as const
 
@@ -75,3 +85,29 @@ export const useDeleteRehearsal = () => useRehearsalMutation((id: string) => del
 /** Reads the suggested songs of an event on demand; nothing is saved. */
 export const useDefaultSongs = () => useMutation({ mutationFn: (eventId: string) => getDefaultSongs(eventId) })
 
+const recordingsKey = (rehearsalId: string) => [...rehearsalsKey, 'recordings', rehearsalId] as const
+
+/** The takes of a rehearsal; no id (the demo room): nothing is fetched. */
+export function useRecordings(rehearsalId: string | undefined) {
+  return useQuery({
+    queryKey: recordingsKey(rehearsalId ?? ''),
+    queryFn: () => listRecordings(rehearsalId ?? ''),
+    enabled: Boolean(rehearsalId),
+  })
+}
+
+export function useCreateRecording(rehearsalId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (values: RecordingValues) => createRecording(rehearsalId, values),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: recordingsKey(rehearsalId) }),
+  })
+}
+
+export function useDeleteRecording(rehearsalId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (recordingId: string) => deleteRecording(rehearsalId, recordingId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: recordingsKey(rehearsalId) }),
+  })
+}

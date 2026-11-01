@@ -10,6 +10,7 @@ import { renderPage } from '@/test/renderPage'
 import { programPage } from '@/test/programs'
 import * as rehearsalsApi from '../api/rehearsalsApi'
 import type { Rehearsal } from '../types'
+import { RehearsalPracticeRoomPage } from './RehearsalPracticeRoomPage'
 import { RehearsalsPage } from './RehearsalsPage'
 
 const at = (days: number, hour: number) => dayjs().add(days, 'day').hour(hour).minute(0).second(0).millisecond(0).toISOString()
@@ -194,5 +195,29 @@ describe('RehearsalsPage', () => {
     fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá buổi tập' }))
 
     expect(await screen.findByText('Buổi tập đã có điểm danh nên không thể xoá.')).toBeInTheDocument()
+  })
+})
+
+describe('RehearsalPracticeRoomPage', () => {
+  it('loads a rehearsal opened by its link and lists, plays and deletes the takes of the chosen song (B43)', async () => {
+    vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({ ...rehearsals[1], songs: [{ songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ', note: 'Điệp khúc 2' }] })
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([])
+    vi.spyOn(rehearsalsApi, 'listRecordings').mockResolvedValue([
+      { id: 'rec-1', songId: 's1', fileSizeBytes: 1000, durationSeconds: 75, audioUrl: 'https://files.example/rec-1.webm', createdAt: '2026-10-31T12:00:00Z' },
+      { id: 'rec-2', songId: 'other', fileSizeBytes: 1000, audioUrl: 'https://files.example/rec-2.webm', createdAt: '2026-10-31T12:05:00Z' },
+    ])
+    const remove = vi.spyOn(rehearsalsApi, 'deleteRecording').mockResolvedValue()
+    renderPage(<RehearsalPracticeRoomPage />, '/director/rehearsals/:rehearsalId', '/director/rehearsals/r2')
+
+    expect(await screen.findByText('Cần tập: Điệp khúc 2')).toBeInTheDocument()
+    // Only the takes of the selected song; jsdom has no microphone, so recording says why it is off.
+    expect(await screen.findByLabelText('Nghe bản thu 1 của Con Bước Lên Bàn Thờ')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/bản thu 2/)).toBeNull()
+    expect(screen.getByRole('button', { name: /Thu âm$/ })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Xoá bản thu 1 của Con Bước Lên Bàn Thờ' }))
+    const confirm = (await screen.findAllByText('Xoá bản thu?'))[0].closest('.ant-modal') as HTMLElement
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá bản thu' }))
+    await waitFor(() => expect(remove).toHaveBeenCalledWith('r2', 'rec-1'))
   })
 })

@@ -7,6 +7,7 @@ import { requestFailureMessage } from '@/lib/api/errors'
 import { SignOutModal } from '@/features/auth'
 import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
+import { ProfileAvatar } from '../components/ProfileAvatar'
 import { ProfileDetails } from '../components/ProfileDetails'
 import { useMyProfile, useUpdateMyProfile } from '../hooks/useMyProfile'
 import type { ProfileUpdateValues } from '../types'
@@ -54,6 +55,7 @@ export function ProfilePage() {
           retrying={profile.isFetching}
         />
       )}
+      {profile.data && <ProfileAvatar profile={profile.data} />}
       {profile.data && (
         <ProfileDetails
           profile={profile.data}

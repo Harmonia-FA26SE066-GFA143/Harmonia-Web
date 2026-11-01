@@ -41,3 +41,25 @@ export const isUpcoming = (rehearsal: Pick<Rehearsal, 'endAt'>, now = Date.now()
 
 export const isRehearsalDay = (rehearsal: Pick<Rehearsal, 'startAt'>, now = new Date()) =>
   new Date(rehearsal.startAt).toDateString() === now.toDateString()
+
+/** A take recorded in the practice room (`RehearsalRecordingDto`, BE 90af733, B43); members of the choir listen on mobile. */
+export interface RehearsalRecording {
+  id: string
+  /** Absent for a take of the whole session. */
+  songId?: string
+  title?: string
+  fileSizeBytes: number
+  /** Reported by the recorder, display only. */
+  durationSeconds?: number
+  /** Short-lived signed URL: the list is read again instead of storing it. */
+  audioUrl: string
+  /** Backend `DateTime`; read it with `parseUtc`. */
+  createdAt: string
+}
+
+export interface RecordingValues {
+  file: File
+  songId?: string
+  title?: string
+  durationSeconds?: number
+}

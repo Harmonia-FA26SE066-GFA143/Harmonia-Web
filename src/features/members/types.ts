@@ -37,6 +37,8 @@ export interface MemberProfile {
   status: MemberStatus
   /** Names of the approved skills. */
   skills: string[]
+  /** Public URL of the member's own picture (BE 90af733); absent without one. */
+  avatarUrl?: string
 }
 
 /**

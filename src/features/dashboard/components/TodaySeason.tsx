@@ -23,5 +23,5 @@ export function TodaySeason() {
       </Flex>
     )
   }
-  return day?.seasonName ? <SeasonRibbon seasonKey={day.seasonKey} seasonName={day.seasonName} celebrationName={day.celebrationName} /> : null
+  return day?.seasonName ? <SeasonRibbon seasonKey={day.seasonKey} color={day.color} seasonName={day.seasonName} celebrationName={day.celebrationName} /> : null
 }
