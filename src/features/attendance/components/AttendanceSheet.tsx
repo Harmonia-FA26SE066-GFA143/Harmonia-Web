@@ -180,16 +180,20 @@ export function AttendanceSheet({ rehearsalId, records, editable, header }: Read
         )}
       </Card>
       <Card styles={{ body: { padding: 0 } }}>
-        <Flex wrap gap={spacing.sm} align="center" justify="space-between" style={{ padding: spacing.md, borderBottom: `1px solid ${colors.border}` }}>
-          <Input
-            allowClear
-            prefix={<SearchOutlined aria-hidden />}
-            placeholder="Tìm theo tên"
-            aria-label="Tìm thành viên"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            style={{ flex: '1 1 240px', maxWidth: 380 }}
-          />
+        <Flex wrap gap={spacing.sm} align="end" justify="space-between" style={{ padding: spacing.md, borderBottom: `1px solid ${colors.border}` }}>
+          <Flex vertical gap={4} style={{ flex: '1 1 240px', maxWidth: 380 }}>
+            <label htmlFor="attendance-search" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+              Tìm thành viên
+            </label>
+            <Input
+              id="attendance-search"
+              allowClear
+              prefix={<SearchOutlined aria-hidden />}
+              placeholder="Họ tên…"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </Flex>
           {editable && (
             <Button icon={<CheckOutlined />} onClick={markAllPresent} disabled={save.isPending}>
               Đánh dấu tất cả có mặt
