@@ -321,3 +321,15 @@ textarea {
     grid-row: 2;
   }
 }
+
+/*
+ * Attendance marks: the checked result takes its colour (`outcomeColors` in tokens.ts, owner 2026-11-02) on its tint,
+ * with its name in the darker ink of the same family. antd styles the checked button through its own selectors.
+ */
+.attendance-marks .ant-radio-button-wrapper { text-align: center; }
+.attendance-marks .ant-radio-button-wrapper-checked { font-weight: 600; z-index: 1; }
+.attendance-marks .attendance-mark-present.ant-radio-button-wrapper-checked { background: #e7f1ec !important; color: #24503f !important; border-color: #2f6150 !important; }
+.attendance-marks .attendance-mark-late.ant-radio-button-wrapper-checked { background: #fbf3e2 !important; color: #7a4f0c !important; border-color: #a8741a !important; }
+.attendance-marks .attendance-mark-excused.ant-radio-button-wrapper-checked { background: #eef1f5 !important; color: #3d4b5e !important; border-color: #93a3b8 !important; }
+.attendance-marks .attendance-mark-absent.ant-radio-button-wrapper-checked { background: #f6ebed !important; color: #762e3d !important; border-color: #8e3b4b !important; }
+.attendance-marks .ant-radio-button-wrapper-checked::before { background-color: transparent !important; }

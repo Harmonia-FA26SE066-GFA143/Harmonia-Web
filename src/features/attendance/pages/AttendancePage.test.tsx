@@ -61,11 +61,12 @@ describe('AttendancePage', () => {
     // Today's session is chosen by default.
     const simon = await screen.findByRole('radiogroup', { name: 'Điểm danh Simon Phan Văn Đức' })
     expect(get).toHaveBeenCalledWith('r1')
-    expect(screen.getByRole('button', { name: /Lưu điểm danh/ })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Lưu điểm danh' })).toBeDisabled()
 
     fireEvent.click(within(simon).getByText('Vắng'))
     fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Điểm danh Anna Đặng Thị Mai' })).getByText('Có mặt'))
-    fireEvent.click(screen.getByRole('button', { name: /Lưu điểm danh \(2 thay đổi\)/ }))
+    expect(screen.getByText('2 thay đổi chưa lưu')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu điểm danh' }))
 
     await waitFor(() => expect(save).toHaveBeenCalledWith('r1', { m2: 'absent', m3: 'present' }))
   })
@@ -87,17 +88,17 @@ describe('AttendancePage', () => {
 
     const simon = await screen.findByRole('radiogroup', { name: 'Điểm danh Simon Phan Văn Đức' })
     fireEvent.click(within(simon).getByText('Vắng'))
-    expect(screen.getByRole('button', { name: /Lưu điểm danh \(1 thay đổi\)/ })).toBeEnabled()
+    expect(screen.getByText('1 thay đổi chưa lưu')).toBeInTheDocument()
 
     // Coming back to the window reloads the list; the mark is not lost.
     const calls = get.mock.calls.length
     window.dispatchEvent(new Event('visibilitychange'))
     await waitFor(() => expect(get.mock.calls.length).toBeGreaterThan(calls))
-    expect(screen.getByRole('button', { name: /Lưu điểm danh \(1 thay đổi\)/ })).toBeEnabled()
+    expect(screen.getByText('1 thay đổi chưa lưu')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /Lưu điểm danh/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu điểm danh' }))
     await waitFor(() => expect(save).toHaveBeenCalledWith('r1', { m2: 'absent' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: /Lưu điểm danh$/ })).toBeDisabled())
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Lưu điểm danh' })).toBeDisabled())
     expect(within(screen.getByRole('radiogroup', { name: 'Điểm danh Simon Phan Văn Đức' })).getByRole('radio', { name: 'Vắng' })).toBeChecked()
   })
 
@@ -112,7 +113,7 @@ describe('AttendancePage', () => {
     renderAttendance('/director/attendance?rehearsalId=r1')
 
     fireEvent.click(await screen.findByRole('button', { name: /Đánh dấu tất cả có mặt/ }))
-    expect(screen.getByRole('button', { name: /Lưu điểm danh \(2 thay đổi\)/ })).toBeEnabled()
+    expect(screen.getByText('2 thay đổi chưa lưu')).toBeInTheDocument()
   })
 
   it('corrects a past session, as the backend allows any time after the start', async () => {
@@ -125,7 +126,8 @@ describe('AttendancePage', () => {
 
     const maria = await screen.findByRole('radiogroup', { name: 'Điểm danh Maria Nguyễn Thu Hướng' })
     fireEvent.click(within(maria).getByText('Muộn'))
-    fireEvent.click(screen.getByRole('button', { name: /Lưu điểm danh \(1 thay đổi\)/ }))
+    expect(screen.getByText('1 thay đổi chưa lưu')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu điểm danh' }))
 
     await waitFor(() => expect(save).toHaveBeenCalledWith('r0', { m1: 'late' }))
   })
@@ -140,7 +142,7 @@ describe('AttendancePage', () => {
     renderAttendance('/director/attendance?rehearsalId=r0')
 
     expect(await screen.findByText(/Điểm danh được từ khi buổi tập bắt đầu/)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Lưu điểm danh/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Lưu điểm danh' })).toBeNull()
     const radios = within(screen.getByRole('radiogroup', { name: 'Điểm danh Maria Nguyễn Thu Hướng' })).getAllByRole('radio')
     radios.forEach((radio) => expect(radio).toBeDisabled())
   })

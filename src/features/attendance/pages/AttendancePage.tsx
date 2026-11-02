@@ -1,14 +1,15 @@
 import { CalendarOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Flex, Select, Typography } from 'antd'
+import { Alert, Button, Card, Flex } from 'antd'
 import dayjs from 'dayjs'
-import { useMemo } from 'react'
-import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
+import { useMemo, type ReactNode } from 'react'
+import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
-import { formatRehearsalTime, isRehearsalDay, rehearsalLabel, useRecentRehearsals, type Rehearsal } from '@/features/rehearsals'
+import { useUpcomingPrograms } from '@/features/liturgical-programs'
+import { isRehearsalDay, useRecentRehearsals, type Rehearsal } from '@/features/rehearsals'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { spacing } from '@/styles/tokens'
 import { AttendanceSheet } from '../components/AttendanceSheet'
+import { SessionHeader } from '../components/SessionHeader'
 import { useAttendance } from '../hooks/useAttendance'
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Điểm danh' }]
@@ -52,6 +53,17 @@ export function AttendancePage() {
   // which supersedes "on the day of the session only" (decision 2026-09-30, 6a.6).
   const started = selected ? attendanceMayOpen(selected) : false
 
+  const pick = (nextId: string) => {
+    const next = new URLSearchParams(searchParams)
+    next.set('rehearsalId', nextId)
+    setSearchParams(next)
+  }
+  const header = (tally?: ReactNode) =>
+    selected && (
+      <SessionHeader session={selected} sessions={sessions} program={program && selected.eventId === program.id ? program : undefined} onPick={pick} tally={tally} />
+    )
+  const showSheet = attendance.data !== undefined && attendance.data.length > 0
+
   const scheduleButton = (
     <Button icon={<CalendarOutlined />} onClick={() => navigate(paths.director.rehearsals)}>
       Đến lịch tập
@@ -86,24 +98,6 @@ export function AttendancePage() {
           }
         />
       )}
-      {program && selected?.eventId === program.id && (
-        <Alert
-          type="info"
-          showIcon
-          style={{ marginBottom: spacing.md }}
-          title={
-            <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
-              <Typography.Text>
-                Điểm danh buổi tập cho chương trình:{' '}
-                <strong>{program.eventName}</strong> · {formatProgramDate(program.date)}
-              </Typography.Text>
-              <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>
-                Xem chi tiết chương trình
-              </Link>
-            </Flex>
-          }
-        />
-      )}
       {rehearsals.isPending && <SectionSkeleton rows={6} label="Đang tải buổi tập" />}
       {rehearsals.isError && (
         <ErrorState title="Không thể tải buổi tập" error={rehearsals.error} hasData={rehearsals.data !== undefined} onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
@@ -117,37 +111,7 @@ export function AttendancePage() {
       )}
       {selected && (
         <Flex vertical gap={spacing.md}>
-          <Card>
-            <Flex wrap gap={spacing.md} align="center" justify="space-between">
-              <Select
-                showSearch
-                optionFilterProp="label"
-                aria-label="Chọn buổi tập"
-                value={selected.id}
-                onChange={(nextId: string) => {
-                  const next = new URLSearchParams(searchParams)
-                  next.set('rehearsalId', nextId)
-                  setSearchParams(next)
-                }}
-                options={sessions.map((rehearsal) => ({ value: rehearsal.id, label: rehearsalLabel(rehearsal) }))}
-                style={{ flex: '1 1 280px', maxWidth: 420, minWidth: 0 }}
-              />
-              <Flex vertical gap={2} style={{ flex: '1 1 280px' }}>
-                <Typography.Text>{formatRehearsalTime(selected)}</Typography.Text>
-                <Typography.Text style={{ color: colors.textMuted }}>
-                  {[selected.locationName, program && `${program.eventName} · ${formatProgramDate(program.date)}`]
-                    .filter(Boolean)
-                    .join(' · ')}
-                  {program && (
-                    <>
-                      {' · '}
-                      <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>Xem chương trình</Link>
-                    </>
-                  )}
-                </Typography.Text>
-              </Flex>
-            </Flex>
-          </Card>
+          {!showSheet && <Card styles={{ body: { padding: `${spacing.lg}px ${spacing.xl}px` } }}>{header()}</Card>}
           {attendance.isPending && <SectionSkeleton rows={8} label="Đang tải danh sách điểm danh" />}
           {attendance.isError && (
             <ErrorState
@@ -166,13 +130,14 @@ export function AttendancePage() {
               title={`Điểm danh được từ khi buổi tập bắt đầu (${dayjs(selected.startAt).format('HH:mm DD/MM/YYYY')}), hoặc sớm hơn nếu Admin cho phép.`}
             />
           )}
-          {attendance.data !== undefined && attendance.data.length > 0 && (
+          {showSheet && (
             // One sheet per session: its unsaved marks stay through a reload of the records.
             <AttendanceSheet
               key={selected.id}
               rehearsalId={selected.id}
               records={attendance.data}
               editable={started}
+              header={header}
             />
           )}
         </Flex>
