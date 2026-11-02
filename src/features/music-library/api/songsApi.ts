@@ -1,5 +1,4 @@
-import { apiRequest } from '@/lib/api/client'
-import { ApiError } from '@/lib/api/errors'
+import { apiRequest, orNullOn404 } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type {
   LearningProgress,
@@ -58,23 +57,13 @@ export async function listSongs(filters: SongFilters, page: SongPage): Promise<P
   return { ...result, items: result.items.map(toSong) }
 }
 
-/** `null` for SONG_NOT_FOUND (404), so the page can show its not-found state. */
-async function orNullWhenMissing<T>(request: Promise<T>): Promise<T | null> {
-  try {
-    return await request
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return null
-    throw error
-  }
-}
-
 export async function getSong(id: string): Promise<Song | null> {
-  const song = await orNullWhenMissing(apiRequest<SongDto>(`/api/songs/${id}`))
+  const song = await orNullOn404(apiRequest<SongDto>(`/api/songs/${id}`))
   return song && toSong(song)
 }
 
 export function getSongClassification(id: string): Promise<SongClassification | null> {
-  return orNullWhenMissing(apiRequest<SongClassification>(`/api/songs/${id}/classification`))
+  return orNullOn404(apiRequest<SongClassification>(`/api/songs/${id}/classification`))
 }
 
 export function updateSongClassification(id: string, values: SongClassificationValues): Promise<SongClassification> {

@@ -1,5 +1,4 @@
-import { apiRequest } from '@/lib/api/client'
-import { ApiError } from '@/lib/api/errors'
+import { apiRequest, orNullOn404 } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { EventFilters, EventFormValues, EventStatus, LiturgicalEvent, PreparationStatus, SongListStatus } from '../types'
 
@@ -81,12 +80,8 @@ export async function listEvents(filters: EventFilters, page: EventPage): Promis
 
 /** `null` for LITURGICAL_EVENT_NOT_FOUND (404), so the page can show its not-found state. */
 export async function getEvent(id: string): Promise<LiturgicalEvent | null> {
-  try {
-    return toEvent(await apiRequest<LiturgicalEventDto>(`/api/liturgical-events/${id}`))
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return null
-    throw error
-  }
+  const dto = await orNullOn404(apiRequest<LiturgicalEventDto>(`/api/liturgical-events/${id}`))
+  return dto && toEvent(dto)
 }
 
 /** A new event starts as a Draft that nobody else sees. */

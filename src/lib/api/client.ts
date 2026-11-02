@@ -9,6 +9,13 @@ import { ApiError } from './errors'
  * Pass `init` as a function when the request itself carries session data: it is rebuilt for the retry, after
  * the refresh token has rotated.
  */
+/** `null` when the backend answers 404 (a record the page shows as not found); any other error is passed on. */
+export const orNullOn404 = <T>(request: Promise<T>): Promise<T | null> =>
+  request.catch((error: unknown) => {
+    if (error instanceof ApiError && error.status === 404) return null
+    throw error
+  })
+
 export async function apiRequest<T>(path: string, init: RequestInit | (() => RequestInit) = {}): Promise<T> {
   return (await request(path, init, false)) as T
 }
