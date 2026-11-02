@@ -21,6 +21,9 @@ interface FormValues {
   comment?: string
 }
 
+/** The comment without the moment mark the row fills in ("[0:12] "): a mark alone is not a comment. */
+const commentWords = (value?: string) => value?.replace(/^\[\d+:\d{2}\]/, '').trim()
+
 const resultOptions = [
   { value: 'passed', label: practiceStatusLabels.passed },
   { value: 'needsRevision', label: practiceStatusLabels.needsRevision },
@@ -49,7 +52,8 @@ export function ReviewDrawer({ submissionId, initialResult, initialComment, onCl
       },
       onError: (error: Error) => message.error(practiceErrorMessage(error, 'Không thể lưu đánh giá. Vui lòng thử lại.')),
     }
-    const trimmed = text?.trim() || undefined
+    // "Đạt" chosen after starting from a row would otherwise send the bare mark as the comment.
+    const trimmed = commentWords(text) ? text?.trim() : undefined
     if (reviewed) {
       comment.mutate({ id: data.id, comment: trimmed ?? '', result: result === 'keep' ? undefined : result }, callbacks)
     } else if (result && result !== 'keep') {
@@ -123,9 +127,7 @@ export function ReviewDrawer({ submissionId, initialResult, initialComment, onCl
               { max: 1000, message: 'Nhận xét tối đa 1000 ký tự.' },
               ({ getFieldValue }) => ({
                 validator: (_, value?: string) => {
-                  // The moment mark alone is not a comment.
-                  const words = value?.replace(/^\[\d+:\d{2}\]/, '').trim()
-                  if (words || (!reviewed && getFieldValue('result') !== 'needsRevision')) return Promise.resolve()
+                  if (commentWords(value) || (!reviewed && getFieldValue('result') !== 'needsRevision')) return Promise.resolve()
                   const required = reviewed ? 'Vui lòng nhập nhận xét.' : 'Vui lòng nhập nhận xét khi cần chỉnh sửa.'
                   return Promise.reject(new Error(required))
                 },
