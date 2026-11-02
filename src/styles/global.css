@@ -261,17 +261,6 @@ textarea {
   caret-color: #8e3b4b;
 }
 
-@media (max-width: 900px) {
-  .auth-layout {
-    grid-template-columns: minmax(0, 1fr);
-    min-height: auto !important;
-  }
-
-  .auth-media {
-    min-height: 240px;
-  }
-}
-
 .rehearsal-practice-room {
   min-width: 0;
 }
