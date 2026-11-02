@@ -1,10 +1,10 @@
 import { UserAddOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Typography } from 'antd'
+import { App, Button, Card, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { accountErrorMessage, duplicateEmailMessage, isDuplicateEmail } from '../accountErrors'
 import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
 import { AccountFilterBar } from '../components/AccountFilterBar'
@@ -87,27 +87,31 @@ export function AccountsPage() {
     })
   }
 
+  // The second action takes a fixed width, so "Sửa" stands in one column whichever action or note follows it.
   const renderActions = (account: Account) => (
-    <Flex gap={spacing.xs} justify="flex-end">
+    <div style={{ display: 'inline-grid', gridTemplateColumns: 'auto 176px', gap: spacing.xs, alignItems: 'center' }}>
       <Button onClick={() => setForm({ open: true, account })} aria-label={`Sửa ${accountName(account)}`}>
         Sửa
       </Button>
       {/* The backend refuses to deactivate the Admin's own account (USER_CANNOT_MODIFY_SELF); say so instead of a gap. */}
       {account.id === ownId && (
-        <Typography.Text style={{ color: colors.textMuted, alignSelf: 'center' }}>Không thể tự ngừng hoạt động</Typography.Text>
+        <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize, textAlign: 'center' }}>
+          Không tự ngừng được
+        </Typography.Text>
       )}
       {account.id !== ownId && (
         // A row of outlined red buttons shouted on every account; the destructive action stays red but quiet.
         <Button
           danger={account.isActive}
           type={account.isActive ? 'text' : 'default'}
+          block
           onClick={() => handleToggleActive(account)}
           aria-label={`${account.isActive ? 'Ngừng hoạt động' : 'Kích hoạt'} ${accountName(account)}`}
         >
           {account.isActive ? 'Ngừng hoạt động' : 'Kích hoạt'}
         </Button>
       )}
-    </Flex>
+    </div>
   )
 
   const createButton = (
