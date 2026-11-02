@@ -4,6 +4,7 @@ import { useEventNames } from '../hooks/useEventNames'
 import { formatProgramDate } from '../programFilters'
 import type { LiturgicalEvent } from '../types'
 import { EventStatusTag } from './EventStatusTag'
+import { ProgramDateCell } from './ProgramDateCell'
 
 export interface EventTableProps {
   events: LiturgicalEvent[]
@@ -13,12 +14,16 @@ export interface EventTableProps {
   loading?: boolean
 }
 
-const numeric = { fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' } as const
-
 /** Liturgical events of the Priest with date, time, place and status. */
 export function EventTable({ events, onOpen, pagination = false, loading }: Readonly<EventTableProps>) {
   const { name, eventName } = useEventNames()
   const columns: TableColumnsType<LiturgicalEvent> = [
+    {
+      key: 'when',
+      title: 'Ngày giờ',
+      width: 200,
+      render: (_, event) => <ProgramDateCell date={event.date} label={`${formatProgramDate(event.date)} · ${event.time}`} />,
+    },
     {
       key: 'name',
       title: 'Sự kiện',
@@ -33,22 +38,13 @@ export function EventTable({ events, onOpen, pagination = false, loading }: Read
         </Flex>
       ),
     },
-    {
-      key: 'when',
-      title: 'Ngày giờ',
-      render: (_, event) => (
-        <Typography.Text style={numeric}>
-          {formatProgramDate(event.date)} · {event.time}
-        </Typography.Text>
-      ),
-    },
-    { key: 'location', title: 'Nơi cử hành', render: (_, event) => event.locationName },
-    { key: 'status', title: 'Trạng thái', width: 130, fixed: 'right', render: (_, event) => <EventStatusTag status={event.status} /> },
+    { key: 'location', title: 'Nơi cử hành', width: 200, render: (_, event) => event.locationName },
+    { key: 'status', title: 'Trạng thái', width: 130, render: (_, event) => <EventStatusTag status={event.status} /> },
     {
       key: 'actions',
       title: 'Thao tác',
       align: 'right',
-      fixed: 'right',
+      width: 120,
       render: (_, event) => (
         <Button onClick={() => onOpen(event)} aria-label={`Xem chi tiết ${eventName(event)} ngày ${formatProgramDate(event.date)}`}>
           Xem
@@ -64,7 +60,8 @@ export function EventTable({ events, onOpen, pagination = false, loading }: Read
       dataSource={events}
       loading={loading}
       pagination={pagination}
-      scroll={{ x: 'max-content' }}
+      // A fixed width, not the content's: long event names wrap instead of pushing the table sideways.
+      scroll={{ x: 900 }}
     />
   )
 }
