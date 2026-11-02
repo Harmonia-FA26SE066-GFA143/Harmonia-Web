@@ -1,3 +1,5 @@
+import { fileExtension } from '@/shared/utils/media'
+
 /** Material kinds named in Report 1 FE-08 and FE-28 (backend `MaterialType`, mapped in songsApi). */
 export type MaterialKind = 'sheetMusic' | 'lyrics' | 'sampleAudio' | 'rehearsalMaterial'
 
@@ -32,7 +34,7 @@ export const maxMaterialBytes = 20 * 1024 * 1024
 /** UploadMusicMaterialRequestValidator.MaxLyricsTextLength. */
 export const maxLyricsTextLength = 20_000
 
-export const fileExtension = (fileName: string) => fileName.slice(fileName.lastIndexOf('.')).toLowerCase()
+export { fileExtension }
 
 export const isMidiFile = (fileName: string | null) => fileName !== null && midiExtensions.includes(fileExtension(fileName))
 
