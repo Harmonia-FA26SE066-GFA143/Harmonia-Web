@@ -3,6 +3,7 @@ import { App, Button, Flex, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useRef, useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
+import { clock } from '@/shared/utils/media'
 import { colors, spacing } from '@/styles/tokens'
 import { useCreateRecording, useDeleteRecording, useRecordings } from '../hooks/useRehearsals'
 import { rehearsalErrorMessage } from '../rehearsalErrors'
@@ -15,9 +16,6 @@ export interface RecordingPanelProps {
 }
 
 const canRecord = () => typeof MediaRecorder !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia)
-
-const duration = (seconds?: number) =>
-  seconds === undefined ? undefined : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 
 /**
  * Records a take of the selected song with the browser microphone and keeps it on the rehearsal (BE 90af733, B43:
@@ -107,7 +105,7 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
       <Flex wrap gap={spacing.sm} align="center">
         {recording ? (
           <Button danger icon={<BorderOutlined />} onClick={() => recorder.current?.stop()}>
-            Dừng và lưu ({duration(elapsed)})
+            Dừng và lưu ({clock(elapsed)})
           </Button>
         ) : (
           <Button icon={<AudioOutlined />} onClick={start} disabled={unavailable} loading={create.isPending}>
@@ -134,7 +132,7 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
               <Flex wrap align="center" gap={spacing.sm}>
                 <Typography.Text style={{ minWidth: 160, fontVariantNumeric: 'tabular-nums' }}>
                   {take.title ?? `Bản thu ${takes.length - index}`} · {dayjs(parseUtc(take.createdAt)).format('DD/MM HH:mm')}
-                  {take.durationSeconds ? ` · ${duration(take.durationSeconds)}` : ''}
+                  {take.durationSeconds ? ` · ${clock(take.durationSeconds)}` : ''}
                 </Typography.Text>
                 <audio controls preload="none" src={take.audioUrl} aria-label={`Nghe bản thu ${takes.length - index} của ${songTitle}`} style={{ height: 40, flex: '1 1 240px' }} />
                 <Tooltip title="Xoá bản thu" trigger={['hover', 'focus']}>

@@ -2,9 +2,8 @@ import { CaretRightFilled, PauseOutlined } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type WaveSurfer from 'wavesurfer.js'
+import { clock } from '@/shared/utils/media'
 import { colors, radius, spacing } from '@/styles/tokens'
-
-const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
 
 /** Flat bars shown until the file is loaded, so the row keeps its height and reads as audio. */
 function IdleBars() {

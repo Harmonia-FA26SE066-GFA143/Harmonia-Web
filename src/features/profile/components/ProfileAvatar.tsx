@@ -1,6 +1,7 @@
 import { DeleteOutlined, UploadOutlined, UserOutlined } from '@ant-design/icons'
 import { App, Avatar, Button, Flex, Typography, Upload } from 'antd'
 import { errorMessage } from '@/lib/api/errors'
+import { fileExtension } from '@/shared/utils/media'
 import { colors, radius, spacing } from '@/styles/tokens'
 import { useDeleteMyAvatar, useUpdateMyAvatar } from '../hooks/useMyProfile'
 import type { Profile } from '../types'
@@ -17,7 +18,7 @@ const messages: Record<string, string> = {
 
 /** Checked before sending, with the backend's rules, so a wrong file is refused at once. */
 function fileProblem(file: File) {
-  const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
+  const extension = fileExtension(file.name)
   if (!file.name.includes('.') || !accepted.includes(extension)) return messages.AVATAR_FILE_TYPE_NOT_ALLOWED
   if (file.size > maxBytes) return messages.AVATAR_FILE_TOO_LARGE
   return undefined
