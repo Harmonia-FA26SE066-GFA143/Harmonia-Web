@@ -1,5 +1,5 @@
 import { AudioOutlined, BorderOutlined, DeleteOutlined } from '@ant-design/icons'
-import { App, Button, Flex, Typography } from 'antd'
+import { App, Button, Flex, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useRef, useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
@@ -83,9 +83,9 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
     setStartedAt(began)
   }
 
-  const handleDelete = (id: string) =>
+  const handleDelete = (id: string, name: string) =>
     modal.confirm({
-      title: 'Xoá bản thu?',
+      title: `Xoá ${name}?`,
       content: 'Ca viên sẽ không nghe được bản thu này nữa.',
       okText: 'Xoá bản thu',
       okButtonProps: { danger: true },
@@ -136,14 +136,16 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
                   {take.title ?? `Bản thu ${takes.length - index}`} · {dayjs(parseUtc(take.createdAt)).format('DD/MM HH:mm')}
                   {take.durationSeconds ? ` · ${duration(take.durationSeconds)}` : ''}
                 </Typography.Text>
-                <audio controls preload="none" src={take.audioUrl} aria-label={`Nghe bản thu ${takes.length - index} của ${songTitle}`} style={{ height: 36, flex: '1 1 240px' }} />
-                <Button
-                  type="text"
-                  danger
-                  icon={<DeleteOutlined />}
-                  aria-label={`Xoá bản thu ${takes.length - index} của ${songTitle}`}
-                  onClick={() => handleDelete(take.id)}
-                />
+                <audio controls preload="none" src={take.audioUrl} aria-label={`Nghe bản thu ${takes.length - index} của ${songTitle}`} style={{ height: 40, flex: '1 1 240px' }} />
+                <Tooltip title="Xoá bản thu" trigger={['hover', 'focus']}>
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    aria-label={`Xoá bản thu ${takes.length - index} của ${songTitle}`}
+                    onClick={() => handleDelete(take.id, `bản thu ${takes.length - index} của “${songTitle}”`)}
+                  />
+                </Tooltip>
               </Flex>
             </li>
           ))}
