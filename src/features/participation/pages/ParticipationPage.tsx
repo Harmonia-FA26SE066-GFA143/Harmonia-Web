@@ -1,15 +1,15 @@
 import { ReloadOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Card, Flex, Input, Segmented, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Alert, App, Avatar, Button, Card, Flex, Input, Segmented, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
-import { generatePath, Link, useSearchParams } from 'react-router'
-import { paths } from '@/app/router/paths'
-import { formatProgramDate, SongListStatusTag, useUpcomingPrograms } from '@/features/liturgical-programs'
+import { useSearchParams } from 'react-router'
+import { useUpcomingPrograms } from '@/features/liturgical-programs'
 import { SkillTags, useChoirMembers } from '@/features/members'
 import { formatDateTime } from '@/lib/api/dates'
-import { EmptyState, ErrorState, MetricSummary, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
+import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
+import { ResponseHeader } from '../components/ResponseHeader'
 import { SendRequestDrawer } from '../components/SendRequestDrawer'
 import { useParticipation, useSendParticipationRequests } from '../hooks/useParticipation'
 import { participationErrorMessage } from '../participationErrors'
@@ -19,17 +19,20 @@ type ResponseFilter = 'all' | ParticipationResponse | 'none'
 
 const responseColors: Record<ParticipationResponse, StatusTagColor> = { confirmed: 'green', unsure: 'gold', declined: 'red' }
 
-const metrics = [
-  { key: 'sent', label: 'Đã gửi yêu cầu' },
-  { key: 'confirmed', label: participationResponseLabels.confirmed },
-  { key: 'unsure', label: participationResponseLabels.unsure },
-  { key: 'declined', label: participationResponseLabels.declined },
-  { key: 'none', label: 'Chưa phản hồi' },
-]
-
 /** Skills are not part of a request; they come from the member profiles. */
 const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<ParticipationRequest> => [
-  { key: 'name', title: 'Thành viên', render: (_, request) => <Typography.Text strong>{request.fullName}</Typography.Text> },
+  {
+    key: 'name',
+    title: 'Thành viên',
+    render: (_, request) => (
+      <Flex align="center" gap={spacing.md}>
+        <Avatar aria-hidden style={{ background: colors.softSurface, color: colors.textMuted, fontWeight: 600, flexShrink: 0 }}>
+          {request.fullName.trim().split(/s+/).at(-1)?.charAt(0).toUpperCase()}
+        </Avatar>
+        <Typography.Text strong>{request.fullName}</Typography.Text>
+      </Flex>
+    ),
+  },
   { key: 'skills', title: 'Kỹ năng', render: (_, request) => <SkillTags skills={skillsOf.get(request.memberId) ?? []} /> },
   {
     key: 'requestedAt',
@@ -137,25 +140,14 @@ export function ParticipationPage() {
       )}
       {program && (
         <Flex vertical gap={spacing.md}>
-          <Card>
-            <Flex wrap gap={spacing.md} align="center" justify="space-between">
-              <Select
-                showSearch
-                optionFilterProp="label"
-                aria-label="Chọn chương trình phụng vụ"
-                value={program.id}
-                onChange={(programId: string) => setSearchParams({ programId })}
-                options={allPrograms.map((item) => ({
-                  value: item.id,
-                  label: `${item.eventName} · ${formatProgramDate(item.date)}${item.date < today ? ' (đã qua)' : ''}`,
-                }))}
-                style={{ flex: '1 1 280px', maxWidth: 420, minWidth: 0 }}
-              />
-              <Flex wrap gap={spacing.sm} align="center">
-                <SongListStatusTag status={program.songListStatus} />
-                <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>Xem chi tiết chương trình</Link>
-              </Flex>
-            </Flex>
+          <Card styles={{ body: { padding: `${spacing.lg}px ${spacing.xl}px` } }}>
+            <ResponseHeader
+              program={program}
+              programs={allPrograms}
+              today={today}
+              onPick={(programId) => setSearchParams({ programId })}
+              counts={participation.data === undefined ? undefined : counts}
+            />
           </Card>
           {isPast && requests.length > 0 && (
             <Alert type="info" showIcon title="Chương trình đã qua: không gửi thêm yêu cầu xác nhận được." />
@@ -181,7 +173,6 @@ export function ParticipationPage() {
           )}
           {participation.data !== undefined && requests.length > 0 && (
             <Flex vertical gap={spacing.lg}>
-              <MetricSummary definitions={metrics} values={counts} />
               <Card styles={{ body: { padding: 0 } }}>
                 <Flex vertical gap={spacing.sm} style={{ padding: spacing.md }}>
                   <Flex wrap gap={spacing.sm} align="center" justify="space-between">
