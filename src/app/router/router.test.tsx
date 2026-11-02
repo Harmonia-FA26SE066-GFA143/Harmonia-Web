@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
 import { clearSession, setSession, type ApiRoleName } from '@/lib/auth/session'
 import { routes } from '.'
-import { isPageHandle, type PageHandle } from './placeholderRoute'
+import { isPageHandle, type PageHandle } from './pageRoute'
 
 const roleByPrefix: [string, ApiRoleName][] = [
   ['/admin', 'Admin'],
@@ -54,8 +54,6 @@ function collectPages(list: RouteObject[]): { path: string; handle: PageHandle }
 }
 
 const pages = collectPages(routes)
-const placeholders = pages.filter((page) => page.handle.placeholder)
-const implemented = pages.filter((page) => !page.handle.placeholder)
 
 describe('router', () => {
   it('registers a page route for every screen-map page', () => {
@@ -66,19 +64,11 @@ describe('router', () => {
     expect(new Set(pages.map((page) => page.path)).size).toBe(pages.length)
   })
 
-  it.each(placeholders)('renders the placeholder for $path', async ({ path, handle }) => {
-    signInAs(roleFor(path))
-    renderAt(path.replace(/:\w+/g, 'demo'))
-    expect(await screen.findByRole('heading', { level: 1, name: handle.title })).toBeInTheDocument()
-    expect(screen.getByText('Đang phát triển')).toBeInTheDocument()
-  })
-
-  it.each(implemented)('renders the implemented page for $path', async ({ path, handle }) => {
+  it.each(pages)('renders the page for $path', async ({ path, handle }) => {
     signInAs(roleFor(path))
     // ?token= opens the reset-password form; the other pages ignore it.
     renderAt(`${path.replace(/:\w+/g, 'demo')}?token=demo`)
     expect(await screen.findByRole('heading', { level: 1, name: handle.title })).toBeInTheDocument()
-    expect(screen.queryByText('Đang phát triển')).toBeNull()
   })
 
   it('wraps internal pages in the app shell', async () => {
