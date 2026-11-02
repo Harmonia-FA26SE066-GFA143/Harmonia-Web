@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons'
 import { Alert, Button, Card, Col, Flex, Progress, Row, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
+import type { ReactNode } from 'react'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useSongList } from '@/features/song-lists'
@@ -27,6 +28,34 @@ interface DirectorPreparationHubProps {
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
 const numeric = { fontVariantNumeric: 'tabular-nums' }
+
+/** One preparation step: its name and state, what stands, and the buttons that move it on, at the card's foot. */
+function StepCard({ icon, title, tag, actions, children }: Readonly<{ icon: ReactNode; title: string; tag: ReactNode; actions: ReactNode; children: ReactNode }>) {
+  return (
+    <Col xs={24} lg={12}>
+      <Card
+        size="small"
+        variant="outlined"
+        style={{ height: '100%', borderRadius: radius.md, background: colors.softSurface, display: 'flex', flexDirection: 'column' }}
+        styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
+      >
+        <div>
+          <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
+            <Flex align="center" gap={spacing.xs} style={{ color: colors.primary, fontSize: typography.cardHeading.fontSize }}>
+              {icon}
+              <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
+                {title}
+              </Typography.Text>
+            </Flex>
+            {tag}
+          </Flex>
+          <div style={{ minHeight: 46 }}>{children}</div>
+        </div>
+        <div style={{ marginTop: spacing.md }}>{actions}</div>
+      </Card>
+    </Col>
+  )
+}
 
 export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<DirectorPreparationHubProps>) {
   const navigate = useNavigate()
@@ -218,127 +247,68 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
           style={{ display: prepStatus.isPending || prepStatus.isError ? 'none' : undefined }}
         >
           {/* Step 1: Xác nhận tham gia */}
-          <Col xs={24} lg={12}>
-            <Card
-              size="small"
-              variant="outlined"
-              style={{
-                height: '100%',
-                borderRadius: radius.md,
-                background: colors.softSurface,
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-              styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
-            >
-              <div>
-                <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
-                  <Flex align="center" gap={spacing.xs}>
-                    <UsergroupAddOutlined style={{ color: colors.primary, fontSize: typography.cardHeading.fontSize }} />
-                    <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
-                      Xác nhận tham gia
-                    </Typography.Text>
-                  </Flex>
-                  {totalInvited === 0 ? (
-                    <Tag style={{ marginInlineEnd: 0 }}>Chưa gửi</Tag>
-                  ) : confirmedCount > 0 ? (
-                    <Tag color="success" style={{ marginInlineEnd: 0 }}>
-                      {confirmedCount} đã xác nhận
-                    </Tag>
-                  ) : (
-                    <Tag color="warning" style={{ marginInlineEnd: 0 }}>
-                      Chờ phản hồi
-                    </Tag>
-                  )}
-                </Flex>
-
-                <div style={{ minHeight: 46 }}>
-                  {totalInvited === 0 ? (
-                    <Typography.Text style={muted}>
-                      Chưa gửi yêu cầu xác nhận nào đến ca viên cho chương trình này.
-                    </Typography.Text>
-                  ) : (
-                    <Flex vertical gap={2}>
-                      <Typography.Text style={{ fontSize: typography.fontSize }}>
-                        <strong style={numeric}>{confirmedCount}</strong> xác nhận ·{' '}
-                        <span style={numeric}>{prep?.participation.unsure ?? 0}</span> chưa chắc chắn ·{' '}
-                        <span style={numeric}>{prep?.participation.declined ?? 0}</span> từ chối
-                      </Typography.Text>
-                      {(prep?.participation.invited ?? 0) > 0 && (
-                        <Typography.Text style={muted}>
-                          Còn <span style={numeric}>{prep?.participation.invited}</span> ca viên chưa trả lời
-                        </Typography.Text>
-                      )}
-                    </Flex>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ marginTop: spacing.md }}>
-                <Button
-                  block
-                  icon={<ArrowRightOutlined />}
-                  iconPlacement="end"
-                  onClick={() => navigate(`${paths.director.participation}?programId=${program.id}`)}
-                >
-                  {totalInvited === 0 ? 'Gửi yêu cầu xác nhận' : 'Xem & gửi thêm ca viên'}
-                </Button>
-              </div>
-            </Card>
-          </Col>
+          <StepCard
+            icon={<UsergroupAddOutlined />}
+            title="Xác nhận tham gia"
+            tag={
+              totalInvited === 0 ? (
+                <Tag style={{ marginInlineEnd: 0 }}>Chưa gửi</Tag>
+              ) : confirmedCount > 0 ? (
+                <Tag color="success" style={{ marginInlineEnd: 0 }}>
+                  {confirmedCount} đã xác nhận
+                </Tag>
+              ) : (
+                <Tag color="warning" style={{ marginInlineEnd: 0 }}>
+                  Chờ phản hồi
+                </Tag>
+              )
+            }
+            actions={
+              <Button
+                block
+                icon={<ArrowRightOutlined />}
+                iconPlacement="end"
+                onClick={() => navigate(`${paths.director.participation}?programId=${program.id}`)}
+              >
+                {totalInvited === 0 ? 'Gửi yêu cầu xác nhận' : 'Xem & gửi thêm ca viên'}
+              </Button>
+            }
+          >
+            {totalInvited === 0 ? (
+              <Typography.Text style={muted}>
+                Chưa gửi yêu cầu xác nhận nào đến ca viên cho chương trình này.
+              </Typography.Text>
+            ) : (
+              <Flex vertical gap={2}>
+                <Typography.Text>
+                  <strong style={numeric}>{confirmedCount}</strong> xác nhận ·{' '}
+                  <span style={numeric}>{prep?.participation.unsure ?? 0}</span> chưa chắc chắn ·{' '}
+                  <span style={numeric}>{prep?.participation.declined ?? 0}</span> từ chối
+                </Typography.Text>
+                {(prep?.participation.invited ?? 0) > 0 && (
+                  <Typography.Text style={muted}>
+                    Còn <span style={numeric}>{prep?.participation.invited}</span> ca viên chưa trả lời
+                  </Typography.Text>
+                )}
+              </Flex>
+            )}
+          </StepCard>
 
           {/* Step 2: Buổi tập và điểm danh */}
-          <Col xs={24} lg={12}>
-            <Card
-              size="small"
-              variant="outlined"
-              style={{
-                height: '100%',
-                borderRadius: radius.md,
-                background: colors.softSurface,
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-              styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
-            >
-              <div>
-                <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
-                  <Flex align="center" gap={spacing.xs}>
-                    <ScheduleOutlined style={{ color: colors.primary, fontSize: typography.cardHeading.fontSize }} />
-                    <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
-                      Buổi tập và điểm danh
-                    </Typography.Text>
-                  </Flex>
-                  {rehearsalsTotal === 0 ? (
-                    <Tag style={{ marginInlineEnd: 0 }}>Chưa có lịch</Tag>
-                  ) : (
-                    <Tag color="processing" style={{ marginInlineEnd: 0 }}>
-                      {rehearsalsHeld}/{rehearsalsTotal} buổi đã tập
-                    </Tag>
-                  )}
-                </Flex>
-
-                <div style={{ minHeight: 46 }}>
-                  {rehearsalsTotal === 0 ? (
-                    <Typography.Text style={muted}>
-                      Lên kế hoạch các buổi tập hát để ca đoàn luyện bài trước ngày lễ.
-                    </Typography.Text>
-                  ) : (
-                    <Flex vertical gap={2}>
-                      <Typography.Text style={{ fontSize: typography.fontSize }}>
-                        Đã lên lịch <strong style={numeric}>{rehearsalsTotal}</strong> buổi tập
-                      </Typography.Text>
-                      {attendanceRate !== undefined && (
-                        <Typography.Text style={muted}>
-                          Tỷ lệ có mặt: <span style={numeric}>{attendanceRate}%</span> ({prep?.attendancePresent}/{prep?.attendanceExpected} lượt)
-                        </Typography.Text>
-                      )}
-                    </Flex>
-                  )}
-                </div>
-              </div>
-
-              <Flex gap={spacing.xs} style={{ marginTop: spacing.md }}>
+          <StepCard
+            icon={<ScheduleOutlined />}
+            title="Buổi tập và điểm danh"
+            tag={
+              rehearsalsTotal === 0 ? (
+                <Tag style={{ marginInlineEnd: 0 }}>Chưa có lịch</Tag>
+              ) : (
+                <Tag color="processing" style={{ marginInlineEnd: 0 }}>
+                  {rehearsalsHeld}/{rehearsalsTotal} buổi đã tập
+                </Tag>
+              )
+            }
+            actions={
+              <Flex gap={spacing.xs}>
                 <Button
                   style={{ flex: 1 }}
                   icon={<CalendarOutlined />}
@@ -353,75 +323,45 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                   Điểm danh
                 </Button>
               </Flex>
-            </Card>
-          </Col>
+            }
+          >
+            {rehearsalsTotal === 0 ? (
+              <Typography.Text style={muted}>
+                Lên kế hoạch các buổi tập hát để ca đoàn luyện bài trước ngày lễ.
+              </Typography.Text>
+            ) : (
+              <Flex vertical gap={2}>
+                <Typography.Text>
+                  Đã lên lịch <strong style={numeric}>{rehearsalsTotal}</strong> buổi tập
+                </Typography.Text>
+                {attendanceRate !== undefined && (
+                  <Typography.Text style={muted}>
+                    Tỷ lệ có mặt: <span style={numeric}>{attendanceRate}%</span> ({prep?.attendancePresent}/{prep?.attendanceExpected} lượt)
+                  </Typography.Text>
+                )}
+              </Flex>
+            )}
+          </StepCard>
 
           {/* Step 3: Bài tập và luyện tập */}
-          <Col xs={24} lg={12}>
-            <Card
-              size="small"
-              variant="outlined"
-              style={{
-                height: '100%',
-                borderRadius: radius.md,
-                background: colors.softSurface,
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-              styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
-            >
-              <div>
-                <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
-                  <Flex align="center" gap={spacing.xs}>
-                    <SoundOutlined style={{ color: colors.primary, fontSize: typography.cardHeading.fontSize }} />
-                    <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
-                      Bài tập và luyện tập
-                    </Typography.Text>
-                  </Flex>
-                  {practiceExpected === 0 ? (
-                    <Tag style={{ marginInlineEnd: 0 }}>Chưa giao bài</Tag>
-                  ) : practiceOverdue > 0 ? (
-                    <Tag color="error" style={{ marginInlineEnd: 0 }}>
-                      {practiceOverdue} quá hạn
-                    </Tag>
-                  ) : (
-                    <Tag color="success" style={{ marginInlineEnd: 0 }}>
-                      {practicePassed}/{practiceExpected} đạt
-                    </Tag>
-                  )}
-                </Flex>
-
-                <div style={{ minHeight: 46 }}>
-                  {practiceExpected === 0 ? (
-                    <Typography.Text style={muted}>
-                      Giao bài tập nộp bản thu cho từng bè hoặc từng ca viên để chấm tiến độ.
-                    </Typography.Text>
-                  ) : (
-                    <Flex vertical gap={4}>
-                      <Flex align="center" justify="space-between">
-                        <Typography.Text style={{ fontSize: typography.fontSize }}>
-                          Đạt <strong style={numeric}>{practicePassed}</strong> / {practiceExpected} lượt nộp
-                        </Typography.Text>
-                        {practiceRate !== undefined && (
-                          <Typography.Text style={{ ...muted, ...numeric }}>
-                            {practiceRate}%
-                          </Typography.Text>
-                        )}
-                      </Flex>
-                      {practiceRate !== undefined && (
-                        <Progress
-                          percent={practiceRate}
-                          size="small"
-                          showInfo={false}
-                          strokeColor={sections.practice.cloth}
-                        />
-                      )}
-                    </Flex>
-                  )}
-                </div>
-              </div>
-
-              <Flex gap={spacing.xs} style={{ marginTop: spacing.md }}>
+          <StepCard
+            icon={<SoundOutlined />}
+            title="Bài tập và luyện tập"
+            tag={
+              practiceExpected === 0 ? (
+                <Tag style={{ marginInlineEnd: 0 }}>Chưa giao bài</Tag>
+              ) : practiceOverdue > 0 ? (
+                <Tag color="error" style={{ marginInlineEnd: 0 }}>
+                  {practiceOverdue} quá hạn
+                </Tag>
+              ) : (
+                <Tag color="success" style={{ marginInlineEnd: 0 }}>
+                  {practicePassed}/{practiceExpected} đạt
+                </Tag>
+              )
+            }
+            actions={
+              <Flex gap={spacing.xs}>
                 <Button
                   style={{ flex: 1 }}
                   icon={<ArrowRightOutlined />}
@@ -437,78 +377,83 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                   Giao bài tập
                 </Button>
               </Flex>
-            </Card>
-          </Col>
-
-          {/* Step 4: Phân công phục vụ */}
-          <Col xs={24} lg={12}>
-            <Card
-              size="small"
-              variant="outlined"
-              style={{
-                height: '100%',
-                borderRadius: radius.md,
-                background: colors.softSurface,
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-              styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
-            >
-              <div>
-                <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
-                  <Flex align="center" gap={spacing.xs}>
-                    <TeamOutlined style={{ color: colors.primary, fontSize: typography.cardHeading.fontSize }} />
-                    <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
-                      Phân công phục vụ
+            }
+          >
+            {practiceExpected === 0 ? (
+              <Typography.Text style={muted}>
+                Giao bài tập nộp bản thu cho từng bè hoặc từng ca viên để chấm tiến độ.
+              </Typography.Text>
+            ) : (
+              <Flex vertical gap={4}>
+                <Flex align="center" justify="space-between">
+                  <Typography.Text>
+                    Đạt <strong style={numeric}>{practicePassed}</strong> / {practiceExpected} lượt nộp
+                  </Typography.Text>
+                  {practiceRate !== undefined && (
+                    <Typography.Text style={{ ...muted, ...numeric }}>
+                      {practiceRate}%
                     </Typography.Text>
-                  </Flex>
-                  {!songListApproved ? (
-                    <Tag style={{ marginInlineEnd: 0 }}>Chờ duyệt bài hát</Tag>
-                  ) : rosterFinalized ? (
-                    <Tag color="success" style={{ marginInlineEnd: 0 }}>
-                      Đã chốt phân công
-                    </Tag>
-                  ) : (
-                    <Tag color="processing" style={{ marginInlineEnd: 0 }}>
-                      Đang phân công
-                    </Tag>
                   )}
                 </Flex>
+                {practiceRate !== undefined && (
+                  <Progress
+                    percent={practiceRate}
+                    size="small"
+                    showInfo={false}
+                    strokeColor={sections.practice.cloth}
+                  />
+                )}
+              </Flex>
+            )}
+          </StepCard>
 
-                <div style={{ minHeight: 46 }}>
-                  {!songListApproved ? (
-                    <Typography.Text style={muted}>
-                      Yêu cầu danh sách bài hát được Cha xứ phê duyệt trước khi thiết lập phân công.
-                    </Typography.Text>
-                  ) : (
-                    <Flex vertical gap={2}>
-                      <Typography.Text style={{ fontSize: typography.fontSize }}>
-                        {rosterFinalized ? 'Đã chốt' : 'Đang phân công'} ·{' '}
-                        <strong style={numeric}>{activeAssignments}</strong> lượt ca viên
-                      </Typography.Text>
-                      {shortages.length > 0 && (
-                        <Typography.Text style={{ fontSize: 13 }}>
-                          Còn thiếu nhân sự cho <strong style={numeric}>{shortages.length}</strong> vị trí
-                        </Typography.Text>
-                      )}
-                    </Flex>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ marginTop: spacing.md }}>
-                <Button
-                  block
-                  type={songListApproved ? 'primary' : 'default'}
-                  icon={<ArrowRightOutlined />}
-                  iconPlacement="end"
-                  onClick={() => navigate(generatePath(paths.director.roster, {}) + `?programId=${program.id}`)}
-                >
-                  {songListApproved ? 'Lập & điều chỉnh phân công' : 'Xem trang phân công'}
-                </Button>
-              </div>
-            </Card>
-          </Col>
+          {/* Step 4: Phân công phục vụ */}
+          <StepCard
+            icon={<TeamOutlined />}
+            title="Phân công phục vụ"
+            tag={
+              !songListApproved ? (
+                <Tag style={{ marginInlineEnd: 0 }}>Chờ duyệt bài hát</Tag>
+              ) : rosterFinalized ? (
+                <Tag color="success" style={{ marginInlineEnd: 0 }}>
+                  Đã chốt phân công
+                </Tag>
+              ) : (
+                <Tag color="processing" style={{ marginInlineEnd: 0 }}>
+                  Đang phân công
+                </Tag>
+              )
+            }
+            actions={
+              <Button
+                block
+                type={songListApproved ? 'primary' : 'default'}
+                icon={<ArrowRightOutlined />}
+                iconPlacement="end"
+                onClick={() => navigate(generatePath(paths.director.roster, {}) + `?programId=${program.id}`)}
+              >
+                {songListApproved ? 'Lập & điều chỉnh phân công' : 'Xem trang phân công'}
+              </Button>
+            }
+          >
+            {!songListApproved ? (
+              <Typography.Text style={muted}>
+                Yêu cầu danh sách bài hát được Cha xứ phê duyệt trước khi thiết lập phân công.
+              </Typography.Text>
+            ) : (
+              <Flex vertical gap={2}>
+                <Typography.Text>
+                  {rosterFinalized ? 'Đã chốt' : 'Đang phân công'} ·{' '}
+                  <strong style={numeric}>{activeAssignments}</strong> lượt ca viên
+                </Typography.Text>
+                {shortages.length > 0 && (
+                  <Typography.Text style={{ fontSize: 13 }}>
+                    Còn thiếu nhân sự cho <strong style={numeric}>{shortages.length}</strong> vị trí
+                  </Typography.Text>
+                )}
+              </Flex>
+            )}
+          </StepCard>
         </Row>
       </Card>
     </Flex>
