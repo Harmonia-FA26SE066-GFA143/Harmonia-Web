@@ -73,6 +73,23 @@ describe('PriestProgramDetailPage', () => {
     expect(await screen.findByRole('heading', { name: 'Không thể tải chương trình' })).toBeInTheDocument()
   })
 
+  it('still finds both neighbours when more than a page of programs comes before this one', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
+    // A parish whose generated Masses fill a whole page before the date: the program itself is not on that page.
+    const busy = Array.from({ length: 100 }, (_, index) => ({ ...draft, id: `m${index}`, date: '2099-09-26', title: `Lễ ${index}` }))
+    const previous = { ...draft, id: 'e0', date: '2099-09-26', title: 'Lễ Chiều Thứ Bảy' }
+    const next = { ...draft, id: 'e2', date: '2099-09-28', title: 'Lễ Thứ Hai' }
+    vi.spyOn(eventsApi, 'listEvents').mockImplementation(async ({ fromDate, toDate }) => {
+      if (toDate === draft.date) return eventPage([previous, draft]) // the days before, ending with this program
+      if (fromDate === draft.date) return eventPage([draft, next]) // the days after, starting with it
+      return eventPage(busy)
+    })
+    renderDetail()
+
+    expect(await screen.findByRole('button', { name: 'Lễ trước: Lễ Chiều Thứ Bảy · 26/09/2099' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Lễ sau: Lễ Thứ Hai · 28/09/2099' })).toBeEnabled()
+  })
+
   it('moves to the program before or after from the header, in date order', async () => {
     const get = vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(
