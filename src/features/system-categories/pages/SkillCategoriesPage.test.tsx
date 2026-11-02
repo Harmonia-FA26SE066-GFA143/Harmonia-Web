@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiContractMissingError, ApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as categoriesApi from '../api/categoriesApi'
 import type { CatalogItem, Skill } from '../types'
@@ -70,7 +70,7 @@ describe('SkillCategoriesPage', () => {
 
   it('says the category is not loaded instead of showing "no category"', async () => {
     vi.spyOn(categoriesApi, 'listSkills').mockResolvedValue(skills)
-    vi.spyOn(categoriesApi, 'listCatalogItems').mockRejectedValue(new ApiContractMissingError('nhóm kỹ năng'))
+    vi.spyOn(categoriesApi, 'listCatalogItems').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<SkillCategoriesPage />, '/admin/skill-categories')
 
     const soprano = (await screen.findByText('Soprano')).closest('tr') as HTMLElement
