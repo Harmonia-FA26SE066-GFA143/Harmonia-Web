@@ -7,11 +7,11 @@ describe('LandingPage', () => {
   it('introduces the four roles', () => {
     renderPage(<LandingPage />)
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Điều phối ca đoàn')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Mỗi Thánh lễ, một ca đoàn sẵn sàng.')
     expect(screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual([
       'Cha xứ',
       'Ca trưởng',
-      'Thành viên ca đoàn / Nhạc công',
+      'Ca viên, nhạc công',
       'Quản trị viên',
     ])
   })
@@ -30,7 +30,7 @@ describe('LandingPage', () => {
     renderPage(<LandingPage />)
 
     expect(screen.getByRole('link', { name: /Liên hệ/ })).toHaveAttribute('href', 'mailto:harmoniafall26@gmail.com')
-    expect(screen.getByRole('heading', { level: 2, name: 'Liên hệ' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Cần tài khoản cho giáo xứ?' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'harmoniafall26@gmail.com' })).toHaveAttribute(
       'href',
       'mailto:harmoniafall26@gmail.com',
