@@ -3,6 +3,7 @@ import { colors, typography } from '@/styles/tokens'
 import { formatProgramDate } from '../programFilters'
 import type { LiturgicalProgram } from '../types'
 import { EventStatusTag } from './EventStatusTag'
+import { ProgramDateCell } from './ProgramDateCell'
 import { SongListStatusTag } from './SongListStatusTag'
 
 export interface ProgramTableProps {
@@ -24,6 +25,12 @@ const classification = ({ eventName, massTypeName, ceremonyTypeName, seasonName 
 export function ProgramTable({ programs, onOpen, pagination = false, loading }: Readonly<ProgramTableProps>) {
   const columns: TableColumnsType<LiturgicalProgram> = [
     {
+      key: 'date',
+      title: 'Ngày giờ',
+      width: 200,
+      render: (_, program) => <ProgramDateCell date={program.date} label={`${program.time} · ${formatProgramDate(program.date)}`} />,
+    },
+    {
       key: 'name',
       title: 'Tên sự kiện',
       render: (_, program) => (
@@ -34,28 +41,18 @@ export function ProgramTable({ programs, onOpen, pagination = false, loading }: 
         </Flex>
       ),
     },
-    {
-      key: 'date',
-      title: 'Ngày giờ',
-      render: (_, program) => (
-        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-          {program.time} · {formatProgramDate(program.date)}
-        </Typography.Text>
-      ),
-    },
-    { key: 'location', title: 'Nơi cử hành', render: (_, program) => program.locationName },
+    { key: 'location', title: 'Nơi cử hành', width: 200, render: (_, program) => program.locationName },
     {
       key: 'songList',
       title: 'Danh sách bài hát',
       width: 170,
-      fixed: 'right',
       render: (_, program) => <SongListStatusTag status={program.songListStatus} />,
     },
     {
       key: 'actions',
       title: 'Thao tác',
       align: 'right',
-      fixed: 'right',
+      width: 140,
       render: (_, program) =>
         // The Choir Director's detail reads published events only (GET /api/schedule/events/{id}), so a cancelled one
         // would open on "not found".
@@ -76,7 +73,8 @@ export function ProgramTable({ programs, onOpen, pagination = false, loading }: 
       dataSource={programs}
       loading={loading}
       pagination={pagination}
-      scroll={{ x: 'max-content' }}
+      // A fixed width, not the content's: long program names wrap instead of pushing the table sideways.
+      scroll={{ x: 960 }}
     />
   )
 }
