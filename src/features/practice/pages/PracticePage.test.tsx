@@ -108,6 +108,22 @@ describe('PracticePage', () => {
     )
   })
 
+  it('does not send the moment mark alone as the comment when "Đạt" is chosen instead', async () => {
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission()]))
+    vi.spyOn(practiceApi, 'getSubmission').mockResolvedValue(submission())
+    const review = vi.spyOn(practiceApi, 'reviewSubmission').mockResolvedValue()
+    renderPractice()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
+    const dialog = await screen.findByRole('dialog')
+    // What the row fills in when the recording was paused at 0:12.
+    fireEvent.change(await within(dialog).findByRole('textbox', { name: 'Nhận xét' }), { target: { value: '[0:12] ' } })
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Đạt' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu kết quả' }))
+
+    await waitFor(() => expect(review).toHaveBeenCalledWith('sub-1', { result: 'passed', comment: undefined }))
+  })
+
   it('adds a comment to a reviewed submission without changing its result', async () => {
     const reviewed = submission({
       status: 'needsRevision',
