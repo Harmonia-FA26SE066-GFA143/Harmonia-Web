@@ -117,7 +117,7 @@ export function RehearsalPracticeRoomPage() {
                     style={{ width: '100%', border: 0, borderBottom: `1px solid ${colors.border}`, background: index === current ? colors.primarySoft : colors.surface, textAlign: 'left', padding: spacing.md }}
                   >
                     <Flex gap={spacing.md} align="start">
-                      <Typography.Text type="secondary" style={{ fontVariantNumeric: 'tabular-nums' }}>{String(index + 1).padStart(2, '0')}</Typography.Text>
+                      <Typography.Text type="secondary" style={{ fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{String(index + 1).padStart(2, '0')}</Typography.Text>
                       <div style={{ minWidth: 0 }}>
                         <Typography.Text strong>{item.title}</Typography.Text>
                         {item.section && <Typography.Text type="secondary" style={{ display: 'block' }}>{item.section}</Typography.Text>}
