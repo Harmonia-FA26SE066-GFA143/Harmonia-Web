@@ -1,66 +1,42 @@
-import {
-  CheckCircleFilled,
-  MailOutlined,
-} from '@ant-design/icons'
+import { MailOutlined } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
-import type { MouseEvent } from 'react'
+import type { CSSProperties, MouseEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useContactEmail } from '@/features/settings'
 import { BrandMark } from '@/shared/ui'
-import { cardSurface, colors, media, radius, sizes, spacing, typography } from '@/styles/tokens'
+import { colors, gold, media, radius, sizes, spacing, spine, typography } from '@/styles/tokens'
 import { HeroVideo } from './HeroVideo'
 
-interface RoleSummary {
-  title: string
-  platform: string
-  duties: string[]
-}
-
-const roleSummaries: RoleSummary[] = [
-  {
-    title: 'Cha xứ',
-    platform: 'Web',
-    duties: [
-      'Lập hoặc xem xét chương trình phụng vụ hằng tuần.',
-      'Phê duyệt, từ chối hoặc yêu cầu chỉnh sửa danh sách bài hát đề xuất, kèm ghi chú.',
-      'Theo dõi tình trạng chuẩn bị của ca đoàn cho các sự kiện quan trọng.',
-      'Xem báo cáo lịch sử phục vụ, sử dụng bài hát và chuẩn bị sự kiện.',
-    ],
-  },
-  {
-    title: 'Ca trưởng',
-    platform: 'Web',
-    duties: [
-      'Quản lý thành viên ca đoàn và duyệt kỹ năng đã khai báo.',
-      'Quản lý kho bài hát, tài liệu tập và phân loại bài hát.',
-      'Đề xuất danh sách bài hát và lập lịch tập cho sự kiện.',
-      'Gửi yêu cầu xác nhận tham gia, phân công phục vụ, giao bài tập và điểm danh.',
-    ],
-  },
-  {
-    title: 'Thành viên ca đoàn / Nhạc công',
-    platform: 'Ứng dụng di động',
-    duties: [
-      'Xem hồ sơ cá nhân, khai báo kỹ năng và theo dõi trạng thái duyệt.',
-      'Xem sự kiện sắp tới và phản hồi tham gia.',
-      'Xem danh sách bài hát đã duyệt và tài liệu tập.',
-      'Nộp bản thu âm bài tập và xem nhận xét của Ca trưởng.',
-    ],
-  },
-  {
-    title: 'Quản trị viên',
-    platform: 'Web',
-    duties: [
-      'Quản lý tài khoản và xác nhận vai trò người dùng.',
-      'Cấu hình danh mục kỹ năng, mùa phụng vụ, loại Thánh lễ, loại nghi lễ và loại sự kiện.',
-      'Xem và xuất báo cáo theo tháng, sự kiện hoặc mùa phụng vụ.',
-      'Xem lịch sử hoạt động của hệ thống.',
-    ],
-  },
+/** One program from song list to celebration, who does each step (the six steps of `PreparationSteps`). */
+const steps = [
+  { title: 'Soạn danh sách', who: 'Ca trưởng', text: 'Chọn bài cho từng phần của Thánh lễ.' },
+  { title: 'Duyệt bài hát', who: 'Cha xứ', text: 'Duyệt, yêu cầu sửa hoặc từ chối kèm ghi chú.' },
+  { title: 'Xác nhận tham gia', who: 'Ca viên', text: 'Trả lời trên điện thoại: có, không hay chưa chắc.' },
+  { title: 'Phân công', who: 'Ca trưởng', text: 'Đủ người cho từng bè, từng nhạc cụ.' },
+  { title: 'Tập và luyện', who: 'Cả ca đoàn', text: 'Điểm danh buổi tập, nộp bản thu, nhận xét.' },
+  { title: 'Cử hành', who: 'Giáo xứ', text: 'Ca đoàn phục vụ Thánh lễ.' },
 ]
 
-/** Public landing page (Stitch SHARED-04), rendered outside the application shell. */
+const roles = [
+  { title: 'Cha xứ', where: 'Trên web', text: 'Lập chương trình phụng vụ, duyệt danh sách bài hát và theo dõi việc chuẩn bị cho các lễ quan trọng.' },
+  { title: 'Ca trưởng', where: 'Trên web', text: 'Quản lý ca viên và kho bài hát, lập lịch tập, phân công, giao bài và điểm danh.' },
+  { title: 'Ca viên, nhạc công', where: 'Trên ứng dụng di động', text: 'Xác nhận tham gia, xem bài đã duyệt, nộp bản thu luyện tập và đọc nhận xét.' },
+  { title: 'Quản trị viên', where: 'Trên web', text: 'Cấp tài khoản, cấu hình danh mục phụng vụ và xuất báo cáo.' },
+]
+
+const display: CSSProperties = { fontFamily: typography.displayFontFamily, fontWeight: 600, margin: 0 }
+
+function Eyebrow({ children, onMedia = false }: Readonly<{ children: string; onMedia?: boolean }>) {
+  return (
+    <Flex align="center" gap={spacing.sm} style={{ fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', color: onMedia ? gold.soft : gold.ink }}>
+      <span aria-hidden style={{ width: 32, height: 1, background: gold.line }} />
+      {children}
+    </Flex>
+  )
+}
+
+/** Public landing page (Stitch SHARED-04, redrawn 2026-11-02), rendered outside the application shell. */
 export function LandingPage() {
   const navigate = useNavigate()
   // Set by the Admin (Contact.Email, readable before signing in); the project address until then.
@@ -72,264 +48,153 @@ export function LandingPage() {
     event.preventDefault()
     navigate(paths.login)
   }
-  const signIn = (
-    <Button
-      type="primary"
-      href={paths.login}
-      onClick={goToSignIn}
-      style={{
-        paddingInline: spacing.lg,
-        height: sizes.controlHeight,
-        fontWeight: 600,
-      }}
-    >
-      Đăng nhập
-    </Button>
-  )
-
-  // Accounts are created by an Admin, so writing to the administrators is how a newcomer gets one.
-  const contact = (
-    <Button
-      ghost
-      icon={<MailOutlined />}
-      href={`mailto:${contactEmail}`}
-      style={{
-        paddingInline: spacing.lg,
-        height: sizes.controlHeight,
-        borderRadius: radius.md,
-        fontWeight: 500,
-      }}
-    >
-      Liên hệ quản trị viên
-    </Button>
-  )
+  const large = { paddingInline: spacing.lg, height: 48, fontSize: 15, fontWeight: 600 }
 
   return (
-    <Flex vertical gap={spacing.xxl} style={{ paddingBottom: spacing.xxl }}>
-      <Flex
-        component="header"
-        justify="space-between"
-        align="center"
-        wrap
-        gap={spacing.md}
-        style={{
-          paddingBlock: spacing.md,
-          borderBottom: `1px solid ${colors.border}`,
-        }}
-      >
+    <Flex vertical style={{ paddingBottom: spacing.xl }}>
+      <Flex component="header" justify="space-between" align="center" style={{ paddingBottom: spacing.lg }}>
         <Flex align="center" gap={spacing.sm}>
           <BrandMark size={36} />
-          <Typography.Text
-            strong
-            style={{
-              fontSize: typography.sectionHeading.fontSize,
-              color: colors.primary,
-              letterSpacing: '-0.02em',
-            }}
-          >
+          <Typography.Text strong style={{ fontSize: typography.sectionHeading.fontSize, color: colors.primary, letterSpacing: '-0.02em' }}>
             Harmonia
           </Typography.Text>
         </Flex>
-        {signIn}
+        <Button type="primary" href={paths.login} onClick={goToSignIn} style={{ paddingInline: spacing.lg, height: sizes.controlHeight, fontWeight: 600 }}>
+          Đăng nhập
+        </Button>
       </Flex>
 
       {/* Hero: a decorative looping video under a scrim that keeps the text at AA contrast. */}
       <section
         aria-labelledby="hero-heading"
         className="landing-hero"
-        style={{
-          position: 'relative',
-          overflow: 'hidden',
-          isolation: 'isolate',
-          display: 'flex',
-          alignItems: 'center',
-          minHeight: 520,
-          borderRadius: radius.lg,
-          background: media.backdrop,
-        }}
+        style={{ position: 'relative', overflow: 'hidden', isolation: 'isolate', display: 'flex', alignItems: 'center', minHeight: 600, borderRadius: radius.lg * 2, background: media.backdrop }}
       >
         <HeroVideo />
         <div aria-hidden style={{ position: 'absolute', inset: 0, background: media.heroScrim }} />
-        <div style={{ position: 'relative', zIndex: 1, padding: spacing.xxl + spacing.sm }}>
-          <Typography.Title
-            id="hero-heading"
-            level={1}
-            style={{
-              margin: 0,
-              maxWidth: 720,
-              color: media.text,
-              fontWeight: 800,
-              fontSize: 42,
-              lineHeight: 1.22,
-              letterSpacing: '-0.03em',
-            }}
-          >
-            Điều phối ca đoàn và quản lý âm nhạc phụng vụ
+        <div style={{ position: 'relative', zIndex: 1, padding: `${spacing.xxl * 2}px ${spacing.xxl + spacing.lg}px`, maxWidth: 800 }}>
+          <Eyebrow onMedia>Âm nhạc phụng vụ của giáo xứ</Eyebrow>
+          <Typography.Title id="hero-heading" level={1} style={{ ...display, marginTop: spacing.lg, color: media.text, fontSize: 68, lineHeight: 1.05 }}>
+            Mỗi Thánh lễ,{' '}
+            <br />
+            một ca đoàn sẵn sàng.
           </Typography.Title>
-          {/* 60ch keeps lines at a readable length. */}
-          <Typography.Paragraph
-            style={{
-              margin: `${spacing.lg}px 0 ${spacing.xl}px`,
-              maxWidth: '60ch',
-              color: media.textMuted,
-              fontSize: 16,
-              lineHeight: 1.6,
-            }}
-          >
-            Harmonia giúp Cha xứ, Ca trưởng và thành viên ca đoàn cùng chuẩn bị chương trình phụng vụ,
-            danh sách bài hát, lịch tập và phân công phục vụ trên một hệ thống chung.
+          <Typography.Paragraph style={{ margin: `${spacing.lg}px 0 ${spacing.xl}px`, maxWidth: '56ch', color: media.textMuted, fontSize: 17, lineHeight: 1.7 }}>
+            Cha xứ duyệt bài hát, Ca trưởng lập lịch tập và phân công, ca viên luyện bài trên điện thoại. Harmonia giữ mọi
+            bước trên cùng một lịch phụng vụ.
           </Typography.Paragraph>
           <Flex wrap gap={spacing.md}>
             {/* On the dark scrim the sign-in is a white button; the header keeps the burgundy one. */}
-            <Button
-              className="landing-hero-sign-in"
-              href={paths.login}
-              onClick={goToSignIn}
-              style={{ paddingInline: spacing.lg, height: sizes.controlHeight, fontWeight: 600 }}
-            >
+            <Button className="landing-hero-sign-in" href={paths.login} onClick={goToSignIn} style={large}>
               Đăng nhập
             </Button>
-            {contact}
+            {/* Accounts are created by an Admin, so writing to the administrators is how a newcomer gets one. */}
+            <Button ghost icon={<MailOutlined />} href={`mailto:${contactEmail}`} style={{ ...large, fontWeight: 500 }}>
+              Liên hệ quản trị viên
+            </Button>
           </Flex>
         </div>
       </section>
 
-      {/* Roles section */}
-      <section aria-labelledby="roles-heading">
-        <div style={{ marginBottom: spacing.xl }}>
-          <Typography.Title
-            id="roles-heading"
-            level={2}
-            style={{
-              margin: 0,
-              fontSize: 24,
-              letterSpacing: '-0.02em',
-              fontWeight: 700,
-            }}
-          >
-            Mỗi vai trò, một không gian làm việc
-          </Typography.Title>
-          <Typography.Text style={{ color: colors.textMuted, fontSize: 14 }}>
-            Được phân quyền chuyên biệt theo đúng sứ vụ và trách nhiệm trong cộng đoàn.
-          </Typography.Text>
-        </div>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
-            gap: spacing.lg,
-          }}
-        >
-          {roleSummaries.map((role) => {
+      <section aria-labelledby="steps-heading" style={{ marginTop: spacing.xxl * 2 }}>
+        <Eyebrow>Một chương trình phụng vụ</Eyebrow>
+        <Typography.Title id="steps-heading" level={2} style={{ ...display, marginTop: spacing.sm, fontSize: 40, lineHeight: 1.15 }}>
+          Từ danh sách bài hát đến ngày cử hành
+        </Typography.Title>
+        <ol style={{ position: 'relative', listStyle: 'none', margin: `${spacing.xl + spacing.sm}px 0 0`, padding: 0, display: 'grid', gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
+          <span aria-hidden style={{ position: 'absolute', top: 15, insetInline: '0 8%', height: 1, background: gold.line }} />
+          {steps.map((step, index) => {
+            const last = index === steps.length - 1
             return (
-              <article
-                key={role.title}
-                style={{
-                  ...cardSurface,
-                  padding: spacing.xl,
-                  borderRadius: radius.lg,
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <Typography.Title
-                  level={3}
+              <li key={step.title} style={{ position: 'relative', paddingInlineEnd: spacing.lg }}>
+                <span
+                  aria-hidden
                   style={{
-                    margin: 0,
-                    fontSize: 17,
-                    fontWeight: 700,
-                    letterSpacing: '-0.01em',
+                    display: 'grid',
+                    placeItems: 'center',
+                    width: 30,
+                    height: 30,
+                    borderRadius: '50%',
+                    border: `1.5px solid ${colors.primary}`,
+                    background: last ? colors.primary : colors.background,
+                    color: last ? media.text : colors.primary,
+                    fontSize: 13,
+                    fontWeight: 600,
                   }}
                 >
-                  {role.title}
-                </Typography.Title>
-                <Typography.Text style={{ color: colors.textMuted }}>Dùng trên {role.platform === 'Web' ? 'web' : 'ứng dụng di động'}</Typography.Text>
-
-                <ul
-                  style={{
-                    margin: `${spacing.md}px 0 0`,
-                    padding: 0,
-                    listStyle: 'none',
-                    color: colors.textBody,
-                    flex: 1,
-                  }}
-                >
-                  {role.duties.map((duty) => (
-                    <li
-                      key={duty}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 10,
-                        marginBottom: spacing.sm,
-                        fontSize: 13.5,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      <CheckCircleFilled
-                        style={{
-                          color: colors.primary,
-                          fontSize: 14,
-                          marginTop: 3,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span>{duty}</span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
+                  {index + 1}
+                </span>
+                <Typography.Text strong style={{ display: 'block', marginTop: spacing.md, fontSize: 15, color: colors.textPrimary }}>
+                  {step.title}
+                </Typography.Text>
+                <Typography.Text style={{ display: 'block', fontSize: typography.metadata.fontSize, fontWeight: 500, color: gold.ink }}>{step.who}</Typography.Text>
+                <Typography.Text style={{ display: 'block', marginTop: spacing.xs, fontSize: 13, color: colors.textMuted }}>{step.text}</Typography.Text>
+              </li>
             )
           })}
+        </ol>
+      </section>
+
+      <section aria-labelledby="roles-heading" style={{ marginTop: spacing.xxl * 2, display: 'grid', gridTemplateColumns: '360px minmax(0, 1fr)', gap: spacing.xxl + spacing.md }}>
+        <div>
+          <Eyebrow>Bốn vai trò</Eyebrow>
+          <Typography.Title id="roles-heading" level={2} style={{ ...display, marginTop: spacing.sm, fontSize: 40, lineHeight: 1.15 }}>
+            Mỗi người một việc, chung một lịch.
+          </Typography.Title>
+          <Typography.Paragraph style={{ margin: `${spacing.md}px 0 0`, color: colors.textMuted, fontSize: 15 }}>
+            Quyền được chia theo đúng trách nhiệm trong cộng đoàn.
+          </Typography.Paragraph>
+        </div>
+        <div>
+          {roles.map((role, index) => (
+            <article
+              key={role.title}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '200px minmax(0, 1fr)',
+                gap: spacing.lg,
+                padding: `${spacing.lg}px 0`,
+                borderTop: `1px solid ${colors.border}`,
+                borderBottom: index === roles.length - 1 ? `1px solid ${colors.border}` : undefined,
+              }}
+            >
+              <div>
+                <Typography.Title level={3} style={{ margin: 0, fontSize: 18 }}>
+                  {role.title}
+                </Typography.Title>
+                <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>{role.where}</Typography.Text>
+              </div>
+              <Typography.Paragraph style={{ margin: 0, fontSize: 15, color: colors.textBody }}>{role.text}</Typography.Paragraph>
+            </article>
+          ))}
         </div>
       </section>
 
-      {/* Contact section */}
       <section
         aria-labelledby="contact-heading"
-        style={{
-          padding: spacing.xl,
-          background: colors.primarySoft,
-          border: `1px solid ${colors.primaryFocus}`,
-          borderRadius: radius.lg,
-        }}
+        style={{ marginTop: spacing.xxl * 2, padding: `${spacing.xxl}px ${spacing.xxl + spacing.md}px`, borderRadius: radius.lg * 2, background: spine.background }}
       >
-        <Flex vertical gap={spacing.xs}>
-          <Typography.Title
-            id="contact-heading"
-            level={2}
-            style={{
-              margin: 0,
-              fontSize: 20,
-              fontWeight: 700,
-              letterSpacing: '-0.01em',
-            }}
+        <Flex justify="space-between" align="center" gap={spacing.xl} wrap>
+          <div>
+            <Typography.Title id="contact-heading" level={2} style={{ ...display, color: media.text, fontSize: 36 }}>
+              Cần tài khoản cho giáo xứ?
+            </Typography.Title>
+            <Typography.Paragraph style={{ margin: `${spacing.sm}px 0 0`, color: spine.text }}>
+              Quản trị viên Harmonia sẽ cấp tài khoản và vai trò cho bạn.
+            </Typography.Paragraph>
+          </div>
+          <a
+            href={`mailto:${contactEmail}`}
+            className="on-media-link"
+            style={{ display: 'inline-flex', alignItems: 'center', height: 48, paddingInline: spacing.lg, borderRadius: radius.md, background: media.text, color: colors.primary, fontWeight: 600 }}
           >
-            Liên hệ
-          </Typography.Title>
-          <Typography.Paragraph style={{ margin: 0, color: colors.textBody, fontSize: 14 }}>
-            Cần tài khoản hoặc hỗ trợ? Gửi email cho quản trị viên Harmonia:{' '}
-            <Typography.Link
-              href={`mailto:${contactEmail}`}
-              style={{ fontWeight: 600, color: colors.primary }}
-            >
-              {contactEmail}
-            </Typography.Link>
-          </Typography.Paragraph>
+            {contactEmail}
+          </a>
         </Flex>
       </section>
 
-      <footer
-        style={{
-          borderTop: `1px solid ${colors.border}`,
-          paddingTop: spacing.lg,
-          textAlign: 'center',
-        }}
-      >
-        <Typography.Text style={{ color: colors.textMuted, fontSize: 13 }}>
-          Harmonia · Hệ thống điều phối ca đoàn và quản lý âm nhạc phụng vụ
-        </Typography.Text>
+      <footer style={{ marginTop: spacing.xxl, paddingTop: spacing.lg, borderTop: `1px solid ${colors.border}`, textAlign: 'center' }}>
+        <Typography.Text style={{ color: colors.textMuted, fontSize: 13 }}>Harmonia · Hệ thống điều phối ca đoàn và quản lý âm nhạc phụng vụ</Typography.Text>
       </footer>
     </Flex>
   )

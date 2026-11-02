@@ -6,7 +6,7 @@ import { pageRoute } from '../placeholderRoute'
 export const publicRoutes: RouteObject[] = [
   pageRoute(
     paths.home,
-    { title: 'Điều phối ca đoàn và quản lý âm nhạc phụng vụ', phase: 1 },
+    { title: 'Mỗi Thánh lễ, một ca đoàn sẵn sàng.', phase: 1 },
     async () => (await import('@/app/pages/LandingPage')).LandingPage,
   ),
 ]
