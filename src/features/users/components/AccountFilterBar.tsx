@@ -18,16 +18,20 @@ export function AccountFilterBar({ value, onChange, onReset, resultCount }: Read
   const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
   return (
     <Flex wrap align="end" gap={spacing.sm} style={{ padding: spacing.md }}>
-      <Input
-        allowClear
-        prefix={<SearchOutlined aria-hidden />}
-        placeholder="Tìm theo email…"
-        aria-label="Tìm tài khoản theo email"
-        value={value.search}
-        onChange={(event) => onChange({ ...value, search: event.target.value })}
-        style={{ flex: '1 1 260px', maxWidth: 360 }}
-      />
-      {/* Visible labels: once a value is chosen the placeholder is gone and the two filters would look alike. */}
+      {/* Visible labels: once a value is typed or chosen the placeholder is gone and the fields would look alike. */}
+      <Flex vertical gap={4} style={{ flex: '1 1 260px', maxWidth: 360 }}>
+        <label htmlFor="account-filter-search" style={labelStyle}>
+          Tìm tài khoản theo email
+        </label>
+        <Input
+          id="account-filter-search"
+          allowClear
+          prefix={<SearchOutlined aria-hidden />}
+          placeholder="ten@giaoxu.org"
+          value={value.search}
+          onChange={(event) => onChange({ ...value, search: event.target.value })}
+        />
+      </Flex>
       <Flex vertical gap={4} style={{ flex: '0 1 220px', minWidth: 180 }}>
         <label htmlFor="account-filter-role" style={labelStyle}>
           Vai trò
