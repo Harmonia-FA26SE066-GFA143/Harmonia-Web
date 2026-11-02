@@ -8,6 +8,8 @@ import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { PageHeader } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { ActivityTrendCard } from '../components/ActivityTrendCard'
+import { AttendanceWatch } from '../components/AttendanceWatch'
+import { ReportLede } from '../components/ReportLede'
 import { ReportPanel } from '../components/ReportPanel'
 import { granularityLabels, periodOf, type Granularity } from '../directorReport'
 import { useExportReport } from '../hooks/useReports'
@@ -137,7 +139,11 @@ export function DirectorReportsPage() {
           Từ {dayjs(period.from).format('DD/MM/YYYY')} đến {dayjs(period.to).format('DD/MM/YYYY')}
         </Typography.Text>
       </Flex>
-      <ActivityTrendCard query={trend.query} title={trend.title} />
+      <ReportLede granularity={granularity} anchor={anchor} choirId={choirId} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)', gap: spacing.md, marginBottom: spacing.lg }}>
+        <ActivityTrendCard query={trend.query} title={trend.title} style={{ marginBottom: 0 }} />
+        <AttendanceWatch filters={filters} />
+      </div>
       <Tabs
         destroyOnHidden
         activeKey={tab}

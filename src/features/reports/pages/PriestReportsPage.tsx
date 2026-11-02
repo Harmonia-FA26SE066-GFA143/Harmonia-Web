@@ -6,6 +6,7 @@ import { useCatalogOptions } from '@/features/system-categories'
 import { PageHeader } from '@/shared/ui'
 import { ReportFilterBar } from '../components/ReportFilterBar'
 import { ReportPanel } from '../components/ReportPanel'
+import { ServiceLede } from '../components/ServiceLede'
 import { priestReportKinds, reportDefinitions } from '../reportDefinitions'
 import { hasActiveReportFilters, readReportFilters, writeReportParams } from '../reportFilters'
 import type { PriestReportKind, ReportFilters } from '../types'
@@ -23,6 +24,8 @@ export function PriestReportsPage() {
   const show = (nextKind: PriestReportKind, nextFilters: ReportFilters) =>
     setParams(writeReportParams(nextKind, nextFilters), { replace: true })
   const clearFilters = () => show(kind, {})
+  const season = seasons.find((option) => option.value === filters.seasonId)?.label
+  const scope = [filters.month && `Tháng ${filters.month.slice(5)}/${filters.month.slice(0, 4)}`, season].filter(Boolean).join(' · ') || 'Từ trước đến nay'
 
   return (
     <>
@@ -31,6 +34,7 @@ export function PriestReportsPage() {
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Báo cáo' }]}
       />
       <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={clearFilters} seasons={seasons} />
+      <ServiceLede filters={filters} scope={scope} />
       <Tabs
         destroyOnHidden
         activeKey={kind}

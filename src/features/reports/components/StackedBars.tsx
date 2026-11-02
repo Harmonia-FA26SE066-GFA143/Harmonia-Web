@@ -4,6 +4,8 @@ import { colors, radius, spacing } from '@/styles/tokens'
 export interface Bucket {
   label: string
   title: string
+  /** A short figure under the label, e.g. the rate of the period. */
+  note?: string
 }
 
 export interface BarSeries<K extends string> {
@@ -28,7 +30,7 @@ export function StackedBars<K extends string>({
 
   return (
     <Flex vertical gap={spacing.md}>
-      <Flex align="flex-end" gap={spacing.xs} style={{ height: chartHeight + 44, overflowX: 'auto', paddingTop: spacing.sm }}>
+      <Flex align="flex-end" gap={spacing.xs} style={{ height: chartHeight + 72, overflowX: 'auto', overflowY: 'hidden', paddingTop: spacing.sm }}>
         {buckets.map((bucket, index) => {
           const counts = values[index]
           const total = totals[index]
@@ -37,7 +39,7 @@ export function StackedBars<K extends string>({
             : 'không có dữ liệu'
           return (
             <Flex key={bucket.title} vertical align="center" justify="flex-end" style={{ flex: '1 0 28px', height: '100%' }}>
-              <Typography.Text style={{ fontSize: 12, color: colors.textMuted, fontVariantNumeric: 'tabular-nums' }}>
+              <Typography.Text style={{ fontSize: 12, fontWeight: 600, color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
                 {total || ''}
               </Typography.Text>
               <Tooltip title={`${bucket.title}: ${description}`}>
@@ -62,6 +64,9 @@ export function StackedBars<K extends string>({
               </Tooltip>
               <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, marginTop: 6, whiteSpace: 'nowrap' }}>
                 {bucket.label}
+              </Typography.Text>
+              <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, minHeight: 18, fontVariantNumeric: 'tabular-nums' }}>
+                {bucket.note}
               </Typography.Text>
             </Flex>
           )
