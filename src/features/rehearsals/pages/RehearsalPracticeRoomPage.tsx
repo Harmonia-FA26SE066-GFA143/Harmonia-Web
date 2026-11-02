@@ -6,6 +6,8 @@ import { useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { env } from '@/config/env'
 import { isPlayableAudio, useSongMaterials } from '@/features/music-library'
+import { ApiError } from '@/lib/api/errors'
+import { ErrorState } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { RecordingPanel } from '../components/RecordingPanel'
 import type { PracticeRoomView } from '../practiceRoomTypes'
@@ -21,9 +23,10 @@ export function RehearsalPracticeRoomPage() {
   const location = useLocation()
   const rehearsal = (location.state as { rehearsal?: Rehearsal } | null)?.rehearsal
   const demoFixture = rehearsalId === 'rehearsal-demo-1' || rehearsalId === 'demo'
-  // Opened from the schedule, the rehearsal travels in the router state; opened by its link, it is fetched.
-  const fetched = useRehearsal(demoFixture || rehearsal ? undefined : rehearsalId)
-  const fallbackRehearsal = demoFixture ? undefined : (rehearsal ?? fetched.data)
+  // Always read again by id: the router state survives a reload, so it only shows the session until the answer
+  // arrives, and stays when the detail endpoint hides it (a rehearsal of a draft or cancelled event answers 404).
+  const fetched = useRehearsal(demoFixture ? undefined : rehearsalId)
+  const fallbackRehearsal = demoFixture ? undefined : (fetched.data ?? rehearsal)
   const [fixture, setFixture] = useState<PracticeRoomView>()
 
   useEffect(() => {
@@ -43,7 +46,9 @@ export function RehearsalPracticeRoomPage() {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [part, setPart] = useState('Tất cả')
   // Sample audio per voice part and typed lyrics come from the song's materials (GET /api/music-materials).
-  const selectedSongId = demoFixture ? '' : (room?.songs[selectedIndex]?.id ?? '')
+  // A list read again may be shorter than the one the selection was made in.
+  const current = Math.min(selectedIndex, Math.max(0, (room?.songs.length ?? 0) - 1))
+  const selectedSongId = demoFixture ? '' : (room?.songs[current]?.id ?? '')
   const materials = useSongMaterials(selectedSongId)
   const audios = (materials.data ?? []).filter((material) => material.url && isPlayableAudio(material))
   const parts = ['Tất cả', ...new Set(audios.flatMap((material) => (material.targetSkillName ? [material.targetSkillName] : [])))]
@@ -54,19 +59,28 @@ export function RehearsalPracticeRoomPage() {
       : audios.find((material) => material.targetSkillName === shownPart)
   const typedLyrics = materials.data?.find((material) => material.kind === 'lyrics' && material.lyricsText !== null)?.lyricsText
 
-  if (fetched.isLoading) return <Skeleton active paragraph={{ rows: 12 }} />
+  if (fetched.isLoading && !rehearsal) return <Skeleton active paragraph={{ rows: 12 }} />
   if (demoFixture && fixture === undefined && import.meta.env.DEV && env.useDevFixtures) return <Skeleton active paragraph={{ rows: 12 }} />
-  if (!room) return (
-    <div>
-      <Typography.Title level={1}>Chi tiết buổi tập</Typography.Title>
-      <Card title="Không tìm thấy buổi tập"><Button onClick={() => navigate(paths.director.rehearsals)}>Quay lại lịch tập</Button></Card>
-    </div>
-  )
+  if (!room) {
+    // 404 REHEARSAL_NOT_FOUND: deleted, or not of the director's choirs. Anything else (network, 500) can be retried.
+    const failed = fetched.isError && !(fetched.error instanceof ApiError && fetched.error.status === 404)
+    return (
+      <div>
+        <Typography.Title level={1}>Chi tiết buổi tập</Typography.Title>
+        {failed ? (
+          <ErrorState title="Không thể tải buổi tập" error={fetched.error} hasData={false} onRetry={() => fetched.refetch()} retrying={fetched.isFetching} />
+        ) : (
+          <Card title="Không tìm thấy buổi tập"><Button onClick={() => navigate(paths.director.rehearsals)}>Quay lại lịch tập</Button></Card>
+        )}
+      </div>
+    )
+  }
 
-  const song = room.songs[selectedIndex]
-  const audioUrl = partAudio?.url ?? song.audioUrl
-  const previous = () => setSelectedIndex((index) => Math.max(0, index - 1))
-  const next = () => setSelectedIndex((index) => Math.min(room.songs.length - 1, index + 1))
+  // Undefined while the rehearsal has no songs; the page then shows "Buổi tập chưa có bài hát" instead of the player.
+  const song = room.songs[current]
+  const audioUrl = partAudio?.url ?? song?.audioUrl
+  const previous = () => setSelectedIndex(Math.max(0, current - 1))
+  const next = () => setSelectedIndex(Math.min(room.songs.length - 1, current + 1))
 
   return (
     <div className="rehearsal-practice-room">
@@ -97,10 +111,10 @@ export function RehearsalPracticeRoomPage() {
                 <li key={item.id}>
                   <button
                     type="button"
-                    aria-current={index === selectedIndex ? 'true' : undefined}
+                    aria-current={index === current ? 'true' : undefined}
                     onClick={() => setSelectedIndex(index)}
                     className="practice-song-item"
-                    style={{ width: '100%', border: 0, borderBottom: `1px solid ${colors.border}`, background: index === selectedIndex ? colors.primarySoft : colors.surface, textAlign: 'left', padding: spacing.md }}
+                    style={{ width: '100%', border: 0, borderBottom: `1px solid ${colors.border}`, background: index === current ? colors.primarySoft : colors.surface, textAlign: 'left', padding: spacing.md }}
                   >
                     <Flex gap={spacing.md} align="start">
                       <Typography.Text type="secondary" style={{ fontVariantNumeric: 'tabular-nums' }}>{String(index + 1).padStart(2, '0')}</Typography.Text>
@@ -121,7 +135,7 @@ export function RehearsalPracticeRoomPage() {
             {song.note && <Typography.Paragraph type="secondary">Cần tập: {song.note}</Typography.Paragraph>}
             <Flex wrap justify="space-between" align="center" gap={spacing.sm}>
               <Segmented value={shownPart} onChange={(value) => setPart(String(value))} options={parts} aria-label="Audio mẫu theo bè" />
-              <Flex gap={4}><Button icon={<LeftOutlined />} aria-label="Bài trước" disabled={selectedIndex === 0} onClick={previous} /><Button icon={<RightOutlined />} aria-label="Bài sau" disabled={selectedIndex === room.songs.length - 1} onClick={next} /></Flex>
+              <Flex gap={4}><Button icon={<LeftOutlined />} aria-label="Bài trước" disabled={current === 0} onClick={previous} /><Button icon={<RightOutlined />} aria-label="Bài sau" disabled={current === room.songs.length - 1} onClick={next} /></Flex>
             </Flex>
 
             <div className="karaoke-lyrics" aria-live="off">

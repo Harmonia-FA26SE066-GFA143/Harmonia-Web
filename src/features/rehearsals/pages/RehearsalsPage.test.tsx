@@ -199,6 +199,47 @@ describe('RehearsalsPage', () => {
 })
 
 describe('RehearsalPracticeRoomPage', () => {
+  const renderRoom = (initialEntry: Parameters<typeof renderPage>[2] = '/director/rehearsals/r2') =>
+    renderPage(<RehearsalPracticeRoomPage />, '/director/rehearsals/:rehearsalId', initialEntry)
+
+  it('says a session has no songs yet instead of failing (the backend allows a rehearsal without songs)', async () => {
+    vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({ ...rehearsals[1], songs: [] })
+    renderRoom()
+
+    expect(await screen.findByRole('heading', { name: 'Buổi tập chưa có bài hát' })).toBeInTheDocument()
+  })
+
+  it('offers a retry when the session cannot be loaded, and says "not found" only for 404', async () => {
+    // Not 404 (403 is not retried by the query client, so the error shows at once; 500 behaves the same after retries).
+    const get = vi.spyOn(rehearsalsApi, 'getRehearsal').mockRejectedValue(new ApiError(403, undefined))
+    const { unmount } = renderRoom()
+
+    expect(await screen.findByRole('heading', { name: 'Không thể tải buổi tập' })).toBeInTheDocument()
+    expect(screen.queryByText('Không tìm thấy buổi tập')).toBeNull()
+    unmount()
+
+    get.mockRejectedValue(new ApiError(404, { code: 'REHEARSAL_NOT_FOUND' }))
+    renderRoom('/director/rehearsals/r404')
+    expect(await screen.findByText('Không tìm thấy buổi tập')).toBeInTheDocument()
+  })
+
+  it('reads a session opened from the schedule again, so its router state (kept across reloads) is not shown stale', async () => {
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([])
+    vi.spyOn(rehearsalsApi, 'listRecordings').mockResolvedValue([])
+    const get = vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({
+      ...rehearsals[1],
+      songs: [{ songId: 's2', songTitle: 'Lễ Vật Tâm Tình' }],
+    })
+    renderRoom({
+      pathname: '/director/rehearsals/r2',
+      state: { rehearsal: { ...rehearsals[1], songs: [{ songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ' }] } },
+    })
+
+    expect(await screen.findByRole('heading', { name: 'Lễ Vật Tâm Tình', level: 2 })).toBeInTheDocument()
+    expect(screen.queryByText('Con Bước Lên Bàn Thờ')).toBeNull()
+    expect(get).toHaveBeenCalledWith('r2')
+  })
+
   it('loads a rehearsal opened by its link and lists, plays and deletes the takes of the chosen song (B43)', async () => {
     vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({ ...rehearsals[1], songs: [{ songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ', note: 'Điệp khúc 2' }] })
     vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([])
