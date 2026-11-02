@@ -2,7 +2,8 @@ import { Card, Flex, Segmented, Spin, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import type { CSSProperties } from 'react'
+import { colors, outcomeColors, spacing } from '@/styles/tokens'
 import { useActivityTrend } from '../hooks/useReports'
 import type { ActivityTrendPoint, ActivityTrendQuery, TrendPeriod } from '../types'
 import { StackedBars, type BarSeries, type Bucket } from './StackedBars'
@@ -11,17 +12,17 @@ type View = 'attendance' | 'practice'
 
 // Labels are the backend's column titles of the same counts (GET /api/reports/columns), as in the tables below.
 const attendanceSeries: BarSeries<'presentCount' | 'lateCount' | 'excusedCount' | 'absentCount'>[] = [
-  { key: 'presentCount', label: 'Có mặt', color: '#389e0d' },
-  { key: 'lateCount', label: 'Đi trễ', color: '#d48806' },
-  { key: 'excusedCount', label: 'Vắng có phép', color: '#0958d9' },
-  { key: 'absentCount', label: 'Vắng', color: '#cf1322' },
+  { key: 'presentCount', label: 'Có mặt', color: outcomeColors.good },
+  { key: 'lateCount', label: 'Đi trễ', color: outcomeColors.late },
+  { key: 'excusedCount', label: 'Vắng có phép', color: outcomeColors.excused },
+  { key: 'absentCount', label: 'Vắng', color: outcomeColors.missed },
 ]
 
 const practiceSeries: BarSeries<'passedCount' | 'needsRevisionCount' | 'awaitingReviewCount' | 'notSubmittedCount'>[] = [
-  { key: 'passedCount', label: 'Đạt', color: '#389e0d' },
-  { key: 'needsRevisionCount', label: 'Cần chỉnh sửa', color: '#d46b08' },
-  { key: 'awaitingReviewCount', label: 'Chờ nhận xét', color: '#0958d9' },
-  { key: 'notSubmittedCount', label: 'Chưa nộp', color: '#cf1322' },
+  { key: 'passedCount', label: 'Đạt', color: outcomeColors.good },
+  { key: 'needsRevisionCount', label: 'Cần chỉnh sửa', color: outcomeColors.late },
+  { key: 'awaitingReviewCount', label: 'Chờ nhận xét', color: outcomeColors.excused },
+  { key: 'notSubmittedCount', label: 'Chưa nộp', color: outcomeColors.missed },
 ]
 
 const percent = (rate?: number) => (rate === undefined ? undefined : `${Math.round(rate * 100)}%`)
@@ -30,17 +31,15 @@ const percent = (rate?: number) => (rate === undefined ? undefined : `${Math.rou
 function bucketOf(point: ActivityTrendPoint, groupBy: TrendPeriod, view: View): Bucket {
   const start = dayjs(point.periodStart)
   const end = dayjs(point.periodEnd)
-  const rate =
-    view === 'attendance'
-      ? percent(point.attendanceRate) && `chuyên cần ${percent(point.attendanceRate)}`
-      : percent(point.completionRate) && `hoàn thành ${percent(point.completionRate)}`
+  const value = percent(view === 'attendance' ? point.attendanceRate : point.completionRate)
+  const rate = value && `${view === 'attendance' ? 'chuyên cần' : 'hoàn thành'} ${value}`
   const names: Record<TrendPeriod, Bucket> = {
     week: { label: start.format('DD/MM'), title: `Tuần ${start.format('DD/MM')} – ${end.format('DD/MM/YYYY')}` },
     month: { label: `T${start.month() + 1}`, title: `Tháng ${start.format('MM/YYYY')}` },
     year: { label: start.format('YYYY'), title: `Năm ${start.format('YYYY')}` },
   }
   const bucket = names[groupBy]
-  return rate ? { ...bucket, title: `${bucket.title} · ${rate}` } : bucket
+  return rate ? { ...bucket, title: `${bucket.title} · ${rate}`, note: value } : bucket
 }
 
 /**
@@ -48,7 +47,7 @@ function bucketOf(point: ActivityTrendPoint, groupBy: TrendPeriod, view: View): 
  * column per week, month or year, stacked by result. Rehearsals count in the period they start, assignments in the
  * period they are due.
  */
-export function ActivityTrendCard({ query, title }: Readonly<{ query: ActivityTrendQuery; title: string }>) {
+export function ActivityTrendCard({ query, title, style }: Readonly<{ query: ActivityTrendQuery; title: string; style?: CSSProperties }>) {
   const [view, setView] = useState<View>('attendance')
   const trend = useActivityTrend(query)
   const points = trend.data ?? []
@@ -69,7 +68,7 @@ export function ActivityTrendCard({ query, title }: Readonly<{ query: ActivityTr
           ]}
         />
       }
-      style={{ marginBottom: spacing.lg }}
+      style={{ marginBottom: spacing.lg, ...style }}
     >
       {trend.isPending && <SectionSkeleton rows={4} label="Đang tải biểu đồ" />}
       {trend.isError && (

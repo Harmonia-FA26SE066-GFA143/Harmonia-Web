@@ -112,6 +112,18 @@ export const sections: Record<SectionKey, SectionColors> = {
   attention: { cloth: '#A8741A', tint: '#FBF3E2', border: '#EBCF97', ink: '#7A4F0C' },
 }
 
+/**
+ * The four results of a roll call (and of a practice review, in the same order) in charts and marks, each beside its
+ * name in words (owner 2026-11-02): present in the rehearsal green, late in the attention ochre, excused in a quiet
+ * slate, absent in the liturgy burgundy.
+ */
+export const outcomeColors = {
+  good: sections.rehearsal.cloth,
+  late: sections.attention.cloth,
+  excused: '#93A3B8',
+  missed: sections.liturgy.cloth,
+} as const
+
 /** An event the Parish Priest made, on his calendar: a liturgy chip, apart from the synced liturgical days (grey). */
 export const priestEvent = {
   background: sections.liturgy.tint,
