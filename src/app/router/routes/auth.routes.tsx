@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { paths } from '../paths'
-import { pageRoute } from '../placeholderRoute'
+import { pageRoute } from '../pageRoute'
 
 const loadAuth = () => import('@/features/auth')
 
@@ -9,21 +9,21 @@ const loadAuth = () => import('@/features/auth')
  * self-registration. These routes stay outside RoleGuard.
  */
 export const authRoutes: RouteObject[] = [
-  pageRoute(paths.login, { title: 'Đăng nhập', phase: 1 }, async () => (await loadAuth()).LoginPage),
+  pageRoute(paths.login, { title: 'Đăng nhập' }, async () => (await loadAuth()).LoginPage),
   pageRoute(
     paths.forgotPassword,
-    { title: 'Quên mật khẩu?', phase: 1 },
+    { title: 'Quên mật khẩu?' },
     async () => (await loadAuth()).ForgotPasswordPage,
   ),
   pageRoute(
     paths.resetPassword,
-    { title: 'Đặt lại mật khẩu', phase: 1 },
+    { title: 'Đặt lại mật khẩu' },
     async () => (await loadAuth()).ResetPasswordPage,
   ),
   // Outside RoleGuard so that a user who must change the password can reach it; the page itself needs a session.
   pageRoute(
     paths.changePassword,
-    { title: 'Đổi mật khẩu', phase: 1 },
+    { title: 'Đổi mật khẩu' },
     async () => (await loadAuth()).ChangePasswordPage,
   ),
 ]

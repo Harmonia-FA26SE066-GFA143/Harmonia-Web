@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { paths } from '../paths'
-import { pageRoute } from '../placeholderRoute'
+import { pageRoute } from '../pageRoute'
 
 const area = 'Quản trị hệ thống'
 
@@ -11,47 +11,47 @@ const area = 'Quản trị hệ thống'
 export const adminRoutes: RouteObject[] = [
   pageRoute(
     paths.admin.dashboard,
-    { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'], phase: 3 },
+    { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'] },
     async () => (await import('@/features/dashboard')).AdminDashboardPage,
   ),
   pageRoute(
     paths.admin.accounts,
-    { title: 'Tài khoản', breadcrumb: [area, 'Tài khoản'], phase: 2 },
+    { title: 'Tài khoản', breadcrumb: [area, 'Tài khoản'] },
     async () => (await import('@/features/users')).AccountsPage,
   ),
   pageRoute(
     paths.admin.roles,
-    { title: 'Vai trò & Phân quyền', breadcrumb: [area, 'Vai trò & Phân quyền'], phase: 2 },
+    { title: 'Vai trò & Phân quyền', breadcrumb: [area, 'Vai trò & Phân quyền'] },
     async () => (await import('@/features/users')).RolesPage,
   ),
   pageRoute(
     paths.admin.skillCategories,
-    { title: 'Danh mục kỹ năng', breadcrumb: [area, 'Danh mục kỹ năng'], phase: 2 },
+    { title: 'Danh mục kỹ năng', breadcrumb: [area, 'Danh mục kỹ năng'] },
     async () => (await import('@/features/system-categories')).SkillCategoriesPage,
   ),
   pageRoute(
     paths.admin.liturgicalCategories,
-    { title: 'Danh mục phụng vụ', breadcrumb: [area, 'Danh mục phụng vụ'], phase: 2 },
+    { title: 'Danh mục phụng vụ', breadcrumb: [area, 'Danh mục phụng vụ'] },
     async () => (await import('@/features/system-categories')).LiturgicalCategoriesPage,
   ),
   pageRoute(
     paths.admin.choirs,
-    { title: 'Ca đoàn', breadcrumb: [area, 'Ca đoàn'], phase: 2 },
+    { title: 'Ca đoàn', breadcrumb: [area, 'Ca đoàn'] },
     async () => (await import('@/features/choirs')).AdminChoirsPage,
   ),
   pageRoute(
     paths.admin.settings,
-    { title: 'Cấu hình chung', breadcrumb: [area, 'Cấu hình chung'], phase: 2 },
+    { title: 'Cấu hình chung', breadcrumb: [area, 'Cấu hình chung'] },
     async () => (await import('@/features/settings')).SettingsPage,
   ),
   pageRoute(
     paths.admin.reports,
-    { title: 'Báo cáo', breadcrumb: [area, 'Báo cáo'], phase: 3 },
+    { title: 'Báo cáo', breadcrumb: [area, 'Báo cáo'] },
     async () => (await import('@/features/reports')).AdminReportsPage,
   ),
   pageRoute(
     paths.admin.activityLog,
-    { title: 'Lịch sử hoạt động', breadcrumb: [area, 'Lịch sử hoạt động'], phase: 3 },
+    { title: 'Lịch sử hoạt động', breadcrumb: [area, 'Lịch sử hoạt động'] },
     async () => (await import('@/features/activity-log')).ActivityLogPage,
   ),
 ]

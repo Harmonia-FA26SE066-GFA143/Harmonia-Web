@@ -1,12 +1,12 @@
 import type { RouteObject } from 'react-router'
 import { paths } from '../paths'
-import { pageRoute } from '../placeholderRoute'
+import { pageRoute } from '../pageRoute'
 
 /** Public pages rendered outside the application shell (Stitch SHARED-04). */
 export const publicRoutes: RouteObject[] = [
   pageRoute(
     paths.home,
-    { title: 'Mỗi Thánh lễ, một ca đoàn sẵn sàng.', phase: 1 },
+    { title: 'Mỗi Thánh lễ, một ca đoàn sẵn sàng.' },
     async () => (await import('@/app/pages/LandingPage')).LandingPage,
   ),
 ]
@@ -15,7 +15,7 @@ export const publicRoutes: RouteObject[] = [
 export const sharedRoutes: RouteObject[] = [
   pageRoute(
     paths.profile,
-    { title: 'Hồ sơ cá nhân', phase: 1 },
+    { title: 'Hồ sơ cá nhân' },
     async () => (await import('@/features/profile')).ProfilePage,
   ),
 ]

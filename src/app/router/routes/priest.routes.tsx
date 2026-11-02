@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { paths } from '../paths'
-import { pageRoute } from '../placeholderRoute'
+import { pageRoute } from '../pageRoute'
 
 const area = 'Cha xứ'
 const programs = 'Chương trình phụng vụ'
@@ -13,42 +13,42 @@ const loadPrograms = () => import('@/features/liturgical-programs')
 export const priestRoutes: RouteObject[] = [
   pageRoute(
     paths.priest.dashboard,
-    { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'], phase: 4 },
+    { title: 'Tổng quan', breadcrumb: [area, 'Tổng quan'] },
     async () => (await import('@/features/dashboard')).PriestDashboardPage,
   ),
   pageRoute(
     paths.priest.calendar,
-    { title: 'Lịch phụng vụ', breadcrumb: [area, 'Lịch phụng vụ'], phase: 4 },
+    { title: 'Lịch phụng vụ', breadcrumb: [area, 'Lịch phụng vụ'] },
     async () => (await loadPrograms()).ProgramCalendarPage,
   ),
   pageRoute(
     paths.priest.programs,
-    { title: 'Danh sách chương trình phụng vụ', breadcrumb: [area, programs], phase: 4 },
+    { title: 'Danh sách chương trình phụng vụ', breadcrumb: [area, programs] },
     async () => (await loadPrograms()).PriestProgramListPage,
   ),
   pageRoute(
     paths.priest.programCreate,
-    { title: 'Tạo chương trình', breadcrumb: [area, programs, 'Tạo chương trình'], phase: 4 },
+    { title: 'Tạo chương trình', breadcrumb: [area, programs, 'Tạo chương trình'] },
     async () => (await loadPrograms()).CreateProgramPage,
   ),
   pageRoute(
     paths.priest.programDetail,
-    { title: 'Chi tiết chương trình phụng vụ', breadcrumb: [area, programs, 'Chi tiết chương trình'], phase: 4 },
+    { title: 'Chi tiết chương trình phụng vụ', breadcrumb: [area, programs, 'Chi tiết chương trình'] },
     async () => (await loadPrograms()).PriestProgramDetailPage,
   ),
   pageRoute(
     paths.priest.songListReview,
-    { title: 'Duyệt danh sách bài hát', breadcrumb: [area, programs, 'Duyệt danh sách bài hát'], phase: 5 },
+    { title: 'Duyệt danh sách bài hát', breadcrumb: [area, programs, 'Duyệt danh sách bài hát'] },
     async () => (await import('@/features/song-list-review')).SongListReviewPage,
   ),
   pageRoute(
     paths.priest.reports,
-    { title: 'Báo cáo', breadcrumb: [area, 'Báo cáo'], phase: 3 },
+    { title: 'Báo cáo', breadcrumb: [area, 'Báo cáo'] },
     async () => (await import('@/features/reports')).PriestReportsPage,
   ),
   pageRoute(
     paths.priest.notes,
-    { title: 'Ghi chú cho Ca trưởng', breadcrumb: [area, 'Ghi chú'], phase: 'TBD' },
+    { title: 'Ghi chú cho Ca trưởng', breadcrumb: [area, 'Ghi chú'] },
     async () => (await import('@/features/notes')).PriestNotesPage,
   ),
 ]
