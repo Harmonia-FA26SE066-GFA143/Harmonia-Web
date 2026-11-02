@@ -257,7 +257,7 @@ describe('RehearsalPracticeRoomPage', () => {
     expect(screen.getByRole('button', { name: /Thu âm$/ })).toBeDisabled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Xoá bản thu 1 của Con Bước Lên Bàn Thờ' }))
-    const confirm = (await screen.findAllByText('Xoá bản thu?'))[0].closest('.ant-modal') as HTMLElement
+    const confirm = (await screen.findAllByText('Xoá bản thu 1 của “Con Bước Lên Bàn Thờ”?'))[0].closest('.ant-modal') as HTMLElement
     fireEvent.click(within(confirm).getByRole('button', { name: 'Xoá bản thu' }))
     await waitFor(() => expect(remove).toHaveBeenCalledWith('r2', 'rec-1'))
   })
