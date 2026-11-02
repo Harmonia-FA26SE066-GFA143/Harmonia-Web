@@ -1,5 +1,4 @@
-import { apiRequest } from '@/lib/api/client'
-import { ApiError } from '@/lib/api/errors'
+import { apiRequest, orNullOn404 } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { EventFilters, LiturgicalProgram, LiturgicalProgramDetail, SongCredits } from '../types'
 import {
@@ -70,12 +69,6 @@ export async function listPrograms(filters: EventFilters, page: EventPage): Prom
     })),
   }
 }
-
-const orNullOn404 = <T>(request: Promise<T>): Promise<T | null> =>
-  request.catch((error: unknown) => {
-    if (error instanceof ApiError && error.status === 404) return null
-    throw error
-  })
 
 /** `null` when the event does not exist or is not published (404 LITURGICAL_EVENT_NOT_FOUND). */
 export async function getProgram(id: string): Promise<LiturgicalProgramDetail | null> {

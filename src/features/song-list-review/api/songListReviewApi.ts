@@ -1,6 +1,5 @@
 import type { SongListStatus } from '@/features/liturgical-programs'
-import { apiRequest } from '@/lib/api/client'
-import { ApiError } from '@/lib/api/errors'
+import { apiRequest, orNullOn404 } from '@/lib/api/client'
 import type { ReviewDecision, ReviewValues, SongList } from '../types'
 
 // `/api/song-lists` (Harmonia-BE SongListsController), the Parish Priest's side: lists waiting for review, the newest
@@ -70,12 +69,8 @@ export async function listPendingSongLists(): Promise<SongList[]> {
  * there is none (404 SONG_LIST_NOT_FOUND).
  */
 export async function getLatestSongList(eventId: string): Promise<SongList | null> {
-  try {
-    return toSongList(await apiRequest<SongListDto>(`/api/song-lists/event/${eventId}/latest`))
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return null
-    throw error
-  }
+  const dto = await orNullOn404(apiRequest<SongListDto>(`/api/song-lists/event/${eventId}/latest`))
+  return dto && toSongList(dto)
 }
 
 /**

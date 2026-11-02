@@ -1,6 +1,5 @@
 import type { SongListStatus } from '@/features/liturgical-programs'
-import { apiRequest } from '@/lib/api/client'
-import { ApiError } from '@/lib/api/errors'
+import { apiRequest, orNullOn404 } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { ReviewDecision, SongList, SongListItemInput, SongSuggestion } from '../types'
 
@@ -66,12 +65,8 @@ const toItems = (items: SongListItemInput[]) =>
 
 /** `null` while the event has no list (404 SONG_LIST_NOT_FOUND). */
 export async function getSongList(eventId: string): Promise<SongList | null> {
-  try {
-    return toSongList(await apiRequest<SongListDto>(`/api/song-lists/event/${eventId}/latest`))
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return null
-    throw error
-  }
+  const dto = await orNullOn404(apiRequest<SongListDto>(`/api/song-lists/event/${eventId}/latest`))
+  return dto && toSongList(dto)
 }
 
 /**
