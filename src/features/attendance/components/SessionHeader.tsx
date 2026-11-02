@@ -48,7 +48,7 @@ export function SessionHeader({ session, sessions, program, onPick, tally }: Rea
           <Typography.Title level={2} style={{ margin: 0, fontSize: 18 }}>
             {[`${start.format('HH:mm')}–${dayjs(session.endAt).format('HH:mm')}`, session.locationName].filter(Boolean).join(' · ')}
           </Typography.Title>
-          <Tag bordered={false} style={{ marginInlineEnd: 0, background: tag.background, color: tag.color, fontWeight: 500 }}>
+          <Tag variant="filled" style={{ marginInlineEnd: 0, background: tag.background, color: tag.color, fontWeight: 500 }}>
             {tag.label}
           </Tag>
         </Flex>
