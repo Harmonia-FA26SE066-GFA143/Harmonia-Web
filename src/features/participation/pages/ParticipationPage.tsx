@@ -175,16 +175,20 @@ export function ParticipationPage() {
             <Flex vertical gap={spacing.lg}>
               <Card styles={{ body: { padding: 0 } }}>
                 <Flex vertical gap={spacing.sm} style={{ padding: spacing.md }}>
-                  <Flex wrap gap={spacing.sm} align="center" justify="space-between">
-                    <Input
-                      allowClear
-                      prefix={<SearchOutlined aria-hidden />}
-                      placeholder="Tìm theo tên hoặc kỹ năng"
-                      aria-label="Tìm thành viên"
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      style={{ flex: '1 1 240px', maxWidth: 380 }}
-                    />
+                  <Flex wrap gap={spacing.sm} align="end" justify="space-between">
+                    <Flex vertical gap={4} style={{ flex: '1 1 240px', maxWidth: 380 }}>
+                      <label htmlFor="participation-search" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+                        Tìm thành viên
+                      </label>
+                      <Input
+                        id="participation-search"
+                        allowClear
+                        prefix={<SearchOutlined aria-hidden />}
+                        placeholder="Họ tên hoặc kỹ năng…"
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                      />
+                    </Flex>
                     <Flex wrap gap={spacing.sm} align="center">
                       {/* The list reloads when the window is focused again or on request, so say how old it is. */}
                       <Typography.Text style={{ color: colors.textMuted }}>
