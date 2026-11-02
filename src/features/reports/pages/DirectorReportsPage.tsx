@@ -6,7 +6,7 @@ import { useChoirs } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { PageHeader } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { ActivityTrendCard } from '../components/ActivityTrendCard'
 import { AttendanceWatch } from '../components/AttendanceWatch'
 import { ReportLede } from '../components/ReportLede'
@@ -21,6 +21,7 @@ import { reportFormatLabels, type ActivityTrendQuery, type ReportFilters, type R
 const granularities: Granularity[] = ['week', 'month', 'year']
 const pickerFormats: Record<Granularity, string> = { week: '[Tuần của] DD/MM/YYYY', month: 'MM/YYYY', year: 'YYYY' }
 const formats = Object.keys(reportFormatLabels) as ReportFormat[]
+const label = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
 
 /**
  * Choir Director: the three per-member reports of the backend (attendance, participation, practice completion,
@@ -101,41 +102,56 @@ export function DirectorReportsPage() {
           </Dropdown>
         }
       />
-      <Flex wrap align="center" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
-        <Segmented<Granularity>
-          aria-label="Thống kê theo"
-          value={granularity}
-          onChange={(by) => show({ by })}
-          options={granularities.map((value) => ({ value, label: granularityLabels[value] }))}
-        />
-        <Flex align="center" gap={spacing.xs}>
-          <Button icon={<LeftOutlined />} aria-label={`${granularityLabels[granularity]} trước`} onClick={() => step(-1)} />
-          <DatePicker
-            picker={granularity}
-            value={anchor}
-            allowClear={false}
-            format={pickerFormats[granularity]}
-            aria-label={`Chọn ${granularityLabels[granularity].toLowerCase()}`}
-            onChange={(date) => date && show({ date })}
+      <Flex wrap align="end" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
+        <Flex vertical gap={4}>
+          <span id="report-granularity" style={label}>
+            Thống kê theo
+          </span>
+          <Segmented<Granularity>
+            aria-labelledby="report-granularity"
+            value={granularity}
+            onChange={(by) => show({ by })}
+            options={granularities.map((value) => ({ value, label: granularityLabels[value] }))}
           />
-          <Button icon={<RightOutlined />} aria-label={`${granularityLabels[granularity]} sau`} onClick={() => step(1)} />
         </Flex>
-        <Select
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          aria-label="Ca đoàn"
-          placeholder="Tất cả ca đoàn"
-          loading={choirs.isPending}
-          value={choirId}
-          onChange={(value?: string) => show({ choirId: value ?? null })}
-          options={(choirs.data ?? []).map((choir) => ({
-            value: choir.id,
-            label: choir.isActive ? choir.name : `${choir.name} (ngừng hoạt động)`,
-          }))}
-          style={{ minWidth: 220 }}
-        />
-        <Typography.Text style={{ color: colors.textMuted }}>
+        <Flex vertical gap={4}>
+          <label htmlFor="report-period" style={label}>
+            Kỳ báo cáo
+          </label>
+          <Flex align="center" gap={spacing.xs}>
+            <Button icon={<LeftOutlined />} aria-label={`${granularityLabels[granularity]} trước`} onClick={() => step(-1)} />
+            <DatePicker
+              picker={granularity}
+              value={anchor}
+              allowClear={false}
+              format={pickerFormats[granularity]}
+              id="report-period"
+              onChange={(date) => date && show({ date })}
+            />
+            <Button icon={<RightOutlined />} aria-label={`${granularityLabels[granularity]} sau`} onClick={() => step(1)} />
+          </Flex>
+        </Flex>
+        <Flex vertical gap={4}>
+          <label htmlFor="report-choir" style={label}>
+            Ca đoàn
+          </label>
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            id="report-choir"
+            placeholder="Tất cả ca đoàn"
+            loading={choirs.isPending}
+            value={choirId}
+            onChange={(value?: string) => show({ choirId: value ?? null })}
+            options={(choirs.data ?? []).map((choir) => ({
+              value: choir.id,
+              label: choir.isActive ? choir.name : `${choir.name} (ngừng hoạt động)`,
+            }))}
+            style={{ minWidth: 220 }}
+          />
+        </Flex>
+        <Typography.Text style={{ color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
           Từ {dayjs(period.from).format('DD/MM/YYYY')} đến {dayjs(period.to).format('DD/MM/YYYY')}
         </Typography.Text>
       </Flex>
