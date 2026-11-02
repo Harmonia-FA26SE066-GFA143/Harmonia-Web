@@ -1,7 +1,9 @@
+import { Typography } from 'antd'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { env } from '@/config/env'
+import { useContactEmail } from '@/features/settings'
 import { ApiError } from '@/lib/api/errors'
 import type { SystemRole } from '@/shared/types/account'
 import { AuthCard } from '../components/AuthCard'
@@ -35,6 +37,7 @@ export function LoginPage() {
   const googleSignIn = useSignInWithGoogle()
   const pending = signIn.isPending || googleSignIn.isPending
   const [params] = useSearchParams()
+  const contactEmail = useContactEmail()
   // apiRequest ends a dead session with a redirect to /login?reason=session-ended.
   const [feedback, setFeedback] = useState<LoginFeedback | undefined>(() =>
     params.get('reason') === 'session-ended' ? { kind: 'session-ended' } : undefined,
@@ -59,7 +62,15 @@ export function LoginPage() {
   }
 
   return (
-    <AuthCard title="Đăng nhập" description="Đăng nhập để tiếp tục sử dụng Harmonia.">
+    <AuthCard
+      title="Đăng nhập"
+      description="Mừng bạn trở lại. Đăng nhập để tiếp tục sử dụng Harmonia."
+      footer={
+        <>
+          Chưa có tài khoản? Tài khoản do quản trị viên giáo xứ cấp. Liên hệ <Typography.Link href={`mailto:${contactEmail}`}>{contactEmail}</Typography.Link>.
+        </>
+      }
+    >
       <LoginForm
         onSubmit={handleSubmit}
         submitting={pending}

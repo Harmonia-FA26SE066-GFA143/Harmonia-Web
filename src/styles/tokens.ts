@@ -78,6 +78,12 @@ export const media = {
   text: '#FFFFFF',
   textMuted: 'rgba(255, 255, 255, 0.88)',
   /** Hero: darkest on the text side (left), opening up to the right where the light falls. */
+  /**
+   * The sign-in photograph: darkened at the foot under the verse and at the top under the brand, and toward the right
+   * where the form panel sits.
+   */
+  signInScrim:
+    'linear-gradient(0deg, rgba(28, 12, 17, 0.85) 0%, rgba(28, 12, 17, 0) 45%), linear-gradient(180deg, rgba(28, 12, 17, 0.55) 0%, rgba(28, 12, 17, 0) 20%), linear-gradient(90deg, rgba(28, 12, 17, 0.35) 0%, rgba(28, 12, 17, 0.6) 55%, rgba(28, 12, 17, 0.92) 100%)',
   heroScrim: 'linear-gradient(90deg, rgba(28, 12, 17, 0.8) 0%, rgba(28, 12, 17, 0.66) 50%, rgba(28, 12, 17, 0.2) 100%)',
   /** Sign-in image: clear at the top, dark under the brand at the bottom. */
   imageScrim: 'linear-gradient(180deg, rgba(28, 12, 17, 0.05) 30%, rgba(28, 12, 17, 0.82) 100%)',
