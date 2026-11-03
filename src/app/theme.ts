@@ -82,7 +82,9 @@ export const theme: ThemeConfig = {
       colorBorderSecondary: 'rgba(0, 0, 0, 0.07)',
     },
     Table: {
-      headerBg: colors.surface,
+      // A quiet paper band keeps column labels distinct without turning tables into admin-heavy grids.
+      headerBg: colors.softSurface,
+      headerColor: colors.textBody,
       headerSplitColor: 'transparent',
       rowHoverBg: colors.softSurface,
       cellPaddingBlock: spacing.md,
