@@ -6,8 +6,8 @@
  * Single source for colors and sizes; the Ant Design theme and custom styles both read from here.
  */
 export const colors = {
-  /** A warm off-white page; colour is kept for the data, not the ground (2026-10-30). */
-  background: '#F7F4F4',
+  /** A warm paper page, a step toward the missal's cream (owner 2026-11-03); colour is kept for the data. */
+  background: '#F5F0E8',
   surface: '#FFFFFF',
   softSurface: '#F5F1F1',
   /** The selected row of the navigation and of lists: one grey step, ink text. */
@@ -39,6 +39,11 @@ export const spine = {
   selected: '#6A2C39',
   text: '#EADADD',
   groupTitle: '#C9A9B0',
+  /** The nave photo at the head of the spine fades into the bookcloth, so the brand reads on it (owner 2026-11-03). */
+  photo: '/media/church-light-poster.webp',
+  photoScrim: 'linear-gradient(180deg, rgba(74, 29, 39, 0.35) 0%, rgba(74, 29, 39, 0.75) 55%, #4A1D27 100%)',
+  /** The gilt edge of the spine. */
+  edge: 'rgba(197, 164, 109, 0.4)',
 } as const
 
 /**
@@ -50,6 +55,17 @@ export const gold = {
   line: '#C5A46D',
   soft: '#E6D7B5',
   ink: '#7A5A1E',
+} as const
+
+/**
+ * The head of the next program's card by the hour of its Mass (owner 2026-11-03, Figma "Sáng – Chiều – Tối"): morning
+ * ivory lit from the top corner, afternoon warm parchment, evening the spine's bookcloth with pale text (title 13:1,
+ * meta 10:1, date 9:1, label 6.5:1). Light, not hue: season colour keeps the season chip.
+ */
+export const massTimeSurfaces = {
+  morning: { background: 'linear-gradient(135deg, rgba(230, 215, 181, 0.55) 0%, #F7F4ED 60%)', dark: false },
+  afternoon: { background: 'linear-gradient(90deg, #EEE8DC 0%, #E9DEC5 100%)', dark: false },
+  evening: { background: '#4A1D27', dark: true },
 } as const
 
 /**

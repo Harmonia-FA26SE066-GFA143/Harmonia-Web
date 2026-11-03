@@ -1,5 +1,6 @@
 import { Typography } from 'antd'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { colors, gold, radius, spacing, typography } from '@/styles/tokens'
+import { RoseWindow } from './RoseWindow'
 import { seasonTone } from './seasonTones'
 
 export interface SeasonRibbonProps {
@@ -13,12 +14,10 @@ export interface SeasonRibbonProps {
   celebrationName?: string
 }
 
-const staffLines = [0.5, 3.5, 6.5, 9.5, 12.5]
-
 /**
  * The current liturgical season on an ivory band: a missal ribbon in the season's colour, the season name in the
- * display serif, the day's celebration under it, and a faint arch over five staff lines. Season colour appears only
- * here and in a season chip (brief 2026-10-31).
+ * display serif, the day's celebration under it, and a rose window in the season's colour at the right edge (owner
+ * 2026-11-03: bare for Lent, radiant for Easter). Season colour appears only here and in a season chip.
  */
 export function SeasonRibbon({ seasonKey, color, seasonName, celebrationName }: Readonly<SeasonRibbonProps>) {
   const tone = seasonTone(seasonKey, color)
@@ -32,7 +31,7 @@ export function SeasonRibbon({ seasonKey, color, seasonName, celebrationName }: 
         background: colors.ivory,
         border: `1px solid ${tone.border}`,
         borderRadius: radius.lg,
-        padding: `${spacing.md}px ${spacing.lg}px ${tone.motif ? spacing.xl : spacing.md}px 72px`,
+        padding: `${spacing.lg}px ${spacing.lg}px ${spacing.lg}px 72px`,
       }}
     >
       <span
@@ -48,28 +47,19 @@ export function SeasonRibbon({ seasonKey, color, seasonName, celebrationName }: 
           clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)',
         }}
       />
-      {tone.motif && (
-        <>
-          <svg
-            aria-hidden
-            viewBox="0 0 96 80"
-            width={96}
-            height={80}
-            // Standing on the staff below (bottom 8 + 13px).
-            style={{ position: 'absolute', right: 40, bottom: 21 }}
-          >
-            <g fill="none" stroke={tone.ribbon} strokeOpacity={0.45}>
-              <path d="M4 80V40a44 44 0 0 1 88 0v40" />
-              <path d="M18 80V42a30 30 0 0 1 60 0v38" strokeOpacity={0.6} />
-            </g>
-          </svg>
-          <svg aria-hidden width="100%" height={13} style={{ position: 'absolute', left: 0, bottom: spacing.sm }}>
-            {staffLines.map((y) => (
-              <line key={y} x1="0" x2="100%" y1={y} y2={y} stroke={tone.ribbon} strokeOpacity={0.3} strokeWidth={1} />
-            ))}
-          </svg>
-        </>
-      )}
+      {/* Its centre 40px in from the right edge, cut by the banner (the Figma drawing). */}
+      <RoseWindow
+        color={tone.ribbon}
+        kind={tone.rose}
+        style={{
+          position: 'absolute',
+          right: -100,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          // Gold is pale and takes more ink; Lent's bare window stays faintest.
+          opacity: tone.rose === 'bare' ? 0.35 : tone.ribbon === gold.line ? 0.85 : 0.5,
+        }}
+      />
       <p
         style={{
           position: 'relative',
