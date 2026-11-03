@@ -1,6 +1,6 @@
 import { Breadcrumb, Flex, Typography, type BreadcrumbProps } from 'antd'
 import type { ReactNode } from 'react'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, gold, spacing, typography } from '@/styles/tokens'
 
 export interface PageHeaderProps {
   title: ReactNode
@@ -40,6 +40,10 @@ export function PageHeader({ title, description, breadcrumb, tags, extra }: Read
           />
         )}
         <Flex align="center" wrap gap={spacing.sm}>
+          <span
+            aria-hidden
+            style={{ width: 24, height: 1, flexShrink: 0, background: gold.line }}
+          />
           <Typography.Title
             level={1}
             style={{

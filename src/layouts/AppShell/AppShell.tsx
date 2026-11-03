@@ -4,7 +4,7 @@ import { createElement, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { BrandMark, OfflineNotice } from '@/shared/ui'
 import { spineTheme } from '@/app/theme'
-import { colors, layout, sizes, spacing, spine, typography } from '@/styles/tokens'
+import { colors, gold, layout, sizes, spacing, spine, typography } from '@/styles/tokens'
 import { getSession } from '@/lib/auth/session'
 import { roleByApiName } from '@/shared/types/account'
 import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection, type Surface } from './navigation'
@@ -14,7 +14,7 @@ import { UserMenu } from './UserMenu'
 
 const { Header, Sider, Content } = Layout
 
-function toMenuItems(sections: NavSection[]): MenuProps['items'] {
+function toMenuItems(sections: NavSection[], selectedPath: string | undefined, onSpine: boolean): MenuProps['items'] {
   return sections.map((section) => ({
     type: 'group',
     key: section.label,
@@ -23,6 +23,11 @@ function toMenuItems(sections: NavSection[]): MenuProps['items'] {
       key: item.path,
       icon: createElement(item.icon),
       label: item.label,
+      // A single book-edge hairline makes the current place legible without adding another status colour.
+      style:
+        item.path === selectedPath
+          ? { boxShadow: `inset 3px 0 0 ${onSpine ? gold.line : colors.primary}` }
+          : undefined,
     })),
   }))
 }
@@ -75,7 +80,7 @@ export function AppShell() {
     <nav aria-label="Điều hướng chính">
       <Menu
         mode="inline"
-        items={toMenuItems(sections)}
+        items={toMenuItems(sections, selectedPath, !isMobile)}
         selectedKeys={selectedPath ? [selectedPath] : []}
         onClick={({ key }) => {
           setDrawerOpen(false)

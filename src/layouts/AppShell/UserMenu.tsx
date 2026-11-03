@@ -57,8 +57,8 @@ export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
             height: 'auto',
             padding: '4px 10px 4px 6px',
             borderRadius: 9999,
-            border: '1px solid rgba(0, 0, 0, 0.06)',
-            background: 'rgba(255, 255, 255, 0.6)',
+            border: `1px solid ${colors.border}`,
+            background: colors.surface,
           }}
         >
           <Flex align="center" gap={spacing.sm}>
