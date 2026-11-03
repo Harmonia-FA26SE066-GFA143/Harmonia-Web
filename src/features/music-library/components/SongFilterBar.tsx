@@ -1,6 +1,6 @@
 import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Flex, Input, Select, TreeSelect, Typography } from 'antd'
-import { useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { themeTreeData, useCatalogOptions, useLookup, type CatalogOption } from '@/features/system-categories'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import { materialKindLabels, materialKinds, type SongFilters } from '../types'
@@ -41,9 +41,18 @@ const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textM
  */
 export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: Readonly<SongFilterBarProps>) {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState(value.search)
+  const composing = useRef(false)
   // A removed chip takes the keyboard focus with it; it moves to the Bộ lọc button instead of the page start.
   const filterButton = useRef<HTMLButtonElement>(null)
   const themes = themeTreeData(useLookup('songThemes').data ?? [])
+
+  // Keep external changes (Back, reset, a shared URL) in sync, but never replace an unfinished IME composition.
+  useEffect(() => {
+    if (!composing.current) setSearch(value.search)
+  }, [value.search])
+
+  const commitSearch = (next: string) => onChange({ ...value, search: next })
 
   // The order is the panel's and the chips': liturgy first, then the library checks.
   const selects: { key: FilterKey; label: string; placeholder?: string; options: CatalogOption[] }[] = [
@@ -101,8 +110,20 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: 
             allowClear
             prefix={<SearchOutlined aria-hidden />}
             placeholder="Tên bài hát, nhạc sĩ, người viết lời"
-            value={value.search}
-            onChange={(event) => onChange({ ...value, search: event.target.value })}
+            value={search}
+            onCompositionStart={() => {
+              composing.current = true
+            }}
+            onCompositionEnd={(event) => {
+              composing.current = false
+              setSearch(event.currentTarget.value)
+              commitSearch(event.currentTarget.value)
+            }}
+            onChange={(event) => {
+              const next = event.target.value
+              setSearch(next)
+              if (!composing.current) commitSearch(next)
+            }}
           />
         </Flex>
         <Button

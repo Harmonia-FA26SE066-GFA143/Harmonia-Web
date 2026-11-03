@@ -124,8 +124,9 @@ describe('SongListReviewPage', () => {
     const review = vi.spyOn(reviewApi, 'reviewSongList').mockResolvedValue()
     renderReview()
 
-    // The list is written, so the current step is the Priest's review.
-    expect(await screen.findByText(/Bước 2\/6/)).toBeInTheDocument()
+    // The written list is complete while the Priest's review remains independently pending.
+    expect(await screen.findByText(/Đã hoàn tất/)).toHaveTextContent('1/6')
+    expect(screen.getByText('Đang chờ duyệt')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Duyệt' }))
     const dialog = await confirmDialog('Duyệt danh sách bài hát?')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Duyệt' }))
@@ -145,8 +146,7 @@ describe('SongListReviewPage', () => {
     expect(await screen.findByText('Đã duyệt')).toBeInTheDocument()
     expect(screen.getByText('“Hợp chủ đề.”')).toBeInTheDocument()
     expect(screen.getByText('Lễ Vật Tâm Tình')).toBeInTheDocument()
-    // Approved: steps 1 and 2 are done, so the current step is 3.
-    expect(await screen.findByText(/Bước 3\/6/)).toBeInTheDocument()
+    expect(await screen.findByText(/Đã hoàn tất/)).toHaveTextContent('2/6')
     expect(screen.queryByRole('button', { name: 'Duyệt' })).toBeNull()
   })
 

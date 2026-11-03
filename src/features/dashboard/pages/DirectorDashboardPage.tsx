@@ -6,8 +6,8 @@ import { generatePath, Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import {
   formatProgramDate,
-  PreparationSteps,
-  preparationSteps,
+  PreparationOverview,
+  preparationItems,
   SongListStatusTag,
   usePreparationStatus,
   useUpcomingPrograms,
@@ -133,11 +133,11 @@ function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: numbe
   )
 }
 
-/** The next program: date, name, place and season, how far its preparation has come (Bước n/6), and a link out. */
+/** The next program: date, name, place and season, its independent preparation items, and a link out. */
 function NextProgram({ program, prep }: Readonly<{ program: LiturgicalProgram; prep: ReturnType<typeof usePreparationStatus> }>) {
   const navigate = useNavigate()
   const date = dayjs(program.date)
-  const steps = preparationSteps({ date: program.date, songListStatus: program.songListStatus, status: prep.data, failed: prep.isError, viewer: 'director' })
+  const items = preparationItems({ date: program.date, songListStatus: program.songListStatus, status: prep.data, failed: prep.isError, viewer: 'director' })
   const meta = [program.time, program.locationName, program.seasonName].filter(Boolean).join(' · ')
 
   return (
@@ -159,7 +159,7 @@ function NextProgram({ program, prep }: Readonly<{ program: LiturgicalProgram; p
         </Button>
       </Flex>
       <div style={{ padding: spacing.lg, borderTop: `1px solid ${colors.border}` }}>
-        <PreparationSteps steps={steps} />
+        <PreparationOverview items={items} />
         {prep.isError && (
           <Flex align="center" gap={spacing.sm} wrap style={{ marginTop: spacing.md }}>
             <Typography.Text type="danger">Không thể tải tình hình chuẩn bị.</Typography.Text>
@@ -310,9 +310,9 @@ function NextProgramSections({ program }: Readonly<{ program: LiturgicalProgram 
 /**
  * Choir Director dashboard (Pattern 4, Dashboard / Overview; brief §12.2): the season of today, then what waits on
  * the Director (at most five tasks, each starting with its verb, with its deadline and its button; more fold into
- * "và N việc khác"), the next program with its numbered steps, its parts still short of people, the recordings
+ * "và N việc khác"), the next program with its independent preparation items, its parts still short of people, the recordings
  * waiting for a grade, and the programs after it. Each part loads and fails on its own; every action leads to the
- * page where it is done. The season banner carries the view's one ribbon.
+ * page where it is done.
  */
 export function DirectorDashboardPage() {
   const navigate = useNavigate()

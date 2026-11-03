@@ -156,9 +156,9 @@ describe('DirectorDashboardPage', () => {
     expect(await screen.findByText('Mọi việc đã xong. Không có việc nào đang chờ bạn.')).toBeInTheDocument()
     expect(await screen.findByRole('region', { name: 'Mùa phụng vụ hôm nay' })).toHaveTextContent('Mùa Vọng')
     expect(screen.getByRole('heading', { name: 'Lễ Các Đẳng' })).toBeInTheDocument()
-    // Numbered steps, the current one in words; each step states its value.
+    // Independent preparation items: no item is presented as blocking a later one.
     expect(await screen.findByText('1/2 đã nhận lời')).toBeInTheDocument()
-    expect(screen.getByText(/Bước 2\/6/)).toBeInTheDocument()
+    expect(screen.getByText(/Đã hoàn tất/)).toHaveTextContent('1/6')
     expect(screen.getByText('1/2 buổi đã tập')).toBeInTheDocument()
     expect(screen.getByText('Chưa lập')).toBeInTheDocument()
     // A missing part is a dashed "Thiếu N" box.
@@ -167,8 +167,7 @@ describe('DirectorDashboardPage', () => {
     expect(screen.getByRole('link', { name: 'Mở phân công' })).toHaveAttribute('href', '/director/roster?programId=p3')
     expect(screen.getByText('Không có bản thu nào chờ chấm.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Lễ Thánh Giuse' })).toHaveAttribute('href', '/director/programs/p4')
-    // The season banner carries the view's one ribbon.
-    expect(screen.queryByTestId('step-bookmark')).toBeNull()
+    expect(screen.getByRole('list', { name: 'Tình trạng các mục chuẩn bị' })).toBeInTheDocument()
   })
 
   it('shows a recoverable error when the programs cannot be loaded', async () => {

@@ -125,3 +125,13 @@ The BE answered B39, B41 and B43–B45 in one release (BE `docs/api-changelog.md
 - The BE renamed its `doc/` folder to `docs/` (`c49958c`, `fa1d2af`). Entries above written before that cite `doc/…` as it was at their commit.
 - `PUT` / `DELETE api/auth/me/avatar` and `avatarUrl` on `UserDto` (`AuthController.cs:72-90`, `docs/api.md` "PUT /api/auth/me/avatar") have no entry in `docs/api-changelog.md`; nor do the `c091c07` permission changes (B37, B38).
 - On the deployed API, every liturgical day still had `color: null` on 2026-11-01, so the Web shows the season colours until the Parish Priest syncs 2026 again.
+
+## Member-profile role at BE `main@90af733` (2026-11-03)
+
+Found while correcting the member-list presentation by role. A profile is intentionally kept after a Choir Member is
+changed to Choir Director or Parish Priest so their history remains attached (`UserService.cs:211-215`), and the
+member-profile search includes every retained profile (`MemberProfileRepository.cs:49-79`).
+
+| ID | Capability Web needs | Why (evidence) | Status |
+|---|---|---|---|
+| B46 | Return the account's current role on each row of `GET /api/member-profiles` | Only Choir Members declare skills. The Web must show approved skills, including the meaningful empty state “Chưa có kỹ năng được duyệt”, for current Choir Members only; a retained profile whose account is now Choir Director or Parish Priest must not show an empty skill state. `MemberProfileSummaryDto` has no role field (`MemberProfileSummaryDto.cs:6-27`), and `SearchMemberProfilesRequest` cannot filter by role (`SearchMemberProfilesRequest.cs:10-21`). Skill emptiness cannot identify the role because a real Choir Member may also have no approved skill. Suggested contract: add the existing role name to `MemberProfileSummaryDto`; keep retained profiles and history unchanged | Open — `TBD: Backend API missing` |

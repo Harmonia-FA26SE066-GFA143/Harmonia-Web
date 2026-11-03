@@ -125,9 +125,9 @@ describe('DirectorProgramDetailPage', () => {
     renderDetail()
 
     expect(await screen.findByText('2 đã xác nhận')).toBeInTheDocument()
-    // Once in the numbered steps, once in the preparation hub.
+    // Once in the independent overview, once in the preparation hub.
     expect(screen.getAllByText('2/3 buổi đã tập')).toHaveLength(2)
-    expect(screen.getByText(/Bước 3\/6/)).toBeInTheDocument()
+    expect(screen.getByText(/Đã hoàn tất/)).toHaveTextContent('3/6')
     // 3 of 6 attendances (2 held × 3 members), 3 of 6 practice submissions passed.
     expect(screen.getByText(/Tỷ lệ có mặt/)).toHaveTextContent('Tỷ lệ có mặt: 50% (3/6 lượt)')
     expect(screen.getByText(/lượt nộp/)).toHaveTextContent('Đạt 3 / 6 lượt nộp')

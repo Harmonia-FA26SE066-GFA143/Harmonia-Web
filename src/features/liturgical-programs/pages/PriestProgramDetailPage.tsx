@@ -10,7 +10,7 @@ import { cardSurface, colors, spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { PreparationStatusCard } from '../components/PreparationStatusCard'
-import { PreparationSteps } from '../components/PreparationSteps'
+import { PreparationOverview } from '../components/PreparationOverview'
 import { PriestAdjacentNav } from '../components/AdjacentProgramNav'
 import { ProgramHeader } from '../components/ProgramHeader'
 import { ProgramItemList } from '../components/ProgramItemList'
@@ -20,15 +20,16 @@ import { useCancelEvent, useEvent, usePreparationStatus, usePublishEvent, useUpd
 import { useEventNames } from '../hooks/useEventNames'
 import { useProgram } from '../hooks/usePrograms'
 import { formatDateTime, vietnamToday } from '@/lib/api/dates'
-import { preparationSteps } from '../preparationSteps'
+import { formatProgramDate } from '../programFilters'
+import { preparationItems } from '../preparationOverview'
 import type { EventFormValues, LiturgicalEvent } from '../types'
 
 const breadcrumb = [{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }, { title: 'Chi tiết chương trình' }]
 
-/** The six numbered steps and the page's one bookmark ribbon, from FE-21 (`preparation-status`, Priest only). */
+/** Independent preparation items from FE-21 (`preparation-status`). */
 function PriestSteps({ event }: Readonly<{ event: LiturgicalEvent }>) {
   const status = usePreparationStatus(event.id)
-  const steps = preparationSteps({
+  const items = preparationItems({
     date: event.date,
     songListStatus: status.data?.songListStatus,
     status: status.data,
@@ -36,12 +37,12 @@ function PriestSteps({ event }: Readonly<{ event: LiturgicalEvent }>) {
     viewer: 'priest',
   })
   return (
-    <Card style={cardSurface} title={<CardTitle>Tiến trình chuẩn bị</CardTitle>}>
-      {status.isPending && <SectionSkeleton rows={2} label="Đang tải tiến trình chuẩn bị" />}
+    <Card style={cardSurface} title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>
+      {status.isPending && <SectionSkeleton rows={2} label="Đang tải tình hình chuẩn bị" />}
       {status.isError && (
         <ErrorState headingLevel={3} title="Không thể tải tiến trình chuẩn bị" error={status.error} hasData={false} onRetry={() => status.refetch()} retrying={status.isFetching} />
       )}
-      {status.isSuccess && <PreparationSteps steps={steps} bookmark />}
+      {status.isSuccess && <PreparationOverview items={items} />}
     </Card>
   )
 }
@@ -131,9 +132,11 @@ export function PriestProgramDetailPage() {
   const data: LiturgicalEvent = event.data
   const cancelled = data.status === 'cancelled'
   const upcoming = data.date >= vietnamToday()
+  const draft = data.status === 'draft'
+  const pastDraft = draft && !upcoming
   const canCancel = !cancelled && upcoming
   // The backend refuses to publish a past event, or one without a season (LITURGICAL_EVENT_SEASON_REQUIRED).
-  const canPublish = data.status === 'draft' && upcoming
+  const canPublish = draft && upcoming
   const needsSeason = canPublish && !data.seasonId
   const type = name('massType', data.massTypeId) || name('ceremonyType', data.ceremonyTypeId)
   const details = [
@@ -214,8 +217,8 @@ export function PriestProgramDetailPage() {
                 Hủy sự kiện
               </Button>
             )}
-            {canPublish && (
-              <Button type="primary" onClick={confirmPublish}>
+            {draft && (
+              <Button type="primary" disabled={pastDraft} onClick={canPublish ? confirmPublish : undefined}>
                 Công bố
               </Button>
             )}
@@ -226,6 +229,19 @@ export function PriestProgramDetailPage() {
         <ErrorState title="Không thể cập nhật chương trình" error={event.error} hasData onRetry={() => event.refetch()} retrying={event.isFetching} />
       )}
       <Flex vertical gap={spacing.lg}>
+        {pastDraft && (
+          <Alert
+            type="warning"
+            showIcon
+            title="Sự kiện đã qua"
+            description={`Bản nháp này không thể công bố vì ngày tổ chức là ${formatProgramDate(data.date)}. Nếu ngày chưa đúng, hãy cập nhật lại.`}
+            action={
+              <Button size="small" onClick={() => setEditing(true)}>
+                Sửa ngày tổ chức
+              </Button>
+            }
+          />
+        )}
         {needsSeason && (
           <Alert
             type="warning"
