@@ -150,12 +150,17 @@ describe('PriestProgramDetailPage', () => {
     expect(await screen.findByText('Chọn mùa phụng vụ cho sự kiện (bấm Sửa) rồi công bố lại.')).toBeInTheDocument()
   })
 
-  it('does not offer to publish a past draft', async () => {
+  it('explains why a past draft cannot be published and offers to correct its date', async () => {
     vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({ ...draft, date: '2020-01-05' })
     renderDetail()
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Lễ Chúa Nhật XXVI' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Công bố' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Công bố' })).toBeDisabled()
+    expect(screen.getByText('Sự kiện đã qua')).toBeInTheDocument()
+    expect(screen.getByText(/không thể công bố vì ngày tổ chức là 05\/01\/2020/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sửa ngày tổ chức' }))
+    expect(await screen.findByRole('dialog', { name: 'Sửa sự kiện' })).toBeInTheDocument()
   })
 
   it('chooses the lead choir among the choirs serving the event', async () => {
@@ -244,7 +249,7 @@ describe('PriestProgramDetailPage', () => {
 
     get.mockResolvedValue({ ...draft, date: '2020-01-05' })
     renderDetail()
-    expect(await screen.findByRole('button', { name: /Sửa/ })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Sửa$/ })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Hủy sự kiện/ })).toBeNull()
   })
 

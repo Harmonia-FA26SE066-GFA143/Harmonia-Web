@@ -8,14 +8,14 @@ import { vietnamToday } from '@/lib/api/dates'
 import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { cardSurface, colors, spacing } from '@/styles/tokens'
 import { DirectorPreparationHub } from '../components/DirectorPreparationHub'
-import { PreparationSteps } from '../components/PreparationSteps'
+import { PreparationOverview } from '../components/PreparationOverview'
 import { DirectorAdjacentNav } from '../components/AdjacentProgramNav'
 import { ProgramHeader } from '../components/ProgramHeader'
 import { ProgramItemList } from '../components/ProgramItemList'
 import { SongListStatusTag } from '../components/SongListStatusTag'
 import { usePreparationStatus } from '../hooks/useEvents'
 import { useProgram } from '../hooks/usePrograms'
-import { preparationSteps } from '../preparationSteps'
+import { preparationItems } from '../preparationOverview'
 import { canEditSongList, type LiturgicalProgramDetail, type SongListStatus } from '../types'
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Chương trình phụng vụ' }, { title: 'Chi tiết chương trình' }]
@@ -25,10 +25,10 @@ function songListAction(status?: SongListStatus): string {
   return canEditSongList(status) ? 'Chỉnh sửa danh sách bài hát' : 'Xem danh sách đề xuất'
 }
 
-/** The six numbered steps with the page's one bookmark ribbon, from what the Choir Director may read (#246). */
+/** Independent preparation items from the status the Choir Director may read (#246). */
 function DirectorSteps({ program }: Readonly<{ program: LiturgicalProgramDetail }>) {
   const prep = usePreparationStatus(program.id)
-  const steps = preparationSteps({
+  const items = preparationItems({
     date: program.date,
     songListStatus: program.songListStatus,
     status: prep.data,
@@ -36,9 +36,8 @@ function DirectorSteps({ program }: Readonly<{ program: LiturgicalProgramDetail 
     viewer: 'director',
   })
   return (
-    <Card style={cardSurface} title={<CardTitle>Tiến trình chuẩn bị</CardTitle>}>
-      {/* No ribbon until the counts arrive, so it never slides on load. */}
-      {prep.isPending ? <SectionSkeleton rows={2} label="Đang tải tiến trình chuẩn bị" /> : <PreparationSteps steps={steps} bookmark />}
+    <Card style={cardSurface} title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>
+      {prep.isPending ? <SectionSkeleton rows={2} label="Đang tải tình hình chuẩn bị" /> : <PreparationOverview items={items} />}
       {prep.isError && (
         <Flex align="center" gap={spacing.sm} wrap style={{ marginTop: spacing.md }}>
           <Typography.Text type="danger">Không thể tải tình hình chuẩn bị.</Typography.Text>

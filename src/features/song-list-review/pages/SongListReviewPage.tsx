@@ -14,10 +14,10 @@ import { generatePath, useNavigate, useParams } from 'react-router'
 import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
 import {
-  PreparationSteps,
+  PreparationOverview,
   ProgramHeader,
   ProgramItemList,
-  preparationSteps,
+  preparationItems,
   useEvent,
   useEventNames,
   usePreparationStatus,
@@ -161,23 +161,23 @@ function ReviewHistory({ list }: Readonly<{ list: SongList }>) {
   )
 }
 
-/** The six steps with the view's one ribbon; the list's own status moves step 2 the moment a decision lands. */
+/** Independent preparation items; the list's own status updates the review item as soon as a decision lands. */
 function ReviewSteps({ eventId, date, list }: Readonly<{ eventId: string; date: string; list: SongList }>) {
   const status = usePreparationStatus(eventId)
   if (status.isPending) return <SectionSkeleton rows={2} label="Đang tải tiến trình chuẩn bị" />
   // One source with the program page: the preparation status (newest version, a draft included). Until it reloads
-  // after a decision, the decided list's own status moves step 2 at once.
+  // after a decision, the decided list's own status updates the review item at once.
   const decidedHere = list.status !== 'submitted' && status.data?.songListStatus === 'submitted'
   const songListStatus = decidedHere ? list.status : (status.data?.songListStatus ?? list.status)
-  const steps = preparationSteps({ date, songListStatus, status: status.data, failed: status.isError, viewer: 'priest' })
-  return <PreparationSteps steps={steps} bookmark />
+  const items = preparationItems({ date, songListStatus, status: status.data, failed: status.isError, viewer: 'priest' })
+  return <PreparationOverview items={items} />
 }
 
 /**
  * Priest: the song list the Choir Director submitted, read like a missal page (FE-17–FE-20, `/api/song-lists`): each
  * song in order with its place in the Mass, who wrote it, its materials and the Choir Director's note, the decision
  * history, and three actions while it waits: Duyệt, Yêu cầu sửa, Từ chối (POST review, Parish Priest only). After a
- * decision the page stays, so the bookmark ribbon is seen moving to the next step.
+ * decision the page stays, so the preparation overview updates in place.
  */
 export function SongListReviewPage() {
   const navigate = useNavigate()
@@ -259,7 +259,7 @@ export function SongListReviewPage() {
       )}
       {!failed && event.data && list && (
         <Flex vertical gap={spacing.lg}>
-          <Card style={cardSurface} title={<CardTitle>Tiến trình chuẩn bị</CardTitle>}>
+          <Card style={cardSurface} title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>
             <ReviewSteps eventId={programId} date={event.data.date} list={list} />
           </Card>
           <ConfigProvider theme={readingTheme}>

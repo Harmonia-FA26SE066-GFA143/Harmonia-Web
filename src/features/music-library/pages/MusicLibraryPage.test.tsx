@@ -72,6 +72,27 @@ describe('MusicLibraryPage', () => {
     )
   })
 
+  it('keeps Vietnamese IME composition intact and searches only after the character is committed', async () => {
+    const list = vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page(songs))
+    renderPage(<MusicLibraryPage />, '/director/library')
+
+    const input = await screen.findByRole('textbox', { name: 'Tìm bài hát' })
+    fireEvent.compositionStart(input)
+    fireEvent.change(input, { target: { value: 'Thuong' } })
+
+    await new Promise((resolve) => setTimeout(resolve, 350))
+    expect(list).not.toHaveBeenCalledWith(expect.objectContaining({ search: 'Thuong' }), expect.anything())
+    expect(input).toHaveValue('Thuong')
+
+    fireEvent.compositionEnd(input, { target: { value: 'Thương' } })
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: 'Thương' }),
+        expect.objectContaining({ pageNumber: 1, pageSize: 24 }),
+      ),
+    )
+  })
+
   it('finds songs not classified yet or missing a material, and shows how each song is used', async () => {
     const request = vi.spyOn(client, 'apiRequest').mockImplementation(async (path) => {
       if (typeof path === 'string' && path.startsWith('/api/songs')) {

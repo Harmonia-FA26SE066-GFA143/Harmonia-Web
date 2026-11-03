@@ -170,7 +170,7 @@ body {
 
 /*
  * Motion (owner 2026-11-01: light continuous motion beside the two moments of brief §12.9). Transform and opacity
- * only, decelerating like `motion.easeOut` in tokens.ts; the reduced-motion rule above makes each one instant.
+ * only, with a decelerating curve; the reduced-motion rule above makes each one instant.
  */
 @keyframes hm-rise {
   from {

@@ -137,16 +137,6 @@ export const priestEvent = {
   text: sections.liturgy.ink,
 } as const
 
-/**
- * The one motion moment (brief §12.9): the bookmark ribbon slides to the next preparation step after the Priest
- * approves. Everything else changes at once; with `prefers-reduced-motion: reduce` the slide is dropped too.
- */
-export const motion = {
-  /** On the 100/150/200/300ms scale of the motion skill (ux-audit 2026-11-01). */
-  bookmarkMs: 300,
-  easeOut: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
-} as const
-
 export const shadows = {
   sm: '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
   md: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',

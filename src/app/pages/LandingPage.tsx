@@ -8,7 +8,7 @@ import { BrandMark } from '@/shared/ui'
 import { colors, gold, media, radius, sizes, spacing, spine, typography } from '@/styles/tokens'
 import { HeroVideo } from './HeroVideo'
 
-/** One program from song list to celebration, who does each step (the six steps of `PreparationSteps`). */
+/** One program from song list to celebration and who handles each part. */
 const steps = [
   { title: 'Soạn danh sách', who: 'Ca trưởng', text: 'Chọn bài cho từng phần của Thánh lễ.' },
   { title: 'Duyệt bài hát', who: 'Cha xứ', text: 'Duyệt, yêu cầu sửa hoặc từ chối kèm ghi chú.' },
