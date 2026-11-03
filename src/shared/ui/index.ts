@@ -1,5 +1,6 @@
 export { BrandMark } from './BrandMark'
 export { CardTitle } from './CardTitle'
+export { ChantStaff } from './ChantStaff'
 export { EmptyState, type EmptyStateProps } from './EmptyState'
 export { Form } from './Form'
 export { FormDrawer, type FormDrawerProps } from './FormDrawer'

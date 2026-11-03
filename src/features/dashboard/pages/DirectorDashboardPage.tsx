@@ -6,6 +6,9 @@ import { generatePath, Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import {
   formatProgramDate,
+  MassTimeMark,
+  massTimeLabels,
+  massTimeOf,
   PreparationOverview,
   preparationItems,
   SongListStatusTag,
@@ -18,7 +21,7 @@ import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
 import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { cardSurface, colors, spacing, typography } from '@/styles/tokens'
+import { cardSurface, colors, gold, massTimeSurfaces, spacing, spine, typography } from '@/styles/tokens'
 import { TodaySeason } from '../components/TodaySeason'
 
 const taskLimit = 5
@@ -138,23 +141,53 @@ function NextProgram({ program, prep }: Readonly<{ program: LiturgicalProgram; p
   const navigate = useNavigate()
   const date = dayjs(program.date)
   const items = preparationItems({ date: program.date, songListStatus: program.songListStatus, status: prep.data, failed: prep.isError, viewer: 'director' })
-  const meta = [program.time, program.locationName, program.seasonName].filter(Boolean).join(' · ')
+  const hour = massTimeOf(program.time)
+  const surface = hour ? massTimeSurfaces[hour] : undefined
+  const dark = surface?.dark ?? false
+  const label = { color: dark ? spine.groupTitle : colors.textMuted, fontSize: typography.metadata.fontSize }
+  const meta = [program.locationName, program.seasonName].filter(Boolean).join(' · ')
 
   return (
     <Card style={cardSurface} styles={{ body: { padding: 0 } }}>
-      <Flex align="center" gap={spacing.lg} style={{ padding: spacing.lg }}>
+      {/* The head takes the light of the Mass's hour (owner 2026-11-03); the preparation below stays on white. */}
+      <Flex
+        align="center"
+        gap={spacing.lg}
+        className={dark ? 'mass-time-dark' : undefined}
+        style={{ padding: spacing.lg, background: surface?.background }}
+      >
         <Flex vertical align="center" style={{ minWidth: 72 }}>
-          <Typography.Text style={muted}>{capitalize(date.format('dddd'))}</Typography.Text>
-          <span style={{ fontSize: 44, fontWeight: 600, lineHeight: 1, letterSpacing: '-0.03em', color: colors.primary }}>{date.format('DD')}</span>
-          <Typography.Text style={muted}>Tháng {date.format('M')}</Typography.Text>
+          <Typography.Text style={label}>{capitalize(date.format('dddd'))}</Typography.Text>
+          <span style={{ fontSize: 44, fontWeight: 600, lineHeight: 1, letterSpacing: '-0.03em', color: dark ? gold.soft : colors.primary }}>
+            {date.format('DD')}
+          </span>
+          <Typography.Text style={label}>Tháng {date.format('M')}</Typography.Text>
         </Flex>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <Typography.Title level={3} style={{ margin: 0, fontFamily: typography.displayFontFamily, fontSize: 30, fontWeight: 600, lineHeight: 1.25 }}>
+          <Typography.Title
+            level={3}
+            style={{ margin: 0, fontFamily: typography.displayFontFamily, fontSize: 30, fontWeight: 600, lineHeight: 1.25, color: dark ? colors.surface : undefined }}
+          >
             {program.eventName}
           </Typography.Title>
-          {meta && <Typography.Text style={{ color: colors.textMuted }}>{meta}</Typography.Text>}
+          <Typography.Text style={{ color: dark ? spine.text : colors.textMuted }}>
+            {hour && <strong style={{ color: dark ? gold.soft : gold.ink }}>{massTimeLabels[hour]} </strong>}
+            {[program.time, meta].filter(Boolean).join(' · ')}
+          </Typography.Text>
         </div>
-        <Button onClick={() => navigate(detailPath(program))} aria-label={`Xem chi tiết: ${program.eventName}`} style={{ flexShrink: 0 }}>
+        {hour && (
+          <MassTimeMark
+            time={hour}
+            color={dark ? gold.soft : hour === 'morning' ? gold.line : gold.ink}
+            style={{ flexShrink: 0, alignSelf: 'flex-end', marginBottom: -spacing.lg, marginInline: spacing.sm }}
+          />
+        )}
+        <Button
+          ghost={dark}
+          onClick={() => navigate(detailPath(program))}
+          aria-label={`Xem chi tiết: ${program.eventName}`}
+          style={{ flexShrink: 0 }}
+        >
           Xem chi tiết
         </Button>
       </Flex>

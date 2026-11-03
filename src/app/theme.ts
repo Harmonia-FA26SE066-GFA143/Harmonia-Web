@@ -83,8 +83,8 @@ export const theme: ThemeConfig = {
     },
     Table: {
       // A quiet paper band keeps column labels distinct without turning tables into admin-heavy grids.
-      headerBg: colors.softSurface,
-      headerColor: colors.textBody,
+      headerBg: colors.parchment,
+      headerColor: colors.primaryHover,
       headerSplitColor: 'transparent',
       rowHoverBg: colors.softSurface,
       cellPaddingBlock: spacing.md,

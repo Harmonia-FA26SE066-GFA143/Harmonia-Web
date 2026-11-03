@@ -10,7 +10,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   color: #1e1a1c;
-  background-color: #f7f4f4;
+  background-color: #f5f0e8;
 }
 
 /* Custom modern slim scrollbar */
@@ -99,12 +99,52 @@ body {
   overflow: hidden;
 }
 
+/*
+ * Missal printing in the workspace (owner 2026-11-03, "đậm chất nhà thờ"). Values repeat tokens.ts (CSS cannot read
+ * it). Column heads are set as rubrics: small capitals in burgundy ink on parchment (7.7:1).
+ */
 .ant-table-thead > tr > th {
   font-weight: 600 !important;
-  color: #374151 !important;
-  font-size: 13px !important;
-  text-transform: none;
-  letter-spacing: 0.01em;
+  color: #762e3d !important;
+  font-size: 12px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* A printed sheet in the workspace opens under a gilt double rule, like a page of the missal. */
+#main-content .ant-card {
+  border-top: 3px double #c5a46d;
+}
+
+/* Each card heading starts on a punctum, the square note of chant, in burgundy. */
+#main-content .ant-card-head-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#main-content .ant-card-head-title::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  background: #8e3b4b;
+}
+
+/* The spine's group titles as rubrics in pale gold (8.9:1 on the bookcloth). */
+.ant-layout-sider .ant-menu-item-group-title {
+  color: #e6d7b5 !important;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-top: 16px !important;
+}
+
+/* On the evening card's bookcloth a burgundy focus ring would vanish (1.9:1): the pale spine text instead. */
+.mass-time-dark .ant-btn:focus-visible {
+  outline: 2px solid #eadadd !important;
+  outline-offset: 2px;
 }
 
 /* Sider Menu refinements */

@@ -114,13 +114,32 @@ export function AppShell() {
             height: '100vh',
             overflow: 'auto',
             background: spine.background,
+            borderInlineEnd: `1px solid ${spine.edge}`,
             // The Choir Director menu is taller than a laptop screen: a thin, quiet scrollbar.
             scrollbarWidth: 'thin',
             scrollbarColor: `${spine.selected} transparent`,
           }}
         >
-          <div style={{ padding: `${spacing.lg}px ${spacing.lg}px ${spacing.md}px` }}>
+          {/* The head of the spine looks into the nave (owner 2026-11-03), then fades into the bookcloth. */}
+          <div
+            style={{
+              position: 'relative',
+              padding: `${spacing.xxl + spacing.md}px ${spacing.lg}px ${spacing.md}px`,
+              marginBottom: spacing.sm,
+              background: `${spine.photoScrim}, url(${spine.photo}) center 35% / cover`,
+            }}
+          >
             <Brand subtitle={subtitle} onSpine />
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                insetInline: spacing.lg,
+                bottom: 0,
+                height: 3,
+                borderBlock: `1px solid ${spine.edge}`,
+              }}
+            />
           </div>
           <ConfigProvider theme={spineTheme}>{menu}</ConfigProvider>
         </Sider>
@@ -136,7 +155,7 @@ export function AppShell() {
             justifyContent: 'space-between',
             gap: spacing.md,
             paddingInline: isMobile ? layout.contentPaddingXMobile : layout.contentPaddingX,
-            borderBottom: `1px solid ${colors.border}`,
+            borderBottom: `1px solid ${gold.soft}`,
             // An opaque band of the page ground (owner choice 2026-10-28), so nothing scrolling under it shows through.
             background: colors.background,
           }}

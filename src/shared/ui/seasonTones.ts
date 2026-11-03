@@ -1,4 +1,5 @@
 import { colors, gold, seasonColors } from '@/styles/tokens'
+import type { RoseKind } from './RoseWindow'
 
 export interface SeasonTone {
   /** The missal ribbon, the chip swatch and the motif strokes. */
@@ -6,8 +7,8 @@ export interface SeasonTone {
   /** The season name on ivory. */
   name: string
   border: string
-  /** Staff lines and arch in the banner; Lent stays bare. */
-  motif: boolean
+  /** The banner's rose window (owner 2026-11-03): bare for Lent, radiant for Easter. */
+  rose: RoseKind
 }
 
 const hairline = 'rgba(0, 0, 0, 0.07)'
@@ -17,15 +18,15 @@ const hairline = 'rgba(0, 0, 0, 0.07)'
 // (`LiturgicalDayDto.Color`, BE 90af733, B45) wins over its season, so red and rose days show; it is null until the
 // Parish Priest syncs the year again.
 const tones = new Map<string, SeasonTone>([
-  ['Advent', { ribbon: seasonColors.purple.cloth, name: seasonColors.purple.ink, border: hairline, motif: true }],
-  ['Lent', { ribbon: seasonColors.purple.cloth, name: seasonColors.purple.ink, border: hairline, motif: false }],
-  ['OrdinaryTime', { ribbon: seasonColors.green.cloth, name: seasonColors.green.ink, border: hairline, motif: true }],
-  ['Christmas', { ribbon: gold.line, name: colors.textPrimary, border: gold.line, motif: true }],
-  ['Easter', { ribbon: gold.line, name: colors.textPrimary, border: gold.line, motif: true }],
+  ['Advent', { ribbon: seasonColors.purple.cloth, name: seasonColors.purple.ink, border: hairline, rose: 'full' }],
+  ['Lent', { ribbon: seasonColors.purple.cloth, name: seasonColors.purple.ink, border: hairline, rose: 'bare' }],
+  ['OrdinaryTime', { ribbon: seasonColors.green.cloth, name: seasonColors.green.ink, border: hairline, rose: 'full' }],
+  ['Christmas', { ribbon: gold.line, name: colors.textPrimary, border: gold.line, rose: 'full' }],
+  ['Easter', { ribbon: gold.line, name: colors.textPrimary, border: gold.line, rose: 'radiant' }],
 ])
-const neutral: SeasonTone = { ribbon: colors.primary, name: colors.textPrimary, border: hairline, motif: true }
+const neutral: SeasonTone = { ribbon: colors.primary, name: colors.textPrimary, border: hairline, rose: 'full' }
 
-const dayColours = new Map<string, Omit<SeasonTone, 'motif'>>([
+const dayColours = new Map<string, Omit<SeasonTone, 'rose'>>([
   ['white', { ribbon: gold.line, name: colors.textPrimary, border: gold.line }],
   ['red', { ribbon: seasonColors.red.cloth, name: seasonColors.red.ink, border: hairline }],
   ['green', { ribbon: seasonColors.green.cloth, name: seasonColors.green.ink, border: hairline }],
@@ -34,9 +35,9 @@ const dayColours = new Map<string, Omit<SeasonTone, 'motif'>>([
   ['black', { ribbon: seasonColors.black.cloth, name: seasonColors.black.ink, border: hairline }],
 ])
 
-/** The season's tone, in the day's liturgical colour when it is known; the motif follows the season (Lent stays bare). */
+/** The season's tone, in the day's liturgical colour when it is known; the rose window follows the season. */
 export const seasonTone = (seasonKey?: string, color?: string): SeasonTone => {
   const season = (seasonKey && tones.get(seasonKey)) || neutral
   const day = color ? dayColours.get(color) : undefined
-  return day ? { ...day, motif: season.motif } : season
+  return day ? { ...day, rose: season.rose } : season
 }

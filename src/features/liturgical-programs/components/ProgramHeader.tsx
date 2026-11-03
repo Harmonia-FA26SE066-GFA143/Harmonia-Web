@@ -1,11 +1,11 @@
 import { Breadcrumb, Flex, Typography, type BreadcrumbProps } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
-import { SeasonChip } from '@/shared/ui'
+import { ChantStaff, SeasonChip } from '@/shared/ui'
 import { colors, gold, spacing, typography } from '@/styles/tokens'
 import { formatProgramDate } from '../programFilters'
-
-const staffLines = [0.5, 3.5, 6.5, 9.5, 12.5]
+import { massTimeLabels, massTimeOf } from '../massTime'
+import { MassTimeMark } from './MassTimeMark'
 
 export interface ProgramHeaderProps {
   title: string
@@ -29,25 +29,25 @@ export interface ProgramHeaderProps {
  */
 export function ProgramHeader({ title, date, time, place, seasonName, status, details, breadcrumb, actions }: Readonly<ProgramHeaderProps>) {
   const weekday = dayjs(date).format('dddd')
-  const when = [`${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${formatProgramDate(date)}`, time, place].filter(Boolean).join(' · ')
+  const hour = massTimeOf(time)
+  const day = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${formatProgramDate(date)}`
 
   return (
-    <header style={{ position: 'relative', marginBottom: spacing.lg, paddingBottom: spacing.xl }}>
+    <header style={{ position: 'relative', marginBottom: spacing.lg, paddingBottom: spacing.md }}>
       {/*
-        The event-detail header is one of the three places the redesign's motifs may appear (brief §5): a faint arch
-        standing on five staff lines, in decorative gold. Hidden from readers; the text carries everything.
+        The head of a chant page (owner 2026-11-03): an arch holding the hour of the Mass (sunrise, low sun, or a candle
+        under stars) beside a four-line staff with neumes. Hidden from readers; the text carries everything.
       */}
-      <svg aria-hidden width={88} height={64} viewBox="0 0 88 64" style={{ position: 'absolute', right: spacing.xl, bottom: 13 }}>
-        <g fill="none" stroke={gold.line} strokeOpacity={0.45}>
-          <path d="M4 64V36a40 40 0 0 1 80 0v28" />
-          <path d="M18 64V38a26 26 0 0 1 52 0v26" strokeOpacity={0.6} />
-        </g>
-      </svg>
-      <svg aria-hidden width="100%" height={13} style={{ position: 'absolute', left: 0, bottom: 0 }}>
-        {staffLines.map((y) => (
-          <line key={y} x1="0" x2="100%" y1={y} y2={y} stroke={gold.line} strokeOpacity={0.3} strokeWidth={1} />
-        ))}
-      </svg>
+      {hour && (
+        <MassTimeMark
+          time={hour}
+          color={hour === 'evening' ? colors.primary : gold.line}
+          style={{ position: 'absolute', right: 248, bottom: 0, opacity: hour === 'evening' ? 0.55 : 0.8 }}
+        />
+      )}
+      <div style={{ position: 'absolute', right: spacing.lg, bottom: 0 }}>
+        <ChantStaff />
+      </div>
       {breadcrumb && <Breadcrumb items={breadcrumb} style={{ marginBottom: spacing.sm, fontSize: typography.metadata.fontSize, fontWeight: 500 }} />}
       <Flex wrap align="flex-start" justify="space-between" gap={spacing.md} style={{ position: 'relative' }}>
         <Flex vertical gap={spacing.xs} style={{ minWidth: 0, flex: '1 1 480px' }}>
@@ -63,7 +63,12 @@ export function ProgramHeader({ title, date, time, place, seasonName, status, de
           >
             {title}
           </Typography.Title>
-          <Typography.Text style={{ color: colors.textBody }}>{when}</Typography.Text>
+          <Typography.Text style={{ color: colors.textBody }}>
+            {day}
+            {(hour || time) && ' · '}
+            {hour && <strong style={{ color: gold.ink }}>{massTimeLabels[hour]} </strong>}
+            {[time, place].filter(Boolean).join(' · ')}
+          </Typography.Text>
           {details && <Typography.Text style={{ color: colors.textMuted, maxWidth: '72ch' }}>{details}</Typography.Text>}
         </Flex>
         {actions && (
