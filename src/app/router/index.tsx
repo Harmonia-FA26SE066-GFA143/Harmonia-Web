@@ -25,7 +25,9 @@ export const routes: RouteObject[] = [
       </div>
     ),
     children: [
-      { element: <BlankLayout />, children: [...publicRoutes, ...authRoutes] },
+      // The landing page runs edge to edge, so it skips the padded blank frame.
+      ...publicRoutes,
+      { element: <BlankLayout />, children: authRoutes },
       {
         element: <RoleGuard />,
         children: [
