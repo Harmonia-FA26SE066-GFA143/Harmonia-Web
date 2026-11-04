@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { CandleMark } from './CandleMark'
+import { EmptyStaff } from './ChantStaff'
 import { StatePanel } from './StatePanel'
 
 export interface EmptyStateProps {
@@ -9,7 +9,7 @@ export interface EmptyStateProps {
   description?: ReactNode
   /** Optional action (e.g. a create button) when one exists for the user. */
   action?: ReactNode
-  /** A subject icon when one names what is missing; otherwise the candle motif of the redesign. */
+  /** A subject icon when one names what is missing; otherwise a staff with nothing written yet. */
   icon?: ReactNode
   /** 3 when the panel sits inside a section that has its own level 2 heading. */
   headingLevel?: 2 | 3
@@ -19,12 +19,13 @@ export function EmptyState({
   title,
   description,
   action,
-  icon = <CandleMark />,
+  icon = <EmptyStaff />,
   headingLevel,
 }: Readonly<EmptyStateProps>) {
   return (
     <StatePanel
       role="status"
+      tone="empty"
       icon={icon}
       title={title}
       description={description}

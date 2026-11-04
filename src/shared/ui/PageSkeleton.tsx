@@ -1,5 +1,6 @@
 import { Flex, Skeleton } from 'antd'
 import { colors, radius, spacing } from '@/styles/tokens'
+import { StaffPlaceholder } from './ChantStaff'
 
 export interface SectionSkeletonProps {
   /** Number of placeholder rows (e.g. table rows). */
@@ -33,14 +34,14 @@ export interface PageSkeletonProps {
   rows?: number
 }
 
-/** Whole-page loading placeholder matching the PageHeader + sections layout. */
+/** Whole-page loading placeholder matching the PageHeader (serif title, incipit, description) + sections layout. */
 export function PageSkeleton({ sections = 2, rows = 4 }: Readonly<PageSkeletonProps>) {
   return (
     <Flex vertical gap={spacing.lg} role="status" aria-busy="true" aria-label="Đang tải trang">
       <Flex vertical gap={spacing.sm}>
-        <Skeleton.Input active size="small" style={{ width: 160 }} />
-        <Skeleton.Input active size="large" style={{ width: 280 }} />
-        <Skeleton.Input active size="small" style={{ width: 360 }} />
+        <Skeleton.Input active size="large" style={{ width: 300, height: 40 }} />
+        <StaffPlaceholder />
+        <Skeleton.Input active size="small" style={{ width: 380 }} />
       </Flex>
       {Array.from({ length: sections }, (_, index) => (
         <SectionSkeleton key={index} rows={rows} />

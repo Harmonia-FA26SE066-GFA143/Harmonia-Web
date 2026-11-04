@@ -1,7 +1,11 @@
-import { DisconnectOutlined, ReloadOutlined } from '@ant-design/icons'
+import { ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button } from 'antd'
 import type { ReactNode } from 'react'
+import { sections } from '@/styles/tokens'
+import { BrokenStaff } from './ChantStaff'
 import { StatePanel } from './StatePanel'
+
+const attention = sections.attention
 
 export interface ErrorStateProps {
   title?: ReactNode
@@ -53,15 +57,18 @@ export function ErrorState({
     ) : undefined
 
   if (hasData) {
+    // A thin ochre band over the data still shown, with a small broken staff (owner 2026-11-04).
     return (
       <Alert
         type="warning"
         showIcon
+        icon={<span style={{ color: attention.cloth }}><BrokenStaff width={36} /></span>}
         role="alert"
         title={offline ? 'Mất kết nối mạng' : 'Không thể cập nhật dữ liệu'}
         description={descriptionText}
         action={onRetry ? <Button size="small" loading={retrying} onClick={onRetry}>Thử lại</Button> : undefined}
-        style={{ marginBlock: 12 }}
+        style={{ marginBlock: 12, background: attention.tint, borderColor: attention.border }}
+        styles={{ title: { color: attention.ink, fontWeight: 600 }, description: { color: sections.roster.ink } }}
       />
     )
   }
@@ -70,7 +77,7 @@ export function ErrorState({
     <StatePanel
       role="alert"
       tone="danger"
-      icon={<DisconnectOutlined />}
+      icon={<BrokenStaff />}
       title={title}
       description={descriptionText}
       actions={actions}

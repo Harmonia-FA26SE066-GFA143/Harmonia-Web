@@ -7,7 +7,8 @@ export interface StatePanelProps {
   title: ReactNode
   description?: ReactNode
   actions?: ReactNode
-  tone?: 'neutral' | 'danger'
+  /** `empty` sets the panel on ivory, a page not yet written (owner 2026-11-04). */
+  tone?: 'neutral' | 'danger' | 'empty'
   role?: 'status' | 'alert'
   /** Level of the title: 3 when the panel sits inside a section that has its own level 2 heading. */
   headingLevel?: 2 | 3
@@ -36,10 +37,11 @@ export function StatePanel({
         padding: `${spacing.xl}px ${spacing.lg}px`,
         textAlign: 'center',
         ...cardSurface,
+        background: tone === 'empty' ? colors.ivory : cardSurface.background,
         borderRadius: radius.lg,
       }}
     >
-      {/* A plain monochrome icon: no tinted circle around it. */}
+      {/* A plain monochrome icon or staff motif: no tinted circle around it. */}
       <span aria-hidden style={{ fontSize: 24, lineHeight: 1, marginBottom: spacing.sm, color: danger ? token.colorError : colors.textMuted }}>
         {icon}
       </span>
