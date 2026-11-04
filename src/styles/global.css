@@ -103,9 +103,9 @@ body {
  * Missal printing in the workspace (owner 2026-11-03, "đậm chất nhà thờ"). Values repeat tokens.ts (CSS cannot read
  * it). Column heads are set as rubrics: small capitals in burgundy ink on parchment (7.7:1).
  */
-.ant-table-thead > tr > th {
-  font-weight: 600 !important;
-  font-size: 12px !important;
+.ant-table-wrapper .ant-table .ant-table-thead > tr > th {
+  font-weight: 600;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
