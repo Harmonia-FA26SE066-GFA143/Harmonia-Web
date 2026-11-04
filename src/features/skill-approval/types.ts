@@ -19,4 +19,13 @@ export interface PendingSkill {
   level?: SkillLevel
   /** Backend `DateTime`; read it with `parseUtc`. */
   declaredAt: string
+  /** A recording or clip the member attached on mobile (BE 9b1f587); optional for the decision. */
+  evidence?: SkillEvidence
+}
+
+export interface SkillEvidence {
+  kind: 'voice' | 'clip'
+  fileName: string
+  /** Short-lived signed URL: the list is read again instead of storing it. */
+  url: string
 }

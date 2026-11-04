@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { listChoirMembers } from './membersApi'
+import { listChoirMembers, searchMembers } from './membersApi'
 
 const fetchMock = vi.fn<typeof fetch>()
 
@@ -40,5 +40,28 @@ describe('listChoirMembers', () => {
     const url = new URL(String(fetchMock.mock.calls[0][0]), 'http://localhost')
     expect(url.pathname).toBe('/api/member-profiles')
     expect(Object.fromEntries(url.searchParams)).toEqual({ status: 'Active', pageNumber: '1', pageSize: '100' })
+  })
+})
+
+describe('searchMembers', () => {
+  it('keeps the account role, so a profile kept after a role change reads as history (BE 9b1f587)', async () => {
+    const dto = {
+      id: 'mp2',
+      fullName: 'Giuse Trần Văn Bình',
+      email: 'binh@giaoxu.org',
+      phone: null,
+      dateOfBirth: null,
+      joinedDate: '2020-01-01',
+      status: 'Inactive',
+      avatarUrl: null,
+      roleName: 'ChoirDirector',
+      approvedSkills: [],
+    }
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ items: [dto], pageNumber: 1, pageSize: 20, totalCount: 1, totalPages: 1 }), { status: 200 }),
+    )
+
+    const page = await searchMembers({ search: '' }, { pageNumber: 1, pageSize: 20 })
+    expect(page.items[0]).toMatchObject({ id: 'mp2', status: 'inactive', role: 'director' })
   })
 })

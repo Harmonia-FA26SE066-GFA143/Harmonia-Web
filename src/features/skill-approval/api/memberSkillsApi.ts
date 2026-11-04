@@ -3,7 +3,8 @@ import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { PendingSkill, SkillLevel } from '../types'
 
 // `/api/member-skills` (Harmonia-BE MemberSkillsController): the Choir Director reads the pending declarations,
-// oldest first, and approves or rejects each one. The member is notified of the decision.
+// oldest first, with the evidence the member attached (BE 9b1f587), and approves or rejects each one. The member is
+// notified of the decision.
 
 export interface PendingSkillPage {
   pageNumber: number
@@ -25,15 +26,17 @@ interface MemberSkillDetailDto {
   categoryName: string
   level: ApiSkillLevel | null
   declaredAt: string
+  evidence: { type: 'Voice' | 'Clip'; fileName: string; url: string } | null
 }
 
-const toPendingSkill = ({ id, memberFullName, skillName, categoryName, level, declaredAt }: MemberSkillDetailDto): PendingSkill => ({
+const toPendingSkill = ({ id, memberFullName, skillName, categoryName, level, declaredAt, evidence }: MemberSkillDetailDto): PendingSkill => ({
   id,
   memberName: memberFullName,
   skillName,
   categoryName,
   level: level ? levelByApi[level] : undefined,
   declaredAt,
+  evidence: evidence ? { kind: evidence.type === 'Voice' ? 'voice' : 'clip', fileName: evidence.fileName, url: evidence.url } : undefined,
 })
 
 export async function listPendingSkills(page: PendingSkillPage): Promise<PagedList<PendingSkill>> {
