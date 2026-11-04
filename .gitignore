@@ -26,6 +26,7 @@ pnpm-debug.log*
 .eslintcache
 
 # Playwright
+.playwright-mcp/
 test-results/
 playwright-report/
 playwright/.cache/
