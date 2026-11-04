@@ -57,9 +57,12 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
                   )
                 )}
               </Flex>
-              <Typography.Text style={{ color: member.skills.length > 0 ? colors.textBody : colors.textMuted }}>
-                {member.skills.length > 0 ? member.skills.join(' · ') : 'Chưa có kỹ năng được duyệt'}
-              </Typography.Text>
+              {member.skills.length > 0 ? (
+                <Typography.Text style={{ color: colors.textBody }}>{member.skills.join(' · ')}</Typography.Text>
+              ) : (
+                // Only a current Choir Member declares skills; on a retained profile the empty state says nothing (B46).
+                member.role === 'member' && <Typography.Text style={{ color: colors.textMuted }}>Chưa có kỹ năng được duyệt</Typography.Text>
+              )}
               <Typography.Text style={muted}>
                 {[`Tham gia ${dayjs(member.joinedDate).format('DD/MM/YYYY')}`, member.email, member.phone].filter(Boolean).join(' · ')}
               </Typography.Text>
