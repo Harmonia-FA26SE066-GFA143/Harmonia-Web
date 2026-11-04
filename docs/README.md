@@ -2,7 +2,7 @@
 
 Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì với BE, đọc trực tiếp sau khi `git pull` repo Harmonia-Web. Nội dung các file viết bằng tiếng Anh để giữ nguyên tên API, mã lỗi và trích dẫn code; file này là bản tóm tắt tiếng Việt.
 
-- Cập nhật lần cuối: 2026-11-01, đối chiếu với Harmonia-BE `main@90af733`. Thay đổi hợp đồng phía BE ghi ở `docs/api-changelog.md` của repo BE (thư mục `doc/` đã đổi tên thành `docs/`).
+- Cập nhật lần cuối: 2026-11-04, đối chiếu với Harmonia-BE `main@9b1f587`. Thay đổi hợp đồng phía BE ghi ở `docs/api-changelog.md` của repo BE (thư mục `doc/` đã đổi tên thành `docs/`).
 - Cách đọc trích dẫn: `File.cs:12-20` là đường dẫn và số dòng trong code BE ở commit trên; `src/...` là code Web.
 - Web làm theo BE ở mọi chỗ BE đã quy định (trường, trạng thái, ai được làm gì, mã lỗi). Chỗ BE chưa có thì ghi là cần BE bổ sung, kèm quyết định tạm của owner.
 
@@ -30,12 +30,13 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
 
 Ba việc BE cần xem (không phải mục backlog, chi tiết ở cuối `tbd-backlog.md`):
 
-- `docs/api-changelog.md` chưa ghi API ảnh đại diện (`PUT`/`DELETE api/auth/me/avatar`, `avatarUrl`), và vẫn chưa ghi các thay đổi quyền của `c091c07` (B37, B38).
+- `docs/api-changelog.md` chưa có mục 2026-11-03 (minh chứng kỹ năng, `roleName` trên hồ sơ ca viên, `MEMBER_NOT_ACTIVE` khi sửa hồ sơ); vẫn chưa ghi API ảnh đại diện (`PUT`/`DELETE api/auth/me/avatar`, `avatarUrl`) và các thay đổi quyền của `c091c07` (B37, B38).
 - Trên API đã deploy, ngày phụng vụ nào cũng còn `color = null`; cần Cha xứ đồng bộ lại năm 2026 thì Web mới hiện màu theo ngày.
 - Trích lời bằng AI: BE đã tăng thời gian chờ và ghi lỗi Gemini vào log (`e6cf8dd`); Web chưa thử lại trên API đã deploy.
 
 Owner đã chốt ngày 2026-10-27 (ghi ở `open-business-decisions.md`): giữ thứ tự gợi ý bài như BE; giữ cho khai bè S/A/T/B ở vai cả buổi lễ; đề nghị BE chặn phân công trùng giờ (B40, BE đã làm).
 
+- Đã xong ở `9b1f587` (2026-11-03): B46 (vai trò hiện tại trên từng hồ sơ ca viên; hồ sơ của người đã chuyển vai trò được giữ, ngừng hoạt động, không sửa được); thêm minh chứng ghi âm hoặc clip cho kỹ năng khai báo. Web nối hết ở #289.
 - Đã xong ở `90af733` (2026-11-01): B39 (thiếu người trả rỗng), B41 (Ca trưởng đọc tình hình chuẩn bị), B43 (thu âm buổi tập, BE tự quyết: Ca trưởng thu, ca viên nghe trên mobile), B44 (hạn gửi danh sách bài), B45 (màu phụng vụ theo ngày); thêm API mọi phiên bản danh sách bài và ảnh đại diện. Web nối hết ở #265.
 - Đã xong ở `d394db4` và `c8ba80f` (2026-10-27 đến 30): B40 (chặn trùng giờ), lời bài hát dạng `.docx` hoặc gõ thẳng, MIDI, trích lời bằng AI, tìm bài theo lời. Web nối hết ở #254, kèm ghi chú từng bài của buổi tập và đăng xuất mọi thiết bị (BE có từ trước). BE đã bổ sung changelog cho đợt này ở `eba5bc9`.
 - Đã xong ở `d1ca63e` (2026-10-27): phân loại bài theo phần phụng vụ, cây chủ đề, số người; gợi ý bài; phân công 3 tầng. Web nối ở #223, #225, #227.
