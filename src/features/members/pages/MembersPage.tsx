@@ -1,6 +1,6 @@
 import { App, Card } from 'antd'
 import { useMemo, useState } from 'react'
-import { ApiError, requestFailureMessage } from '@/lib/api/errors'
+import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
@@ -18,6 +18,13 @@ const pageSize = 20
  * created; the Choir Director searches them and edits their phone, dates and status. Skills come from the
  * declarations approved on the Skill Approval page.
  */
+/** `PUT /api/member-profiles/{id}` refusals the Choir Director can act on. */
+const updateMessages: Record<string, string> = {
+  MEMBER_NOT_FOUND: 'Ca viên không còn tồn tại. Vui lòng tải lại trang.',
+  // BE 9b1f587: the account became a Choir Director or Parish Priest meanwhile; the profile is history only.
+  MEMBER_NOT_ACTIVE: 'Tài khoản này không còn là ca viên nên không sửa được hồ sơ. Vui lòng tải lại trang.',
+}
+
 export function MembersPage() {
   const { message } = App.useApp()
   const [filters, setFilters] = useState<MemberFilters>(emptyMemberFilters)
@@ -48,9 +55,7 @@ export function MembersPage() {
         // The drawer stays open so the entered values are not lost.
         onError: (error) =>
           message.error(
-            error instanceof ApiError && error.code === 'MEMBER_NOT_FOUND'
-              ? 'Ca viên không còn tồn tại. Vui lòng tải lại trang.'
-              : requestFailureMessage(error, 'Không thể lưu thông tin ca viên. Vui lòng thử lại.'),
+            errorMessage(error, updateMessages, 'Không thể lưu thông tin ca viên. Vui lòng thử lại.'),
           ),
       },
     )

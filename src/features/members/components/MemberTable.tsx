@@ -1,3 +1,4 @@
+import { roleLabels } from '@/shared/types/account'
 import { Avatar, Button, Flex, Pagination, Spin, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { StatusTag, type StatusTagColor } from '@/shared/ui'
@@ -44,10 +45,16 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
             <Flex vertical style={{ flex: 1, minWidth: 0 }}>
               <Flex align="center" gap={spacing.sm} wrap>
                 <Typography.Text style={{ fontWeight: 600, fontSize: typography.cardHeading.fontSize }}>{member.fullName}</Typography.Text>
-                {member.status !== 'active' && (
-                  <StatusTag color={statusColors[member.status]} style={{ marginInlineEnd: 0 }}>
-                    {memberStatusLabels[member.status]}
+                {member.role !== 'member' ? (
+                  <StatusTag color="default" style={{ marginInlineEnd: 0 }}>
+                    Đã chuyển sang {roleLabels[member.role]}
                   </StatusTag>
+                ) : (
+                  member.status !== 'active' && (
+                    <StatusTag color={statusColors[member.status]} style={{ marginInlineEnd: 0 }}>
+                      {memberStatusLabels[member.status]}
+                    </StatusTag>
+                  )
                 )}
               </Flex>
               <Typography.Text style={{ color: member.skills.length > 0 ? colors.textBody : colors.textMuted }}>
@@ -57,9 +64,12 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
                 {[`Tham gia ${dayjs(member.joinedDate).format('DD/MM/YYYY')}`, member.email, member.phone].filter(Boolean).join(' · ')}
               </Typography.Text>
             </Flex>
-            <Button onClick={() => onEdit(member)} aria-label={`Sửa ${member.fullName}`}>
-              Sửa
-            </Button>
+            {/* A profile kept from an account that changed role is history only (BE 9b1f587: 409 MEMBER_NOT_ACTIVE). */}
+            {member.role === 'member' && (
+              <Button onClick={() => onEdit(member)} aria-label={`Sửa ${member.fullName}`}>
+                Sửa
+              </Button>
+            )}
           </li>
         ))}
       </ul>

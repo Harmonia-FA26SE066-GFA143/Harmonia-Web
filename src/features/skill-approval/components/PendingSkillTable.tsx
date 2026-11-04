@@ -1,7 +1,9 @@
-import { Button, Flex, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { PlayCircleOutlined } from '@ant-design/icons'
+import { Button, Flex, Modal, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { useState } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
 import { colors, spacing, typography } from '@/styles/tokens'
-import { skillLevelLabels, type PendingSkill } from '../types'
+import { skillLevelLabels, type PendingSkill, type SkillEvidence } from '../types'
 
 export interface PendingSkillTableProps {
   skills: PendingSkill[]
@@ -30,6 +32,7 @@ export function PendingSkillTable({
   onApprove,
   onReject,
 }: Readonly<PendingSkillTableProps>) {
+  const [clip, setClip] = useState<{ skill: PendingSkill; evidence: SkillEvidence }>()
   const columns: TableColumnsType<PendingSkill> = [
     {
       key: 'member',
@@ -57,6 +60,21 @@ export function PendingSkillTable({
         ) : (
           <Typography.Text style={muted}>Không nêu</Typography.Text>
         ),
+    },
+    {
+      key: 'evidence',
+      title: 'Minh chứng',
+      render: (_, skill) => {
+        const { evidence } = skill
+        if (!evidence) return <Typography.Text style={muted}>Không gửi</Typography.Text>
+        return evidence.kind === 'voice' ? (
+          <audio controls preload="none" src={evidence.url} aria-label={`Nghe minh chứng ${skill.skillName} của ${skill.memberName}`} style={{ height: 36, width: 240 }} />
+        ) : (
+          <Button icon={<PlayCircleOutlined />} onClick={() => setClip({ skill, evidence })} aria-label={`Xem clip ${skill.skillName} của ${skill.memberName}`}>
+            Xem clip
+          </Button>
+        )
+      },
     },
     {
       key: 'declaredAt',
@@ -97,13 +115,28 @@ export function PendingSkillTable({
   ]
 
   return (
-    <Table<PendingSkill>
-      rowKey="id"
-      columns={columns}
-      dataSource={skills}
-      loading={loading}
-      pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: onPageChange }}
-      scroll={{ x: 'max-content' }}
-    />
+    <>
+      <Table<PendingSkill>
+        rowKey="id"
+        columns={columns}
+        dataSource={skills}
+        loading={loading}
+        pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: onPageChange }}
+        scroll={{ x: 'max-content' }}
+      />
+      {/* The signed link expires; the list is read again on focus, which renews it. */}
+      <Modal
+        open={Boolean(clip)}
+        title={clip ? `${clip.skill.skillName} · ${clip.skill.memberName}` : undefined}
+        footer={null}
+        width={720}
+        destroyOnHidden
+        onCancel={() => setClip(undefined)}
+      >
+        {clip && (
+          <video controls autoPlay src={clip.evidence.url} aria-label={`Clip minh chứng: ${clip.evidence.fileName}`} style={{ width: '100%', borderRadius: 8 }} />
+        )}
+      </Modal>
+    </>
   )
 }

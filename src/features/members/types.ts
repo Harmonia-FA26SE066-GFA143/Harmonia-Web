@@ -1,3 +1,4 @@
+import type { SystemRole } from '@/shared/types/account'
 /**
  * A choir member as the Choir Director sees them when sending confirmation requests (FE-33) and taking
  * attendance (FE-45). `skills` are the member's approved skills (FE-02, FE-25) as display names, mapped from
@@ -39,6 +40,11 @@ export interface MemberProfile {
   skills: string[]
   /** Public URL of the member's own picture (BE 90af733); absent without one. */
   avatarUrl?: string
+  /**
+   * The account's current role (BE 9b1f587). A profile is kept, Inactive and out of every choir, when its member becomes
+   * a Choir Director or Parish Priest; it stays for its history and can no longer be edited (409 MEMBER_NOT_ACTIVE).
+   */
+  role: SystemRole
 }
 
 /**

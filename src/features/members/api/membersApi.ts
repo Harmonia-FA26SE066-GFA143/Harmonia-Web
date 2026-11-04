@@ -1,3 +1,5 @@
+import type { ApiRoleName } from '@/lib/auth/session'
+import { roleByApiName } from '@/shared/types/account'
 import { apiRequest } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { ChoirMember, MemberFilters, MemberProfile, MemberProfileValues, MemberStatus } from '../types'
@@ -23,6 +25,7 @@ interface MemberProfileSummaryDto {
   status: ApiMemberStatus
   approvedSkills: { skillId: string; skillName: string }[]
   avatarUrl: string | null
+  roleName: ApiRoleName
 }
 
 const skillNames = (dto: MemberProfileSummaryDto) => dto.approvedSkills.map((skill) => skill.skillName)
@@ -63,6 +66,7 @@ const toMemberProfile = (dto: MemberProfileSummaryDto): MemberProfile => ({
   status: statusByApi[dto.status],
   skills: skillNames(dto),
   avatarUrl: dto.avatarUrl ?? undefined,
+  role: roleByApiName[dto.roleName],
 })
 
 export async function updateMember(id: string, values: MemberProfileValues): Promise<void> {
