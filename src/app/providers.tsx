@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import { useState, type ReactNode } from 'react'
 import { ApiError } from '@/lib/api/errors'
+import { NeumeSpinner } from '@/shared/ui'
 import { theme } from './theme'
 
 // Vietnamese month/day names for Ant Design date pickers and dayjs formatting.
@@ -26,7 +27,13 @@ export function AppProviders({ children }: Readonly<{ children: ReactNode }>) {
   )
 
   return (
-    <ConfigProvider theme={theme} locale={viVN}>
+    // The neume ring replaces Ant Design's spinning circle in buttons and loading areas (owner 2026-11-04).
+    <ConfigProvider
+      theme={theme}
+      locale={viVN}
+      button={{ loadingIcon: <NeumeSpinner size={14} /> }}
+      spin={{ indicator: <NeumeSpinner size={24} /> }}
+    >
       {/* AntApp gives message/notification/modal access to theme context */}
       <AntApp>
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

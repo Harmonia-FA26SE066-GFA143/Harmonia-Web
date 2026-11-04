@@ -274,6 +274,50 @@ body {
   animation: hm-unroll 300ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
 }
 
+/* The neume spinner: each punctum is lit in turn and fades over the next three steps (NeumeSpinner.tsx). */
+@keyframes hm-punctum {
+  0% { opacity: 1; }
+  12.5% { opacity: 0.65; }
+  25% { opacity: 0.4; }
+  37.5%, 100% { opacity: 0.2; }
+}
+
+.hm-neume-spinner rect {
+  animation: hm-punctum 800ms step-end infinite;
+}
+
+/* The rose spinner: the lit lobe runs round the rim, two fading behind it (RoseSpinner.tsx). */
+@keyframes hm-lobe {
+  0% { fill-opacity: 0.9; }
+  8.33% { fill-opacity: 0.5; }
+  16.67% { fill-opacity: 0.25; }
+  25%, 100% { fill-opacity: 0; }
+}
+
+.hm-rose-spinner .hm-lobe {
+  fill-opacity: 0;
+  animation: hm-lobe 1200ms step-end infinite;
+}
+
+/* Reduced motion: the ring and the rose stand still; the words beside them say what is happening. */
+@media (prefers-reduced-motion: reduce) {
+  .hm-neume-spinner rect {
+    animation: none !important;
+    opacity: 0.55;
+  }
+
+  .hm-rose-spinner .hm-lobe {
+    animation: none !important;
+  }
+}
+
+/* Ant Design spins its loading icon; the neume ring steps instead. */
+.ant-spin-dot.hm-neume-spinner,
+.ant-btn-loading-icon .hm-neume-spinner {
+  animation: none !important;
+  transform: none !important;
+}
+
 /* A small acknowledgement: the result appears in place of the button that made it. */
 .hm-pop {
   animation: hm-pop 150ms cubic-bezier(0.16, 1, 0.3, 1) both;

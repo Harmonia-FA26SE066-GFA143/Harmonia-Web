@@ -90,6 +90,11 @@ export const theme: ThemeConfig = {
       cellPaddingBlock: spacing.md,
       borderRadius: radius.lg,
     },
+    // Placeholders in warm parchment, not cold grey (owner 2026-11-04, Figma "Trạng thái").
+    Skeleton: {
+      gradientFromColor: '#F0EAE0',
+      gradientToColor: '#E9E1D3',
+    },
     Breadcrumb: {
       fontSize: typography.metadata.fontSize,
       separatorColor: colors.textMuted,
