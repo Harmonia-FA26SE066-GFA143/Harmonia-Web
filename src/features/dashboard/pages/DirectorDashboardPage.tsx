@@ -33,7 +33,9 @@ const rowStyle = (index: number) => ({
   padding: `${spacing.md}px ${spacing.lg}px`,
   borderTop: index > 0 ? `1px solid ${colors.border}` : undefined,
 })
-const capitalize = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`
+// The hour's arch: pale gold on the dark evening card, decorative gold at sunrise, Gold Ink on the afternoon parchment.
+const markColors = { morning: gold.line, afternoon: gold.ink, evening: gold.soft } as const
+const capitalize =(text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`
 const detailPath = (program: LiturgicalProgram) => generatePath(paths.director.programDetail, { programId: program.id })
 
 /** The Priest's note on the newest list, read only for the lists sent back. */
@@ -178,7 +180,7 @@ function NextProgram({ program, prep }: Readonly<{ program: LiturgicalProgram; p
         {hour && (
           <MassTimeMark
             time={hour}
-            color={dark ? gold.soft : hour === 'morning' ? gold.line : gold.ink}
+            color={markColors[hour]}
             style={{ flexShrink: 0, alignSelf: 'flex-end', marginBottom: -spacing.lg, marginInline: spacing.sm }}
           />
         )}

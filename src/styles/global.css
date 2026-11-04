@@ -105,7 +105,6 @@ body {
  */
 .ant-table-thead > tr > th {
   font-weight: 600 !important;
-  color: #762e3d !important;
   font-size: 12px !important;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -132,18 +131,17 @@ body {
 }
 
 /* The spine's group titles as rubrics in pale gold (8.9:1 on the bookcloth). */
-.ant-layout-sider .ant-menu-item-group-title {
-  color: #e6d7b5 !important;
+.ant-layout-sider .ant-menu .ant-menu-item-group-title {
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding-top: 16px !important;
+  padding-top: 16px;
 }
 
 /* On the evening card's bookcloth a burgundy focus ring would vanish (1.9:1): the pale spine text instead. */
-.mass-time-dark .ant-btn:focus-visible {
-  outline: 2px solid #eadadd !important;
+.mass-time-dark .ant-btn.ant-btn:focus-visible {
+  outline: 2px solid #eadadd;
   outline-offset: 2px;
 }
 
@@ -302,20 +300,13 @@ body {
 /* Reduced motion: the ring and the rose stand still; the words beside them say what is happening. */
 @media (prefers-reduced-motion: reduce) {
   .hm-neume-spinner rect {
-    animation: none !important;
+    animation: none;
     opacity: 0.55;
   }
 
   .hm-rose-spinner .hm-lobe {
-    animation: none !important;
+    animation: none;
   }
-}
-
-/* Ant Design spins its loading icon; the neume ring steps instead. */
-.ant-spin-dot.hm-neume-spinner,
-.ant-btn-loading-icon .hm-neume-spinner {
-  animation: none !important;
-  transform: none !important;
 }
 
 /* A small acknowledgement: the result appears in place of the button that made it. */

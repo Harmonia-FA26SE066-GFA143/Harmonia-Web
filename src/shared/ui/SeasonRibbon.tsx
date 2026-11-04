@@ -1,7 +1,7 @@
 import { Typography } from 'antd'
 import { colors, gold, radius, spacing, typography } from '@/styles/tokens'
 import { RoseWindow } from './RoseWindow'
-import { seasonTone } from './seasonTones'
+import { seasonTone, type SeasonTone } from './seasonTones'
 
 export interface SeasonRibbonProps {
   /** The calendar's season code (`LiturgicalDayDto.SeasonName`): Advent, Christmas, Lent, Easter or OrdinaryTime. */
@@ -12,6 +12,12 @@ export interface SeasonRibbonProps {
   seasonName: string
   /** The day's celebration, e.g. "Thứ Bảy tuần XXX Thường niên". */
   celebrationName?: string
+}
+
+/** Gold is pale and takes more ink; Lent's bare window stays faintest. */
+function roseOpacity(tone: SeasonTone) {
+  if (tone.rose === 'bare') return 0.35
+  return tone.ribbon === gold.line ? 0.85 : 0.5
 }
 
 /**
@@ -56,8 +62,7 @@ export function SeasonRibbon({ seasonKey, color, seasonName, celebrationName }: 
           right: -100,
           top: '50%',
           transform: 'translateY(-50%)',
-          // Gold is pale and takes more ink; Lent's bare window stays faintest.
-          opacity: tone.rose === 'bare' ? 0.35 : tone.ribbon === gold.line ? 0.85 : 0.5,
+          opacity: roseOpacity(tone),
         }}
       />
       <p

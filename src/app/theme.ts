@@ -1,5 +1,5 @@
 import type { ThemeConfig } from 'antd'
-import { colors, layout, radius, shadows, sizes, spacing, spine, typography } from '@/styles/tokens'
+import { colors, gold, layout, radius, shadows, sizes, spacing, spine, typography } from '@/styles/tokens'
 
 /**
  * Maps Harmonia design tokens onto Ant Design theme tokens.
@@ -137,7 +137,8 @@ export const spineTheme: ThemeConfig = {
       itemActiveBg: spine.selected,
       itemSelectedBg: spine.selected,
       itemSelectedColor: colors.surface,
-      groupTitleColor: spine.groupTitle,
+      // Group titles as pale-gold rubrics (8.9:1 on the bookcloth, owner 2026-11-03).
+      groupTitleColor: gold.soft,
       colorPrimaryBorder: spine.text,
     },
   },
