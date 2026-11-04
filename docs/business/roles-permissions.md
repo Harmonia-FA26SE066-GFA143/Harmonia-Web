@@ -1,6 +1,6 @@
 # Roles and Permissions
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@c091c07` and 2026-10-27 at `main@d1ca63e`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions below stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@c091c07` 2026-10-27 at `main@d1ca63e` and 2026-11-04 at `main@9b1f587`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions below stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 LI-02, FE-01–FE-54
 
@@ -13,11 +13,11 @@ Report 1 requires a valid registered account and says system functions are provi
 
 LI-03: skill declarations, song-list approval, roster finalization, and practice evaluation depend on authorized users and are not fully automated.
 
-## BE contract (verified `a6af23e`, re-checked `90af733`)
+## BE contract (verified `a6af23e`, re-checked `9b1f587`)
 
 - **Four roles**: `Admin`, `ParishPriest`, `ChoirDirector`, `ChoirMember`. **One role per account** (`User.RoleId`). Instrumentalist is not a role: it is a Choir Member with instrument skills (owner decision C3). Liturgy Committee is not a separate role.
 - **No public registration.** `AuthController` has no register endpoint. The Admin creates accounts with a role (`UsersController.cs:27-30`); the BE generates a 12-character first password and emails it (`UserService.cs:44-81, 170-180`); the account must replace it at the first sign-in (`isPasswordChangeRequired`, `AuthController.cs:46-52`). Password reset by email link and Google sign-in (existing active accounts only) exist (`AuthController.cs:19-24, 71-83`).
-- **Only the Admin** creates, edits (email, name, phone), deactivates or reactivates accounts and assigns roles (`UsersController.cs:14-15`). The Admin cannot deactivate or change the role of their own account, and the last active Admin cannot be deactivated or moved to another role (`UserService.cs:116-124, 149-157`). A role change or deactivation revokes the user's sessions.
+- **Only the Admin** creates, edits (email, name, phone), deactivates or reactivates accounts and assigns roles (`UsersController.cs:14-15`). The Admin cannot deactivate or change the role of their own account, and the last active Admin cannot be deactivated or moved to another role (`UserService.cs:116-124, 149-157`). A role change or deactivation revokes the user's sessions. When a Choir Member gets another role, their member profile is kept for its history but set Inactive and removed from every choir; it can no longer be edited (`409 MEMBER_NOT_ACTIVE`), and member-profile rows carry `roleName` so the Web can tell (`UserService.cs:211-226`, `MemberProfileService.cs:117-119`, `9b1f587`).
 - **Every user** edits their own full name and phone (`PUT /api/auth/me`) and replaces or removes their own picture (`PUT` / `DELETE /api/auth/me/avatar`, `.jpg`, `.jpeg`, `.png`, `.webp` ≤ 2 MB, `90af733`); email changes go through the Admin.
 - **Choir Director** (`90af733`): reads the preparation status of the events their choirs serve (B41) and records rehearsal takes (B43).
 - **Choir Member on the web** signs in but only sees the message to use the mobile app (Web `LoginPage.tsx`). There is no self-registration on mobile either.
