@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, FileSearchOutlined } from '@ant-design/icons'
-import { App, Button, Card, Tabs } from 'antd'
+import { App, Button, Card, Tabs, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
@@ -8,6 +8,7 @@ import { parseUtc } from '@/lib/api/dates'
 import { ApiError, requestFailureMessage } from '@/lib/api/errors'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { LearningProgressDrawer } from '../components/LearningProgressDrawer'
 import { SongClassificationPanel } from '../components/SongClassificationPanel'
 import { SongClassificationDrawer } from '../components/SongClassificationDrawer'
@@ -285,7 +286,12 @@ export function SongDetailPage() {
           activeKey={tab}
           onChange={setTab}
           items={[
-            { key: 'info', label: 'Thông tin', children: <SongInfoPanel song={data} /> },
+            { key: 'info', label: 'Thông tin', children: (
+              <>
+                <Typography.Title level={2} style={{ margin: `0 0 ${spacing.md}px`, fontSize: typography.cardHeading.fontSize }}>Thông tin bài hát</Typography.Title>
+                <SongInfoPanel song={data} />
+              </>
+            ) },
             {
               key: 'classification',
               label: 'Phân loại',
@@ -306,12 +312,16 @@ export function SongDetailPage() {
               label: materials.data ? `Tài liệu (${materials.data.length})` : 'Tài liệu',
               children: (
                 <>
+                  <Typography.Paragraph style={{ color: colors.textMuted, marginBottom: spacing.lg }}>
+                    Xem bản nhạc, đọc lời ca và nghe audio. Tài liệu được sắp theo từng nhóm bên dưới.
+                  </Typography.Paragraph>
                   {materials.isPending && <SectionSkeleton rows={3} label="Đang tải tài liệu" />}
                   {materials.isError && (
                     <ErrorState headingLevel={2} title="Không thể tải tài liệu" error={materials.error} hasData={materials.data !== undefined} onRetry={() => materials.refetch()} retrying={materials.isFetching} />
                   )}
                   {materials.data !== undefined && (
                     <SongMaterialsPanel
+                      readingLayout
                       materials={materials.data}
                       uploadingKind={upload.isPending && picked?.file ? picked.kind : undefined}
                       onPick={handlePick}

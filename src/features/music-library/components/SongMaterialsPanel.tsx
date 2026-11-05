@@ -34,6 +34,8 @@ import { AudioWaveform } from './AudioWaveform'
 /** Without the handlers the card is read-only (the Parish Priest reviewing a song list): view and download only. */
 export interface SongMaterialsPanelProps {
   materials: SongMaterial[]
+  /** A reading surface for the full song page; embedded review drawers keep their compact layout. */
+  readingLayout?: boolean
   /** Kind currently being uploaded, to show progress on its button. */
   uploadingKind?: MaterialKind
   /** A file was picked for a kind; the page checks it and asks for a title before uploading. */
@@ -108,13 +110,14 @@ type MaterialActions = Pick<SongMaterialsPanelProps, 'onDelete' | 'onEdit' | 'on
 
 function MaterialRow({
   material,
+  readingLayout,
   onDelete,
   onEdit,
   onProgress,
   onReplace,
   onExtractLyrics,
   extractingId,
-}: Readonly<{ material: SongMaterial } & MaterialActions>) {
+}: Readonly<{ material: SongMaterial; readingLayout: boolean } & MaterialActions>) {
   const Icon = kindIcons[material.kind]
   return (
     <Flex component="li" vertical gap={spacing.sm} style={{ padding: spacing.md, background: colors.background, borderRadius: radius.md }}>
@@ -133,16 +136,16 @@ function MaterialRow({
             <Icon />
           </span>
         )}
-        <Flex vertical style={{ flex: '1 1 200px', minWidth: 0 }}>
+        <Flex vertical style={{ flex: readingLayout ? '1 1 calc(100% - 80px)' : '1 1 200px', minWidth: 0 }}>
           <Flex wrap align="center" gap={spacing.xs}>
-            <Typography.Text strong ellipsis={{ tooltip: material.title }}>
+            <Typography.Text strong ellipsis={readingLayout ? false : { tooltip: material.title }} style={{ overflowWrap: 'anywhere' }}>
               {material.title}
             </Typography.Text>
             {material.targetSkillName && <Tag style={{ marginInlineEnd: 0 }}>{material.targetSkillName}</Tag>}
           </Flex>
           <Typography.Text
-            ellipsis={{ tooltip: material.fileName ?? undefined }}
-            style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}
+            ellipsis={readingLayout ? false : { tooltip: material.fileName ?? undefined }}
+            style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize, overflowWrap: 'anywhere' }}
           >
             {details(material)}
           </Typography.Text>
@@ -209,7 +212,7 @@ function MaterialRow({
       {material.lyricsText !== null && (
         <Typography.Paragraph
           ellipsis={{ rows: 4, expandable: 'collapsible', symbol: (expanded) => (expanded ? 'Thu gọn' : 'Xem hết lời') }}
-          style={{ margin: 0, whiteSpace: 'pre-line' }}
+          style={{ margin: 0, whiteSpace: 'pre-line', maxWidth: readingLayout ? '72ch' : undefined, overflowWrap: 'anywhere' }}
         >
           {material.lyricsText}
         </Typography.Paragraph>
@@ -222,7 +225,7 @@ function MaterialRow({
  * Materials grouped by the four FE-08/FE-28 kinds, each with its own upload action: the "Tài liệu" tab of the song page
  * and the body of the Parish Priest's materials drawer.
  */
-export function SongMaterialsPanel({ materials, uploadingKind, onPick, onTypeLyrics, ...actions }: Readonly<SongMaterialsPanelProps>) {
+export function SongMaterialsPanel({ materials, readingLayout = false, uploadingKind, onPick, onTypeLyrics, ...actions }: Readonly<SongMaterialsPanelProps>) {
   return (
     <div>
       {materialKinds.map((kind, index) => {
@@ -231,8 +234,14 @@ export function SongMaterialsPanel({ materials, uploadingKind, onPick, onTypeLyr
         const hintId = `materials-${kind}-hint`
         return (
           <Fragment key={kind}>
-            {index > 0 && <Divider />}
-            <section aria-labelledby={headingId}>
+            {index > 0 && !readingLayout && <Divider />}
+            <section aria-labelledby={headingId} style={readingLayout ? {
+              padding: spacing.lg,
+              marginBottom: spacing.lg,
+              background: colors.ivory,
+              border: `1px solid ${colors.border}`,
+              borderRadius: radius.lg,
+            } : undefined}>
               <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.xs }}>
                 <Typography.Title id={headingId} level={2} style={{ margin: 0, fontSize: typography.cardHeading.fontSize }}>
                   {materialKindLabels[kind]}
@@ -260,7 +269,7 @@ export function SongMaterialsPanel({ materials, uploadingKind, onPick, onTypeLyr
               {items.length > 0 ? (
                 <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                   {items.map((material) => (
-                    <MaterialRow key={material.id} material={material} {...actions} />
+                    <MaterialRow key={material.id} material={material} readingLayout={readingLayout} {...actions} />
                   ))}
                 </Flex>
               ) : (

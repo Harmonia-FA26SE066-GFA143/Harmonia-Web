@@ -62,7 +62,7 @@ export function SongIndexList({
   onPageChange,
 }: Readonly<SongIndexListProps>) {
   const { search } = useLocation()
-  const rowPadding = density === 'compact' ? `${spacing.sm}px ${spacing.md}px` : `${spacing.md}px`
+  const rowPadding = density === 'compact' ? `${spacing.sm}px ${spacing.lg}px` : `${spacing.lg}px`
 
   return (
     <div role="region" aria-label="Mục lục bài hát">
@@ -83,6 +83,7 @@ export function SongIndexList({
                 key={song.id}
                 style={{
                   display: 'flex',
+                  flexWrap: 'wrap',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: spacing.md,
@@ -90,7 +91,7 @@ export function SongIndexList({
                   borderBottom: `1px solid ${colors.border}`,
                 }}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: '1 1 320px', minWidth: 0 }}>
                   <Flex align="center" gap={spacing.sm} wrap>
                     <Link
                       to={generatePath(paths.director.songDetail, { songId: song.id })}
@@ -98,7 +99,7 @@ export function SongIndexList({
                       style={{
                         fontWeight: 600,
                         fontSize: typography.cardHeading.fontSize,
-                        color: colors.textPrimary,
+                        color: colors.primary,
                         overflowWrap: 'anywhere',
                       }}
                     >
@@ -110,13 +111,13 @@ export function SongIndexList({
                       </Tag>
                     )}
                   </Flex>
-                  <div style={{ marginTop: spacing.xs, fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+                  <div style={{ marginTop: spacing.xs, fontSize: typography.metadata.fontSize, color: colors.textMuted, overflowWrap: 'anywhere' }}>
                     {details.join(' · ')}
                   </div>
                 </div>
 
                 {song.materialCounts && (
-                  <Flex gap={spacing.md} align="center" style={{ flexShrink: 0 }}>
+                  <Flex gap={spacing.sm} vertical style={{ flex: '0 1 200px', minWidth: 0 }}>
                     {shownMaterials.map(({ kind, icon }) => (
                       <MaterialMark key={kind} kind={kind} icon={icon} available={(song.materialCounts?.[kind] ?? 0) > 0} />
                     ))}

@@ -96,65 +96,65 @@ export function MusicLibraryPage() {
     <>
       <PageHeader
         title="Kho bài hát"
+        description="Tìm bài hát theo mùa phụng vụ, phần lễ và chủ đề; mở bản nhạc, lời ca và tài liệu tập luyện."
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }]}
         extra={addButton}
       />
-      {songs.isPending && <SectionSkeleton rows={8} label="Đang tải kho bài hát" />}
-      {songs.isError && (
-        <ErrorState title="Không thể tải kho bài hát" error={songs.error} hasData={songs.data !== undefined} onRetry={() => songs.refetch()} retrying={songs.isFetching} />
-      )}
-      {songs.data !== undefined && total === 0 && !filtered && (
-        <EmptyState
-          title="Chưa có bài hát nào"
-          description="Thêm bài hát để bắt đầu quản lý kho nhạc."
-          action={addButton}
+      <Card styles={{ body: { padding: 0 } }}>
+        <SongFilterBar
+          libraryLayout
+          value={filters}
+          onChange={changeFilters}
+          onReset={resetFilters}
+          resultCount={songs.data?.totalCount}
+          extra={
+            total > 0 ? (
+              <ViewSwitcher
+                view={viewMode}
+                density={density}
+                onViewChange={handleViewChange}
+                onDensityChange={handleDensityChange}
+              />
+            ) : undefined
+          }
         />
-      )}
-      {songs.data !== undefined && (total > 0 || filtered) && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <SongFilterBar
-            value={filters}
-            onChange={changeFilters}
-            onReset={resetFilters}
-            resultCount={total}
-            extra={
-              total > 0 ? (
-                <ViewSwitcher
-                  view={viewMode}
-                  density={density}
-                  onViewChange={handleViewChange}
-                  onDensityChange={handleDensityChange}
-                />
-              ) : undefined
-            }
+        {songs.isPending && <div style={{ padding: spacing.lg }}><SectionSkeleton rows={8} label="Đang tải kho bài hát" /></div>}
+        {songs.isError && (
+          <ErrorState title="Không thể tải kho bài hát" error={songs.error} hasData={songs.data !== undefined} onRetry={() => songs.refetch()} retrying={songs.isFetching} />
+        )}
+        {songs.data !== undefined && total === 0 && !filtered && (
+          <EmptyState
+            title="Chưa có bài hát nào"
+            description="Thêm bài hát để bắt đầu quản lý kho nhạc."
+            action={addButton}
           />
-          {total === 0 ? (
-            <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
-              <NoFilterResults onClearFilters={resetFilters} />
-            </div>
-          ) : viewMode === 'table' ? (
-            <SongTable
-              songs={songs.data.items}
-              page={page}
-              pageSize={pageSize}
-              total={total}
-              density={density}
-              loading={songs.isPlaceholderData}
-              onPageChange={setPage}
-            />
-          ) : (
-            <SongIndexList
-              songs={songs.data.items}
-              page={page}
-              pageSize={pageSize}
-              total={total}
-              density={density}
-              loading={songs.isPlaceholderData}
-              onPageChange={setPage}
-            />
-          )}
-        </Card>
-      )}
+        )}
+        {songs.data !== undefined && (total > 0 || filtered) && (total === 0 ? (
+          <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+            <NoFilterResults onClearFilters={resetFilters} />
+          </div>
+        ) : viewMode === 'table' ? (
+          <SongTable
+            songs={songs.data.items}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            density={density}
+            loading={songs.isPlaceholderData}
+            onPageChange={setPage}
+          />
+        ) : (
+          <SongIndexList
+            songs={songs.data.items}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            density={density}
+            loading={songs.isPlaceholderData}
+            onPageChange={setPage}
+          />
+        ))}
+      </Card>
       <SongFormDrawer
         open={adding}
         saving={save.isPending}
