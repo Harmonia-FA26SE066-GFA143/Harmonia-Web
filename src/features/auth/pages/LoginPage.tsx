@@ -75,7 +75,11 @@ export function LoginPage() {
         onSubmit={handleSubmit}
         submitting={pending}
         feedback={feedback}
-        alternative={env.googleClientId && <GoogleSignInButton clientId={env.googleClientId} onCredential={handleGoogle} />}
+        alternative={
+          env.googleClientId && (
+            <GoogleSignInButton clientId={env.googleClientId} onCredential={handleGoogle} disabled={pending} />
+          )
+        }
       />
     </AuthCard>
   )
