@@ -1,8 +1,8 @@
 import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Flex, Input, Select, TreeSelect, Typography } from 'antd'
+import { Button, Flex, Input, Select, TreeSelect, Typography, type InputRef } from 'antd'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { themeTreeData, useCatalogOptions, useLookup, type CatalogOption } from '@/features/system-categories'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { colors, radius, sizes, spacing, typography } from '@/styles/tokens'
 import { materialKindLabels, materialKinds, type SongFilters } from '../types'
 
 export interface SongFilterBarProps {
@@ -10,9 +10,11 @@ export interface SongFilterBarProps {
   onChange: (value: SongFilters) => void
   onReset: () => void
   /** Songs matching the filters on the server, across all pages. */
-  resultCount: number
+  resultCount?: number
   /** Additional controls placed on the right of the result count row (e.g. ViewSwitcher). */
   extra?: ReactNode
+  /** Show primary filters directly on the library page; pickers keep all filters collapsed. */
+  libraryLayout?: boolean
 }
 
 type FilterKey = Exclude<keyof SongFilters, 'search'>
@@ -35,14 +37,15 @@ const findTitle = (nodes: TreeOption[], value: string): string | undefined => {
 const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
 
 /**
- * Search over title, composer and lyricist (case and Vietnamese diacritics ignored), and one "Bộ lọc" panel with the
+ * Search over title, composer and lyricist, three visible liturgical filters and one additional "Bộ lọc" panel with the
  * FE-29 classification filters of GET /api/songs (a theme also finds its sub-themes' songs) and the library checks:
  * songs not classified yet, songs missing a kind of material. Active filters show as chips, so the panel can stay shut.
  */
-export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: Readonly<SongFilterBarProps>) {
+export function SongFilterBar({ value, onChange, onReset, resultCount, extra, libraryLayout = false }: Readonly<SongFilterBarProps>) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState(value.search)
   const composing = useRef(false)
+  const searchInput = useRef<InputRef>(null)
   // A removed chip takes the keyboard focus with it; it moves to the Bộ lọc button instead of the page start.
   const filterButton = useRef<HTMLButtonElement>(null)
   const themes = themeTreeData(useLookup('songThemes').data ?? [])
@@ -51,6 +54,20 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: 
   useEffect(() => {
     if (!composing.current) setSearch(value.search)
   }, [value.search])
+
+  useEffect(() => {
+    if (!libraryLayout) return
+    const focusSearch = (event: KeyboardEvent) => {
+      if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return
+      const target = event.target
+      if (target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return
+      if (document.querySelector('[role="dialog"]')) return
+      event.preventDefault()
+      searchInput.current?.focus()
+    }
+    document.addEventListener('keydown', focusSearch)
+    return () => document.removeEventListener('keydown', focusSearch)
+  }, [libraryLayout])
 
   const commitSearch = (next: string) => onChange({ ...value, search: next })
 
@@ -90,7 +107,7 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: 
   ].filter((chip): chip is { key: FilterKey; text: string } => Boolean(chip))
 
   const field = (key: FilterKey, label: string, control: ReactNode) => (
-    <Flex key={key} vertical gap={spacing.xs}>
+    <Flex key={key} vertical gap={spacing.xs} style={{ minWidth: 0 }}>
       <label htmlFor={`song-filter-${key}`} style={labelStyle}>
         {label}
       </label>
@@ -98,15 +115,48 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: 
     </Flex>
   )
 
+  const selectField = (select: (typeof selects)[number]) => field(
+    select.key,
+    select.label,
+    <Select
+      id={`song-filter-${select.key}`}
+      allowClear
+      showSearch
+      optionFilterProp="label"
+      placeholder={select.placeholder ?? 'Tất cả'}
+      value={value[select.key]}
+      onChange={(selected?: string) => set(select.key, selected)}
+      options={select.options}
+    />,
+  )
+
+  const themeField = field('themeId', 'Chủ đề',
+    <TreeSelect
+      id="song-filter-themeId"
+      allowClear
+      showSearch
+      treeNodeFilterProp="title"
+      treeDefaultExpandAll
+      placeholder="Tất cả"
+      value={value.themeId}
+      onChange={(themeId?: string) => set('themeId', themeId)}
+      treeData={themes}
+    />,
+  )
+
   return (
-    <Flex vertical gap={spacing.md} style={{ padding: spacing.md }}>
+    <Flex vertical gap={spacing.md} style={libraryLayout
+      ? { padding: spacing.lg, background: colors.ivory, borderBottom: `1px solid ${colors.border}`, borderRadius: `${radius.lg}px ${radius.lg}px 0 0` }
+      : { padding: spacing.md }}>
       <Flex align="end" gap={spacing.sm} wrap>
-        <Flex vertical gap={spacing.xs} style={{ flex: '0 1 420px' }}>
+        <Flex vertical gap={spacing.xs} style={{ flex: libraryLayout ? '1 1 420px' : '0 1 420px', minWidth: 0 }}>
           <label htmlFor="song-filter-search" style={labelStyle}>
             Tìm bài hát
           </label>
           <Input
+            ref={searchInput}
             id="song-filter-search"
+            aria-keyshortcuts={libraryLayout ? '/' : undefined}
             allowClear
             prefix={<SearchOutlined aria-hidden />}
             placeholder="Tên bài hát, nhạc sĩ, người viết lời"
@@ -137,6 +187,11 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: 
         </Button>
       </Flex>
 
+      {libraryLayout && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: spacing.md }}>
+        {selects.filter((select) => select.key === 'seasonId' || select.key === 'slotId').map(selectField)}
+        {themeField}
+      </div>}
+
       {/* Kept in the page while shut (hidden), so aria-controls always points at it. */}
       <div
         id="song-filter-panel"
@@ -151,62 +206,21 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: 
           borderRadius: radius.md,
         }}
       >
-        {selects.slice(0, 3).map((select) =>
-          field(
-            select.key,
-            select.label,
-            <Select
-              id={`song-filter-${select.key}`}
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder="Tất cả"
-              value={value[select.key]}
-              onChange={(selected?: string) => set(select.key, selected)}
-              options={select.options}
-            />,
-          ),
-        )}
-        {/* The theme sits with the liturgical filters, as a tree: a theme also finds its sub-themes' songs. */}
-        {field(
-          'themeId',
-          'Chủ đề',
-          <TreeSelect
-            id="song-filter-themeId"
-            allowClear
-            showSearch
-            treeNodeFilterProp="title"
-            treeDefaultExpandAll
-            placeholder="Tất cả"
-            value={value.themeId}
-            onChange={(themeId?: string) => set('themeId', themeId)}
-            treeData={themes}
-          />,
-        )}
-        {selects.slice(3).map((select) =>
-          field(
-            select.key,
-            select.label,
-            <Select
-              id={`song-filter-${select.key}`}
-              allowClear
-              showSearch={select.options.length > 5}
-              optionFilterProp="label"
-              placeholder={select.placeholder ?? 'Tất cả'}
-              value={value[select.key]}
-              onChange={(selected?: string) => set(select.key, selected)}
-              options={select.options}
-            />,
-          ),
+        {libraryLayout ? selects.filter((select) => select.key !== 'seasonId' && select.key !== 'slotId').map(selectField) : (
+          <>
+            {selects.slice(0, 3).map(selectField)}
+            {themeField}
+            {selects.slice(3).map(selectField)}
+          </>
         )}
       </div>
 
-      {chips.length > 0 && (
+      {(chips.length > 0 || value.search.trim()) && (
         <Flex align="center" gap={spacing.sm} wrap aria-label="Bộ lọc đang dùng" role="group">
           {chips.map((chip) => (
             <Button
               key={chip.key}
-              size="small"
+              style={{ minHeight: sizes.controlHeight, height: 'auto', whiteSpace: 'normal', textAlign: 'start' }}
               icon={<CloseOutlined aria-hidden />}
               iconPlacement="end"
               aria-label={`Bỏ lọc ${chip.text}`}
@@ -219,7 +233,6 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: 
             </Button>
           ))}
           <Button
-            size="small"
             type="link"
             onClick={() => {
               onReset()
@@ -233,7 +246,7 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra }: 
 
       <Flex justify="space-between" align="center" wrap gap={spacing.sm}>
         <Typography.Text role="status" aria-atomic style={{ color: colors.textMuted }}>
-          {resultCount} bài hát
+          {resultCount === undefined ? 'Chưa có kết quả' : `${resultCount} bài hát`}
         </Typography.Text>
         {extra}
       </Flex>

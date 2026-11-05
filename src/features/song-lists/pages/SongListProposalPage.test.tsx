@@ -107,6 +107,12 @@ describe('SongListProposalPage', () => {
       expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ seasonId: 'season-ot', massTypeId: 'mass-sunday' }), expect.anything()),
     )
 
+    // The picker keeps the compact filter panel; only the full library exposes its primary filters.
+    expect(within(picker).queryByRole('combobox', { name: 'Mùa phụng vụ' })).not.toBeInTheDocument()
+    fireEvent.click(within(picker).getByRole('button', { name: /Bộ lọc \(2\)$/ }))
+    expect(within(picker).getByRole('combobox', { name: 'Mùa phụng vụ' })).toBeVisible()
+    expect(within(picker).getByRole('combobox', { name: 'Chủ đề' })).toBeVisible()
+
     fireEvent.click(within(picker).getByRole('button', { name: 'Xoá tất cả bộ lọc' }))
     await waitFor(() => expect(list).toHaveBeenLastCalledWith({ search: '' }, expect.anything()))
   })

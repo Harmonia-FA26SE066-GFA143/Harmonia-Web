@@ -39,6 +39,8 @@ describe('MusicLibraryPage', () => {
     renderPage(<MusicLibraryPage />, '/director/library')
 
     expect(await screen.findByRole('heading', { name: 'Không thể tải kho bài hát' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Tìm bài hát' })).toBeInTheDocument()
+    expect(screen.queryByText('0 bài hát')).not.toBeInTheDocument()
   })
 
   it('shows the empty state with an add action', async () => {
@@ -46,6 +48,7 @@ describe('MusicLibraryPage', () => {
     renderPage(<MusicLibraryPage />, '/director/library')
 
     expect(await screen.findByRole('heading', { name: 'Chưa có bài hát nào' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Tìm bài hát' })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /Thêm bài hát/ }).length).toBeGreaterThan(0)
   })
 
@@ -70,6 +73,9 @@ describe('MusicLibraryPage', () => {
       expect.objectContaining({ search: 'không có' }),
       expect.objectContaining({ pageNumber: 1, pageSize: 24 }),
     )
+    fireEvent.click(screen.getByRole('button', { name: 'Xoá tất cả bộ lọc' }))
+    expect(await screen.findByText('Con Bước Lên Bàn Thờ')).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Tìm bài hát' })).toHaveValue('')
   })
 
   it('keeps Vietnamese IME composition intact and searches only after the character is committed', async () => {
@@ -149,6 +155,13 @@ describe('MusicLibraryPage', () => {
     renderPage(<MusicLibraryPage />, '/director/library', '/director/library?classified=no')
 
     expect(await screen.findByRole('button', { name: /Bộ lọc \(1\)$/ })).toHaveAttribute('aria-expanded', 'false')
+    for (const name of ['Mùa phụng vụ', 'Phần phụng vụ', 'Chủ đề']) {
+      expect(screen.getByRole('combobox', { name })).toBeVisible()
+    }
+    expect(screen.queryByRole('combobox', { name: 'Phân loại' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Bộ lọc \(1\)$/ }))
+    expect(screen.getByRole('combobox', { name: 'Phân loại' })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: /Bộ lọc \(1\)$/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Bỏ lọc Phân loại: Chưa phân loại' }))
 
     expect(list).toHaveBeenCalledWith(expect.objectContaining({ classified: 'no' }), expect.anything())

@@ -1,5 +1,5 @@
 import { Typography } from 'antd'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, radius, spacing, typography } from '@/styles/tokens'
 import type { Song } from '../types'
 
 const none = <span style={{ color: colors.textMuted, fontWeight: 400 }}>Chưa ghi</span>
@@ -16,19 +16,19 @@ export function SongInfoPanel({ song }: Readonly<{ song: Song }>) {
     { label: 'Người viết lời', value: song.lyricist },
   ]
   return (
-    <div>
+    <div style={{ background: colors.ivory, border: `1px solid ${colors.border}`, borderRadius: radius.lg, padding: spacing.lg }}>
       <dl style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: spacing.lg, margin: 0 }}>
         {facts.map(({ label, value }) => (
           <div key={label} style={{ minWidth: 0 }}>
-            <dt style={{ color: colors.textMuted, fontSize: 13 }}>{label}</dt>
-            <dd style={{ margin: '2px 0 0', fontWeight: 600 }}>{value || none}</dd>
+            <dt style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{label}</dt>
+            <dd style={{ margin: `${spacing.xs}px 0 0`, fontWeight: 600, overflowWrap: 'anywhere' }}>{value || none}</dd>
           </div>
         ))}
       </dl>
       {song.notes && (
         <div style={{ marginTop: spacing.lg, paddingTop: spacing.md, borderTop: `1px solid ${colors.border}` }}>
           <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>Ghi chú</Typography.Text>
-          <Typography.Paragraph style={{ margin: 0, whiteSpace: 'pre-line' }}>{song.notes}</Typography.Paragraph>
+          <Typography.Paragraph style={{ margin: 0, whiteSpace: 'pre-line', maxWidth: '72ch', overflowWrap: 'anywhere' }}>{song.notes}</Typography.Paragraph>
         </div>
       )}
     </div>
