@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api/errors'
-import { createSong, deleteMaterial, getSong, listMaterials, listSongs, updateSongClassification, uploadMaterial } from './songsApi'
+import { createSong, deleteMaterial, getMaterialPlayback, getSong, listMaterials, listSongs, updateSongClassification, uploadMaterial } from './songsApi'
 
 const fetchMock = vi.fn<typeof fetch>()
 const reply = (status: number, body?: unknown) =>
@@ -72,6 +72,40 @@ describe('songsApi', () => {
     const [material] = await listMaterials('s1')
     expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/music-materials\?songId=s1&pageNumber=1&pageSize=100$/)
     expect(material).toMatchObject({ id: 'm1', kind: 'sampleAudio', url: 'https://x/a.mp3' })
+  })
+
+  it('loads the rendered audio and synchronized note data of the Emmanuel MIDI material', async () => {
+    const notes = {
+      schemaVersion: 1,
+      timeUnit: 'seconds',
+      durationSeconds: 8,
+      notesEndSeconds: 7,
+      minPitch: 60,
+      maxPitch: 67,
+      tracks: [{ id: 0, name: 'Organ' }],
+      notes: [{ pitch: 60, start: 0, duration: 1, velocity: 90, track: 0 }],
+    }
+    fetchMock
+      .mockResolvedValueOnce(reply(200, {
+        id: 'emmanuel-midi',
+        songId: 'emmanuel',
+        title: 'Emmanuel – organ',
+        status: 'Ready',
+        schemaVersion: 1,
+        durationSeconds: 8,
+        instrument: 'Organ',
+        audioUrl: 'https://files.example/emmanuel.wav',
+        notesUrl: 'https://files.example/emmanuel-notes.json',
+        createdAt: '2026-11-05T12:00:00Z',
+      }))
+      .mockResolvedValueOnce(reply(200, notes))
+
+    await expect(getMaterialPlayback('emmanuel-midi')).resolves.toMatchObject({
+      playback: { title: 'Emmanuel – organ', status: 'ready', instrument: 'organ' },
+      notes,
+    })
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/music-materials\/emmanuel-midi\/playback$/)
+    expect(fetchMock.mock.calls[1][0]).toBe('https://files.example/emmanuel-notes.json')
   })
 
   it('uploads the file and its fields as multipart form data', async () => {

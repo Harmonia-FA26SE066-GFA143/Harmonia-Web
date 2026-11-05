@@ -4,6 +4,7 @@ import {
   deleteMaterial,
   deleteSong,
   extractLyrics,
+  getMaterialPlayback,
   getSong,
   getSongClassification,
   listLearningProgress,
@@ -69,6 +70,17 @@ export function useSaveSongClassification(songId: string) {
 
 export function useSongMaterials(songId: string) {
   return useQuery({ queryKey: materialsKey(songId), queryFn: () => listMaterials(songId), enabled: Boolean(songId) })
+}
+
+/** A fresh WAV URL and its synchronized notes.json for one MIDI material. */
+export function useMaterialPlayback(materialId: string | undefined) {
+  return useQuery({
+    queryKey: [...songsKey, 'material-playback', materialId],
+    queryFn: () => getMaterialPlayback(materialId!),
+    enabled: Boolean(materialId),
+    // Signed URLs must be obtained again when the user returns instead of being kept as fresh indefinitely.
+    staleTime: 0,
+  })
 }
 
 export function useUploadMaterial(songId: string) {

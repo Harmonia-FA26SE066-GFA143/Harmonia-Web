@@ -52,6 +52,50 @@ export const playbackInstrumentLabels: Record<PlaybackInstrument, string> = {
   stringEnsemble: 'Dàn dây',
 }
 
+/** Fresh signed playback files rendered by the backend for one MIDI material. */
+export interface MaterialPlayback {
+  id: string
+  songId: string
+  title: string
+  status: 'ready'
+  schemaVersion: number
+  durationSeconds: number
+  instrument: PlaybackInstrument
+  audioUrl: string
+  notesUrl: string
+  createdAt: string
+}
+
+export interface MidiPlaybackTrack {
+  id: number
+  name: string
+}
+
+export interface MidiPlaybackNote {
+  pitch: number
+  start: number
+  duration: number
+  velocity: number
+  track: number
+}
+
+/** Schema v1 of the backend-generated notes.json; every time value is in seconds. */
+export interface MidiPlaybackNotes {
+  schemaVersion: 1
+  timeUnit: 'seconds'
+  durationSeconds: number
+  notesEndSeconds: number
+  minPitch: number
+  maxPitch: number
+  tracks: MidiPlaybackTrack[]
+  notes: MidiPlaybackNote[]
+}
+
+export interface MaterialPlaybackBundle {
+  playback: MaterialPlayback
+  notes: MidiPlaybackNotes
+}
+
 /** A song of the choir's music library (FE-27), as `SongDto` of GET /api/songs. Missing texts arrive as null. */
 export interface Song {
   id: string

@@ -5,11 +5,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { env } from '@/config/env'
-import { isPlayableAudio, useSongMaterials } from '@/features/music-library'
+import { isMidiFile, isPlayableAudio, useSongMaterials } from '@/features/music-library'
 import { ApiError } from '@/lib/api/errors'
 import { ErrorState } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { RecordingPanel } from '../components/RecordingPanel'
+import { MidiPracticePlayer } from '../components/MidiPracticePlayer'
 import type { PracticeRoomView } from '../practiceRoomTypes'
 import { usePracticeRoom } from '../hooks/usePracticeRoom'
 import { useRehearsal } from '../hooks/useRehearsals'
@@ -51,12 +52,18 @@ export function RehearsalPracticeRoomPage() {
   const selectedSongId = demoFixture ? '' : (room?.songs[current]?.id ?? '')
   const materials = useSongMaterials(selectedSongId)
   const audios = (materials.data ?? []).filter((material) => material.url && isPlayableAudio(material))
-  const parts = ['Tất cả', ...new Set(audios.flatMap((material) => (material.targetSkillName ? [material.targetSkillName] : [])))]
+  const midis = (materials.data ?? []).filter((material) => isMidiFile(material.fileName))
+  const practiceMaterials = [...midis, ...audios]
+  const parts = ['Tất cả', ...new Set(practiceMaterials.flatMap((material) => (material.targetSkillName ? [material.targetSkillName] : [])))]
   const shownPart = parts.includes(part) ? part : 'Tất cả'
   const partAudio =
     shownPart === 'Tất cả'
       ? (audios.find((material) => !material.targetSkillName) ?? audios[0])
       : audios.find((material) => material.targetSkillName === shownPart)
+  const partMidi =
+    shownPart === 'Tất cả'
+      ? (midis.find((material) => !material.targetSkillName) ?? midis[0])
+      : midis.find((material) => material.targetSkillName === shownPart)
   const typedLyrics = materials.data?.find((material) => material.kind === 'lyrics' && material.lyricsText !== null)?.lyricsText
 
   if (fetched.isLoading && !rehearsal) return <Skeleton active paragraph={{ rows: 12 }} />
@@ -134,17 +141,37 @@ export function RehearsalPracticeRoomPage() {
             <Typography.Title level={2} style={{ marginTop: 0 }}>{song.title}</Typography.Title>
             {song.note && <Typography.Paragraph type="secondary">Cần tập: {song.note}</Typography.Paragraph>}
             <Flex wrap justify="space-between" align="center" gap={spacing.sm}>
-              <Segmented value={shownPart} onChange={(value) => setPart(String(value))} options={parts} aria-label="Audio mẫu theo bè" />
+              <Segmented value={shownPart} onChange={(value) => setPart(String(value))} options={parts} aria-label="Bản tập theo bè" />
               <Flex gap={4}><Button icon={<LeftOutlined />} aria-label="Bài trước" disabled={current === 0} onClick={previous} /><Button icon={<RightOutlined />} aria-label="Bài sau" disabled={current === room.songs.length - 1} onClick={next} /></Flex>
             </Flex>
 
-            <div className="karaoke-lyrics" aria-live="off">
-              {song.lyrics.length ? <><Typography.Title level={2}>{song.lyrics[0].text}</Typography.Title><Typography.Text type="secondary">{song.lyrics[1]?.text}</Typography.Text></> : typedLyrics ? <Typography.Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>{typedLyrics}</Typography.Paragraph> : <Typography.Text type="secondary">Bài hát chưa có lời dạng văn bản</Typography.Text>}
-            </div>
+            {selectedSongId && materials.isPending ? (
+              <Skeleton active paragraph={{ rows: 8 }} style={{ marginTop: spacing.lg }} />
+            ) : selectedSongId && materials.isError ? (
+              <div style={{ marginTop: spacing.lg }}>
+                <ErrorState
+                  headingLevel={3}
+                  title="Không thể tải tài liệu tập"
+                  error={materials.error}
+                  onRetry={() => materials.refetch()}
+                  retrying={materials.isFetching}
+                />
+              </div>
+            ) : partMidi ? (
+              <div style={{ marginTop: spacing.lg }}>
+                <MidiPracticePlayer materialId={partMidi.id} title={song.title} />
+              </div>
+            ) : (
+              <>
+                <div className="karaoke-lyrics" aria-live="off">
+                  {song.lyrics.length ? <><Typography.Title level={2}>{song.lyrics[0].text}</Typography.Title><Typography.Text type="secondary">{song.lyrics[1]?.text}</Typography.Text></> : typedLyrics ? <Typography.Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>{typedLyrics}</Typography.Paragraph> : <Typography.Text type="secondary">Bài hát chưa có lời dạng văn bản</Typography.Text>}
+                </div>
 
-            {!audioUrl ? (
-              <Card size="small" style={{ background: colors.softSurface }}><Flex gap={spacing.sm} align="center"><AudioOutlined /><Typography.Text type="secondary">Chưa có audio mẫu cho bài hát này</Typography.Text></Flex></Card>
-            ) : <audio key={audioUrl} controls src={audioUrl} aria-label={`Nghe ${song.title}${shownPart === 'Tất cả' ? '' : `, bè ${shownPart}`}`} style={{ width: '100%' }} />}
+                {!audioUrl ? (
+                  <Card size="small" style={{ background: colors.softSurface }}><Flex gap={spacing.sm} align="center"><AudioOutlined /><Typography.Text type="secondary">Chưa có audio mẫu hoặc MIDI cho bài hát này</Typography.Text></Flex></Card>
+                ) : <audio key={audioUrl} controls src={audioUrl} aria-label={`Nghe ${song.title}${shownPart === 'Tất cả' ? '' : `, bè ${shownPart}`}`} style={{ width: '100%' }} />}
+              </>
+            )}
 
             {/* The demo room has no rehearsal on the server, so nothing can be recorded there. */}
             <RecordingPanel rehearsalId={demoFixture ? undefined : room.rehearsalId} songId={song.id} songTitle={song.title} />
