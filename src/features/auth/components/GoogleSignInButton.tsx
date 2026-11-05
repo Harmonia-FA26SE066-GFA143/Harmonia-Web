@@ -42,6 +42,8 @@ export interface GoogleSignInButtonProps {
   clientId: string
   /** Receives the ID token Google returned for the chosen account. */
   onCredential: (idToken: string) => void
+  /** Prevents a second Google sign-in while either sign-in flow is already being processed. */
+  disabled?: boolean
   width?: number
 }
 
@@ -49,7 +51,7 @@ export interface GoogleSignInButtonProps {
  * Google's own "Sign in with Google" button. Nothing is shown while the script loads or when it cannot load; the
  * email and password form stays usable either way.
  */
-export function GoogleSignInButton({ clientId, onCredential, width = 320 }: Readonly<GoogleSignInButtonProps>) {
+export function GoogleSignInButton({ clientId, onCredential, disabled = false, width = 400 }: Readonly<GoogleSignInButtonProps>) {
   const container = useRef<HTMLDivElement>(null)
   // The latest handler, so the button is not rendered again when the parent re-renders.
   const handler = useRef(onCredential)
@@ -62,6 +64,8 @@ export function GoogleSignInButton({ clientId, onCredential, width = 320 }: Read
     loadGoogleIdentity()
       .then((google) => {
         if (!active || !container.current) return
+        const availableWidth = Math.floor(container.current.getBoundingClientRect().width)
+        const buttonWidth = availableWidth > 0 ? Math.min(width, availableWidth) : width
         google.accounts.id.initialize({
           client_id: clientId,
           callback: ({ credential }) => credential && handler.current(credential),
@@ -73,7 +77,7 @@ export function GoogleSignInButton({ clientId, onCredential, width = 320 }: Read
           text: 'signin_with',
           shape: 'rectangular',
           locale: 'vi',
-          width,
+          width: buttonWidth,
         })
       })
       .catch(() => {
@@ -84,5 +88,13 @@ export function GoogleSignInButton({ clientId, onCredential, width = 320 }: Read
     }
   }, [clientId, width])
 
-  return <div ref={container} style={{ display: 'flex', justifyContent: 'center', minHeight: 44 }} />
+  return (
+    <div
+      ref={container}
+      aria-busy={disabled}
+      aria-disabled={disabled}
+      inert={disabled}
+      style={{ display: 'flex', justifyContent: 'center', width: '100%', minHeight: 44, opacity: disabled ? 0.6 : 1 }}
+    />
+  )
 }

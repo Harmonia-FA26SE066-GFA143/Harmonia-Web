@@ -28,7 +28,7 @@ function fakeGoogle() {
     parent.innerHTML = '<button type="button">Đăng nhập bằng Google</button>'
   })
   window.google = { accounts: { id: { initialize, renderButton } } }
-  return { initialize, signInAs: (credential: string) => act(() => callback({ credential })) }
+  return { initialize, renderButton, signInAs: (credential: string) => act(() => callback({ credential })) }
 }
 
 describe('LoginPage', () => {
@@ -77,12 +77,14 @@ describe('LoginPage', () => {
 
   it('signs in with the Google token and opens the workspace', async () => {
     Object.assign(env, { googleClientId: 'web-client-id' })
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ width: 360 } as DOMRect)
     const google = fakeGoogle()
     const signIn = vi.spyOn(authApi, 'signInWithGoogle').mockResolvedValue({ role: 'admin', mustChangePassword: false })
     renderPage(<LoginPage />, '/login')
 
     expect(await screen.findByRole('button', { name: 'Đăng nhập bằng Google' })).toBeInTheDocument()
     expect(google.initialize).toHaveBeenCalledWith(expect.objectContaining({ client_id: 'web-client-id' }))
+    expect(google.renderButton).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ width: 360 }))
     google.signInAs('google-id-token')
 
     await waitFor(() => expect(signIn).toHaveBeenCalledWith('google-id-token', expect.anything()))

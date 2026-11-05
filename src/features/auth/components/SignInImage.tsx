@@ -1,7 +1,7 @@
 import { Typography } from 'antd'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import churchInterior from '@/assets/images/auth/church-interior-960.webp'
+import churchInterior from '@/assets/images/auth/church-interior-editorial-v2.webp'
 import { BrandMark } from '@/shared/ui'
 import { media, spacing, typography } from '@/styles/tokens'
 
