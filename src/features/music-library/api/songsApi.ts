@@ -3,8 +3,11 @@ import { toQuery, type PagedList } from '@/lib/api/paging'
 import type {
   LearningProgress,
   LearningStatus,
+  MaterialPlayback,
+  MaterialPlaybackBundle,
   MaterialKind,
   MaterialValues,
+  MidiPlaybackNotes,
   PlaybackInstrument,
   Song,
   SongClassification,
@@ -112,6 +115,33 @@ const toMaterial = ({ materialType, fileUrl, ...rest }: MusicMaterialDto): SongM
   kind: kindByType[materialType],
   url: fileUrl,
 })
+
+interface PlaybackDto extends Omit<MaterialPlayback, 'status' | 'instrument'> {
+  status: 'Ready'
+  instrument: 'Piano' | 'Organ' | 'Guitar' | 'StringEnsemble'
+}
+
+const playbackInstrumentByApi: Record<PlaybackDto['instrument'], PlaybackInstrument> = {
+  Piano: 'piano',
+  Organ: 'organ',
+  Guitar: 'guitar',
+  StringEnsemble: 'stringEnsemble',
+}
+
+/** WAV and note data rendered together from a MIDI file, so both share one timeline. */
+export async function getMaterialPlayback(materialId: string): Promise<MaterialPlaybackBundle> {
+  const dto = await apiRequest<PlaybackDto>(`/api/music-materials/${materialId}/playback`)
+  const playback: MaterialPlayback = {
+    ...dto,
+    status: 'ready',
+    instrument: playbackInstrumentByApi[dto.instrument],
+  }
+  // This is a private storage URL signed by the backend. Keep the fetch in the API module, not in presentation code.
+  const response = await fetch(playback.notesUrl)
+  if (!response.ok) throw new Error(`Playback notes request failed with status ${response.status}`)
+  const notes = (await response.json()) as MidiPlaybackNotes
+  return { playback, notes }
+}
 
 export async function listMaterials(songId: string): Promise<SongMaterial[]> {
   // ponytail: one page of 100, the backend maximum; a song with more materials would need paging here.
