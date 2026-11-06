@@ -1,7 +1,7 @@
 import { ArrowLeftOutlined, AudioOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Segmented, Skeleton, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { env } from '@/config/env'
@@ -89,6 +89,63 @@ export function RehearsalPracticeRoomPage() {
   const audioUrl = partAudio?.url ?? song?.audioUrl
   const previous = () => setSelectedIndex(Math.max(0, current - 1))
   const next = () => setSelectedIndex(Math.min(room.songs.length - 1, current + 1))
+  let materialContent: ReactNode = null
+  if (song) {
+    const audioLabel = shownPart === 'Tất cả' ? `Nghe ${song.title}` : `Nghe ${song.title}, bè ${shownPart}`
+    let lyricsContent: ReactNode
+    if (song.lyrics.length) {
+      lyricsContent = (
+        <>
+          <Typography.Title level={2}>{song.lyrics[0].text}</Typography.Title>
+          <Typography.Text type="secondary">{song.lyrics[1]?.text}</Typography.Text>
+        </>
+      )
+    } else if (typedLyrics) {
+      lyricsContent = <Typography.Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>{typedLyrics}</Typography.Paragraph>
+    } else {
+      lyricsContent = <Typography.Text type="secondary">Bài hát chưa có lời dạng văn bản</Typography.Text>
+    }
+
+    const legacyContent = (
+      <>
+        <div className="karaoke-lyrics" aria-live="off">{lyricsContent}</div>
+        {audioUrl ? (
+          <audio key={audioUrl} controls src={audioUrl} aria-label={audioLabel} style={{ width: '100%' }} />
+        ) : (
+          <Card size="small" style={{ background: colors.softSurface }}>
+            <Flex gap={spacing.sm} align="center">
+              <AudioOutlined />
+              <Typography.Text type="secondary">Chưa có audio mẫu hoặc MIDI cho bài hát này</Typography.Text>
+            </Flex>
+          </Card>
+        )}
+      </>
+    )
+
+    if (selectedSongId && materials.isPending) {
+      materialContent = <Skeleton active paragraph={{ rows: 8 }} style={{ marginTop: spacing.lg }} />
+    } else if (selectedSongId && materials.isError) {
+      materialContent = (
+        <div style={{ marginTop: spacing.lg }}>
+          <ErrorState
+            headingLevel={3}
+            title="Không thể tải tài liệu tập"
+            error={materials.error}
+            onRetry={() => materials.refetch()}
+            retrying={materials.isFetching}
+          />
+        </div>
+      )
+    } else if (partMidi) {
+      materialContent = (
+        <div style={{ marginTop: spacing.lg }}>
+          <MidiPracticePlayer materialId={partMidi.id} title={song.title} />
+        </div>
+      )
+    } else {
+      materialContent = legacyContent
+    }
+  }
 
   return (
     <div className="rehearsal-practice-room">
@@ -146,33 +203,7 @@ export function RehearsalPracticeRoomPage() {
               <Flex gap={4}><Button icon={<LeftOutlined />} aria-label="Bài trước" disabled={current === 0} onClick={previous} /><Button icon={<RightOutlined />} aria-label="Bài sau" disabled={current === room.songs.length - 1} onClick={next} /></Flex>
             </Flex>
 
-            {selectedSongId && materials.isPending ? (
-              <Skeleton active paragraph={{ rows: 8 }} style={{ marginTop: spacing.lg }} />
-            ) : selectedSongId && materials.isError ? (
-              <div style={{ marginTop: spacing.lg }}>
-                <ErrorState
-                  headingLevel={3}
-                  title="Không thể tải tài liệu tập"
-                  error={materials.error}
-                  onRetry={() => materials.refetch()}
-                  retrying={materials.isFetching}
-                />
-              </div>
-            ) : partMidi ? (
-              <div style={{ marginTop: spacing.lg }}>
-                <MidiPracticePlayer materialId={partMidi.id} title={song.title} />
-              </div>
-            ) : (
-              <>
-                <div className="karaoke-lyrics" aria-live="off">
-                  {song.lyrics.length ? <><Typography.Title level={2}>{song.lyrics[0].text}</Typography.Title><Typography.Text type="secondary">{song.lyrics[1]?.text}</Typography.Text></> : typedLyrics ? <Typography.Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>{typedLyrics}</Typography.Paragraph> : <Typography.Text type="secondary">Bài hát chưa có lời dạng văn bản</Typography.Text>}
-                </div>
-
-                {!audioUrl ? (
-                  <Card size="small" style={{ background: colors.softSurface }}><Flex gap={spacing.sm} align="center"><AudioOutlined /><Typography.Text type="secondary">Chưa có audio mẫu hoặc MIDI cho bài hát này</Typography.Text></Flex></Card>
-                ) : <audio key={audioUrl} controls src={audioUrl} aria-label={`Nghe ${song.title}${shownPart === 'Tất cả' ? '' : `, bè ${shownPart}`}`} style={{ width: '100%' }} />}
-              </>
-            )}
+            {materialContent}
 
             {/* The demo room has no rehearsal on the server, so nothing can be recorded there. */}
             <RecordingPanel rehearsalId={demoFixture ? undefined : room.rehearsalId} songId={song.id} songTitle={song.title} />
