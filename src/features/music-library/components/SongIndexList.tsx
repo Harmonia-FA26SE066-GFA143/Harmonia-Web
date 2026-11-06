@@ -3,6 +3,7 @@ import { Flex, Pagination, Spin, Tag } from 'antd'
 import type { ReactNode } from 'react'
 import { generatePath, Link, useLocation } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { Reveal } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { songListState } from '../songFilters'
 import { materialKindLabels, type MaterialKind, type Song } from '../types'
@@ -68,8 +69,8 @@ export function SongIndexList({
     <div role="region" aria-label="Mục lục bài hát">
       <Spin spinning={loading}>
         {/* role="list": the list-style reset drops list semantics in Safari. */}
-        <ul role="list" className="hm-stagger" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {songs.map((song) => {
+        <ul role="list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+          {songs.map((song, index) => {
             const credits = [song.composer, song.lyricist && song.lyricist !== song.composer && song.lyricist].filter(Boolean)
             const details = [
               credits.length > 0 ? credits.join(' / ') : 'Chưa ghi tác giả',
@@ -79,8 +80,11 @@ export function SongIndexList({
             ].filter(Boolean)
 
             return (
-              <li
+              <Reveal
+                as="li"
                 key={song.id}
+                delay={index * 30}
+                className="hm-lift"
                 style={{
                   display: 'flex',
                   flexWrap: 'wrap',
@@ -123,7 +127,7 @@ export function SongIndexList({
                     ))}
                   </Flex>
                 )}
-              </li>
+              </Reveal>
             )
           })}
         </ul>

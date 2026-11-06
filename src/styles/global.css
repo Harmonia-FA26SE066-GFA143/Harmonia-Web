@@ -1,3 +1,16 @@
+/* Motion tokens (DESIGN.md "Motion"). Feedback 100-300ms, entrances 400-1200ms, ambient loops 10-30s. */
+:root {
+  --hm-dur-instant: 100ms;
+  --hm-dur-fast: 150ms;
+  --hm-dur-base: 200ms;
+  --hm-dur-slow: 300ms;
+  --hm-dur-reveal: 600ms;
+  --hm-dur-reveal-long: 1000ms;
+  --hm-dur-ambient: 20s;
+  --hm-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --hm-lift-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
+
 html,
 body,
 #root {
@@ -207,8 +220,9 @@ body {
 }
 
 /*
- * Motion (owner 2026-11-01: light continuous motion beside the two moments of brief §12.9). Transform and opacity
- * only, with a decelerating curve; the reduced-motion rule above makes each one instant.
+ * Motion (owner 2026-11-06, DESIGN.md "Motion"): rich, in the manner of kpv.vn. Durations and easing are the tokens
+ * on :root above; prefer transform, opacity, filter and colour, never layout properties. The reduced-motion rule
+ * above makes every animation and transition instant.
  */
 @keyframes hm-rise {
   from {
@@ -312,6 +326,61 @@ body {
 /* A small acknowledgement: the result appears in place of the button that made it. */
 .hm-pop {
   animation: hm-pop 150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/*
+ * Shared motion classes (DESIGN.md "Motion").
+ * hm-reveal: hidden until <Reveal> (shared/ui) adds .is-visible as it scrolls into view, then fades and rises once.
+ * The animation only fills backwards, so after it ends hover transforms (hm-lift) work. --hm-delay staggers a row.
+ */
+.hm-reveal:not(.is-visible) {
+  opacity: 0;
+}
+
+.hm-reveal.is-visible {
+  animation: hm-reveal-in var(--hm-dur-reveal) var(--hm-ease) var(--hm-delay, 0ms) backwards;
+}
+
+@keyframes hm-reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* hm-lift: rises and casts a soft shadow only on hover, focus or press (Lift Means Touch); fades back after. */
+.hm-lift {
+  transition:
+    transform var(--hm-dur-base) var(--hm-ease),
+    box-shadow var(--hm-dur-base) var(--hm-ease);
+}
+
+.hm-lift:focus-within,
+.hm-lift:active {
+  transform: translateY(-2px);
+  box-shadow: var(--hm-lift-shadow);
+}
+
+@media (hover: hover) {
+  .hm-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--hm-lift-shadow);
+  }
+}
+
+.hm-lift:active {
+  transform: translateY(0);
+  transition-duration: var(--hm-dur-instant);
+}
+
+/* hm-glow: a gentle colour wash on hover or focus; the text keeps its colour. */
+.hm-glow {
+  transition: background-color var(--hm-dur-base) var(--hm-ease);
+}
+
+.hm-glow:hover,
+.hm-glow:focus-within {
+  background-color: rgba(142, 59, 75, 0.05);
 }
 
 /* A form drawer wraps its panel in the Form (drawerRender), so the footer's submit button submits it; the Form must
