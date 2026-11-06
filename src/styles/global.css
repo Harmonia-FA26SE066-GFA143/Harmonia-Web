@@ -383,6 +383,21 @@ body {
   background-color: rgba(142, 59, 75, 0.05);
 }
 
+/*
+ * hm-skeleton-in: a loading placeholder arrives after the instant beat (100ms), so an answer that comes back at once
+ * never flashes it (Loaders), then rises and fades in. Its room is held from the start, so nothing jumps. --hm-delay
+ * staggers the blocks of one page. Reduced motion keeps the 100ms wait but drops the stagger and the rise.
+ */
+.hm-skeleton-in {
+  animation: hm-rise var(--hm-dur-slow) var(--hm-ease) calc(var(--hm-dur-instant) + var(--hm-delay, 0ms)) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-skeleton-in {
+    animation-delay: var(--hm-dur-instant);
+  }
+}
+
 /* A form drawer wraps its panel in the Form (drawerRender), so the footer's submit button submits it; the Form must
    fill the drawer's height, or the panel ends under the footer. */
 .ant-drawer-content-wrapper > form {
