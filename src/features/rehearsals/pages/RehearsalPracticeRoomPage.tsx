@@ -11,6 +11,7 @@ import { ErrorState } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { RecordingPanel } from '../components/RecordingPanel'
 import { MidiPracticePlayer } from '../components/MidiPracticePlayer'
+import { PracticeScoreViewer } from '../components/PracticeScoreViewer'
 import type { PracticeRoomView } from '../practiceRoomTypes'
 import { usePracticeRoom } from '../hooks/usePracticeRoom'
 import { useRehearsal } from '../hooks/useRehearsals'
@@ -53,7 +54,8 @@ export function RehearsalPracticeRoomPage() {
   const materials = useSongMaterials(selectedSongId)
   const audios = (materials.data ?? []).filter((material) => material.url && isPlayableAudio(material))
   const midis = (materials.data ?? []).filter((material) => isMidiFile(material.fileName))
-  const practiceMaterials = [...midis, ...audios]
+  const scores = (materials.data ?? []).filter((material) => material.kind === 'sheetMusic' && material.url && material.fileName)
+  const practiceMaterials = [...midis, ...audios, ...scores]
   const parts = ['Tất cả', ...new Set(practiceMaterials.flatMap((material) => (material.targetSkillName ? [material.targetSkillName] : [])))]
   const shownPart = parts.includes(part) ? part : 'Tất cả'
   const partAudio =
@@ -65,6 +67,11 @@ export function RehearsalPracticeRoomPage() {
       ? (midis.find((material) => !material.targetSkillName) ?? midis[0])
       : (midis.find((material) => material.targetSkillName === shownPart) ??
         midis.find((material) => !material.targetSkillName))
+  const partScore =
+    shownPart === 'Tất cả'
+      ? (scores.find((material) => !material.targetSkillName) ?? scores[0])
+      : (scores.find((material) => material.targetSkillName === shownPart) ??
+        scores.find((material) => !material.targetSkillName))
   const typedLyrics = materials.data?.find((material) => material.kind === 'lyrics' && material.lyricsText !== null)?.lyricsText
 
   if (fetched.isLoading && !rehearsal) return <Skeleton active paragraph={{ rows: 12 }} />
@@ -204,6 +211,16 @@ export function RehearsalPracticeRoomPage() {
             </Flex>
 
             {materialContent}
+
+            {partScore && (
+              <PracticeScoreViewer
+                key={partScore.id}
+                material={partScore}
+                songTitle={song.title}
+                refreshing={materials.isFetching}
+                onRefresh={async () => { await materials.refetch() }}
+              />
+            )}
 
             {/* The demo room has no rehearsal on the server, so nothing can be recorded there. */}
             <RecordingPanel rehearsalId={demoFixture ? undefined : room.rehearsalId} songId={song.id} songTitle={song.title} />
