@@ -30,6 +30,7 @@ pnpm-debug.log*
 test-results/
 playwright-report/
 playwright/.cache/
+tests/e2e/.auth/
 
 # Editor / OS
 .vscode/*

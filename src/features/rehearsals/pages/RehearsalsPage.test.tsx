@@ -1,5 +1,6 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
+import { useEffect, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
@@ -13,6 +14,17 @@ import * as rehearsalsApi from '../api/rehearsalsApi'
 import type { Rehearsal } from '../types'
 import { RehearsalPracticeRoomPage } from './RehearsalPracticeRoomPage'
 import { RehearsalsPage } from './RehearsalsPage'
+
+vi.mock('react-pdf', () => ({
+  pdfjs: { GlobalWorkerOptions: {} },
+  Document: ({ children, onLoadSuccess }: { children: ReactNode; onLoadSuccess?: (value: { numPages: number }) => void }) => {
+    useEffect(() => onLoadSuccess?.({ numPages: 3 }), [onLoadSuccess])
+    return <div data-testid="pdf-document">{children}</div>
+  },
+  Page: ({ pageNumber, scale }: { pageNumber: number; scale: number }) => (
+    <div aria-label={`Đã vẽ trang PDF ${pageNumber}`} data-scale={scale} />
+  ),
+}))
 
 const at = (days: number, hour: number) => dayjs().add(days, 'day').hour(hour).minute(0).second(0).millisecond(0).toISOString()
 
@@ -214,6 +226,18 @@ describe('RehearsalPracticeRoomPage', () => {
     lyricsText: null,
     createdAt: '2026-11-05T12:00:00Z',
   } satisfies SongMaterial
+  const emmanuelScoreMaterial = {
+    id: 'emmanuel-score',
+    kind: 'sheetMusic',
+    title: 'Emmanuel – tổng phổ',
+    fileName: 'emmanuel.pdf',
+    fileSizeBytes: 24000,
+    targetSkillId: null,
+    targetSkillName: null,
+    url: 'https://files.example/emmanuel.pdf',
+    lyricsText: null,
+    createdAt: '2026-11-05T12:00:00Z',
+  } satisfies SongMaterial
   const emmanuelPlayback = {
     playback: {
       id: 'emmanuel-midi',
@@ -351,5 +375,62 @@ describe('RehearsalPracticeRoomPage', () => {
     expect(await screen.findByRole('heading', { name: 'Bản nốt đồng bộ' })).toBeInTheDocument()
     expect(getPlayback).toHaveBeenLastCalledWith('emmanuel-midi')
     expect(screen.queryByLabelText('Nghe Emmanuel, bè Soprano')).toBeNull()
+  })
+
+  it('shows the PDF score one page at a time and switches to the score of the selected voice part', async () => {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(800)
+    const sopranoScore = {
+      id: 'emmanuel-soprano-score',
+      kind: 'sheetMusic',
+      title: 'Emmanuel – Soprano',
+      fileName: 'emmanuel-soprano.jpg',
+      fileSizeBytes: 18000,
+      targetSkillId: 'soprano',
+      targetSkillName: 'Soprano',
+      url: 'https://files.example/emmanuel-soprano.jpg',
+      lyricsText: null,
+      createdAt: '2026-11-05T12:00:00Z',
+    } satisfies SongMaterial
+    const materials = [
+      emmanuelMidiMaterial,
+      emmanuelScoreMaterial,
+      sopranoScore,
+    ]
+    prepareEmmanuelPlayback(materials)
+    let resolveRefresh!: (materials: SongMaterial[]) => void
+    const refreshedMaterials = new Promise<SongMaterial[]>((resolve) => { resolveRefresh = resolve })
+    vi.mocked(songsApi.listMaterials).mockResolvedValueOnce(materials).mockReturnValueOnce(refreshedMaterials)
+
+    renderRoom()
+
+    expect(await screen.findByRole('heading', { name: 'Bản nhạc' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Mở\/Tải xuống/ })).toHaveAttribute('href', 'https://files.example/emmanuel.pdf')
+    expect(await screen.findByText('Trang 1 / 3')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Trang bản nhạc sau' }))
+    expect(await screen.findByLabelText('Đã vẽ trang PDF 2')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Phóng to bản nhạc' }))
+    expect(screen.getByText('125%')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Soprano'))
+    expect(await screen.findByRole('img', { name: 'Bản nhạc Emmanuel – Soprano' })).toHaveAttribute(
+      'src',
+      'https://files.example/emmanuel-soprano.jpg',
+    )
+    expect(screen.getByRole('button', { name: 'Phát Emmanuel' })).toBeInTheDocument()
+
+    fireEvent.error(screen.getByRole('img', { name: 'Bản nhạc Emmanuel – Soprano' }))
+    expect(await screen.findByRole('heading', { name: 'Không thể mở bản nhạc' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Thử lại/ }))
+    expect(screen.getByRole('heading', { name: 'Không thể mở bản nhạc' })).toBeInTheDocument()
+
+    await act(async () => resolveRefresh([
+      emmanuelMidiMaterial,
+      emmanuelScoreMaterial,
+      { ...sopranoScore, url: 'https://files.example/emmanuel-soprano-refreshed.jpg' },
+    ]))
+    expect(await screen.findByRole('img', { name: 'Bản nhạc Emmanuel – Soprano' })).toHaveAttribute(
+      'src',
+      'https://files.example/emmanuel-soprano-refreshed.jpg',
+    )
   })
 })
