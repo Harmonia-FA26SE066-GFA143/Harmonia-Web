@@ -71,7 +71,7 @@ export const theme: ThemeConfig = {
       itemMarginInline: spacing.sm,
       itemMarginBlock: 4,
     },
-    // Flat controls and cards: only what floats (menus, popovers, dialogs) casts a shadow.
+    // Flat at rest: shadows appear on hover, focus or press only (DESIGN.md "Lift Means Touch"; `hm-lift` in global.css).
     Button: {
       defaultShadow: 'none',
       primaryShadow: 'none',
