@@ -321,4 +321,71 @@ describe('RehearsalPracticeRoomPage', () => {
     expect(screen.queryByText('Bài hát chưa có lời dạng văn bản')).toBeNull()
     expect(getPlayback).toHaveBeenCalledWith('emmanuel-midi')
   })
+
+  it('uses the choir-wide MIDI when the selected voice part has no dedicated MIDI', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+    vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({
+      ...rehearsals[1],
+      songs: [{ songId: 'emmanuel', songTitle: 'Emmanuel' }],
+    })
+    vi.spyOn(rehearsalsApi, 'listRecordings').mockResolvedValue([])
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([
+      {
+        id: 'emmanuel-midi',
+        kind: 'rehearsalMaterial',
+        title: 'Emmanuel – organ',
+        fileName: 'emmanuel.mid',
+        fileSizeBytes: 12000,
+        targetSkillId: null,
+        targetSkillName: null,
+        url: 'https://files.example/emmanuel.mid',
+        lyricsText: null,
+        createdAt: '2026-11-05T12:00:00Z',
+      },
+      {
+        id: 'emmanuel-soprano-audio',
+        kind: 'sampleAudio',
+        title: 'Emmanuel – Soprano',
+        fileName: 'emmanuel-soprano.mp3',
+        fileSizeBytes: 9000,
+        targetSkillId: 'soprano',
+        targetSkillName: 'Soprano',
+        url: 'https://files.example/emmanuel-soprano.mp3',
+        lyricsText: null,
+        createdAt: '2026-11-05T12:00:00Z',
+      },
+    ])
+    const getPlayback = vi.spyOn(songsApi, 'getMaterialPlayback').mockResolvedValue({
+      playback: {
+        id: 'emmanuel-midi',
+        songId: 'emmanuel',
+        title: 'Emmanuel – organ',
+        status: 'ready',
+        schemaVersion: 1,
+        durationSeconds: 8,
+        instrument: 'organ',
+        audioUrl: 'https://files.example/emmanuel.wav',
+        notesUrl: 'https://files.example/emmanuel-notes.json',
+        createdAt: '2026-11-05T12:00:00Z',
+      },
+      notes: {
+        schemaVersion: 1,
+        timeUnit: 'seconds',
+        durationSeconds: 8,
+        notesEndSeconds: 7,
+        minPitch: 60,
+        maxPitch: 67,
+        tracks: [{ id: 0, name: 'Organ' }],
+        notes: [{ pitch: 60, start: 0, duration: 1, velocity: 90, track: 0 }],
+      },
+    })
+
+    renderRoom()
+
+    expect(await screen.findByRole('heading', { name: 'Bản nốt đồng bộ' })).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Soprano'))
+    expect(await screen.findByRole('heading', { name: 'Bản nốt đồng bộ' })).toBeInTheDocument()
+    expect(getPlayback).toHaveBeenLastCalledWith('emmanuel-midi')
+    expect(screen.queryByLabelText('Nghe Emmanuel, bè Soprano')).toBeNull()
+  })
 })

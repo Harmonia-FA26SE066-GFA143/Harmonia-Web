@@ -63,7 +63,8 @@ export function RehearsalPracticeRoomPage() {
   const partMidi =
     shownPart === 'Tất cả'
       ? (midis.find((material) => !material.targetSkillName) ?? midis[0])
-      : midis.find((material) => material.targetSkillName === shownPart)
+      : (midis.find((material) => material.targetSkillName === shownPart) ??
+        midis.find((material) => !material.targetSkillName))
   const typedLyrics = materials.data?.find((material) => material.kind === 'lyrics' && material.lyricsText !== null)?.lyricsText
 
   if (fetched.isLoading && !rehearsal) return <Skeleton active paragraph={{ rows: 12 }} />
