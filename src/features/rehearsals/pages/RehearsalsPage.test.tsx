@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
+import type { MaterialPlaybackBundle, SongMaterial } from '@/features/music-library'
 import * as songsApi from '@/features/music-library/api/songsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
@@ -201,6 +202,57 @@ describe('RehearsalsPage', () => {
 describe('RehearsalPracticeRoomPage', () => {
   const renderRoom = (initialEntry: Parameters<typeof renderPage>[2] = '/director/rehearsals/r2') =>
     renderPage(<RehearsalPracticeRoomPage />, '/director/rehearsals/:rehearsalId', initialEntry)
+  const emmanuelMidiMaterial = {
+    id: 'emmanuel-midi',
+    kind: 'rehearsalMaterial',
+    title: 'Emmanuel – organ',
+    fileName: 'emmanuel.mid',
+    fileSizeBytes: 12000,
+    targetSkillId: null,
+    targetSkillName: null,
+    url: 'https://files.example/emmanuel.mid',
+    lyricsText: null,
+    createdAt: '2026-11-05T12:00:00Z',
+  } satisfies SongMaterial
+  const emmanuelPlayback = {
+    playback: {
+      id: 'emmanuel-midi',
+      songId: 'emmanuel',
+      title: 'Emmanuel – organ',
+      status: 'ready',
+      schemaVersion: 1,
+      durationSeconds: 8,
+      instrument: 'organ',
+      audioUrl: 'https://files.example/emmanuel.wav',
+      notesUrl: 'https://files.example/emmanuel-notes.json',
+      createdAt: '2026-11-05T12:00:00Z',
+    },
+    notes: {
+      schemaVersion: 1,
+      timeUnit: 'seconds',
+      durationSeconds: 8,
+      notesEndSeconds: 7,
+      minPitch: 60,
+      maxPitch: 67,
+      tracks: [{ id: 0, name: 'Organ' }],
+      notes: [
+        { pitch: 60, start: 0, duration: 1, velocity: 90, track: 0 },
+        { pitch: 64, start: 1, duration: 1, velocity: 90, track: 0 },
+        { pitch: 67, start: 2, duration: 2, velocity: 100, track: 0 },
+      ],
+    },
+  } satisfies MaterialPlaybackBundle
+
+  const prepareEmmanuelPlayback = (materials: SongMaterial[] = [emmanuelMidiMaterial]) => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+    vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({
+      ...rehearsals[1],
+      songs: [{ songId: 'emmanuel', songTitle: 'Emmanuel' }],
+    })
+    vi.spyOn(rehearsalsApi, 'listRecordings').mockResolvedValue([])
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue(materials)
+    return vi.spyOn(songsApi, 'getMaterialPlayback').mockResolvedValue(emmanuelPlayback)
+  }
 
   it('says a session has no songs yet instead of failing (the backend allows a rehearsal without songs)', async () => {
     vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({ ...rehearsals[1], songs: [] })
@@ -263,54 +315,7 @@ describe('RehearsalPracticeRoomPage', () => {
   })
 
   it('shows the synchronized MIDI score for Emmanuel instead of the lyrics and plain audio player', async () => {
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
-    vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({
-      ...rehearsals[1],
-      songs: [{ songId: 'emmanuel', songTitle: 'Emmanuel' }],
-    })
-    vi.spyOn(rehearsalsApi, 'listRecordings').mockResolvedValue([])
-    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([
-      {
-        id: 'emmanuel-midi',
-        kind: 'rehearsalMaterial',
-        title: 'Emmanuel – organ',
-        fileName: 'emmanuel.mid',
-        fileSizeBytes: 12000,
-        targetSkillId: null,
-        targetSkillName: null,
-        url: 'https://files.example/emmanuel.mid',
-        lyricsText: null,
-        createdAt: '2026-11-05T12:00:00Z',
-      },
-    ])
-    const getPlayback = vi.spyOn(songsApi, 'getMaterialPlayback').mockResolvedValue({
-      playback: {
-        id: 'emmanuel-midi',
-        songId: 'emmanuel',
-        title: 'Emmanuel – organ',
-        status: 'ready',
-        schemaVersion: 1,
-        durationSeconds: 8,
-        instrument: 'organ',
-        audioUrl: 'https://files.example/emmanuel.wav',
-        notesUrl: 'https://files.example/emmanuel-notes.json',
-        createdAt: '2026-11-05T12:00:00Z',
-      },
-      notes: {
-        schemaVersion: 1,
-        timeUnit: 'seconds',
-        durationSeconds: 8,
-        notesEndSeconds: 7,
-        minPitch: 60,
-        maxPitch: 67,
-        tracks: [{ id: 0, name: 'Organ' }],
-        notes: [
-          { pitch: 60, start: 0, duration: 1, velocity: 90, track: 0 },
-          { pitch: 64, start: 1, duration: 1, velocity: 90, track: 0 },
-          { pitch: 67, start: 2, duration: 2, velocity: 100, track: 0 },
-        ],
-      },
-    })
+    const getPlayback = prepareEmmanuelPlayback()
 
     renderRoom()
 
@@ -323,25 +328,8 @@ describe('RehearsalPracticeRoomPage', () => {
   })
 
   it('uses the choir-wide MIDI when the selected voice part has no dedicated MIDI', async () => {
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
-    vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({
-      ...rehearsals[1],
-      songs: [{ songId: 'emmanuel', songTitle: 'Emmanuel' }],
-    })
-    vi.spyOn(rehearsalsApi, 'listRecordings').mockResolvedValue([])
-    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([
-      {
-        id: 'emmanuel-midi',
-        kind: 'rehearsalMaterial',
-        title: 'Emmanuel – organ',
-        fileName: 'emmanuel.mid',
-        fileSizeBytes: 12000,
-        targetSkillId: null,
-        targetSkillName: null,
-        url: 'https://files.example/emmanuel.mid',
-        lyricsText: null,
-        createdAt: '2026-11-05T12:00:00Z',
-      },
+    const getPlayback = prepareEmmanuelPlayback([
+      emmanuelMidiMaterial,
       {
         id: 'emmanuel-soprano-audio',
         kind: 'sampleAudio',
@@ -355,30 +343,6 @@ describe('RehearsalPracticeRoomPage', () => {
         createdAt: '2026-11-05T12:00:00Z',
       },
     ])
-    const getPlayback = vi.spyOn(songsApi, 'getMaterialPlayback').mockResolvedValue({
-      playback: {
-        id: 'emmanuel-midi',
-        songId: 'emmanuel',
-        title: 'Emmanuel – organ',
-        status: 'ready',
-        schemaVersion: 1,
-        durationSeconds: 8,
-        instrument: 'organ',
-        audioUrl: 'https://files.example/emmanuel.wav',
-        notesUrl: 'https://files.example/emmanuel-notes.json',
-        createdAt: '2026-11-05T12:00:00Z',
-      },
-      notes: {
-        schemaVersion: 1,
-        timeUnit: 'seconds',
-        durationSeconds: 8,
-        notesEndSeconds: 7,
-        minPitch: 60,
-        maxPitch: 67,
-        tracks: [{ id: 0, name: 'Organ' }],
-        notes: [{ pitch: 60, start: 0, duration: 1, velocity: 90, track: 0 }],
-      },
-    })
 
     renderRoom()
 

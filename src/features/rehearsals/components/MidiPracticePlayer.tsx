@@ -17,6 +17,15 @@ const visibleSeconds = 12
 const pastSeconds = 3
 const pitchGutter = 48
 
+interface PianoRollGeometry {
+  width: number
+  visibleStart: number
+  visibleEnd: number
+  rowHeight: number
+  xAt: (seconds: number) => number
+  yAt: (pitch: number) => number
+}
+
 function lowerBound(notes: MidiPlaybackNote[], time: number) {
   let low = 0
   let high = notes.length
@@ -30,14 +39,13 @@ function lowerBound(notes: MidiPlaybackNote[], time: number) {
 
 const pitchName = (pitch: number) => `C${Math.floor(pitch / 12) - 1}`
 
-function drawPianoRoll(
+function prepareCanvas(
   canvas: HTMLCanvasElement,
   score: MidiPlaybackNotes,
   currentTime: number,
-  maxNoteDuration: number,
-) {
+): { context: CanvasRenderingContext2D; geometry: PianoRollGeometry } | undefined {
   const context = canvas.getContext('2d')
-  if (!context) return
+  if (!context) return undefined
 
   const width = Math.max(640, Math.round(canvas.clientWidth || 0))
   const ratio = window.devicePixelRatio || 1
@@ -62,47 +70,59 @@ function drawPianoRoll(
 
   context.font = `${typography.metadata.fontSize}px ${typography.fontFamily}`
   context.textBaseline = 'top'
-  for (let second = Math.ceil(visibleStart); second <= visibleEnd; second += 1) {
-    const x = xAt(second)
+  return { context, geometry: { width, visibleStart, visibleEnd, rowHeight, xAt, yAt } }
+}
+
+function drawTimeGrid(context: CanvasRenderingContext2D, geometry: PianoRollGeometry) {
+  for (let second = Math.ceil(geometry.visibleStart); second <= geometry.visibleEnd; second += 1) {
+    const x = geometry.xAt(second)
     context.strokeStyle = second % 4 === 0 ? colors.mutedBorder : colors.border
     context.lineWidth = second % 4 === 0 ? 1.25 : 1
     context.beginPath()
     context.moveTo(x, 0)
     context.lineTo(x, canvasHeight)
     context.stroke()
-    if (second < visibleEnd) {
+    if (second < geometry.visibleEnd) {
       context.fillStyle = colors.textMuted
       context.fillText(clock(second), x + 4, 4)
     }
   }
+}
 
+function drawPitchGrid(context: CanvasRenderingContext2D, score: MidiPlaybackNotes, geometry: PianoRollGeometry) {
   for (let pitch = score.minPitch; pitch <= score.maxPitch; pitch += 1) {
     if (pitch % 12 !== 0) continue
-    const y = yAt(pitch)
+    const y = geometry.yAt(pitch)
     context.strokeStyle = colors.border
     context.lineWidth = 1
     context.beginPath()
     context.moveTo(pitchGutter, y)
-    context.lineTo(width, y)
+    context.lineTo(geometry.width, y)
     context.stroke()
-    context.fillStyle = colors.textMuted
-    context.fillText(pitchName(pitch), 8, Math.max(2, y + 2))
   }
+}
 
-  const first = lowerBound(score.notes, visibleStart - maxNoteDuration)
+function drawNotes(
+  context: CanvasRenderingContext2D,
+  score: MidiPlaybackNotes,
+  currentTime: number,
+  maxNoteDuration: number,
+  geometry: PianoRollGeometry,
+) {
+  const first = lowerBound(score.notes, geometry.visibleStart - maxNoteDuration)
   for (let index = first; index < score.notes.length; index += 1) {
     const note = score.notes[index]
-    if (note.start > visibleEnd) break
+    if (note.start > geometry.visibleEnd) break
     const noteEnd = note.start + note.duration
-    if (noteEnd < visibleStart) continue
+    if (noteEnd < geometry.visibleStart) continue
     const active = note.start <= currentTime && currentTime < noteEnd
-    const x = Math.max(pitchGutter, xAt(note.start))
-    const endX = Math.min(width, xAt(noteEnd))
-    const y = yAt(note.pitch)
+    const x = Math.max(pitchGutter, geometry.xAt(note.start))
+    const endX = Math.min(geometry.width, geometry.xAt(noteEnd))
+    const y = geometry.yAt(note.pitch)
     context.globalAlpha = active ? 1 : Math.min(0.72, 0.36 + (note.velocity / 127) * 0.28)
     context.fillStyle = active ? colors.primaryHover : colors.primary
     const noteWidth = Math.max(2, endX - x)
-    const noteHeight = Math.max(3, rowHeight - 2)
+    const noteHeight = Math.max(3, geometry.rowHeight - 2)
     context.fillRect(x, y + 1, noteWidth, noteHeight)
     if (active) {
       // A white outline distinguishes the current notes by shape as well as colour.
@@ -112,15 +132,19 @@ function drawPianoRoll(
     }
   }
   context.globalAlpha = 1
+}
 
-  const playheadX = xAt(currentTime)
+function drawPlayhead(context: CanvasRenderingContext2D, currentTime: number, geometry: PianoRollGeometry) {
+  const playheadX = geometry.xAt(currentTime)
   context.strokeStyle = colors.primaryHover
   context.lineWidth = 2
   context.beginPath()
   context.moveTo(playheadX, 0)
   context.lineTo(playheadX, canvasHeight)
   context.stroke()
+}
 
+function drawPitchGutter(context: CanvasRenderingContext2D, score: MidiPlaybackNotes, geometry: PianoRollGeometry) {
   context.fillStyle = colors.surface
   context.fillRect(0, 0, pitchGutter, canvasHeight)
   context.strokeStyle = colors.mutedBorder
@@ -132,8 +156,24 @@ function drawPianoRoll(
   for (let pitch = score.minPitch; pitch <= score.maxPitch; pitch += 1) {
     if (pitch % 12 !== 0) continue
     context.fillStyle = colors.textMuted
-    context.fillText(pitchName(pitch), 8, Math.max(2, yAt(pitch) + 2))
+    context.fillText(pitchName(pitch), 8, Math.max(2, geometry.yAt(pitch) + 2))
   }
+}
+
+function drawPianoRoll(
+  canvas: HTMLCanvasElement,
+  score: MidiPlaybackNotes,
+  currentTime: number,
+  maxNoteDuration: number,
+) {
+  const prepared = prepareCanvas(canvas, score, currentTime)
+  if (!prepared) return
+  const { context, geometry } = prepared
+  drawTimeGrid(context, geometry)
+  drawPitchGrid(context, score, geometry)
+  drawNotes(context, score, currentTime, maxNoteDuration, geometry)
+  drawPlayhead(context, currentTime, geometry)
+  drawPitchGutter(context, score, geometry)
 }
 
 function playbackDescription(error: Error) {
@@ -164,6 +204,28 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds }: Readonl
     () => score.notes.reduce((longest, note) => Math.max(longest, note.duration), 0),
     [score.notes],
   )
+
+  useEffect(() => {
+    const element = document.createElement('audio')
+    element.src = audioUrl
+    element.preload = 'metadata'
+    const onPlay = () => setPlaying(true)
+    const onPause = () => setPlaying(false)
+    const onError = () => setAudioFailed(true)
+    element.addEventListener('play', onPlay)
+    element.addEventListener('pause', onPause)
+    element.addEventListener('ended', onPause)
+    element.addEventListener('error', onError)
+    audio.current = element
+    return () => {
+      if (!element.paused) element.pause()
+      element.removeEventListener('play', onPlay)
+      element.removeEventListener('pause', onPause)
+      element.removeEventListener('ended', onPause)
+      element.removeEventListener('error', onError)
+      audio.current = null
+    }
+  }, [audioUrl])
 
   useEffect(() => {
     const tick = () => {
@@ -222,25 +284,16 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds }: Readonl
           {score.notes.length.toLocaleString('vi-VN')} nốt · {score.tracks.length} track
         </Typography.Text>
       </Flex>
-      <div
-        style={{ border: `1px solid ${colors.border}`, borderRadius: radius.lg, overflow: 'hidden', background: colors.ivory }}
+      <figure
+        aria-label={`Bản nốt MIDI của ${title}. Đường dọc màu đỏ sẫm chỉ vị trí đang phát.`}
+        style={{ margin: 0, border: `1px solid ${colors.border}`, borderRadius: radius.lg, overflow: 'hidden', background: colors.ivory }}
       >
         <canvas
           ref={canvas}
-          role="img"
-          aria-label={`Bản nốt MIDI của ${title}. Đường dọc màu đỏ sẫm chỉ vị trí đang phát.`}
+          aria-hidden="true"
           style={{ display: 'block', width: '100%', height: canvasHeight }}
         />
-      </div>
-      <audio
-        ref={audio}
-        src={audioUrl}
-        preload="metadata"
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={() => setPlaying(false)}
-        onError={() => setAudioFailed(true)}
-      />
+      </figure>
       {audioFailed && (
         <Typography.Paragraph role="alert" style={{ color: colors.primaryHover, margin: `${spacing.sm}px 0 0` }}>
           Không thể phát bản MIDI. Vui lòng tải lại bản phát rồi thử lại.
