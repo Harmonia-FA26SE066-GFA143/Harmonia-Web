@@ -101,6 +101,7 @@ const enumLabels: Record<string, string> = {
   Lyrics: 'Lời bài hát',
   SampleAudio: 'Audio mẫu',
   RehearsalMaterial: 'Tài liệu tập luyện',
+  InteractiveScore: 'Bản nhạc tương tác',
   Present: 'Có mặt',
   Absent: 'Vắng',
   Late: 'Đi muộn',

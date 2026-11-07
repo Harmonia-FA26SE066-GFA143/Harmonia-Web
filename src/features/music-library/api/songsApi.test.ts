@@ -123,6 +123,33 @@ describe('songsApi', () => {
     expect(body.get('file')).toBeInstanceOf(File)
   })
 
+  it('maps the interactive score in material types, counts and the missing-material filter (BE d550665)', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        reply(200, {
+          items: [{ id: 'm5', songId: 's1', materialType: 'InteractiveScore', title: 'SATB', fileName: 'satb.mxl', fileUrl: 'https://x/satb.mxl' }],
+          pageNumber: 1,
+          pageSize: 100,
+          totalCount: 1,
+          totalPages: 1,
+        }),
+      )
+      .mockResolvedValueOnce(
+        reply(200, {
+          items: [{ id: 's1', title: 'Bài', materialCounts: { SheetMusic: 1, InteractiveScore: 2 } }],
+          pageNumber: 1,
+          pageSize: 20,
+          totalCount: 1,
+          totalPages: 1,
+        }),
+      )
+
+    expect((await listMaterials('s1'))[0]).toMatchObject({ kind: 'interactiveScore' })
+    const songs = await listSongs({ search: '', missingMaterial: 'interactiveScore' }, { pageNumber: 1, pageSize: 20 })
+    expect(new URL(String(fetchMock.mock.calls[1][0]), 'http://localhost').searchParams.get('missingMaterialType')).toBe('InteractiveScore')
+    expect(songs.items[0].materialCounts).toEqual({ sheetMusic: 1, lyrics: 0, sampleAudio: 0, rehearsalMaterial: 0, interactiveScore: 2 })
+  })
+
   it('deletes a material', async () => {
     fetchMock.mockResolvedValueOnce(reply(204))
 

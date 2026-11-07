@@ -9,6 +9,7 @@ import {
   FileTextOutlined,
   FolderOpenOutlined,
   FormOutlined,
+  PlayCircleOutlined,
   ReadOutlined,
   SwapOutlined,
   UploadOutlined,
@@ -22,10 +23,12 @@ import {
   fileExtension,
   isMidiFile,
   isPlayableAudio,
+  isScoreFile,
   materialExtensions,
   materialKindLabels,
   materialKinds,
   maxMaterialBytes,
+  rendersPlayback,
   type MaterialKind,
   type SongMaterial,
 } from '../types'
@@ -64,8 +67,12 @@ const isImage = ({ fileName }: SongMaterial) => fileName !== null && ['.png', '.
 /** What is under the title: file name, size and date, or what kind of text it is. */
 function details(material: SongMaterial) {
   const source = material.lyricsText === null ? material.fileName : 'Lời gõ trực tiếp'
-  const midi = isMidiFile(material.fileName) ? 'MIDI, nghe trên ứng dụng di động' : undefined
-  return [source, midi, formatSize(material.fileSizeBytes), `tải lên ${dayjs(parseUtc(material.createdAt)).format('DD/MM/YYYY')}`]
+  const playback = isMidiFile(material.fileName)
+    ? 'MIDI, nghe trên ứng dụng di động'
+    : isScoreFile(material.fileName)
+      ? 'MusicXML, máy chủ dựng sẵn bản phát'
+      : undefined
+  return [source, playback, formatSize(material.fileSizeBytes), `tải lên ${dayjs(parseUtc(material.createdAt)).format('DD/MM/YYYY')}`]
     .filter(Boolean)
     .join(' · ')
 }
@@ -75,6 +82,7 @@ const kindIcons:Record<MaterialKind, ComponentType> = {
   lyrics: FileTextOutlined,
   sampleAudio: CustomerServiceOutlined,
   rehearsalMaterial: FolderOpenOutlined,
+  interactiveScore: PlayCircleOutlined,
 }
 
 function UploadButton({ kind, loading, label, hintId, onPick }: Readonly<{
@@ -151,8 +159,9 @@ function MaterialRow({
           </Typography.Text>
         </Flex>
         {/* Signed URLs expire; the list is refetched when the window regains focus, which renews them. */}
+        {/* MIDI and MusicXML do not open in a browser tab; they are downloaded. */}
         {material.url &&
-          (isMidiFile(material.fileName) ? (
+          (rendersPlayback(material.fileName) ? (
             <Button type="link" icon={<DownloadOutlined />} href={material.url} aria-label={`Tải xuống ${material.title}`}>
               Tải xuống
             </Button>
