@@ -1,6 +1,6 @@
 # Practice Assignments and Submissions
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e` and 2026-10-26 at `main@43dfe31`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@43dfe31` and 2026-11-07 at `main@d550665`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 FE-08–FE-13, FE-41–FE-44, LI-03, LI-05
 
@@ -14,6 +14,7 @@ Evaluation is manual (LI-03, LI-05); advanced AI performance analysis is exclude
 - **Endpoints**: `api/practice-assignments` (create, list, mine, submissions) and `api/practice-submissions` (list, detail, feedback, comments, mine) (`PracticeAssignmentsController.cs`, `PracticeSubmissionsController.cs`). Learning progress per material is `LearningStatus` = `NotStarted`, `NeedsPractice`, `Learned`.
 - The Director's feedback and comments are the BE's review model; follow the DTOs rather than a separate "review" entity.
 - **Choir** (D8, `718696c`): an assignment needs `choirId`, with the same checks as a rehearsal (`CHOIR_NOT_FOUND`, `CHOIR_INACTIVE`, `CHOIR_NOT_SERVING_EVENT`); every audience stays inside that choir (`CreatePracticeAssignmentRequest.cs:7-11`, `PracticeAssignmentService.cs:50-57`). A Choir Director sees and reviews only assignments and submissions of their choirs (`PracticeSubmissionService.cs:25-59`).
+- **Automatic score** (`5dc9d03`, advisory, never stored): the Choir Director can score a submitted recording (`POST api/practice-submissions/{id}/score`, `PracticeSubmissionsController.cs:34-38`) and a Choir Member a recording before submitting it (`POST api/practice-assignments/mine/{id}/score`, `PracticeAssignmentsController.cs:81`, file `.mp3`, `.m4a`, `.wav`). The recording is compared with the MIDI material of the assignment: `score` 0–100 (70% pitch, 30% rhythm), `pitchScore`, `rhythmScore`, `coveragePercent`, `trackName` (`PracticeAudioScoreResponse.cs`). Errors: 422 `PRACTICE_AUDIO_UNREADABLE`, and 422 `PRACTICE_REFERENCE_MISSING` when no MIDI material is attached (`PracticeSubmissionService.cs:22-40`, `ErrorStatusMap.cs:194-195`). The grade stays the Director's (BR-11 and LI-05 unchanged).
 - **Materials**: several per assignment, in order (`materialIds`; `materialId` is the first) (`CreatePracticeAssignmentRequest.cs:17-24`).
 
 ## Owner decisions still standing (BE silent)

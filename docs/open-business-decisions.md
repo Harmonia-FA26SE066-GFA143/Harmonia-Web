@@ -45,6 +45,12 @@ Stored in the business files (`roles-permissions.md`, `choir-skills.md`, `liturg
 - **Vocal parts at the whole-service level** (decided 2026-10-27): keep them. The BE pre-fills song requirements without the vocal parts but accepts any skill as a whole-service requirement; the Web offers the vocal parts there, which covers Report 1 FE-35 / FE-37 (singers per vocal part, warnings for missing vocal skills).
 - **Overlapping events** (decided 2026-10-27): the BE should refuse to assign a member to two events at overlapping times; requested as tbd-backlog B40.
 
+## Owner decisions 2026-11-07
+
+- **One Web PR for the BE update** (BE `d550665`): events need a serving choir and a lead choir, a reason when a choir leaves a published event, the substitute director, "confirm all" invitations and the automatic score of a submission are delivered together (Web `504a506`, `b906d14`, `2c6ed1f`). The interactive MusicXML score is separate Web work.
+- **Substitute director candidates** (decided 2026-11-07): the Web offers only Choir Directors who already direct a choir, other than the choir's own director, until the BE lets the Parish Priest list directors (tbd-backlog B48).
+- **Attendance start check** (decided 2026-11-07): the Web does not read `Rehearsal.AttendanceStartCheckEnabled`; the attendance sheet stays read-only before the start time and relies on `REHEARSAL_NOT_STARTED` (tbd-backlog B49).
+
 ## Confirmed BA decisions — Daniel, 2026-10-01
 
 The owner's "Confirmed Business Decisions" of 2026-10-01 (kept locally, not published) is the owner-supplied record of intent for the event lifecycle, music program versioning, readiness and emergency handling. It carries a BE-override note at the top; follow the BE where they differ.
