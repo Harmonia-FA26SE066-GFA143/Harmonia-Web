@@ -38,6 +38,14 @@ export async function getParticipation(eventId: string): Promise<ParticipationRe
   }))
 }
 
+/**
+ * Confirms every unanswered request on the members' behalf; Declined and Unsure answers stay, and nobody is notified
+ * (`POST …/confirm-all`, lead choir's director, BE ef2277f, meant for demos).
+ */
+export async function confirmAllParticipation(eventId: string): Promise<void> {
+  await apiRequest<unknown>(`/api/event-participations/confirm-all${toQuery({ eventId })}`, { method: 'POST' })
+}
+
 /** Asks the given members, none of whom may have been asked for this event (EVENT_PARTICIPATION_ALREADY_REQUESTED). */
 export async function sendParticipationRequests(eventId: string, memberIds: string[]): Promise<void> {
   await apiRequest<unknown>('/api/event-participations', { method: 'POST', body: JSON.stringify({ eventId, memberIds }) })
