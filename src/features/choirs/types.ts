@@ -29,6 +29,18 @@ export interface EventChoir {
   isLead: boolean
   directorId?: string
   directorName?: string
+  /** Choir Director standing in for `directorId` at this event only (BE ff72860); both keep the rights. */
+  substituteDirectorId?: string
+  substituteDirectorName?: string
+  /** Why the Parish Priest last changed this choir's place or substitute on the event. */
+  reason?: string
+}
+
+/** Body of PUT /api/liturgical-events/{id}/choirs. */
+export interface EventChoirsValues {
+  choirIds: string[]
+  leadChoirId?: string
+  reason?: string
 }
 
 /** An active member of a choir (`ChoirMemberDto`). */

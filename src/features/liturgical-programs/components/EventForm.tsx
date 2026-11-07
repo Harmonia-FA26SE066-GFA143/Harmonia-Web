@@ -1,5 +1,6 @@
 import { Button, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
+import { useChoirs } from '@/features/choirs'
 import { useCatalogOptions } from '@/features/system-categories'
 import { spacing } from '@/styles/tokens'
 import type { EventFormValues, LiturgicalEvent } from '../types'
@@ -15,6 +16,8 @@ interface FormFields {
   massTypeId?: string
   ceremonyTypeId?: string
   specialRequirements?: string
+  choirIds?: string[]
+  leadChoirId?: string
 }
 
 export interface EventFormProps {
@@ -44,9 +47,14 @@ const toFields = (event: LiturgicalEvent): FormFields => ({
 
 /**
  * Event fields with the backend's rules (Create/UpdateLiturgicalEventRequestValidator): date, time and place are
- * required, and a Mass type or a ceremony type. Shared by the create page and the edit dialog.
+ * required, and a Mass type or a ceremony type. Shared by the create page and the edit dialog. Creating also needs
+ * the serving choirs and the lead one (BE 678fc34); once created, they change on the event's choir card.
  */
 export function EventForm({ event, initialDate, saving = false, submitText, onSubmit, onCancel, onDirty }: Readonly<EventFormProps>) {
+  const [form] = Form.useForm<FormFields>()
+  const chosenChoirIds = Form.useWatch('choirIds', form) ?? []
+  const choirs = useChoirs(!event)
+  const choirOptions = (choirs.data ?? []).filter((choir) => choir.isActive).map((choir) => ({ value: choir.id, label: choir.name }))
   const locations = useCatalogOptions('worshipLocations')
   const categories = useCatalogOptions('eventCategories')
   const seasons = useCatalogOptions('seasons')
@@ -65,11 +73,19 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
       massTypeId: values.massTypeId,
       ceremonyTypeId: values.ceremonyTypeId,
       specialRequirements: values.specialRequirements?.trim() || undefined,
+      ...(event ? {} : { choirIds: values.choirIds, leadChoirId: values.leadChoirId }),
     })
+  }
+
+  // Keeps the lead among the chosen choirs, and picks the only one when a single choir serves.
+  const chooseChoirs = (choirIds: string[]) => {
+    const lead = form.getFieldValue('leadChoirId') as string | undefined
+    form.setFieldValue('leadChoirId', lead && choirIds.includes(lead) ? lead : choirIds.length === 1 ? choirIds[0] : undefined)
   }
 
   return (
     <Form<FormFields>
+      form={form}
       layout="vertical"
       initialValues={event ? toFields(event) : { date: initialDate ? dayjs(initialDate) : undefined }}
       onValuesChange={onDirty}
@@ -135,6 +151,39 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
           <Select allowClear placeholder="Chọn loại sự kiện" options={categories} />
         </Form.Item>
       </Flex>
+      {!event && (
+        <Flex wrap gap={spacing.md}>
+          <Form.Item
+            label="Ca đoàn phục vụ"
+            name="choirIds"
+            rules={[{ required: true, type: 'array', min: 1, message: 'Chọn ít nhất một ca đoàn phục vụ.' }]}
+            extra={choirs.isError ? 'Không thể tải danh sách ca đoàn. Vui lòng tải lại trang.' : undefined}
+            style={{ flex: '2 1 280px' }}
+          >
+            <Select
+              mode="multiple"
+              optionFilterProp="label"
+              placeholder="Chọn ca đoàn"
+              loading={choirs.isPending}
+              options={choirOptions}
+              onChange={chooseChoirs}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Ca đoàn phụ trách"
+            name="leadChoirId"
+            rules={[{ required: true, message: 'Chọn ca đoàn phụ trách.' }]}
+            extra="Ca trưởng của ca đoàn này lập danh sách bài, mời tham gia và phân công."
+            style={{ flex: '1 1 200px' }}
+          >
+            <Select
+              placeholder="Chọn ca đoàn phụ trách"
+              disabled={chosenChoirIds.length === 0}
+              options={choirOptions.filter(({ value }) => chosenChoirIds.includes(value))}
+            />
+          </Form.Item>
+        </Flex>
+      )}
       <Form.Item
         label="Tiêu đề (không bắt buộc)"
         name="title"

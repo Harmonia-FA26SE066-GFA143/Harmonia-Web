@@ -6,9 +6,10 @@ import {
   listMembersOfChoir,
   removeChoirMember,
   saveChoir,
+  setSubstituteDirector,
   updateEventChoirs,
 } from '../api/choirsApi'
-import type { ChoirValues } from '../types'
+import type { ChoirValues, EventChoirsValues } from '../types'
 
 const choirsKey = ['choirs'] as const
 
@@ -44,4 +45,9 @@ export const useRemoveChoirMember = (choirId: string) =>
   useChoirMutation((memberId: string) => removeChoirMember(choirId, memberId))
 
 export const useUpdateEventChoirs = (eventId: string) =>
-  useChoirMutation((value: { choirIds: string[]; leadChoirId?: string }) => updateEventChoirs(eventId, value))
+  useChoirMutation((value: EventChoirsValues) => updateEventChoirs(eventId, value))
+
+export const useSetSubstituteDirector = (eventId: string) =>
+  useChoirMutation(({ choirId, ...value }: { choirId: string; directorId: string | null; reason?: string }) =>
+    setSubstituteDirector(eventId, choirId, value),
+  )
