@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 type TimeListener = (time: number) => void
+export type PlaybackClockError = 'playback-failed'
 
 export interface PlaybackClock {
   playing: boolean
   duration: number
-  error: string | null
+  error: PlaybackClockError | null
   play(): Promise<void>
   pause(): void
   /** Clamped to [0, duration]; subscribers are called once right away, even while paused. */
@@ -15,7 +16,8 @@ export interface PlaybackClock {
   subscribe(listener: TimeListener): () => void
 }
 
-const AUDIO_EVENTS = ['play', 'pause', 'seeked', 'ended', 'loadedmetadata', 'durationchange'] as const
+const PLAYBACK_ERROR: PlaybackClockError = 'playback-failed'
+const AUDIO_EVENTS = ['play', 'pause', 'seeked', 'ended', 'loadedmetadata', 'durationchange', 'error'] as const
 
 // A throwing subscriber must not stop the others or the frame loop.
 function emit(listeners: Set<TimeListener>, time: number) {
@@ -33,10 +35,11 @@ function emit(listeners: Set<TimeListener>, time: number) {
  * Owns one HTMLAudioElement per `src`. Time is never accumulated: every value handed out is `audio.currentTime`.
  * React state is only `playing`, `duration`, `error`; time flows through `subscribe`/`getTime` so no frame re-renders.
  */
-export function usePlaybackClock(src: string | undefined): PlaybackClock {
+export function usePlaybackClock(src: string | undefined, fallbackDuration = 0): PlaybackClock {
+  const safeFallbackDuration = Number.isFinite(fallbackDuration) && fallbackDuration > 0 ? fallbackDuration : 0
   const [playing, setPlaying] = useState(false)
   const [duration, setDuration] = useState(0)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<PlaybackClockError | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const listenersRef = useRef(new Set<TimeListener>())
 
@@ -91,6 +94,7 @@ export function usePlaybackClock(src: string | undefined): PlaybackClock {
       seeked: () => emit(listeners, audio.currentTime),
       loadedmetadata: syncDuration,
       durationchange: syncDuration,
+      error: () => setError(PLAYBACK_ERROR),
     }
     for (const type of AUDIO_EVENTS) audio.addEventListener(type, handlers[type])
 
@@ -125,12 +129,16 @@ export function usePlaybackClock(src: string | undefined): PlaybackClock {
         const audio = audioRef.current
         if (!audio) return
         try {
+          if (audio.ended) {
+            audio.currentTime = 0
+            emit(listenersRef.current, 0)
+          }
           await audio.play()
         } catch {
           // A rejection from an audio that was already replaced or disposed (AbortError) is not the user's problem.
           if (audioRef.current !== audio) return
           setPlaying(false)
-          setError('Không phát được âm thanh. Hãy bấm phát lại.')
+          setError(PLAYBACK_ERROR)
         }
       },
       pause() {
@@ -139,7 +147,7 @@ export function usePlaybackClock(src: string | undefined): PlaybackClock {
       seek(seconds: number) {
         const audio = audioRef.current
         if (!audio) return
-        const max = Number.isFinite(audio.duration) ? audio.duration : 0
+        const max = Math.max(Number.isFinite(audio.duration) ? audio.duration : 0, safeFallbackDuration)
         audio.currentTime = Math.min(Math.max(seconds, 0), max)
         emit(listenersRef.current, audio.currentTime)
       },
@@ -150,8 +158,12 @@ export function usePlaybackClock(src: string | undefined): PlaybackClock {
         return () => void listeners.delete(listener)
       },
     }),
-    [],
+    [safeFallbackDuration],
   )
 
-  return useMemo(() => ({ playing, duration, error, ...api }), [playing, duration, error, api])
+  const effectiveDuration = Math.max(duration, safeFallbackDuration)
+  return useMemo(
+    () => ({ playing, duration: effectiveDuration, error, ...api }),
+    [playing, effectiveDuration, error, api],
+  )
 }
