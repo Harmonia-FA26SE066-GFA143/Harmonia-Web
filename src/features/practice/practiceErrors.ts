@@ -8,6 +8,9 @@ const messages: Record<string, string> = {
   PRACTICE_SUBMISSION_ALREADY_PASSED: 'Bài đã đạt, không chấm lại được.',
   PRACTICE_SUBMISSION_NOT_REVIEWED: 'Bản thu chưa được chấm; hãy chấm trước khi nhận xét thêm.',
   PRACTICE_SUBMISSION_CONFLICT: 'Bản thu vừa thay đổi. Thông tin đã được tải lại.',
+  // Automatic scoring (BE 5dc9d03).
+  PRACTICE_AUDIO_UNREADABLE: 'Không chấm tự động được: bản thu không đọc được hoặc có quá ít tiếng hát.',
+  PRACTICE_REFERENCE_MISSING: 'Không chấm tự động được: bài tập chưa gắn bản mẫu MIDI.',
   PRACTICE_DUE_DATE_IN_PAST: 'Hạn nộp phải sau thời điểm hiện tại.',
   PRACTICE_TARGET_REQUIRED: 'Chọn ít nhất một kỹ năng hoặc một ca viên.',
   CHOIR_NOT_FOUND: 'Ca đoàn đã chọn không còn do bạn phụ trách. Vui lòng tải lại trang.',

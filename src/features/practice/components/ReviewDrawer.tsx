@@ -1,7 +1,7 @@
-import { App, Flex, Input, Radio, Typography } from 'antd'
+import { App, Button, Flex, Input, Radio, Typography } from 'antd'
 import { ErrorState, Form, FormDrawer, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
-import { useCommentSubmission, useReviewSubmission, useSubmission } from '../hooks/usePractice'
+import { useCommentSubmission, useReviewSubmission, useScoreSubmission, useSubmission } from '../hooks/usePractice'
 import { practiceErrorMessage } from '../practiceErrors'
 import { formatDateTime } from '@/lib/api/dates'
 import { formatDuration } from '../practiceFormat'
@@ -28,6 +28,39 @@ const resultOptions = [
   { value: 'passed', label: practiceStatusLabels.passed },
   { value: 'needsRevision', label: practiceStatusLabels.needsRevision },
 ]
+
+/**
+ * Advisory score against the assignment's MIDI reference (BE 5dc9d03), asked for on demand since the server analyses
+ * the audio each time; it is not stored and does not decide the result.
+ */
+function AutoScore({ submissionId }: Readonly<{ submissionId: string }>) {
+  const score = useScoreSubmission()
+  const result = score.data
+  return (
+    <Flex vertical gap={spacing.xs} style={{ padding: spacing.sm, borderRadius: 8, background: colors.softSurface }}>
+      <Flex align="center" justify="space-between" gap={spacing.sm} wrap>
+        <Typography.Text strong>Chấm tự động (tham khảo)</Typography.Text>
+        <Button size="small" loading={score.isPending} onClick={() => score.mutate(submissionId)}>
+          {result ? 'Chấm lại' : 'Chấm tự động'}
+        </Button>
+      </Flex>
+      {result && (
+        <Typography.Text>
+          <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>{result.score}/100</Typography.Text>
+          {` · cao độ ${result.pitchScore} · nhịp ${result.rhythmScore} · hát được ${result.coveragePercent}% giai điệu · bè ${result.trackName}`}
+        </Typography.Text>
+      )}
+      {score.isError && (
+        <Typography.Text type="danger">{practiceErrorMessage(score.error, 'Không chấm tự động được. Vui lòng thử lại.')}</Typography.Text>
+      )}
+      {!result && !score.isError && (
+        <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
+          So với bản mẫu MIDI của bài tập: 70% cao độ, 30% nhịp. Chỉ để tham khảo, không lưu và không thay kết quả chấm.
+        </Typography.Text>
+      )}
+    </Flex>
+  )
+}
 
 /**
  * Listen to a submission and review it manually (FE-42–FE-44, LI-03, LI-05). The first review sets "Đạt" or "Cần
@@ -92,6 +125,7 @@ export function ReviewDrawer({ submissionId, initialResult, initialComment, onCl
             </Typography.Paragraph>
           </div>
           <audio controls src={data.audioUrl} style={{ width: '100%' }} aria-label={`Bản thu của ${data.memberName}`} />
+          <AutoScore submissionId={data.id} />
           {data.feedbacks.length > 0 && (
             <div>
               <Typography.Text strong>Đánh giá đã có</Typography.Text>
