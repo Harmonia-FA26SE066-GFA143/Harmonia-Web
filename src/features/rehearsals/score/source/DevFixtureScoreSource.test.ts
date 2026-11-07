@@ -50,6 +50,31 @@ describe('DevFixtureScoreSource', () => {
     }).not.toThrow()
   })
 
+  it('a fixture module that fails to load rejects with read-failed and keeps the cause', async () => {
+    flags.useDevFixtures = true
+    const cause = new Error('chunk missing')
+    vi.resetModules()
+    vi.doMock('./fixtures/sample.mxl?url', () => {
+      throw cause
+    })
+    try {
+      // resetModules gives fresh module instances, so the error class must come from the same load.
+      const { DevFixtureScoreSource: Fresh } = await import('./DevFixtureScoreSource')
+      const { ScoreSourceError: FreshError } = await import('./types')
+      const error = await new Fresh().load().then(
+        () => undefined,
+        (reason: unknown) => reason,
+      )
+
+      expect(error).toBeInstanceOf(FreshError)
+      expect((error as ScoreSourceError).code).toBe('read-failed')
+      // Vitest wraps the factory's error; ours is its cause.
+      expect(((error as ScoreSourceError).cause as Error).cause).toBe(cause)
+    } finally {
+      vi.doUnmock('./fixtures/sample.mxl?url')
+    }
+  })
+
   it('an already aborted signal rejects with aborted', async () => {
     flags.useDevFixtures = true
     vi.stubGlobal('fetch', vi.fn())

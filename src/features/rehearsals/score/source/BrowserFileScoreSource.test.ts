@@ -123,12 +123,24 @@ describe('BrowserFileScoreSource', () => {
     expect(revoked).toEqual(['blob:test/0'])
   })
 
-  it('an already aborted signal rejects with aborted before reading', async () => {
+  it.each([
+    ['a.musicxml', XML],
+    ['a.mxl', ZIP],
+  ])('an already aborted signal rejects with aborted and never starts reading %s', async (name, content) => {
+    const text = vi.spyOn(File.prototype, 'text')
+    const arrayBuffer = vi.spyOn(File.prototype, 'arrayBuffer')
     const controller = new AbortController()
     controller.abort()
 
-    await rejection(new BrowserFileScoreSource({ score: new File([XML], 'a.musicxml'), audio: wav() }).load(controller.signal), 'aborted')
-    expect(created).toEqual([])
+    try {
+      await rejection(new BrowserFileScoreSource({ score: new File([content], name), audio: wav() }).load(controller.signal), 'aborted')
+      expect(text).not.toHaveBeenCalled()
+      expect(arrayBuffer).not.toHaveBeenCalled()
+      expect(URL.createObjectURL).not.toHaveBeenCalled()
+    } finally {
+      text.mockRestore()
+      arrayBuffer.mockRestore()
+    }
   })
 
   it('aborting during the read rejects with aborted and creates no URL', async () => {
