@@ -48,7 +48,7 @@ export const priestRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.priest.notes,
-    { title: 'Ghi chú cho Ca trưởng', breadcrumb: [area, 'Ghi chú'] },
+    { title: 'Trao đổi với Ca trưởng', breadcrumb: [area, 'Trao đổi'] },
     async () => (await import('@/features/notes')).PriestNotesPage,
   ),
 ]

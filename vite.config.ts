@@ -11,7 +11,15 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    server: apiProxyTarget ? { proxy: { '/api': { target: apiProxyTarget, changeOrigin: true } } } : undefined,
+    // `/hubs` is the SignalR endpoint (chat), which needs the WebSocket upgrade forwarded.
+    server: apiProxyTarget
+      ? {
+          proxy: {
+            '/api': { target: apiProxyTarget, changeOrigin: true },
+            '/hubs': { target: apiProxyTarget, changeOrigin: true, ws: true },
+          },
+        }
+      : undefined,
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
