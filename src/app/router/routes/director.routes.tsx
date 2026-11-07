@@ -88,7 +88,7 @@ export const directorRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.director.notes,
-    { title: 'Ghi chú từ Cha xứ', breadcrumb: [area, 'Ghi chú'] },
+    { title: 'Trao đổi với Cha xứ', breadcrumb: [area, 'Trao đổi'] },
     async () => (await import('@/features/notes')).DirectorNotesPage,
   ),
   pageRoute(

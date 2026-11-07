@@ -1,8 +1,8 @@
 import { errorMessage } from '@/lib/api/errors'
 
-/** Refusals of POST /api/director-notes (Harmonia-BE DirectorNoteService, CreateDirectorNoteRequestValidator). */
+/** Refusals of POST /api/director-notes and /messages (Harmonia-BE DirectorNoteService, validators). */
 const messages: Record<string, string> = {
-  DIRECTOR_NOTE_RECIPIENT_INVALID: 'Có Ca trưởng đã chọn không còn hoạt động. Danh sách người nhận đã được tải lại.',
+  DIRECTOR_NOTE_RECIPIENT_INVALID: 'Người nhận không còn hoạt động. Danh sách người nhận đã được tải lại.',
   DIRECTOR_NOTE_TARGET_REQUIRED: 'Chọn ngày hoặc sự kiện cho ghi chú.',
   LITURGICAL_EVENT_NOT_FOUND: 'Sự kiện đã chọn không còn tồn tại.',
 }
