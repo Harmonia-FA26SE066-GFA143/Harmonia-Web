@@ -1,7 +1,7 @@
-import { CustomerServiceOutlined, ExportOutlined, FileTextOutlined, FolderOpenOutlined, PlayCircleOutlined, ReadOutlined } from '@ant-design/icons'
+import { CustomerServiceOutlined, DownloadOutlined, ExportOutlined, FileTextOutlined, FolderOpenOutlined, PlayCircleOutlined, ReadOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Flex, Tag, Typography } from 'antd'
 import type { ComponentType } from 'react'
-import { isPlayableAudio, materialKindLabels, type SongMaterial } from '@/features/music-library'
+import { isPlayableAudio, materialKindLabels, rendersPlayback, type SongMaterial } from '@/features/music-library'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 
 const kindIcons: Record<SongMaterial['kind'], ComponentType> = {
@@ -60,7 +60,13 @@ export function MaterialPicker({
               {material.url && isPlayableAudio(material) && (
                 <audio controls preload="none" src={material.url} aria-label={`Nghe ${material.title}`} style={{ height: 36, maxWidth: '100%' }} />
               )}
-              {material.url && !isPlayableAudio(material) && (
+              {/* MIDI and MusicXML do not open in a browser tab; they are downloaded. */}
+              {material.url && rendersPlayback(material.fileName) && (
+                <Button type="link" icon={<DownloadOutlined />} href={material.url} aria-label={`Tải xuống ${material.title}`}>
+                  Tải xuống
+                </Button>
+              )}
+              {material.url && !isPlayableAudio(material) && !rendersPlayback(material.fileName) && (
                 <Button
                   type="link"
                   icon={<ExportOutlined />}

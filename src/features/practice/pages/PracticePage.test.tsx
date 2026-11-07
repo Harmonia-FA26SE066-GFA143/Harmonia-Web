@@ -282,6 +282,37 @@ describe('PracticePage', () => {
     expect(create.mock.calls[0][0]).toMatchObject({ choirId: 'c1', songId: 's1', materialIds: ['m1', 'm2'] })
   })
 
+  it('offers MIDI and MusicXML materials as downloads, not as a tab to open', async () => {
+    const material = (id: string, kind: 'sheetMusic' | 'interactiveScore' | 'rehearsalMaterial', title: string, fileName: string) => ({
+      id, kind, title, fileName, fileSizeBytes: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, lyricsText: null, createdAt: '2026-10-01T00:00:00Z',
+    })
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cecilia', isActive: true }])
+    vi.spyOn(songsApi, 'listSongs').mockResolvedValue({
+      items: [{ id: 's1', title: 'Con Bước Lên Bàn Thờ' }] as never,
+      pageNumber: 1,
+      pageSize: 100,
+      totalCount: 1,
+      totalPages: 1,
+    })
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([
+      material('m1', 'sheetMusic', 'Bản nhạc', 'con-buoc.pdf'),
+      material('m2', 'interactiveScore', 'Bản tương tác', 'con-buoc.mxl'),
+      material('m3', 'rehearsalMaterial', 'Nốt tập', 'tap.mid'),
+    ])
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
+    renderPractice()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bài hát (không bắt buộc)' }))
+    fireEvent.click(await screen.findByTitle('Con Bước Lên Bàn Thờ'))
+
+    for (const title of ['Bản tương tác', 'Nốt tập']) {
+      const download = await screen.findByRole('link', { name: `Tải xuống ${title}` })
+      expect(download).not.toHaveAttribute('target')
+    }
+    expect(screen.getByRole('link', { name: 'Mở Bản nhạc (tab mới)' })).toHaveAttribute('target', '_blank')
+  })
+
   it('shows the readiness of each member for the chosen upcoming event', async () => {
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
     vi.spyOn(practiceApi, 'listUpcomingEvents').mockResolvedValue([
