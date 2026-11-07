@@ -9,6 +9,7 @@ import {
   listSubmissions,
   listUpcomingEvents,
   reviewSubmission,
+  scoreSubmission,
   type SubmissionPage,
 } from '../api/practiceApi'
 import type { AssignmentValues, PracticeStatus, ReviewResult } from '../types'
@@ -78,6 +79,9 @@ export const useReviewSubmission = () =>
   usePracticeChange(({ id, result, comment }: { id: string; result: ReviewResult; comment?: string }) =>
     reviewSubmission(id, { result, comment }),
   )
+
+/** Nothing is stored, so nothing is reloaded. */
+export const useScoreSubmission = () => useMutation({ mutationFn: (id: string) => scoreSubmission(id) })
 
 export const useCommentSubmission = () =>
   usePracticeChange(({ id, comment, result }: { id: string; comment: string; result?: ReviewResult }) =>

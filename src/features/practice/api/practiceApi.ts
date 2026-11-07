@@ -9,6 +9,7 @@ import type {
   PracticeStatus,
   PracticeSubmission,
   ReviewResult,
+  SubmissionScore,
 } from '../types'
 
 // Practice for the Choir Director: `/api/practice-assignments` and `/api/practice-submissions` (Harmonia-BE): the
@@ -134,6 +135,14 @@ export async function reviewSubmission(id: string, review: { result: ReviewResul
     method: 'POST',
     body: JSON.stringify({ result: apiStatus[review.result], comment: review.comment }),
   })
+}
+
+/**
+ * Advisory automatic score of a submission against the assignment's MIDI reference, 0–100, pitch weighing 70% and
+ * rhythm 30%; computed on request and never stored (`POST …/{id}/score`, BE 5dc9d03).
+ */
+export function scoreSubmission(id: string): Promise<SubmissionScore> {
+  return apiRequest<SubmissionScore>(`/api/practice-submissions/${id}/score`, { method: 'POST' })
 }
 
 /** A later comment on a reviewed submission (FE-44); `result` changes it, on the member's newest attempt only. */
