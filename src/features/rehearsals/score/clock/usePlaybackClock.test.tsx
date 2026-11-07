@@ -8,8 +8,9 @@ class FakeAudio {
   static instances: FakeAudio[] = []
   static playError: Error | null = null
 
-  currentTime = 0
+  private time = 0
   duration = NaN
+  ended = false
   paused = true
   src = ''
   preload = ''
@@ -19,6 +20,15 @@ class FakeAudio {
   adds: Record<string, number> = {}
   removes: Record<string, number> = {}
   private handlers = new Map<string, Set<() => void>>()
+
+  get currentTime() {
+    return this.time
+  }
+
+  set currentTime(value: number) {
+    const max = Number.isFinite(this.duration) ? this.duration : Number.POSITIVE_INFINITY
+    this.time = Math.min(Math.max(value, 0), max)
+  }
 
   constructor() {
     FakeAudio.instances.push(this)
@@ -181,9 +191,17 @@ describe('usePlaybackClock', () => {
     FakeAudio.playError = new Error('NotAllowedError')
     const { result } = setup('a.wav')
     await act(async () => result.current.play())
-    expect(result.current.error).not.toBeNull()
+    expect(result.current.error).toBe('playback-failed')
     expect(result.current.playing).toBe(false)
     expect(raf.pending.size).toBe(0)
+  })
+
+  it('audio error sets the neutral playback-failed code', () => {
+    const { result } = setup('a.wav')
+
+    act(() => last().dispatch('error'))
+
+    expect(result.current.error).toBe('playback-failed')
   })
 
   it('seek clamps to [0, duration], notifies once immediately even while paused, and matches after seeked', () => {
@@ -209,6 +227,29 @@ describe('usePlaybackClock', () => {
     expect(seen).toEqual([0, 10, 4, 4])
   })
 
+  it('uses fallback duration for display and seek before metadata or when audio is shorter', () => {
+    const { result } = renderHook(() => usePlaybackClock('a.wav', 12))
+    expect(result.current.duration).toBe(12)
+
+    act(() => result.current.seek(10))
+    expect(last().currentTime).toBe(10)
+
+    act(() => {
+      last().duration = 8
+      last().dispatch('loadedmetadata')
+    })
+    expect(result.current.duration).toBe(12)
+    act(() => result.current.seek(11))
+    expect(last().currentTime).toBe(8)
+    expect(result.current.getTime()).toBe(8)
+
+    act(() => {
+      last().duration = 15
+      last().dispatch('durationchange')
+    })
+    expect(result.current.duration).toBe(15)
+  })
+
   it('ended sets playing false and stops the frame loop', async () => {
     const { result } = setup('a.wav')
     await act(async () => result.current.play())
@@ -218,6 +259,21 @@ describe('usePlaybackClock', () => {
     })
     expect(result.current.playing).toBe(false)
     expect(raf.pending.size).toBe(0)
+  })
+
+  it('play after ended restarts the owned audio from 0', async () => {
+    const { result } = setup('a.wav')
+    const audio = last()
+    audio.duration = 8
+    audio.currentTime = 8
+    audio.ended = true
+    audio.paused = true
+    audio.dispatch('ended')
+
+    await act(async () => result.current.play())
+
+    expect(audio.currentTime).toBe(0)
+    expect(result.current.playing).toBe(true)
   })
 
   it('reports duration from loadedmetadata and durationchange; NaN and Infinity become 0', () => {
