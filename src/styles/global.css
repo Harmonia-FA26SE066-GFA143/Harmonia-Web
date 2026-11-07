@@ -341,6 +341,13 @@ body {
   animation: hm-reveal-in var(--hm-dur-reveal) var(--hm-ease) var(--hm-delay, 0ms) backwards;
 }
 
+/* Reduced motion: visible at once, no stagger (the global rule shortens the duration but keeps the delay). */
+@media (prefers-reduced-motion: reduce) {
+  .hm-reveal.is-visible {
+    animation: none;
+  }
+}
+
 @keyframes hm-reveal-in {
   from {
     opacity: 0;
