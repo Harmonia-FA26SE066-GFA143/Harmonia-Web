@@ -11,11 +11,13 @@ import { ApiError } from '@/lib/api/errors'
 import { clock } from '@/shared/utils/media'
 import { ErrorState } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { usePlaybackClock } from '../score/clock/usePlaybackClock'
 
 const canvasHeight = 300
 const visibleSeconds = 12
 const pastSeconds = 3
 const pitchGutter = 48
+const midiPlaybackError = 'Không thể phát bản MIDI. Vui lòng tải lại bản phát rồi thử lại.'
 
 interface PianoRollGeometry {
   width: number
@@ -192,58 +194,33 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds }: Readonl
   audioUrl: string
   durationSeconds: number
 }>) {
-  const audio = useRef<HTMLAudioElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
-  const frame = useRef<number | undefined>(undefined)
   const time = useRef(0)
-  const [playing, setPlaying] = useState(false)
+  const displayedSecond = useRef(0)
   const [currentTime, setCurrentTime] = useState(0)
-  const [audioFailed, setAudioFailed] = useState(false)
-  const duration = Math.max(durationSeconds, score.durationSeconds)
+  const fallbackDuration = Math.max(durationSeconds, score.durationSeconds)
+  const { playing, duration, error, play, pause, seek: seekPlayback, getTime, subscribe } =
+    usePlaybackClock(audioUrl, fallbackDuration)
   const maxNoteDuration = useMemo(
     () => score.notes.reduce((longest, note) => Math.max(longest, note.duration), 0),
     [score.notes],
   )
 
   useEffect(() => {
-    const element = document.createElement('audio')
-    element.src = audioUrl
-    element.preload = 'metadata'
-    const onPlay = () => setPlaying(true)
-    const onPause = () => setPlaying(false)
-    const onError = () => setAudioFailed(true)
-    element.addEventListener('play', onPlay)
-    element.addEventListener('pause', onPause)
-    element.addEventListener('ended', onPause)
-    element.addEventListener('error', onError)
-    audio.current = element
-    return () => {
-      if (!element.paused) element.pause()
-      element.removeEventListener('play', onPlay)
-      element.removeEventListener('pause', onPause)
-      element.removeEventListener('ended', onPause)
-      element.removeEventListener('error', onError)
-      audio.current = null
-    }
-  }, [audioUrl])
-
-  useEffect(() => {
-    const tick = () => {
-      if (audio.current) {
-        time.current = audio.current.currentTime
-        setCurrentTime(time.current)
+    const element = canvas.current
+    if (!element) return
+    const drawAt = (seconds: number) => {
+      time.current = seconds
+      drawPianoRoll(element, score, seconds, maxNoteDuration)
+      const wholeSecond = Math.floor(seconds)
+      if (wholeSecond !== displayedSecond.current) {
+        displayedSecond.current = wholeSecond
+        setCurrentTime(seconds)
       }
-      frame.current = requestAnimationFrame(tick)
     }
-    if (playing) frame.current = requestAnimationFrame(tick)
-    return () => {
-      if (frame.current !== undefined) cancelAnimationFrame(frame.current)
-    }
-  }, [playing])
-
-  useEffect(() => {
-    if (canvas.current) drawPianoRoll(canvas.current, score, currentTime, maxNoteDuration)
-  }, [currentTime, maxNoteDuration, score])
+    drawAt(getTime())
+    return subscribe(drawAt)
+  }, [getTime, maxNoteDuration, score, subscribe])
 
   useEffect(() => {
     const element = canvas.current
@@ -254,24 +231,19 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds }: Readonl
   }, [maxNoteDuration, score])
 
   const toggle = async () => {
-    const element = audio.current
-    if (!element) return
-    if (!element.paused) {
-      element.pause()
+    if (playing) {
+      pause()
       return
     }
-    if (element.ended) element.currentTime = 0
-    try {
-      await element.play()
-    } catch {
-      setAudioFailed(true)
-    }
+    await play()
   }
 
   const seek = (seconds: number) => {
-    if (audio.current) audio.current.currentTime = seconds
-    time.current = seconds
-    setCurrentTime(seconds)
+    seekPlayback(seconds)
+    const actualTime = getTime()
+    time.current = actualTime
+    displayedSecond.current = Math.floor(actualTime)
+    setCurrentTime(actualTime)
   }
 
   return (
@@ -294,9 +266,9 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds }: Readonl
           style={{ display: 'block', width: '100%', height: canvasHeight }}
         />
       </figure>
-      {audioFailed && (
+      {error && (
         <Typography.Paragraph role="alert" style={{ color: colors.primaryHover, margin: `${spacing.sm}px 0 0` }}>
-          Không thể phát bản MIDI. Vui lòng tải lại bản phát rồi thử lại.
+          {midiPlaybackError}
         </Typography.Paragraph>
       )}
       <Flex align="center" gap={spacing.md} style={{ marginTop: spacing.md }}>
@@ -305,7 +277,7 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds }: Readonl
           shape="circle"
           icon={playing ? <PauseOutlined /> : <CaretRightFilled />}
           onClick={() => void toggle()}
-          disabled={audioFailed}
+          disabled={Boolean(error)}
           aria-label={`${playing ? 'Tạm dừng' : 'Phát'} ${title}`}
         />
         <Slider
