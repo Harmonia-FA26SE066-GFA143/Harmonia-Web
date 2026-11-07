@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { colors, spacing } from '@/styles/tokens'
 import { materialFileProblem } from '../songErrors'
 import {
-  isMidiFile,
   materialExtensions,
   materialKindLabels,
   playbackInstrumentLabels,
+  rendersPlayback,
   type PlaybackInstrument,
   type SongMaterial,
 } from '../types'
@@ -17,7 +17,7 @@ export interface ReplaceMaterialFileDrawerProps {
   /** The drawer is open while a material is set. */
   material?: SongMaterial
   saving?: boolean
-  /** `instrument` only for a MIDI file: the backend renders it again with that instrument. */
+  /** `instrument` only for a MIDI or MusicXML file: the backend renders it again with that instrument. */
   onSubmit: (file: File, resetProgress: boolean, instrument?: PlaybackInstrument) => void
   onCancel: () => void
 }
@@ -33,7 +33,8 @@ export function ReplaceMaterialFileDrawer({ material, saving = false, onSubmit, 
   // Set when "Thay file" is pressed before a file is picked; the button stays clickable and says what is missing.
   const [missing, setMissing] = useState(false)
   const problem = material && file ? materialFileProblem(material.kind, file) : undefined
-  const midi = Boolean(file && isMidiFile(file.name))
+  // MIDI or MusicXML: the backend renders playback again with the chosen instrument.
+  const playback = Boolean(file && rendersPlayback(file.name))
 
   const reset = () => {
     setFile(undefined)
@@ -52,7 +53,7 @@ export function ReplaceMaterialFileDrawer({ material, saving = false, onSubmit, 
       cancelButtonProps={{ disabled: saving }}
       onOk={() => {
         if (!file) setMissing(true)
-        else if (!problem) onSubmit(file, resetProgress, midi ? instrument : undefined)
+        else if (!problem) onSubmit(file, resetProgress, playback ? instrument : undefined)
       }}
       onCancel={() => {
         reset()
@@ -81,7 +82,7 @@ export function ReplaceMaterialFileDrawer({ material, saving = false, onSubmit, 
           {file && !problem && <Typography.Text>File mới: {file.name}</Typography.Text>}
           {problem && <Alert type="error" showIcon title={problem} />}
           {missing && <Alert type="error" showIcon title="Vui lòng chọn file mới." />}
-          {midi && !problem && (
+          {playback && !problem && (
             <Flex vertical gap={spacing.xs}>
               <Typography.Text id="replace-instrument">Nhạc cụ phát trên ứng dụng di động</Typography.Text>
               <Select

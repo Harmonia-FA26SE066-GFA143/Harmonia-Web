@@ -1,10 +1,10 @@
 import { Input, Select, Typography } from 'antd'
 import { useCatalogOptions } from '@/features/system-categories'
 import {
-  isMidiFile,
   materialKindLabels,
   maxLyricsTextLength,
   playbackInstrumentLabels,
+  rendersPlayback,
   type MaterialKind,
   type PlaybackInstrument,
   type SongMaterial,
@@ -45,7 +45,7 @@ const instrumentOptions = Object.entries(playbackInstrumentLabels).map(([value, 
 /**
  * Title (required by the backend) and optional target skill of a material, before it is uploaded or when it is
  * edited. The file and the kind cannot change: another file is a new material. Typed lyrics (BE d394db4) carry their
- * text here, both when added and when edited; a MIDI file asks which instrument the mobile app plays it with.
+ * text here, both when added and when edited; a MIDI or MusicXML file asks which instrument the mobile app plays it with.
  */
 export function UploadMaterialDrawer({ pending, material, saving = false, onSubmit, onCancel }: Readonly<UploadMaterialDrawerProps>) {
   const activeSkills = useCatalogOptions('skills')
@@ -57,7 +57,8 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
   const editing = pending ? undefined : material
   const typedLyrics = pending ? pending.kind === 'lyrics' && !pending.file : editing?.lyricsText != null
   const fileName = pending?.file?.name ?? editing?.fileName ?? undefined
-  const midi = Boolean(pending?.file && isMidiFile(pending.file.name))
+  // MIDI or MusicXML: the backend renders playback with the chosen instrument.
+  const playback = Boolean(pending?.file && rendersPlayback(pending.file.name))
 
   const title = () => {
     if (editing) return typedLyrics ? 'Sửa lời bài hát' : 'Sửa tài liệu'
@@ -89,7 +90,7 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
               : {
                   title: pending?.title ?? (pending?.file ? titleFrom(pending.file.name) : undefined),
                   lyricsText: pending?.lyricsText,
-                  instrument: midi ? 'piano' : undefined,
+                  instrument: playback ? 'piano' : undefined,
                 }
           }
           onFinish={(values) =>
@@ -97,7 +98,7 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
               title: values.title.trim(),
               targetSkillId: values.targetSkillId,
               lyricsText: typedLyrics ? values.lyricsText?.trim() : undefined,
-              instrument: midi ? values.instrument : undefined,
+              instrument: playback ? values.instrument : undefined,
             })
           }
         >
@@ -134,8 +135,8 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
           <Input.TextArea autoSize={{ minRows: 10, maxRows: 24 }} placeholder="Gõ hoặc dán lời bài hát, mỗi câu một dòng" />
         </Form.Item>
       )}
-      {midi && (
-        <Form.Item label="Nhạc cụ phát" name="instrument" extra="Ứng dụng di động phát tệp MIDI bằng nhạc cụ này. Trình duyệt không phát được MIDI, Web chỉ cho tải về.">
+      {playback && (
+        <Form.Item label="Nhạc cụ phát" name="instrument" extra="Máy chủ dựng bản phát bằng nhạc cụ này cho ứng dụng di động. Trình duyệt không mở được MIDI hay MusicXML, Web chỉ cho tải về.">
           <Select options={instrumentOptions} />
         </Form.Item>
       )}

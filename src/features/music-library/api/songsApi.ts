@@ -37,6 +37,7 @@ const toSong = ({ materialCounts, lastUsedDate, ...rest }: SongDto): Song => ({
     lyrics: materialCounts.Lyrics ?? 0,
     sampleAudio: materialCounts.SampleAudio ?? 0,
     rehearsalMaterial: materialCounts.RehearsalMaterial ?? 0,
+    interactiveScore: materialCounts.InteractiveScore ?? 0,
   },
   lastUsedDate: lastUsedDate ?? undefined,
 })
@@ -84,13 +85,14 @@ export async function updateSong(id: string, values: SongValues): Promise<Song> 
 // Materials: `/api/music-materials` (Harmonia-BE MusicMaterialsController). The backend sends and expects the
 // PascalCase `MaterialType` names; the Web kinds are mapped here and nowhere else.
 
-type ApiMaterialType = 'SheetMusic' | 'Lyrics' | 'SampleAudio' | 'RehearsalMaterial'
+type ApiMaterialType = 'SheetMusic' | 'Lyrics' | 'SampleAudio' | 'RehearsalMaterial' | 'InteractiveScore'
 
 const typeByKind: Record<MaterialKind, ApiMaterialType> = {
   sheetMusic: 'SheetMusic',
   lyrics: 'Lyrics',
   sampleAudio: 'SampleAudio',
   rehearsalMaterial: 'RehearsalMaterial',
+  interactiveScore: 'InteractiveScore',
 }
 
 const kindByType = Object.fromEntries(Object.entries(typeByKind).map(([kind, type]) => [type, kind])) as Record<

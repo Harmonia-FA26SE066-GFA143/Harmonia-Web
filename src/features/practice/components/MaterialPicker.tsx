@@ -1,4 +1,4 @@
-import { CustomerServiceOutlined, ExportOutlined, FileTextOutlined, FolderOpenOutlined, ReadOutlined } from '@ant-design/icons'
+import { CustomerServiceOutlined, ExportOutlined, FileTextOutlined, FolderOpenOutlined, PlayCircleOutlined, ReadOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Flex, Tag, Typography } from 'antd'
 import type { ComponentType } from 'react'
 import { isPlayableAudio, materialKindLabels, type SongMaterial } from '@/features/music-library'
@@ -9,6 +9,7 @@ const kindIcons: Record<SongMaterial['kind'], ComponentType> = {
   lyrics: FileTextOutlined,
   sampleAudio: CustomerServiceOutlined,
   rehearsalMaterial: FolderOpenOutlined,
+  interactiveScore: PlayCircleOutlined,
 }
 
 /**

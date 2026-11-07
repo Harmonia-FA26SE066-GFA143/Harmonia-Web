@@ -243,7 +243,7 @@ describe('MusicLibraryPage', () => {
       lyricist: null,
       musicalKey: 'C',
       tempo: '4/4',
-      materialCounts: { sheetMusic: 1, lyrics: 1, sampleAudio: 0, rehearsalMaterial: 0 },
+      materialCounts: { sheetMusic: 1, lyrics: 1, sampleAudio: 0, rehearsalMaterial: 0, interactiveScore: 0 },
     }
     vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page([longTitleSong]))
     renderPage(<MusicLibraryPage />, '/director/library')

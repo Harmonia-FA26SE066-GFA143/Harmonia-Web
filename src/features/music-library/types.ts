@@ -1,31 +1,38 @@
 import { fileExtension } from '@/shared/utils/media'
 
-/** Material kinds named in Report 1 FE-08 and FE-28 (backend `MaterialType`, mapped in songsApi). */
-export type MaterialKind = 'sheetMusic' | 'lyrics' | 'sampleAudio' | 'rehearsalMaterial'
+/**
+ * Material kinds named in Report 1 FE-08 and FE-28, plus the interactive score (backend `MaterialType`, mapped in
+ * songsApi; `InteractiveScore` since BE d550665, tbd-backlog B47).
+ */
+export type MaterialKind = 'sheetMusic' | 'lyrics' | 'sampleAudio' | 'rehearsalMaterial' | 'interactiveScore'
 
-export const materialKinds: MaterialKind[] = ['sheetMusic', 'lyrics', 'sampleAudio', 'rehearsalMaterial']
+export const materialKinds: MaterialKind[] = ['sheetMusic', 'lyrics', 'sampleAudio', 'rehearsalMaterial', 'interactiveScore']
 
 export const materialKindLabels: Record<MaterialKind, string> = {
   sheetMusic: 'Bản nhạc',
   lyrics: 'Lời bài hát',
   sampleAudio: 'Audio mẫu',
   rehearsalMaterial: 'Tài liệu tập luyện',
+  interactiveScore: 'Bản nhạc tương tác',
 }
 
 const documentExtensions = ['.pdf', '.png', '.jpg']
 const audioExtensions = ['.mp3', '.m4a', '.wav']
 // The backend renders MIDI for the mobile piano roll; browsers cannot play it, so the Web only offers the download.
 const midiExtensions = ['.mid', '.midi']
+// MusicXML, plain or zipped: the backend converts it to MIDI and renders its playback the same way (BE d550665).
+const scoreExtensions = ['.musicxml', '.mxl']
 
 /**
- * Accepted file extensions per kind (Harmonia-BE MusicMaterialService, BE d394db4); the backend checks them again.
- * Lyrics are a Word file or typed text; pdf/png/jpg lyrics uploaded earlier stay readable but cannot be uploaded.
+ * Accepted file extensions per kind (Harmonia-BE MusicMaterialService, BE d394db4, d550665); the backend checks them
+ * again. Lyrics are a Word file or typed text; pdf/png/jpg lyrics uploaded earlier stay readable but cannot be uploaded.
  */
 export const materialExtensions: Record<MaterialKind, string[]> = {
   sheetMusic: documentExtensions,
   lyrics: ['.docx'],
   sampleAudio: [...audioExtensions, ...midiExtensions],
   rehearsalMaterial: [...documentExtensions, ...audioExtensions, ...midiExtensions],
+  interactiveScore: scoreExtensions,
 }
 
 /** 20 MiB, the backend limit (MusicMaterialService.MaxFileSizeBytes). */
@@ -37,6 +44,11 @@ export const maxLyricsTextLength = 20_000
 export { fileExtension }
 
 export const isMidiFile = (fileName: string | null) => fileName !== null && midiExtensions.includes(fileExtension(fileName))
+
+export const isScoreFile = (fileName: string | null) => fileName !== null && scoreExtensions.includes(fileExtension(fileName))
+
+/** A file the backend renders into playback with a chosen instrument (MIDI, or a MusicXML score). */
+export const rendersPlayback = (fileName: string | null) => isMidiFile(fileName) || isScoreFile(fileName)
 
 /** Audio the browser plays; a MIDI file is downloaded instead. */
 export const isPlayableAudio = ({ fileName }: Pick<SongMaterial, 'fileName'>) =>
