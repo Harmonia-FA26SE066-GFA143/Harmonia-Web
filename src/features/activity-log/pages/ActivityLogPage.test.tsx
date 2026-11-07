@@ -82,4 +82,29 @@ describe('ActivityLogPage', () => {
     expect(within(dialog).queryByText('2026-10-11T02:30:00Z')).toBeNull()
     expect(within(dialog).getAllByText(/11\/10\/2026 \d{2}:30/).length).toBeGreaterThan(0)
   })
+
+  it('names the interactive score and its audited fields in words', async () => {
+    vi.spyOn(activityLogApi, 'listActivityLog').mockResolvedValue(
+      page([
+        {
+          id: 'l3',
+          createdAt: '2026-10-12T02:00:00Z',
+          action: 'Updated',
+          entityType: 'MusicMaterial',
+          entityId: 'mm-1',
+          oldValue: '{"MaterialType":"SheetMusic","ScoreRevision":1}',
+          newValue: '{"MaterialType":"InteractiveScore","ScoreRevision":2,"ScoreSha256":"ab","PlaybackAudioSha256":"cd"}',
+        },
+      ]),
+    )
+    renderLog()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Xem chi tiết/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Bản nhạc tương tác')).toBeInTheDocument()
+    expect(within(dialog).getByText('Phiên bản bản nhạc')).toBeInTheDocument()
+    expect(within(dialog).getByText('Mã băm bản nhạc (SHA-256)')).toBeInTheDocument()
+    expect(within(dialog).getByText('Mã băm audio phát (SHA-256)')).toBeInTheDocument()
+    expect(within(dialog).queryByText('ScoreSha256')).toBeNull()
+  })
 })

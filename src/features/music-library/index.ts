@@ -9,6 +9,7 @@ export {
   isPlayableAudio,
   materialKindLabels,
   playbackInstrumentLabels,
+  rendersPlayback,
   type MaterialPlaybackBundle,
   type MidiPlaybackNote,
   type MidiPlaybackNotes,
