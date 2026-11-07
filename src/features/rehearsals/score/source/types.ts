@@ -11,6 +11,10 @@ export interface ScorePackageSource {
   load(signal?: AbortSignal): Promise<ScorePackage>
 }
 
+/**
+ * Five codes; callers handle all of them. `unavailable` = the dev fixture source cannot run (flag off or a production
+ * build).
+ */
 export type ScoreSourceErrorCode = 'invalid-type' | 'too-large' | 'read-failed' | 'aborted' | 'unavailable'
 
 /** The only error a source throws. `message` is Vietnamese UI copy; the underlying error stays in `cause`. */
