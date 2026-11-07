@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getParticipation, sendParticipationRequests } from '../api/participationApi'
+import { confirmAllParticipation, getParticipation, sendParticipationRequests } from '../api/participationApi'
 
 const participationKey = (programId: string) => ['participation', programId] as const
 
@@ -17,6 +17,14 @@ export function useSendParticipationRequests(programId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (memberIds: string[]) => sendParticipationRequests(programId, memberIds),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: participationKey(programId) }),
+  })
+}
+
+export function useConfirmAllParticipation(programId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => confirmAllParticipation(programId),
     onSettled: () => queryClient.invalidateQueries({ queryKey: participationKey(programId) }),
   })
 }

@@ -1,5 +1,5 @@
-import { ReloadOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
-import { Alert, App, Avatar, Button, Card, Flex, Input, Segmented, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { CheckOutlined, ReloadOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
+import { Alert, App, Avatar, Button, Card, Flex, Input, Popconfirm, Segmented, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -11,7 +11,7 @@ import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { ResponseHeader } from '../components/ResponseHeader'
 import { SendRequestDrawer } from '../components/SendRequestDrawer'
-import { useParticipation, useSendParticipationRequests } from '../hooks/useParticipation'
+import { useConfirmAllParticipation, useParticipation, useSendParticipationRequests } from '../hooks/useParticipation'
 import { participationErrorMessage } from '../participationErrors'
 import { participationResponseLabels, type ParticipationRequest, type ParticipationResponse } from '../types'
 
@@ -85,6 +85,7 @@ export function ParticipationPage() {
   const isPast = program !== undefined && program.date < today
   const participation = useParticipation(program?.id)
   const send = useSendParticipationRequests(program?.id ?? '')
+  const confirmAll = useConfirmAllParticipation(program?.id ?? '')
   const [picking, setPicking] = useState(false)
   const [filter, setFilter] = useState<ResponseFilter>('all')
   const [search, setSearch] = useState('')
@@ -115,6 +116,12 @@ export function ParticipationPage() {
         setPicking(false)
       },
       onError: (error) => message.error(participationErrorMessage(error, 'Không thể gửi yêu cầu. Vui lòng thử lại.')),
+    })
+
+  const handleConfirmAll = () =>
+    confirmAll.mutate(undefined, {
+      onSuccess: () => message.success('Đã xác nhận hộ các thành viên chưa phản hồi.'),
+      onError: (error) => message.error(participationErrorMessage(error, 'Không thể xác nhận hộ. Vui lòng thử lại.')),
     })
 
   const sendButton = (
@@ -204,6 +211,19 @@ export function ParticipationPage() {
                       <Button icon={<SendOutlined />} onClick={() => setPicking(true)} disabled={isPast || send.isPending}>
                         Gửi thêm cho thành viên chưa được mời
                       </Button>
+                      {counts.none > 0 && (
+                        <Popconfirm
+                          title={`Xác nhận hộ ${counts.none} thành viên chưa phản hồi?`}
+                          description="Phản hồi Không tham gia và Chưa chắc được giữ nguyên. Thành viên không nhận thông báo."
+                          okText="Xác nhận hộ"
+                          cancelText="Hủy"
+                          onConfirm={handleConfirmAll}
+                        >
+                          <Button icon={<CheckOutlined />} loading={confirmAll.isPending}>
+                            Xác nhận hộ người chưa phản hồi
+                          </Button>
+                        </Popconfirm>
+                      )}
                     </Flex>
                   </Flex>
                   <Segmented<ResponseFilter>
