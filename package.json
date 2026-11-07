@@ -25,6 +25,7 @@
     "react-dom": "^19.2.8",
     "react-pdf": "^11.0.0",
     "react-router": "^8.4.0",
+    "verovio": "6.4.1",
     "wavesurfer.js": "7.12.12"
   },
   "devDependencies": {
