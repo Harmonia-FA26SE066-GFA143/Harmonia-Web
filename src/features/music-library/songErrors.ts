@@ -30,12 +30,17 @@ export function materialFileProblem(kind: MaterialKind, file: File): string | un
   return undefined
 }
 
-/** MIDI files the backend cannot render for the mobile player (422, BE d394db4); also on replacing a file. */
+/**
+ * MIDI and MusicXML files the backend cannot render for the mobile player (422, BE d394db4, d550665); also on
+ * replacing a file. A score is converted to MIDI first, so the MIDI_* codes can also answer a MusicXML upload.
+ */
 const midiMessages: Record<string, string> = {
   MIDI_INVALID_FILE: 'Tệp MIDI không hợp lệ. Vui lòng chọn tệp khác.',
   MIDI_FORMAT_UNSUPPORTED: 'Định dạng MIDI này chưa được hỗ trợ. Hãy xuất lại tệp ở định dạng MIDI 0 hoặc 1.',
-  MIDI_NO_PLAYABLE_NOTES: 'Tệp MIDI không có nốt nào để phát (chỉ có bộ gõ hoặc trống).',
-  MIDI_LIMIT_EXCEEDED: 'Tệp MIDI quá dài hoặc có quá nhiều nốt.',
+  MIDI_NO_PLAYABLE_NOTES: 'Tệp không có nốt nào để phát (chỉ có bộ gõ hoặc trống).',
+  MIDI_LIMIT_EXCEEDED: 'Tệp quá dài hoặc có quá nhiều nốt.',
+  MATERIAL_SCORE_INVALID: 'Tệp MusicXML bị hỏng hoặc không đọc được. Hãy xuất lại tệp .musicxml hoặc .mxl.',
+  MATERIAL_SCORE_UNSUPPORTED: 'Bản nhạc MusicXML này chưa phát được (không có bè hoặc không có nốt có cao độ). Hãy xuất lại theo dạng từng bè.',
 }
 
 /** POST /api/music-materials (Harmonia-BE doc/api.md, Music materials). */

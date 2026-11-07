@@ -16,6 +16,16 @@ export const practiceStatusLabels: Record<PracticeStatus, string> = {
 /** Manual review result (FE-43, LI-03, LI-05): never automatic. */
 export type ReviewResult = 'passed' | 'needsRevision'
 
+/** `PracticeAudioScoreResponse`: advisory, 0–100; `trackName` is the MIDI voice part the recording matched best. */
+export interface SubmissionScore {
+  score: number
+  pitchScore: number
+  rhythmScore: number
+  /** Share of the reference melody the recording reached; not part of `score`. */
+  coveragePercent: number
+  trackName: string
+}
+
 /** `AssignmentScope` of Harmonia-BE: the whole choir, members with given skills, or chosen members. */
 export type AssignmentScope = 'all' | 'skillGroup' | 'individual'
 

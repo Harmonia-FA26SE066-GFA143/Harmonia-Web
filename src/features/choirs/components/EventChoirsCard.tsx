@@ -1,10 +1,12 @@
 import { EditOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Card, Flex, Select, Tag, Typography } from 'antd'
+import { Alert, App, Button, Card, Flex, Input, Select, Tag, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { CardTitle, ErrorState, Form, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { useChoirs, useEventChoirs, useUpdateEventChoirs } from '../hooks/useChoirs'
+import type { EventChoir } from '../types'
+import { SubstituteDirectorModal } from './SubstituteDirectorModal'
 
 export interface EventChoirsCardProps {
   eventId: string
@@ -12,11 +14,14 @@ export interface EventChoirsCardProps {
   canEdit?: boolean
   /** The backend refuses changes once the event date has passed (LITURGICAL_EVENT_ALREADY_PASSED). */
   locked?: boolean
+  /** Removing a choir from a published event needs a reason (CHOIR_CHANGE_REASON_REQUIRED, BE ff72860). */
+  published?: boolean
 }
 
 interface Draft {
   choirIds: string[]
   leadChoirId?: string
+  reason?: string
 }
 
 const muted = { color: colors.textMuted }
@@ -27,11 +32,12 @@ const muted = { color: colors.textMuted }
  * saves the whole set at once, choosing among the parish's active choirs (`GET /api/choirs`, open to the Priest since
  * BE c091c07); an inactive choir may stay on the event but cannot be added (CHOIR_INACTIVE).
  */
-export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Readonly<EventChoirsCardProps>) {
+export function EventChoirsCard({ eventId, canEdit = false, locked = false, published = false }: Readonly<EventChoirsCardProps>) {
   const { message } = App.useApp()
   const serving = useEventChoirs(eventId)
   const update = useUpdateEventChoirs(eventId)
   const [draft, setDraft] = useState<Draft>()
+  const [substituteFor, setSubstituteFor] = useState<EventChoir>()
   const parish = useChoirs(canEdit && Boolean(draft))
   const editButton = useRef<HTMLButtonElement>(null)
   const wasEditing = useRef(false)
@@ -49,12 +55,17 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Re
     draft.choirIds.length === current.length &&
     draft.choirIds.every((id) => current.some((choir) => choir.choirId === id))
   const needsLead = draft !== undefined && draft.choirIds.length > 0 && !draft.leadChoirId
+  // At least one choir always serves (BE 678fc34: LITURGICAL_EVENT_CHOIR_REQUIRED).
+  const empty = draft !== undefined && draft.choirIds.length === 0
+  const removing = draft !== undefined && current.some((choir) => !draft.choirIds.includes(choir.choirId))
+  const reason = draft?.reason?.trim() || undefined
+  const needsReason = published && removing && !reason
+  const blocked = unchanged || needsLead || empty || needsReason
 
   const save = () =>
     draft &&
-    !unchanged &&
-    !needsLead &&
-    update.mutate(draft, {
+    !blocked &&
+    update.mutate({ choirIds: draft.choirIds, leadChoirId: draft.leadChoirId, reason }, {
       onSuccess: () => {
         message.success('Đã lưu ca đoàn phục vụ.')
         setDraft(undefined)
@@ -64,6 +75,7 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Re
 
   const choose = (choirIds: string[]) =>
     setDraft((previous) => ({
+      reason: previous?.reason,
       choirIds,
       leadChoirId: previous?.leadChoirId && choirIds.includes(previous.leadChoirId) ? previous.leadChoirId : choirIds.length === 1 ? choirIds[0] : undefined,
     }))
@@ -96,13 +108,24 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Re
       {serving.data !== undefined && !draft && (
         <Flex vertical gap={spacing.sm}>
           {current.length > 0 ? (
-            <Flex wrap gap={spacing.xs}>
+            <Flex vertical gap={spacing.xs}>
               {current.map((choir) => (
-                <Tag key={choir.choirId} color={choir.isLead ? 'gold' : undefined} style={{ marginInlineEnd: 0 }}>
-                  {choir.name}
-                  {choir.isLead && ' · Phụ trách'}
-                  {choir.directorName && ` (${choir.directorName})`}
-                </Tag>
+                <Flex key={choir.choirId} align="center" gap={spacing.sm} wrap>
+                  <Tag color={choir.isLead ? 'gold' : undefined} style={{ marginInlineEnd: 0 }}>
+                    {choir.name}
+                    {choir.isLead && ' · Phụ trách'}
+                    {choir.directorName && ` (${choir.directorName})`}
+                  </Tag>
+                  {choir.substituteDirectorName && (
+                    <Typography.Text>Ca trưởng thay thế: {choir.substituteDirectorName}</Typography.Text>
+                  )}
+                  {choir.reason && <Typography.Text style={muted}>Lý do: {choir.reason}</Typography.Text>}
+                  {canEdit && !locked && (
+                    <Button size="small" type="link" onClick={() => setSubstituteFor(choir)} aria-label={`Ca trưởng thay thế cho ${choir.name}`}>
+                      {choir.substituteDirectorId ? 'Đổi ca trưởng thay thế' : 'Đặt ca trưởng thay thế'}
+                    </Button>
+                  )}
+                </Flex>
               ))}
             </Flex>
           ) : (
@@ -152,17 +175,38 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false }: Re
               </Form.Item>
             )}
           </Form>
-          {draft.choirIds.length === 0 && current.length > 0 && <Alert type="warning" showIcon title="Lưu sẽ gỡ mọi ca đoàn khỏi chương trình." />}
+          {empty && <Alert type="warning" showIcon title="Chương trình cần ít nhất một ca đoàn phục vụ." />}
+          {removing && !empty && (
+            <Form layout="vertical" component="div">
+              <Form.Item
+                label="Lý do gỡ ca đoàn"
+                required={published}
+                validateStatus={needsReason ? 'warning' : undefined}
+                help="Gửi kèm thông báo. Ca viên không còn thuộc ca đoàn nào phục vụ sẽ mất lời mời và phân công của chương trình."
+                style={{ marginBottom: spacing.sm }}
+              >
+                <Input.TextArea
+                  aria-label="Lý do gỡ ca đoàn"
+                  rows={2}
+                  maxLength={500}
+                  showCount
+                  value={draft.reason}
+                  onChange={(event) => setDraft({ ...draft, reason: event.target.value })}
+                />
+              </Form.Item>
+            </Form>
+          )}
           <Flex gap={spacing.sm} justify="flex-end">
             <Button onClick={() => setDraft(undefined)} disabled={update.isPending}>
               Hủy
             </Button>
-            <Button type="primary" loading={update.isPending} disabled={unchanged || needsLead} onClick={save}>
+            <Button type="primary" loading={update.isPending} disabled={blocked} onClick={save}>
               Lưu
             </Button>
           </Flex>
         </Flex>
       )}
+      <SubstituteDirectorModal eventId={eventId} choir={substituteFor} onClose={() => setSubstituteFor(undefined)} />
     </Card>
   )
 }

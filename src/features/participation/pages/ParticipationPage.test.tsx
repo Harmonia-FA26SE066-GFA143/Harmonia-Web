@@ -122,6 +122,60 @@ describe('ParticipationPage', () => {
     expect(await screen.findByText(/đã được gửi yêu cầu cho chương trình này/)).toBeInTheDocument()
   })
 
+  it('offers to confirm on the members’ behalf only while someone has not answered', async () => {
+    vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([
+      asked('m1', 'Maria Nguyễn Thu Hướng', { response: 'confirmed', respondedAt: requestedAt }),
+      asked('m2', 'Simon Phan Văn Đức', { response: 'declined', respondedAt: requestedAt }),
+    ])
+    renderParticipation('/director/participation?programId=p2')
+
+    expect(await screen.findByText('Maria Nguyễn Thu Hướng')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Xác nhận hộ/ })).toBeNull()
+  })
+
+  it('confirms the unanswered requests only after asking, then reloads the list', async () => {
+    const get = vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([
+      asked('m1', 'Maria Nguyễn Thu Hướng', { response: 'unsure', respondedAt: requestedAt }),
+      asked('m3', 'Anna Đặng Thị Mai'),
+    ])
+    const confirmAll = vi.spyOn(participationApi, 'confirmAllParticipation').mockResolvedValue()
+    renderParticipation('/director/participation?programId=p2')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Xác nhận hộ người chưa phản hồi/ }))
+    expect(await screen.findByText('Xác nhận hộ 1 thành viên chưa phản hồi?')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Hủy' }))
+    expect(confirmAll).not.toHaveBeenCalled()
+
+    const loads = get.mock.calls.length
+    fireEvent.click(screen.getByRole('button', { name: /Xác nhận hộ người chưa phản hồi/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Xác nhận hộ' }))
+
+    await waitFor(() => expect(confirmAll).toHaveBeenCalledWith('p2'))
+    expect(await screen.findByText('Đã xác nhận hộ các thành viên chưa phản hồi.')).toBeInTheDocument()
+    await waitFor(() => expect(get.mock.calls.length).toBeGreaterThan(loads))
+    // The mutation runs asynchronously, so the cancelled attempt is counted once everything has settled.
+    expect(confirmAll).toHaveBeenCalledTimes(1)
+  })
+
+  it('explains a refused confirmation and lets the director try again', async () => {
+    vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([asked('m3', 'Anna Đặng Thị Mai')])
+    const confirmAll = vi
+      .spyOn(participationApi, 'confirmAllParticipation')
+      .mockRejectedValueOnce(new ApiError(403, { code: 'CHOIR_NOT_LEAD' }))
+      .mockResolvedValueOnce()
+    renderParticipation('/director/participation?programId=p2')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Xác nhận hộ người chưa phản hồi/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Xác nhận hộ' }))
+    expect(await screen.findByText('Chỉ ca trưởng của ca đoàn phụ trách chương trình mới làm được việc này.')).toBeInTheDocument()
+
+    const retry = screen.getByRole('button', { name: /Xác nhận hộ người chưa phản hồi/ })
+    await waitFor(() => expect(retry).toBeEnabled())
+    fireEvent.click(retry)
+    fireEvent.click(await screen.findByRole('button', { name: 'Xác nhận hộ' }))
+    await waitFor(() => expect(confirmAll).toHaveBeenCalledTimes(2))
+  })
+
   it('does not send more for a program that is already past', async () => {
     vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([asked('m3', 'Anna Đặng Thị Mai')])
     renderParticipation('/director/participation?programId=p1')

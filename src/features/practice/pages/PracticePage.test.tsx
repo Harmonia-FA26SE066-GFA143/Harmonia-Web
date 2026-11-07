@@ -108,6 +108,84 @@ describe('PracticePage', () => {
     )
   })
 
+  it('scores a submission automatically on request, for reference only', async () => {
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission()]))
+    vi.spyOn(practiceApi, 'getSubmission').mockResolvedValue(submission())
+    const score = vi
+      .spyOn(practiceApi, 'scoreSubmission')
+      .mockResolvedValue({ score: 82, pitchScore: 85, rhythmScore: 75, coveragePercent: 90, trackName: 'Tenor' })
+    renderPractice()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
+    const dialog = await screen.findByRole('dialog')
+    // Nothing is scored until asked: the server analyses the audio each time.
+    expect(score).not.toHaveBeenCalled()
+    fireEvent.click(await within(dialog).findByRole('button', { name: 'Chấm tự động' }))
+
+    await waitFor(() => expect(score).toHaveBeenCalledWith('sub-1'))
+    expect(await within(dialog).findByText('82/100')).toBeInTheDocument()
+    expect(within(dialog).getByText(/cao độ 85 · nhịp 75 · hát được 90% giai điệu · bè Tenor/)).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Chấm lại' })).toBeInTheDocument()
+  })
+
+  it('explains why a recording cannot be scored, and scores again on request', async () => {
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission()]))
+    vi.spyOn(practiceApi, 'getSubmission').mockResolvedValue(submission())
+    const score = vi
+      .spyOn(practiceApi, 'scoreSubmission')
+      .mockRejectedValueOnce(new ApiError(422, { code: 'PRACTICE_AUDIO_UNREADABLE' }))
+      .mockRejectedValueOnce(new ApiError(422, { code: 'PRACTICE_REFERENCE_MISSING' }))
+      .mockResolvedValueOnce({ score: 64, pitchScore: 60, rhythmScore: 73, coveragePercent: 70, trackName: 'Bass' })
+    renderPractice()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
+    const dialog = await screen.findByRole('dialog')
+    const scoreButton = await within(dialog).findByRole('button', { name: 'Chấm tự động' })
+
+    fireEvent.click(scoreButton)
+    expect(
+      await within(dialog).findByText('Không chấm tự động được: bản thu không đọc được hoặc có quá ít tiếng hát.'),
+    ).toBeInTheDocument()
+
+    await waitFor(() => expect(scoreButton).toBeEnabled())
+    fireEvent.click(scoreButton)
+    expect(await within(dialog).findByText('Không chấm tự động được: bài tập chưa gắn bản mẫu MIDI.')).toBeInTheDocument()
+    expect(within(dialog).queryByText(/bản thu không đọc được/)).toBeNull()
+
+    await waitFor(() => expect(scoreButton).toBeEnabled())
+    fireEvent.click(scoreButton)
+    expect(await within(dialog).findByText('64/100')).toBeInTheDocument()
+    expect(within(dialog).queryByText(/Không chấm tự động được/)).toBeNull()
+    expect(score).toHaveBeenCalledTimes(3)
+  })
+
+  it('does not carry a score over to another submission', async () => {
+    const other = submission({ id: 'sub-2', memberName: 'Anna Đặng Thị Mai' })
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission(), other]))
+    vi.spyOn(practiceApi, 'getSubmission').mockImplementation(async (id) => (id === 'sub-2' ? other : submission()))
+    vi.spyOn(practiceApi, 'scoreSubmission').mockResolvedValue({
+      score: 82,
+      pitchScore: 85,
+      rhythmScore: 75,
+      coveragePercent: 90,
+      trackName: 'Tenor',
+    })
+    renderPractice()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
+    let dialog = await screen.findByRole('dialog')
+    fireEvent.click(await within(dialog).findByRole('button', { name: 'Chấm tự động' }))
+    expect(await within(dialog).findByText('82/100')).toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Hủy' }))
+    await waitFor(() => expect(screen.queryByText('82/100')).toBeNull())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cần chỉnh sửa bản thu của Anna Đặng Thị Mai' }))
+    dialog = await screen.findByRole('dialog')
+    expect(await within(dialog).findByLabelText('Bản thu của Anna Đặng Thị Mai')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Chấm tự động' })).toBeInTheDocument()
+    expect(within(dialog).queryByText(/\/100$/)).toBeNull()
+  })
+
   it('does not send the moment mark alone as the comment when "Đạt" is chosen instead', async () => {
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission()]))
     vi.spyOn(practiceApi, 'getSubmission').mockResolvedValue(submission())
@@ -202,6 +280,37 @@ describe('PracticePage', () => {
 
     await waitFor(() => expect(create).toHaveBeenCalled())
     expect(create.mock.calls[0][0]).toMatchObject({ choirId: 'c1', songId: 's1', materialIds: ['m1', 'm2'] })
+  })
+
+  it('offers MIDI and MusicXML materials as downloads, not as a tab to open', async () => {
+    const material = (id: string, kind: 'sheetMusic' | 'interactiveScore' | 'rehearsalMaterial', title: string, fileName: string) => ({
+      id, kind, title, fileName, fileSizeBytes: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, lyricsText: null, createdAt: '2026-10-01T00:00:00Z',
+    })
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cecilia', isActive: true }])
+    vi.spyOn(songsApi, 'listSongs').mockResolvedValue({
+      items: [{ id: 's1', title: 'Con Bước Lên Bàn Thờ' }] as never,
+      pageNumber: 1,
+      pageSize: 100,
+      totalCount: 1,
+      totalPages: 1,
+    })
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([
+      material('m1', 'sheetMusic', 'Bản nhạc', 'con-buoc.pdf'),
+      material('m2', 'interactiveScore', 'Bản tương tác', 'con-buoc.mxl'),
+      material('m3', 'rehearsalMaterial', 'Nốt tập', 'tap.mid'),
+    ])
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
+    renderPractice()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bài hát (không bắt buộc)' }))
+    fireEvent.click(await screen.findByTitle('Con Bước Lên Bàn Thờ'))
+
+    for (const title of ['Bản tương tác', 'Nốt tập']) {
+      const download = await screen.findByRole('link', { name: `Tải xuống ${title}` })
+      expect(download).not.toHaveAttribute('target')
+    }
+    expect(screen.getByRole('link', { name: 'Mở Bản nhạc (tab mới)' })).toHaveAttribute('target', '_blank')
   })
 
   it('shows the readiness of each member for the chosen upcoming event', async () => {

@@ -103,7 +103,8 @@ describe('SongDetailPage', () => {
 
     // Each file link names its material and says it opens a new tab; the accepted files are told before picking one.
     expect(screen.getByRole('link', { name: 'Xem/Tải xuống Bản nhạc SATB (mở tab mới)' })).toHaveAttribute('target', '_blank')
-    expect(screen.getAllByText(/tối đa 20 MB/)).toHaveLength(4)
+    // One hint per kind, the interactive score included (BE d550665).
+    expect(screen.getAllByText(/tối đa 20 MB/)).toHaveLength(5)
   })
 
   it('keeps the song visible when its materials cannot be loaded', async () => {
@@ -289,6 +290,112 @@ describe('SongDetailPage', () => {
 
     expect(await screen.findByText('Tệp vượt quá 20 MB. Vui lòng chọn tệp nhỏ hơn.')).toBeInTheDocument()
     expect(within(dialog).getByRole('textbox', { name: 'Tiêu đề' })).toHaveValue('ban-nhac')
+  })
+
+  it('uploads a MusicXML score as an interactive score, with the instrument its playback is rendered with', async () => {
+    withSong()
+    const upload = vi
+      .spyOn(songsApi, 'uploadMaterial')
+      .mockResolvedValue(material({ id: 'm4', kind: 'interactiveScore', title: 'Bản tương tác', fileName: 'satb.mxl' }))
+    renderDetail('materials')
+
+    const score = (await screen.findByRole('heading', { level: 2, name: 'Bản nhạc tương tác' })).closest('section')!
+    const input = score.querySelector('input[type="file"]') as HTMLInputElement
+    expect(input.accept).toBe('.musicxml,.mxl')
+    const file = new File(['<score-partwise/>'], 'satb.mxl', { type: 'application/vnd.recordare.musicxml' })
+    fireEvent.change(input, { target: { files: [file] } })
+
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Nhạc cụ phát')).toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tải lên' }))
+
+    await waitFor(() =>
+      expect(upload).toHaveBeenCalledWith('s1', { kind: 'interactiveScore', file, title: 'satb', targetSkillId: undefined, instrument: 'piano' }),
+    )
+  })
+
+  it('explains a MusicXML score the backend cannot play', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'uploadMaterial').mockRejectedValue(new ApiError(422, { code: 'MATERIAL_SCORE_UNSUPPORTED' }))
+    renderDetail('materials')
+
+    const score = (await screen.findByRole('heading', { level: 2, name: 'Bản nhạc tương tác' })).closest('section')!
+    const input = score.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [new File(['<x/>'], 'satb.musicxml', { type: 'application/xml' })] } })
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Tải lên' }))
+
+    expect(await screen.findByText(/Bản nhạc MusicXML này chưa phát được/)).toBeInTheDocument()
+  })
+
+  it('explains a MusicXML score that is damaged', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'uploadMaterial').mockRejectedValue(new ApiError(422, { code: 'MATERIAL_SCORE_INVALID' }))
+    renderDetail('materials')
+
+    const score = (await screen.findByRole('heading', { level: 2, name: 'Bản nhạc tương tác' })).closest('section')!
+    const input = score.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [new File(['<x/>'], 'satb.mxl')] } })
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Tải lên' }))
+
+    expect(await screen.findByText(/Tệp MusicXML bị hỏng/)).toBeInTheDocument()
+  })
+
+  it('downloads MIDI and MusicXML files instead of opening them in a tab', async () => {
+    vi.spyOn(songsApi, 'getSong').mockResolvedValue(song)
+    vi.spyOn(songsApi, 'getSongClassification').mockResolvedValue(classification)
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([
+      ...materials,
+      material({ id: 'm4', kind: 'interactiveScore', title: 'Bản tương tác', fileName: 'satb.mxl' }),
+      material({ id: 'm5', kind: 'rehearsalMaterial', title: 'Nốt tập', fileName: 'tap.mid' }),
+    ])
+    renderDetail('materials')
+
+    for (const title of ['Bản tương tác', 'Nốt tập']) {
+      const download = await screen.findByRole('link', { name: `Tải xuống ${title}` })
+      expect(download).toHaveAttribute('href', expect.stringContaining('https://files.example/'))
+      expect(download).not.toHaveAttribute('target')
+    }
+    expect(screen.getByRole('link', { name: 'Xem/Tải xuống Bản nhạc SATB (mở tab mới)' })).toHaveAttribute('target', '_blank')
+  })
+
+  it('replaces a MusicXML score with the instrument its playback is rendered with', async () => {
+    vi.spyOn(songsApi, 'getSong').mockResolvedValue(song)
+    vi.spyOn(songsApi, 'getSongClassification').mockResolvedValue(classification)
+    const score = material({ id: 'm4', kind: 'interactiveScore', title: 'Bản tương tác', fileName: 'satb.mxl' })
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([score])
+    const replace = vi.spyOn(songsApi, 'replaceMaterialFile').mockResolvedValue(score)
+    renderDetail('materials')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thay file Bản tương tác' }))
+    const dialog = await screen.findByRole('dialog')
+    const file = new File(['<score-partwise/>'], 'moi.musicxml')
+    fireEvent.change(dialog.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } })
+    expect(await within(dialog).findByText('Nhạc cụ phát trên ứng dụng di động')).toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thay file' }))
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('m4', file, false, 'piano'))
+  })
+
+  it('sends no instrument when a MIDI file is replaced by a file that is not rendered', async () => {
+    vi.spyOn(songsApi, 'getSong').mockResolvedValue(song)
+    vi.spyOn(songsApi, 'getSongClassification').mockResolvedValue(classification)
+    const midi = material({ id: 'm5', kind: 'rehearsalMaterial', title: 'Nốt tập', fileName: 'tap.mid' })
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([midi])
+    const replace = vi.spyOn(songsApi, 'replaceMaterialFile').mockResolvedValue(midi)
+    renderDetail('materials')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thay file Nốt tập' }))
+    const dialog = await screen.findByRole('dialog')
+    const input = dialog.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [new File(['m'], 'moi.mid')] } })
+    expect(await within(dialog).findByText('Nhạc cụ phát trên ứng dụng di động')).toBeInTheDocument()
+    const mp3 = new File(['a'], 'moi.mp3', { type: 'audio/mpeg' })
+    // The upload field is remounted after each pick.
+    fireEvent.change(dialog.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [mp3] } })
+    await waitFor(() => expect(within(dialog).queryByText('Nhạc cụ phát trên ứng dụng di động')).toBeNull())
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thay file' }))
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('m5', mp3, false, undefined))
   })
 
   it('deletes a material only after confirmation', async () => {
