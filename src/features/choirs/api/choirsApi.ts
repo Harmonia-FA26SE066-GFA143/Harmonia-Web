@@ -1,5 +1,5 @@
 import { apiRequest } from '@/lib/api/client'
-import type { Choir, ChoirMembership, ChoirValues, EventChoir } from '../types'
+import type { Choir, ChoirMembership, ChoirValues, EventChoir, EventChoirsValues } from '../types'
 
 // `/api/choirs` and `/api/liturgical-events/{id}/choirs` (Harmonia-BE ChoirsController, LiturgicalEventsController,
 // D7, D8). The Admin creates and edits choirs; a Choir Director lists only their own. Members: Admin and Choir Director.
@@ -61,12 +61,25 @@ interface EventChoirDto {
   isLead: boolean
   directorId: string | null
   directorFullName: string | null
+  substituteDirectorId: string | null
+  substituteDirectorFullName: string | null
+  reason: string | null
 }
 
-const toEventChoir = ({ directorId, directorFullName, ...rest }: EventChoirDto): EventChoir => ({
+const toEventChoir = ({
+  directorId,
+  directorFullName,
+  substituteDirectorId,
+  substituteDirectorFullName,
+  reason,
+  ...rest
+}: EventChoirDto): EventChoir => ({
   ...rest,
   directorId: directorId ?? undefined,
   directorName: directorFullName ?? undefined,
+  substituteDirectorId: substituteDirectorId ?? undefined,
+  substituteDirectorName: substituteDirectorFullName ?? undefined,
+  reason: reason ?? undefined,
 })
 
 /** The lead choir first, then by name (Parish Priest, Choir Director). */
@@ -75,10 +88,28 @@ export async function listEventChoirs(eventId: string): Promise<EventChoir[]> {
 }
 
 /**
- * Parish Priest: replaces the choirs serving the event; an empty list removes them all. The lead choir is required
- * while there are choirs and must be one of them (CHOIR_LEAD_INVALID).
+ * Parish Priest: replaces the choirs serving the event, at least one, with the lead among them (BE 678fc34:
+ * LITURGICAL_EVENT_CHOIR_REQUIRED, CHOIR_LEAD_INVALID). Removing a choir from a published event needs a reason ≤ 500
+ * (CHOIR_CHANGE_REASON_REQUIRED, BE ff72860); its members then lose their invitation and roster rows.
  */
-export async function updateEventChoirs(eventId: string, value: { choirIds: string[]; leadChoirId?: string }): Promise<EventChoir[]> {
-  const body = JSON.stringify({ choirIds: value.choirIds, leadChoirId: value.choirIds.length > 0 ? value.leadChoirId : undefined })
+export async function updateEventChoirs(eventId: string, value: EventChoirsValues): Promise<EventChoir[]> {
+  const body = JSON.stringify(value)
   return (await apiRequest<EventChoirDto[]>(`/api/liturgical-events/${eventId}/choirs`, { method: 'PUT', body })).map(toEventChoir)
+}
+
+/**
+ * Parish Priest: another active Choir Director stands in for a serving choir's director at this event only; a reason
+ * is required when setting one, and `directorId: null` hands it back (BE ff72860).
+ */
+export async function setSubstituteDirector(
+  eventId: string,
+  choirId: string,
+  value: { directorId: string | null; reason?: string },
+): Promise<EventChoir[]> {
+  return (
+    await apiRequest<EventChoirDto[]>(`/api/liturgical-events/${eventId}/choirs/${choirId}/substitute-director`, {
+      method: 'PUT',
+      body: JSON.stringify(value),
+    })
+  ).map(toEventChoir)
 }

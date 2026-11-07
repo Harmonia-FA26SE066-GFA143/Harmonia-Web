@@ -252,7 +252,7 @@ export function PriestProgramDetailPage() {
         )}
         {data.status === 'published' && <PriestSteps event={data} />}
         {data.status === 'published' && <PriestProgramSongs eventId={data.id} />}
-        <EventChoirsCard eventId={data.id} canEdit locked={cancelled || !upcoming} />
+        <EventChoirsCard eventId={data.id} canEdit locked={cancelled || !upcoming} published={data.status === 'published'} />
         {data.status === 'published' && <PreparationStatusCard eventId={data.id} />}
       </Flex>
       {/* The form has its own Save and Cancel; while saving the drawer cannot be closed. */}

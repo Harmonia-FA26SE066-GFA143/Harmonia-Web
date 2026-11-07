@@ -14,6 +14,11 @@ const messages: Record<string, string> = {
   // Publishing rechecks the event and answers these two directly, not inside VALIDATION_FAILED.
   LITURGICAL_EVENT_TYPE_REQUIRED: 'Chọn loại lễ hoặc loại nghi thức cho sự kiện (bấm Sửa) rồi công bố lại.',
   LITURGICAL_EVENT_SEASON_REQUIRED: 'Chọn mùa phụng vụ cho sự kiện (bấm Sửa) rồi công bố lại.',
+  // BE 678fc34: a generated draft has no choir yet; publishing needs a lead choir.
+  LITURGICAL_EVENT_CHOIR_REQUIRED: 'Chọn ca đoàn phục vụ và ca đoàn phụ trách (thẻ Ca đoàn phục vụ) rồi công bố lại.',
+  CHOIR_LEAD_INVALID: 'Chọn ca đoàn phụ trách trong số các ca đoàn phục vụ.',
+  CHOIR_NOT_FOUND: 'Có ca đoàn đã chọn không còn tồn tại. Vui lòng tải lại trang.',
+  CHOIR_INACTIVE: 'Có ca đoàn đã chọn đã ngừng hoạt động. Vui lòng chọn ca đoàn khác.',
   LOOKUP_INACTIVE: 'Có mục đã chọn (mùa, loại lễ, danh mục hoặc nơi cử hành) đã ngừng dùng. Vui lòng chọn mục khác.',
   LITURGICAL_EVENT_GENERATION_RANGE_INVALID: 'Khoảng ngày phải bắt đầu từ hôm nay và dài tối đa 62 ngày.',
   LOOKUP_NOT_FOUND: 'Có mục đã chọn không còn tồn tại. Vui lòng tải lại trang.',

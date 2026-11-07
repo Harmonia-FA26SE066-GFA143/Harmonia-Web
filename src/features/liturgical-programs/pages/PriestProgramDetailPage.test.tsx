@@ -194,8 +194,9 @@ describe('PriestProgramDetailPage', () => {
 
     expect(await screen.findByText('Chưa có ca đoàn phục vụ.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Sửa ca đoàn phục vụ/ }))
-    // Nothing to remove, so no warning about taking every choir off.
-    expect(screen.queryByText('Lưu sẽ gỡ mọi ca đoàn khỏi chương trình.')).toBeNull()
+    // At least one choir serves (BE 678fc34): nothing chosen yet, nothing to save.
+    expect(screen.getByText('Chương trình cần ít nhất một ca đoàn phục vụ.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Lưu' })).toBeDisabled()
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Ca đoàn phục vụ' }))
     fireEvent.click(await screen.findByTitle('Ca đoàn Cecilia'))
     // An inactive choir cannot be added (CHOIR_INACTIVE).
@@ -203,6 +204,114 @@ describe('PriestProgramDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
 
     await waitFor(() => expect(update).toHaveBeenCalledWith('e1', { choirIds: ['c1'], leadChoirId: 'c1' }))
+  })
+
+  it('asks why a choir leaves a published event', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({ ...draft, status: 'published', publishedAt: '2026-09-20T02:00:00Z' })
+    vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([
+      { choirId: 'c1', name: 'Ca đoàn Cecilia', isActive: true, isLead: true },
+      { choirId: 'c2', name: 'Ca đoàn Giuse', isActive: true, isLead: false },
+    ])
+    const update = vi.spyOn(choirsApi, 'updateEventChoirs').mockResolvedValue([])
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Sửa ca đoàn phục vụ/ }))
+    const giuse = screen.getAllByTitle('Ca đoàn Giuse').find((node) => node.classList.contains('ant-select-selection-item'))
+    fireEvent.click(within(giuse as HTMLElement).getByRole('img', { hidden: true }))
+    // CHOIR_CHANGE_REASON_REQUIRED: no reason, no save.
+    const reason = await screen.findByRole('textbox', { name: 'Lý do gỡ ca đoàn' })
+    expect(screen.getByRole('button', { name: 'Lưu' })).toBeDisabled()
+    fireEvent.change(reason, { target: { value: ' Ca đoàn Giuse đi hành hương. ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu' }))
+
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith('e1', { choirIds: ['c1'], leadChoirId: 'c1', reason: 'Ca đoàn Giuse đi hành hương.' }),
+    )
+  })
+
+  it('sets a substitute director for one event, with a reason', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
+    vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([
+      { choirId: 'c1', name: 'Ca đoàn Cecilia', isActive: true, isLead: true, directorId: 'u1', directorName: 'Anh Phêrô' },
+    ])
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true, directorId: 'u1', directorName: 'Anh Phêrô' },
+      { id: 'c2', name: 'Ca đoàn Giuse', isActive: true, directorId: 'u2', directorName: 'Chị Maria' },
+    ])
+    const substitute = vi.spyOn(choirsApi, 'setSubstituteDirector').mockResolvedValue([])
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ca trưởng thay thế cho Ca đoàn Cecilia' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Ca trưởng thay thế' }))
+    // The choir's own director already holds the rights (CHOIR_DIRECTOR_INVALID).
+    expect(screen.queryByTitle('Anh Phêrô')).toBeNull()
+    fireEvent.click(await screen.findByTitle('Chị Maria'))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu' }))
+    expect(await within(dialog).findByText('Vui lòng nhập lý do.')).toBeInTheDocument()
+    expect(substitute).not.toHaveBeenCalled()
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Lý do' }), { target: { value: 'Anh Phêrô bận đột xuất.' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu' }))
+
+    await waitFor(() =>
+      expect(substitute).toHaveBeenCalledWith('e1', 'c1', { directorId: 'u2', reason: 'Anh Phêrô bận đột xuất.' }),
+    )
+  })
+
+  it('opens the substitute dialog clean for each choir, dropping what was typed and cancelled', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
+    vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([
+      { choirId: 'c1', name: 'Ca đoàn Cecilia', isActive: true, isLead: true, directorId: 'u1', directorName: 'Anh Phêrô' },
+      {
+        choirId: 'c2',
+        name: 'Ca đoàn Giuse',
+        isActive: true,
+        isLead: false,
+        directorId: 'u2',
+        directorName: 'Chị Maria',
+        substituteDirectorId: 'u1',
+        substituteDirectorName: 'Anh Phêrô',
+        reason: 'Chị Maria đi vắng.',
+      },
+    ])
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true, directorId: 'u1', directorName: 'Anh Phêrô' },
+      { id: 'c2', name: 'Ca đoàn Giuse', isActive: true, directorId: 'u2', directorName: 'Chị Maria' },
+      { id: 'c3', name: 'Ca đoàn Têrêsa', isActive: true, directorId: 'u3', directorName: 'Anh Giacôbê' },
+    ])
+    renderDetail()
+
+    const open = async (choir: string) => {
+      fireEvent.click(await screen.findByRole('button', { name: `Ca trưởng thay thế cho ${choir}` }))
+      return screen.findByRole('dialog', { name: `Ca trưởng thay thế · ${choir}` })
+    }
+    const closed = (choir: string) =>
+      waitFor(() => expect(screen.queryByRole('dialog', { name: `Ca trưởng thay thế · ${choir}` })).toBeNull())
+    // The select's visible text: the chosen director's name, or the placeholder.
+    const picked = (dialog: HTMLElement) => dialog.querySelector('.ant-select')?.textContent ?? ''
+
+    let dialog = await open('Ca đoàn Cecilia')
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Ca trưởng thay thế' }))
+    fireEvent.click(await screen.findByTitle('Anh Giacôbê'))
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Lý do' }), { target: { value: 'Gõ rồi hủy.' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Hủy' }))
+    await closed('Ca đoàn Cecilia')
+
+    // Reopened: back to the choir's own state, nothing typed before.
+    dialog = await open('Ca đoàn Cecilia')
+    expect(within(dialog).getByRole('textbox', { name: 'Lý do' })).toHaveValue('')
+    expect(picked(dialog)).toBe('Chọn ca trưởng')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Hủy' }))
+    await closed('Ca đoàn Cecilia')
+
+    // Another choir: its own substitute and reason.
+    dialog = await open('Ca đoàn Giuse')
+    expect(within(dialog).getByRole('textbox', { name: 'Lý do' })).toHaveValue('Chị Maria đi vắng.')
+    expect(picked(dialog)).toBe('Anh Phêrô')
+    // And the clear button still works from there.
+    const substitute = vi.spyOn(choirsApi, 'setSubstituteDirector').mockResolvedValue([])
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Gỡ người thay' }))
+    await waitFor(() => expect(substitute).toHaveBeenCalledWith('e1', 'c2', { directorId: null, reason: undefined }))
   })
 
   it('cancels a published event, warning that members are notified', async () => {

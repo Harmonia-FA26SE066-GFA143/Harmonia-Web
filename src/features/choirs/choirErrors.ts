@@ -12,6 +12,9 @@ const messages: Record<string, string> = {
   LITURGICAL_EVENT_NOT_FOUND: 'Chương trình không còn tồn tại.',
   LITURGICAL_EVENT_CANCELLED: 'Chương trình đã bị hủy.',
   LITURGICAL_EVENT_ALREADY_PASSED: 'Chương trình đã qua, không đổi ca đoàn phục vụ được.',
+  LITURGICAL_EVENT_CHOIR_REQUIRED: 'Chương trình cần ít nhất một ca đoàn phục vụ.',
+  CHOIR_CHANGE_REASON_REQUIRED: 'Vui lòng nhập lý do thay đổi.',
+  CHOIR_NOT_SERVING_EVENT: 'Ca đoàn không còn phục vụ chương trình này. Danh sách đã được tải lại.',
 }
 
 /** The message of the error code, or of the first field error code (400 VALIDATION_FAILED), else `fallback`. */

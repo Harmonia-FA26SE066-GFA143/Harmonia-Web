@@ -63,6 +63,10 @@ const toBody = (values: EventFormValues) =>
     categoryId: values.categoryId,
     title: values.title,
     specialRequirements: values.specialRequirements,
+    // Create only (BE 678fc34): at least one choir and the lead among them. PUT ignores them; choirs change through
+    // `/choirs`.
+    choirIds: values.choirIds,
+    leadChoirId: values.leadChoirId,
   })
 
 /** Ordered by date then time on the server. */

@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
@@ -29,6 +30,10 @@ beforeEach(() => {
           ? [{ id: 's-ot', name: 'Mùa Thường Niên' }]
           : [],
   )
+  vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+    { id: 'choir-1', name: 'Ca đoàn Cecilia', isActive: true },
+    { id: 'choir-off', name: 'Ca đoàn cũ', isActive: false },
+  ])
 })
 
 afterEach(() => {
@@ -48,7 +53,7 @@ function enterTime(value: string) {
 }
 
 describe('CreateProgramPage', () => {
-  it('requires date, time, place and a Mass or ceremony type', async () => {
+  it('requires date, time, place, a Mass or ceremony type and a serving choir', async () => {
     const create = vi.spyOn(eventsApi, 'createEvent')
     renderPage(<CreateProgramPage />, route)
 
@@ -58,6 +63,7 @@ describe('CreateProgramPage', () => {
     expect(screen.getByText('Vui lòng chọn giờ.')).toBeInTheDocument()
     expect(screen.getByText('Vui lòng chọn nơi cử hành.')).toBeInTheDocument()
     expect(screen.getByText('Chọn loại Thánh lễ hoặc loại nghi thức.')).toBeInTheDocument()
+    expect(screen.getByText('Chọn ít nhất một ca đoàn phục vụ.')).toBeInTheDocument()
     expect(create).not.toHaveBeenCalled()
   })
 
@@ -69,6 +75,10 @@ describe('CreateProgramPage', () => {
     enterTime('18:30')
     await choose('Nơi cử hành', 'Nhà thờ chính')
     await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
+    // A switched-off choir cannot serve a new event; a single choir becomes the lead by itself.
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Ca đoàn phục vụ' }))
+    expect(screen.queryByTitle('Ca đoàn cũ')).toBeNull()
+    await choose('Ca đoàn phục vụ', 'Ca đoàn Cecilia')
     fireEvent.change(screen.getByRole('textbox', { name: 'Tiêu đề (không bắt buộc)' }), { target: { value: '  Lễ Bổn mạng ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
@@ -83,6 +93,8 @@ describe('CreateProgramPage', () => {
         categoryId: undefined,
         title: 'Lễ Bổn mạng',
         specialRequirements: undefined,
+        choirIds: ['choir-1'],
+        leadChoirId: 'choir-1',
       }),
     )
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/new-1')
@@ -96,6 +108,7 @@ describe('CreateProgramPage', () => {
     enterTime('18:30')
     await choose('Nơi cử hành', 'Nhà thờ chính')
     await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
+    await choose('Ca đoàn phục vụ', 'Ca đoàn Cecilia')
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
     expect(await screen.findByText('Đã tạo bản nháp sự kiện, mùa phụng vụ được điền là Mùa Thường Niên.')).toBeInTheDocument()
@@ -108,6 +121,7 @@ describe('CreateProgramPage', () => {
     enterTime('18:30')
     await choose('Nơi cử hành', 'Nhà thờ chính')
     await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
+    await choose('Ca đoàn phục vụ', 'Ca đoàn Cecilia')
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
     expect(await screen.findByText('Đã có sự kiện khác cùng ngày, giờ và nơi cử hành.')).toBeInTheDocument()

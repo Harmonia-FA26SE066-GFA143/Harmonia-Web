@@ -117,6 +117,9 @@ export interface EventFormValues {
   categoryId?: string
   title?: string
   specialRequirements?: string
+  /** Create only: the serving choirs (at least one) and the lead one among them (BE 678fc34). */
+  choirIds?: string[]
+  leadChoirId?: string
 }
 
 /** Query filters of GET /api/liturgical-events; they combine with AND on the server. */
