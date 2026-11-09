@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from 'react'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { ErrorState } from '@/shared/ui/ErrorState'
 import { colors, radius, spacing } from '@/styles/tokens'
-import { exceedsSvgLimits, sanitizeSvg } from './sanitizeSvg'
+import { failsSvgPreflight, sanitizeSvg } from './sanitizeSvg'
 import './ScoreViewer.css'
 
 export type ScoreViewerStatus = 'loading' | 'empty' | 'error' | 'ready'
@@ -19,9 +19,17 @@ interface ScoreViewerBaseProps {
   onWidthChange?: (width: number) => void
 }
 
-/** The error state always offers "Thử lại", so a caller that can reach it has to say what retrying does. */
+/**
+ * `status: 'error'` offers "Thử lại", so its caller has to say what retrying does. A score the viewer refuses while
+ * `ready` shows the button only when `onRetry` is given; retrying the same pages could not help.
+ * `scoreKey` names the score behind `svgPages`: the same key with new pages is a relayout, a new key is another score.
+ */
 export type ScoreViewerProps = ScoreViewerBaseProps &
-  ({ status: 'error'; onRetry: () => void } | { status: Exclude<ScoreViewerStatus, 'error'>; onRetry?: () => void })
+  (
+    | { status: 'error'; onRetry: () => void; scoreKey?: string }
+    | { status: 'ready'; scoreKey: string; onRetry?: () => void }
+    | { status: 'loading' | 'empty'; onRetry?: () => void; scoreKey?: string }
+  )
 
 const DEBOUNCE_MS = 200
 const WIDTH_STEP_PX = 16
@@ -41,30 +49,30 @@ const themeVars = {
   '--hm-score-gap': `${spacing.lg}px`,
 } as CSSProperties
 
-const TOO_LARGE = 'too-large'
+const REFUSED = 'refused'
+type FilterResult = string[] | typeof REFUSED
 const yieldToBrowser = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
-function visibleState(status: ScoreViewerStatus, filtered: string[] | typeof TOO_LARGE | null): ScoreViewerStatus {
+function visibleState(status: ScoreViewerStatus, result: FilterResult | undefined): ScoreViewerStatus {
   if (status !== 'ready') return status
-  if (filtered === TOO_LARGE) return 'error'
-  return filtered ? 'ready' : 'loading'
+  if (result === REFUSED) return 'error'
+  return result ? 'ready' : 'loading'
 }
 
 /**
  * Shows the rendered score on a flat ivory sheet in one scroll region. It does no fetching: the caller passes the state
  * and the pages. Hooks for P5/P7: `hm-score-note--active` on a note group, `hm-score-lyric--active` on a syllable.
  * Pages are filtered after render, one per task; nothing unfiltered ever reaches the DOM. Until the first result the
- * loading state shows. While new pages (relayout) are filtered the previous, already filtered ones stay, so the scroll
- * region stays mounted and keeps its position; the browser only clamps it when the score gets shorter.
+ * loading state shows. While new pages of the same `scoreKey` (relayout) are filtered the previous, already filtered ones
+ * stay, so the scroll region stays mounted and keeps its position; the browser only clamps it when the score gets shorter.
  */
-export function ScoreViewer({ status, svgPages, title, onRetry, onWidthChange }: Readonly<ScoreViewerProps>) {
+export function ScoreViewer({ status, scoreKey, svgPages, title, onRetry, onWidthChange }: Readonly<ScoreViewerProps>) {
   const rootRef = useRef<HTMLDivElement>(null)
   const onWidthChangeRef = useRef(onWidthChange)
   const summaryId = useId()
-  const [filtered, setFiltered] = useState<string[] | typeof TOO_LARGE | null>(null)
-  const [attempt, setAttempt] = useState(0)
-  // Leaving `ready` means another score may follow: it must start from loading, not from these pages.
-  if (status !== 'ready' && filtered !== null) setFiltered(null)
+  const [filtered, setFiltered] = useState<{ scoreKey: string; result: FilterResult } | null>(null)
+  // Another score, or leaving `ready`: start from loading before anything of these pages is committed again.
+  if (filtered !== null && (status !== 'ready' || filtered.scoreKey !== scoreKey)) setFiltered(null)
 
   useEffect(() => {
     onWidthChangeRef.current = onWidthChange
@@ -72,29 +80,35 @@ export function ScoreViewer({ status, svgPages, title, onRetry, onWidthChange }:
 
   useEffect(() => {
     if (status !== 'ready') return
-    // New pages or an unmount end this run: nothing is parsed or set after the next yield.
+    // Another key, new pages or an unmount end this run: nothing is parsed or set after the next yield.
     let superseded = false
     const stillWantedAfterYield = async () => {
       await yieldToBrowser()
       return !superseded
     }
+    const finish = (result: FilterResult) => setFiltered({ scoreKey, result })
     void (async () => {
       if (!(await stillWantedAfterYield())) return
-      if (exceedsSvgLimits(svgPages)) {
-        setFiltered(TOO_LARGE)
+      if (failsSvgPreflight(svgPages)) {
+        finish(REFUSED)
         return
       }
       const clean: string[] = []
       for (const page of svgPages) {
         if (!(await stillWantedAfterYield())) return
-        clean.push(sanitizeSvg(page))
+        const sanitized = sanitizeSvg(page)
+        if (!sanitized) {
+          finish(REFUSED)
+          return
+        }
+        clean.push(sanitized)
       }
-      setFiltered(clean)
+      finish(failsSvgPreflight(clean) ? REFUSED : clean)
     })()
     return () => {
       superseded = true
     }
-  }, [status, svgPages, attempt])
+  }, [status, scoreKey, svgPages])
 
   useEffect(() => {
     const root = rootRef.current
@@ -117,8 +131,8 @@ export function ScoreViewer({ status, svgPages, title, onRetry, onWidthChange }:
     }
   }, [])
 
-  const view = visibleState(status, filtered)
-  const pages = Array.isArray(filtered) ? filtered : []
+  const view = visibleState(status, filtered?.result)
+  const pages = Array.isArray(filtered?.result) ? filtered.result : []
   const pageCount = `${pages.length} trang`
   return (
     <div ref={rootRef} className="hm-score-viewer" style={themeVars}>
@@ -143,11 +157,11 @@ export function ScoreViewer({ status, svgPages, title, onRetry, onWidthChange }:
         <ErrorState
           title="Không thể hiển thị bản nhạc"
           description={
-            filtered === TOO_LARGE
-              ? 'Bản nhạc này quá lớn nên không thể hiển thị. Vui lòng thử lại hoặc dùng bản ngắn hơn.'
+            filtered?.result === REFUSED
+              ? 'Bản nhạc này quá lớn hoặc không hợp lệ nên không thể hiển thị. Vui lòng dùng bản khác.'
               : 'Đã xảy ra sự cố khi mở bản nhạc. Vui lòng thử lại.'
           }
-          onRetry={onRetry ?? (() => setAttempt((count) => count + 1))}
+          onRetry={onRetry}
         />
       )}
       {view === 'ready' && (

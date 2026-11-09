@@ -20,9 +20,16 @@ function hasTooManyTags(svg: string): boolean {
   return false
 }
 
-export function exceedsSvgLimits(pages: readonly string[]): boolean {
+/**
+ * `<!DOCTYPE`, `<!ENTITY` and every other `<!` declaration: a short file can expand to any size inside the parser, past
+ * all the limits here. Verovio's SVG has none; comments and CDATA are not declarations and `cleanElement` removes them.
+ */
+const XML_DECLARATION = /<!(?!--|\[CDATA\[)/
+
+/** True when the pages must not reach a parser at all. Also run on the output, where only the sizes can still fail. */
+export function failsSvgPreflight(pages: readonly string[]): boolean {
   const total = pages.reduce((sum, page) => sum + page.length, 0)
-  return total > MAX_TOTAL_CHARS || pages.some((page) => page.length > MAX_PAGE_CHARS || hasTooManyTags(page))
+  return total > MAX_TOTAL_CHARS || pages.some((page) => page.length > MAX_PAGE_CHARS || hasTooManyTags(page) || XML_DECLARATION.test(page))
 }
 
 /**
@@ -54,8 +61,11 @@ const LEFTOVER_REFERENCE = /@import|image-set\(|url\(\s*['"]?\s*(?![\s'"#])/i
  * The whole of Verovio's `@font-face` for its music text font (the ♩ of the tempo mark), the one data URL allowed: only
  * these descriptors, in this order, as one top-level block. A data URL never reaches the network.
  */
-const VEROVIO_FONT_FACE =
-  /^\s*@font-face\s*\{\s*font-family:\s*'([^']+)';\s*src:\s*url\(data:application\/font-woff2;charset=utf-8;base64,[A-Za-z0-9+/=]+\)\s*format\('woff2'\);\s*(?:font-weight:\s*normal;\s*)?(?:font-style:\s*normal;\s*)?\}$/
+const FONT_FACE_SHAPE = String.raw`@font-face\s*\{\s*font-family:\s*'([\w -]+)';\s*src:\s*url\(data:application/font-woff2;charset=utf-8;base64,[A-Za-z0-9+/=]+\)\s*format\('woff2'\);\s*(?:font-weight:\s*normal;\s*)?(?:font-style:\s*normal;\s*)?\}`
+const VEROVIO_FONT_FACE = new RegExp(String.raw`^\s*${FONT_FACE_SHAPE}$`)
+const FONT_FACE_ANYWHERE = new RegExp(FONT_FACE_SHAPE, 'g')
+/** What could hide a brace from `topLevelBlocks`. Verovio writes none of it outside its font blocks. */
+const OPAQUE_CSS = /\/\*|\\|["']/
 /** Every family Verovio 6.4.1 embedded in the scores inventoried for this list. */
 const VEROVIO_FONT_FAMILIES = new Set(['Leipzig'])
 /** An embedded face named like one of these would replace the app's own text everywhere. */
@@ -131,11 +141,16 @@ function cleanCss(css: string): string {
   return LEFTOVER_REFERENCE.test(cleaned) ? '' : cleaned
 }
 
-/** A `<style>` text: Verovio's top-level font blocks stay as written, every other block is rebuilt or dropped. */
+/**
+ * A `<style>` text: Verovio's top-level font blocks stay as written, every other block is rebuilt or dropped. A comment,
+ * string or escape outside a font block loses the whole stylesheet, since the brace count cannot be trusted past one.
+ */
 const cleanStyleSheet = (css: string) =>
-  topLevelBlocks(css)
-    .map((block) => (isVerovioFontFace(block) ? block : scopeRule(block)))
-    .join('')
+  OPAQUE_CSS.test(css.replace(FONT_FACE_ANYWHERE, ''))
+    ? ''
+    : topLevelBlocks(css)
+        .map((block) => (isVerovioFontFace(block) ? block : scopeRule(block)))
+        .join('')
 
 const isAllowedElement = (element: Element) => element.namespaceURI === SVG_NAMESPACE && ALLOWED_ELEMENTS.has(element.tagName)
 
@@ -174,13 +189,17 @@ function cleanElement(element: Element) {
  * Cleans one SVG page before it is mounted with `innerHTML`. The score is a file a user uploaded, so its SVG is not
  * trusted. Allow list: an element or attribute not named above is removed, an element with everything inside it. Of
  * what stays, links must be a `#fragment`, `javascript:` values go, presentation attributes lose external references
- * and CSS is rebuilt so it cannot act outside `PAGE_SELECTOR` (mount the result only inside that element). Ids, classes, `use` links to its own glyphs, geometry and Verovio's styles and font are kept, so P5 can find notes by
- * id. Returns '' when the markup is not one SVG.
+ * and CSS is rebuilt so it cannot act outside `PAGE_SELECTOR` (mount the result only inside that element). Ids, classes,
+ * `use` links to its own glyphs, geometry and Verovio's styles and font are kept, so P5 can find notes by id. Returns ''
+ * when the markup is not one SVG, declares a DTD, or turns out past the page limits once parsed.
  */
 export function sanitizeSvg(svg: string): string {
+  if (XML_DECLARATION.test(svg)) return ''
   const doc = new DOMParser().parseFromString(svg, 'image/svg+xml')
   const root = doc.documentElement
   if (root.tagName !== 'svg' || !isAllowedElement(root) || doc.getElementsByTagName('parsererror').length > 0) return ''
+  if (root.getElementsByTagName('*').length > MAX_PAGE_TAGS) return ''
   cleanElement(root)
-  return new XMLSerializer().serializeToString(root)
+  const clean = new XMLSerializer().serializeToString(root)
+  return clean.length > MAX_PAGE_CHARS ? '' : clean
 }

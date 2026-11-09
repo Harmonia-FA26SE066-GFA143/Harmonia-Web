@@ -72,7 +72,7 @@ describe('ScoreViewer states', () => {
   })
 
   it('ready draws every page inside exactly one focusable scroll region with a text summary', async () => {
-    const { container } = render(<ScoreViewer status="ready" svgPages={[page('a'), page('b')]} title="Kinh Hòa Bình" />)
+    const { container } = render(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('a'), page('b')]} title="Kinh Hòa Bình" />)
     const region = await findSheet()
     expect(region).toHaveAttribute('tabindex', '0')
     expect(region.querySelectorAll('svg')).toHaveLength(2)
@@ -83,7 +83,7 @@ describe('ScoreViewer states', () => {
 
   it('ready never mounts unsafe markup', async () => {
     const evil = '<svg xmlns="http://www.w3.org/2000/svg" onload="x()"><script>x()</script><rect/></svg>'
-    render(<ScoreViewer status="ready" svgPages={[evil]} />)
+    render(<ScoreViewer status="ready" scoreKey="a" svgPages={[evil]} />)
     const region = await findSheet()
     expect(region.querySelector('script')).toBeNull()
     expect(region.querySelector('[onload]')).toBeNull()
@@ -97,7 +97,7 @@ describe('ScoreViewer states', () => {
         <svg>
           <g className="note" />
         </svg>
-        <ScoreViewer status="ready" svgPages={[scored]} />
+        <ScoreViewer status="ready" scoreKey="a" svgPages={[scored]} />
       </>,
     )
     const region = await findSheet()
@@ -108,10 +108,10 @@ describe('ScoreViewer states', () => {
   })
 
   it('new svgPages keep the same scroll region and its scroll position', async () => {
-    const { rerender } = render(<ScoreViewer status="ready" svgPages={[page('a')]} />)
+    const { rerender } = render(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('a')]} />)
     const region = await findSheet()
     region.scrollTop = 300
-    rerender(<ScoreViewer status="ready" svgPages={[page('b')]} />)
+    rerender(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('b')]} />)
     expect(screen.getByRole('group', { name: 'Bản nhạc' })).toBe(region)
     await waitFor(() => expect(region.querySelector('#b')).not.toBeNull())
     expect(screen.getByRole('group', { name: 'Bản nhạc' })).toBe(region)
@@ -128,10 +128,11 @@ describe('ScoreViewer filtering', () => {
     ['a page past the size limit', [oversized]],
     ['a page with too many elements', [`<svg>${'<g/>'.repeat(MAX_PAGE_TAGS)}</svg>`]],
     ['pages past the total', Array.from({ length: Math.floor(MAX_TOTAL_CHARS / MAX_PAGE_CHARS) + 1 }, () => 'x'.repeat(MAX_PAGE_CHARS))],
+    ['a page with a DTD', [`<!DOCTYPE svg [<!ENTITY a "AAAA">]><svg xmlns="http://www.w3.org/2000/svg"><text>&a;&a;</text></svg>`]],
   ])('%s shows the error state without parsing anything', async (_name, svgPages) => {
     const parse = parseSpy()
     const onRetry = vi.fn()
-    render(<ScoreViewer status="ready" svgPages={svgPages} onRetry={onRetry} />)
+    render(<ScoreViewer status="ready" scoreKey="a" svgPages={svgPages} onRetry={onRetry} />)
     expect(await screen.findByRole('alert')).toHaveTextContent('quá lớn')
     await settle()
     expect(parse).not.toHaveBeenCalled()
@@ -140,24 +141,123 @@ describe('ScoreViewer filtering', () => {
     expect(onRetry).toHaveBeenCalledTimes(1)
   })
 
-  it('still offers "Thử lại" for a score that is too large when the caller gave no onRetry', async () => {
-    render(<ScoreViewer status="ready" svgPages={[oversized]} />)
-    fireEvent.click(await screen.findByRole('button', { name: /Thử lại/ }))
-    await settle()
-    expect(screen.getByRole('alert')).toHaveTextContent('quá lớn')
+  it('offers no "Thử lại" for a refused score when the caller gave no onRetry: retrying alone cannot help', async () => {
+    render(<ScoreViewer status="ready" scoreKey="a" svgPages={[oversized]} />)
+    await screen.findByRole('alert')
+    expect(screen.queryByRole('button', { name: /Thử lại/ })).toBeNull()
+  })
+
+  it('a page the sanitizer cannot read shows the error state, not a blank page', async () => {
+    render(<ScoreViewer status="ready" scoreKey="a" svgPages={['<svg']} />)
+    expect(await screen.findByRole('alert')).toHaveTextContent('không hợp lệ')
+  })
+
+  describe('checks after parsing (the parser is stubbed to expand, as the preflight now stops every real DTD)', () => {
+    const realParse = DOMParser.prototype.parseFromString
+    const parserExpandsTo = (svg: string) =>
+      vi.spyOn(DOMParser.prototype, 'parseFromString').mockImplementation(function (this: DOMParser, _input, type) {
+        return realParse.call(this, svg, type)
+      })
+    const svgns = 'xmlns="http://www.w3.org/2000/svg"'
+
+    it('a page that expands past the size limit shows the error state and is not kept', async () => {
+      parserExpandsTo(`<svg ${svgns}><text id="expanded">${'x'.repeat(MAX_PAGE_CHARS)}</text></svg>`)
+      const { container } = render(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('a')]} />)
+      await screen.findByRole('alert')
+      expect(container.querySelector('#expanded')).toBeNull()
+    })
+
+    it(
+      'pages that expand past the total show the error state and are not kept',
+      async () => {
+        parserExpandsTo(`<svg ${svgns}><text id="expanded">${'x'.repeat(MAX_PAGE_CHARS - 200)}</text></svg>`)
+        const pages = Array.from({ length: Math.floor(MAX_TOTAL_CHARS / MAX_PAGE_CHARS) + 2 }, (_, index) => page(`p${index}`))
+        const { container } = render(<ScoreViewer status="ready" scoreKey="a" svgPages={pages} />)
+        await screen.findByRole('alert', {}, { timeout: 12_000 })
+        expect(container.querySelector('#expanded')).toBeNull()
+      },
+      15_000,
+    )
+  })
+
+  describe('scoreKey', () => {
+    it('status="ready" requires a scoreKey (checked by tsc)', async () => {
+      // @ts-expect-error `status="ready"` requires `scoreKey`; `npm run typecheck` fails if this line ever compiles.
+      render(<ScoreViewer status="ready" svgPages={[page('a')]} />)
+      await findSheet()
+    })
+
+    it('another score shows loading at once, with nothing of the old one in the DOM', async () => {
+      const { rerender, container } = render(<ScoreViewer status="ready" scoreKey="A" svgPages={[page('from-a')]} />)
+      await findSheet()
+      rerender(<ScoreViewer status="ready" scoreKey="B" svgPages={[page('from-b')]} />)
+      expect(container.querySelector('#from-a')).toBeNull()
+      expect(screen.getByLabelText('Đang tải bản nhạc')).toBeInTheDocument()
+      expect((await findSheet()).querySelector('#from-b')).not.toBeNull()
+      expect(container.querySelector('#from-a')).toBeNull()
+    })
+
+    it('a new key filters again even when the pages array is the same one', async () => {
+      const shared = [page('shared')]
+      const { rerender } = render(<ScoreViewer status="ready" scoreKey="A" svgPages={shared} />)
+      await findSheet()
+      rerender(<ScoreViewer status="ready" scoreKey="B" svgPages={shared} />)
+      expect(screen.getByLabelText('Đang tải bản nhạc')).toBeInTheDocument()
+      expect((await findSheet()).querySelector('#shared')).not.toBeNull()
+    })
+
+    it('a refused score does not carry its error over to the next one', async () => {
+      const { rerender } = render(<ScoreViewer status="ready" scoreKey="A" svgPages={[oversized]} />)
+      await screen.findByRole('alert')
+      rerender(<ScoreViewer status="ready" scoreKey="B" svgPages={[page('from-b')]} />)
+      expect(screen.queryByRole('alert')).toBeNull()
+      expect(screen.getByLabelText('Đang tải bản nhạc')).toBeInTheDocument()
+    })
+
+    it('the same score with new pages keeps the filtered ones until the new ones are ready', async () => {
+      const { rerender, container } = render(<ScoreViewer status="ready" scoreKey="A" svgPages={[page('before')]} />)
+      await findSheet()
+      rerender(<ScoreViewer status="ready" scoreKey="A" svgPages={[page('after')]} />)
+      expect(container.querySelector('#before')).not.toBeNull()
+      await waitFor(() => expect(container.querySelector('#after')).not.toBeNull())
+      expect(container.querySelector('#before')).toBeNull()
+    })
+
+    it('A → B → A in a row lets only the last run land', async () => {
+      const parse = parseSpy()
+      const slow = [page('a-old1'), page('a-old2'), page('a-old3')]
+      const { rerender, container } = render(<ScoreViewer status="ready" scoreKey="A" svgPages={slow} />)
+      rerender(<ScoreViewer status="ready" scoreKey="B" svgPages={[page('from-b')]} />)
+      rerender(<ScoreViewer status="ready" scoreKey="A" svgPages={[page('a-new')]} />)
+      await findSheet()
+      await settle()
+      expect(container.querySelector('#a-new')).not.toBeNull()
+      expect(container.querySelector('#a-old1')).toBeNull()
+      expect(container.querySelector('#from-b')).toBeNull()
+      expect(parse).toHaveBeenCalledTimes(1)
+    })
+
+    it('a result for the old score cannot land under the new one', async () => {
+      const { rerender, container } = render(<ScoreViewer status="ready" scoreKey="A" svgPages={[page('from-a'), page('from-a2')]} />)
+      rerender(<ScoreViewer status="ready" scoreKey="B" svgPages={[page('from-b')]} />)
+      await findSheet()
+      await settle()
+      expect(container.querySelector('#from-b')).not.toBeNull()
+      expect(container.querySelector('#from-a')).toBeNull()
+    })
   })
 
   it('recovers from the error state when smaller pages arrive', async () => {
-    const { rerender } = render(<ScoreViewer status="ready" svgPages={[oversized]} />)
+    const { rerender } = render(<ScoreViewer status="ready" scoreKey="a" svgPages={[oversized]} />)
     await screen.findByRole('alert')
-    rerender(<ScoreViewer status="ready" svgPages={[page('small')]} />)
+    rerender(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('small')]} />)
     expect((await findSheet()).querySelector('#small')).not.toBeNull()
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('shows the loading state, never the raw SVG, until the pages are filtered', async () => {
     const raw = '<svg xmlns="http://www.w3.org/2000/svg" id="raw-page" onload="x()"><rect/></svg>'
-    const { container } = render(<ScoreViewer status="ready" svgPages={[raw]} />)
+    const { container } = render(<ScoreViewer status="ready" scoreKey="a" svgPages={[raw]} />)
     expect(screen.getByLabelText('Đang tải bản nhạc')).toHaveAttribute('aria-busy', 'true')
     expect(container.querySelector('#raw-page')).toBeNull()
     expect(container.innerHTML).not.toContain('onload')
@@ -176,7 +276,7 @@ describe('ScoreViewer filtering', () => {
     const parse = parseSpy()
     const runNextTask = () => act(async () => tasks.shift()?.())
 
-    render(<ScoreViewer status="ready" svgPages={[page('a'), page('b'), page('c')]} />)
+    render(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('a'), page('b'), page('c')]} />)
     expect(parse).toHaveBeenCalledTimes(0)
     await runNextTask() // the limits are checked in this task
     expect(parse).toHaveBeenCalledTimes(0)
@@ -190,8 +290,8 @@ describe('ScoreViewer filtering', () => {
 
   it('new svgPages make the earlier run stop, so a slower old result cannot replace them', async () => {
     const parse = parseSpy()
-    const { rerender, container } = render(<ScoreViewer status="ready" svgPages={[page('old1'), page('old2'), page('old3')]} />)
-    rerender(<ScoreViewer status="ready" svgPages={[page('new')]} />)
+    const { rerender, container } = render(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('old1'), page('old2'), page('old3')]} />)
+    rerender(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('new')]} />)
     await findSheet()
     await settle()
     expect(container.querySelector('#new')).not.toBeNull()
@@ -202,7 +302,7 @@ describe('ScoreViewer filtering', () => {
   it('unmounting in the middle stops the work and reports nothing', async () => {
     const parse = parseSpy()
     const consoleError = vi.spyOn(console, 'error')
-    const { unmount } = render(<ScoreViewer status="ready" svgPages={[page('a'), page('b')]} />)
+    const { unmount } = render(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('a'), page('b')]} />)
     unmount()
     await settle()
     expect(parse).not.toHaveBeenCalled()
@@ -210,10 +310,10 @@ describe('ScoreViewer filtering', () => {
   })
 
   it('forgets the filtered pages when the status leaves ready, so a new score starts from loading', async () => {
-    const { rerender, container } = render(<ScoreViewer status="ready" svgPages={[page('first')]} />)
+    const { rerender, container } = render(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('first')]} />)
     await findSheet()
     rerender(<ScoreViewer status="loading" svgPages={[]} />)
-    rerender(<ScoreViewer status="ready" svgPages={[page('second')]} />)
+    rerender(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('second')]} />)
     expect(container.querySelector('#first')).toBeNull()
     expect(screen.getByLabelText('Đang tải bản nhạc')).toBeInTheDocument()
     expect((await findSheet()).querySelector('#second')).not.toBeNull()
@@ -225,7 +325,7 @@ describe('ScoreViewer resize', () => {
   it('reports the width once after the debounce, then only for large enough changes', () => {
     vi.useFakeTimers()
     const onWidthChange = vi.fn()
-    render(<ScoreViewer status="ready" svgPages={[page('a')]} onWidthChange={onWidthChange} />)
+    render(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('a')]} onWidthChange={onWidthChange} />)
     const observer = FakeResizeObserver.instances.at(-1)!
 
     // A drag of the window: sizes arrive closer together than the debounce.
@@ -270,7 +370,7 @@ describe('ScoreViewer resize', () => {
 
   it('keeps one observer across state changes', () => {
     const { rerender } = render(<ScoreViewer status="loading" svgPages={[]} />)
-    rerender(<ScoreViewer status="ready" svgPages={[page('a')]} />)
+    rerender(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('a')]} />)
     rerender(<ScoreViewer status="error" svgPages={[]} onRetry={() => {}} />)
     expect(FakeResizeObserver.instances.filter((o) => !o.disconnected)).toHaveLength(1)
   })

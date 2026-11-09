@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
-import { exceedsSvgLimits, MAX_PAGE_CHARS, MAX_PAGE_TAGS, MAX_TOTAL_CHARS, sanitizeSvg } from './sanitizeSvg'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { failsSvgPreflight, MAX_PAGE_CHARS, MAX_PAGE_TAGS, MAX_TOTAL_CHARS, sanitizeSvg } from './sanitizeSvg'
 // Page 1 of docs/local/spikes/verovio/fixtures/sample.mxl from Verovio 6.4.1 (pageWidth 1344, adjustPageHeight).
 import verovioPage from './__fixtures__/verovio-sample-page.svg?raw'
 
@@ -11,23 +11,78 @@ const NS = 'xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/19
 
 const parse = (svg: string) => new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement
 
-describe('exceedsSvgLimits', () => {
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe('failsSvgPreflight', () => {
   it('accepts a page exactly at each limit and refuses one past it', () => {
-    expect(exceedsSvgLimits(['x'.repeat(MAX_PAGE_CHARS)])).toBe(false)
-    expect(exceedsSvgLimits(['x'.repeat(MAX_PAGE_CHARS + 1)])).toBe(true)
-    expect(exceedsSvgLimits(['<'.repeat(MAX_PAGE_TAGS)])).toBe(false)
-    expect(exceedsSvgLimits(['<'.repeat(MAX_PAGE_TAGS + 1)])).toBe(true)
+    expect(failsSvgPreflight(['x'.repeat(MAX_PAGE_CHARS)])).toBe(false)
+    expect(failsSvgPreflight(['x'.repeat(MAX_PAGE_CHARS + 1)])).toBe(true)
+    expect(failsSvgPreflight(['<'.repeat(MAX_PAGE_TAGS)])).toBe(false)
+    expect(failsSvgPreflight(['<'.repeat(MAX_PAGE_TAGS + 1)])).toBe(true)
   })
 
   it('adds up the pages for the total', () => {
     const page = 'x'.repeat(MAX_PAGE_CHARS)
     const atLimit = Math.floor(MAX_TOTAL_CHARS / MAX_PAGE_CHARS)
-    expect(exceedsSvgLimits(Array.from({ length: atLimit }, () => page))).toBe(false)
-    expect(exceedsSvgLimits(Array.from({ length: atLimit + 1 }, () => page))).toBe(true)
+    expect(failsSvgPreflight(Array.from({ length: atLimit }, () => page))).toBe(false)
+    expect(failsSvgPreflight(Array.from({ length: atLimit + 1 }, () => page))).toBe(true)
   })
 
   it('accepts a real Verovio page', () => {
-    expect(exceedsSvgLimits([verovioPage])).toBe(false)
+    expect(failsSvgPreflight([verovioPage])).toBe(false)
+  })
+
+  it('leaves comments and CDATA to the sanitizer, which removes them', () => {
+    expect(failsSvgPreflight([`<svg ${NS}><!-- x --><text><![CDATA[y]]></text></svg>`])).toBe(false)
+  })
+
+  it.each([
+    ["Codex's entity payload", `<!DOCTYPE svg [<!ENTITY a "${'A'.repeat(10_000)}">]><svg ${NS}><text>${'&a;'.repeat(1000)}</text></svg>`],
+    ['lower case', `<!doctype svg><svg ${NS}/>`],
+    ['a space after <!', `<! DOCTYPE svg><svg ${NS}/>`],
+    ['after a comment', `<!-- x --><!DOCTYPE svg><svg ${NS}/>`],
+    ['after a processing instruction', `<?xml version="1.0"?><!DOCTYPE svg><svg ${NS}/>`],
+    ['after a BOM', `﻿<!DOCTYPE svg><svg ${NS}/>`],
+    ['SYSTEM', `<!DOCTYPE svg SYSTEM "http://x/a.dtd"><svg ${NS}/>`],
+    ['PUBLIC', `<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://x/a.dtd"><svg ${NS}/>`],
+    [
+      'nested entities (billion laughs)',
+      `<!DOCTYPE svg [<!ENTITY a "aaaaaaaaaa"><!ENTITY b "${'&a;'.repeat(10)}"><!ENTITY c "${'&b;'.repeat(10)}"><!ENTITY d "${'&c;'.repeat(10)}">]><svg ${NS}><text>&d;</text></svg>`,
+    ],
+    ['ENTITY outside a DOCTYPE', `<svg ${NS}><!ENTITY a "b"><text/></svg>`],
+  ])('refuses a DTD before any parser sees it: %s', (_name, svg) => {
+    const parser = vi.spyOn(DOMParser.prototype, 'parseFromString')
+    expect(failsSvgPreflight([svg])).toBe(true)
+    expect(sanitizeSvg(svg)).toBe('')
+    expect(parser).not.toHaveBeenCalled()
+  })
+})
+
+// The DTD check above means nothing can expand any more. To reach the checks behind it, the parser is stubbed to return
+// more than the short input held, which is what a parser expanding something the preflight failed to see would do.
+describe('sanitizeSvg after parsing', () => {
+  const realParse = DOMParser.prototype.parseFromString
+  const parserExpandsTo = (svg: string) =>
+    vi.spyOn(DOMParser.prototype, 'parseFromString').mockImplementation(function (this: DOMParser, _input, type) {
+      return realParse.call(this, svg, type)
+    })
+  const short = `<svg ${NS}/>`
+
+  it('refuses a page that parses into too many elements', () => {
+    parserExpandsTo(`<svg ${NS}>${'<g/>'.repeat(MAX_PAGE_TAGS + 1)}</svg>`)
+    expect(sanitizeSvg(short)).toBe('')
+  })
+
+  it('refuses a page that serializes past the size limit', () => {
+    parserExpandsTo(`<svg ${NS}><text>${'x'.repeat(MAX_PAGE_CHARS)}</text></svg>`)
+    expect(sanitizeSvg(short)).toBe('')
+  })
+
+  it('keeps a page within both limits', () => {
+    parserExpandsTo(`<svg ${NS}><g/></svg>`)
+    expect(sanitizeSvg(short)).toContain('<g')
   })
 })
 
@@ -224,6 +279,23 @@ describe('sanitizeSvg', () => {
         expect(styleOf(`${LEIPZIG}${bad}`)).toBe(LEIPZIG)
         expect(styleOf(`${LEIPZIG}${LEIPZIG}`)).toBe(`${LEIPZIG}${LEIPZIG}`)
         expect(styleOf(`@media print{${LEIPZIG}}${LEIPZIG}`)).toBe(LEIPZIG)
+      })
+
+      const FONT = `@font-face{font-family:'Leipzig';${SRC}}`
+
+      it.each([
+        ['an unclosed comment that hides a block', `a{/*}${FONT}`],
+        ['an unclosed comment at the start', `/* ${FONT}`],
+        ['a closed comment around a block', `/*}${FONT}*/g.a{fill:red}`],
+        ['a comment beside valid CSS', 'g.a{fill:red}/* note */'],
+        ['a double-quoted string holding }', `a{content:"}${FONT}"}`],
+        ['a single-quoted string holding }', `a{content:'}${FONT}'}`],
+        ['a string holding /*', `a{content:"/*"}${FONT}`],
+        ['a hex-escaped brace', `a{\\7d ${FONT}`],
+        ['an escaped closing brace that the count would take for a real one', `a{\\}${FONT}`],
+        ['a comment opener inside a font family', `@font-face{font-family:'/*';${SRC}}${FONT}`],
+      ])('removes the whole stylesheet: %s', (_name, css) => {
+        expect(styleOf(css)).toBe('')
       })
 
       it('drops a listed family as soon as the UI uses that name', async () => {
