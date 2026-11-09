@@ -50,6 +50,19 @@ describe('createScoreEngine', () => {
     expect(toolkit.renderToTimemap).toHaveBeenCalledWith({ includeMeasures: true })
   })
 
+  it('load and relayout ask for pages only as tall as their content (adjustPageHeight)', async () => {
+    const toolkit = fakeToolkit()
+    const engine = createScoreEngine(toolkit)
+
+    await engine.load({ format: 'musicxml', data: '<score/>' }, { pageWidth: 1800 })
+    engine.relayout(1200)
+
+    expect(toolkit.setOptions.mock.calls).toEqual([
+      [{ pageWidth: 1800, adjustPageHeight: true }],
+      [{ pageWidth: 1200, adjustPageHeight: true }],
+    ])
+  })
+
   it('broken data rejects with load-failed, never the raw library error', async () => {
     const raw = new Error('vrv internal: pugixml parse error')
     const engine = createScoreEngine(

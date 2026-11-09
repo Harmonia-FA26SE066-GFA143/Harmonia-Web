@@ -1,0 +1,100 @@
+/* ScoreViewer. Colours and sizes come from tokens.ts through the custom properties set on .hm-score-viewer. */
+
+.hm-score-viewer {
+  height: 100%;
+  min-width: 0;
+}
+
+/* A flat sheet of paper: ivory, one 1px border, no shadow, no gradient. */
+.hm-score-sheet {
+  display: block;
+  box-sizing: border-box;
+  padding: var(--hm-score-pad);
+  background: var(--hm-score-paper);
+  border: 1px solid var(--hm-score-border);
+  border-radius: var(--hm-score-radius);
+  color: var(--hm-score-ink);
+}
+
+/* The one scroll region of the score: the page around it does not scroll the score. */
+.hm-score-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.hm-score-scroll:focus-visible {
+  outline: 2px solid var(--hm-score-focus);
+  outline-offset: 2px;
+}
+
+.hm-score-page + .hm-score-page {
+  margin-top: var(--hm-score-gap);
+}
+
+/* Verovio draws shapes in currentColor under a `color="black"` attribute and leaves text on the default black fill;
+   ink is never pure black. */
+.hm-score-page .definition-scale {
+  color: var(--hm-score-ink);
+  fill: var(--hm-score-ink);
+}
+
+/* Verovio sizes its SVG for the page width it was given; never let it push past the sheet. */
+.hm-score-page svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+
+.hm-score-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hm-score-pad);
+}
+
+/* Hooks for P5/P7 (static look only; motion belongs to P7). Verovio nests a note's syllables (g.verse) inside the
+   note, and fill is inherited, so the verse is set back to ink: the lyric has its own hook. */
+.hm-score-note--active {
+  color: var(--hm-score-active);
+  fill: var(--hm-score-active);
+  stroke: var(--hm-score-active);
+}
+
+.hm-score-note--active .verse {
+  color: var(--hm-score-ink);
+  fill: var(--hm-score-ink);
+  stroke: none;
+}
+
+.hm-score-note--active .verse .hm-score-lyric--active,
+.hm-score-lyric--active {
+  color: var(--hm-score-active);
+  fill: var(--hm-score-active);
+}
+
+.hm-score-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-score-scroll {
+    scroll-behavior: auto;
+  }
+
+  .hm-score-scroll *,
+  .hm-score-scroll *::before,
+  .hm-score-scroll *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
