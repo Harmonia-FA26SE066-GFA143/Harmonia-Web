@@ -43,7 +43,7 @@ export class ScoreEngineError extends Error {
 
 /** The part of Verovio's `VerovioToolkit` the engine uses; tests pass a fake. */
 export interface ScoreToolkit {
-  setOptions(options: { pageWidth: number }): boolean
+  setOptions(options: { pageWidth: number; adjustPageHeight: boolean }): boolean
   loadData(data: string): boolean
   loadZipDataBuffer(data: ArrayBuffer): boolean
   getPageCount(): number

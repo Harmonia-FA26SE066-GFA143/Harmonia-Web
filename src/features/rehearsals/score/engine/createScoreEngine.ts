@@ -2,8 +2,8 @@ import { ScoreEngineError, type ScoreEngine, type ScoreInput, type ScoreToolkit 
 
 /**
  * Wraps a toolkit with a lifecycle. Verovio options stay as in the spike (docs/local/spikes/verovio): defaults plus
- * `pageWidth`, timemap with `includeMeasures`, `getMEI()` without options. Repeats are left to Verovio's default
- * expansion; how the player treats repeats (AliasMap, which pass to show) is Track A's call, not this adapter's.
+ * `pageWidth` and `adjustPageHeight` (`layoutOptions`), timemap with `includeMeasures`, `getMEI()` without options.
+ * Repeats are left to Verovio's default expansion; how the player treats repeats (AliasMap, which pass to show) is Track A's call, not this adapter's.
  */
 export function createScoreEngine(initial: ScoreToolkit): ScoreEngine {
   let toolkit: ScoreToolkit | null = initial
@@ -28,7 +28,7 @@ export function createScoreEngine(initial: ScoreToolkit): ScoreEngine {
 
       loaded = false
       try {
-        if (!target.setOptions({ pageWidth })) throw new Error('Verovio rejected the layout options')
+        if (!target.setOptions(layoutOptions(pageWidth))) throw new Error('Verovio rejected the layout options')
         if (!parse(target, input)) throw new Error('Verovio rejected the score data')
         const result = { svgPages: renderPages(target), mei: target.getMEI(), timemap: target.renderToTimemap({ includeMeasures: true }) }
         loaded = true
@@ -42,7 +42,7 @@ export function createScoreEngine(initial: ScoreToolkit): ScoreEngine {
       const target = alive()
       if (!loaded) throw new ScoreEngineError('not-loaded')
       try {
-        if (!target.setOptions({ pageWidth })) throw new Error('Verovio rejected the layout options')
+        if (!target.setOptions(layoutOptions(pageWidth))) throw new Error('Verovio rejected the layout options')
         target.redoLayout()
         return renderPages(target)
       } catch (cause) {
@@ -68,3 +68,9 @@ function parse(target: ScoreToolkit, input: ScoreInput): boolean {
   if (input.format === 'mxl') return target.loadZipDataBuffer(input.data.slice().buffer)
   return target.loadData(typeof input.data === 'string' ? input.data : new TextDecoder().decode(input.data))
 }
+
+/**
+ * `adjustPageHeight` (Chat 2026-11-08, P4 fix 1): a page is only as tall as its systems, so a short song does not sit
+ * on a whole A4 of blank paper. Layout only; the timemap does not change.
+ */
+const layoutOptions = (pageWidth: number) => ({ pageWidth, adjustPageHeight: true })
