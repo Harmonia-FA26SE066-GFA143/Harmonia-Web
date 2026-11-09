@@ -52,10 +52,8 @@ const TEXT_ONLY_ELEMENTS = new Set(['style', 'title', 'desc'])
 /** `java\tscript:`, ` JavaScript:`: browsers ignore control characters and whitespace when they read a URL scheme. */
 const isScriptUrl = (value: string) => value.replace(/[\s\p{Cc}]/gu, '').toLowerCase().startsWith('javascript:')
 
-const URL_PATTERN = /url\(\s*(['"]?)(.*?)\1\s*\)/gi
-/** Anything that still loads from outside once the known forms are rewritten. */
-// The lookahead also refuses a space or quote, so backtracking over `\s*['"]?` cannot slip past `url( "#id" )`.
-const LEFTOVER_REFERENCE = /@import|image-set\(|url\(\s*['"]?\s*(?![\s'"#])/i
+/** The one form a presentation attribute (fill, stroke) may reference: a fragment of this SVG, and nothing else in it. */
+const LOCAL_REFERENCE = /^url\(#[\w-]+\)$/
 
 /**
  * The whole of Verovio's `@font-face` for its music text font (the ♩ of the tempo mark), the one data URL allowed: only
@@ -86,7 +84,7 @@ const ALLOWED_CSS_PROPERTIES = new Set(
   'font-family font-weight font-style font-size fill stroke stroke-width stroke-dasharray text-anchor visibility opacity'.split(' '),
 )
 /** The value class has no `(`, quote, `\`, `@` or `!`, so `url()`, `expression()`, escapes and `!important` cannot match. */
-const CSS_DECLARATION = /^\s*([a-z-]+)\s*:\s*([\w\s.,#%-]+?)\s*$/
+const CSS_VALUE = /^[\w\s.,#%-]+$/
 /** Type, id and class selectors joined by spaces: `:`, `*`, `>`, `[` and `@` cannot match. */
 const SAFE_SELECTOR = /^[a-z#.][\w#.\s-]*$/i
 const DOCUMENT_ROOT_SELECTOR = /(?:^|\s)(?:html|body)(?=$|[\s.#])/i
@@ -96,8 +94,11 @@ const cleanDeclarations = (css: string) =>
   css
     .split(';')
     .map((declaration) => {
-      const match = CSS_DECLARATION.exec(declaration)
-      return match && ALLOWED_CSS_PROPERTIES.has(match[1]) ? `${match[1]}:${match[2]};` : ''
+      // Split and trimmed, not one pattern: runs of spaces in user CSS must not make a regular expression backtrack.
+      const colon = declaration.indexOf(':')
+      const property = declaration.slice(0, colon).trim()
+      const value = declaration.slice(colon + 1).trim()
+      return colon > 0 && ALLOWED_CSS_PROPERTIES.has(property) && CSS_VALUE.test(value) ? `${property}:${value};` : ''
     })
     .join('')
 
@@ -128,20 +129,6 @@ function scopeRule(block: string): string {
 }
 
 /**
- * Removes every external reference from a presentation attribute: `@import`, `image-set()` and `url()` other than `#id`
- * become nothing or `none`. A value with a backslash is dropped whole, since escapes can spell `url(` or `@import` in
- * disguise; Verovio writes none.
- */
-function cleanCss(css: string): string {
-  if (css.includes('\\')) return ''
-  const cleaned = css
-    .replace(/@import[^;]*;?/gi, '')
-    .replace(/image-set\([^)]*\)/gi, 'none')
-    .replace(URL_PATTERN, (match: string, _quote: string, target: string) => (target.trim().startsWith('#') ? match : 'none'))
-  return LEFTOVER_REFERENCE.test(cleaned) ? '' : cleaned
-}
-
-/**
  * A `<style>` text: Verovio's top-level font blocks stay as written, every other block is rebuilt or dropped. A comment,
  * string or escape outside a font block loses the whole stylesheet, since the brace count cannot be trusted past one.
  */
@@ -163,8 +150,8 @@ function cleanAttributes(element: Element) {
       if (cleaned) attribute.value = cleaned
       else drop = true
     } else if (!drop && /url\(|\\/i.test(value)) {
-      // Presentation attributes (fill, stroke) take url() too.
-      drop = cleanCss(value) !== value
+      // A backslash can spell `url(` in disguise; Verovio writes none and no url() in these attributes at all.
+      drop = !LOCAL_REFERENCE.test(value)
     }
     if (drop) element.removeAttributeNode(attribute)
   }

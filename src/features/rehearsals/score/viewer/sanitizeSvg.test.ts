@@ -321,6 +321,40 @@ describe('sanitizeSvg', () => {
     expect(out.querySelector('rect')?.getAttribute('stroke')).toBe('url(#f)')
   })
 
+  it.each(['url(#a) red', 'url( #a )', 'url("#a")', 'URL(#a)', 'url(#a)url(#b)', 'url(#a', 'url(http://x/a#b)', 'url(#a\\)'])(
+    'a presentation attribute keeps url() only as exactly url(#id): %s',
+    (value) => {
+      const out = parse(sanitizeSvg(`<svg ${NS}><rect fill='${value.replace(/"/g, '&quot;')}'/></svg>`))
+      expect(out.querySelector('rect')?.hasAttribute('fill')).toBe(false)
+    },
+  )
+
+  it('reads declarations by their first colon, with spaces around either side', () => {
+    const body = (css: string) => parse(sanitizeSvg(`<svg ${NS}><style>${css}</style></svg>`)).querySelector('style')?.textContent
+    expect(body('g.a{ fill : red ; stroke:blue}')).toBe('.hm-score-page g.a{fill:red;stroke:blue;}')
+    expect(body('g.a{fillx;stroke:blue}')).toBe('.hm-score-page g.a{stroke:blue;}')
+    expect(body('g.a{:red;stroke:blue}')).toBe('.hm-score-page g.a{stroke:blue;}')
+    expect(body('g.a{fill:;stroke:blue}')).toBe('.hm-score-page g.a{stroke:blue;}')
+    expect(body('g.a{fill:a:b;stroke:blue}')).toBe('.hm-score-page g.a{stroke:blue;}')
+  })
+
+  // Each input took seconds with the backtracking patterns these checks replaced, and time grew with the square of its
+  // length. The limit is far above what a linear scan needs and far below what a quadratic one takes at this size.
+  describe('stays fast on CSS built to make a pattern backtrack', () => {
+    const SIZE = 100_000
+    it.each([
+      ['repeated url( in a presentation attribute', `<rect fill="${'url('.repeat(SIZE / 4)}"/>`],
+      // Short on purpose: the old pattern was cubic here, and 3,000 spaces already took seconds.
+      ['url( and a run of spaces in a presentation attribute', `<rect fill="url(${' '.repeat(3000)}#"/>`],
+      ['a long run of spaces before a bad character in a rule', `<style>g{a:b${' '.repeat(SIZE)}(}</style>`],
+      ['a long run of spaces before a bad character in a style attribute', `<rect style="a:b${' '.repeat(SIZE)}("/>`],
+    ])('%s', (_name, body) => {
+      const start = performance.now()
+      sanitizeSvg(`<svg ${NS}>${body}</svg>`)
+      expect(performance.now() - start).toBeLessThan(1000)
+    })
+  })
+
   it('drops CSS with escapes, which could spell url( or @import in disguise', () => {
     const out = sanitizeSvg(`<svg ${NS}><style>.a { background: \\75 rl(http://x) }</style><rect style="fill: \\75 rl(http://x)"/></svg>`)
     expect(out).not.toMatch(/\/\/x/)
