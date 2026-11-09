@@ -1,4 +1,29 @@
+import { typography } from '@/styles/tokens'
+
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
+
+/**
+ * What ScoreViewer is willing to parse, checked before any parsing. Measured on Verovio 6.4.1 output: the largest page
+ * of a 200-measure SATB score in sixteenths with three verses is 283,262 chars and 5,371 tags, the whole score 28.1 M
+ * chars (100 pages). `length` stands in for bytes: Verovio's SVG is ASCII but for the lyrics.
+ */
+export const MAX_PAGE_CHARS = 1_000_000
+export const MAX_PAGE_TAGS = 20_000
+export const MAX_TOTAL_CHARS = 40_000_000
+
+function hasTooManyTags(svg: string): boolean {
+  let tags = 0
+  for (let index = svg.indexOf('<'); index !== -1; index = svg.indexOf('<', index + 1)) {
+    tags += 1
+    if (tags > MAX_PAGE_TAGS) return true
+  }
+  return false
+}
+
+export function exceedsSvgLimits(pages: readonly string[]): boolean {
+  const total = pages.reduce((sum, page) => sum + page.length, 0)
+  return total > MAX_TOTAL_CHARS || pages.some((page) => page.length > MAX_PAGE_CHARS || hasTooManyTags(page))
+}
 
 /**
  * What the score may be drawn with. Built from the SVG Verovio 6.4.1 writes for sample.mxl, sample.mei and a test score
@@ -26,12 +51,24 @@ const URL_PATTERN = /url\(\s*(['"]?)(.*?)\1\s*\)/gi
 const LEFTOVER_REFERENCE = /@import|image-set\(|url\(\s*['"]?\s*(?![\s'"#])/i
 
 /**
- * Verovio's `@font-face` for its music text font (Leipzig, the ♩ of the tempo mark), the one data URL allowed: exactly
- * this MIME, as the `src` of an `@font-face`, whose other declarations cannot hold a `(`. A data URL never reaches the
- * network. The outer group makes `split` keep the blocks it finds.
+ * The whole of Verovio's `@font-face` for its music text font (the ♩ of the tempo mark), the one data URL allowed: only
+ * these descriptors, in this order, as one top-level block. A data URL never reaches the network.
  */
-const EMBEDDED_FONT =
-  /(@font-face\s*\{\s*(?:[\w-]+:[\w\s'-]*;\s*)*src:\s*url\(data:application\/font-woff2;charset=utf-8;base64,[A-Za-z0-9+/=]+\)\s*format\('woff2'\);\s*(?:[\w-]+:[\w\s'-]*;\s*)*\})/i
+const VEROVIO_FONT_FACE =
+  /^\s*@font-face\s*\{\s*font-family:\s*'([^']+)';\s*src:\s*url\(data:application\/font-woff2;charset=utf-8;base64,[A-Za-z0-9+/=]+\)\s*format\('woff2'\);\s*(?:font-weight:\s*normal;\s*)?(?:font-style:\s*normal;\s*)?\}$/
+/** Every family Verovio 6.4.1 embedded in the scores inventoried for this list. */
+const VEROVIO_FONT_FAMILIES = new Set(['Leipzig'])
+/** An embedded face named like one of these would replace the app's own text everywhere. */
+const UI_FONT_FAMILIES = new Set(
+  `${typography.fontFamily},${typography.displayFontFamily}`.split(',').map((family) => family.trim().replace(/^'|'$/g, '').toLowerCase()),
+)
+
+// ponytail: the font bytes are not checked (a hash would tie this to one Verovio version). A forged Leipzig can only
+// change the score's own ♩, since the UI never uses that family; hash it if that family ever reaches app text.
+function isVerovioFontFace(block: string): boolean {
+  const family = VEROVIO_FONT_FACE.exec(block)?.[1]
+  return family !== undefined && VEROVIO_FONT_FAMILIES.has(family) && !UI_FONT_FAMILIES.has(family.toLowerCase())
+}
 
 /** The element ScoreViewer mounts each page in: a `<style>` inside inline SVG applies to the whole document otherwise. */
 const PAGE_SELECTOR = '.hm-score-page'
@@ -94,11 +131,10 @@ function cleanCss(css: string): string {
   return LEFTOVER_REFERENCE.test(cleaned) ? '' : cleaned
 }
 
-/** A `<style>` text: Verovio's embedded font blocks (the odd parts of the split) stay, the rest is rebuilt rule by rule. */
+/** A `<style>` text: Verovio's top-level font blocks stay as written, every other block is rebuilt or dropped. */
 const cleanStyleSheet = (css: string) =>
-  css
-    .split(EMBEDDED_FONT)
-    .map((part, index) => (index % 2 === 1 ? part : topLevelBlocks(part).map(scopeRule).join('')))
+  topLevelBlocks(css)
+    .map((block) => (isVerovioFontFace(block) ? block : scopeRule(block)))
     .join('')
 
 const isAllowedElement = (element: Element) => element.namespaceURI === SVG_NAMESPACE && ALLOWED_ELEMENTS.has(element.tagName)
