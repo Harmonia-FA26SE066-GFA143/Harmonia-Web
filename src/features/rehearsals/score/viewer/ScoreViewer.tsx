@@ -1,8 +1,8 @@
-import { useEffect, useId, useMemo, useRef, type CSSProperties } from 'react'
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { ErrorState } from '@/shared/ui/ErrorState'
 import { colors, radius, spacing } from '@/styles/tokens'
-import { sanitizeSvg } from './sanitizeSvg'
+import { exceedsSvgLimits, sanitizeSvg } from './sanitizeSvg'
 import './ScoreViewer.css'
 
 export type ScoreViewerStatus = 'loading' | 'empty' | 'error' | 'ready'
@@ -41,21 +41,60 @@ const themeVars = {
   '--hm-score-gap': `${spacing.lg}px`,
 } as CSSProperties
 
+const TOO_LARGE = 'too-large'
+const yieldToBrowser = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+function visibleState(status: ScoreViewerStatus, filtered: string[] | typeof TOO_LARGE | null): ScoreViewerStatus {
+  if (status !== 'ready') return status
+  if (filtered === TOO_LARGE) return 'error'
+  return filtered ? 'ready' : 'loading'
+}
+
 /**
  * Shows the rendered score on a flat ivory sheet in one scroll region. It does no fetching: the caller passes the state
  * and the pages. Hooks for P5/P7: `hm-score-note--active` on a note group, `hm-score-lyric--active` on a syllable.
- * The scroll region stays mounted while the status is `ready`, so new pages (relayout) keep the scroll position; the
- * browser only clamps it when the score gets shorter.
+ * Pages are filtered after render, one per task; nothing unfiltered ever reaches the DOM. Until the first result the
+ * loading state shows. While new pages (relayout) are filtered the previous, already filtered ones stay, so the scroll
+ * region stays mounted and keeps its position; the browser only clamps it when the score gets shorter.
  */
 export function ScoreViewer({ status, svgPages, title, onRetry, onWidthChange }: Readonly<ScoreViewerProps>) {
   const rootRef = useRef<HTMLDivElement>(null)
   const onWidthChangeRef = useRef(onWidthChange)
   const summaryId = useId()
-  const pages = useMemo(() => svgPages.map(sanitizeSvg), [svgPages])
+  const [filtered, setFiltered] = useState<string[] | typeof TOO_LARGE | null>(null)
+  const [attempt, setAttempt] = useState(0)
+  // Leaving `ready` means another score may follow: it must start from loading, not from these pages.
+  if (status !== 'ready' && filtered !== null) setFiltered(null)
 
   useEffect(() => {
     onWidthChangeRef.current = onWidthChange
   }, [onWidthChange])
+
+  useEffect(() => {
+    if (status !== 'ready') return
+    // New pages or an unmount end this run: nothing is parsed or set after the next yield.
+    let superseded = false
+    const stillWantedAfterYield = async () => {
+      await yieldToBrowser()
+      return !superseded
+    }
+    void (async () => {
+      if (!(await stillWantedAfterYield())) return
+      if (exceedsSvgLimits(svgPages)) {
+        setFiltered(TOO_LARGE)
+        return
+      }
+      const clean: string[] = []
+      for (const page of svgPages) {
+        if (!(await stillWantedAfterYield())) return
+        clean.push(sanitizeSvg(page))
+      }
+      setFiltered(clean)
+    })()
+    return () => {
+      superseded = true
+    }
+  }, [status, svgPages, attempt])
 
   useEffect(() => {
     const root = rootRef.current
@@ -78,10 +117,12 @@ export function ScoreViewer({ status, svgPages, title, onRetry, onWidthChange }:
     }
   }, [])
 
+  const view = visibleState(status, filtered)
+  const pages = Array.isArray(filtered) ? filtered : []
   const pageCount = `${pages.length} trang`
   return (
     <div ref={rootRef} className="hm-score-viewer" style={themeVars}>
-      {status === 'loading' && (
+      {view === 'loading' && (
         <output aria-busy="true" aria-label="Đang tải bản nhạc" className="hm-score-sheet hm-score-skeleton hm-skeleton-in">
           {/* Bare staves the width of the sheet, where the systems will be (StaffPlaceholder is incipit-long). */}
           {Array.from({ length: 4 }, (_, index) => (
@@ -95,17 +136,21 @@ export function ScoreViewer({ status, svgPages, title, onRetry, onWidthChange }:
           ))}
         </output>
       )}
-      {status === 'empty' && (
+      {view === 'empty' && (
         <EmptyState title="Chưa có bản nhạc" description="Bài này chưa có bản nhạc để hiển thị." />
       )}
-      {status === 'error' && (
+      {view === 'error' && (
         <ErrorState
           title="Không thể hiển thị bản nhạc"
-          description="Đã xảy ra sự cố khi mở bản nhạc. Vui lòng thử lại."
-          onRetry={onRetry}
+          description={
+            filtered === TOO_LARGE
+              ? 'Bản nhạc này quá lớn nên không thể hiển thị. Vui lòng thử lại hoặc dùng bản ngắn hơn.'
+              : 'Đã xảy ra sự cố khi mở bản nhạc. Vui lòng thử lại.'
+          }
+          onRetry={onRetry ?? (() => setAttempt((count) => count + 1))}
         />
       )}
-      {status === 'ready' && (
+      {view === 'ready' && (
         <>
           <p id={summaryId} className="hm-score-sr">
             {title ? `${title}, ${pageCount}` : `Bản nhạc ${pageCount}`}

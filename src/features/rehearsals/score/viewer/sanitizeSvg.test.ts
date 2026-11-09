@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { sanitizeSvg } from './sanitizeSvg'
+import { describe, expect, it, vi } from 'vitest'
+import { exceedsSvgLimits, MAX_PAGE_CHARS, MAX_PAGE_TAGS, MAX_TOTAL_CHARS, sanitizeSvg } from './sanitizeSvg'
 // Page 1 of docs/local/spikes/verovio/fixtures/sample.mxl from Verovio 6.4.1 (pageWidth 1344, adjustPageHeight).
 import verovioPage from './__fixtures__/verovio-sample-page.svg?raw'
 
@@ -10,6 +10,26 @@ const DRAWING = 'svg g defs symbol path use rect line polygon polyline ellipse c
 const NS = 'xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"'
 
 const parse = (svg: string) => new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement
+
+describe('exceedsSvgLimits', () => {
+  it('accepts a page exactly at each limit and refuses one past it', () => {
+    expect(exceedsSvgLimits(['x'.repeat(MAX_PAGE_CHARS)])).toBe(false)
+    expect(exceedsSvgLimits(['x'.repeat(MAX_PAGE_CHARS + 1)])).toBe(true)
+    expect(exceedsSvgLimits(['<'.repeat(MAX_PAGE_TAGS)])).toBe(false)
+    expect(exceedsSvgLimits(['<'.repeat(MAX_PAGE_TAGS + 1)])).toBe(true)
+  })
+
+  it('adds up the pages for the total', () => {
+    const page = 'x'.repeat(MAX_PAGE_CHARS)
+    const atLimit = Math.floor(MAX_TOTAL_CHARS / MAX_PAGE_CHARS)
+    expect(exceedsSvgLimits(Array.from({ length: atLimit }, () => page))).toBe(false)
+    expect(exceedsSvgLimits(Array.from({ length: atLimit + 1 }, () => page))).toBe(true)
+  })
+
+  it('accepts a real Verovio page', () => {
+    expect(exceedsSvgLimits([verovioPage])).toBe(false)
+  })
+})
 
 describe('sanitizeSvg', () => {
   it('removes script and foreignObject, in any case and at any depth', () => {
@@ -171,6 +191,49 @@ describe('sanitizeSvg', () => {
       expect(rules[0].style.getPropertyValue('position')).toBe('')
       mount.remove()
       outside.remove()
+    })
+
+    describe('@font-face', () => {
+      const SRC = "src: url(data:application/font-woff2;charset=utf-8;base64,d09GMg) format('woff2');"
+      const LEIPZIG = `@font-face {\n    font-family: 'Leipzig';\n    ${SRC}\n    font-weight: normal;\n    font-style: normal;\n}`
+
+      it.each([
+        ['the UI font, with Verovio descriptors', `@font-face { font-family: 'Be Vietnam Pro'; ${SRC} font-weight: normal; font-style: normal; }`],
+        ['the UI font, with weight 400', `@font-face{font-family:'Be Vietnam Pro';${SRC}font-weight:400}`],
+        ['the display font', `@font-face { font-family: 'Cormorant Garamond'; ${SRC} }`],
+        ['a family Verovio never embeds', `@font-face { font-family: 'Evil'; ${SRC} }`],
+        ['Leipzig in another case', `@font-face { font-family: 'LEIPZIG'; ${SRC} }`],
+        ['inside @media print', `@media print{${LEIPZIG}}`],
+        ['inside @supports', `@supports (display:grid){${LEIPZIG}}`],
+        ['unicode-range', `@font-face { font-family: 'Leipzig'; ${SRC} unicode-range: U+41; }`],
+        ['font-display', `@font-face { font-family: 'Leipzig'; ${SRC} font-display: swap; }`],
+        ['size-adjust', `@font-face { font-family: 'Leipzig'; size-adjust: 900%; ${SRC} }`],
+        ['a weight Verovio never writes', `@font-face { font-family: 'Leipzig'; ${SRC} font-weight: bold; }`],
+        ['a style Verovio never writes', `@font-face { font-family: 'Leipzig'; ${SRC} font-style: italic; }`],
+      ])('drops the whole block: %s', (_name, css) => {
+        expect(styleOf(css)).toBe('')
+      })
+
+      it('keeps the real Verovio block exactly as written', () => {
+        expect(styleOf(LEIPZIG)).toBe(LEIPZIG)
+      })
+
+      it('judges two neighbouring blocks independently', () => {
+        const bad = `@font-face { font-family: 'Be Vietnam Pro'; ${SRC} }`
+        expect(styleOf(`${bad}${LEIPZIG}`)).toBe(LEIPZIG)
+        expect(styleOf(`${LEIPZIG}${bad}`)).toBe(LEIPZIG)
+        expect(styleOf(`${LEIPZIG}${LEIPZIG}`)).toBe(`${LEIPZIG}${LEIPZIG}`)
+        expect(styleOf(`@media print{${LEIPZIG}}${LEIPZIG}`)).toBe(LEIPZIG)
+      })
+
+      it('drops a listed family as soon as the UI uses that name', async () => {
+        vi.resetModules()
+        vi.doMock('@/styles/tokens', () => ({ typography: { fontFamily: "leipzig, serif", displayFontFamily: 'Georgia, serif' } }))
+        const { sanitizeSvg: withLeipzigInUi } = await import('./sanitizeSvg')
+        vi.doUnmock('@/styles/tokens')
+        vi.resetModules()
+        expect(withLeipzigInUi(`<svg ${NS}><style>${LEIPZIG}</style></svg>`)).not.toContain('@font-face')
+      })
     })
 
     it('filters a style attribute by the same properties, since an inline style can pull the SVG out of the viewer', () => {
