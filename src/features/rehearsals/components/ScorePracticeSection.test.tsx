@@ -4,6 +4,7 @@ import { spacing } from '@/styles/tokens'
 import type { LoadedScore } from '../score/engine'
 import { DevFixtureScoreSource } from '../score/source/DevFixtureScoreSource'
 import { ScoreSourceError, type ScorePackage } from '../score/source/types'
+import { ACTIVE_LYRIC_CLASS } from '../score/sync/useLyricSync'
 import { ACTIVE_NOTE_CLASS } from '../score/sync/useScoreSync'
 import { toEnginePageWidth } from '../score/viewer'
 import { MAX_PAGE_CHARS } from '../score/viewer/sanitizeSvg'
@@ -654,5 +655,110 @@ describe('ScorePracticeSection, disposal', () => {
     await act(async () => deliver(engine))
     expect(engine.dispose).toHaveBeenCalled()
     expect(engine.load).not.toHaveBeenCalled()
+  })
+})
+
+describe('ScorePracticeSection, lyrics', () => {
+  // One part, two verses on n1: "Ca" (verse 1) and "Hát" (verse 2).
+  const LYRIC_MEI = `<mei xmlns="http://www.music-encoding.org/ns/mei"><music><body><mdiv><score>
+<scoreDef><staffGrp><staffDef n="1"><label>Nữ cao</label></staffDef></staffGrp></scoreDef>
+<section><measure><staff n="1"><layer n="1"><note xml:id="n1">
+  <verse n="1"><syl xml:id="v1">Ca</syl></verse><verse n="2"><syl xml:id="v2">Hát</syl></verse>
+</note></layer></staff></measure></section></score></mdiv></body></music></mei>`
+  const LYRIC_PAGE = `<svg xmlns="http://www.w3.org/2000/svg"><g id="n1" class="note"><path d="M0 0"/>
+<g class="verse"><g id="v1" class="syl"><text>Ca</text></g></g><g class="verse"><g id="v2" class="syl"><text>Hát</text></g></g></g></svg>`
+
+  const sungEngine = () =>
+    mocks.createVerovioEngine.mockImplementationOnce(async () => {
+      const engine = fakeEngine()
+      engine.load.mockResolvedValue({ svgPages: [LYRIC_PAGE], mei: LYRIC_MEI, timemap: TIMEMAP, aliases: new Map() })
+      engines.push(engine)
+      return engine
+    })
+  const litLyrics = (sheet: HTMLElement) => Array.from(sheet.querySelectorAll(`.${ACTIVE_LYRIC_CLASS}`), (el) => el.id)
+
+  it('a score without lyrics offers no lyric choice and lights no syllable', async () => {
+    renderSection()
+    pickBoth()
+    const sheet = await findSheet()
+    expect(screen.queryByRole('combobox', { name: 'Khổ lời' })).toBeNull()
+    expect(screen.queryByRole('combobox', { name: 'Lời của bè' })).toBeNull()
+    expect(litLyrics(sheet)).toEqual([])
+  })
+
+  it('lights the first verse, and the chosen verse once another is picked', async () => {
+    sungEngine()
+    renderSection()
+    pickBoth()
+    const sheet = await findSheet()
+    await waitFor(() => expect(litLyrics(sheet)).toEqual(['v1']))
+    const verse = screen.getByRole('combobox', { name: 'Khổ lời' })
+    act(() => verse.focus())
+    fireEvent.keyDown(verse, { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 })
+    fireEvent.keyDown(verse, { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 })
+    fireEvent.keyDown(verse, { key: 'Enter', code: 'Enter', keyCode: 13 })
+    await waitFor(() => expect(litLyrics(sheet)).toEqual(['v2']))
+  })
+})
+
+describe('ScorePracticeSection, lyrics over tied notes', () => {
+  // Hand-written: t1 (sung "Ca", tied to t2) 0–1 s, t2 1–2 s, n3 (sung "ngợi") 2–3 s.
+  const tiedMei = (withTie: boolean) => `<mei xmlns="http://www.music-encoding.org/ns/mei"><music><body><mdiv><score>
+<scoreDef><staffGrp><staffDef n="1"><label>Nữ cao</label></staffDef></staffGrp></scoreDef>
+<section><measure><staff n="1"><layer n="1">
+  <note xml:id="t1"><verse n="1"><syl xml:id="s-ca">Ca</syl></verse></note>
+  <note xml:id="t2"/>
+  <note xml:id="n3"><verse n="1"><syl xml:id="s-ngoi">ngợi</syl></verse></note>
+</layer></staff>${withTie ? '<tie startid="#t1" endid="#t2"/>' : ''}</measure></section></score></mdiv></body></music></mei>`
+  const TIED_PAGE = `<svg xmlns="http://www.w3.org/2000/svg">
+<g id="t1" class="note"><path d="M0 0"/><g class="verse"><g id="s-ca" class="syl"><text>Ca</text></g></g></g>
+<g id="t2" class="note"><path d="M0 0"/></g>
+<g id="n3" class="note"><path d="M0 0"/><g class="verse"><g id="s-ngoi" class="syl"><text>ngợi</text></g></g></g></svg>`
+  const TIED_TIMEMAP = [
+    { tstamp: 0, on: ['t1'] },
+    { tstamp: 1000, off: ['t1'], on: ['t2'] },
+    { tstamp: 2000, off: ['t2'], on: ['n3'] },
+    { tstamp: 3000, off: ['n3'] },
+  ]
+
+  async function openAt(withTie: boolean) {
+    mocks.createVerovioEngine.mockImplementationOnce(async () => {
+      const engine = fakeEngine()
+      engine.load.mockResolvedValue({ svgPages: [TIED_PAGE], mei: tiedMei(withTie), timemap: TIED_TIMEMAP, aliases: new Map() })
+      engines.push(engine)
+      return engine
+    })
+    renderSection()
+    pickBoth()
+    const sheet = await findSheet()
+    await waitFor(() => expect(sheet.querySelector('#s-ca')).not.toBeNull())
+    const at = (seconds: number) => {
+      act(() => {
+        const audio = FakeAudio.instances.at(-1)!
+        audio.currentTime = seconds
+        audio.dispatch('seeked')
+      })
+      return {
+        lyrics: Array.from(sheet.querySelectorAll(`.${ACTIVE_LYRIC_CLASS}`), (el) => el.id),
+        notes: Array.from(sheet.querySelectorAll(`.${ACTIVE_NOTE_CLASS}`), (el) => el.id),
+      }
+    }
+    return at
+  }
+
+  it('keeps the syllable of a tie head lit through its continuation, off at the group end', async () => {
+    const at = await openAt(true)
+    expect(at(0.5)).toEqual({ lyrics: ['s-ca'], notes: ['t1'] })
+    // Notes still light one notehead at a time: the tie map changes nothing for them.
+    expect(at(1.5)).toEqual({ lyrics: ['s-ca'], notes: ['t2'] })
+    expect(at(1.999)).toEqual({ lyrics: ['s-ca'], notes: ['t2'] })
+    expect(at(2)).toEqual({ lyrics: ['s-ngoi'], notes: ['n3'] })
+  })
+
+  it('without a tie the syllable ends with its own note, as before', async () => {
+    const at = await openAt(false)
+    expect(at(0.5)).toEqual({ lyrics: ['s-ca'], notes: ['t1'] })
+    expect(at(1.5)).toEqual({ lyrics: [], notes: ['t2'] })
+    expect(at(2)).toEqual({ lyrics: ['s-ngoi'], notes: ['n3'] })
   })
 })
