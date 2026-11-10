@@ -94,9 +94,16 @@ const noteIdOf = (item: Element) => (item.localName === 'chord' ? childrenNamed(
 
 /**
  * For each note and verse with lyrics: the ids of the notes a melisma on it would carry, read from MEI (`melismaSpans`
- * decides which syllable holds). They are the notes right after it in the same staff and layer (across barlines, through beams and tuplets), up to a
- * rest/space, a note carrying a syllable of the same verse, a note without id, or the end of the layer. Keyed by note id
- * and verse; an empty list means the melisma has no note after its own. Broken MEI yields an empty map.
+ * decides which syllable holds). They are the notes right after it in the same staff and layer (across barlines, through
+ * beams and tuplets), up to a rest/space, a note carrying a syllable of the same verse, a note without id, or the end of
+ * the layer. Keyed by note id and verse; an empty list means the melisma has no note after its own. Broken MEI yields an
+ * empty map.
+ *
+ * Known limit (accepted for P2): the successors follow MEI document order, one static chain per note, not the expanded
+ * playback path. A melisma that crosses a volta (pass 1 -> ending 1, pass 2 -> ending 2) or the backward jump of a
+ * repeat is cut at the end of its own note on the pass where the next note played is not the next note written. This
+ * fails safe: the syllable goes dark early, it is never held too long or lit over the wrong notes. Fix (Track A / P10):
+ * build the adjacency per occurrence from Verovio's expansion instead of from document order.
  */
 export function parseMelismas(mei: string): MelismaMap {
   const doc = new DOMParser().parseFromString(mei, 'application/xml')
@@ -136,7 +143,8 @@ const SAME_TIME = 1e-6
  * one starts in playback exactly when the hold so far ends; it then ends with the last of them. A rest, a gap, a new
  * syllable, the end of the layer or a melisma that `melismas` does not know ends it at the syllable's own span. Never
  * held to the next lyric or to the end of the piece. `con="d"`, and a `con="u"` followed by another syl of its verse on
- * the same note, are not extended; a span is never shortened.
+ * the same note, are not extended; a span is never shortened. Across a volta or a repeat jump the hold may end early,
+ * see the known limit on `parseMelismas`.
  */
 export function melismaSpans(syllables: readonly LyricSyllable[], timeline: PlaybackTimeline, melismas: MelismaMap): LyricSpan[] {
   const onsByNote = new Map<string, TimelineEvent[]>()
@@ -212,7 +220,12 @@ const indexes = new WeakMap<readonly LyricSpan[], ActiveSyllableIndex>()
 
 /**
  * `createActiveSyllableIndex(spans).at(cursorState.time)`, with the index cached per spans array, so a caller passing the
- * same array every tick builds it once. Pass a new array when the spans change (they are `readonly`).
+ * same array every tick builds it once.
+ *
+ * Contract: `spans` is an immutable snapshot. The cache is keyed by array identity, so mutating the same array after a
+ * call is not supported and keeps returning the old result; to change the spans, pass a new array. A frequent caller
+ * (the 60 Hz sync) should rather hold a `createActiveSyllableIndex` and rebuild it when its spans change. No content
+ * fingerprint on purpose: checking it would make every lookup O(n) again.
  */
 export function activeSyllables(spans: readonly LyricSpan[], cursorState: { readonly time: number }): readonly string[] {
   let index = indexes.get(spans)
