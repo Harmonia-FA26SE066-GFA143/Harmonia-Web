@@ -39,7 +39,7 @@ export function parseLyrics(mei: string): LyricSyllable[] {
 }
 
 /** `@n` of the nearest ancestor named `name`, undefined when there is none or it has no `@n`. */
-function ancestorN(el: Element, name: string): string | undefined {
+export function ancestorN(el: Element, name: string): string | undefined {
   for (let p = el.parentElement; p; p = p.parentElement) if (p.localName === name) return p.getAttribute('n') ?? undefined
   return undefined
 }
