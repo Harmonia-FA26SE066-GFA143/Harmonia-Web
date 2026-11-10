@@ -1,2 +1,13 @@
 export { lyricSpans, parseLyrics } from './parseLyrics'
-export type { LyricSpan, LyricSyllable, WordPos } from './types'
+export {
+  activeSyllables,
+  assignParts,
+  createActiveSyllableIndex,
+  listVerses,
+  melismaSpans,
+  parseMelismas,
+  resolveParts,
+  selectLyrics,
+} from './selectLyrics'
+export type { ActiveSyllableIndex } from './selectLyrics'
+export type { LyricSpan, LyricSyllable, MelismaMap, PartSyllable, PartTable, WordPos } from './types'
