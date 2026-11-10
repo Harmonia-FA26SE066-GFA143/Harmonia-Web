@@ -17,6 +17,17 @@ export interface LyricSyllable {
   con?: string
 }
 
+/** `staff@n` -> its part, in `staffDef` document order. `partKey` convention: see `resolveParts`. */
+export type PartTable = ReadonlyMap<string, { partKey: string; label: string }>
+
+/** A syllable tagged with the part of its staff (`assignParts`). */
+export interface PartSyllable extends LyricSyllable {
+  partKey: string
+}
+
+/** `${noteId}\0${verse}` -> ids of the notes a melisma on that note and verse would carry (`parseMelismas`). */
+export type MelismaMap = ReadonlyMap<string, readonly string[]>
+
 /** Seconds during which a syllable is lit; one per sounding occurrence of its note. */
 export interface LyricSpan {
   syllable: LyricSyllable
