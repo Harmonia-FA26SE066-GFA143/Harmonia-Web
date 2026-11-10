@@ -17,6 +17,11 @@ interface ScoreViewerBaseProps {
    * it changes by `WIDTH_STEP_PX` or more. The caller maps it to Verovio units and decides whether to `relayout`.
    */
   onWidthChange?: (width: number) => void
+  /**
+   * Called once when the filter refuses the pages it was given (too large, or not a clean SVG), so the caller can leave
+   * its ready state. Never for pages that were replaced or unmounted before their filtering finished.
+   */
+  onRefused?: () => void
 }
 
 /**
@@ -66,9 +71,10 @@ function visibleState(status: ScoreViewerStatus, result: FilterResult | undefine
  * loading state shows. While new pages of the same `scoreKey` (relayout) are filtered the previous, already filtered ones
  * stay, so the scroll region stays mounted and keeps its position; the browser only clamps it when the score gets shorter.
  */
-export function ScoreViewer({ status, scoreKey, svgPages, title, onRetry, onWidthChange }: Readonly<ScoreViewerProps>) {
+export function ScoreViewer({ status, scoreKey, svgPages, title, onRetry, onWidthChange, onRefused }: Readonly<ScoreViewerProps>) {
   const rootRef = useRef<HTMLDivElement>(null)
   const onWidthChangeRef = useRef(onWidthChange)
+  const onRefusedRef = useRef(onRefused)
   const summaryId = useId()
   const [filtered, setFiltered] = useState<{ scoreKey: string; result: FilterResult } | null>(null)
   // Another score, or leaving `ready`: start from loading before anything of these pages is committed again.
@@ -76,7 +82,8 @@ export function ScoreViewer({ status, scoreKey, svgPages, title, onRetry, onWidt
 
   useEffect(() => {
     onWidthChangeRef.current = onWidthChange
-  }, [onWidthChange])
+    onRefusedRef.current = onRefused
+  }, [onWidthChange, onRefused])
 
   useEffect(() => {
     if (status !== 'ready') return
@@ -86,7 +93,11 @@ export function ScoreViewer({ status, scoreKey, svgPages, title, onRetry, onWidt
       await yieldToBrowser()
       return !superseded
     }
-    const finish = (result: FilterResult) => setFiltered({ scoreKey, result })
+    // Only reached by a run still wanted after its last yield, so a replaced or unmounted run never reports.
+    const finish = (result: FilterResult) => {
+      setFiltered({ scoreKey, result })
+      if (result === REFUSED) onRefusedRef.current?.()
+    }
     void (async () => {
       if (!(await stillWantedAfterYield())) return
       if (failsSvgPreflight(svgPages)) {
