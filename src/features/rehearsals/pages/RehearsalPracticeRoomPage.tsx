@@ -12,6 +12,7 @@ import { colors, spacing } from '@/styles/tokens'
 import { RecordingPanel } from '../components/RecordingPanel'
 import { MidiPracticePlayer } from '../components/MidiPracticePlayer'
 import { PracticeScoreViewer } from '../components/PracticeScoreViewer'
+import { ScorePracticeSection } from '../components/ScorePracticeSection'
 import type { PracticeRoomView } from '../practiceRoomTypes'
 import { usePracticeRoom } from '../hooks/usePracticeRoom'
 import { useRehearsal } from '../hooks/useRehearsals'
@@ -210,7 +211,7 @@ export function RehearsalPracticeRoomPage() {
               <Flex gap={4}><Button icon={<LeftOutlined />} aria-label="Bài trước" disabled={current === 0} onClick={previous} /><Button icon={<RightOutlined />} aria-label="Bài sau" disabled={current === room.songs.length - 1} onClick={next} /></Flex>
             </Flex>
 
-            {materialContent}
+            <ScorePracticeSection key={song.id} title={song.title} fallback={materialContent} />
 
             {partScore && (
               <PracticeScoreViewer

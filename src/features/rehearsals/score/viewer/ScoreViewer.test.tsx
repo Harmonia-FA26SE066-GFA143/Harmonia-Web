@@ -375,3 +375,45 @@ describe('ScoreViewer resize', () => {
     expect(FakeResizeObserver.instances.filter((o) => !o.disconnected)).toHaveLength(1)
   })
 })
+
+describe('ScoreViewer onRefused', () => {
+  const oversized = '<svg>' + ' '.repeat(MAX_PAGE_CHARS) + '</svg>'
+  /** Lets the filter's per-page tasks run to the end. */
+  const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 50)))
+
+  it.each([
+    ['too large for the preflight', oversized],
+    ['not an SVG once sanitized', '<html xmlns="http://www.w3.org/1999/xhtml"/>'],
+  ])('tells the caller once when the pages are refused: %s', async (_name, refused) => {
+    const onRefused = vi.fn()
+    render(<ScoreViewer status="ready" scoreKey="a" svgPages={[refused]} onRefused={onRefused} />)
+    await screen.findByText('Không thể hiển thị bản nhạc')
+    await settle()
+    expect(onRefused).toHaveBeenCalledTimes(1)
+  })
+
+  it('says nothing for pages that pass', async () => {
+    const onRefused = vi.fn()
+    render(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('a')]} onRefused={onRefused} />)
+    await findSheet()
+    await settle()
+    expect(onRefused).not.toHaveBeenCalled()
+  })
+
+  it('says nothing for refused pages replaced before they were filtered', async () => {
+    const onRefused = vi.fn()
+    const { rerender } = render(<ScoreViewer status="ready" scoreKey="a" svgPages={[oversized]} onRefused={onRefused} />)
+    rerender(<ScoreViewer status="ready" scoreKey="a" svgPages={[page('a')]} onRefused={onRefused} />)
+    await findSheet()
+    await settle()
+    expect(onRefused).not.toHaveBeenCalled()
+  })
+
+  it('says nothing after unmount', async () => {
+    const onRefused = vi.fn()
+    const view = render(<ScoreViewer status="ready" scoreKey="a" svgPages={[oversized]} onRefused={onRefused} />)
+    view.unmount()
+    await settle()
+    expect(onRefused).not.toHaveBeenCalled()
+  })
+})
