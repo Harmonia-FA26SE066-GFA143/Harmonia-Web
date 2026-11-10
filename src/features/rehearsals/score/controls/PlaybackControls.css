@@ -1,0 +1,7 @@
+/* The rail stays thin; this makes the 40px row around it clickable (.ant-slider is 12px tall). */
+.hm-playback-slider::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block: -14px;
+}
