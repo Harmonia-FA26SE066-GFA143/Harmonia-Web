@@ -1,7 +1,7 @@
 /** Raw files for the player: the score text/bytes and a URL the `<audio>` element can play. */
 export interface ScorePackage {
-  /** `mxl` is the zipped MusicXML container, so it is always bytes. */
-  score: { data: string | Uint8Array; format: 'musicxml' | 'mxl'; fileName: string }
+  /** `mxl` is the zipped MusicXML container, so it is always bytes. Same shape as the engine's `ScoreInput`. */
+  score: ({ format: 'musicxml'; data: string | Uint8Array } | { format: 'mxl'; data: Uint8Array }) & { fileName: string }
   audioUrl: string
   /** Revokes every object URL this package created. Safe to call more than once. */
   dispose(): void
