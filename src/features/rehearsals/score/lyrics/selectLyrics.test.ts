@@ -286,6 +286,46 @@ describe('melismaSpans', () => {
     ])
   })
 
+  // Known limit (P2, fix in Track A / P10): successors follow document order, so a melisma whose next played note is not
+  // its next written note is cut at the end of its own note. These tests lock that safe failure, not the final behaviour.
+  const sections = (measures: string) =>
+    `<?xml version="1.0" encoding="UTF-8"?><mei xmlns="http://www.music-encoding.org/ns/mei"><music><body><mdiv><score><scoreDef/><section>${measures}</section></score></mdiv></body></music></mei>`
+
+  it('known limit, cut early: a melisma into a volta holds over ending 1 on pass 1 but stops at its own note on pass 2', () => {
+    const mei = sections(
+      `<measure>${staff('1', note('a', '1', 'A', 'u'))}</measure>` +
+        `<ending n="1"><measure>${staff('1', bare('b1'))}</measure></ending>` +
+        `<ending n="2"><measure>${staff('1', bare('b2'))}</measure></ending>` +
+        `<measure>${staff('1', note('c', '1', 'C'))}</measure>`,
+    )
+    const timeline = parseTimemap(sequential(['a', 'b1', 'a-rend2', 'b2', 'c']), new Map([['a-rend2', 'a']]), parseTieMap(mei))
+    const spans = melismaSpans(parseLyrics(mei), timeline, parseMelismas(mei))
+
+    expect(timesOf(spans)).toEqual([
+      ['A', 0, 2],
+      ['A', 2, 3],
+      ['C', 4, 5],
+    ])
+    expect(activeSyllables(spans, { time: 3.5 })).toEqual([])
+  })
+
+  it('known limit, cut early: a melisma over the backward jump of a repeat stops at its own note', () => {
+    const mei = sections(`<measure>${staff('1', bare('b') + note('a', '1', 'A', 'u'))}</measure><measure>${staff('1', note('d', '1', 'D'))}</measure>`)
+    const aliases = new Map([
+      ['b-rend2', 'b'],
+      ['a-rend2', 'a'],
+    ])
+    const timeline = parseTimemap(sequential(['b', 'a', 'b-rend2', 'a-rend2', 'd']), aliases, parseTieMap(mei))
+    const spans = melismaSpans(parseLyrics(mei), timeline, parseMelismas(mei))
+
+    expect(timesOf(spans)).toEqual([
+      ['A', 1, 2],
+      ['A', 3, 4],
+      ['D', 4, 5],
+    ])
+    expect(activeSyllables(spans, { time: 2.5 })).toEqual([])
+  })
+
   it('holds across a tie group, and leaves the P1 lyricSpans contract as it was', () => {
     const mei = doc('', `${staff('1', note('a', '1', 'A', 'u') + bare('b') + bare('c') + note('d', '1', 'D'))}<tie startid="#a" endid="#b"/>`)
     const timeline = parseTimemap(sequential(['a', 'b', 'c', 'd']), undefined, parseTieMap(mei))
@@ -361,6 +401,17 @@ describe('activeSyllables and createActiveSyllableIndex', () => {
 
   it('returns one id per selected part sounding at that time', () => {
     expect(at(0.5, [span('nu', 0, 1), span('nam', 0, 2), span('khac', 5, 6)])).toEqual(['nu', 'nam'])
+  })
+
+  // Contract (JSDoc of activeSyllables): spans are an immutable snapshot; mutating the same array is unsupported and has
+  // no test on purpose. A new array, same content or not, is read afresh.
+  it('reads a new spans array as a new snapshot, whether its content is the same or grew', () => {
+    const first = [span('a', 0, 2)]
+
+    expect(at(1, first)).toEqual(['a'])
+    expect(at(1, [...first])).toEqual(['a'])
+    expect(at(1, [...first, span('b', 1, 3)])).toEqual(['a', 'b'])
+    expect(at(1, first)).toEqual(['a'])
   })
 
   it('returns an id once when two occurrences of a syllable overlap', () => {
