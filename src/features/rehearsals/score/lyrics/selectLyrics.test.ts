@@ -54,30 +54,22 @@ function deepFreeze<T>(value: T): T {
 }
 
 describe('resolveParts', () => {
-  it('keys each staff of a reduced SATB (two labelled staves) by the slug of its label', () => {
-    const mei = doc('<staffGrp><staffDef n="1"><label>S.A.</label></staffDef><staffDef n="2"><label>T.B.</label></staffDef></staffGrp>')
+  const labelled = (first: string, second: string) =>
+    doc(`<staffGrp><staffDef n="1"><label>${first}</label></staffDef><staffDef n="2"><label>${second}</label></staffDef></staffGrp>`)
 
+  it.each([
+    ['keys each staff of a reduced SATB (two labelled staves) by the slug of its label', labelled('S.A.', 'T.B.'), ['s-a', 'S.A.'], ['t-b', 'T.B.']],
+    ['strips Vietnamese diacritics from the key but keeps them in the display label', labelled(' Nữ cao ', 'Đồng ca'), ['nu-cao', 'Nữ cao'], ['dong-ca', 'Đồng ca']],
+    [
+      'numbers the staves of one part whose label sits on the staffGrp (Verovio: one MusicXML part, two staves)',
+      doc('<staffGrp><staffGrp><label>Hợp xướng</label><staffDef n="1"/><staffDef n="2"/></staffGrp></staffGrp>'),
+      ['hop-xuong-1', 'Hợp xướng 1'],
+      ['hop-xuong-2', 'Hợp xướng 2'],
+    ],
+  ])('%s', (_name, mei, [key1, label1], [key2, label2]) => {
     expect(entries(mei)).toEqual([
-      ['1', 's-a', 'S.A.'],
-      ['2', 't-b', 'T.B.'],
-    ])
-  })
-
-  it('strips Vietnamese diacritics from the key but keeps them in the display label', () => {
-    const mei = doc('<staffGrp><staffDef n="1"><label> Nữ cao </label></staffDef><staffDef n="2"><label>Đồng ca</label></staffDef></staffGrp>')
-
-    expect(entries(mei)).toEqual([
-      ['1', 'nu-cao', 'Nữ cao'],
-      ['2', 'dong-ca', 'Đồng ca'],
-    ])
-  })
-
-  it('numbers the staves of one part whose label sits on the staffGrp (Verovio: one MusicXML part, two staves)', () => {
-    const mei = doc('<staffGrp><staffGrp><label>Hợp xướng</label><staffDef n="1"/><staffDef n="2"/></staffGrp></staffGrp>')
-
-    expect(entries(mei)).toEqual([
-      ['1', 'hop-xuong-1', 'Hợp xướng 1'],
-      ['2', 'hop-xuong-2', 'Hợp xướng 2'],
+      ['1', key1, label1],
+      ['2', key2, label2],
     ])
   })
 
