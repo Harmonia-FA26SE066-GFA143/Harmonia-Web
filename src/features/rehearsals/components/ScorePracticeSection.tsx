@@ -4,17 +4,21 @@ import { env } from '@/config/env'
 import { spacing } from '@/styles/tokens'
 import { usePlaybackClock } from '../score/clock/usePlaybackClock'
 import { FollowButton } from '../score/controls/FollowButton'
+import { LyricSelector } from '../score/controls/LyricSelector'
 import { PlaybackControls } from '../score/controls/PlaybackControls'
+import { readLyrics, useLyricSelection, type ScoreLyrics } from '../score/controls/useLyricSelection'
 import { useScoreShortcuts } from '../score/controls/useScoreShortcuts'
 import { createVerovioEngine, type ScoreEngine } from '../score/engine'
 import { checkAlignment } from '../score/source/checkAlignment'
 import { DevFixtureScoreSource } from '../score/source/DevFixtureScoreSource'
 import { ScoreSourceError, type ScorePackage, type ScorePackageSource, type ScoreSourceErrorCode } from '../score/source/types'
 import { useFollowScroll } from '../score/sync/useFollowScroll'
+import { useLyricSync } from '../score/sync/useLyricSync'
 import { useNoteSeek } from '../score/sync/useNoteSeek'
 import { useScoreSync } from '../score/sync/useScoreSync'
 import { createTimelineCursor, type TimelineCursor } from '../score/timeline/cursor'
 import { parseTimemap } from '../score/timeline/parseTimemap'
+import { parseTieMap } from '../score/timeline/tieMap'
 import type { PlaybackTimeline } from '../score/timeline/types'
 import { MIN_ENGINE_PAGE_WIDTH, ScoreViewer, toEnginePageWidth } from '../score/viewer'
 import { LocalScoreFilePicker } from './LocalScoreFilePicker'
@@ -37,7 +41,17 @@ type PlayerState =
   | { status: 'loading' }
   | { status: 'failed' }
   | { status: 'rejected'; message: string }
-  | { status: 'ready'; fileName: string; svgPages: string[]; audioUrl: string; cursor: TimelineCursor; onsets: PlaybackTimeline['onsets']; timelineSeconds: number }
+  | {
+      status: 'ready'
+      fileName: string
+      svgPages: string[]
+      audioUrl: string
+      cursor: TimelineCursor
+      onsets: PlaybackTimeline['onsets']
+      timelineSeconds: number
+      /** Null for a score without lyrics: no lyric choice is shown. */
+      lyrics: ScoreLyrics | null
+    }
 
 const failureOf = (error: unknown): PlayerState =>
   error instanceof ScoreSourceError && !RETRYABLE[error.code] ? { status: 'rejected', message: error.message } : { status: 'failed' }
@@ -83,6 +97,8 @@ function ScorePlayer({
   useNoteSeek(clock, viewerRoot, ready?.onsets ?? null)
   const { following, resume } = useFollowScroll(viewerRoot)
   useScoreShortcuts(sectionRoot, clock)
+  const lyricChoice = useLyricSelection(ready?.lyrics ?? null, ready?.fileName ?? '')
+  useLyricSync(clock, viewerRoot, lyricChoice.index)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -112,7 +128,8 @@ function ScorePlayer({
         const loaded = await engine.load(scorePackage.score, { pageWidth: loadWidth })
         if (signal.aborted) return release()
         const { score, audioUrl } = scorePackage
-        const timeline = parseTimemap(loaded.timemap, loaded.aliases)
+        // The tie map only adds group info and finalOff (lyrics hold over tied notes); note on/off times and onsets stay as they were.
+        const timeline = parseTimemap(loaded.timemap, loaded.aliases, parseTieMap(loaded.mei))
         // The sheet may have reported its real width while the engine was busy; draw at that width before showing it.
         const svgPages = pageWidth.current === loadWidth ? loaded.svgPages : relayoutOr(engine, pageWidth.current, loaded.svgPages)
         engineRef.current = engine
@@ -124,6 +141,7 @@ function ScorePlayer({
           cursor: createTimelineCursor(timeline),
           onsets: timeline.onsets,
           timelineSeconds: timeline.duration,
+          lyrics: readLyrics(loaded.mei, timeline),
         })
       } catch (error) {
         release()
@@ -201,6 +219,13 @@ function ScorePlayer({
       </div>
       {warning && <Alert type="warning" showIcon title={warning} style={{ marginTop: spacing.md }} />}
       {ready && <PlaybackControls clock={clock} title={title} />}
+      <LyricSelector
+        parts={lyricChoice.parts}
+        verses={lyricChoice.verses}
+        selection={lyricChoice.selection}
+        onPart={lyricChoice.choosePart}
+        onVerse={lyricChoice.chooseVerse}
+      />
     </div>
   )
 }
