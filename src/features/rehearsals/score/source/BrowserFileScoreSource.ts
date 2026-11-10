@@ -34,16 +34,21 @@ export class BrowserFileScoreSource implements ScorePackageSource {
       throw new ScoreSourceError('too-large', `Tệp âm thanh lớn hơn ${AUDIO_MAX_BYTES / MB} MB. Vui lòng chọn tệp ngắn hơn.`)
 
     if (signal?.aborted) throw abortedError()
-    const read: Promise<string | Uint8Array> = (format === 'mxl' ? score.arrayBuffer().then((buffer) => new Uint8Array(buffer)) : score.text()).catch((cause: unknown) => {
+    const fileName = score.name
+    const read: Promise<ScorePackage['score']> = (
+      format === 'mxl'
+        ? score.arrayBuffer().then((buffer) => ({ format, data: new Uint8Array(buffer), fileName }))
+        : score.text().then((data) => ({ format, data, fileName }))
+    ).catch((cause: unknown) => {
       throw new ScoreSourceError('read-failed', 'Không đọc được tệp bản nhạc. Vui lòng chọn lại tệp.', cause)
     })
-    const data = await untilAborted(read, signal)
+    const scoreFile = await untilAborted(read, signal)
 
     // Created only after the read, so an abort or failure never leaves a URL behind.
     const audioUrl = URL.createObjectURL(audio)
     let disposed = false
     return {
-      score: { data, format, fileName: score.name },
+      score: scoreFile,
       audioUrl,
       dispose() {
         if (disposed) return

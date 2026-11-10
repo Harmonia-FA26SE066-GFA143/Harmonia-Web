@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createScoreEngine } from './createScoreEngine'
+import { ALIAS_BATCH_SIZE, createScoreEngine } from './createScoreEngine'
 import { ScoreEngineError, type ScoreToolkit } from './types'
 
 const TIMEMAP = [
@@ -20,10 +20,27 @@ function fakeToolkit(overrides: Partial<ScoreToolkit> = {}) {
     renderToSVG: vi.fn((page: number) => `<svg data-page="${page}" data-width="${width}"/>`),
     renderToTimemap: vi.fn(() => TIMEMAP),
     getMEI: vi.fn(() => '<mei/>'),
+    getExpansionIdsForElement: vi.fn((id: string) => [id]),
     redoLayout: vi.fn(),
     destroy: vi.fn(),
   }
   return Object.assign(toolkit, overrides)
+}
+
+const SCORE = { format: 'musicxml', data: '<score/>' } as const
+const LAYOUT = { pageWidth: 1800 }
+
+/** A toolkit whose first page draws `rendered` and whose timemap plays `first`, then `second`. */
+function aliasToolkit(rendered: string[], [first, second]: string[][], expansion: Record<string, unknown>) {
+  return fakeToolkit({
+    renderToSVG: vi.fn((page: number) => (page === 1 ? `<svg>${rendered.map((id) => `<g id="${id}" class="note"/>`).join('')}</svg>` : '<svg/>')),
+    renderToTimemap: vi.fn(() => [
+      { tstamp: 0, on: first },
+      { tstamp: 500, off: first, on: second },
+      { tstamp: 1000, off: second },
+    ]),
+    getExpansionIdsForElement: vi.fn((id: string): unknown => expansion[id] ?? []),
+  })
 }
 
 async function rejection(promise: Promise<unknown>): Promise<ScoreEngineError> {
@@ -46,8 +63,82 @@ describe('createScoreEngine', () => {
       svgPages: ['<svg data-page="1" data-width="1800"/>', '<svg data-page="2" data-width="1800"/>'],
       mei: '<mei/>',
       timemap: TIMEMAP,
+      aliases: new Map(),
     })
     expect(toolkit.renderToTimemap).toHaveBeenCalledWith({ includeMeasures: true })
+  })
+
+  it('load maps a repeated id to its original and never asks about an id the SVG already has', async () => {
+    const toolkit = aliasToolkit(['a', 'b'], [['a', 'b'], ['a-rend2']], { 'a-rend2': ['a', 'a-rend2'] })
+
+    const { aliases } = await createScoreEngine(toolkit).load(SCORE, LAYOUT)
+
+    expect([...aliases]).toEqual([['a-rend2', 'a']])
+    expect(toolkit.getExpansionIdsForElement.mock.calls).toEqual([['a-rend2']])
+  })
+
+  it('an expansion answer that does not hold up is skipped and the load still succeeds', async () => {
+    const toolkit = aliasToolkit(
+      ['a', 'b'],
+      [['a', 'b'], ['a-rend2', 'p', 'q', 'c', 'd', 'e', 'f', 'g']],
+      {
+        'a-rend2': ['a', 'a-rend2'], // valid
+        p: ['missing'], // does not name the id asked about
+        q: ['a'], // names a drawn note, but not the id asked about
+        c: ['d', 'c'], // c and d point at each other, neither is drawn
+        d: ['c', 'd'],
+        e: ['zz', 'e'], // original not in the SVG
+        f: ['a', 1, 'f'], // not all strings
+        g: { 0: 'a' }, // not an array
+      },
+    )
+
+    const { aliases } = await createScoreEngine(toolkit).load(SCORE, LAYOUT)
+
+    expect([...aliases]).toEqual([['a-rend2', 'a']])
+  })
+
+  it('looks ids up in batches and yields to the browser between them', async () => {
+    const missing = Array.from({ length: 2 * ALIAS_BATCH_SIZE + 1 }, (_, index) => `a-rend${index + 2}`)
+    const toolkit = aliasToolkit(['a'], [['a'], missing], Object.fromEntries(missing.map((id) => [id, ['a', id]])))
+    const lookupsAtYield: number[] = []
+    const engine = createScoreEngine(toolkit, async () => {
+      lookupsAtYield.push(toolkit.getExpansionIdsForElement.mock.calls.length)
+    })
+
+    const { aliases } = await engine.load(SCORE, LAYOUT)
+
+    expect(aliases.size).toBe(missing.length)
+    expect(lookupsAtYield).toEqual([ALIAS_BATCH_SIZE, 2 * ALIAS_BATCH_SIZE])
+  })
+
+  it.each([
+    ['dispose', 'disposed'],
+    ['a newer load', 'superseded'],
+  ] as const)('%s between two batches stops the lookups and the old load gives no aliases', async (what, code) => {
+    const missing = Array.from({ length: ALIAS_BATCH_SIZE + 1 }, (_, index) => `a-rend${index + 2}`)
+    const toolkit = aliasToolkit(['a'], [['a'], missing], Object.fromEntries(missing.map((id) => [id, ['a', id]])))
+    let release: () => void = () => {}
+    let paused: () => void = () => {}
+    const atPause = new Promise<void>((resolve) => (paused = resolve))
+    let pauses = 0
+    // Only the first pause is held; the newer load's pauses pass straight through.
+    const engine = createScoreEngine(toolkit, () => {
+      pauses += 1
+      if (pauses > 1) return Promise.resolve()
+      paused()
+      return new Promise<void>((resolve) => (release = resolve))
+    })
+
+    const first = engine.load(SCORE, LAYOUT)
+    await atPause
+    const lookupsBefore = toolkit.getExpansionIdsForElement.mock.calls.length
+    const next = what === 'dispose' ? (engine.dispose(), undefined) : engine.load(SCORE, LAYOUT)
+    release()
+
+    expect((await rejection(first)).code).toBe(code)
+    if (what === 'dispose') expect(toolkit.getExpansionIdsForElement.mock.calls.length).toBe(lookupsBefore)
+    else expect((await next)?.aliases.size).toBe(missing.length)
   })
 
   it('load and relayout ask for pages only as tall as their content (adjustPageHeight)', async () => {

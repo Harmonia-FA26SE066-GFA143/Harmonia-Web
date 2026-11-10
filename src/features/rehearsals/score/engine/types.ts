@@ -1,4 +1,4 @@
-import type { RawTimemapEntry } from '../timeline/types'
+import type { AliasMap, RawTimemapEntry } from '../timeline/types'
 
 /** Score file as read from the source. `mxl` is the zipped MusicXML container, so it is always bytes. */
 export type ScoreInput = { format: 'musicxml'; data: string | Uint8Array } | { format: 'mxl'; data: Uint8Array }
@@ -14,6 +14,8 @@ export interface LoadedScore {
   mei: string
   /** Raw `renderToTimemap()` output, for `parseTimemap`. */
   timemap: RawTimemapEntry[]
+  /** Repeat id (`-rendN`) -> the original note id the SVG has, for `parseTimemap`. Only ids that differ are listed. */
+  aliases: AliasMap
 }
 
 export interface ScoreEngine {
@@ -50,6 +52,11 @@ export interface ScoreToolkit {
   renderToSVG(pageNo: number): string
   renderToTimemap(options: { includeMeasures: boolean }): RawTimemapEntry[]
   getMEI(): string
+  /**
+   * At runtime (6.4.1) an array: the original id first, then its repeat copies. Verovio's typings declare an object, so
+   * the engine checks the shape instead of trusting either.
+   */
+  getExpansionIdsForElement(id: string): unknown
   redoLayout(): void
   destroy(): void
 }
