@@ -1,0 +1,4 @@
+/* A note on the sheet can be clicked to jump playback there (useNoteSeek). */
+.hm-score-viewer g.note {
+  cursor: pointer;
+}
