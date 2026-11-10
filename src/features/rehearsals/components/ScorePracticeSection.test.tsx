@@ -323,6 +323,98 @@ const reportWidth = async (contentWidth: number) => {
   await act(() => new Promise((resolve) => setTimeout(resolve, 300)))
 }
 
+describe('ScorePracticeSection, playing from the sheet', () => {
+  // n1 sounds 0–1 s and again 2–3 s (a repeat, drawn once); n2 sounds 1–2 s.
+  const loadRepeatScore = async () => {
+    mocks.createVerovioEngine.mockImplementationOnce(async () => {
+      const engine = fakeEngine()
+      engine.load.mockResolvedValue({
+        svgPages: [page('n1', 'n2')],
+        mei: '<mei/>',
+        timemap: [
+          { tstamp: 0, on: ['n1'] },
+          { tstamp: 1000, off: ['n1'], on: ['n2'] },
+          { tstamp: 2000, off: ['n2'], on: ['n1-rend2'] },
+          { tstamp: 3000, off: ['n1-rend2'] },
+        ],
+        aliases: new Map([['n1-rend2', 'n1']]),
+      })
+      engines.push(engine)
+      return engine
+    })
+    renderSection()
+    pickBoth()
+    const sheet = await findSheet()
+    setAudioDuration(60)
+    return sheet
+  }
+  const audio = () => FakeAudio.instances.at(-1)!
+
+  it('a click on a note moves the audio there, to the occurrence nearest in time, and does not start playing', async () => {
+    const play = vi.spyOn(FakeAudio.prototype, 'play')
+    const sheet = await loadRepeatScore()
+    fireEvent.click(sheet.querySelector('#n2')!)
+    expect(audio().currentTime).toBe(1)
+    fireEvent.click(sheet.querySelector('#n1')!) // at 1 s n1 (0 s and 2 s) is a tie: the earlier plays again
+    expect(audio().currentTime).toBe(0)
+    expect(sheet.querySelector(`#n1.${ACTIVE_NOTE_CLASS}`)).not.toBeNull()
+    expect(play).not.toHaveBeenCalled()
+  })
+
+  it('a click on the paper changes nothing', async () => {
+    const sheet = await loadRepeatScore()
+    fireEvent.click(sheet)
+    expect(audio().currentTime).toBe(0)
+  })
+
+  it('shortcuts act with the focus on the sheet and leave the page alone otherwise', async () => {
+    const play = vi.spyOn(FakeAudio.prototype, 'play')
+    const sheet = await loadRepeatScore()
+    fireEvent.keyDown(document.body, { key: 'ArrowRight' })
+    expect(audio().currentTime).toBe(0)
+    fireEvent.keyDown(sheet, { key: 'ArrowRight' })
+    expect(audio().currentTime).toBe(5)
+    fireEvent.keyDown(sheet, { key: 'Home' })
+    expect(audio().currentTime).toBe(0)
+    fireEvent.keyDown(sheet, { key: ' ' })
+    expect(play).toHaveBeenCalledTimes(1)
+    // Space and Home are shortcuts, not scrolling: following goes on
+    expect(screen.queryByRole('button', { name: 'Theo dõi nốt đang hát' })).not.toBeInTheDocument()
+    // Space on the play button is the button's own click, not a second toggle.
+    fireEvent.keyDown(screen.getByRole('button', { name: `Phát ${TITLE}` }), { key: ' ' })
+    expect(play).toHaveBeenCalledTimes(1)
+  })
+
+  it('announces the shortcuts on the play button', async () => {
+    await loadRepeatScore()
+    expect(screen.getByRole('button', { name: `Phát ${TITLE}` })).toHaveAttribute('aria-keyshortcuts', 'Space ArrowLeft ArrowRight Home')
+  })
+
+  it('pressing "Theo dõi" keeps the focus inside the section, so the shortcuts still work', async () => {
+    const play = vi.spyOn(FakeAudio.prototype, 'play')
+    const sheet = await loadRepeatScore()
+    fireEvent.wheel(sheet, { deltaY: 80 })
+    const follow = await screen.findByRole('button', { name: 'Theo dõi nốt đang hát' })
+    follow.focus()
+    expect(document.activeElement).toBe(follow)
+    fireEvent.click(follow) // what Enter does on a button
+    expect(screen.queryByRole('button', { name: 'Theo dõi nốt đang hát' })).not.toBeInTheDocument()
+    expect(document.activeElement).toBe(sheet)
+    fireEvent.keyDown(document.activeElement!, { key: ' ' })
+    expect(play).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows "Theo dõi" after the user scrolls the sheet, and pressing it brings the follow back', async () => {
+    const sheet = await loadRepeatScore()
+    expect(screen.queryByRole('button', { name: 'Theo dõi nốt đang hát' })).not.toBeInTheDocument()
+    fireEvent.wheel(sheet, { deltaY: 80 })
+    const follow = await screen.findByRole('button', { name: 'Theo dõi nốt đang hát' })
+    expect(follow).toHaveTextContent('Theo dõi')
+    fireEvent.click(follow)
+    expect(screen.queryByRole('button', { name: 'Theo dõi nốt đang hát' })).not.toBeInTheDocument()
+  })
+})
+
 describe('ScorePracticeSection, a width that changes while the engine loads', () => {
   it('redraws at the new width before the viewer gets any page', async () => {
     const held = holdNextLoad()

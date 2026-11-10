@@ -3,14 +3,19 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { env } from '@/config/env'
 import { spacing } from '@/styles/tokens'
 import { usePlaybackClock } from '../score/clock/usePlaybackClock'
+import { FollowButton } from '../score/controls/FollowButton'
 import { PlaybackControls } from '../score/controls/PlaybackControls'
+import { useScoreShortcuts } from '../score/controls/useScoreShortcuts'
 import { createVerovioEngine, type ScoreEngine } from '../score/engine'
 import { checkAlignment } from '../score/source/checkAlignment'
 import { DevFixtureScoreSource } from '../score/source/DevFixtureScoreSource'
 import { ScoreSourceError, type ScorePackage, type ScorePackageSource, type ScoreSourceErrorCode } from '../score/source/types'
+import { useFollowScroll } from '../score/sync/useFollowScroll'
+import { useNoteSeek } from '../score/sync/useNoteSeek'
 import { useScoreSync } from '../score/sync/useScoreSync'
 import { createTimelineCursor, type TimelineCursor } from '../score/timeline/cursor'
 import { parseTimemap } from '../score/timeline/parseTimemap'
+import type { PlaybackTimeline } from '../score/timeline/types'
 import { MIN_ENGINE_PAGE_WIDTH, ScoreViewer, toEnginePageWidth } from '../score/viewer'
 import { LocalScoreFilePicker } from './LocalScoreFilePicker'
 
@@ -32,7 +37,7 @@ type PlayerState =
   | { status: 'loading' }
   | { status: 'failed' }
   | { status: 'rejected'; message: string }
-  | { status: 'ready'; fileName: string; svgPages: string[]; audioUrl: string; cursor: TimelineCursor; timelineSeconds: number }
+  | { status: 'ready'; fileName: string; svgPages: string[]; audioUrl: string; cursor: TimelineCursor; onsets: PlaybackTimeline['onsets']; timelineSeconds: number }
 
 const failureOf = (error: unknown): PlayerState =>
   error instanceof ScoreSourceError && !RETRYABLE[error.code] ? { status: 'rejected', message: error.message } : { status: 'failed' }
@@ -66,6 +71,8 @@ function ScorePlayer({
 }: Readonly<{ source: ScorePackageSource; title: string; fallback: ReactNode; onRetry: () => void }>) {
   const [state, setState] = useState<PlayerState>({ status: 'loading' })
   const [viewerRoot, setViewerRoot] = useState<HTMLDivElement | null>(null)
+  // The part of the page the keyboard shortcuts belong to: the sheet, its controls and the follow button.
+  const [sectionRoot, setSectionRoot] = useState<HTMLDivElement | null>(null)
   const engineRef = useRef<ScoreEngine | null>(null)
   /** Frees what this attempt holds: the effect's cleanup and a refusal from the viewer both call it. */
   const releaseRef = useRef<() => void>(() => {})
@@ -73,6 +80,9 @@ function ScorePlayer({
   const ready = state.status === 'ready' ? state : undefined
   const clock = usePlaybackClock(ready?.audioUrl)
   useScoreSync(clock, viewerRoot, ready?.cursor ?? null)
+  useNoteSeek(clock, viewerRoot, ready?.onsets ?? null)
+  const { following, resume } = useFollowScroll(viewerRoot)
+  useScoreShortcuts(sectionRoot, clock)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -112,6 +122,7 @@ function ScorePlayer({
           svgPages,
           audioUrl,
           cursor: createTimelineCursor(timeline),
+          onsets: timeline.onsets,
           timelineSeconds: timeline.duration,
         })
       } catch (error) {
@@ -159,25 +170,33 @@ function ScorePlayer({
 
   const warning = ready && misalignmentNote(clock.duration, ready.timelineSeconds)
   return (
-    <div style={{ marginTop: spacing.lg }}>
-      <div ref={setViewerRoot} style={{ height: SHEET_FRAME_HEIGHT }}>
-        {ready ? (
-          <ScoreViewer
-            status="ready"
-            scoreKey={ready.fileName}
-            svgPages={ready.svgPages}
-            title={title}
-            onRetry={onRetry}
-            onWidthChange={onWidthChange}
-            // Refused pages end the ready state: the package (object URL) and the engine go now, not when the page is
-            // left; the clock then drops the audio and the fallback comes back.
-            onRefused={() => {
-              releaseRef.current()
-              setState({ status: 'failed' })
-            }}
-          />
-        ) : (
-          <ScoreViewer status="loading" svgPages={[]} title={title} onWidthChange={onWidthChange} />
+    <div ref={setSectionRoot} style={{ marginTop: spacing.lg }}>
+      <div style={{ position: 'relative' }}>
+        <div ref={setViewerRoot} style={{ height: SHEET_FRAME_HEIGHT }}>
+          {ready ? (
+            <ScoreViewer
+              status="ready"
+              scoreKey={ready.fileName}
+              svgPages={ready.svgPages}
+              title={title}
+              onRetry={onRetry}
+              onWidthChange={onWidthChange}
+              // Refused pages end the ready state: the package (object URL) and the engine go now, not when the page is
+              // left; the clock then drops the audio and the fallback comes back.
+              onRefused={() => {
+                releaseRef.current()
+                setState({ status: 'failed' })
+              }}
+            />
+          ) : (
+            <ScoreViewer status="loading" svgPages={[]} title={title} onWidthChange={onWidthChange} />
+          )}
+        </div>
+        {/* Over the sheet's lower right, clear of its scroll bar, so showing it moves nothing. */}
+        {ready && !following && (
+          <div style={{ position: 'absolute', right: spacing.xl * 2, bottom: spacing.lg }}>
+            <FollowButton onClick={resume} />
+          </div>
         )}
       </div>
       {warning && <Alert type="warning" showIcon title={warning} style={{ marginTop: spacing.md }} />}

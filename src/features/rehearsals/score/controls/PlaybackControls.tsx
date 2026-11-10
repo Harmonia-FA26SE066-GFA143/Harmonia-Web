@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { clock as formatTime } from '@/shared/utils/media'
 import { colors, sizes, spacing } from '@/styles/tokens'
 import type { PlaybackClock } from '../clock/usePlaybackClock'
+import { SEEK_STEP } from './useScoreShortcuts'
 import './PlaybackControls.css'
 
 /** "44:44 / 44:44", the widest label, measures 101px in Be Vietnam Pro at the body size ("11:11 / 11:11" 65px). */
@@ -51,12 +52,13 @@ export function PlaybackControls({ clock, title }: Readonly<{ clock: PlaybackClo
         </Typography.Paragraph>
       )}
       <Flex align="center" gap={spacing.md} style={{ minHeight: sizes.controlHeight }}>
-        <Tooltip title={label}>
+        <Tooltip title={`${label} (Space). ← → lùi hoặc tiến ${SEEK_STEP} giây, Home về đầu.`}>
           <Button
             type="primary"
             shape="circle"
             icon={playIcon(playing, finished)}
             aria-label={`${label} ${title}`}
+            aria-keyshortcuts="Space ArrowLeft ArrowRight Home"
             onClick={() => {
               if (playing) pause()
               else void play()
