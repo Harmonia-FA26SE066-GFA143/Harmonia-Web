@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AUDIO_MAX_BYTES, BrowserFileScoreSource, SCORE_MAX_BYTES } from './BrowserFileScoreSource'
-import { ScoreSourceError, type ScoreSourceErrorCode } from './types'
+import { ScoreSourceError, type ScorePackage, type ScoreSourceErrorCode } from './types'
 
 const XML = '<score-partwise/>'
 const ZIP = new Uint8Array([0x50, 0x4b, 0x03, 0x04])
@@ -153,5 +153,14 @@ describe('BrowserFileScoreSource', () => {
     await rejection(load, 'aborted')
     expect(created).toEqual([])
     expect(revoked).toEqual([])
+  })
+})
+
+describe('ScorePackage types', () => {
+  it('a zipped score is always bytes, a MusicXML score may be text', () => {
+    // @ts-expect-error mxl is a zip container: its data is never text
+    const wrong: ScorePackage['score'] = { format: 'mxl', data: '<score/>', fileName: 'bai.mxl' }
+    const right: ScorePackage['score'] = { format: 'musicxml', data: '<score/>', fileName: 'bai.musicxml' }
+    expect([wrong.format, right.format]).toEqual(['mxl', 'musicxml'])
   })
 })
