@@ -11,7 +11,7 @@ import { LyricSelector } from '../score/controls/LyricSelector'
 import { PlaybackControls } from '../score/controls/PlaybackControls'
 import { readLyrics, useLyricSelection, type ScoreLyrics } from '../score/controls/useLyricSelection'
 import { useScoreShortcuts } from '../score/controls/useScoreShortcuts'
-import { createVerovioEngine, type ScoreEngine } from '../score/engine'
+import { countStaves, createVerovioEngine, MAX_SCORE_NOTES, ScoreEngineError, type ScoreEngine } from '../score/engine'
 import { checkAlignment } from '../score/source/checkAlignment'
 import { DevFixtureScoreSource } from '../score/source/DevFixtureScoreSource'
 import { ScoreSourceError, type ScorePackage, type ScorePackageSource, type ScoreSourceErrorCode } from '../score/source/types'
@@ -24,6 +24,7 @@ import { parseTimemap } from '../score/timeline/parseTimemap'
 import { parseTieMap } from '../score/timeline/tieMap'
 import type { PlaybackTimeline } from '../score/timeline/types'
 import { MIN_ENGINE_PAGE_WIDTH, ScoreViewer, toEnginePageWidth } from '../score/viewer'
+import { MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH } from '../score/viewer/toEnginePageWidth'
 import { LocalScoreFilePicker } from './LocalScoreFilePicker'
 import '../score/focus/focusMode.css'
 
@@ -55,10 +56,19 @@ type PlayerState =
       timelineSeconds: number
       /** Null for a score without lyrics: no lyric choice is shown. */
       lyrics: ScoreLyrics | null
+      /**
+       * The page shown was drawn by the multi-staff rule (two staves or more, at least the floor), so the stylesheet keeps
+       * it at least the floor wide and the sheet scrolls under it. Follows the page drawn, never the one asked for.
+       */
+      multiStaff: boolean
     }
 
-const failureOf = (error: unknown): PlayerState =>
-  error instanceof ScoreSourceError && !RETRYABLE[error.code] ? { status: 'rejected', message: error.message } : { status: 'failed' }
+const TOO_COMPLEX = `Bản nhạc quá dài để hiển thị trên web (hơn ${MAX_SCORE_NOTES.toLocaleString('vi-VN')} nốt và dấu lặng). Vui lòng dùng bản ngắn hơn hoặc tách bài thành nhiều phần.`
+
+function failureOf(error: unknown): PlayerState {
+  if (error instanceof ScoreEngineError && error.code === 'too-complex') return { status: 'rejected', message: TOO_COMPLEX }
+  return error instanceof ScoreSourceError && !RETRYABLE[error.code] ? { status: 'rejected', message: error.message } : { status: 'failed' }
+}
 
 /** Alignment guard of the plan: half a second, or 1% of a long song. */
 const toleranceFor = (timelineSeconds: number) => Math.max(0.5, timelineSeconds * 0.01)
@@ -102,12 +112,12 @@ function ScoreToolbar({
   )
 }
 
-/** On failure the sheet keeps its previous layout: right notes, wrong width until the next resize. */
-function relayoutOr(engine: ScoreEngine, pageWidth: number, previous: string[]): string[] {
+/** The pages at `pageWidth`, or undefined when the engine fails: the caller then keeps the page it has and its width. */
+function tryRelayout(engine: ScoreEngine, pageWidth: number): string[] | undefined {
   try {
     return engine.relayout(pageWidth)
   } catch {
-    return previous
+    return undefined
   }
 }
 
@@ -126,7 +136,15 @@ function ScorePlayer({
   const engineRef = useRef<ScoreEngine | null>(null)
   /** Frees what this attempt holds: the effect's cleanup and a refusal from the viewer both call it. */
   const releaseRef = useRef<() => void>(() => {})
+  /**
+   * The width of the page on screen (or, before the load, of the page the load will draw). It moves only when a page at
+   * that width is drawn, so a failed redraw leaves it on the old page and the next width report tries again.
+   */
   const pageWidth = useRef(MIN_ENGINE_PAGE_WIDTH)
+  /** The last width the sheet reported (NaN until it does), and the staves of the loaded score (1 until it is known). */
+  const sheetWidth = useRef(Number.NaN)
+  const staves = useRef(1)
+  const drawnByMultiStaffRule = (drawnWidth: number) => staves.current >= 2 && drawnWidth >= MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH
   const ready = state.status === 'ready' ? state : undefined
   const clock = usePlaybackClock(ready?.audioUrl)
   useScoreSync(clock, viewerRoot, ready?.cursor ?? null)
@@ -161,8 +179,8 @@ function ScorePlayer({
         if (signal.aborted) return release()
         engine = await createVerovioEngine()
         if (signal.aborted) return release()
-        // Known limit (F2-I1, accepted for slice 1): Verovio parses and draws every page synchronously inside this call,
-        // 1.8–4.6 s for a 27–67 page SATB score, and it cannot be cancelled. A Worker is P10 / Track A work.
+        // Known limit (F2-I1): Verovio parses and draws every page synchronously inside this call and it cannot be
+        // cancelled. The engine refuses a score over MAX_SCORE_NOTES (too-complex), which bounds it near 3.3 s (P10-A).
         const loadWidth = pageWidth.current
         const loaded = await engine.load(scorePackage.score, { pageWidth: loadWidth })
         if (signal.aborted) return release()
@@ -171,8 +189,13 @@ function ScorePlayer({
         const timeline = parseTimemap(loaded.timemap, loaded.aliases, parseTieMap(loaded.mei))
         // Verovio accepts broken XML and draws an empty page; a score with no note to follow is refused like a wrong file.
         if (timeline.onsets.size === 0) throw new ScoreSourceError('invalid-type', 'Không đọc được nốt nhạc nào trong tệp này. Vui lòng kiểm tra lại tệp MusicXML.')
-        // The sheet may have reported its real width while the engine was busy; draw at that width before showing it.
-        const svgPages = pageWidth.current === loadWidth ? loaded.svgPages : relayoutOr(engine, pageWidth.current, loaded.svgPages)
+        // The sheet may have reported its real width while the engine was busy, and a score of several staves has a wider
+        // floor (known only now, from the MEI): draw at the page they give before showing it, so at most one redraw.
+        staves.current = countStaves(loaded.mei)
+        const wanted = toEnginePageWidth(sheetWidth.current, staves.current)
+        const relaid = wanted === loadWidth ? loaded.svgPages : tryRelayout(engine, wanted)
+        pageWidth.current = relaid ? wanted : loadWidth
+        const svgPages = relaid ?? loaded.svgPages
         engineRef.current = engine
         setState({
           status: 'ready',
@@ -183,6 +206,7 @@ function ScorePlayer({
           onsets: timeline.onsets,
           timelineSeconds: timeline.duration,
           lyrics: readLyrics(loaded.mei, timeline),
+          multiStaff: drawnByMultiStaffRule(pageWidth.current),
         })
       } catch (error) {
         release()
@@ -197,14 +221,20 @@ function ScorePlayer({
   }, [source])
 
   const onWidthChange = (width: number) => {
-    const next = toEnginePageWidth(width)
+    sheetWidth.current = width
+    const next = toEnginePageWidth(width, staves.current)
     if (next === pageWidth.current) return
-    pageWidth.current = next
     const engine = engineRef.current
-    // No engine yet: the load in progress compares widths when it ends. Redrawn here, not in a state updater, which
-    // StrictMode runs twice.
-    if (!engine || state.status !== 'ready') return
-    setState({ ...state, svgPages: relayoutOr(engine, next, state.svgPages) })
+    // No engine yet: nothing is drawn, the load uses this width or compares it when it ends.
+    if (!engine || state.status !== 'ready') {
+      pageWidth.current = next
+      return
+    }
+    // Redrawn here, not in a state updater, which StrictMode runs twice. A failure keeps the page and its width.
+    const svgPages = tryRelayout(engine, next)
+    if (!svgPages) return
+    pageWidth.current = next
+    setState({ ...state, svgPages, multiStaff: drawnByMultiStaffRule(next) })
   }
 
   if (state.status === 'rejected') {
@@ -272,7 +302,7 @@ function ScorePlayer({
               buttonRef={focusButton}
             />
           )}
-          <div ref={setViewerRoot} className="hm-score-frame" style={{ height: failed || active ? undefined : SHEET_FRAME_HEIGHT }}>
+          <div ref={setViewerRoot} className={ready?.multiStaff ? 'hm-score-frame hm-score-frame--multi-staff' : 'hm-score-frame'} style={{ height: failed || active ? undefined : SHEET_FRAME_HEIGHT }}>
             {viewer}
           </div>
           {warning && <Alert type="warning" showIcon title={warning} style={{ marginTop: spacing.md }} />}
