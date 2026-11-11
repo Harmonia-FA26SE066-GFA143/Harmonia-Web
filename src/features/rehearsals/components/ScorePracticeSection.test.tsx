@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { spacing } from '@/styles/tokens'
 import type { LoadedScore } from '../score/engine'
@@ -6,7 +6,7 @@ import { DevFixtureScoreSource } from '../score/source/DevFixtureScoreSource'
 import { ScoreSourceError, type ScorePackage } from '../score/source/types'
 import { ACTIVE_LYRIC_CLASS } from '../score/sync/useLyricSync'
 import { ACTIVE_NOTE_CLASS } from '../score/sync/useScoreSync'
-import { toEnginePageWidth } from '../score/viewer'
+import { MIN_ENGINE_PAGE_WIDTH, PHONE_ENGINE_PAGE_WIDTH, toEnginePageWidth } from '../score/viewer'
 import { MAX_PAGE_CHARS } from '../score/viewer/sanitizeSvg'
 import { ScorePracticeSection } from './ScorePracticeSection'
 
@@ -192,7 +192,8 @@ describe('ScorePracticeSection, a loaded package', () => {
     expect(screen.getByRole('button', { name: `Phát ${TITLE}` })).toBeInTheDocument()
     expect(screen.getByRole('slider', { name: `Vị trí phát ${TITLE}` })).toBeInTheDocument()
     expect(screen.queryByText(FALLBACK)).not.toBeInTheDocument()
-    expect(FakeAudio.instances.at(-1)?.src).toBe('blob:audio-1')
+    // The audio source is set by an effect, which may run after the DOM that findSheet waited for.
+    await waitFor(() => expect(FakeAudio.instances.at(-1)?.src).toBe('blob:audio-1'))
     expect(engines[0].load).toHaveBeenCalledWith(expect.objectContaining({ format: 'mxl', data: expect.any(Uint8Array) }), { pageWidth: expect.any(Number) })
   })
 
@@ -259,7 +260,9 @@ describe('ScorePracticeSection, a loaded package', () => {
     renderSection()
     pickBoth()
     await findSheet()
-    act(() => FakeResizeObserver.instances[0].resize(100 + 2 * (spacing.xl + 1))) // below the engine's minimum page
+    // 305 px of content is 396.5 engine units: under the minimum, so it maps to the page drawn at load (the minimum).
+    // (Before the narrow-sheet rule P7 fix 2 this test used 100 px, which now maps to the phone page and does redraw.)
+    act(() => FakeResizeObserver.instances[0].resize(305 + 2 * (spacing.xl + 1)))
     await act(() => new Promise((resolve) => setTimeout(resolve, 300)))
     expect(engines[0].relayout).not.toHaveBeenCalled()
   })
@@ -434,10 +437,24 @@ describe('ScorePracticeSection, a width that changes while the engine loads', ()
     renderSection()
     pickBoth()
     await waitFor(() => expect(held.engine.load).toHaveBeenCalled())
-    await reportWidth(100) // below the engine's minimum page, which the load already used
+    // 305 px of content is 396.5 units: under the minimum, which the load already used. (Was 100 px before the narrow-sheet
+    // rule of P7 fix 2; 100 px now maps to the phone page, see the next test.)
+    await reportWidth(305)
     await held.finish()
     await findSheet()
     expect(held.engine.relayout).not.toHaveBeenCalled()
+  })
+
+  it('a phone-width sheet is drawn on the wide phone page, not the minimum', async () => {
+    const held = holdNextLoad()
+    renderSection()
+    pickBoth()
+    await waitFor(() => expect(held.engine.load).toHaveBeenCalled())
+    await reportWidth(285) // 375 px window, focus mode
+    await held.finish()
+    await findSheet()
+    expect(held.engine.relayout.mock.calls).toEqual([[PHONE_ENGINE_PAGE_WIDTH]])
+    expect(PHONE_ENGINE_PAGE_WIDTH).toBeGreaterThan(MIN_ENGINE_PAGE_WIDTH)
   })
 
   it('uses only the last of several widths', async () => {
@@ -466,7 +483,7 @@ describe('ScorePracticeSection, a width that changes while the engine loads', ()
     expect(held.engine.relayout).not.toHaveBeenCalled()
     expect(engines).toHaveLength(2)
     expect(sheet.isConnected).toBe(true)
-    expect(FakeAudio.instances.at(-1)?.src).toBe('blob:audio-2')
+    await waitFor(() => expect(FakeAudio.instances.at(-1)?.src).toBe('blob:audio-2'))
   })
 
   it('does not redraw for a player that is gone', async () => {
@@ -538,7 +555,8 @@ describe('ScorePracticeSection, failures', () => {
     expect(screen.getByText(FALLBACK)).toBeInTheDocument()
     expect(vi.mocked(URL.revokeObjectURL).mock.calls).toEqual([['blob:audio-1']])
     expect(engines[0].dispose).toHaveBeenCalledTimes(1)
-    expect(FakeAudio.instances.every((audio) => audio.src === '')).toBe(true)
+    // The clock lets go of the audio in an effect cleanup, after the error card is already on screen: wait for it.
+    await waitFor(() => expect(FakeAudio.instances.every((audio) => audio.src === '')).toBe(true))
     view.unmount()
     expect(vi.mocked(URL.revokeObjectURL).mock.calls).toEqual([['blob:audio-1']])
     expect(engines[0].dispose).toHaveBeenCalledTimes(1)
@@ -588,7 +606,7 @@ describe('ScorePracticeSection, failures', () => {
     expect(screen.getByText(FALLBACK)).toBeInTheDocument()
     expect(screen.queryByRole('slider')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: `Phát ${TITLE}` })).not.toBeInTheDocument()
-    expect(FakeAudio.instances.every((audio) => audio.src === '')).toBe(true)
+    await waitFor(() => expect(FakeAudio.instances.every((audio) => audio.src === '')).toBe(true))
     fireEvent.click(retry)
     await findSheet()
     expect(engines).toHaveLength(2)
@@ -658,25 +676,25 @@ describe('ScorePracticeSection, disposal', () => {
   })
 })
 
-describe('ScorePracticeSection, lyrics', () => {
-  // One part, two verses on n1: "Ca" (verse 1) and "Hát" (verse 2).
-  const LYRIC_MEI = `<mei xmlns="http://www.music-encoding.org/ns/mei"><music><body><mdiv><score>
+// One part, two verses on n1: "Ca" (verse 1) and "Hát" (verse 2).
+const LYRIC_MEI = `<mei xmlns="http://www.music-encoding.org/ns/mei"><music><body><mdiv><score>
 <scoreDef><staffGrp><staffDef n="1"><label>Nữ cao</label></staffDef></staffGrp></scoreDef>
 <section><measure><staff n="1"><layer n="1"><note xml:id="n1">
   <verse n="1"><syl xml:id="v1">Ca</syl></verse><verse n="2"><syl xml:id="v2">Hát</syl></verse>
 </note></layer></staff></measure></section></score></mdiv></body></music></mei>`
-  const LYRIC_PAGE = `<svg xmlns="http://www.w3.org/2000/svg"><g id="n1" class="note"><path d="M0 0"/>
+const LYRIC_PAGE = `<svg xmlns="http://www.w3.org/2000/svg"><g id="n1" class="note"><path d="M0 0"/>
 <g class="verse"><g id="v1" class="syl"><text>Ca</text></g></g><g class="verse"><g id="v2" class="syl"><text>Hát</text></g></g></g></svg>`
 
-  const sungEngine = () =>
-    mocks.createVerovioEngine.mockImplementationOnce(async () => {
-      const engine = fakeEngine()
-      engine.load.mockResolvedValue({ svgPages: [LYRIC_PAGE], mei: LYRIC_MEI, timemap: TIMEMAP, aliases: new Map() })
-      engines.push(engine)
-      return engine
-    })
-  const litLyrics = (sheet: HTMLElement) => Array.from(sheet.querySelectorAll(`.${ACTIVE_LYRIC_CLASS}`), (el) => el.id)
+const sungEngine = () =>
+  mocks.createVerovioEngine.mockImplementationOnce(async () => {
+    const engine = fakeEngine()
+    engine.load.mockResolvedValue({ svgPages: [LYRIC_PAGE], mei: LYRIC_MEI, timemap: TIMEMAP, aliases: new Map() })
+    engines.push(engine)
+    return engine
+  })
+const litLyrics = (sheet: HTMLElement) => Array.from(sheet.querySelectorAll(`.${ACTIVE_LYRIC_CLASS}`), (el) => el.id)
 
+describe('ScorePracticeSection, lyrics', () => {
   it('a score without lyrics offers no lyric choice and lights no syllable', async () => {
     renderSection()
     pickBoth()
@@ -760,5 +778,240 @@ describe('ScorePracticeSection, lyrics over tied notes', () => {
     expect(at(0.5)).toEqual({ lyrics: ['s-ca'], notes: ['t1'] })
     expect(at(1.5)).toEqual({ lyrics: [], notes: ['t2'] })
     expect(at(2)).toEqual({ lyrics: ['s-ngoi'], notes: ['n3'] })
+  })
+})
+
+describe('ScorePracticeSection, focus mode', () => {
+  const TOGGLE = { name: 'Chế độ tập trung' }
+  const DIALOG = { name: `Chế độ tập trung: ${TITLE}` }
+  const loadReady = async () => {
+    const view = renderSection()
+    pickBoth()
+    const sheet = await findSheet()
+    setAudioDuration(60)
+    return { sheet, view }
+  }
+  const toggle = () => screen.getByRole('button', TOGGLE)
+  const enter = async () => {
+    const { sheet, view } = await loadReady()
+    fireEvent.click(toggle())
+    return { sheet, view, dialog: screen.getByRole('dialog', DIALOG) }
+  }
+  const openLyricSelect = async () => {
+    sungEngine()
+    renderSection()
+    pickBoth()
+    await findSheet()
+    fireEvent.click(toggle())
+    const verse = screen.getByRole('combobox', { name: 'Khổ lời' })
+    act(() => verse.focus())
+    return verse
+  }
+
+  it('offers the button once the score is ready, not while it loads, and announces its state and key', async () => {
+    let release: (engine: ReturnType<typeof fakeEngine>) => void = () => {}
+    mocks.createVerovioEngine.mockImplementationOnce(() => new Promise((resolve) => (release = resolve)))
+    renderSection()
+    pickBoth()
+    await screen.findByRole('status', { name: 'Đang tải bản nhạc' })
+    expect(screen.queryByRole('button', TOGGLE)).toBeNull()
+    await waitFor(() => expect(mocks.createVerovioEngine).toHaveBeenCalled())
+    release(fakeEngine())
+    await findSheet()
+    expect(toggle()).toHaveAttribute('aria-pressed', 'false')
+    expect(toggle()).toHaveAttribute('aria-keyshortcuts', 'F')
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('the button turns it on: a labelled modal dialog holding the sheet, the controls and the button, focus on it', async () => {
+    const { sheet, dialog } = await enter()
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(toggle()).toHaveAttribute('aria-pressed', 'true')
+    expect(within(dialog).getByRole('group', { name: 'Bản nhạc' })).toBe(sheet)
+    expect(within(dialog).getByRole('slider', { name: `Vị trí phát ${TITLE}` })).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: `Phát ${TITLE}` })).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', TOGGLE)).toBe(toggle())
+    expect(document.activeElement).toBe(dialog)
+  })
+
+  it('does not rebuild the sheet, the button or the engine when it turns on and off', async () => {
+    const { sheet } = await loadReady()
+    const button = toggle()
+    const play = screen.getByRole('button', { name: `Phát ${TITLE}` })
+    fireEvent.click(button)
+    expect(screen.getByRole('group', { name: 'Bản nhạc' })).toBe(sheet)
+    expect(toggle()).toBe(button)
+    expect(screen.getByRole('button', { name: `Phát ${TITLE}` })).toBe(play)
+    fireEvent.click(button)
+    expect(screen.getByRole('group', { name: 'Bản nhạc' })).toBe(sheet)
+    expect(engines[0].load).toHaveBeenCalledTimes(1)
+    expect(engines[0].relayout).not.toHaveBeenCalled()
+  })
+
+  it('hides the rest of the page from the keyboard and screen readers, and holds the page scroll', async () => {
+    const { dialog } = await enter()
+    expect(screen.getByRole('region', { name: 'Mở bản nhạc từ máy', hidden: true }).closest('[inert]')).not.toBeNull()
+    expect(dialog.closest('[inert]')).toBeNull()
+    expect(document.body.style.overflow).toBe('hidden')
+  })
+
+  it('Esc leaves, gives the focus back to the button and puts the page back', async () => {
+    const { sheet } = await enter()
+    fireEvent.keyDown(sheet, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(toggle()).toHaveAttribute('aria-pressed', 'false')
+    expect(document.activeElement).toBe(toggle())
+    expect(screen.getByRole('region', { name: 'Mở bản nhạc từ máy' }).closest('[inert]')).toBeNull()
+    expect(document.body.style.overflow).toBe('')
+    expect(document.body.className).toBe('')
+  })
+
+  it('the button turns it off again', async () => {
+    await enter()
+    fireEvent.click(toggle())
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.activeElement).toBe(toggle())
+  })
+
+  it('f turns it on from the sheet and off again, and is not heard elsewhere on the page', async () => {
+    const { sheet } = await loadReady()
+    fireEvent.keyDown(document.body, { key: 'f' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    fireEvent.keyDown(sheet, { key: 'f' })
+    expect(screen.getByRole('dialog', DIALOG)).toBeInTheDocument()
+    fireEvent.keyDown(screen.getByRole('dialog', DIALOG), { key: 'f' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('the playback shortcuts keep working in it, with the focus on the dialog', async () => {
+    const play = vi.spyOn(FakeAudio.prototype, 'play')
+    const { dialog } = await enter()
+    const audio = FakeAudio.instances.at(-1)!
+    fireEvent.keyDown(dialog, { key: ' ' })
+    expect(play).toHaveBeenCalledTimes(1)
+    fireEvent.keyDown(dialog, { key: 'ArrowRight' })
+    expect(audio.currentTime).toBe(5)
+    fireEvent.keyDown(dialog, { key: 'Home' })
+    expect(audio.currentTime).toBe(0)
+  })
+
+  it('can take the focus itself, so a click on its empty part keeps the shortcuts working', async () => {
+    const { dialog } = await enter()
+    expect(dialog).toHaveAttribute('tabindex', '-1')
+  })
+
+  it("keys typed in a lyric select are the select's: no shortcut, no leaving", async () => {
+    const play = vi.spyOn(FakeAudio.prototype, 'play')
+    const verse = await openLyricSelect()
+    for (const key of ['f', ' ', 'ArrowRight', 'Home']) fireEvent.keyDown(verse, { key })
+    expect(screen.getByRole('dialog', DIALOG)).toBeInTheDocument()
+    expect(play).not.toHaveBeenCalled()
+  })
+
+  it('Esc with a select open closes the list first and stays in the mode; the next Esc leaves', async () => {
+    const verse = await openLyricSelect()
+    fireEvent.keyDown(verse, { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 })
+    await waitFor(() => expect(verse).toHaveAttribute('aria-expanded', 'true'))
+    fireEvent.keyDown(verse, { key: 'Escape', code: 'Escape', keyCode: 27 })
+    expect(screen.getByRole('dialog', DIALOG)).toBeInTheDocument()
+    await waitFor(() => expect(verse).toHaveAttribute('aria-expanded', 'false'))
+    fireEvent.keyDown(verse, { key: 'Escape', code: 'Escape', keyCode: 27 })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  // Markup only: one element carries the scroll class and none sets an inline overflow. That nothing else scrolls is
+  // measured in a browser (computed overflow, scrollHeight/clientHeight), see the P7 reports.
+  it('markup: only the sheet carries the scroll class, no inline overflow in the dialog', async () => {
+    const { dialog } = await enter()
+    expect(dialog.querySelectorAll('.hm-score-scroll')).toHaveLength(1)
+    const scrolling = [dialog, ...dialog.querySelectorAll<HTMLElement>('*')].filter((el) => /auto|scroll/.test(el.style.overflow + el.style.overflowY))
+    expect(scrolling).toEqual([])
+  })
+
+  it('wears the dark look only while on', async () => {
+    const { sheet } = await loadReady()
+    const root = sheet.closest('.hm-score-section')!
+    expect(root).not.toHaveClass('hm-score-section--focus')
+    fireEvent.click(toggle())
+    expect(root).toHaveClass('hm-score-section--focus')
+    fireEvent.click(toggle())
+    expect(root).not.toHaveClass('hm-score-section--focus')
+  })
+
+  it('leaves nothing on the page when the section unmounts in the mode', async () => {
+    const { view } = await enter()
+    view.unmount()
+    expect(document.body.style.overflow).toBe('')
+    expect(document.body.className).toBe('')
+    expect(document.querySelector('[inert]')).toBeNull()
+  })
+
+  it('another file ends the mode with the player that held it', async () => {
+    await enter()
+    pickBoth(scoreFile('khac.mxl'), audioFile('khac.wav'))
+    await waitFor(() => expect(engines).toHaveLength(2))
+    await findSheet()
+    expect(screen.queryByRole('dialog')).toBeNull()
+    await waitFor(() => expect(document.querySelector('[inert]')).toBeNull())
+    expect(document.body.style.overflow).toBe('')
+  })
+
+  it('a score the viewer refuses ends the mode: the error and the fallback are on the page', async () => {
+    mocks.createVerovioEngine.mockImplementationOnce(async () => {
+      const engine = fakeEngine()
+      engine.load.mockResolvedValue({ svgPages: ['<svg>' + ' '.repeat(MAX_PAGE_CHARS) + '</svg>'], mei: '<mei/>', timemap: TIMEMAP, aliases: new Map() })
+      engines.push(engine)
+      return engine
+    })
+    renderSection()
+    pickBoth()
+    // The mode is turned on with f while the score still loads, then the viewer refuses the pages.
+    fireEvent.keyDown(screen.getByRole('status', { name: 'Đang tải bản nhạc' }), { key: 'f' }) // at once: the player is mounted, the refusal comes later
+    expect(screen.getByRole('dialog', DIALOG)).toBeInTheDocument()
+    await screen.findByRole('button', { name: /Thử lại/ })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByText(FALLBACK)).toBeInTheDocument()
+    // inert and the scroll hold are taken off by the mode's effect cleanup, after the error card is on screen: wait for it.
+    await waitFor(() => expect(document.querySelector('[inert]')).toBeNull())
+    expect(document.body.style.overflow).toBe('')
+  })
+})
+
+describe('ScorePracticeSection, the follow button', () => {
+  it('sits in the toolbar above the sheet, never over it, so it cannot cover the last system', async () => {
+    renderSection()
+    pickBoth()
+    const sheet = await findSheet()
+    setAudioDuration(60)
+    fireEvent.wheel(sheet, { deltaY: 80 })
+    const follow = await screen.findByRole('button', { name: 'Theo dõi nốt đang hát' })
+    const toolbar = follow.closest('.hm-score-toolbar')!
+    expect(toolbar).not.toBeNull()
+    expect(toolbar.contains(screen.getByRole('button', { name: 'Chế độ tập trung' }))).toBe(true)
+    expect(sheet.closest('.hm-score-frame')!.contains(follow)).toBe(false)
+    expect(follow.closest('[style*="absolute"]')).toBeNull()
+  })
+})
+
+describe('ScorePracticeSection, states with a next step', () => {
+  it('says out loud that the score is being prepared, not only to screen readers', async () => {
+    mocks.createVerovioEngine.mockImplementationOnce(() => new Promise(() => {}))
+    renderSection()
+    pickBoth()
+    const loading = await screen.findByRole('status', { name: 'Đang tải bản nhạc' })
+    expect(loading).toHaveTextContent('Đang dựng bản nhạc, có thể mất vài giây.')
+  })
+
+  it('a refused file says in words what to do next', async () => {
+    renderSection()
+    pickBoth(scoreFile('bai.pdf'))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Vui lòng chọn lại tệp./)
+  })
+
+  it('nothing chosen yet: the picker says what to choose and the fallback stays; no player, no focus button', () => {
+    renderSection()
+    expect(screen.getByText(/Vui lòng chọn cả hai tệp của cùng một bài/)).toBeInTheDocument()
+    expect(screen.getByText(FALLBACK)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Chế độ tập trung' })).toBeNull()
   })
 })

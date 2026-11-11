@@ -1,12 +1,12 @@
 import { Flex, Select } from 'antd'
 import type { ReactNode } from 'react'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, radius, spacing, typography } from '@/styles/tokens'
 import type { LyricPart, LyricSelection } from './useLyricSelection'
 
 function Field({ id, label, children }: Readonly<{ id: string; label: string; children: ReactNode }>) {
   return (
-    <Flex align="center" gap={spacing.sm}>
-      <label htmlFor={id} style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+    <Flex align="center" gap={spacing.sm} className="hm-glow" style={{ padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.md }}>
+      <label htmlFor={id} style={{ fontSize: typography.metadata.fontSize, color: `var(--hm-focus-muted, ${colors.textMuted})` }}>
         {label}
       </label>
       {children}

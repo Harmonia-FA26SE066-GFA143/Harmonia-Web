@@ -47,7 +47,7 @@ export function PlaybackControls({ clock, title }: Readonly<{ clock: PlaybackClo
   return (
     <div style={{ marginTop: spacing.md }}>
       {error && (
-        <Typography.Paragraph role="alert" style={{ color: colors.primaryHover, margin: `0 0 ${spacing.sm}px` }}>
+        <Typography.Paragraph role="alert" style={{ color: `var(--hm-focus-danger, ${colors.primaryHover})`, margin: `0 0 ${spacing.sm}px` }}>
           Không thể phát âm thanh. Vui lòng thử lại hoặc chọn tệp khác.
         </Typography.Paragraph>
       )}
@@ -56,6 +56,7 @@ export function PlaybackControls({ clock, title }: Readonly<{ clock: PlaybackClo
           <Button
             type="primary"
             shape="circle"
+            className="hm-lift"
             icon={playIcon(playing, finished)}
             aria-label={`${label} ${title}`}
             aria-keyshortcuts="Space ArrowLeft ArrowRight Home"
