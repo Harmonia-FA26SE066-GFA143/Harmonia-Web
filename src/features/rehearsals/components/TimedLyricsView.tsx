@@ -58,7 +58,7 @@ export function TimedLyricsView({
       <Typography.Text type="secondary" style={{ fontSize: typography.metadata.fontSize, color: 'inherit', opacity: 0.72 }}>
         Lời theo mốc thời gian
       </Typography.Text>
-      <p aria-live="off" style={{ margin: `${spacing.xs}px 0 0`, minHeight: '1.3em', fontFamily: typography.displayFontFamily, fontSize: 28, fontWeight: 600, lineHeight: 1.3 }}>
+      <p aria-live="off" style={{ margin: `${spacing.xs}px 0 0`, minHeight: '1.3em', fontFamily: typography.displayFontFamily, ...typography.pageTitle }}>
         {sounding?.text}
       </p>
       <p style={{ margin: 0, minHeight: '1.6em', opacity: 0.72 }}>{nextLine?.text}</p>

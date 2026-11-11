@@ -9,9 +9,10 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { acceptRegistration, deleteRegistration, listRegistrations, type MemberRegistration } from '../api/memberRegistrationsApi'
+import { registrationsKey } from '../hooks/useWaitingRegistrations'
 
 const pageSize = 20
-const key = ['member-registrations'] as const
+const key = registrationsKey
 const when = (value: string) => dayjs(parseUtc(value)).format('DD/MM/YYYY HH:mm')
 
 const failure = (error: Error, fallback: string) =>

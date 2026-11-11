@@ -7,7 +7,7 @@ import { useChoirs } from '@/features/choirs'
 import { parseUtc } from '@/lib/api/dates'
 import { getSession } from '@/lib/auth/session'
 import { ErrorState, Form, StatusTag } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, radius, spacing, typography } from '@/styles/tokens'
 import {
   appointNomination,
   approveNomination,
@@ -223,7 +223,7 @@ function TrainingRow({ training, nominationId, canManage, onResult }: Readonly<{
     })
 
   return (
-    <Flex component="li" vertical gap={spacing.xs} style={{ padding: spacing.md, border: `1px solid ${colors.border}`, borderRadius: 8 }}>
+    <Flex component="li" vertical gap={spacing.xs} style={{ padding: spacing.md, border: `1px solid ${colors.border}`, borderRadius: radius.lg }}>
       <Flex justify="space-between" gap={spacing.sm} align="center">
         <Typography.Text strong>{training.courseName}</Typography.Text>
         <StatusTag color={training.result === 'Passed' ? 'green' : training.result === 'Failed' ? 'red' : 'processing'}>{trainingResultLabels[training.result]}</StatusTag>

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useChoirs } from '@/features/choirs'
 import { useChoirMembers } from '@/features/members'
 import { Form, FormDrawer } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
+import { spacing, typography } from '@/styles/tokens'
 import { createNomination, getEligibility } from '../api/nominationsApi'
 import { nominationErrorMessage } from '../nominationErrors'
 import { NominationStatsList } from './NominationStatsList'
@@ -74,7 +74,7 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
         </Form.Item>
         {memberId && (
           <section aria-label="Thành tích của ca viên" style={{ marginBottom: spacing.lg }}>
-            <Typography.Title level={3} style={{ fontSize: 16, marginTop: 0 }}>Thành tích</Typography.Title>
+            <Typography.Title level={3} style={{ fontSize: typography.cardHeading.fontSize, marginTop: 0 }}>Thành tích</Typography.Title>
             {eligibility.isPending && <Skeleton active paragraph={{ rows: 3 }} title={false} />}
             {eligibility.isError && <Alert type="error" showIcon title={nominationErrorMessage(eligibility.error, 'Không tải được thành tích của ca viên.')} />}
             {eligibility.data && (

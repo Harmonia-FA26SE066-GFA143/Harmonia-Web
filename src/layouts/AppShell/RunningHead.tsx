@@ -108,11 +108,28 @@ export function RunningHead({ sections, selectedPath, brand, controls, scrolled 
                 aria-current={item.path === selectedPath ? 'page' : undefined}
               >
                 {item.label}
+                {item.useCount && <TabCount useCount={item.useCount} />}
               </Link>
             ))}
           </div>
         </div>
       </nav>
     </div>
+  )
+}
+
+/** The number waiting on a tab; read aloud with the tab name, hidden while it is none. */
+function TabCount({ useCount }: Readonly<{ useCount: () => number | undefined }>) {
+  const count = useCount()
+  if (!count) return null
+  // The space keeps the name and the number apart when read aloud; a flex row does not draw it.
+  return (
+    <>
+      {' '}
+      <span className="hm-tab__count">
+        {count}{' '}
+        <span className="hm-visually-hidden">đang chờ</span>
+      </span>
+    </>
   )
 }

@@ -1,6 +1,6 @@
 import { Typography } from 'antd'
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { env } from '@/config/env'
 import { useContactEmail } from '@/features/settings'
@@ -67,7 +67,8 @@ export function LoginPage() {
       description="Mừng bạn trở lại. Đăng nhập để tiếp tục sử dụng Harmonia."
       footer={
         <>
-          Chưa có tài khoản? Tài khoản do quản trị viên giáo xứ cấp. Liên hệ <Typography.Link href={`mailto:${contactEmail}`}>{contactEmail}</Typography.Link>.
+          Chưa có tài khoản? <Link to={paths.join}>Gửi yêu cầu tham gia ca đoàn</Link>, quản trị viên giáo xứ sẽ xét và cấp tài khoản. Cần hỗ trợ, liên hệ{' '}
+          <Typography.Link href={`mailto:${contactEmail}`}>{contactEmail}</Typography.Link>.
         </>
       }
     >

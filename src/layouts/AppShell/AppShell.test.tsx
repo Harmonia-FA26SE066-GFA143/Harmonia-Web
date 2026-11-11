@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
+import * as registrationsApi from '@/features/member-registrations/api/memberRegistrationsApi'
 import * as notificationsApi from '@/features/notifications/api/notificationsApi'
 import * as profileApi from '@/features/profile/api/profileApi'
 import * as settingsApi from '@/features/settings/api/settingsApi'
@@ -56,6 +57,17 @@ describe('AppShell', () => {
     expect(within(pages).getByRole('link', { name: 'Lịch tập' })).toHaveAttribute('aria-current', 'page')
     expect(within(pages).queryByText('Tài khoản')).toBeNull()
     expect(screen.getByText('Nội dung trang')).toBeInTheDocument()
+  })
+
+  it('shows how many requests wait beside their tab, read with its name', async () => {
+    setViewportWidth(1440)
+    const list = vi.spyOn(registrationsApi, 'listRegistrations').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 1, totalCount: 3, totalPages: 3 })
+    renderShellAt('/admin/accounts')
+
+    const pages = await screen.findByRole('navigation', { name: 'Các trang của Quản trị hệ thống' })
+    expect(await within(pages).findByRole('link', { name: 'Đăng ký gia nhập 3 đang chờ' })).toBeInTheDocument()
+    expect(list).toHaveBeenCalledWith('', 1, 1)
+    expect(within(pages).getByRole('link', { name: 'Tài khoản' })).toBeInTheDocument()
   })
 
   it('offers the role workspaces on role-neutral pages', async () => {

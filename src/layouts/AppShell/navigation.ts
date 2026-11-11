@@ -20,6 +20,8 @@ import {
 } from '@ant-design/icons'
 import type { ComponentType } from 'react'
 import { paths } from '@/app/router/paths'
+import { useWaitingRegistrationCount } from '@/features/member-registrations'
+import { usePendingSkills } from '@/features/skill-approval'
 import { AttendanceOutlined, SeasonOutlined, SheetMusicOutlined } from '@/shared/ui'
 
 /** A role workspace. Chosen from the URL prefix; it is not an authorization check. */
@@ -29,6 +31,8 @@ export interface NavItem {
   path: string
   label: string
   icon: ComponentType
+  /** How many items wait on this page, when every row of its list is waiting. A hook: called once per tab, every render. */
+  useCount?: () => number | undefined
 }
 
 export interface NavSection {
@@ -41,6 +45,9 @@ export interface SurfaceConfig {
   basePath: string
   sections: NavSection[]
 }
+
+/** The same one-row page the Director dashboard reads, so both share one request. */
+const usePendingSkillCount = () => usePendingSkills({ pageNumber: 1, pageSize: 1 }).data?.totalCount
 
 /**
  * Navigation per role, limited to pages in the screen map. Each section is an area of the running head.
@@ -74,7 +81,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
         items: [
           { path: paths.director.members, label: 'Danh sách ca viên', icon: IdcardOutlined },
           { path: paths.director.choirs, label: 'Ca đoàn', icon: ApartmentOutlined },
-          { path: paths.director.skillApproval, label: 'Duyệt kỹ năng', icon: SafetyCertificateOutlined },
+          { path: paths.director.skillApproval, label: 'Duyệt kỹ năng', icon: SafetyCertificateOutlined, useCount: usePendingSkillCount },
           { path: paths.director.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined },
         ],
       },
@@ -108,7 +115,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
         items: [
           { path: paths.admin.dashboard, label: 'Tổng quan', icon: AppstoreOutlined },
           { path: paths.admin.accounts, label: 'Tài khoản', icon: TeamOutlined },
-          { path: paths.admin.memberRegistrations, label: 'Đăng ký gia nhập', icon: UsergroupAddOutlined },
+          { path: paths.admin.memberRegistrations, label: 'Đăng ký gia nhập', icon: UsergroupAddOutlined, useCount: useWaitingRegistrationCount },
           { path: paths.admin.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined },
           { path: paths.admin.roles, label: 'Vai trò & Phân quyền', icon: UserSwitchOutlined },
           { path: paths.admin.skillCategories, label: 'Danh mục kỹ năng', icon: TagsOutlined },
