@@ -12,6 +12,7 @@ import { PlaybackControls } from '../score/controls/PlaybackControls'
 import { readLyrics, useLyricSelection, type ScoreLyrics } from '../score/controls/useLyricSelection'
 import { useScoreShortcuts } from '../score/controls/useScoreShortcuts'
 import { countStaves, createVerovioEngine, MAX_SCORE_NOTES, ScoreEngineError, type ScoreEngine } from '../score/engine'
+import { ScoreCredit } from '../score/license/ScoreCredit'
 import { checkAlignment } from '../score/source/checkAlignment'
 import { DevFixtureScoreSource } from '../score/source/DevFixtureScoreSource'
 import { ScoreSourceError, type ScorePackage, type ScorePackageSource, type ScoreSourceErrorCode } from '../score/source/types'
@@ -314,6 +315,7 @@ function ScorePlayer({
             onPart={lyricChoice.choosePart}
             onVerse={lyricChoice.chooseVerse}
           />
+          {ready && <ScoreCredit />}
         </dialog>
       </ConfigProvider>
       {(failed || audioDead) && fallback}
