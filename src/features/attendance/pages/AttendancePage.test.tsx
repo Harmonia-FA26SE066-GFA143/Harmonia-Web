@@ -98,7 +98,8 @@ describe('AttendancePage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Lưu điểm danh' }))
     await waitFor(() => expect(save).toHaveBeenCalledWith('r1', { m2: 'absent' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Lưu điểm danh' })).toBeDisabled())
+    // The button answers in its own place.
+    expect(await screen.findByRole('button', { name: 'Đã lưu' })).toBeDisabled()
     expect(within(screen.getByRole('radiogroup', { name: 'Điểm danh Simon Phan Văn Đức' })).getByRole('radio', { name: 'Vắng' })).toBeChecked()
   })
 

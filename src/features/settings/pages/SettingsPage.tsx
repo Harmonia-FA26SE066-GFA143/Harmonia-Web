@@ -1,6 +1,6 @@
-import { App, Button, Card, Flex, Input, InputNumber, Switch } from 'antd'
+import { App, Card, Flex, Input, InputNumber, Switch } from 'antd'
 import type { ReactNode } from 'react'
-import { CardTitle, EmptyState, ErrorState, Form, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, EmptyState, ErrorState, Form, PageHeader, SaveButton, SectionSkeleton, useJustSaved } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { useSettings, useUpdateSettings } from '../hooks/useSettings'
 import { settingErrorMessage } from '../settingsErrors'
@@ -68,6 +68,7 @@ export function SettingsPage() {
   const { message } = App.useApp()
   const settings = useSettings()
   const update = useUpdateSettings()
+  const [justSaved, markSaved] = useJustSaved()
   const all = (settings.data ?? []).toSorted((a, b) => a.order - b.order)
   // One card per section, in the order of its first setting.
   const sections = [...new Set(all.map((setting) => setting.group))].map((title) => ({
@@ -86,7 +87,10 @@ export function SettingsPage() {
       return
     }
     update.mutate(changes, {
-      onSuccess: () => message.success(`Đã lưu ${changes.length} thiết lập.`),
+      onSuccess: () => {
+        markSaved()
+        message.success(`Đã lưu ${changes.length} thiết lập.`)
+      },
       onError: (error) => message.error(settingErrorMessage(error, 'Không thể lưu cấu hình. Vui lòng thử lại.')),
     })
   }
@@ -118,9 +122,9 @@ export function SettingsPage() {
               </Card>
             ))}
             <Flex justify="flex-end">
-              <Button type="primary" htmlType="submit" loading={update.isPending}>
+              <SaveButton saved={justSaved} type="primary" htmlType="submit" loading={update.isPending}>
                 Lưu thay đổi
-              </Button>
+              </SaveButton>
             </Flex>
           </Flex>
         </Form>

@@ -1548,3 +1548,33 @@ textarea {
 .landing-sheet {
   background-image: url('../assets/images/texture/paper-grain.svg') !important;
 }
+
+/* A save button says "Đã lưu" in place; both labels share a cell, so its width holds. */
+.hm-save-label {
+  display: inline-grid;
+}
+
+.hm-save-label > * {
+  grid-area: 1 / 1;
+}
+
+.hm-save-label > .is-hidden {
+  visibility: hidden;
+}
+
+/* Depth: the page steps back while a drawer or dialog is open, and a drawer's content follows its panel. */
+@media (prefers-reduced-motion: no-preference) {
+  #main-content {
+    transform-origin: 50% 240px;
+    transition: transform var(--hm-dur-panel) var(--hm-ease), opacity var(--hm-dur-panel) var(--hm-ease);
+  }
+
+  body:has(.ant-drawer-open, .ant-modal-wrap:not([style*='display: none'])) #main-content {
+    transform: scale(0.985);
+    opacity: 0.92;
+  }
+
+  .ant-drawer-open .ant-drawer-body > * {
+    animation: hm-rise-small var(--hm-dur-panel) var(--hm-ease) 60ms both;
+  }
+}

@@ -2,7 +2,7 @@ import { CheckOutlined, SearchOutlined } from '@ant-design/icons'
 import { App, Avatar, Button, Card, Flex, Input, Modal, Radio, Table, Typography, type TableColumnsType } from 'antd'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useBeforeUnload, useBlocker } from 'react-router'
-import { NoFilterResults } from '@/shared/ui'
+import { NoFilterResults, SaveButton, useJustSaved } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, media, outcomeColors, radius, shadows, spacing, spine, typography } from '@/styles/tokens'
 import { attendanceErrorMessage } from '../attendanceErrors'
@@ -45,6 +45,7 @@ export interface AttendanceSheetProps {
 export function AttendanceSheet({ rehearsalId, records, editable, header }: Readonly<AttendanceSheetProps>) {
   const { message } = App.useApp()
   const save = useSaveAttendance(rehearsalId)
+  const [justSaved, markSaved] = useJustSaved()
   // Only what the user changed; the rest reads from `records`. The sheet is not remounted when the records reload
   // (window refocus, after a save), so these edits, the search and the focus survive.
   const [edits, setEdits] = useState<Record<string, AttendanceValue>>({})
@@ -101,7 +102,10 @@ export function AttendanceSheet({ rehearsalId, records, editable, header }: Read
   const handleSave = () => {
     if (save.isPending) return
     save.mutate(edits, {
-      onSuccess: () => message.success('Đã lưu điểm danh.'),
+      onSuccess: () => {
+        markSaved()
+        message.success('Đã lưu điểm danh.')
+      },
       onError: (error) => message.error(attendanceErrorMessage(error)),
     })
   }
@@ -240,9 +244,9 @@ export function AttendanceSheet({ rehearsalId, records, editable, header }: Read
             <Button ghost={dirty} onClick={discard} disabled={!dirty || save.isPending}>
               Hủy thay đổi
             </Button>
-            <Button type={dirty ? 'default' : 'primary'} onClick={handleSave} disabled={!dirty} loading={save.isPending} style={dirty ? { color: colors.primary, fontWeight: 600 } : undefined}>
+            <SaveButton saved={justSaved && !dirty} type={dirty ? 'default' : 'primary'} onClick={handleSave} disabled={!dirty} loading={save.isPending} style={dirty ? { color: colors.primary, fontWeight: 600 } : undefined}>
               Lưu điểm danh
-            </Button>
+            </SaveButton>
           </Flex>
         </Flex>
       )}
