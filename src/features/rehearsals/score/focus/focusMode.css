@@ -1,0 +1,94 @@
+/*
+ * Focus mode of the practice section (P7). The section root fills the screen over the page chrome; the sheet keeps its
+ * ivory paper, everything around it is the dark ground. Colours come from custom properties (`--hm-focus-*`, set inline
+ * by focusTheme.ts only while the mode is on); durations and easing are the shared motion tokens of global.css.
+ */
+
+.hm-score-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 40px;
+  margin-bottom: 8px;
+}
+
+.hm-score-section--focus {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 12px clamp(12px, 3vw, 40px) 16px;
+  /* Clips only: the sheet is the one scroll region. */
+  overflow: hidden;
+  background: var(--hm-focus-bg);
+  color: var(--hm-focus-text);
+  outline: none;
+  animation: hm-score-focus-in var(--hm-dur-slow) var(--hm-ease);
+}
+
+/* A comfortable measure for music, centred; wider screens get margin, not a wider (slower to redraw) sheet. */
+.hm-score-section--focus > * {
+  box-sizing: border-box;
+  flex: none;
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+}
+
+.hm-score-section--focus > .hm-score-frame {
+  flex: 1 1 0;
+  min-height: 160px;
+}
+
+.hm-score-section--focus .hm-score-toolbar {
+  margin-bottom: 0;
+}
+
+.hm-score-focus-title {
+  min-width: 0;
+  margin-inline-end: auto;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hm-score-focus-hint {
+  color: var(--hm-focus-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 560px) {
+  .hm-score-focus-hint {
+    display: none;
+  }
+}
+
+/* The ring around the sheet sits on the dark ground now: the burgundy of the light mode would vanish. */
+.hm-score-section--focus .hm-score-scroll:focus-visible {
+  outline-color: var(--hm-focus-ring);
+}
+
+.hm-score-section--focus .hm-glow:hover,
+.hm-score-section--focus .hm-glow:focus-within {
+  background-color: var(--hm-focus-wash);
+}
+
+/* Fades in over the page: nothing slides, so the chrome behind is never seen moving. */
+@keyframes hm-score-focus-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-score-section--focus {
+    animation: none;
+  }
+}

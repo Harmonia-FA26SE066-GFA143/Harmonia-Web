@@ -9,10 +9,15 @@ export const SEEK_STEP = 5
 const TYPING = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])'
 const PRESSABLE = 'button, a[href], summary, [role="button"]'
 
+/** Whether the target is a field the user types into (also a select: its letters pick an option). */
+export function isTypingTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(TYPING) !== null
+}
+
 /** Whether the focused element gives this key a meaning of its own (typing, pressing a button, moving a slider). */
 function ownedByTarget(target: EventTarget | null, key: string): boolean {
   if (!(target instanceof Element)) return false
-  if (target.closest(TYPING)) return true
+  if (isTypingTarget(target)) return true
   if (key === ' ') return target.closest(PRESSABLE) !== null
   return target.closest('[role="slider"]') !== null
 }
