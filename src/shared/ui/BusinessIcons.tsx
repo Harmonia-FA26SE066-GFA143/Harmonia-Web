@@ -1,20 +1,21 @@
 import Icon from '@ant-design/icons'
 import type { GetProps } from 'antd'
-import type { ReactNode } from 'react'
+import type { ReactNode, SVGProps } from 'react'
 
 type IconProps = Omit<GetProps<typeof Icon>, 'component'>
 
+/** The drawing itself; the Icon around it carries the name (or hides it), so the svg stays out of the reading. */
+function GlyphSvg(props: Readonly<SVGProps<SVGSVGElement>>) {
+  return <svg aria-hidden width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props} />
+}
+
 /** Harmonia's own icons, drawn to sit beside Ant Design Outlined: 24 grid, 1.5 stroke, `currentColor`, sized by `1em`. */
 function Glyph({ children, ...props }: Readonly<IconProps & { children: ReactNode }>) {
+  // Ant Design passes the children on to `component`.
   return (
-    <Icon
-      {...props}
-      component={() => (
-        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          {children}
-        </svg>
-      )}
-    />
+    <Icon {...props} component={GlyphSvg}>
+      {children}
+    </Icon>
   )
 }
 

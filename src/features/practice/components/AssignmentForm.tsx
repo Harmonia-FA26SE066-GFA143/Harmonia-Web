@@ -26,6 +26,34 @@ const scopeOptions: { value: AssignmentScope; label: string }[] = [
 ]
 
 /**
+ * How many will be notified, when it can be known: the choir's members, or the ones picked. Members of a skill are
+ * matched by the backend, so that scope has no number.
+ */
+function recipientCount(scope: AssignmentScope | undefined, choirSize?: number, picked?: string[]) {
+  if (scope === 'all') return choirSize
+  if (scope === 'individual') return picked?.length
+  return undefined
+}
+
+/** The recipients in words, for the summary. */
+function recipientText(scope: AssignmentScope | undefined, count: number | undefined, skillNames: string[]) {
+  if (scope === 'skillGroup') return skillNames.length > 0 ? `Ca viên có kỹ năng ${skillNames.join(', ')}` : 'Chưa chọn kỹ năng'
+  if (count === undefined) return '—'
+  return scope === 'all' ? `${count} ca viên (cả ca đoàn)` : `${count} ca viên`
+}
+
+/** The due date, with the days left while it is ahead. */
+function dueSummary(dueDate?: Dayjs) {
+  if (!dueDate) return '—'
+  const when = dueDate.format('HH:mm DD/MM/YYYY')
+  const daysLeft = Math.ceil(dueDate.diff(dayjs(), 'day', true))
+  return daysLeft >= 0 ? `${when} · còn ${daysLeft} ngày` : when
+}
+
+/** The send button names its effect when the number is known. */
+const submitLabel = (count?: number) => (count ? `Giao bài cho ${count} ca viên` : 'Giao bài tập')
+
+/**
  * Gives a practice assignment (FE-41; `CreatePracticeAssignmentRequestValidator`) to one of the director's choirs (D8,
  * required): event, song and materials (several since BE 718696c) are optional, the due date is in the future, and the members are the whole
  * choir, its members with chosen skills or chosen members of it. The backend notifies them; the assignment then
@@ -53,14 +81,11 @@ export function AssignmentForm() {
   const materialIds = Form.useWatch('materialIds', form)
   const skillIds = Form.useWatch('skillIds', form)
   const memberIds = Form.useWatch('memberIds', form)
-  // How many will be notified, when it can be known: the choir's members, or the ones picked. Members of a skill are
-  // matched by the backend, so that scope says its skills instead of a number.
-  const recipients = scope === 'all' ? members.data?.length : scope === 'individual' ? memberIds?.length : undefined
+  const recipients = recipientCount(scope, members.data?.length, memberIds)
   const choirName = activeChoirs.find((choir) => choir.id === choirId)?.name
   const songTitle = songs.data?.items.find((song) => song.id === songId)?.title
   const event = events.data?.find((item) => item.id === eventId)
   const skillNames = (skills ?? []).filter((skill) => skillIds?.includes(String(skill.value))).map((skill) => skill.label)
-  const daysLeft = dueDate ? Math.ceil(dueDate.diff(dayjs(), 'day', true)) : undefined
 
   const handleFinish = ({ dueDate, ...values }: FormValues) => {
     if (!dueDate || create.isPending) return
@@ -216,7 +241,7 @@ export function AssignmentForm() {
               Huỷ
             </Button>
             <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={create.isPending}>
-              {recipients ? `Giao bài cho ${recipients} ca viên` : 'Giao bài tập'}
+              {submitLabel(recipients)}
             </Button>
           </Flex>
         </Form>
@@ -227,21 +252,13 @@ export function AssignmentForm() {
           <dt>Ca đoàn</dt>
           <dd>{choirName ?? '—'}</dd>
           <dt>Người nhận</dt>
-          <dd>
-            {scope === 'skillGroup'
-              ? skillNames.length > 0
-                ? `Ca viên có kỹ năng ${skillNames.join(', ')}`
-                : 'Chưa chọn kỹ năng'
-              : recipients !== undefined
-                ? `${recipients} ca viên${scope === 'all' ? ' (cả ca đoàn)' : ''}`
-                : '—'}
-          </dd>
+          <dd>{recipientText(scope, recipients, skillNames)}</dd>
           <dt>Bài hát</dt>
           <dd>{songTitle ?? 'Không gắn bài hát'}</dd>
           <dt>Tài liệu</dt>
           <dd>{materialIds?.length ? `${materialIds.length} tài liệu gửi kèm` : 'Không gửi kèm'}</dd>
           <dt>Hạn nộp</dt>
-          <dd>{dueDate ? `${dueDate.format('HH:mm DD/MM/YYYY')}${daysLeft !== undefined && daysLeft >= 0 ? ` · còn ${daysLeft} ngày` : ''}` : '—'}</dd>
+          <dd>{dueSummary(dueDate)}</dd>
           <dt>Thánh lễ</dt>
           <dd>{event ? formatEventOption(event) : 'Không gắn Thánh lễ'}</dd>
         </dl>

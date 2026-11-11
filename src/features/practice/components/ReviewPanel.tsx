@@ -86,7 +86,8 @@ export function ReviewPanel({ submissionId, initialResult, initialComment, onDon
     const callbacks = {
       onSuccess: () => {
         message.success(reviewed ? 'Đã thêm nhận xét.' : 'Đã chấm bài.')
-        setDecided(reviewed ? 'Đã gửi nhận xét' : `Đã chấm: ${practiceStatusLabels[result === 'needsRevision' ? 'needsRevision' : 'passed']}`)
+        const outcome: ReviewResult = result === 'needsRevision' ? 'needsRevision' : 'passed'
+        setDecided(reviewed ? 'Đã gửi nhận xét' : `Đã chấm: ${practiceStatusLabels[outcome]}`)
         setTimeout(onDone, 700)
       },
       onError: (error: Error) => message.error(practiceErrorMessage(error, 'Không thể lưu đánh giá. Vui lòng thử lại.')),
@@ -131,7 +132,10 @@ export function ReviewPanel({ submissionId, initialResult, initialComment, onDon
               </Typography.Paragraph>
             </div>
             <div className="hm-review-panel__audio">
-              <audio controls src={data.audioUrl} style={{ width: '100%' }} aria-label={`Bản thu của ${data.memberName}`} />
+              {/* A sung recording has no transcript; the empty captions track only marks that none exists. */}
+              <audio controls src={data.audioUrl} style={{ width: '100%' }} aria-label={`Bản thu của ${data.memberName}`}>
+                <track kind="captions" />
+              </audio>
             </div>
             <AutoScore submissionId={data.id} />
             {data.feedbacks.length > 0 && (
@@ -177,15 +181,13 @@ export function ReviewPanel({ submissionId, initialResult, initialComment, onDon
             >
               <Input.TextArea rows={4} showCount maxLength={1000} placeholder="Nhận xét và hướng dẫn cho ca viên" />
             </Form.Item>
-            {decided ? (
-              <p className="hm-review-panel__done hm-pop" role="status">
-                {decided}
-              </p>
-            ) : reviewed ? (
+            {decided && <output className="hm-review-panel__done hm-pop">{decided}</output>}
+            {!decided && reviewed && (
               <Button type="primary" htmlType="submit" loading={saving}>
                 Gửi nhận xét
               </Button>
-            ) : (
+            )}
+            {!decided && !reviewed && (
               <Flex gap={spacing.sm} justify="flex-end">
                 <Button onClick={() => decide('needsRevision')} loading={saving && review.variables?.result === 'needsRevision'} disabled={saving}>
                   {practiceStatusLabels.needsRevision}

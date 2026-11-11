@@ -142,7 +142,10 @@ function TimedLyricsEditor({ material, lyricsMaterials, form, initialValues, has
                 event.currentTarget.pause()
               }
             }}
-          />
+          >
+            {/* The words are timed in the editor below; the audio itself has no caption file. */}
+            <track kind="captions" />
+          </audio>
           <PreviewLine audio={audio} form={form} />
         </section>
       ) : (

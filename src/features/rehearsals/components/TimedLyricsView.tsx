@@ -52,7 +52,9 @@ export function TimedLyricsView({
 
   const index = Math.floor(phase / 2)
   const sounding = phase >= 0 && phase % 2 === 1 ? lines[index] : undefined
-  const nextLine = phase < 0 ? undefined : lines[sounding ? index + 1 : index]
+  // Before the first line nothing is next; while a line sounds the one after it is, between lines the coming one.
+  const nextIndex = sounding ? index + 1 : index
+  const nextLine = phase < 0 ? undefined : lines[nextIndex]
   return (
     <section aria-label="Lời theo mốc thời gian của âm thanh" style={{ marginTop: spacing.md, textAlign: 'center' }}>
       <Typography.Text type="secondary" style={{ fontSize: typography.metadata.fontSize, color: 'inherit', opacity: 0.72 }}>

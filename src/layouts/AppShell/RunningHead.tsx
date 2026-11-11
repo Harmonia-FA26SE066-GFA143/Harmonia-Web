@@ -98,7 +98,7 @@ export function RunningHead({ sections, selectedPath, brand, controls, scrolled 
       <nav className="hm-sub" aria-label={`Các trang của ${area.label}`}>
         <div ref={tabsBox} className="hm-tabs">
           <span ref={underline} className="hm-underline" aria-hidden />
-          <div key={areaIndex} className={`hm-tabs__list${seen.from ? ` in-from-${seen.from}` : ''}`}>
+          <div key={areaIndex} className={['hm-tabs__list', seen.from && `in-from-${seen.from}`].filter(Boolean).join(' ')}>
             {area.items.map((item, index) => (
               <Link
                 key={item.path}

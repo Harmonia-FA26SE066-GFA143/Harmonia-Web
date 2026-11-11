@@ -211,7 +211,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
               onChange={setSongId}
               options={songs.map((song) => {
                 const short = shortages.data.filter((item) => item.songListItemId === song.id).length
-                return { value: song.id, label: `${song.liturgicalPart ? `${song.liturgicalPart} · ` : ''}${song.title}${short ? ` · thiếu ${short}` : ''}` }
+                return { value: song.id, label: [song.liturgicalPart, song.title, short && `thiếu ${short}`].filter(Boolean).join(' · ') }
               })}
               style={{ minWidth: 280 }}
             />

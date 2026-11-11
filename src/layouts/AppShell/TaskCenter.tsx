@@ -44,7 +44,13 @@ export function TaskCenter() {
         duration: 8,
         actions:
           task.status === 'failed' ? (
-            <Button size="small" onClick={() => (notification.destroy(task.id), retry(task.id))}>
+            <Button
+              size="small"
+              onClick={() => {
+                notification.destroy(task.id)
+                retry(task.id)
+              }}
+            >
               Thử lại
             </Button>
           ) : (

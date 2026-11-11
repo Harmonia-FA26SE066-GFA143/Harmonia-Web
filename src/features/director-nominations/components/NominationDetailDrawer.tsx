@@ -6,7 +6,7 @@ import { useState, type ReactNode } from 'react'
 import { useChoirs } from '@/features/choirs'
 import { parseUtc } from '@/lib/api/dates'
 import { getSession } from '@/lib/auth/session'
-import { ErrorState, Form, StatusTag } from '@/shared/ui'
+import { ErrorState, Form, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import {
   appointNomination,
@@ -74,6 +74,14 @@ function historyOf(item: NominationDetail) {
   }
   if (item.appointedAt) entries.push({ key: 'appointed', content: <><strong>{moment(item.appointedAt)}</strong> · Admin bổ nhiệm làm Ca trưởng ca đoàn {item.appointedChoirName}.</> })
   return entries
+}
+
+const trainingResultColors: Record<keyof typeof trainingResultLabels, StatusTagColor> = { Passed: 'green', Failed: 'red', InProgress: 'processing' }
+
+/** An ended nomination reads as stopped; an appointed one as done; any other as under way. */
+function stepsStatus(ended: boolean, status: NominationDetail['status']) {
+  if (ended) return 'error'
+  return status === 'Appointed' ? 'finish' : 'process'
 }
 
 function stepIndex(status: NominationDetail['status'], reviewedAt: string | null) {
@@ -226,10 +234,10 @@ function TrainingRow({ training, nominationId, canManage, onResult }: Readonly<{
     <Flex component="li" vertical gap={spacing.xs} style={{ padding: spacing.md, border: `1px solid ${colors.border}`, borderRadius: radius.lg }}>
       <Flex justify="space-between" gap={spacing.sm} align="center">
         <Typography.Text strong>{training.courseName}</Typography.Text>
-        <StatusTag color={training.result === 'Passed' ? 'green' : training.result === 'Failed' ? 'red' : 'processing'}>{trainingResultLabels[training.result]}</StatusTag>
+        <StatusTag color={trainingResultColors[training.result]}>{trainingResultLabels[training.result]}</StatusTag>
       </Flex>
       <Typography.Text type="secondary">
-        {[training.organizer, `${day(training.startDate)}${training.endDate ? ` đến ${day(training.endDate)}` : ''}`].filter(Boolean).join(' · ')}
+        {[training.organizer, [day(training.startDate), training.endDate && day(training.endDate)].filter(Boolean).join(' đến ')].filter(Boolean).join(' · ')}
       </Typography.Text>
       {training.resultNote && <Typography.Text>Ghi chú: {training.resultNote}</Typography.Text>}
       <Flex wrap gap={spacing.sm} align="center">
@@ -315,7 +323,7 @@ export function NominationDetailDrawer({ id, onClose }: Readonly<{ id?: string; 
             size="small"
             style={{ marginTop: spacing.md }}
             current={stepIndex(item.status, item.reviewedAt)}
-            status={ended ? 'error' : item.status === 'Appointed' ? 'finish' : 'process'}
+            status={stepsStatus(ended, item.status)}
             items={nominationSteps.map((step) => ({ title: step.title }))}
           />
           {ended && <Alert type="info" showIcon title={`Đề cử đã kết thúc ở trạng thái ${statusLabels[item.status]}.`} style={{ marginTop: spacing.md }} />}

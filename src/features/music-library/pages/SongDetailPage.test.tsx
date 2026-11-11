@@ -80,7 +80,7 @@ describe('SongDetailPage timed lyrics', () => {
     await openDrawer()
     fireEvent.click(screen.getByRole('button', { name: 'Lưu mốc thời gian' }))
 
-    expect((await screen.findAllByText('Vui lòng nhập giây bắt đầu.')).length).toBe(2)
+    expect(await screen.findAllByText('Vui lòng nhập giây bắt đầu.')).toHaveLength(2)
     expect(save).not.toHaveBeenCalled()
   }, 30_000)
   it('sends the lines in order and reports a line past the audio', async () => {

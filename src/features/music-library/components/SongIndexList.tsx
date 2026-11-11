@@ -77,8 +77,7 @@ export function SongIndexList({
   return (
     <div role="region" aria-label="Mục lục bài hát">
       <Spin spinning={loading}>
-        {/* role="list": the list-style reset drops list semantics in Safari. */}
-        <ul role="list" className={`hm-stagger song-index${density === 'compact' ? ' is-compact' : ''}`}>
+        <ul className={`hm-stagger song-index${density === 'compact' ? ' is-compact' : ''}`}>
           {songs.map((song, index) => {
             const credits = [song.composer, song.lyricist && song.lyricist !== song.composer && song.lyricist].filter(Boolean)
             const details = [

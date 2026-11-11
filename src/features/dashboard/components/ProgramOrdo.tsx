@@ -119,7 +119,8 @@ function Preparation({ program }: Readonly<{ program: LiturgicalProgram }>) {
     <div className="ordo-panel">
       <div>
         <CountIn value={missing.length} />
-        <div role="status" aria-atomic>
+        {/* A live region without role="status", which would hide the heading inside it. */}
+        <div aria-live="polite" aria-atomic>
           <Typography.Title level={4} style={{ margin: 0, fontSize: typography.cardHeading.fontSize }}>
             {missing.length === 0 ? 'Đã đủ mọi mục' : `Còn thiếu ${missing.length} mục`}
           </Typography.Title>

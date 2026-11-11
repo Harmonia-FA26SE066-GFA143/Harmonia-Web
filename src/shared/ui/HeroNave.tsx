@@ -276,7 +276,7 @@ export function HeroNave({ aperture, onUnavailable, still = false }: Readonly<He
 
   return (
     <>
-      <canvas ref={canvasRef} aria-hidden style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
+      <canvas ref={canvasRef} role="presentation" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
       {!reduced && (
         <Button
           shape="circle"

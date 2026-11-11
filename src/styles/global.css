@@ -84,9 +84,9 @@ body {
 }
 
 /* A linked card says it is clickable by its border, not by lifting or casting a shadow. */
-.ant-card-hoverable:hover {
-  border-color: var(--hm-border-control) !important;
-  box-shadow: none !important;
+.ant-card-hoverable.ant-card-hoverable.ant-card-hoverable:hover {
+  border-color: var(--hm-border-control);
+  box-shadow: none;
 }
 
 /* A day holds its celebration and two events on two lines each, without scrolling inside the cell. antd sets the
@@ -169,9 +169,9 @@ body {
 }
 
 /* Landing hero and sign-in image: controls on dark media take a white focus ring; hover states stay light too. */
-.landing-hero .ant-btn:focus-visible,
-.on-media-link:focus-visible {
-  outline: 2px solid var(--hm-text-on-media) !important;
+.landing-hero.landing-hero .ant-btn.ant-btn:focus-visible,
+.on-media-link.on-media-link:focus-visible {
+  outline: 2px solid var(--hm-text-on-media);
   outline-offset: 2px;
 }
 
@@ -180,30 +180,30 @@ body {
   border-radius: 10px;
 }
 
-.landing-hero .landing-hero-sign-in {
-  border: 0 !important;
-  background: var(--hm-surface-base) !important;
-  color: var(--hm-action-primary) !important;
+.landing-hero .ant-btn.landing-hero-sign-in.landing-hero-sign-in.landing-hero-sign-in {
+  border: 0;
+  background: var(--hm-surface-base);
+  color: var(--hm-action-primary);
 }
 
-.landing-hero .landing-hero-sign-in:hover {
-  background: var(--hm-surface-soft) !important;
-  color: var(--hm-action-primary-hover) !important;
+.landing-hero .ant-btn.landing-hero-sign-in.landing-hero-sign-in.landing-hero-sign-in:not(:disabled):hover {
+  background: var(--hm-surface-soft);
+  color: var(--hm-action-primary-hover);
 }
 
-.landing-hero .landing-hero-sign-in:active {
-  background: var(--hm-surface-selected) !important;
+.landing-hero .ant-btn.landing-hero-sign-in.landing-hero-sign-in.landing-hero-sign-in:not(:disabled):active {
+  background: var(--hm-surface-selected);
 }
 
-.landing-hero .ant-btn-background-ghost {
-  border-color: var(--hm-text-on-media-muted) !important;
-  color: var(--hm-text-on-media) !important;
+.landing-hero .ant-btn.ant-btn-background-ghost.ant-btn-background-ghost.ant-btn-background-ghost {
+  border-color: var(--hm-text-on-media-muted);
+  color: var(--hm-text-on-media);
 }
 
-.landing-hero .ant-btn-background-ghost:hover {
-  border-color: var(--hm-text-on-media) !important;
-  background: transparent !important;
-  color: var(--hm-text-on-media) !important;
+.landing-hero .ant-btn.ant-btn-background-ghost.ant-btn-background-ghost.ant-btn-background-ghost:not(:disabled):hover {
+  border-color: var(--hm-text-on-media);
+  background: transparent;
+  color: var(--hm-text-on-media);
 }
 
 /*
@@ -586,11 +586,15 @@ textarea {
  */
 .attendance-marks .ant-radio-button-wrapper { text-align: center; }
 .attendance-marks .ant-radio-button-wrapper-checked { font-weight: 600; z-index: 1; }
-.attendance-marks .attendance-mark-present.ant-radio-button-wrapper-checked { background: var(--hm-area-rehearsal-tint) !important; color: var(--hm-area-rehearsal-ink) !important; border-color: var(--hm-outcome-good) !important; }
-.attendance-marks .attendance-mark-late.ant-radio-button-wrapper-checked { background: var(--hm-warning-tint) !important; color: var(--hm-warning) !important; border-color: var(--hm-outcome-late) !important; }
-.attendance-marks .attendance-mark-excused.ant-radio-button-wrapper-checked { background: var(--hm-surface-selected) !important; color: var(--hm-text-primary) !important; border-color: var(--hm-outcome-excused) !important; }
-.attendance-marks .attendance-mark-absent.ant-radio-button-wrapper-checked { background: var(--hm-area-liturgy-tint) !important; color: var(--hm-area-liturgy-ink) !important; border-color: var(--hm-outcome-missed) !important; }
-.attendance-marks .ant-radio-button-wrapper-checked::before { background-color: transparent !important; }
+.attendance-marks .ant-radio-button-wrapper.attendance-mark-present.attendance-mark-present.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-checked,
+.attendance-marks .ant-radio-button-wrapper.attendance-mark-present.attendance-mark-present.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-checked:hover { background: var(--hm-area-rehearsal-tint); color: var(--hm-area-rehearsal-ink); border-color: var(--hm-outcome-good); }
+.attendance-marks .ant-radio-button-wrapper.attendance-mark-late.attendance-mark-late.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-checked,
+.attendance-marks .ant-radio-button-wrapper.attendance-mark-late.attendance-mark-late.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-checked:hover { background: var(--hm-warning-tint); color: var(--hm-warning); border-color: var(--hm-outcome-late); }
+.attendance-marks .ant-radio-button-wrapper.attendance-mark-excused.attendance-mark-excused.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-checked,
+.attendance-marks .ant-radio-button-wrapper.attendance-mark-excused.attendance-mark-excused.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-checked:hover { background: var(--hm-surface-selected); color: var(--hm-text-primary); border-color: var(--hm-outcome-excused); }
+.attendance-marks .ant-radio-button-wrapper.attendance-mark-absent.attendance-mark-absent.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-checked,
+.attendance-marks .ant-radio-button-wrapper.attendance-mark-absent.attendance-mark-absent.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-checked:hover { background: var(--hm-area-liturgy-tint); color: var(--hm-area-liturgy-ink); border-color: var(--hm-outcome-missed); }
+.attendance-marks .ant-radio-button-wrapper.ant-radio-button-wrapper-checked.ant-radio-button-wrapper-checked::before { background-color: transparent; }
 
 /*
  * Running head (Harmonia Design System, 2026-11-10). The one authored sequence of the workspace, transform and opacity
@@ -1209,10 +1213,11 @@ textarea {
   }
 }
 
+/* An empty-string marker instead of none: Safari keeps the list semantics, so no role="list" is needed. */
 .song-index {
   margin: 0;
   padding: 0;
-  list-style: none;
+  list-style-type: '';
 }
 
 .song-index__row {
@@ -1591,9 +1596,9 @@ textarea {
 }
 
 /* Paper grain on the surfaces read like a page; a tile of noise, no colour of its own. */
-.hm-paper,
-.landing-sheet {
-  background-image: url('../assets/images/texture/paper-grain.svg') !important;
+.hm-paper.hm-paper.hm-paper,
+.landing-sheet.landing-sheet.landing-sheet {
+  background-image: url('../assets/images/texture/paper-grain.svg');
 }
 
 /* A save button says "Đã lưu" in place; both labels share a cell, so its width holds. */
@@ -2013,6 +2018,7 @@ textarea {
 }
 
 .hm-review-panel__done {
+  display: block;
   margin: 0;
   padding: 10px 12px;
   border-radius: var(--hm-radius-md);
@@ -2047,4 +2053,12 @@ textarea {
 
 .hm-facts dd {
   margin: 0;
+}
+
+/* A fieldset used only to name a group of controls: no frame of its own. */
+.hm-plain-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }

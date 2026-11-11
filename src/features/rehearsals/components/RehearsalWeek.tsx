@@ -68,7 +68,7 @@ export function RehearsalWeek({ weekStart, direction, rehearsals, programs, sele
                     type="button"
                     className={`hm-week__card is-rehearsal${isUpcoming(rehearsal) ? '' : ' is-past'}`}
                     aria-pressed={rehearsal.id === selectedId}
-                    aria-label={`Buổi tập ${rehearsalLabel(rehearsal)}${program ? `, cho ${program.eventName}` : ''}`}
+                    aria-label={[`Buổi tập ${rehearsalLabel(rehearsal)}`, program && `cho ${program.eventName}`].filter(Boolean).join(', ')}
                     onClick={() => onSelect(rehearsal)}
                   >
                     <b>{time(rehearsal)}</b>
