@@ -4,6 +4,25 @@
  * by focusTheme.ts only while the mode is on); durations and easing are the shared motion tokens of global.css.
  */
 
+/* The section root is a <dialog open>. It is never opened as a modal, so it must look like plain content until the focus
+   rule below takes over: reset what a browser gives a dialog (absolute, centred, bordered, padded, Canvas ground). */
+.hm-score-section {
+  position: static;
+  inset: auto;
+  display: block;
+  box-sizing: border-box;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
 .hm-score-toolbar {
   display: flex;
   flex-wrap: wrap;

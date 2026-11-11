@@ -122,7 +122,7 @@ function ScorePlayer({
   const [state, setState] = useState<PlayerState>({ status: 'loading' })
   const [viewerRoot, setViewerRoot] = useState<HTMLDivElement | null>(null)
   // The part of the page the keyboard shortcuts belong to: the sheet, its controls and the follow button.
-  const [sectionRoot, setSectionRoot] = useState<HTMLDivElement | null>(null)
+  const [sectionRoot, setSectionRoot] = useState<HTMLDialogElement | null>(null)
   const focusButton = useRef<HTMLButtonElement>(null)
   const engineRef = useRef<ScoreEngine | null>(null)
   /** Frees what this attempt holds: the effect's cleanup and a refusal from the viewer both call it. */
@@ -243,11 +243,15 @@ function ScorePlayer({
   return (
     <>
       <ConfigProvider theme={active ? focusTheme : inheritTheme}>
-        <div
+        {/* A native <dialog open>, never opened as a modal (no showModal: that would put it in the top layer, under which Ant
+            Design's popups would vanish, and rebuild the sheet): its dialog role is the element's own while the mode is on
+            (aria-modal, backed by the inert page and the fixed overlay), and it presents as plain content when it is off. */}
+        <dialog
+          open
           ref={setSectionRoot}
           className={active ? 'hm-score-section hm-score-section--focus' : 'hm-score-section'}
           style={active ? focusVars : { marginTop: spacing.lg }}
-          role={active ? 'dialog' : undefined}
+          role={active ? undefined : 'presentation'}
           aria-modal={active ? true : undefined}
           aria-label={active ? `Chế độ tập trung: ${title}` : undefined}
           // Focusable by script and by a click on its empty part, so the shortcuts keep a place to be heard.
@@ -280,7 +284,7 @@ function ScorePlayer({
             onPart={lyricChoice.choosePart}
             onVerse={lyricChoice.chooseVerse}
           />
-        </div>
+        </dialog>
       </ConfigProvider>
       {failed && fallback}
     </>
