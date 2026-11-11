@@ -1983,3 +1983,68 @@ textarea {
 .hm-roster-count.is-short {
   color: var(--hm-area-attention-ink);
 }
+
+/* Chấm bài: the queue beside the review panel (artifact PracticeReviewPage). */
+.hm-split--review {
+  grid-template-columns: minmax(0, 1fr) 420px;
+}
+
+.hm-review-panel {
+  position: sticky;
+  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+  padding: 20px 24px;
+  background: var(--hm-surface-base);
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-lg);
+}
+
+.hm-review-panel__name {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+.hm-review-panel__audio {
+  padding: 12px;
+  border-radius: var(--hm-radius-md);
+  background: var(--hm-area-practice-tint);
+}
+
+.hm-review-panel__done {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--hm-radius-md);
+  background: var(--hm-area-practice-tint);
+  color: var(--hm-area-practice-ink);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Giao bài tập: form sections beside a sticky summary (artifact AssignPracticePage). */
+.hm-split--assign {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+.hm-form-section {
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--hm-border-hairline);
+}
+
+.hm-facts {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.hm-facts dt {
+  color: var(--hm-text-muted);
+  font-size: 13px;
+}
+
+.hm-facts dd {
+  margin: 0;
+}

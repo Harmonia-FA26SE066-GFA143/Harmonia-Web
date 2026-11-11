@@ -9,6 +9,8 @@ import { PracticeStatusTag } from './PracticeStatusTag'
 
 export interface SubmissionTableProps {
   submissions: PracticeSubmission[]
+  /** The row shown in the review panel beside the table. */
+  selectedId?: string
   /** Server-side paging of GET /api/practice-submissions. */
   page: number
   pageSize: number
@@ -43,6 +45,7 @@ export function SubmissionTable({
   onPass,
   onNeedsRevision,
   onOpen,
+  selectedId,
 }: Readonly<SubmissionTableProps>) {
   const times = useRef(new Map<string, number>())
 
@@ -124,6 +127,9 @@ export function SubmissionTable({
       loading={loading}
       pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: onPageChange }}
       scroll={{ x: 'max-content' }}
+      rowClassName={(submission) => (submission.id === selectedId ? 'is-picked' : '')}
+      className="hm-table-pick"
+      onRow={(submission) => ({ onClick: () => onOpen(submission) })}
     />
   )
 }
