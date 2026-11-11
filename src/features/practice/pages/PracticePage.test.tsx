@@ -223,6 +223,11 @@ describe('PracticePage', () => {
     await waitFor(() => expect(comment).toHaveBeenCalledWith('sub-1', { comment: 'Nghe thêm bản mẫu.', result: undefined }))
   })
 
+  // The two form tests below find fields by label instead of `getByRole`/`findByRole` with a name: the role query works out
+  // the accessible name of every candidate through jsdom's getComputedStyle against Ant Design's injected rules (over 100 ms
+  // a call, repeated at every `findByRole` poll), which made them the slowest of the file under load (3 s against 1.5 s).
+  // The role a query would also prove is read straight off the element found by label (a tag, a type or an attribute), once
+  // per kind of control, so a control that stopped being a radio, check box, combobox or text box still fails here.
   it('asks for the choir and the skills of a skill-group assignment before giving it', async () => {
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
       { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
@@ -233,9 +238,13 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Tiêu đề' }), { target: { value: 'Tập bè Tenor' } })
-    fireEvent.click(screen.getByRole('radio', { name: 'Theo kỹ năng' }))
-    expect(await screen.findByRole('combobox', { name: 'Kỹ năng' })).toBeInTheDocument()
+    const title = await screen.findByLabelText('Tiêu đề')
+    expect(title.matches('input:not([type]), input[type="text"], textarea')).toBe(true)
+    fireEvent.change(title, { target: { value: 'Tập bè Tenor' } })
+    const bySkill = screen.getByLabelText('Theo kỹ năng')
+    expect(bySkill).toHaveAttribute('type', 'radio')
+    fireEvent.click(bySkill)
+    expect(await screen.findByLabelText('Kỹ năng')).toHaveAttribute('role', 'combobox')
     fireEvent.click(screen.getByRole('button', { name: /Giao bài tập/ }))
 
     expect(await screen.findByText('Vui lòng chọn ca đoàn.')).toBeInTheDocument()
@@ -265,13 +274,21 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
-    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Ca đoàn' }))
+    const choir = await screen.findByLabelText('Ca đoàn')
+    expect(choir).toHaveAttribute('role', 'combobox')
+    fireEvent.mouseDown(choir)
     fireEvent.click(await screen.findByTitle('Ca đoàn Cecilia'))
-    fireEvent.change(screen.getByRole('textbox', { name: 'Tiêu đề' }), { target: { value: 'Tập bài nhập lễ' } })
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bài hát (không bắt buộc)' }))
+    fireEvent.change(screen.getByLabelText('Tiêu đề'), { target: { value: 'Tập bài nhập lễ' } })
+    const song = screen.getByLabelText('Bài hát (không bắt buộc)')
+    expect(song).toHaveAttribute('role', 'combobox')
+    fireEvent.mouseDown(song)
     fireEvent.click(await screen.findByTitle('Con Bước Lên Bàn Thờ'))
-    fireEvent.click(await screen.findByRole('checkbox', { name: /Bản nhạc/ }))
-    fireEvent.click(screen.getByRole('checkbox', { name: /Audio mẫu/ }))
+    const sheet = await screen.findByLabelText(/^Bản nhạc/)
+    expect(sheet).toHaveAttribute('type', 'checkbox')
+    fireEvent.click(sheet)
+    const audio = screen.getByLabelText(/^Audio mẫu/)
+    expect(audio).toHaveAttribute('type', 'checkbox')
+    fireEvent.click(audio)
     const due = screen.getByPlaceholderText('Chọn ngày giờ')
     fireEvent.mouseDown(due)
     fireEvent.change(due, { target: { value: '20/12/2030 18:00' } })

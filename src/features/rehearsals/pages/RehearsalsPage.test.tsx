@@ -26,6 +26,13 @@ vi.mock('react-pdf', () => ({
   ),
 }))
 
+// The PDF test names its elements by aria-label, alt text and heading tag instead of `getByRole`/`findByRole` with a name: the
+// role query works out the accessible name of every candidate through jsdom's getComputedStyle against Ant Design's injected
+// rules (tens to over a hundred ms per call, and `findByRole` repeats it at every poll), and eleven of them took that test past
+// 5 s when several test files ran at once. The same elements are still addressed by the name the user would hear, and the
+// role a query would also prove is read straight off the element (tag, attribute: microseconds) once per kind below.
+const findHeading = (name: string) => screen.findByText(name, { selector: 'h1,h2,h3,h4,h5,h6' })
+
 const at = (days: number, hour: number) => dayjs().add(days, 'day').hour(hour).minute(0).second(0).millisecond(0).toISOString()
 
 // Newest first, as the backend lists them.
@@ -403,32 +410,38 @@ describe('RehearsalPracticeRoomPage', () => {
 
     renderRoom()
 
-    expect(await screen.findByRole('heading', { name: 'Bản nhạc' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Mở\/Tải xuống/ })).toHaveAttribute('href', 'https://files.example/emmanuel.pdf')
+    expect(await findHeading('Bản nhạc')).toBeInTheDocument()
+    expect(screen.getByText(/Mở\/Tải xuống/).closest('a')).toHaveAttribute('href', 'https://files.example/emmanuel.pdf')
     expect(await screen.findByText('Trang 1 / 3')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Trang bản nhạc sau' }))
+    const next = screen.getByLabelText('Trang bản nhạc sau')
+    expect(next.tagName).toBe('BUTTON')
+    fireEvent.click(next)
     expect(await screen.findByLabelText('Đã vẽ trang PDF 2')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Phóng to bản nhạc' }))
+    const zoomIn = screen.getByLabelText('Phóng to bản nhạc')
+    expect(zoomIn.tagName).toBe('BUTTON')
+    fireEvent.click(zoomIn)
     expect(screen.getByText('125%')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Soprano'))
-    expect(await screen.findByRole('img', { name: 'Bản nhạc Emmanuel – Soprano' })).toHaveAttribute(
+    expect(await screen.findByAltText('Bản nhạc Emmanuel – Soprano')).toHaveAttribute(
       'src',
       'https://files.example/emmanuel-soprano.jpg',
     )
-    expect(screen.getByRole('button', { name: 'Phát Emmanuel' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Phát Emmanuel').tagName).toBe('BUTTON')
 
-    fireEvent.error(screen.getByRole('img', { name: 'Bản nhạc Emmanuel – Soprano' }))
-    expect(await screen.findByRole('heading', { name: 'Không thể mở bản nhạc' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /Thử lại/ }))
-    expect(screen.getByRole('heading', { name: 'Không thể mở bản nhạc' })).toBeInTheDocument()
+    const sheetImage = screen.getByAltText('Bản nhạc Emmanuel – Soprano')
+    expect(sheetImage.tagName).toBe('IMG')
+    fireEvent.error(sheetImage)
+    expect(await findHeading('Không thể mở bản nhạc')).toBeInTheDocument()
+    fireEvent.click(screen.getByText(/Thử lại/).closest('button')!)
+    expect(await findHeading('Không thể mở bản nhạc')).toBeInTheDocument()
 
     await act(async () => resolveRefresh([
       emmanuelMidiMaterial,
       emmanuelScoreMaterial,
       { ...sopranoScore, url: 'https://files.example/emmanuel-soprano-refreshed.jpg' },
     ]))
-    expect(await screen.findByRole('img', { name: 'Bản nhạc Emmanuel – Soprano' })).toHaveAttribute(
+    expect(await screen.findByAltText('Bản nhạc Emmanuel – Soprano')).toHaveAttribute(
       'src',
       'https://files.example/emmanuel-soprano-refreshed.jpg',
     )
