@@ -1,5 +1,5 @@
 import { Alert, ConfigProvider } from 'antd'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
 import { env } from '@/config/env'
 import { Reveal } from '@/shared/ui/Reveal'
 import { spacing } from '@/styles/tokens'
@@ -70,6 +70,37 @@ function misalignmentNote(audioSeconds: number, timelineSeconds: number): string
   if (ok) return undefined
   const gap = Math.abs(deltaSeconds).toLocaleString('vi-VN', { maximumFractionDigits: 1 })
   return `Âm thanh ${deltaSeconds > 0 ? 'dài' : 'ngắn'} hơn bản nhạc khoảng ${gap} giây, nên nốt sáng có thể không khớp tiếng. Vui lòng kiểm tra lại hai tệp.`
+}
+
+/**
+ * Above the sheet, not over it: showing "Theo dõi" or the mode button moves nothing and covers no staff. In focus mode
+ * it also names the song and the way out, since the page's own title is hidden.
+ */
+function ScoreToolbar({
+  title,
+  active,
+  ready,
+  following,
+  onResume,
+  onToggle,
+  buttonRef,
+}: Readonly<{
+  title: string
+  active: boolean
+  ready: boolean
+  following: boolean
+  onResume: () => void
+  onToggle: () => void
+  buttonRef: Ref<HTMLButtonElement>
+}>) {
+  return (
+    <div className="hm-score-toolbar">
+      {active && <span className="hm-score-focus-title">{title}</span>}
+      {active && <span className="hm-score-focus-hint">Esc để thoát</span>}
+      {ready && !following && <FollowButton onClick={onResume} />}
+      {(ready || active) && <FocusModeButton active={active} onToggle={onToggle} buttonRef={buttonRef} />}
+    </div>
+  )
 }
 
 /** On failure the sheet keeps its previous layout: right notes, wrong width until the next resize. */
@@ -223,13 +254,15 @@ function ScorePlayer({
           tabIndex={active ? -1 : undefined}
         >
           {!failed && (
-            // Above the sheet, not over it: showing "Theo dõi" or the mode button moves nothing and covers no staff.
-            <div className="hm-score-toolbar">
-              {active && <span className="hm-score-focus-title">{title}</span>}
-              {active && <span className="hm-score-focus-hint">Esc để thoát</span>}
-              {ready && !following && <FollowButton onClick={resume} />}
-              {(ready || active) && <FocusModeButton active={active} onToggle={focus.toggle} buttonRef={focusButton} />}
-            </div>
+            <ScoreToolbar
+              title={title}
+              active={active}
+              ready={ready !== undefined}
+              following={following}
+              onResume={resume}
+              onToggle={focus.toggle}
+              buttonRef={focusButton}
+            />
           )}
           <div ref={setViewerRoot} className="hm-score-frame" style={{ height: failed || active ? undefined : SHEET_FRAME_HEIGHT }}>
             {viewer}
