@@ -21,6 +21,7 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
    - [`actors.md`](business/actors.md), [`domain.md`](business/domain.md): tổng quan theo Report 1.
 4. [`api-conventions.md`](api-conventions.md): các giả định của Web khi gọi API (dạng lỗi, enum, ngày giờ UTC, phân trang, tải file, token). Khi BE đổi một quy ước, Web cần biết.
 5. [`stitch-screen-map.md`](stitch-screen-map.md): các màn hình Web theo vai trò và route.
+6. [`practice-score-player.md`](practice-score-player.md): phòng luyện tập bản nhạc MusicXML chạy theo âm thanh: kiến trúc, nguồn bản nhạc (Web chưa nối `GET api/music-materials/{id}/score`), giới hạn đã biết, việc còn lại.
 
 ## Cần bàn với BE (các mục còn mở trong backlog)
 
