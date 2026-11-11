@@ -73,20 +73,26 @@ export function BackgroundTaskProvider({ children }: Readonly<{ children: ReactN
     const born = generation.current
     const isCurrent = () => generation.current === born
     runningKeys.current.add(spec.key)
-    spec
-      .run(isCurrent)
-      .then(
-        (result): Partial<BackgroundTask> => ({ status: 'succeeded', result }),
-        (error: unknown): Partial<BackgroundTask> => ({
-          status: 'failed',
-          error: spec.errorMessage(error instanceof Error ? error : new Error(String(error))),
-        }),
-      )
-      .then((patch) => {
-        if (!isCurrent()) return
-        runningKeys.current.delete(spec.key)
-        setTasks((all) => all.map((task) => (task.id === id ? { ...task, ...patch, notified: false } : task)))
-      })
+    const settle = async () => {
+      let patch: Partial<BackgroundTask>
+      try {
+        patch = { status: 'succeeded', result: await spec.run(isCurrent) }
+      } catch (error) {
+        // A message that cannot be worded still ends the task, so it never stays "running".
+        let text = 'Tác vụ không thành công. Vui lòng thử lại.'
+        try {
+          text = spec.errorMessage(error instanceof Error ? error : new Error(String(error)))
+        } catch {
+          // Keep the generic text.
+        }
+        patch = { status: 'failed', error: text }
+      }
+      if (!isCurrent()) return
+      runningKeys.current.delete(spec.key)
+      setTasks((all) => all.map((task) => (task.id === id ? { ...task, ...patch, notified: false } : task)))
+    }
+    // settle never rejects: every outcome is caught above.
+    void settle()
   }, [])
 
   const start = useCallback(
