@@ -29,13 +29,29 @@ export const NARROW_CONTENT_PX = 300
 export const PHONE_ENGINE_PAGE_WIDTH = 750
 
 /**
- * Maps the width `ScoreViewer.onWidthChange` reports (CSS px) to Verovio's `pageWidth`, for `load` and `relayout`. A
- * phone-width sheet gets `PHONE_ENGINE_PAGE_WIDTH` (and scrolls); every other sheet gets `SCORE_LAYOUT_SCALE` times its
- * width, at least `MIN_ENGINE_PAGE_WIDTH`, and the page is shrunk to fit it (no scroll). A width that is not a positive
- * number (the viewer never reports one) gives the minimum.
+ * Narrowest page for a score of two staves or more (P10-A). How readable a page is depends on how many staves share it,
+ * not only on its width: at 425 (the 768 px sheet) a 4-part SATB squeezes its notes into one column (Verovio
+ * justification ratio 0.11), a one-staff song does not. Measured with Verovio's "highly compressed" warnings and
+ * the gaps between syllables (report P10-A – Tiếp tục): 2 and 4 staves need about the same page, so one floor serves
+ * both. 900 is the narrowest where no two syllables of a dense 4-part score (eighths, 2 verses) touch; 850 left 24 pairs
+ * overlapping, 750 (the phone page) left 4 on a plain SATB in quarters.
+ * The same number is `--hm-multi-staff-page-units` in `ScoreViewer.css` (the test keeps them equal).
  */
-export function toEnginePageWidth(contentWidthPx: number): number {
-  if (!Number.isFinite(contentWidthPx) || contentWidthPx <= 0) return MIN_ENGINE_PAGE_WIDTH
+export const MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH = 900
+
+/**
+ * Maps the width `ScoreViewer.onWidthChange` reports (CSS px) to Verovio's `pageWidth`, for `load` and `relayout`.
+ * One staff (or a count not known yet): a phone-width sheet gets `PHONE_ENGINE_PAGE_WIDTH` (and scrolls); every other
+ * sheet gets `SCORE_LAYOUT_SCALE` times its width, at least `MIN_ENGINE_PAGE_WIDTH`, and the page is shrunk to fit it.
+ * ponytail: the one-staff rule keeps its step at `NARROW_CONTENT_PX` (P7), only measured scores need better.
+ * Two staves or more: `SCORE_LAYOUT_SCALE` times the width, at least `MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH`, continuous and
+ * never decreasing; a sheet too narrow for the floor scrolls sideways (`.hm-score-frame--multi-staff` in the CSS).
+ * A width that is not a positive number (the viewer never reports one) gives the minimum for the staff count.
+ */
+export function toEnginePageWidth(contentWidthPx: number, staves = 1): number {
+  const valid = Number.isFinite(contentWidthPx) && contentWidthPx > 0
+  if (staves >= 2) return valid ? Math.max(MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH, Math.round(contentWidthPx * SCORE_LAYOUT_SCALE)) : MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH
+  if (!valid) return MIN_ENGINE_PAGE_WIDTH
   if (contentWidthPx < NARROW_CONTENT_PX) return PHONE_ENGINE_PAGE_WIDTH
   return Math.max(MIN_ENGINE_PAGE_WIDTH, Math.round(contentWidthPx * SCORE_LAYOUT_SCALE))
 }
