@@ -4,6 +4,7 @@ import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as songsApi from '../api/songsApi'
+import { readLyricsDraft, saveLyricsDraft } from '../lyricsDraft'
 import type { Song, SongClassification, SongMaterial } from '../types'
 import { SongDetailPage } from './SongDetailPage'
 
@@ -104,6 +105,7 @@ describe('SongDetailPage timed lyrics', () => {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  sessionStorage.clear()
 })
 
 describe('SongDetailPage', () => {
@@ -275,15 +277,33 @@ describe('SongDetailPage', () => {
     )
   })
 
-  it('drafts the lyrics of a sheet with AI, then saves them as typed lyrics', async () => {
+  it('reads the lyrics of a sheet with AI as a background task and keeps the draft for "Mở bản nháp"', async () => {
     withSong()
-    vi.spyOn(songsApi, 'extractLyrics').mockResolvedValue('Con bước lên bàn thờ Chúa')
+    let answer!: (text: string) => void
+    vi.spyOn(songsApi, 'extractLyrics').mockReturnValue(new Promise((resolve) => (answer = resolve)))
+    renderDetail('materials')
+
+    const extract = await screen.findByRole('button', { name: 'Trích lời từ Bản nhạc SATB' })
+    fireEvent.click(extract)
+    expect(await screen.findByText('Đang trích lời. Bạn có thể chuyển sang trang khác, Harmonia sẽ báo khi xong.')).toBeInTheDocument()
+    // One run per sheet: a second click while it reads starts nothing.
+    fireEvent.click(extract)
+    expect(songsApi.extractLyrics).toHaveBeenCalledTimes(1)
+
+    answer('Con bước lên bàn thờ Chúa')
+    await waitFor(() => expect(readLyricsDraft('s1', 'm1')).toBe('Con bước lên bàn thờ Chúa'))
+    // The form waits for the Director: the notification opens it.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('opens a kept draft from ?draft=, saves it as typed lyrics and forgets it', async () => {
+    withSong()
+    saveLyricsDraft('s1', 'm1', 'Con bước lên bàn thờ Chúa')
     const upload = vi
       .spyOn(songsApi, 'uploadMaterial')
       .mockResolvedValue(material({ id: 'm3', kind: 'lyrics', title: 'Lời', fileName: null, url: null, lyricsText: 'Con bước' }))
-    renderDetail('materials')
+    renderPage(<SongDetailPage />, '/director/library/:songId', '/director/library/s1?tab=materials&draft=m1')
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Trích lời từ Bản nhạc SATB' }))
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByRole('textbox', { name: 'Lời bài hát' })).toHaveValue('Con bước lên bàn thờ Chúa')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu lời bài hát' }))
@@ -296,16 +316,27 @@ describe('SongDetailPage', () => {
       }),
     )
     expect(await screen.findByText('Đã lưu lời bài hát.')).toBeInTheDocument()
+    expect(readLyricsDraft('s1', 'm1')).toBeUndefined()
   })
 
-  it('says so when the AI finds no lyrics on the sheet, without opening an empty form', async () => {
+  it('keeps no draft when the AI finds no lyrics on the sheet', async () => {
     withSong()
     vi.spyOn(songsApi, 'extractLyrics').mockResolvedValue('')
     renderDetail('materials')
 
     fireEvent.click(await screen.findByRole('button', { name: 'Trích lời từ Bản nhạc SATB' }))
 
-    expect(await screen.findByText('Không tìm thấy lời trên “Bản nhạc SATB”. Bạn có thể gõ lời trực tiếp.')).toBeInTheDocument()
+    await waitFor(() => expect(songsApi.extractLyrics).toHaveBeenCalledWith('m1'))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Trích lời từ Bản nhạc SATB' })).not.toHaveClass('ant-btn-loading'))
+    expect(readLyricsDraft('s1', 'm1')).toBeUndefined()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('says the draft is gone when ?draft= names none', async () => {
+    withSong()
+    renderPage(<SongDetailPage />, '/director/library/:songId', '/director/library/s1?tab=materials&draft=m1')
+
+    expect(await screen.findByText('Bản nháp lời đã hết hạn hoặc không còn. Bạn có thể trích lời lại.')).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 

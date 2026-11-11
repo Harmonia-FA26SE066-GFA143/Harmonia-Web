@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import { useState, type ReactNode } from 'react'
 import { ApiError } from '@/lib/api/errors'
+import { BackgroundTaskProvider } from '@/shared/tasks/BackgroundTasks'
 import { NeumeSpinner } from '@/shared/ui'
 import { theme } from './theme'
 
@@ -36,7 +37,10 @@ export function AppProviders({ children }: Readonly<{ children: ReactNode }>) {
     >
       {/* AntApp gives message/notification/modal access to theme context */}
       <AntApp>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          {/* Above the router: a task keeps running and keeps its result while pages change. */}
+          <BackgroundTaskProvider>{children}</BackgroundTaskProvider>
+        </QueryClientProvider>
       </AntApp>
     </ConfigProvider>
   )

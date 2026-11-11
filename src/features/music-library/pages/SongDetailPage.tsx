@@ -1,12 +1,13 @@
 import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { App, Button, Card, Tabs, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { generatePath, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
 import { ApiError, requestFailureMessage } from '@/lib/api/errors'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
+import { useBackgroundTasks } from '@/shared/tasks/BackgroundTasks'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { LearningProgressDrawer } from '../components/LearningProgressDrawer'
@@ -21,7 +22,6 @@ import { UploadMaterialDrawer, type MaterialFormValues, type PendingMaterial } f
 import {
   useDeleteMaterial,
   useDeleteSong,
-  useExtractLyrics,
   useSaveSong,
   useSaveSongClassification,
   useSong,
@@ -31,6 +31,8 @@ import {
   useUpdateMaterial,
   useUploadMaterial,
 } from '../hooks/useSongs'
+import { extractLyrics } from '../api/songsApi'
+import { readLyricsDraft, removeLyricsDraft, saveLyricsDraft } from '../lyricsDraft'
 import { listSearchOf } from '../songFilters'
 import {
   classificationErrorMessage,
@@ -60,6 +62,8 @@ const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { tit
  * assignment uses (409 SONG_IN_USE, BE 718696c), as "only if never selected for a Mass" (song-approval.md, 5a.5) asks.
  * The three parts are tabs kept in `?tab=`, each with its own loading, empty and error states.
  */
+const extractKeyPrefix = 'extract-lyrics:'
+
 export function SongDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -75,7 +79,8 @@ export function SongDetailPage() {
   const remove = useDeleteMaterial(songId)
   const updateMaterial = useUpdateMaterial(songId)
   const replaceFile = useReplaceMaterialFile(songId)
-  const extract = useExtractLyrics()
+  const tasks = useBackgroundTasks()
+  const [params, setParams] = useSearchParams()
   const deleteSong = useDeleteSong()
   const [editingMaterial, setEditingMaterial] = useState<SongMaterial>()
   const [replacing, setReplacing] = useState<SongMaterial>()
@@ -85,6 +90,35 @@ export function SongDetailPage() {
   const [classifying, setClassifying] = useState(false)
   const [titleError, setTitleError] = useState<string>()
   const [picked, setPicked] = useState<PendingMaterial>()
+  // The sheet the open lyrics draft came from; its stored draft is removed once the lyrics are saved.
+  const [draftOf, setDraftOf] = useState<string>()
+  const extractingIds = new Set(
+    tasks.tasks
+      .filter((task) => task.status === 'running' && task.key.startsWith(extractKeyPrefix))
+      .map((task) => task.key.slice(extractKeyPrefix.length)),
+  )
+
+  // "Mở bản nháp" (task notification or list) comes back here with ?draft=<materialId>: open the lyrics form with it.
+  const draftParam = params.get('draft')
+  const songTitle = song.data?.title
+  useEffect(() => {
+    if (!draftParam || songTitle === undefined) return
+    const text = readLyricsDraft(songId, draftParam)
+    if (text) {
+      // The draft lives in sessionStorage and the URL, outside React: opening it is a sync with them.
+      // oxlint-disable-next-line react/set-state-in-effect
+      setPicked({ kind: 'lyrics', lyricsText: text, title: `Lời ${songTitle}`.slice(0, 200) })
+      setDraftOf(draftParam)
+    } else message.info('Bản nháp lời đã hết hạn hoặc không còn. Bạn có thể trích lời lại.')
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        next.delete('draft')
+        return next
+      },
+      { replace: true },
+    )
+  }, [draftParam, songTitle, songId, message, setParams])
 
   const backButton = (
     // The list's filters and page travel with the song (router state), so coming back shows the list as it was.
@@ -160,16 +194,29 @@ export function SongDetailPage() {
 
   const lyricsTitle = `Lời ${data.title}`.slice(0, 200)
 
-  // The draft is not saved: the director reads it in the lyrics form and saves it as typed lyrics. A sheet with no
-  // printed lyrics answers an empty text (GeminiLyricsExtractor), so there is nothing to open.
-  const handleExtractLyrics = (material: SongMaterial) =>
-    extract.mutate(material.id, {
-      onSuccess: (lyricsText) =>
-        lyricsText.trim()
-          ? setPicked({ kind: 'lyrics', lyricsText, title: lyricsTitle })
-          : message.info(`Không tìm thấy lời trên “${material.title}”. Bạn có thể gõ lời trực tiếp.`),
-      onError: (error) => message.error(extractLyricsErrorMessage(error)),
+  // A background task: the Director may leave this page while the AI reads. The draft waits in this tab (never saved
+  // on the server) until opened from the notification; a sheet with no printed lyrics answers an empty text
+  // (GeminiLyricsExtractor), so there is nothing to open.
+  const handleExtractLyrics = (material: SongMaterial) => {
+    const songPath = generatePath(paths.director.songDetail, { songId })
+    const started = tasks.start({
+      type: 'extract-lyrics',
+      key: `${extractKeyPrefix}${material.id}`,
+      title: `Trích lời từ ${material.title}`,
+      sourcePath: `${songPath}?tab=materials`,
+      errorMessage: extractLyricsErrorMessage,
+      run: async (isCurrent) => {
+        const text = await extractLyrics(material.id)
+        if (!text.trim()) return { summary: `Không tìm thấy lời trên “${material.title}”. Bạn có thể gõ lời trực tiếp.` }
+        if (isCurrent()) saveLyricsDraft(songId, material.id, text)
+        return {
+          summary: `Đã trích lời từ ${material.title} của bài ${data.title}.`,
+          action: { label: 'Mở bản nháp', to: `${songPath}?tab=materials&draft=${material.id}` },
+        }
+      },
     })
+    if (started) message.info('Đang trích lời. Bạn có thể chuyển sang trang khác, Harmonia sẽ báo khi xong.')
+  }
 
   const handleUpload = (values: MaterialFormValues) => {
     if (!picked || upload.isPending) return
@@ -180,6 +227,8 @@ export function SongDetailPage() {
         onSuccess: () => {
           message.success(file ? `Đã tải lên ${materialKindLabels[kind].toLowerCase()}.` : 'Đã lưu lời bài hát.')
           setPicked(undefined)
+          if (draftOf) removeLyricsDraft(songId, draftOf)
+          setDraftOf(undefined)
         },
         onError: (error) => message.error(uploadErrorMessage(error)),
       },
@@ -329,7 +378,7 @@ export function SongDetailPage() {
                       onPick={handlePick}
                       onTypeLyrics={() => setPicked({ kind: 'lyrics', title: lyricsTitle })}
                       onExtractLyrics={handleExtractLyrics}
-                      extractingId={extract.isPending ? extract.variables : undefined}
+                      extractingIds={extractingIds}
                       onDelete={handleDelete}
                       onEdit={setEditingMaterial}
                       onReplace={setReplacing}

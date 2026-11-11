@@ -9,7 +9,9 @@ import { roleByApiName } from '@/shared/types/account'
 import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection, type Surface } from './navigation'
 import { NotificationBell } from '@/features/notifications'
 import { SystemAnnouncement } from '@/features/settings'
+import { RouteStage } from './RouteStage'
 import { RunningHead } from './RunningHead'
+import { TaskCenter } from './TaskCenter'
 import { UserMenu } from './UserMenu'
 import { WorkspaceGround } from './WorkspaceGround'
 
@@ -65,6 +67,7 @@ export function AppShell() {
 
   const controls = (
     <>
+      <TaskCenter />
       <NotificationBell />
       <UserMenu compact={screens.xl === false} />
     </>
@@ -122,7 +125,9 @@ export function AppShell() {
         <div style={{ maxWidth: layout.contentMaxWidth, marginInline: 'auto' }}>
           <OfflineNotice />
           <SystemAnnouncement />
-          <Outlet />
+          <RouteStage>
+            <Outlet />
+          </RouteStage>
         </div>
       </Content>
       {isCompact && (

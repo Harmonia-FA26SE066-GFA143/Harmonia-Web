@@ -4,7 +4,6 @@ import {
   deleteMaterial,
   deleteSong,
   deleteTimedLyrics,
-  extractLyrics,
   getMaterialPlayback,
   getSong,
   getSongClassification,
@@ -124,11 +123,6 @@ export function useDeleteMaterial(songId: string) {
     mutationFn: (materialId: string) => deleteMaterial(materialId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
   })
-}
-
-/** Nothing is cached: each run asks the AI again, and the draft goes to the upload form. */
-export function useExtractLyrics() {
-  return useMutation({ mutationFn: extractLyrics })
 }
 
 /** The material keeps its id, so only its list (file name, size, link) is reloaded. */

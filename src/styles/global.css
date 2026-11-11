@@ -838,13 +838,7 @@ textarea {
 .hm-incipit rect:nth-of-type(2) { animation-delay: 540ms; }
 .hm-incipit rect:nth-of-type(3) { animation-delay: 600ms; }
 
-.hm-page-head h1 {
-  animation: hm-rise-small 300ms var(--hm-ease) 200ms both;
-}
-
-.hm-page-head ~ * {
-  animation: hm-rise-small var(--hm-dur-base) var(--hm-ease) 160ms both;
-}
+/* The page head and its content enter as one: RouteStage moves the whole page, so neither animates on its own. */
 
 @keyframes hm-staff-draw {
   from { transform: scaleX(0); }
@@ -1629,5 +1623,47 @@ textarea {
 
   .ant-drawer-open .ant-drawer-body > * {
     animation: hm-rise-small var(--hm-dur-panel) var(--hm-ease) 60ms both;
+  }
+}
+
+/* A page whose code is still loading after 300ms: the rose over the old page, which stays put. */
+.hm-route-wait {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: start center;
+  padding-top: 120px;
+  background: color-mix(in srgb, var(--hm-surface-page) 72%, transparent);
+  animation: hm-fade-in var(--hm-dur-fast) var(--hm-ease) both;
+  z-index: 2;
+}
+
+/* Signing in: the card steps back and the rose says what is happening; nothing under it can be used meanwhile. */
+.hm-auth-busy {
+  opacity: 0.55;
+  transition: opacity var(--hm-dur-fast) var(--hm-ease);
+}
+
+.hm-auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--hm-surface-page) 78%, transparent);
+  animation: hm-fade-in var(--hm-dur-fast) var(--hm-ease) both;
+}
+
+.hm-auth-overlay > output {
+  padding: 32px 40px;
+  border-radius: var(--hm-radius-lg);
+  border: 1px solid var(--hm-border-hairline);
+  background: var(--hm-surface-reading);
+  box-shadow: var(--hm-shadow-md);
+}
+
+@keyframes hm-fade-in {
+  from {
+    opacity: 0;
   }
 }
