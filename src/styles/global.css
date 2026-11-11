@@ -1626,6 +1626,12 @@ textarea {
   }
 }
 
+/* The old page dims while the next one is fetched; the new one then rises in (RouteStage). */
+.hm-route-leaving {
+  opacity: 0.6;
+  transition: opacity var(--hm-dur-instant) var(--hm-ease);
+}
+
 /* A page whose code is still loading after 300ms: the rose over the old page, which stays put. */
 .hm-route-wait {
   position: absolute;

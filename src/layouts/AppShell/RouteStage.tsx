@@ -8,7 +8,7 @@ const SLOW_PAGE_MS = 300
 
 /**
  * The page content of the shell, the only part that moves when the page changes: the running head, bell and account
- * stay still. The new page rises 4px and fades in (220ms; 480ms for the first page of a workspace, after sign-in).
+ * stay still. The old page dims for 100ms while the next is fetched; the new page rises 4px and fades in (220ms; 480ms for the first page of a workspace, after sign-in).
  * One movement for the page head and its content together. Instant under reduced motion.
  */
 export function RouteStage({ children }: Readonly<{ children: ReactNode }>) {
@@ -31,6 +31,8 @@ export function RouteStage({ children }: Readonly<{ children: ReactNode }>) {
 
   // A lazily loaded page (its code chunk) may take a while on a slow network: say so only past SLOW_PAGE_MS.
   const loading = navigation.state === 'loading'
+  // Only a move to another page dims the old one (100ms); a new ?tab= or filter on the same page does not.
+  const leaving = loading && navigation.location?.pathname !== pathname
   useEffect(() => {
     if (!loading) return
     const timer = setTimeout(() => setSlow(true), SLOW_PAGE_MS)
@@ -42,7 +44,9 @@ export function RouteStage({ children }: Readonly<{ children: ReactNode }>) {
 
   return (
     <div style={{ position: 'relative' }} aria-busy={slow || undefined}>
-      <div ref={stage}>{children}</div>
+      <div ref={stage} className={leaving ? 'hm-route-leaving' : undefined}>
+        {children}
+      </div>
       {slow && (
         <div className="hm-route-wait">
           <RoseSpinner label="Đang mở trang…" />
