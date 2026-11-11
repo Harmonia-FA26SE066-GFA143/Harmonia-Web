@@ -1313,3 +1313,92 @@ describe('ScorePracticeSection with an interactive score', () => {
     getScore.mockRestore()
   })
 })
+
+describe('ScorePracticeSection, the Verovio credit', () => {
+  const CREDIT = /Bản nhạc được dựng bằng Verovio/
+  const LICENCE = { name: 'Giấy phép của Verovio' }
+
+  it('shows under the sheet once it is on screen, outside the sheet frame, which keeps its height', async () => {
+    renderSection()
+    pickBoth()
+    const sheet = await findSheet()
+    const credit = screen.getByText(CREDIT)
+    const frame = sheet.closest('.hm-score-frame') as HTMLElement
+    expect(frame).not.toBeNull()
+    expect(frame.contains(credit)).toBe(false)
+    // The page leaves the play controls on screen; jsdom rewrites the calc(), so only its bounds are read.
+    expect(frame.style.height).toMatch(/^clamp\(320px, .+, 560px\)$/)
+    expect(credit.closest('dialog')).toBe(frame.closest('dialog'))
+    expect(screen.getByRole('button', LICENCE)).toHaveTextContent('Giấy phép')
+  })
+
+  it('is not there before a score is chosen, while it loads, or after the load fails', async () => {
+    let release: (engine: ReturnType<typeof fakeEngine>) => void = () => {}
+    mocks.createVerovioEngine.mockImplementationOnce(() => new Promise((resolve) => (release = resolve)))
+    renderSection()
+    expect(screen.queryByText(CREDIT)).toBeNull()
+    pickBoth()
+    await screen.findByRole('status', { name: 'Đang tải bản nhạc' })
+    expect(screen.queryByText(CREDIT)).toBeNull()
+    expect(screen.queryByRole('button', LICENCE)).toBeNull()
+    await waitFor(() => expect(mocks.createVerovioEngine).toHaveBeenCalled())
+    release(fakeEngine())
+    await findSheet()
+    expect(screen.getByText(CREDIT)).toBeInTheDocument()
+  })
+
+  it('is not there when the engine fails (retry offered, fallback back)', async () => {
+    mocks.createVerovioEngine.mockRejectedValue(new Error('no wasm'))
+    renderSection()
+    pickBoth()
+    await screen.findByRole('button', { name: /Thử lại/ })
+    expect(screen.queryByText(CREDIT)).toBeNull()
+    expect(screen.queryByRole('button', LICENCE)).toBeNull()
+    expect(screen.getByText(FALLBACK)).toBeInTheDocument()
+  })
+
+  it('is not there when the score is refused (too complex, or no note to follow)', async () => {
+    mocks.createVerovioEngine.mockImplementationOnce(async () => {
+      const engine = fakeEngine()
+      engine.load.mockRejectedValue(new ScoreEngineError('too-complex'))
+      return engine
+    })
+    renderSection()
+    pickBoth()
+    await screen.findByRole('alert')
+    expect(screen.queryByText(CREDIT)).toBeNull()
+    expect(screen.queryByRole('button', LICENCE)).toBeNull()
+  })
+
+  it('is not there for the fallback after the pages are refused and the ready state ends', async () => {
+    mocks.createVerovioEngine.mockImplementationOnce(async () => {
+      const engine = fakeEngine()
+      engine.load.mockResolvedValue({ svgPages: ['<svg xmlns="http://www.w3.org/2000/svg">' + 'x'.repeat(MAX_PAGE_CHARS) + '</svg>'], mei: '<mei/>', timemap: TIMEMAP, aliases: new Map() })
+      return engine
+    })
+    renderSection()
+    pickBoth()
+    await screen.findByRole('button', { name: /Thử lại/ })
+    expect(screen.queryByText(CREDIT)).toBeNull()
+    expect(screen.queryByRole('button', LICENCE)).toBeNull()
+  })
+
+  it('stays in focus mode, where its dialog opens over the mode and closing it leaves the mode on', async () => {
+    renderSection()
+    pickBoth()
+    await findSheet()
+    fireEvent.click(screen.getByRole('button', { name: 'Chế độ tập trung' }))
+    const section = screen.getByRole('dialog', { name: `Chế độ tập trung: ${TITLE}` })
+    expect(within(section).getByText(CREDIT)).toBeInTheDocument()
+    const link = within(section).getByRole('button', LICENCE)
+    act(() => link.focus())
+    fireEvent.click(link)
+    const licence = await screen.findByRole('dialog', LICENCE)
+    // Not inside the inert part of the page: Ant Design mounts it on <body>, which the mode leaves alone.
+    expect(licence.closest('[inert]')).toBeNull()
+    // Focus moves into the dialog only when its enter animation ends (no animation events in jsdom): ScoreCredit.test covers that.
+    fireEvent.keyDown(licence, { key: 'Escape', code: 'Escape', keyCode: 27 })
+    expect(section).toHaveClass('hm-score-section--focus')
+    expect(screen.getByRole('button', { name: 'Chế độ tập trung' })).toHaveAttribute('aria-pressed', 'true')
+  })
+})

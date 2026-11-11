@@ -14,6 +14,7 @@ import { readLyrics, useLyricSelection, type ScoreLyrics } from '../score/contro
 import { useScoreShortcuts } from '../score/controls/useScoreShortcuts'
 import { countStaves, createVerovioEngine, MAX_SCORE_NOTES, ScoreEngineError, type ScoreEngine } from '../score/engine'
 import { ApiScoreSource } from '../score/source/ApiScoreSource'
+import { ScoreCredit } from '../score/license/ScoreCredit'
 import { checkAlignment } from '../score/source/checkAlignment'
 import { DevFixtureScoreSource } from '../score/source/DevFixtureScoreSource'
 import { ScoreSourceError, type ScorePackage, type ScorePackageSource, type ScoreSourceErrorCode } from '../score/source/types'
@@ -331,6 +332,7 @@ function ScorePlayer({
           />
           {/* The two lyric sources never show together: a score with its own lyrics lights them note by note. */}
           {ready && !ready.lyrics && material && <TimedLyricsView material={material} clock={clock} onStale={onStale} />}
+          {ready && <ScoreCredit />}
         </dialog>
       </ConfigProvider>
       {(failed || audioDead) && fallback}
