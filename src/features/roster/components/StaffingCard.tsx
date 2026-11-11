@@ -1,6 +1,6 @@
 import { DeleteOutlined, DownOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
-import { App, Button, Card, Dropdown, Flex, Input, InputNumber, Select, Table, Tag, Typography, type TableColumnsType } from 'antd'
-import { useRef, useState } from 'react'
+import { App, Button, Card, Dropdown, Flex, Input, InputNumber, Select, Tag, Typography, type TableColumnsType } from 'antd'
+import { useRef, useState, type ReactNode } from 'react'
 import { CardTitle, FormDrawer, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import {
@@ -181,7 +181,15 @@ export function StaffingCard({
       width: 150,
       render: (_, row) => (
         <Flex vertical>
-          <Typography.Text strong>{row.skillName}</Typography.Text>
+          <Flex align="baseline" justify="space-between" gap={spacing.sm}>
+            <p className="hm-rubric" style={{ margin: 0 }}>{row.skillName}</p>
+            <span
+              className={`hm-roster-count${linesOf(row.skillId).length < row.requiredCount ? ' is-short' : ''}`}
+              aria-label={`Đã có ${linesOf(row.skillId).length} trên ${row.requiredCount} người`}
+            >
+              {linesOf(row.skillId).length}/{row.requiredCount}
+            </span>
+          </Flex>
           {coveredByWholeService(row) > 0 && (
             <Typography.Text style={{ ...muted, fontSize: typography.metadata.fontSize }}>Cả buổi lễ: {coveredByWholeService(row)} người</Typography.Text>
           )}
@@ -221,7 +229,7 @@ export function StaffingCard({
         const gap = missing > 0 && (coveredByWholeService(row) > 0 ? `Cần thêm ${missing}` : `Thiếu ${missing}`)
         const covered = isSaved && !shortage
         return (
-          <Flex wrap gap={spacing.xs} align="center">
+          <Flex vertical gap={spacing.xs} align="stretch">
             {linesOf(row.skillId).map((line) => {
               const label = line.note ? `${line.memberName} · ${line.note}` : line.memberName
               if (locked) {
@@ -319,7 +327,7 @@ export function StaffingCard({
                     optionFilterProp="label"
                     value={null}
                     aria-label={song ? `Thêm ca viên cho ${row.skillName}` : `Thêm ca viên cho ${row.skillName} (cả buổi lễ)`}
-                    placeholder={options.some((option) => !option.disabled) ? 'Thêm ca viên' : 'Không còn ca viên phù hợp'}
+                    placeholder={options.some((option) => !option.disabled) ? 'Chọn ca viên' : 'Không còn ca viên phù hợp'}
                     notFoundContent="Không có ca viên đã nhận lời (Xác nhận hoặc Chưa chắc chắn) có kỹ năng này"
                     options={options}
                     onChange={(memberId: string) =>
@@ -329,7 +337,7 @@ export function StaffingCard({
                         { onError: failed('Không thể phân công ca viên. Vui lòng thử lại.') },
                       )
                     }
-                    style={{ minWidth: 200 }}
+                    style={{ minWidth: 0, flex: 1 }}
                   />
                 )}
               </span>
@@ -401,14 +409,17 @@ export function StaffingCard({
       {requirements.isSuccess && (
         <Flex vertical gap={spacing.sm}>
           {rows.length > 0 ? (
-            <Table<PersonnelRequirement>
-              rowKey="skillId"
-              columns={columns}
-              dataSource={rows}
-              pagination={false}
-              scroll={{ x: 720 }}
-              size="small"
-            />
+            <div className="hm-roster-cols">
+              {rows.map((row, index) => (
+                <section key={row.skillId} className="hm-roster-col" aria-label={row.skillName}>
+                  {columns.map((column) => (
+                    <div key={String(column.key)} className={`hm-roster-col__${String(column.key)}`}>
+                      {(column as { render: (value: unknown, row: PersonnelRequirement, index: number) => ReactNode }).render(undefined, row, index)}
+                    </div>
+                  ))}
+                </section>
+              ))}
+            </div>
           ) : (
             <Typography.Text style={muted}>{song ? 'Chưa có yêu cầu nhân sự.' : 'Chưa khai vai nào cho cả buổi lễ.'}</Typography.Text>
           )}

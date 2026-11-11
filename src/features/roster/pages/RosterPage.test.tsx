@@ -14,6 +14,12 @@ import type { PersonnelRequirement, RosterShortage, ServiceRoster } from '../typ
 import { RosterPage } from './RosterPage'
 
 const renderRoster = () => renderPage(<RosterPage />, '/director/roster', '/director/roster?programId=p1')
+/** One scope at a time: switch from the whole service to the songs (the first song of the approved list). */
+async function showSongs() {
+  const songs = await screen.findByRole('radio', { name: 'Theo bài hát' })
+  await waitFor(() => expect(songs).toBeEnabled())
+  fireEvent.click(songs)
+}
 
 const roster: ServiceRoster = {
   id: 'r1',
@@ -112,7 +118,8 @@ describe('RosterPage', () => {
     renderRoster()
 
     expect(await screen.findByRole('heading', { name: 'Chưa có danh sách bài hát đã duyệt' })).toBeInTheDocument()
-    expect(screen.getByText('Cả buổi lễ: thiếu 1 Organ')).toBeInTheDocument()
+    expect(screen.getByText('Còn thiếu người ở 1 vị trí')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Theo bài hát' })).toBeDisabled()
     // The whole roster is finalized only once the list is approved.
     expect(screen.getByRole('button', { name: /Chốt phân công/ })).toBeDisabled()
 
@@ -143,6 +150,7 @@ describe('RosterPage', () => {
 
     // The note shows next to the member; the song's organ is covered by the whole-service organist.
     expect(await screen.findByRole('button', { name: /Simon Phan Văn Đức · Đàn chính/ })).toBeInTheDocument()
+    await showSongs()
     expect(await screen.findByText('Đủ (cả buổi lễ)')).toBeInTheDocument()
     fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Thêm ca viên cho Organ' }))
     const option = await screen.findByTitle('Simon Phan Văn Đức (đã giữ cả buổi lễ)')
@@ -190,6 +198,7 @@ describe('RosterPage', () => {
     withRoster(roster)
     const replace = vi.spyOn(rosterApi, 'replaceAssignment').mockResolvedValue()
     renderRoster()
+    await showSongs()
 
     fireEvent.click(await screen.findByRole('button', { name: /Giuse Vũ Đình Khôi, Tenor/ }))
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Thay người' }))
@@ -205,6 +214,7 @@ describe('RosterPage', () => {
     withRoster(roster)
     const note = vi.spyOn(rosterApi, 'updateAssignmentNote').mockResolvedValue()
     renderRoster()
+    await showSongs()
 
     fireEvent.click(await screen.findByRole('button', { name: /Giuse Vũ Đình Khôi, Tenor/ }))
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Ghi chú vai' }))
@@ -229,7 +239,10 @@ describe('RosterPage', () => {
     const add = vi.spyOn(rosterApi, 'addAssignment').mockResolvedValue()
     renderRoster()
 
-    expect(await screen.findByText('Con Bước Lên Bàn Thờ: thiếu 1 Tenor')).toBeInTheDocument()
+    expect(await screen.findByText('Còn thiếu người ở 1 vị trí')).toBeInTheDocument()
+    await showSongs()
+    // The song picker counts each song's shortages.
+    expect(await screen.findByText(/Con Bước Lên Bàn Thờ · thiếu 1/)).toBeInTheDocument()
     // The empty position is a dashed slot in words, holding the picker.
     expect(await screen.findByText('Thiếu 1')).toBeInTheDocument()
     fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Thêm ca viên cho Tenor' }))
@@ -250,6 +263,7 @@ describe('RosterPage', () => {
     withRoster(null)
     const save = vi.spyOn(rosterApi, 'savePersonnelRequirements').mockResolvedValue()
     renderRoster()
+    await showSongs()
 
     fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Kỹ năng cần thêm cho Con Bước Lên Bàn Thờ' }))
     fireEvent.click(await screen.findByTitle('Organ'))

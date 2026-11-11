@@ -3,16 +3,17 @@ import dayjs from 'dayjs'
 import { generatePath, Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, SongListStatusTag, type LiturgicalProgram } from '@/features/liturgical-programs'
-import { colors, outcomeColors, sections, spacing, typography } from '@/styles/tokens'
+import { SummaryStrip } from '@/shared/ui'
+import { colors, sections, spacing, typography } from '@/styles/tokens'
 import { participationResponseLabels, type ParticipationResponse } from '../types'
 
 export type ResponseCounts = Record<ParticipationResponse | 'none' | 'sent', number>
 
-const answers: { key: ParticipationResponse | 'none'; label: string; color: string }[] = [
-  { key: 'confirmed', label: participationResponseLabels.confirmed.toLowerCase(), color: outcomeColors.good },
-  { key: 'unsure', label: participationResponseLabels.unsure.toLowerCase(), color: outcomeColors.late },
-  { key: 'declined', label: participationResponseLabels.declined.toLowerCase(), color: outcomeColors.missed },
-  { key: 'none', label: 'chưa phản hồi', color: colors.mutedBorder },
+// Spec order: Xác nhận, Từ chối, Chưa chắc; "Chưa phản hồi" is the waiting cell.
+const answers: { key: ParticipationResponse; label: string }[] = [
+  { key: 'confirmed', label: participationResponseLabels.confirmed },
+  { key: 'declined', label: participationResponseLabels.declined },
+  { key: 'unsure', label: participationResponseLabels.unsure },
 ]
 
 export interface ResponseHeaderProps {
@@ -56,24 +57,13 @@ export function ResponseHeader({ program, programs, today, onPick, counts }: Rea
         </Typography.Text>
         {counts && counts.sent > 0 && (
           <div style={{ marginTop: spacing.md }}>
-            <Flex
-              role="img"
-              aria-label={answers.map(({ key, label }) => `${counts[key]} ${label}`).join(', ')}
-              style={{ height: 6, maxWidth: 440, borderRadius: 3, overflow: 'hidden', background: colors.softSurface }}
-            >
-              {answers.map(({ key, color }) => (counts[key] ? <span key={key} style={{ flex: counts[key], background: color }} /> : null))}
-            </Flex>
-            <Flex component="ul" wrap gap={spacing.md} style={{ listStyle: 'none', margin: `${spacing.sm}px 0 0`, padding: 0, color: colors.textMuted }}>
-              <li>
-                <b style={{ color: colors.textPrimary }}>{counts.sent}</b> đã gửi yêu cầu
-              </li>
-              {answers.map(({ key, label, color }) => (
-                <li key={key}>
-                  <span aria-hidden style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: color, marginInlineEnd: 6 }} />
-                  {counts[key]} {label}
-                </li>
-              ))}
-            </Flex>
+            <SummaryStrip
+              label={`Phản hồi trên ${counts.sent} yêu cầu đã gửi`}
+              cells={[
+                ...answers.map(({ key, label }) => ({ label, value: counts[key] })),
+                { label: 'Chưa phản hồi', value: counts.none, waiting: 'Còn chờ' },
+              ]}
+            />
           </div>
         )}
       </Flex>

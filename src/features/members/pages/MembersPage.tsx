@@ -2,16 +2,25 @@ import { App, Card } from 'antd'
 import { useMemo, useState } from 'react'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, SummaryStrip } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { MemberFilterBar } from '../components/MemberFilterBar'
 import { MemberFormDrawer } from '../components/MemberFormDrawer'
 import { MemberTable } from '../components/MemberTable'
+import { useChoirMembers } from '../hooks/useChoirMembers'
 import { useMemberProfiles, useUpdateMemberProfile } from '../hooks/useMemberProfiles'
 import { emptyMemberFilters, hasActiveMemberFilters } from '../memberFilters'
 import type { MemberFilters, MemberProfile, MemberProfileValues } from '../types'
 
 const pageSize = 20
+
+/** The four voice parts, matched on the approved skill names as VoicePartIcon reads them. */
+const voiceParts = [
+  { label: 'Soprano', pattern: /soprano|nữ cao/i },
+  { label: 'Alto', pattern: /alto|nữ trầm/i },
+  { label: 'Tenor', pattern: /tenor|nam cao/i },
+  { label: 'Bass', pattern: /bass|nam trầm/i },
+]
 
 /**
  * Choir Director: choir members (FE-24) on `/api/member-profiles`. Members are ChoirMember accounts the Admin
@@ -33,6 +42,12 @@ export function MembersPage() {
   const query = useMemo(() => ({ ...filters, search }), [filters, search])
   const members = useMemberProfiles(query, { pageNumber: page, pageSize })
   const update = useUpdateMemberProfile()
+  // Active members with their approved skills, for the counts above the list (the same request other pages share).
+  const active = useChoirMembers()
+  const activeCells = active.data && [
+    { label: 'Đang sinh hoạt', value: active.data.length },
+    ...voiceParts.map(({ label, pattern }) => ({ label, value: active.data.filter((member) => member.skills.some((skill) => pattern.test(skill))).length })),
+  ]
   const [editing, setEditing] = useState<MemberProfile>()
 
   const total = members.data?.totalCount ?? 0
@@ -68,6 +83,11 @@ export function MembersPage() {
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Danh sách ca viên' }]}
         description="Tài khoản ca viên do Quản trị viên tạo."
       />
+      {activeCells && (
+        <div style={{ marginBottom: spacing.md }}>
+          <SummaryStrip label="Ca viên đang sinh hoạt theo bè" cells={activeCells} />
+        </div>
+      )}
 
       {members.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách ca viên" />}
       {members.isError && (

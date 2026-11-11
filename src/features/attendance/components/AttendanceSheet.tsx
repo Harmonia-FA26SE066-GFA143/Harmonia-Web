@@ -2,20 +2,12 @@ import { CheckOutlined, SearchOutlined } from '@ant-design/icons'
 import { App, Avatar, Button, Card, Flex, Input, Modal, Radio, Table, Typography, type TableColumnsType } from 'antd'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useBeforeUnload, useBlocker } from 'react-router'
-import { NoFilterResults, SaveButton, useJustSaved } from '@/shared/ui'
+import { NoFilterResults, SaveButton, SummaryStrip, useJustSaved } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, media, outcomeColors, radius, shadows, spacing, spine, typography } from '@/styles/tokens'
 import { attendanceErrorMessage } from '../attendanceErrors'
 import { useSaveAttendance } from '../hooks/useAttendance'
 import { attendanceLabels, attendanceShortLabels, attendanceValues, type AttendanceRecord, type AttendanceValue } from '../types'
-
-/** Each result in its colour (`outcomeColors`, owner 2026-11-02); the checked button takes it in global.css. */
-const markColors: Record<AttendanceValue, string> = {
-  present: outcomeColors.good,
-  late: outcomeColors.late,
-  excused: outcomeColors.excused,
-  absent: outcomeColors.missed,
-}
 
 const options = attendanceValues.map((value) => ({
   value,
@@ -155,28 +147,13 @@ export function AttendanceSheet({ rehearsalId, records, header }: Readonly<Atten
       <Card styles={{ body: { padding: `${spacing.lg}px ${spacing.xl}px` } }}>
         {header(
         <div style={{ marginTop: spacing.md }}>
-          <Flex
-            role="img"
-            aria-label={`${marked} trên ${records.length} ca viên đã điểm danh`}
-            style={{ height: 6, maxWidth: 440, borderRadius: 3, overflow: 'hidden', background: colors.softSurface }}
-          >
-            {attendanceValues.map((value) => (counts[value] ? <span key={value} style={{ flex: counts[value], background: markColors[value] }} /> : null))}
-            {records.length > marked && <span style={{ flex: records.length - marked }} />}
-          </Flex>
-          <Flex component="ul" wrap gap={spacing.md} style={{ listStyle: 'none', margin: `${spacing.sm}px 0 0`, padding: 0, color: colors.textMuted }}>
-            <li>
-              <b style={{ color: colors.textPrimary }}>
-                {marked}/{records.length}
-              </b>{' '}
-              đã điểm danh
-            </li>
-            {attendanceValues.map((value) => (
-              <li key={value}>
-                <span aria-hidden style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: markColors[value], marginInlineEnd: 6 }} />
-                {counts[value]} {attendanceLabels[value].toLowerCase()}
-              </li>
-            ))}
-          </Flex>
+          <SummaryStrip
+            label={`Điểm danh: ${marked} trên ${records.length} ca viên`}
+            cells={[
+              ...attendanceValues.map((value) => ({ label: attendanceLabels[value], value: counts[value] })),
+              { label: 'Chưa điểm danh', value: records.length - marked, waiting: 'Còn chờ' },
+            ]}
+          />
         </div>,
         )}
       </Card>
@@ -207,7 +184,7 @@ export function AttendanceSheet({ rehearsalId, records, header }: Readonly<Atten
           <Table<AttendanceRecord> rowKey="memberId" columns={columns} dataSource={visible} pagination={false} scroll={{ x: 720 }} />
         )}
       </Card>
-      // Sticky at the bottom of the window, so Save stays in reach on a long list.
+      {/* Sticky at the bottom of the window, so Save stays in reach on a long list. */}
       <Flex
         ref={saveBar}
         align="center"

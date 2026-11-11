@@ -1,10 +1,12 @@
 import { Card } from 'antd'
+import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { EmptyState, EmptyWeek, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { EventFilterBar } from '../components/EventFilterBar'
+import { ProgramPreview } from '../components/ProgramPreview'
 import { ProgramTable } from '../components/ProgramTable'
 import { usePrograms } from '../hooks/usePrograms'
 import { hasActiveEventFilters, readEventListState, writeEventListState } from '../programFilters'
@@ -28,6 +30,21 @@ export function DirectorProgramListPage() {
   const changeFilters = (next: EventFilters) => setSearchParams(writeEventListState(next, 1), { replace: true })
   const setPage = (next: number) => setSearchParams(writeEventListState(filters, next), { replace: true })
   const resetFilters = () => changeFilters({})
+  const today = dayjs().format('YYYY-MM-DD')
+  const items = programs.data?.items ?? []
+  // The previewed program is kept in the URL beside the filters; the first row until one is picked.
+  const picked = items.find((program) => program.id === searchParams.get('program')) ?? items.find((program) => program.status !== 'cancelled')
+  const pick = (id: string) =>
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        next.set('program', id)
+        return next
+      },
+      { replace: true },
+    )
+  const openProgram = (id: string) => navigate(generatePath(paths.director.programDetail, { programId: id }))
+  const propose = (id: string) => navigate(generatePath(paths.director.songListProposal, { programId: id }))
 
   return (
     <>
@@ -50,27 +67,34 @@ export function DirectorProgramListPage() {
         />
       )}
       {programs.data !== undefined && (total > 0 || filtered) && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <EventFilterBar
-            value={filters}
-            onChange={changeFilters}
-            onReset={resetFilters}
-            resultCount={total}
-            statuses={['published', 'cancelled']}
-          />
-          {total === 0 ? (
-            <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
-              <NoFilterResults onClearFilters={resetFilters} />
-            </div>
-          ) : (
-            <ProgramTable
-              programs={programs.data.items}
-              loading={programs.isPlaceholderData}
-              pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
-              onOpen={(program) => navigate(generatePath(paths.director.programDetail, { programId: program.id }))}
+        <div className="hm-split">
+          <Card styles={{ body: { padding: 0 } }}>
+            <EventFilterBar
+              value={filters}
+              onChange={changeFilters}
+              onReset={resetFilters}
+              resultCount={total}
+              statuses={['published', 'cancelled']}
             />
-          )}
-        </Card>
+            {total === 0 ? (
+              <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+                <NoFilterResults onClearFilters={resetFilters} />
+              </div>
+            ) : (
+              <ProgramTable
+                programs={items}
+                today={today}
+                selectedId={picked?.id}
+                onSelect={(program) => pick(program.id)}
+                loading={programs.isPlaceholderData}
+                pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
+                onOpen={(program) => openProgram(program.id)}
+                onPropose={(program) => propose(program.id)}
+              />
+            )}
+          </Card>
+          {picked && <ProgramPreview program={picked} today={today} onOpen={() => openProgram(picked.id)} onPropose={() => propose(picked.id)} />}
+        </div>
       )}
     </>
   )

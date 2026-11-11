@@ -1673,3 +1673,313 @@ textarea {
     opacity: 0;
   }
 }
+
+/* SummaryStrip: counts in one sheet, equal columns split by 1px rules, a label over a serif figure. */
+.hm-summary {
+  display: grid;
+  margin: 0;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-surface-base);
+  overflow: hidden;
+}
+
+.hm-summary__cell {
+  padding: 12px 16px;
+  border-inline-start: 1px solid var(--hm-border-default);
+  transition: background-color var(--hm-dur-base) var(--hm-ease);
+}
+
+.hm-summary__cell:first-child {
+  border-inline-start: 0;
+}
+
+.hm-summary__cell dt {
+  color: var(--hm-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.hm-summary__cell dd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 2px 0 0;
+}
+
+.hm-summary__figure {
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.1;
+  font-variant-numeric: lining-nums;
+  color: var(--hm-text-primary);
+}
+
+.hm-summary__cell.is-waiting {
+  background: var(--hm-area-attention-tint);
+}
+
+.hm-summary__cell.is-waiting dt,
+.hm-summary__cell.is-waiting .hm-summary__figure,
+.hm-summary__cell.is-waiting .hm-summary__action,
+.hm-summary__cell.is-waiting .hm-summary__action a {
+  color: var(--hm-area-attention-ink);
+}
+
+.hm-summary__action {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Rubric: a section opens with a small burgundy square and a liturgy-ink label (artifact ws-rubric). */
+.hm-rubric {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-area-liturgy-ink);
+}
+
+.hm-rubric::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex: none;
+  background: var(--hm-action-primary);
+}
+
+.hm-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  height: 22px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-sm);
+  font-size: 12px;
+  color: var(--hm-text-body);
+}
+
+/* A list beside the reading-surface preview of its picked row. */
+.hm-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 16px;
+  align-items: start;
+}
+
+.hm-preview {
+  position: sticky;
+  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 24px;
+  background-color: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-hairline);
+  border-top: 1px solid var(--hm-gilt);
+  border-radius: var(--hm-radius-lg);
+}
+
+.hm-preview__title {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.15;
+  color: var(--hm-text-primary);
+}
+
+.hm-preview__songs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hm-preview__songs li {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--hm-border-hairline);
+}
+
+.hm-preview__songs li:last-child {
+  border-bottom: 0;
+}
+
+/* A table whose row picks what the preview shows. */
+.hm-table-pick .ant-table-tbody > tr {
+  cursor: pointer;
+}
+
+.hm-table-pick .ant-table-tbody > tr.is-picked > td {
+  background: var(--hm-surface-selected);
+}
+
+/* Lịch tập: the week as seven columns (artifact RehearsalsPage). */
+.hm-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.hm-week__day {
+  min-height: 180px;
+  border-inline-start: 1px solid var(--hm-border-default);
+}
+
+.hm-week__day:first-child {
+  border-inline-start: 0;
+}
+
+.hm-week__day.is-today {
+  background: var(--hm-surface-reading);
+}
+
+.hm-week__head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--hm-surface-band);
+  border-bottom: 1px solid var(--hm-border-default);
+  color: var(--hm-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hm-week__head b {
+  font-family: var(--hm-font-display);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--hm-text-primary);
+  font-variant-numeric: lining-nums;
+}
+
+.hm-week__day.is-today .hm-week__head {
+  box-shadow: inset 0 -2px 0 var(--hm-action-primary);
+}
+
+.hm-week__items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+}
+
+.hm-week__card {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 6px 8px;
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.35;
+  border-radius: var(--hm-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border-color var(--hm-dur-fast) var(--hm-ease), box-shadow var(--hm-dur-fast) var(--hm-ease);
+}
+
+.hm-week__card b {
+  font-weight: 600;
+}
+
+.hm-week__card small {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.hm-week__card.is-rehearsal {
+  background: var(--hm-area-rehearsal-tint);
+  color: var(--hm-area-rehearsal-ink);
+  border-color: var(--hm-area-rehearsal-border);
+}
+
+.hm-week__card.is-rehearsal.is-past {
+  background: var(--hm-surface-soft);
+  color: var(--hm-text-body);
+  border-color: var(--hm-border-default);
+}
+
+.hm-week__card.is-rehearsal[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px var(--hm-area-rehearsal-ink);
+}
+
+.hm-week__card.is-mass {
+  background: var(--hm-area-liturgy-tint);
+  color: var(--hm-area-liturgy-ink);
+  border-color: var(--hm-area-liturgy-border);
+}
+
+.hm-week__card:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
+}
+
+.hm-rehearsal-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 24px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+/* Today's rehearsal, above the week, only when there is one. */
+.hm-today-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0 16px 12px;
+  padding: 12px 16px;
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-area-rehearsal-tint);
+  color: var(--hm-area-rehearsal-ink);
+  border: 1px solid var(--hm-area-rehearsal-border);
+}
+
+/* Phân công: one column per required skill (artifact RosterPage). */
+.hm-roster-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.hm-roster-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-surface-base);
+}
+
+.hm-roster-col__remove {
+  margin-top: auto;
+  text-align: right;
+}
+
+.hm-roster-count {
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 20px;
+  font-variant-numeric: lining-nums;
+  color: var(--hm-text-primary);
+}
+
+.hm-roster-count.is-short {
+  color: var(--hm-area-attention-ink);
+}

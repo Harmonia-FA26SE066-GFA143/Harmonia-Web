@@ -40,11 +40,15 @@ afterEach(() => {
 describe('DirectorProgramListPage', () => {
   it('lists programs without a create action and opens the director detail', async () => {
     vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(programPage(program))
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue({ ...program, songs: [{ id: 'i1', title: 'Con bước lên bàn thờ', liturgicalPart: 'Ca nhập lễ' }] })
     renderPage(<DirectorProgramListPage />, '/director/programs')
 
-    expect(await screen.findByText('Lễ Chúa Nhật XXVI')).toBeInTheDocument()
+    expect(await screen.findAllByText('Lễ Chúa Nhật XXVI')).not.toHaveLength(0)
     expect(screen.queryByRole('button', { name: /Tạo chương trình/ })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Lễ Chúa Nhật XXVI' }))
+    // The first program is previewed beside the list, with the songs chosen so far by liturgical part.
+    const preview = await screen.findByRole('complementary', { name: 'Xem trước: Lễ Chúa Nhật XXVI' })
+    expect(await within(preview).findByText('Con bước lên bàn thờ')).toBeInTheDocument()
+    fireEvent.click(within(preview).getByRole('button', { name: 'Mở chương trình' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/director/programs/p1')
   })
 
@@ -52,13 +56,13 @@ describe('DirectorProgramListPage', () => {
     const list = vi
       .spyOn(programsApi, 'listPrograms')
       .mockResolvedValue(programPage(program, { id: 'p2', eventName: 'Lễ Bổn mạng', date: '2026-10-04', status: 'cancelled' }))
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue(null)
     renderPage(<DirectorProgramListPage />, '/director/programs')
 
     expect(await screen.findByText('Lễ Bổn mạng')).toBeInTheDocument()
     expect(screen.getByText('Đã hủy')).toBeInTheDocument()
     // Its detail cannot be read by the Choir Director, so nothing leads to a "not found" page.
-    expect(screen.queryByRole('button', { name: 'Xem chi tiết Lễ Bổn mạng' })).toBeNull()
-    expect(screen.getByText('Không xem được')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Lễ Bổn mạng$/ })).toBeNull()
     expect(list).toHaveBeenCalledWith({}, { pageNumber: 1, pageSize: 20 })
   })
 })
