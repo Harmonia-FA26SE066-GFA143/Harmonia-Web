@@ -10,6 +10,13 @@ import { CreateProgramPage } from './CreateProgramPage'
 
 const route = '/priest/programs/new'
 
+// These four tests fill the real form: a TimePicker and up to three Ant Design selects, each of which renders its popup in
+// jsdom with React in development mode inside StrictMode. That is CPU work, not waiting (about 1.2–1.6 s alone, measured
+// per step, no timer or request in it), so with several test files sharing the processor it grows past the 5 s default
+// (3.7 s with four runs at once, 5.8 s before the label queries below). Their own limit, not a global one; nothing is
+// relaxed in what they check.
+const FILL_FORM_TIMEOUT_MS = 15_000
+
 const created: LiturgicalEvent = {
   id: 'new-1',
   date: '2026-10-04',
@@ -40,8 +47,22 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+// Fields are found by their label, not `getByRole('combobox', { name })`: the role query works out the accessible name of
+// every candidate through jsdom's getComputedStyle against Ant Design's injected rules, 130–180 ms per call here (the
+// label query takes 2–4 ms), which is what pushed these tests past 5 s when several test files ran at once. Each label
+// is still the field's own (`<label for>` must point at the input), so a field that lost its label fails here too. What a
+// role query would also prove, that the element is a combobox or a text box, is read straight off the element it found
+// (an attribute or a tag: microseconds), so a field that stopped being one fails here as well.
+const TEXT_BOX = 'input:not([type]), input[type="text"], textarea'
+function field(label: string, role: 'combobox' | 'textbox' = 'textbox') {
+  const element = screen.getByLabelText(label)
+  if (role === 'combobox') expect(element).toHaveAttribute('role', 'combobox')
+  else expect(element.matches(TEXT_BOX)).toBe(true)
+  return element
+}
+
 async function choose(label: string, option: string) {
-  fireEvent.mouseDown(screen.getByRole('combobox', { name: label }))
+  fireEvent.mouseDown(field(label, 'combobox'))
   fireEvent.click(await screen.findByTitle(option))
 }
 
@@ -65,7 +86,7 @@ describe('CreateProgramPage', () => {
     expect(screen.getByText('Chọn loại Thánh lễ hoặc loại nghi thức.')).toBeInTheDocument()
     expect(screen.getByText('Chọn ít nhất một ca đoàn phục vụ.')).toBeInTheDocument()
     expect(create).not.toHaveBeenCalled()
-  })
+  }, FILL_FORM_TIMEOUT_MS)
 
   it('creates a draft with the date preselected from the calendar and opens it', async () => {
     const create = vi.spyOn(eventsApi, 'createEvent').mockResolvedValue(created)
@@ -76,10 +97,10 @@ describe('CreateProgramPage', () => {
     await choose('Nơi cử hành', 'Nhà thờ chính')
     await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
     // A switched-off choir cannot serve a new event; a single choir becomes the lead by itself.
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Ca đoàn phục vụ' }))
+    fireEvent.mouseDown(field('Ca đoàn phục vụ', 'combobox'))
     expect(screen.queryByTitle('Ca đoàn cũ')).toBeNull()
     await choose('Ca đoàn phục vụ', 'Ca đoàn Cecilia')
-    fireEvent.change(screen.getByRole('textbox', { name: 'Tiêu đề (không bắt buộc)' }), { target: { value: '  Lễ Bổn mạng ' } })
+    fireEvent.change(field('Tiêu đề (không bắt buộc)'), { target: { value: '  Lễ Bổn mạng ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
     await waitFor(() =>
@@ -98,7 +119,7 @@ describe('CreateProgramPage', () => {
       }),
     )
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/new-1')
-  })
+  }, FILL_FORM_TIMEOUT_MS)
 
   it('tells which season the backend filled in when none was chosen', async () => {
     vi.spyOn(eventsApi, 'createEvent').mockResolvedValue({ ...created, seasonId: 's-ot' })
@@ -112,7 +133,7 @@ describe('CreateProgramPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
     expect(await screen.findByText('Đã tạo bản nháp sự kiện, mùa phụng vụ được điền là Mùa Thường Niên.')).toBeInTheDocument()
-  })
+  }, FILL_FORM_TIMEOUT_MS)
 
   it('explains a taken slot and keeps the entered values', async () => {
     vi.spyOn(eventsApi, 'createEvent').mockRejectedValue(new ApiError(409, { code: 'LITURGICAL_EVENT_SLOT_TAKEN' }))
@@ -126,19 +147,19 @@ describe('CreateProgramPage', () => {
 
     expect(await screen.findByText('Đã có sự kiện khác cùng ngày, giờ và nơi cử hành.')).toBeInTheDocument()
     expect(screen.getByDisplayValue('04/10/2026')).toBeInTheDocument()
-  })
+  }, FILL_FORM_TIMEOUT_MS)
 
   it('asks before leaving with unsaved input', async () => {
     renderPage(<CreateProgramPage />, route)
 
-    fireEvent.change(screen.getByRole('textbox', { name: 'Tiêu đề (không bắt buộc)' }), { target: { value: 'Lễ Bổn mạng' } })
+    fireEvent.change(field('Tiêu đề (không bắt buộc)'), { target: { value: 'Lễ Bổn mạng' } })
     fireEvent.click(screen.getByRole('button', { name: 'Hủy' }))
 
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText('Rời khỏi trang tạo chương trình?')).toBeInTheDocument()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Ở lại' }))
     await waitFor(() => expect(screen.queryByTestId('location')).toBeNull())
-    expect(screen.getByRole('textbox', { name: 'Tiêu đề (không bắt buộc)' })).toHaveValue('Lễ Bổn mạng')
+    expect(field('Tiêu đề (không bắt buộc)')).toHaveValue('Lễ Bổn mạng')
 
     fireEvent.click(screen.getByRole('button', { name: 'Hủy' }))
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Rời khỏi trang' }))
