@@ -47,6 +47,7 @@ const themeVars = {
   '--hm-score-paper': colors.ivory,
   '--hm-score-border': colors.border,
   '--hm-score-ink': colors.textPrimary,
+  '--hm-score-muted': colors.textMuted,
   '--hm-score-active': colors.primary,
   '--hm-score-focus': colors.primary,
   '--hm-score-radius': `${radius.lg}px`,
@@ -159,6 +160,8 @@ export function ScoreViewer({ status, scoreKey, svgPages, title, onRetry, onWidt
               </g>
             </svg>
           ))}
+          {/* Loading can take seconds (the engine draws every page at once): say so in words, not only to screen readers. */}
+          <span className="hm-score-loading-text">Đang dựng bản nhạc, có thể mất vài giây.</span>
         </output>
       )}
       {view === 'empty' && (
