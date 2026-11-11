@@ -84,7 +84,7 @@ export function LandingPage() {
             {modelUnavailable ? (
               <img src="/media/church-light-poster.webp" alt="" aria-hidden className="landing-hero__light" />
             ) : (
-              <canvas ref={aperture} role="presentation" className="landing-hero__light" />
+              <canvas ref={aperture} className="landing-hero__light" />
             )}
             <div aria-hidden style={{ position: 'absolute', inset: 0, background: media.windowScrim }} />
             <Typography.Title id="hero-heading" level={1} style={{ ...serif, position: 'relative', color: media.text, fontSize: 40, lineHeight: 1.08, textAlign: 'center', textWrap: 'balance' }}>

@@ -276,7 +276,8 @@ export function HeroNave({ aperture, onUnavailable, still = false }: Readonly<He
 
   return (
     <>
-      <canvas ref={canvasRef} role="presentation" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
+      {/* Decoration: a canvas with no fallback content is skipped by screen readers, so it needs no aria attribute. */}
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
       {!reduced && (
         <Button
           shape="circle"
