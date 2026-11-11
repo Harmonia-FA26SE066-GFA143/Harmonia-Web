@@ -85,7 +85,7 @@ export function RehearsalPracticeRoomPage() {
   const refreshMaterials = materials.refetch
   let materialContent: ReactNode = null
   if (song) {
-    const audioLabel = shownPart === 'Tất cả' ? `Nghe ${song.title}` : `Nghe ${song.title}, bè ${shownPart}`
+    const audioLabel = shownPart === 'Tất cả' ? song.title : `${song.title}, bè ${shownPart}`
     const lyricsContent = typedLyrics ? (
       <Typography.Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>{typedLyrics}</Typography.Paragraph>
     ) : (

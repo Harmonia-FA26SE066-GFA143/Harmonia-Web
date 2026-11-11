@@ -18,8 +18,9 @@ export function TimedAudioPlayer({
   const clock = usePlaybackClock(src)
   if (clock.error && material.url && material.url !== src) setSrc(material.url)
   const untimed = <div className="karaoke-lyrics" aria-live="off">{untimedLyrics}</div>
+  // The group names the player; its buttons say only the verb ("Phát …"), not "Phát Nghe …".
   return (
-    <div>
+    <div role="group" aria-label={`Nghe ${title}`}>
       {supportsTimedLyrics(material) ? <TimedLyricsView material={material} clock={clock} onStale={onStale} untimed={untimed} /> : untimed}
       <PlaybackControls clock={clock} title={title} />
       {/* The signed link may have expired while the page stayed open; a new list brings a new one. */}
