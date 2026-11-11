@@ -11,6 +11,7 @@ import {
   ScheduleOutlined,
   SettingOutlined,
   SoundOutlined,
+  SolutionOutlined,
   TagsOutlined,
   TeamOutlined,
   UnorderedListOutlined,
@@ -58,6 +59,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
           { path: paths.priest.programs, label: 'Chương trình phụng vụ', icon: UnorderedListOutlined },
         ],
       },
+      { label: 'Ca trưởng', items: [{ path: paths.priest.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined }] },
       { label: 'Trao đổi', items: [{ path: paths.priest.notes, label: 'Trao đổi với Ca trưởng', icon: MessageOutlined }] },
       { label: 'Báo cáo', items: [{ path: paths.priest.reports, label: 'Báo cáo', icon: BarChartOutlined }] },
     ],
@@ -73,6 +75,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
           { path: paths.director.members, label: 'Danh sách ca viên', icon: IdcardOutlined },
           { path: paths.director.choirs, label: 'Ca đoàn', icon: ApartmentOutlined },
           { path: paths.director.skillApproval, label: 'Duyệt kỹ năng', icon: SafetyCertificateOutlined },
+          { path: paths.director.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined },
         ],
       },
       {
@@ -105,6 +108,8 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
         items: [
           { path: paths.admin.dashboard, label: 'Tổng quan', icon: AppstoreOutlined },
           { path: paths.admin.accounts, label: 'Tài khoản', icon: TeamOutlined },
+          { path: paths.admin.memberRegistrations, label: 'Đăng ký gia nhập', icon: UsergroupAddOutlined },
+          { path: paths.admin.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined },
           { path: paths.admin.roles, label: 'Vai trò & Phân quyền', icon: UserSwitchOutlined },
           { path: paths.admin.skillCategories, label: 'Danh mục kỹ năng', icon: TagsOutlined },
           { path: paths.admin.liturgicalCategories, label: 'Danh mục phụng vụ', icon: FileTextOutlined },

@@ -1,6 +1,8 @@
 import { apiRequest, orNullOn404 } from '@/lib/api/client'
+import { ApiError } from '@/lib/api/errors'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type {
+  InteractiveScore,
   LearningProgress,
   LearningStatus,
   MaterialPlayback,
@@ -15,6 +17,8 @@ import type {
   SongFilters,
   SongMaterial,
   SongValues,
+  TimedLyricLine,
+  TimedLyrics,
   UploadMaterialValues,
 } from '../types'
 
@@ -143,6 +147,36 @@ export async function getMaterialPlayback(materialId: string): Promise<MaterialP
   if (!response.ok) throw new Error(`Playback notes request failed with status ${response.status}`)
   const notes = (await response.json()) as MidiPlaybackNotes
   return { playback, notes }
+}
+
+/** Fresh signed links of one revision of a score; call again rather than keeping them. */
+export function getInteractiveScore(materialId: string): Promise<InteractiveScore> {
+  return apiRequest<InteractiveScore>(`/api/music-materials/${materialId}/score`)
+}
+
+/** Null is the normal "no timing yet" (404 TIMED_LYRICS_NOT_FOUND); a missing material is still an error. */
+export async function getTimedLyrics(audioMaterialId: string): Promise<TimedLyrics | null> {
+  try {
+    return await apiRequest<TimedLyrics>(`/api/music-materials/${audioMaterialId}/timed-lyrics`)
+  } catch (error) {
+    if (error instanceof ApiError && error.code === 'TIMED_LYRICS_NOT_FOUND') return null
+    throw error
+  }
+}
+
+/** Creates or replaces the whole timing (Choir Director). */
+export function saveTimedLyrics(
+  audioMaterialId: string,
+  values: { lyricsMaterialId: string; lines: TimedLyricLine[] },
+): Promise<TimedLyrics> {
+  return apiRequest<TimedLyrics>(`/api/music-materials/${audioMaterialId}/timed-lyrics`, {
+    method: 'PUT',
+    body: JSON.stringify({ ...values, granularity: 'Line' }),
+  })
+}
+
+export function deleteTimedLyrics(audioMaterialId: string): Promise<void> {
+  return apiRequest<void>(`/api/music-materials/${audioMaterialId}/timed-lyrics`, { method: 'DELETE' })
 }
 
 export async function listMaterials(songId: string): Promise<SongMaterial[]> {

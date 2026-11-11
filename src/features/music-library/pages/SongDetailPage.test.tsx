@@ -31,7 +31,7 @@ const classification: SongClassification = {
 }
 
 const material = (fields: Partial<SongMaterial> & Pick<SongMaterial, 'id' | 'kind' | 'title' | 'fileName'>): SongMaterial => ({
-  fileSizeBytes: null,
+  fileSizeBytes: null, fileRevision: 1,
   targetSkillId: null,
   targetSkillName: null,
   url: `https://files.example/${fields.fileName}`,
@@ -55,6 +55,52 @@ function withSong() {
   vi.spyOn(songsApi, 'getSongClassification').mockResolvedValue(classification)
   vi.spyOn(songsApi, 'listMaterials').mockResolvedValue(materials)
 }
+
+describe('SongDetailPage timed lyrics', () => {
+  const lyrics = material({ id: 'l1', kind: 'lyrics', title: 'Lời', fileName: null, url: null, lyricsText: 'Dòng một\nDòng hai' })
+  const openDrawer = async () => {
+    vi.spyOn(songsApi, 'getSong').mockResolvedValue(song)
+    vi.spyOn(songsApi, 'getSongClassification').mockResolvedValue(classification)
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([...materials, lyrics])
+    vi.spyOn(songsApi, 'getTimedLyrics').mockResolvedValue(null)
+    renderDetail('materials')
+    fireEvent.click(await screen.findByRole('button', { name: 'Soạn lời theo thời gian cho Audio mẫu bè Tenor' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Điền dòng từ lời đã chọn' }))
+    await screen.findByLabelText('Lời dòng 2')
+  }
+  const setSeconds = (label: string, value: string) => {
+    const input = screen.getByLabelText(label)
+    fireEvent.change(input, { target: { value } })
+    fireEvent.blur(input)
+  }
+
+  it('shows what to fix on the row and saves nothing', async () => {
+    const save = vi.spyOn(songsApi, 'saveTimedLyrics')
+    await openDrawer()
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu mốc thời gian' }))
+
+    expect((await screen.findAllByText('Vui lòng nhập giây bắt đầu.')).length).toBe(2)
+    expect(save).not.toHaveBeenCalled()
+  }, 30_000)
+  it('sends the lines in order and reports a line past the audio', async () => {
+    const save = vi.spyOn(songsApi, 'saveTimedLyrics').mockRejectedValue(new ApiError(400, { code: 'TIMED_LYRICS_EXCEEDS_DURATION' }))
+    await openDrawer()
+    setSeconds('Giây bắt đầu dòng 1', '0')
+    setSeconds('Giây kết thúc dòng 1', '4')
+    setSeconds('Giây bắt đầu dòng 2', '4')
+    setSeconds('Giây kết thúc dòng 2', '9')
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu mốc thời gian' }))
+
+    await waitFor(() => expect(save).toHaveBeenCalledWith('m2', {
+      lyricsMaterialId: 'l1',
+      lines: [
+        { order: 1, text: 'Dòng một', startSeconds: 0, endSeconds: 4 },
+        { order: 2, text: 'Dòng hai', startSeconds: 4, endSeconds: 9 },
+      ],
+    }))
+    expect(await screen.findByText(/kết thúc sau khi âm thanh đã hết/)).toBeInTheDocument()
+  }, 30_000)
+})
 
 afterEach(() => {
   vi.restoreAllMocks()

@@ -20,6 +20,16 @@ export const adminRoutes: RouteObject[] = [
     async () => (await import('@/features/users')).AccountsPage,
   ),
   pageRoute(
+    paths.admin.memberRegistrations,
+    { title: 'Đăng ký gia nhập', breadcrumb: [area, 'Đăng ký gia nhập'] },
+    async () => (await import('@/features/member-registrations')).MemberRegistrationsPage,
+  ),
+  pageRoute(
+    paths.admin.nominations,
+    { title: 'Đề cử Ca trưởng', breadcrumb: [area, 'Đề cử Ca trưởng'] },
+    async () => (await import('@/features/director-nominations')).AdminNominationsPage,
+  ),
+  pageRoute(
     paths.admin.roles,
     { title: 'Vai trò & Phân quyền', breadcrumb: [area, 'Vai trò & Phân quyền'] },
     async () => (await import('@/features/users')).RolesPage,

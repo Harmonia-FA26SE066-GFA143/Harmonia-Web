@@ -75,7 +75,7 @@ describe('SongListReviewPage', () => {
         kind: 'lyrics',
         title: 'Lời bài hát bản in',
         fileName: 'loi.pdf',
-        fileSizeBytes: 2048,
+        fileSizeBytes: 2048, fileRevision: 1,
         targetSkillId: null,
         targetSkillName: null,
         url: 'https://files.example/loi.pdf',

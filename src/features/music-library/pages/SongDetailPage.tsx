@@ -16,6 +16,7 @@ import { SongFormDrawer } from '../components/SongFormDrawer'
 import { SongInfoPanel } from '../components/SongInfoPanel'
 import { SongMaterialsPanel } from '../components/SongMaterialsPanel'
 import { ReplaceMaterialFileDrawer } from '../components/ReplaceMaterialFileDrawer'
+import { TimedLyricsDrawer } from '../components/TimedLyricsDrawer'
 import { UploadMaterialDrawer, type MaterialFormValues, type PendingMaterial } from '../components/UploadMaterialDrawer'
 import {
   useDeleteMaterial,
@@ -79,6 +80,7 @@ export function SongDetailPage() {
   const [editingMaterial, setEditingMaterial] = useState<SongMaterial>()
   const [replacing, setReplacing] = useState<SongMaterial>()
   const [progressOf, setProgressOf] = useState<SongMaterial>()
+  const [timing, setTiming] = useState<SongMaterial>()
   const [editing, setEditing] = useState(false)
   const [classifying, setClassifying] = useState(false)
   const [titleError, setTitleError] = useState<string>()
@@ -332,6 +334,7 @@ export function SongDetailPage() {
                       onEdit={setEditingMaterial}
                       onReplace={setReplacing}
                       onProgress={setProgressOf}
+                      onTimedLyrics={setTiming}
                     />
                   )}
                 </>
@@ -368,6 +371,7 @@ export function SongDetailPage() {
         onCancel={() => setReplacing(undefined)}
       />
       <LearningProgressDrawer material={progressOf} onClose={() => setProgressOf(undefined)} />
+      <TimedLyricsDrawer material={timing} materials={materials.data ?? []} onClose={() => setTiming(undefined)} />
       {classification.data && (
         <SongClassificationDrawer
           open={classifying}

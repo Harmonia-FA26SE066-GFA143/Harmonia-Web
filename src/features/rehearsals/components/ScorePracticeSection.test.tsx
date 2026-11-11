@@ -1,5 +1,8 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as songsApi from '@/features/music-library/api/songsApi'
+import type { SongMaterial } from '@/features/music-library'
+import { ApiError } from '@/lib/api/errors'
 import { spacing } from '@/styles/tokens'
 import type { LoadedScore } from '../score/engine'
 import { DevFixtureScoreSource } from '../score/source/DevFixtureScoreSource'
@@ -1013,5 +1016,28 @@ describe('ScorePracticeSection, states with a next step', () => {
     expect(screen.getByText(/Vui lòng chọn cả hai tệp của cùng một bài/)).toBeInTheDocument()
     expect(screen.getByText(FALLBACK)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Chế độ tập trung' })).toBeNull()
+  })
+})
+
+describe('ScorePracticeSection with an interactive score', () => {
+  const material = (id: string, fileRevision = 1) => ({ id, kind: 'interactiveScore', title: 'Bản nhạc', fileRevision, url: 'https://f/s' }) as SongMaterial
+
+  it('reads the API instead of asking for files, and reloads on another voice part or revision', async () => {
+    const getScore = vi.spyOn(songsApi, 'getInteractiveScore').mockRejectedValue(new ApiError(409, { code: 'MATERIAL_PLAYBACK_UNAVAILABLE' }))
+    const view = (item: SongMaterial) => <ScorePracticeSection title="Bài" fallback={<p>Nội dung cũ</p>} material={item} />
+    const { rerender } = render(view(material('s1')))
+
+    expect(await screen.findByText(/chưa có bản phát/)).toBeInTheDocument()
+    expect(screen.getByText('Nội dung cũ')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Mở bản nhạc từ máy' })).toBeNull()
+    expect(getScore).toHaveBeenLastCalledWith('s1')
+
+    rerender(view(material('s2')))
+    await waitFor(() => expect(getScore).toHaveBeenLastCalledWith('s2'))
+
+    const calls = getScore.mock.calls.length
+    rerender(view(material('s2', 2)))
+    await waitFor(() => expect(getScore.mock.calls.length).toBeGreaterThan(calls))
+    getScore.mockRestore()
   })
 })

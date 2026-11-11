@@ -5,6 +5,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   DownloadOutlined,
+  FieldTimeOutlined,
   ExportOutlined,
   FileTextOutlined,
   FolderOpenOutlined,
@@ -29,6 +30,7 @@ import {
   materialKinds,
   maxMaterialBytes,
   rendersPlayback,
+  supportsTimedLyrics,
   type MaterialKind,
   type SongMaterial,
 } from '../types'
@@ -55,6 +57,8 @@ export interface SongMaterialsPanelProps {
   onExtractLyrics?: (material: SongMaterial) => void
   /** Sheet music whose lyrics are being read. */
   extractingId?: string
+  /** Opens the editor of the lyrics timed to an audio material. */
+  onTimedLyrics?: (material: SongMaterial) => void
 }
 
 function formatSize(bytes: number | null): string | undefined {
@@ -114,7 +118,7 @@ function UploadButton({ kind, loading, label, hintId, onPick }: Readonly<{
   )
 }
 
-type MaterialActions = Pick<SongMaterialsPanelProps, 'onDelete' | 'onEdit' | 'onProgress' | 'onReplace' | 'onExtractLyrics' | 'extractingId'>
+type MaterialActions = Pick<SongMaterialsPanelProps, 'onDelete' | 'onEdit' | 'onProgress' | 'onReplace' | 'onExtractLyrics' | 'extractingId' | 'onTimedLyrics'>
 
 function MaterialRow({
   material,
@@ -125,6 +129,7 @@ function MaterialRow({
   onReplace,
   onExtractLyrics,
   extractingId,
+  onTimedLyrics,
 }: Readonly<{ material: SongMaterial; readingLayout: boolean } & MaterialActions>) {
   const Icon = kindIcons[material.kind]
   return (
@@ -186,6 +191,11 @@ function MaterialRow({
             aria-label={`Trích lời từ ${material.title}`}
           >
             Trích lời
+          </Button>
+        )}
+        {onTimedLyrics && supportsTimedLyrics(material) && (
+          <Button icon={<FieldTimeOutlined />} onClick={() => onTimedLyrics(material)} aria-label={`Soạn lời theo thời gian cho ${material.title}`}>
+            Lời theo thời gian
           </Button>
         )}
         {onProgress && (

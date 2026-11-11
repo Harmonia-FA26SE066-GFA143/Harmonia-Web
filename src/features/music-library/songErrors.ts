@@ -1,4 +1,4 @@
-import { ApiError, requestFailureMessage } from '@/lib/api/errors'
+import { ApiError, errorMessage, requestFailureMessage } from '@/lib/api/errors'
 import { fileExtension, materialExtensions, materialKindLabels, maxMaterialBytes, type MaterialKind } from './types'
 
 /** POST/PUT /api/songs answer 409 SONG_TITLE_DUPLICATE when an active song has the same title and composer. */
@@ -42,6 +42,22 @@ const midiMessages: Record<string, string> = {
   MATERIAL_SCORE_INVALID: 'Tệp MusicXML bị hỏng hoặc không đọc được. Hãy xuất lại tệp .musicxml hoặc .mxl.',
   MATERIAL_SCORE_UNSUPPORTED: 'Bản nhạc MusicXML này chưa phát được (không có bè hoặc không có nốt có cao độ). Hãy xuất lại theo dạng từng bè.',
 }
+
+/** PUT and DELETE /api/music-materials/{id}/timed-lyrics (Harmonia-BE d74096c, ErrorStatusMap.cs:105,121-124). */
+export const timedLyricsErrorMessage = (error: Error) =>
+  errorMessage(
+    error,
+    {
+      VALIDATION_FAILED: 'Có dòng chưa hợp lệ. Vui lòng kiểm tra các dòng lần lượt và không chồng nhau.',
+      TIMED_LYRICS_LINES_INVALID: 'Có dòng chưa hợp lệ. Vui lòng kiểm tra các dòng lần lượt và không chồng nhau.',
+      TIMED_LYRICS_EXCEEDS_DURATION: 'Dòng cuối kết thúc sau khi âm thanh đã hết. Vui lòng sửa giây kết thúc.',
+      TIMED_LYRICS_NOT_FOUND: 'Mốc thời gian đã được xoá trước đó. Vui lòng tải lại trang.',
+      MATERIAL_NOT_LYRICS: 'Tài liệu lời đã chọn không còn thuộc bài hát này. Vui lòng chọn tài liệu khác.',
+      MATERIAL_NOT_AUDIO: 'Tài liệu này không gắn được lời theo thời gian.',
+      MATERIAL_NOT_FOUND: 'Tài liệu không còn tồn tại. Vui lòng tải lại trang.',
+    },
+    'Không thể lưu mốc thời gian. Vui lòng thử lại.',
+  )
 
 /** POST /api/music-materials (Harmonia-BE doc/api.md, Music materials). */
 export function uploadErrorMessage(error: Error): string {

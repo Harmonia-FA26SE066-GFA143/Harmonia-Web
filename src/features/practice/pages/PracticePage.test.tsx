@@ -246,7 +246,7 @@ describe('PracticePage', () => {
 
   it('attaches several materials of the song to the assignment', async () => {
     const material = (id: string, kind: 'sheetMusic' | 'sampleAudio', title: string, fileName: string) => ({
-      id, kind, title, fileName, fileSizeBytes: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, lyricsText: null, createdAt: '2026-10-01T00:00:00Z',
+      id, kind, title, fileName, fileSizeBytes: 1, fileRevision: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, lyricsText: null, createdAt: '2026-10-01T00:00:00Z',
     })
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cecilia', isActive: true }])
     vi.spyOn(songsApi, 'listSongs').mockResolvedValue({
@@ -284,7 +284,7 @@ describe('PracticePage', () => {
 
   it('offers MIDI and MusicXML materials as downloads, not as a tab to open', async () => {
     const material = (id: string, kind: 'sheetMusic' | 'interactiveScore' | 'rehearsalMaterial', title: string, fileName: string) => ({
-      id, kind, title, fileName, fileSizeBytes: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, lyricsText: null, createdAt: '2026-10-01T00:00:00Z',
+      id, kind, title, fileName, fileSizeBytes: 1, fileRevision: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, lyricsText: null, createdAt: '2026-10-01T00:00:00Z',
     })
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cecilia', isActive: true }])
     vi.spyOn(songsApi, 'listSongs').mockResolvedValue({

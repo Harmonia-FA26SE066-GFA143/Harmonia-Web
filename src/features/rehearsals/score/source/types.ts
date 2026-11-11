@@ -3,6 +3,8 @@ export interface ScorePackage {
   /** `mxl` is the zipped MusicXML container, so it is always bytes. Same shape as the engine's `ScoreInput`. */
   score: ({ format: 'musicxml'; data: string | Uint8Array } | { format: 'mxl'; data: Uint8Array }) & { fileName: string }
   audioUrl: string
+  /** Where the last note ends in the audio, when the source knows it: a server WAV rings on past the score for a short tail. */
+  notesEndSeconds?: number
   /** Revokes every object URL this package created. Safe to call more than once. */
   dispose(): void
 }

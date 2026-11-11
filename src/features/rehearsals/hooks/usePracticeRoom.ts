@@ -2,20 +2,17 @@ import { useMemo } from 'react'
 import type { Rehearsal } from '../types'
 import type { PracticeRoomView } from '../practiceRoomTypes'
 
-/** UI adapter boundary: future API/lyrics/audio sources replace this function without changing the page. */
-export function usePracticeRoom(rehearsal: Rehearsal | undefined, fixture?: PracticeRoomView) {
+export function usePracticeRoom(rehearsal: Rehearsal | undefined) {
   return useMemo<PracticeRoomView | undefined>(() => {
     if (!rehearsal) return undefined
     return {
-      ...(fixture ?? { rehearsalId: rehearsal.id, title: 'Buổi tập', startAt: rehearsal.startAt, endAt: rehearsal.endAt, songs: [] }),
       rehearsalId: rehearsal.id,
+      title: 'Buổi tập',
       startAt: rehearsal.startAt,
       endAt: rehearsal.endAt,
       locationName: rehearsal.locationName,
       note: rehearsal.note,
-      songs: rehearsal.songs.length
-        ? rehearsal.songs.map((song, index) => fixture?.songs[index] ? { ...fixture.songs[index], id: song.songId, title: song.songTitle, note: song.note } : { id: song.songId, title: song.songTitle, note: song.note, durationSeconds: 0, localState: 'notStarted' as const, lyrics: [] })
-        : (fixture?.songs ?? []),
+      songs: rehearsal.songs.map((song) => ({ id: song.songId, title: song.songTitle, note: song.note })),
     }
-  }, [fixture, rehearsal])
+  }, [rehearsal])
 }

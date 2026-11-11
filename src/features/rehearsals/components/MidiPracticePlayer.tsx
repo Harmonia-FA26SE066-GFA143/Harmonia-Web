@@ -6,12 +6,14 @@ import {
   useMaterialPlayback,
   type MidiPlaybackNote,
   type MidiPlaybackNotes,
+  type SongMaterial,
 } from '@/features/music-library'
 import { ApiError } from '@/lib/api/errors'
 import { clock } from '@/shared/utils/media'
 import { ErrorState } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import { usePlaybackClock } from '../score/clock/usePlaybackClock'
+import { TimedLyricsView } from './TimedLyricsView'
 
 const canvasHeight = 300
 const visibleSeconds = 12
@@ -188,19 +190,21 @@ function playbackDescription(error: Error) {
   return undefined
 }
 
-function SynchronizedPlayer({ title, score, audioUrl, durationSeconds }: Readonly<{
+function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMaterial, onStale }: Readonly<{
   title: string
   score: MidiPlaybackNotes
   audioUrl: string
   durationSeconds: number
+  timedMaterial?: SongMaterial
+  onStale?: () => void
 }>) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const time = useRef(0)
   const displayedSecond = useRef(0)
   const [currentTime, setCurrentTime] = useState(0)
   const fallbackDuration = Math.max(durationSeconds, score.durationSeconds)
-  const { playing, duration, error, play, pause, seek: seekPlayback, getTime, subscribe } =
-    usePlaybackClock(audioUrl, fallbackDuration)
+  const playbackClock = usePlaybackClock(audioUrl, fallbackDuration)
+  const { playing, duration, error, play, pause, seek: seekPlayback, getTime, subscribe } = playbackClock
   const maxNoteDuration = useMemo(
     () => score.notes.reduce((longest, note) => Math.max(longest, note.duration), 0),
     [score.notes],
@@ -266,6 +270,7 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds }: Readonl
           style={{ display: 'block', width: '100%', height: canvasHeight }}
         />
       </figure>
+      {timedMaterial && <TimedLyricsView material={timedMaterial} clock={playbackClock} onStale={onStale} />}
       {error && (
         <Typography.Paragraph role="alert" style={{ color: colors.primaryHover, margin: `${spacing.sm}px 0 0` }}>
           {midiPlaybackError}
@@ -298,7 +303,13 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds }: Readonl
   )
 }
 
-export function MidiPracticePlayer({ materialId, title }: Readonly<{ materialId: string; title: string }>) {
+export function MidiPracticePlayer({ materialId, title, timedMaterial, onStale }: Readonly<{
+  materialId: string
+  title: string
+  /** Set when the material can hold timed lyrics. */
+  timedMaterial?: SongMaterial
+  onStale?: () => void
+}>) {
   const playback = useMaterialPlayback(materialId)
 
   if (playback.isPending) return <Skeleton active paragraph={{ rows: 8 }} title={{ width: '28%' }} />
@@ -331,6 +342,8 @@ export function MidiPracticePlayer({ materialId, title }: Readonly<{ materialId:
         score={playback.data.notes}
         audioUrl={playback.data.playback.audioUrl}
         durationSeconds={playback.data.playback.durationSeconds}
+        timedMaterial={timedMaterial}
+        onStale={onStale}
       />
     </div>
   )

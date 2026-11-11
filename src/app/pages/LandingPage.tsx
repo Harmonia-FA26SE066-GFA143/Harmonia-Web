@@ -45,11 +45,12 @@ export function LandingPage() {
   const showPhoto = useCallback(() => setModelUnavailable(true), [])
 
   // A real link (open in a new tab, visible URL); a plain click still navigates inside the app.
-  const goToSignIn = (event: MouseEvent) => {
+  const goTo = (path: string) => (event: MouseEvent) => {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
     event.preventDefault()
-    navigate(paths.login)
+    navigate(path)
   }
+  const goToSignIn = goTo(paths.login)
   const large = { paddingInline: spacing.xl, height: 52, fontSize: 16, fontWeight: 600 }
 
   return (
@@ -96,7 +97,10 @@ export function LandingPage() {
             </Button>
           </div>
           <div className="landing-hero__contact">
-            {/* Accounts are created by an Admin, so writing to the administrators is how a newcomer gets one. */}
+            {/* A request to join, not an account: an Admin decides and the server then emails the sign-in. */}
+            <Button ghost href={paths.join} onClick={goTo(paths.join)} style={{ height: 44, fontWeight: 500, marginInlineEnd: spacing.sm }}>
+              Đăng ký tham gia ca đoàn
+            </Button>
             <Button ghost icon={<MailOutlined />} href={`mailto:${contactEmail}`} style={{ height: 44, fontWeight: 500 }}>
               Liên hệ quản trị viên
             </Button>

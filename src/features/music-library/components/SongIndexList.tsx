@@ -1,6 +1,6 @@
 import { AlignLeftOutlined, ArrowRightOutlined, CustomerServiceOutlined } from '@ant-design/icons'
 import { Flex, Pagination, Spin, Tag } from 'antd'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { generatePath, Link, useLocation } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { SheetMusicOutlined } from '@/shared/ui'
@@ -48,6 +48,16 @@ function MaterialMark({ kind, icon, available }: Readonly<{ kind: MaterialKind; 
   )
 }
 
+/** Page 1 of the sheet, to know a song by sight; a blank page mark when there is none or it fails. The title names the song. */
+function SongThumbnail({ url }: Readonly<{ url?: string | null }>) {
+  const [failed, setFailed] = useState(false)
+  return (
+    <span aria-hidden className="song-index__thumb">
+      {url && !failed ? <img src={url} alt="" loading="lazy" onError={() => setFailed(true)} /> : <SheetMusicOutlined />}
+    </span>
+  )
+}
+
 /**
  * The music library as the contents page of a hymnal: ruled lines, the number and title in the display serif, credits
  * under the title, and which materials the song has (SongDto counts). The title's link covers the whole line. SongDto
@@ -83,6 +93,7 @@ export function SongIndexList({
                 <span aria-hidden className="song-index__number">
                   {(page - 1) * pageSize + index + 1}
                 </span>
+                {density !== 'compact' && <SongThumbnail url={song.sheetMusicThumbnailUrl} />}
                 <div style={{ minWidth: 0 }}>
                   <Flex align="center" gap={spacing.sm} wrap>
                     <Link to={generatePath(paths.director.songDetail, { songId: song.id })} state={songListState(search)} className="song-index__title">

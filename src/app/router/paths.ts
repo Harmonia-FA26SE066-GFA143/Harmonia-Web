@@ -6,6 +6,8 @@
 export const paths = {
   home: '/',
   login: '/login',
+  /** Public request to join the choir; it creates no account. */
+  join: '/join',
   forgotPassword: '/forgot-password',
   /** Target of the emailed reset link; the backend's PasswordReset__WebUrl must point here. */
   resetPassword: '/reset-password',
@@ -16,6 +18,8 @@ export const paths = {
   admin: {
     dashboard: '/admin',
     accounts: '/admin/accounts',
+    memberRegistrations: '/admin/member-registrations',
+    nominations: '/admin/director-nominations',
     roles: '/admin/roles',
     skillCategories: '/admin/skill-categories',
     liturgicalCategories: '/admin/liturgical-categories',
@@ -32,6 +36,7 @@ export const paths = {
     programCreate: '/priest/programs/new',
     programDetail: '/priest/programs/:programId',
     songListReview: '/priest/programs/:programId/song-review',
+    nominations: '/priest/director-nominations',
     reports: '/priest/reports',
     notes: '/priest/notes',
   },
@@ -41,6 +46,7 @@ export const paths = {
     members: '/director/members',
     choirs: '/director/choirs',
     skillApproval: '/director/skill-approval',
+    nominations: '/director/director-nominations',
     programs: '/director/programs',
     programDetail: '/director/programs/:programId',
     songListProposal: '/director/programs/:programId/song-list',
