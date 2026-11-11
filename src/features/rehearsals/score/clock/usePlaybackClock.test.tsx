@@ -204,6 +204,41 @@ describe('usePlaybackClock', () => {
     expect(result.current.error).toBe('playback-failed')
   })
 
+  it('sourceFailed: only the audio element failing sets it, not a refused play()', async () => {
+    FakeAudio.playError = new Error('NotAllowedError')
+    const { result } = setup('a.wav')
+    expect(result.current.sourceFailed).toBe(false)
+
+    await act(async () => result.current.play())
+    expect(result.current.error).toBe('playback-failed')
+    expect(result.current.sourceFailed).toBe(false)
+
+    act(() => last().dispatch('error'))
+    expect(result.current.sourceFailed).toBe(true)
+  })
+
+  it('sourceFailed clears when the audio actually plays and when src changes', async () => {
+    const { result, rerender } = setup('a.wav')
+    act(() => last().dispatch('error'))
+    expect(result.current.sourceFailed).toBe(true)
+
+    await act(async () => result.current.play())
+    expect(result.current.sourceFailed).toBe(false)
+
+    act(() => last().dispatch('error'))
+    expect(result.current.sourceFailed).toBe(true)
+    rerender({ s: 'b.wav' })
+    expect(result.current.sourceFailed).toBe(false)
+  })
+
+  it('an error fired by a disposed audio does not mark the next one as failed', () => {
+    const { result, rerender } = setup('a.wav')
+    const first = last()
+    rerender({ s: 'b.wav' })
+    act(() => first.dispatch('error'))
+    expect(result.current.sourceFailed).toBe(false)
+  })
+
   it('seek clamps to [0, duration], notifies once immediately even while paused, and matches after seeked', () => {
     const { result } = setup('a.wav')
     act(() => {

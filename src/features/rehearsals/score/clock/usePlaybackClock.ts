@@ -7,6 +7,8 @@ export interface PlaybackClock {
   playing: boolean
   duration: number
   error: PlaybackClockError | null
+  /** The audio element itself failed (bad or unreachable file), unlike a `play()` the browser refused. Stand-ins may omit it. */
+  sourceFailed?: boolean
   play(): Promise<void>
   pause(): void
   /** Clamped to [0, duration]; subscribers are called once right away, even while paused. */
@@ -40,6 +42,7 @@ export function usePlaybackClock(src: string | undefined, fallbackDuration = 0):
   const [playing, setPlaying] = useState(false)
   const [duration, setDuration] = useState(0)
   const [error, setError] = useState<PlaybackClockError | null>(null)
+  const [sourceFailed, setSourceFailed] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const listenersRef = useRef(new Set<TimeListener>())
 
@@ -50,6 +53,7 @@ export function usePlaybackClock(src: string | undefined, fallbackDuration = 0):
     setPlaying(false)
     setDuration(0)
     setError(null)
+    setSourceFailed(false)
   }
 
   useEffect(() => {
@@ -80,6 +84,7 @@ export function usePlaybackClock(src: string | undefined, fallbackDuration = 0):
     const handlers: Record<(typeof AUDIO_EVENTS)[number], () => void> = {
       play: () => {
         setError(null) // a retry that actually plays clears the earlier autoplay error
+        setSourceFailed(false)
         setPlaying(true)
         startLoop()
       },
@@ -94,7 +99,10 @@ export function usePlaybackClock(src: string | undefined, fallbackDuration = 0):
       seeked: () => emit(listeners, audio.currentTime),
       loadedmetadata: syncDuration,
       durationchange: syncDuration,
-      error: () => setError(PLAYBACK_ERROR),
+      error: () => {
+        setError(PLAYBACK_ERROR)
+        setSourceFailed(true)
+      },
     }
     for (const type of AUDIO_EVENTS) audio.addEventListener(type, handlers[type])
 
@@ -163,7 +171,7 @@ export function usePlaybackClock(src: string | undefined, fallbackDuration = 0):
 
   const effectiveDuration = Math.max(duration, safeFallbackDuration)
   return useMemo(
-    () => ({ playing, duration: effectiveDuration, error, ...api }),
-    [playing, effectiveDuration, error, api],
+    () => ({ playing, duration: effectiveDuration, error, sourceFailed, ...api }),
+    [playing, effectiveDuration, error, sourceFailed, api],
   )
 }

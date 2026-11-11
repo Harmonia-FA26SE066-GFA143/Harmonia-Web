@@ -200,6 +200,22 @@ describe('ScorePracticeSection, a loaded package', () => {
     expect(engines[0].load).toHaveBeenCalledWith(expect.objectContaining({ format: 'mxl', data: expect.any(Uint8Array) }), { pageWidth: expect.any(Number) })
   })
 
+  it('shows the controls as soon as the score is ready, without waiting to be scrolled into view', async () => {
+    // A viewer with motion on and a sheet that never scrolls into view; the test setup otherwise reports reduced motion.
+    vi.stubGlobal('IntersectionObserver', class {
+      observe() {}
+      disconnect() {}
+    })
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      (media) => ({ matches: false, media, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }) as unknown as MediaQueryList,
+    )
+    renderSection()
+    pickBoth()
+    await findSheet()
+    const play = screen.getByRole('button', { name: `Phát ${TITLE}` })
+    expect(play.closest('.hm-reveal:not(.is-visible)')).toBeNull()
+  })
+
   it('lights the sounding note on the mounted sheet', async () => {
     renderSection()
     pickBoth()
@@ -614,6 +630,115 @@ describe('ScorePracticeSection, failures', () => {
     await findSheet()
     expect(engines).toHaveLength(2)
     expect(screen.getByRole('slider', { name: `Vị trí phát ${TITLE}` })).toBeInTheDocument()
+  })
+
+  it.each([
+    ['an empty timemap', []],
+    ['a timemap with only rests', [{ tstamp: 0 }, { tstamp: 1000 }]],
+  ])('a score that renders with %s is refused: a message, the fallback, everything freed once, no audio', async (_name, timemap) => {
+    let engine: ReturnType<typeof fakeEngine> | undefined
+    mocks.createVerovioEngine.mockImplementationOnce(async () => {
+      engine = fakeEngine()
+      engine.load.mockResolvedValue({ svgPages: ['<svg xmlns="http://www.w3.org/2000/svg"></svg>'], mei: '<mei/>', timemap, aliases: new Map() })
+      return engine
+    })
+    const view = renderSection()
+    pickBoth()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Không đọc được nốt nhạc nào trong tệp này. Vui lòng kiểm tra lại tệp MusicXML.')
+    expect(screen.getByText(FALLBACK)).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Bản nhạc' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: `Phát ${TITLE}` })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Thử lại/ })).not.toBeInTheDocument()
+    expect(FakeAudio.instances.filter((audio) => audio.src !== '')).toHaveLength(0)
+    expect(vi.mocked(URL.revokeObjectURL).mock.calls).toEqual([['blob:audio-1']])
+    expect(engine!.dispose).toHaveBeenCalledTimes(1)
+    view.unmount()
+    expect(vi.mocked(URL.revokeObjectURL).mock.calls).toEqual([['blob:audio-1']])
+    expect(engine!.dispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('a score of a single note without lyrics stays ready', async () => {
+    renderSection()
+    pickBoth()
+    await findSheet()
+    expect(screen.getByRole('button', { name: `Phát ${TITLE}` })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByText(FALLBACK)).not.toBeInTheDocument()
+    expect(engines[0].dispose).not.toHaveBeenCalled()
+  })
+
+  it('an audio that never loads brings the fallback back and keeps the sheet to read', async () => {
+    renderSection()
+    pickBoth()
+    await findSheet()
+    await waitFor(() => expect(FakeAudio.instances.at(-1)?.src).toBe('blob:audio-1'))
+    act(() => FakeAudio.instances.at(-1)!.dispatch('error'))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Không thể phát âm thanh')
+    expect(screen.getByText(FALLBACK)).toBeInTheDocument()
+    expect(await findSheet()).toBeInTheDocument()
+  })
+
+  it('a play refused after the audio loaded keeps the fallback away: the score can still sound, so two players could', async () => {
+    renderSection()
+    pickBoth()
+    await findSheet()
+    await waitFor(() => expect(FakeAudio.instances.at(-1)?.src).toBe('blob:audio-1'))
+    setAudioDuration(10)
+    vi.spyOn(FakeAudio.instances.at(-1)!, 'play').mockRejectedValueOnce(new Error('NotAllowedError'))
+    fireEvent.click(screen.getByRole('button', { name: `Phát ${TITLE}` }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Không thể phát âm thanh')
+    expect(screen.queryByText(FALLBACK)).not.toBeInTheDocument()
+  })
+
+  const readyWithAudio = async () => {
+    renderSection()
+    pickBoth()
+    await findSheet()
+    await waitFor(() => expect(FakeAudio.instances.at(-1)?.src).toBe('blob:audio-1'))
+    return FakeAudio.instances.at(-1)!
+  }
+  const refusePlay = async (audio: FakeAudio) => {
+    vi.spyOn(audio, 'play').mockRejectedValueOnce(new DOMException('blocked', 'NotAllowedError'))
+    fireEvent.click(screen.getByRole('button', { name: `Phát ${TITLE}` }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Không thể phát âm thanh')
+  }
+
+  it('a play refused before the audio has loaded keeps the fallback away', async () => {
+    await refusePlay(await readyWithAudio())
+    expect(screen.queryByText(FALLBACK)).not.toBeInTheDocument()
+  })
+
+  it('a play refused before loading, then a retry once loaded: the score alone sounds', async () => {
+    const audio = await readyWithAudio()
+    await refusePlay(audio)
+    // In between too: a fallback shown here could be started and then play beside the score.
+    expect(screen.queryByText(FALLBACK)).not.toBeInTheDocument()
+    setAudioDuration(10)
+    vi.spyOn(audio, 'play').mockImplementationOnce(() => {
+      audio.paused = false
+      audio.dispatch('play')
+      return Promise.resolve()
+    })
+    fireEvent.click(screen.getByRole('button', { name: `Phát ${TITLE}` }))
+    await screen.findByRole('button', { name: `Tạm dừng ${TITLE}` })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByText(FALLBACK)).not.toBeInTheDocument()
+  })
+
+  it('a play refused, then the audio fails to load: the fallback comes back', async () => {
+    const audio = await readyWithAudio()
+    await refusePlay(audio)
+    act(() => audio.dispatch('error'))
+    expect(await screen.findByText(FALLBACK)).toBeInTheDocument()
+  })
+
+  it('an audio that fails after it had loaded keeps the sheet and the message, without the fallback', async () => {
+    const audio = await readyWithAudio()
+    setAudioDuration(10)
+    act(() => audio.dispatch('error'))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Không thể phát âm thanh')
+    expect(screen.queryByText(FALLBACK)).not.toBeInTheDocument()
+    expect(await findSheet()).toBeInTheDocument()
   })
 
   it('an engine failure frees the package and falls back with a retry', async () => {
