@@ -1,7 +1,6 @@
 import { Alert, ConfigProvider } from 'antd'
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
 import { env } from '@/config/env'
-import { Reveal } from '@/shared/ui/Reveal'
 import { spacing } from '@/styles/tokens'
 import { usePlaybackClock } from '../score/clock/usePlaybackClock'
 import { FocusModeButton } from '../score/focus/FocusModeButton'
@@ -170,6 +169,8 @@ function ScorePlayer({
         const { score, audioUrl } = scorePackage
         // The tie map only adds group info and finalOff (lyrics hold over tied notes); note on/off times and onsets stay as they were.
         const timeline = parseTimemap(loaded.timemap, loaded.aliases, parseTieMap(loaded.mei))
+        // Verovio accepts broken XML and draws an empty page; a score with no note to follow is refused like a wrong file.
+        if (timeline.onsets.size === 0) throw new ScoreSourceError('invalid-type', 'Không đọc được nốt nhạc nào trong tệp này. Vui lòng kiểm tra lại tệp MusicXML.')
         // The sheet may have reported its real width while the engine was busy; draw at that width before showing it.
         const svgPages = pageWidth.current === loadWidth ? loaded.svgPages : relayoutOr(engine, pageWidth.current, loaded.svgPages)
         engineRef.current = engine
@@ -217,6 +218,9 @@ function ScorePlayer({
 
   const { active } = focus
   const warning = ready && misalignmentNote(clock.duration, ready.timelineSeconds)
+  // An audio that never loaded (a corrupt WAV) can never sound, so the room's own player may come back beside the sheet.
+  // A refused play() can still be retried, loaded or not: the fallback stays away then, or two players could sound at once.
+  const audioDead = ready !== undefined && clock.sourceFailed === true && clock.duration <= 0
   // One ScoreViewer element for every state, so it is kept (not rebuilt) as the state moves from loading to ready to refused.
   let viewer: ReactNode
   if (failed) viewer = <ScoreViewer status="error" svgPages={[]} title={title} onRetry={onRetry} />
@@ -272,11 +276,7 @@ function ScorePlayer({
             {viewer}
           </div>
           {warning && <Alert type="warning" showIcon title={warning} style={{ marginTop: spacing.md }} />}
-          {ready && (
-            <Reveal>
-              <PlaybackControls clock={clock} title={title} />
-            </Reveal>
-          )}
+          {ready && <PlaybackControls clock={clock} title={title} />}
           <LyricSelector
             parts={lyricChoice.parts}
             verses={lyricChoice.verses}
@@ -286,7 +286,7 @@ function ScorePlayer({
           />
         </dialog>
       </ConfigProvider>
-      {failed && fallback}
+      {(failed || audioDead) && fallback}
     </>
   )
 }
