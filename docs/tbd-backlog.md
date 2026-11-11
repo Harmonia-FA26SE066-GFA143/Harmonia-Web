@@ -181,3 +181,9 @@ Nine BE commits since `d550665` add director chat, public member registration, d
 - Parish Priests and Choir Directors nominate eligible members; the Parish Priest reviews and records training, and the Admin appoints (`DirectorNominationsController.cs:15-96`).
 - Removing the `ChoirDirector` role or deactivating a director who still leads a choir or substitutes at an upcoming event returns 409 `USER_STILL_DIRECTING`; changing a choir's director sends `ChoirChanged` notifications.
 - `SongDto.sheetMusicThumbnailUrl` is the non-expiring 160×220 preview of page 1 of the oldest active sheet music; the original remains behind short-lived URLs (`SongDto.cs:33-37`, `IFileStorageService.cs:25-32`).
+
+## Background tasks at BE `main@d74096c` (2026-11-12)
+
+| ID | Capability Web needs | Why (evidence) | Status |
+|---|---|---|---|
+| B51 | A persistent AI lyrics extraction job | `POST api/music-materials/{id}/extract-lyrics` (Choir Director, `MusicMaterialsController.cs:111-115`) waits for Gemini and answers `{ lyricsText }` once (`MusicMaterialService.cs:363-375`); nothing is stored. The Web now runs it as a background task of the browser tab, so the Choir Director can move to another page, and keeps the draft in that tab until it is opened and saved. A reload, a closed tab, a lost connection, an expired session or a backend restart still loses the run and its result | TBD: Backend API missing. Needed: start a job and get its id; read its state (queued, running, succeeded, failed) and result as the Choir Director; one running job per material; results kept for a limited time; polling or SignalR for updates. The Web will not name an endpoint before the BE decides the contract |
