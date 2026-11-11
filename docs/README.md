@@ -2,7 +2,7 @@
 
 Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì với BE, đọc trực tiếp sau khi `git pull` repo Harmonia-Web. Nội dung các file viết bằng tiếng Anh để giữ nguyên tên API, mã lỗi và trích dẫn code; file này là bản tóm tắt tiếng Việt.
 
-- Cập nhật lần cuối: 2026-11-07, đối chiếu với Harmonia-BE `main@d550665`. Thay đổi hợp đồng phía BE ghi ở `docs/api-changelog.md` của repo BE (thư mục `doc/` đã đổi tên thành `docs/`).
+- Cập nhật lần cuối: 2026-11-10, đối chiếu với Harmonia-BE `main@d74096c`. Thay đổi hợp đồng phía BE ghi ở `docs/api-changelog.md` của repo BE.
 - Cách đọc trích dẫn: `File.cs:12-20` là đường dẫn và số dòng trong code BE ở commit trên; `src/...` là code Web.
 - Web làm theo BE ở mọi chỗ BE đã quy định (trường, trạng thái, ai được làm gì, mã lỗi). Chỗ BE chưa có thì ghi là cần BE bổ sung, kèm quyết định tạm của owner.
 
@@ -26,8 +26,6 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
 
 | Mục | Việc cần BE làm | Ghi chú |
 |---|---|---|
-| B42 | Lời bài hát có mốc thời gian từng câu, chạy theo audio mẫu | Cho phòng luyện tập. Chờ owner quyết ai nhập mốc thời gian |
-| B48 | Cha xứ xem được danh sách Ca trưởng để chọn ca trưởng thay thế cho một sự kiện | `GET api/users` chỉ Admin đọc được; Web chỉ gợi ý các ca trưởng đã có ca đoàn. Đề xuất: danh sách Ca trưởng đang hoạt động, chỉ đọc, cho Cha xứ |
 | B49 | Ca trưởng đọc được setting `Rehearsal.AttendanceStartCheckEnabled` | Khi Admin tắt kiểm tra, điểm danh được bất cứ lúc nào, nhưng Web không biết nên vẫn khoá bảng điểm danh trước giờ tập. Đề xuất: đặt setting là public hoặc trả kèm buổi tập |
 
 Các việc BE cần xem (không phải mục backlog, chi tiết ở cuối `tbd-backlog.md`):
@@ -39,6 +37,9 @@ Các việc BE cần xem (không phải mục backlog, chi tiết ở cuối `tb
 
 Owner đã chốt ngày 2026-10-27 (ghi ở `open-business-decisions.md`): giữ thứ tự gợi ý bài như BE; giữ cho khai bè S/A/T/B ở vai cả buổi lễ; đề nghị BE chặn phân công trùng giờ (B40, BE đã làm).
 
+- Đã xong ở `d74096c` (2026-11-10): B42 (lời theo mốc thời gian cho audio/score); thumbnail trang đầu bản nhạc trong `SongDto`; `MusicMaterialDto.fileRevision`; notes schema v2 cho bản nhạc tương tác; upload audio hỏng trả `MATERIAL_AUDIO_INVALID`. Web chưa nối các trường và endpoint mới này.
+- Đã xong ở `f449a4b` đến `717e8d1` (2026-11-07 đến 09): chat Cha xứ–Ca trưởng trả danh sách mọi Ca trưởng đang hoạt động, nên B48 đã có nguồn dữ liệu; đăng ký gia nhập công khai; đề cử, đào tạo và bổ nhiệm Ca trưởng. Web hiện mới dùng chat, chưa có các màn đăng ký/đề cử.
+- Thay đổi bàn giao Ca trưởng ở `9f89eea` (2026-11-10): đổi role hoặc vô hiệu hoá người còn phụ trách trả `USER_STILL_DIRECTING`; `NotificationType` thêm `ChoirChanged`.
 - Đã xong ở `d550665` (2026-11-07): sự kiện bắt buộc ca đoàn và ca đoàn phụ trách; lý do khi gỡ ca đoàn khỏi sự kiện đã công bố; ca trưởng thay thế cho một sự kiện; xác nhận hộ lời mời; chấm điểm tự động bản thu (Web `504a506`, `b906d14`, `2c6ed1f`); bản nhạc tương tác MusicXML và setting chặn điểm danh trước giờ tập thêm ở BE, Web chưa dùng (B49). `docs/api-changelog.md` của BE nay đã ghi mục 2026-11-03, API ảnh đại diện và các thay đổi quyền của `c091c07`.
 - Đã xong ở `9b1f587` (2026-11-03): B46 (vai trò hiện tại trên từng hồ sơ ca viên; hồ sơ của người đã chuyển vai trò được giữ, ngừng hoạt động, không sửa được); thêm minh chứng ghi âm hoặc clip cho kỹ năng khai báo. Web nối hết ở #289.
 - Đã xong ở `90af733` (2026-11-01): B39 (thiếu người trả rỗng), B41 (Ca trưởng đọc tình hình chuẩn bị), B43 (thu âm buổi tập, BE tự quyết: Ca trưởng thu, ca viên nghe trên mobile), B44 (hạn gửi danh sách bài), B45 (màu phụng vụ theo ngày); thêm API mọi phiên bản danh sách bài và ảnh đại diện. Web nối hết ở #265.

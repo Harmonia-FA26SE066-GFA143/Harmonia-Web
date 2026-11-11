@@ -22,6 +22,6 @@ Members view upcoming Masses, ceremonies, performances, and rehearsal schedules 
 - No reminders for rehearsals and no attendance at the Mass itself.
 - Report metrics (3.1): attendance rate = sessions present ÷ practice sessions of one event; confirmation rate = members who confirmed ÷ members sent the request.
 
-## Open questions (the BE decides where it covers them; the rest belong in `design/tbd-backlog.md`)
+## Open questions (the BE decides where it covers them; the rest belong in [`tbd-backlog.md`](../tbd-backlog.md))
 
 Whether rehearsal songs must come from an approved list (the BE accepts any active song; the Web only offers to fill them from the approved list); reminders to members who have not answered; whether instrumentalists are invited through the same member list; what happens to attendance when a rehearsal is edited.
