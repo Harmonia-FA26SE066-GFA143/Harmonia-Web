@@ -1,5 +1,5 @@
 import type { RawTimemapEntry } from '../timeline/types'
-import { ScoreEngineError, type ScoreEngine, type ScoreInput, type ScoreToolkit } from './types'
+import { ScoreEngineError, type ScoreEngine, type ScoreToolkit } from './types'
 
 /**
  * Wraps a toolkit with a lifecycle. Verovio options stay as in the spike (docs/local/spikes/verovio): defaults plus
@@ -11,6 +11,41 @@ import { ScoreEngineError, type ScoreEngine, type ScoreInput, type ScoreToolkit 
 export const ALIAS_BATCH_SIZE = 500
 /** SVG pages scanned for ids per task. */
 export const PAGE_SCAN_BATCH_SIZE = 10
+
+/**
+ * Most `<note>` elements a score may have before the engine refuses it with `too-complex`: a limit on elements, not on
+ * sounding notes. Each note of a chord counts; in MusicXML a rest is a `<note>` too and counts (in Verovio's MEI it is a
+ * `<rest>` and does not), so the user is told "nốt và dấu lặng". Comments and CDATA are skipped. Verovio parses, lays out and builds the timemap in single calls that cannot yield and grow
+ * faster than the score (P10-A, Chromium, 4-part score in eighths with 2 verses and a repeat every 8 bars): 200 bars,
+ * 6 400 notes, load 3,3 s; 400 bars 6,6 s; 800 bars 24,4 s. 6 400 keeps the longest load under the 4,6 s accepted in
+ * slice 1 (F2-I1); a real 4-part hymn of 100 bars in quarters has about 1 600. To change it, measure again (report P10-A).
+ */
+export const MAX_SCORE_NOTES = 6400
+const HIDDEN = [
+  ['<!--', '-->'],
+  ['<![CDATA[', ']]>'],
+] as const
+
+/**
+ * `<note` followed by a space, `/` or `>`, outside comments and CDATA. One pass from `<` to `<` with no DOM: a comment or
+ * CDATA that never closes hides the rest of the text, as an XML parser would read it.
+ */
+function countNotes(xml: string): number {
+  let count = 0
+  let at = xml.indexOf('<')
+  while (at !== -1) {
+    const hidden = HIDDEN.find(([open]) => xml.startsWith(open, at))
+    if (hidden) {
+      const end = xml.indexOf(hidden[1], at + hidden[0].length)
+      if (end === -1) break
+      at = xml.indexOf('<', end + hidden[1].length)
+      continue
+    }
+    if (xml.startsWith('<note', at) && /[\s/>]/.test(xml.charAt(at + 5))) count += 1
+    at = xml.indexOf('<', at + 1)
+  }
+  return count
+}
 
 type Pause = () => Promise<void>
 
@@ -42,12 +77,19 @@ export function createScoreEngine(initial: ScoreToolkit, pause: Pause = yieldToB
       if (ticket !== latest) throw new ScoreEngineError('superseded')
 
       loaded = false
+      // MusicXML text is counted before Verovio sees it. An mxl is only counted once parsed (from its MEI), before the
+      // timemap and the pages, the larger part of the time.
+      // ponytail: an over-limit mxl still costs its parse (800 bars: 5,7 s); unzip it here first if that matters.
+      const text = input.format === 'musicxml' ? asText(input.data) : undefined
+      if (text !== undefined && countNotes(text) > MAX_SCORE_NOTES) throw new ScoreEngineError('too-complex')
       try {
         if (!target.setOptions(layoutOptions(pageWidth))) throw new Error('Verovio rejected the layout options')
-        if (!parse(target, input)) throw new Error('Verovio rejected the score data')
+        const parsed = input.format === 'mxl' ? target.loadZipDataBuffer(input.data.slice().buffer) : target.loadData(text ?? '')
+        if (!parsed) throw new Error('Verovio rejected the score data')
+        const mei = target.getMEI()
+        if (countNotes(mei) > MAX_SCORE_NOTES) throw new ScoreEngineError('too-complex')
         const timemap = target.renderToTimemap({ includeMeasures: true })
         const svgPages = renderPages(target)
-        const mei = target.getMEI()
         // A dispose() or a newer load() while this one waits ends it: the toolkit then holds another score, or none.
         const pauseOrStop = async () => {
           await pause()
@@ -128,10 +170,7 @@ function originalOf(answer: unknown, id: string, drawn: ReadonlySet<string>): st
   return original !== id && drawn.has(original) ? original : undefined
 }
 
-function parse(target: ScoreToolkit, input: ScoreInput): boolean {
-  if (input.format === 'mxl') return target.loadZipDataBuffer(input.data.slice().buffer)
-  return target.loadData(typeof input.data === 'string' ? input.data : new TextDecoder().decode(input.data))
-}
+const asText = (data: string | Uint8Array) => (typeof data === 'string' ? data : new TextDecoder().decode(data))
 
 /**
  * `adjustPageHeight` (Chat 2026-11-08, P4 fix 1): a page is only as tall as its systems, so a short song does not sit

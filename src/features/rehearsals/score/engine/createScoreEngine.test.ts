@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { ALIAS_BATCH_SIZE, createScoreEngine } from './createScoreEngine'
+import { ALIAS_BATCH_SIZE, MAX_SCORE_NOTES, createScoreEngine } from './createScoreEngine'
 import { ScoreEngineError, type ScoreToolkit } from './types'
 
 const TIMEMAP = [
@@ -299,5 +301,63 @@ describe('createScoreEngine', () => {
 
     expect(toolkit.loadData.mock.calls).toEqual([['<lời/>'], ['<lời/>']])
     expect(toolkit.loadZipDataBuffer).not.toHaveBeenCalled()
+  })
+
+  it('a MusicXML text with more than MAX_SCORE_NOTES notes is refused with too-complex before Verovio parses it', async () => {
+    const toolkit = fakeToolkit()
+    const engine = createScoreEngine(toolkit)
+    const notes = (count: number) => '<score>' + '<note default-x="1"><notehead/><notations/></note>'.repeat(count) + '</score>'
+
+    expect((await rejection(engine.load({ format: 'musicxml', data: notes(MAX_SCORE_NOTES + 1) }, LAYOUT))).code).toBe('too-complex')
+    expect((await rejection(engine.load({ format: 'musicxml', data: new TextEncoder().encode(notes(MAX_SCORE_NOTES + 1)) }, LAYOUT))).code).toBe('too-complex')
+    expect(toolkit.setOptions).not.toHaveBeenCalled()
+    expect(toolkit.loadData).not.toHaveBeenCalled()
+    expect(() => engine.relayout(1200)).toThrow(expect.objectContaining({ code: 'not-loaded' }))
+
+    // exactly at the limit it loads; <notehead> and <notations> are not notes
+    await engine.load({ format: 'musicxml', data: notes(MAX_SCORE_NOTES) }, LAYOUT)
+    expect(toolkit.loadData).toHaveBeenCalledTimes(1)
+  })
+
+  it('notes inside XML comments and CDATA are not counted: a small score full of them loads, a long one is still refused', async () => {
+    const toolkit = fakeToolkit()
+    const engine = createScoreEngine(toolkit)
+    const hidden = `<!-- ${'<note>'.repeat(MAX_SCORE_NOTES)} --><![CDATA[${'<note/>'.repeat(MAX_SCORE_NOTES)}]]>`
+    const small = `<score>${hidden}<note><pitch/></note><note><rest/></note>${hidden}</score>`
+
+    await engine.load({ format: 'musicxml', data: small }, LAYOUT)
+    expect(toolkit.loadData.mock.calls).toEqual([[small]])
+
+    const long = `<score>${hidden}${'<note><pitch/></note>'.repeat(MAX_SCORE_NOTES + 1)}</score>`
+    expect((await rejection(engine.load({ format: 'musicxml', data: long }, LAYOUT))).code).toBe('too-complex')
+    // a comment that never closes hides the rest of the file, as it does from an XML parser
+    await engine.load({ format: 'musicxml', data: `<score><note/><!-- ${'<note/>'.repeat(MAX_SCORE_NOTES + 1)}` }, LAYOUT)
+    expect(toolkit.loadData).toHaveBeenCalledTimes(2)
+  })
+
+  it('an mxl whose parsed score has more than MAX_SCORE_NOTES notes is refused with too-complex before the timemap and the pages', async () => {
+    const mei = (count: number) => '<mei>' + '<note xml:id="n"/>'.repeat(count) + '<notehead/></mei>'
+    const toolkit = fakeToolkit({ getMEI: vi.fn(() => mei(MAX_SCORE_NOTES + 1)) })
+    const engine = createScoreEngine(toolkit)
+
+    expect((await rejection(engine.load({ format: 'mxl', data: new Uint8Array([1]) }, LAYOUT))).code).toBe('too-complex')
+    expect(toolkit.renderToTimemap).not.toHaveBeenCalled()
+    expect(toolkit.renderToSVG).not.toHaveBeenCalled()
+    expect(() => engine.relayout(1200)).toThrow(expect.objectContaining({ code: 'not-loaded' }))
+
+    toolkit.getMEI.mockReturnValue(mei(MAX_SCORE_NOTES))
+    expect((await engine.load({ format: 'mxl', data: new Uint8Array([1]) }, LAYOUT)).mei).toBe(mei(MAX_SCORE_NOTES))
+    expect(toolkit.getMEI).toHaveBeenCalledTimes(2)
+  })
+
+  it('the hand-written SATB fixture (4 staves, 113 notes, lyrics) passes the note check and reaches Verovio unchanged', async () => {
+    const satb = readFileSync(join(process.cwd(), 'src/features/rehearsals/score/engine/__fixtures__/satb-chieu-ve.musicxml'), 'utf8')
+    expect(satb.match(/<note[\s/>]/g)).toHaveLength(113) // 28 per part, plus the second note of the bass chord
+    expect(satb.match(/<score-part /g)).toHaveLength(4)
+    const toolkit = fakeToolkit()
+
+    await createScoreEngine(toolkit).load({ format: 'musicxml', data: satb }, LAYOUT)
+
+    expect(toolkit.loadData.mock.calls).toEqual([[satb]])
   })
 })
