@@ -1,34 +1,45 @@
 import type { ThemeConfig } from 'antd'
-import { colors, gold, layout, radius, shadows, sizes, spacing, spine, typography } from '@/styles/tokens'
+import { component, layout, motion, radius, semantic, shadows, sizes, spacing, typography } from '@/styles/tokens'
+
+const seconds = (ms: number) => `${ms / 1000}s`
 
 /**
- * Maps Harmonia design tokens onto Ant Design theme tokens.
- * Semantic colors (success/warning/info) keep Ant Design defaults: no approved values exist yet. Two defaults fail
- * WCAG 1.4.3 as text and are darkened: the placeholder (1.8:1) and the error red (3.3:1 on white); the focus ring
- * fails 1.4.11 and uses the primary color.
+ * Ant Design on the Harmonia Design System tokens (owner 2026-11-10). Parish Burgundy is primary, link and the keyboard
+ * focus ring (the derived default ring is too faint for WCAG 1.4.11). Success, warning, error and info keep their own
+ * tinted pairs (5.1:1 or better), always with a word or icon.
  */
 export const theme: ThemeConfig = {
   token: {
-    colorPrimary: colors.primary,
-    colorPrimaryHover: colors.primaryHover,
-    colorLink: colors.primary,
-    colorLinkHover: colors.primaryHover,
-    colorBgLayout: colors.background,
-    colorBgContainer: colors.surface,
-    colorFillAlter: colors.softSurface,
-    colorBorder: colors.border,
-    colorBorderSecondary: 'rgba(0, 0, 0, 0.06)',
-    colorText: colors.textPrimary,
-    colorTextSecondary: colors.textBody,
-    colorTextTertiary: colors.textMuted,
-    colorTextDisabled: colors.textDisabled,
-    colorTextPlaceholder: colors.textMuted,
-    colorError: '#cf1322',
-    controlOutline: colors.primaryFocus,
-    // Color of every keyboard focus ring; the derived default is 2.2:1 on white.
-    colorPrimaryBorder: colors.primary,
-    controlItemBgActive: colors.primarySoft,
-    controlItemBgHover: 'rgba(142, 59, 75, 0.04)',
+    colorPrimary: semantic.action.primary,
+    colorPrimaryHover: semantic.action.primaryHover,
+    colorPrimaryActive: semantic.action.primaryHover,
+    colorLink: semantic.action.link,
+    colorLinkHover: semantic.action.linkHover,
+    colorLinkActive: semantic.action.linkHover,
+    colorBgLayout: semantic.surface.page,
+    colorBgContainer: semantic.surface.base,
+    colorFillAlter: semantic.surface.soft,
+    colorBorder: semantic.border.control,
+    colorBorderSecondary: semantic.border.default,
+    colorSplit: semantic.border.default,
+    colorText: semantic.text.primary,
+    colorTextSecondary: semantic.text.body,
+    colorTextTertiary: semantic.text.muted,
+    colorTextDisabled: semantic.text.disabled,
+    colorTextPlaceholder: semantic.text.muted,
+    colorError: semantic.status.error,
+    colorErrorBg: semantic.status.errorTint,
+    colorSuccess: semantic.status.success,
+    colorSuccessBg: semantic.status.successTint,
+    colorWarning: semantic.status.warning,
+    colorWarningBg: semantic.status.warningTint,
+    colorInfo: semantic.status.info,
+    colorInfoBg: semantic.status.infoTint,
+    controlOutline: semantic.action.focusHalo,
+    // The colour of every keyboard focus ring.
+    colorPrimaryBorder: semantic.action.focus,
+    controlItemBgActive: semantic.action.selectedWash,
+    controlItemBgHover: semantic.surface.soft,
 
     fontFamily: typography.fontFamily,
     fontSize: typography.fontSize,
@@ -48,60 +59,86 @@ export const theme: ThemeConfig = {
     boxShadow: shadows.md,
     boxShadowSecondary: shadows.lg,
     boxShadowTertiary: shadows.sm,
+
+    motionDurationFast: seconds(motion.fast),
+    motionDurationMid: seconds(motion.base),
+    motionDurationSlow: seconds(motion.panel),
+    motionEaseOut: motion.ease,
+    motionEaseOutCirc: motion.ease,
   },
   components: {
     Layout: {
-      bodyBg: colors.background,
+      bodyBg: semantic.surface.page,
       headerHeight: layout.headerHeight,
       headerPadding: `0 ${layout.contentPaddingX}px`,
-      siderBg: spine.background,
     },
     Menu: {
-      // The light menu of the mobile drawer: the selected row is a grey step with ink text. The desktop sidebar wears
-      // spineTheme below.
-      itemSelectedBg: colors.selectedSurface,
-      itemSelectedColor: colors.textPrimary,
-      groupTitleColor: colors.textMuted,
+      // The light menu of the small-screen drawer.
+      itemSelectedBg: semantic.surface.selected,
+      itemSelectedColor: semantic.text.primary,
+      groupTitleColor: semantic.text.muted,
       groupTitleFontSize: typography.metadata.fontSize,
-      itemHoverBg: colors.softSurface,
-      itemHoverColor: colors.textPrimary,
+      itemHoverBg: semantic.surface.soft,
+      itemHoverColor: semantic.text.primary,
       itemHeight: 40,
       itemBorderRadius: radius.md,
       activeBarBorderWidth: 0,
       itemMarginInline: spacing.sm,
       itemMarginBlock: 4,
     },
-    // Flat at rest: shadows appear on hover, focus or press only (DESIGN.md "Lift Means Touch"; `hm-lift` in global.css).
     Button: {
       defaultShadow: 'none',
       primaryShadow: 'none',
       dangerShadow: 'none',
       fontWeight: 500,
+      defaultBorderColor: semantic.border.control,
     },
     Card: {
-      colorBorderSecondary: 'rgba(0, 0, 0, 0.07)',
+      colorBorderSecondary: semantic.border.hairline,
+      headerHeight: component.card.headHeight,
+      headerPadding: component.card.padding,
+      bodyPadding: component.card.padding,
     },
     Table: {
-      // A quiet paper band keeps column labels distinct without turning tables into admin-heavy grids.
-      headerBg: colors.parchment,
-      headerColor: colors.primaryHover,
+      // Printed heads: ink on the parchment band, sentence case.
+      headerBg: component.table.headBg,
+      headerColor: component.table.headColor,
       headerSplitColor: 'transparent',
-      rowHoverBg: colors.softSurface,
-      cellPaddingBlock: spacing.md,
+      rowHoverBg: component.table.rowHover,
+      rowSelectedBg: component.table.rowSelected,
+      rowSelectedHoverBg: component.table.rowSelected,
+      cellPaddingBlock: component.table.rowPaddingBlock,
+      cellPaddingBlockMD: component.table.rowPaddingBlock,
+      cellPaddingBlockSM: component.table.rowPaddingBlockCompact,
+      cellPaddingInline: component.table.cellPaddingInline,
+      cellPaddingInlineMD: component.table.cellPaddingInline,
+      cellPaddingInlineSM: component.table.cellPaddingInline,
+      cellFontSize: component.table.fontSize,
+      cellFontSizeMD: component.table.fontSize,
+      cellFontSizeSM: component.table.fontSize,
       borderRadius: radius.lg,
     },
-    // Placeholders in warm parchment, not cold grey (owner 2026-11-04, Figma "Trạng thái").
     Skeleton: {
-      gradientFromColor: '#F0EAE0',
-      gradientToColor: '#E9E1D3',
+      gradientFromColor: component.skeleton.from,
+      gradientToColor: component.skeleton.to,
     },
     Breadcrumb: {
       fontSize: typography.metadata.fontSize,
-      separatorColor: colors.textMuted,
-      itemColor: colors.textMuted,
+      separatorColor: semantic.text.muted,
+      itemColor: semantic.text.muted,
     },
     Input: {
-      activeShadow: '0 0 0 3px rgba(142, 59, 75, 0.15)',
+      activeShadow: `0 0 0 3px ${semantic.action.focusHalo}`,
+    },
+    Select: {
+      activeOutlineColor: semantic.action.focusHalo,
+    },
+    Tag: {
+      defaultBg: semantic.surface.soft,
+      defaultColor: semantic.text.body,
+    },
+    Drawer: {
+      footerPaddingBlock: spacing.md - 4,
     },
     Modal: {
       boxShadow: shadows.xl,
@@ -110,36 +147,13 @@ export const theme: ThemeConfig = {
 }
 
 /**
- * Ivory reading surfaces (brief §12.10): event detail and song-list review. Layout, container and elevated
- * backgrounds all take ivory, so a dropdown or modal opened inside does not flash pure white. Nested under the root
- * ConfigProvider, which still owns every other token.
+ * Reading surfaces (program detail, song-list review): layout, container and elevated backgrounds all take vellum, so a
+ * dropdown or modal opened inside does not flash white. Nested under the root ConfigProvider.
  */
 export const readingTheme: ThemeConfig = {
   token: {
-    colorBgLayout: colors.ivory,
-    colorBgContainer: colors.ivory,
-    colorBgElevated: colors.ivory,
-  },
-}
-
-/**
- * The desktop sidebar as the songbook's burgundy spine (owner 2026-10-31, replacing the neutral chrome of 2026-10-30;
- * no thumb tabs or area grounds). AppShell applies it around the sidebar only. The focus ring takes the pale spine
- * text: burgundy on the spine is 1.9:1.
- */
-export const spineTheme: ThemeConfig = {
-  components: {
-    Menu: {
-      itemBg: 'transparent',
-      itemColor: spine.text,
-      itemHoverBg: spine.hover,
-      itemHoverColor: colors.surface,
-      itemActiveBg: spine.selected,
-      itemSelectedBg: spine.selected,
-      itemSelectedColor: colors.surface,
-      // Group titles as pale-gold rubrics (8.9:1 on the bookcloth, owner 2026-11-03).
-      groupTitleColor: gold.soft,
-      colorPrimaryBorder: spine.text,
-    },
+    colorBgLayout: semantic.surface.reading,
+    colorBgContainer: semantic.surface.reading,
+    colorBgElevated: semantic.surface.reading,
   },
 }

@@ -54,12 +54,17 @@
   gap: var(--hm-score-pad);
 }
 
-/* Hooks for P5/P7 (static look only; motion belongs to P7). Verovio nests a note's syllables (g.verse) inside the
+/* The sounding note. Verovio nests a note's syllables (g.verse) inside the
    note, and fill is inherited, so the verse is set back to ink: the lyric has its own hook. */
 .hm-score-note--active {
   color: var(--hm-score-active);
   fill: var(--hm-score-active);
   stroke: var(--hm-score-active);
+}
+
+/* Only the notehead glows: the note's group also holds its lyrics. In the units of Verovio's scaled drawing; a state, so reduced motion keeps it. */
+.hm-score-note--active .notehead {
+  filter: drop-shadow(0 0 40px var(--hm-score-active));
 }
 
 .hm-score-note--active .verse {

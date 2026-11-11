@@ -1,158 +1,191 @@
 /**
- * Harmonia design tokens.
- * Sources: .ai-skills/design/design-system.md (workspace root) for colors; Stitch DESIGN(2).md
- * (project 5445464059092912576) for typography, sizing and layout where design-system.md is silent.
- * Where the two disagree, design-system.md wins (see docs/stitch-screen-map.md, phase 0 notes).
- * Single source for colors and sizes; the Ant Design theme and custom styles both read from here.
+ * Harmonia design tokens, from the Harmonia Design System artifact (owner choice 2026-11-10, replacing the "Mực son"
+ * trial): Parish Burgundy for actions, the Bookcloth Spine for the chrome, Warm Paper under every page, gold only as a
+ * hairline. Values and their contrast notes come from the artifact's tokens.json; contrast is measured on the ground named.
+ *
+ * Three layers:
+ * 1. `primitive`: raw values, named by what they are. Nothing outside this file reads them.
+ * 2. `semantic`: what a value is for (text.primary, action.focus). Components and CSS read this layer, in TS or as
+ *    `--hm-*` variables (`cssVariables`, injected once in main.tsx).
+ * 3. `component`: the few values one component owns (table head, drawer widths).
+ *
+ * The exports below `component` (`colors`, `spine`, `sections`…) are the compatibility layer the existing pages import;
+ * each value comes from `semantic`, so no colour is written twice.
  */
-export const colors = {
-  /** A warm paper page, a step toward the missal's cream (owner 2026-11-03); colour is kept for the data. */
-  background: '#F5F0E8',
-  surface: '#FFFFFF',
-  softSurface: '#F5F1F1',
-  /** The selected row of the navigation and of lists: one grey step, ink text. */
-  selectedSurface: '#EEE8E9',
-  border: '#E6DEDF',
-  mutedBorder: '#D3C8CA',
-  /** Ink, never pure black. */
-  textPrimary: '#1E1A1C',
-  textBody: '#3F3639',
-  textMuted: '#6B5F62',
-  /** Still 5.5:1 on the grey of a disabled control: a disabled button must be readable, only not clickable. */
-  textDisabled: '#5F6368',
-  primary: '#8E3B4B',
-  primaryHover: '#762E3D',
-  primarySoft: 'rgba(142, 59, 75, 0.08)',
-  primaryFocus: 'rgba(142, 59, 75, 0.25)',
-  /** Reading surfaces (redesign brief 2026-10-31): season banner, event detail, song-list review. Not a page ground. */
-  ivory: '#F7F4ED',
-  parchment: '#EEE8DC',
+
+// ---------------------------------------------------------------- 1. Primitive
+const primitive = {
+  burgundy: { 900: '#4A1D27', 850: '#5A2431', 800: '#6A2C39', 700: '#762E3D', 600: '#8E3B4B', 50: '#F6EBED' },
+  rose: { 200: '#EADADD', 300: '#C9A9B0' },
+  ink: { 900: '#1E1A1C', 700: '#3F3639', 500: '#6B5F62', grey: '#5F6368', 400: '#8C8083' },
+  paper: {
+    0: '#FFFFFF',
+    page: '#F5F0E8',
+    soft: '#F5F1F1',
+    selected: '#EEE8E9',
+    reading: '#F7F4ED',
+    parchment: '#EEE8DC',
+    line: '#E6DEDF',
+    strong: '#D3C8CA',
+  },
+  gold: { line: '#C5A46D', soft: '#E6D7B5', ink: '#7A5A1E' },
+  green: { 800: '#24503F', 600: '#2F6150', 50: '#E7F1EC' },
+  blue: { 800: '#24405F', 600: '#2E4D72', 50: '#E8EEF6' },
+  leather: { 800: '#5A3E2B', 600: '#6B4A33', 50: '#F3ECE6' },
+  ochre: { 800: '#7A4F0C', 500: '#A8741A', 200: '#EBCF97', 50: '#FBF3E2' },
+  slate: { 500: '#73839A' },
+  status: {
+    successInk: '#237804',
+    successTint: '#F6FFED',
+    warningInk: '#7A4F0C',
+    warningTint: '#FFFBE6',
+    errorInk: '#CF1322',
+    errorTint: '#FFF1F0',
+    infoInk: '#0958D9',
+    infoTint: '#E6F4FF',
+  },
+  night: { 950: '#1C0C11' },
+  season: {
+    purple: { cloth: '#765A83', ink: '#5E4469' },
+    green: { cloth: '#657B62', ink: '#4A5E48' },
+    red: { cloth: '#A53D3D', ink: '#A53D3D' },
+    rose: { cloth: '#A55570', ink: '#8A4559' },
+    black: { cloth: '#3A3436', ink: '#3A3436' },
+  },
 } as const
 
-/**
- * The sidebar as the songbook's dark burgundy spine (owner 2026-10-31, DESIGN.md "Navigation"). Text 10.4:1, selected
- * row 10.3:1, group titles 6.5:1.
- */
-export const spine = {
-  background: '#4A1D27',
-  hover: '#5A2431',
-  selected: '#6A2C39',
-  text: '#EADADD',
-  groupTitle: '#C9A9B0',
-  /** The nave photo at the head of the spine fades into the bookcloth, so the brand reads on it (owner 2026-11-03). */
-  photo: '/media/church-light-poster.webp',
-  photoScrim: 'linear-gradient(180deg, rgba(74, 29, 39, 0.35) 0%, rgba(74, 29, 39, 0.75) 55%, #4A1D27 100%)',
-  /** The gilt edge of the spine. */
-  edge: 'rgba(197, 164, 109, 0.4)',
-} as const
-
-/**
- * Decorative gold (brief 2026-10-31): ribbon edges, hairlines, Christmas and Easter banners. `line` is never text
- * (2.15:1 on ivory) and gold never marks a status. `ink` is the only gold for text: 5.8:1 on ivory but 4.46:1 on
- * `soft`, so text on `soft` stays `colors.textPrimary`.
- */
-export const gold = {
-  line: '#C5A46D',
-  soft: '#E6D7B5',
-  ink: '#7A5A1E',
-} as const
-
-/**
- * The head of the next program's card by the hour of its Mass (owner 2026-11-03, Figma "Sáng – Chiều – Tối"): morning
- * ivory lit from the top corner, afternoon warm parchment, evening the spine's bookcloth with pale text (title 13:1,
- * meta 10:1, date 9:1, label 6.5:1). Light, not hue: season colour keeps the season chip.
- */
-export const massTimeSurfaces = {
-  morning: { background: 'linear-gradient(135deg, rgba(230, 215, 181, 0.55) 0%, #F7F4ED 60%)', dark: false },
-  afternoon: { background: 'linear-gradient(90deg, #EEE8DC 0%, #E9DEC5 100%)', dark: false },
-  evening: { background: '#4A1D27', dark: true },
-} as const
-
-/**
- * Liturgical-season colours, only in the season banner and a season chip, always beside the season name. `cloth`
- * carries white text (purple 5.9:1, green 4.6:1, red 6.3:1); `ink` is the season's text colour on ivory (7.6:1, 6.4:1).
- * Season green stays apart from the rehearsal cloth (ΔE 16, hue 140° against 168°).
- */
-export const seasonColors = {
-  purple: { cloth: '#765A83', ink: '#5E4469' },
-  green: { cloth: '#657B62', ink: '#4A5E48' },
-  /** Red days (Palm Sunday, Good Friday, Pentecost, martyrs), from the day's liturgical colour (BE 90af733, B45). */
-  red: { cloth: '#A53D3D', ink: '#A53D3D' },
-  /** Gaudete and Laetare Sundays: white text 5.1:1 on the cloth, ink 6.2:1 on ivory. */
-  rose: { cloth: '#A55570', ink: '#8A4559' },
-  /** Black (Masses for the dead, where used): white text 12:1, ink on ivory 11:1. */
-  black: { cloth: '#3A3436', ink: '#3A3436' },
-} as const
-
-/**
- * Text and scrims over photos and video (landing hero, sign-in image). The scrim is a dark burgundy ink, so the
- * picture keeps the brand's warmth; contrast was measured on the brightest frames behind the text.
- */
-export const media = {
-  /** Shown behind the poster until it loads. */
-  backdrop: '#1C0C11',
-  text: '#FFFFFF',
-  textMuted: 'rgba(255, 255, 255, 0.88)',
-  /** Hero: darkest on the text side (left), opening up to the right where the light falls. */
-  /**
-   * The sign-in photograph: darkened at the foot under the verse and at the top under the brand, and toward the right
-   * where the form panel sits.
-   */
-  signInScrim:
-    'linear-gradient(0deg, rgba(28, 12, 17, 0.85) 0%, rgba(28, 12, 17, 0) 45%), linear-gradient(180deg, rgba(28, 12, 17, 0.55) 0%, rgba(28, 12, 17, 0) 20%), linear-gradient(90deg, rgba(28, 12, 17, 0.35) 0%, rgba(28, 12, 17, 0.6) 55%, rgba(28, 12, 17, 0.92) 100%)',
-  heroScrim: 'linear-gradient(90deg, rgba(28, 12, 17, 0.8) 0%, rgba(28, 12, 17, 0.66) 50%, rgba(28, 12, 17, 0.2) 100%)',
-  /** Sign-in image: clear at the top, dark under the brand at the bottom. */
-  imageScrim: 'linear-gradient(180deg, rgba(28, 12, 17, 0.05) 30%, rgba(28, 12, 17, 0.82) 100%)',
-  /** Edge of controls drawn on the media (pause button). */
-  controlBorder: 'rgba(255, 255, 255, 0.4)',
-} as const
-
-/**
- * One colour per area of work, used on its data only (readiness steps, chips, waiting counts), never on the shell
- * (2026-10-30). Each area has its cloth (marks, filled steps), a pale tint with a darker edge (chips, waiting cells)
- * and a dark ink for text on the tint (7:1 or more).
- */
-export type SectionKey = 'liturgy' | 'rehearsal' | 'practice' | 'roster' | 'attention'
-
-export interface SectionColors {
-  cloth: string
-  tint: string
-  border: string
-  ink: string
+const alpha = (hex: string, a: number) => {
+  const n = Number.parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`
 }
 
-export const sections: Record<SectionKey, SectionColors> = {
-  /** Liturgical events and programs: what the Parish Priest made. */
-  liturgy: { cloth: '#8E3B4B', tint: '#F6EBED', border: 'rgba(142, 59, 75, 0.32)', ink: '#762E3D' },
-  /** Rehearsals and attendance. */
-  rehearsal: { cloth: '#2F6150', tint: '#E7F1EC', border: 'rgba(47, 97, 80, 0.32)', ink: '#24503F' },
-  /** Practice assignments and submissions. */
-  practice: { cloth: '#2E4D72', tint: '#E8EEF6', border: 'rgba(46, 77, 114, 0.3)', ink: '#24405F' },
-  /** Service roster: tan leather bookcloth (owner choice 2026-10-28). */
-  roster: { cloth: '#6B4A33', tint: '#F3ECE6', border: 'rgba(107, 74, 51, 0.3)', ink: '#5A3E2B' },
-  /** Something waiting on the viewer. */
-  attention: { cloth: '#A8741A', tint: '#FBF3E2', border: '#EBCF97', ink: '#7A4F0C' },
-}
-
-/**
- * The four results of a roll call (and of a practice review, in the same order) in charts and marks, each beside its
- * name in words (owner 2026-11-02): present in the rehearsal green, late in the attention ochre, excused in a quiet
- * slate, absent in the liturgy burgundy.
- */
-export const outcomeColors = {
-  good: sections.rehearsal.cloth,
-  late: sections.attention.cloth,
-  excused: '#93A3B8',
-  missed: sections.liturgy.cloth,
+// ---------------------------------------------------------------- 2. Semantic
+export const semantic = {
+  surface: {
+    /** Warm Paper: the one page ground under every workspace and the header band. */
+    page: primitive.paper.page,
+    /** Sheet White: cards, inputs, tables, drawers. */
+    base: primitive.paper[0],
+    /** Row hover, neutral chip fill. */
+    soft: primitive.paper.soft,
+    /** Selected row; differs from hover and stays after the pointer leaves. */
+    selected: primitive.paper.selected,
+    /** Ivory reading surface: program detail, song-list review, sheet music, season banner. */
+    reading: primitive.paper.reading,
+    /** Parchment: table header band and special metadata panels. */
+    band: primitive.paper.parchment,
+    /** Bookcloth Spine: the navigation, the evening program head, the landing's closing band. Nothing else. */
+    chrome: primitive.burgundy[900],
+    chromeHover: primitive.burgundy[850],
+    chromeSelected: primitive.burgundy[800],
+    media: primitive.night[950],
+  },
+  text: {
+    /** 15.2:1 on page. */
+    primary: primitive.ink[900],
+    /** 10.3:1 on page. */
+    body: primitive.ink[700],
+    /** 5.4:1 on page. */
+    muted: primitive.ink[500],
+    /** 5.5:1 on the disabled grey: readable, only not clickable. */
+    disabled: primitive.ink.grey,
+    /** On brand-primary (7.3:1), the bookcloth and season cloths. */
+    onBrand: primitive.paper[0],
+    /** Navigation text and the focus ring on the bookcloth (10.4:1); burgundy would be 1.9:1 there. */
+    onChrome: primitive.rose[200],
+    /** Group titles on the bookcloth, 12px sentence case (6.5:1). */
+    onChromeMuted: primitive.rose[300],
+    onMedia: primitive.paper[0],
+    onMediaMuted: 'rgba(255, 255, 255, 0.88)',
+  },
+  border: {
+    /** Decorative dividers (1.3:1). Not for control edges. */
+    default: primitive.paper.line,
+    /** Hover edge of a quiet surface, decorative (1.6:1). */
+    strong: primitive.paper.strong,
+    hairline: 'rgba(0, 0, 0, 0.07)',
+    /** Control edges and the dashed draft / "Thiếu N" marks: 3.8:1 (WCAG 1.4.11). */
+    control: primitive.ink[400],
+  },
+  action: {
+    /** Parish Burgundy: primary button, links, focus ring, caret. White text 7.3:1. One primary action per region. */
+    primary: primitive.burgundy[600],
+    primaryHover: primitive.burgundy[700],
+    link: primitive.burgundy[600],
+    linkHover: primitive.burgundy[700],
+    focus: primitive.burgundy[600],
+    focusHalo: alpha(primitive.burgundy[600], 0.15),
+    /** Selected filter chip or hovered link row. Never a page ground. */
+    selectedWash: alpha(primitive.burgundy[600], 0.08),
+  },
+  status: {
+    /** Always with a word or icon. */
+    success: primitive.status.successInk,
+    successTint: primitive.status.successTint,
+    warning: primitive.status.warningInk,
+    warningTint: primitive.status.warningTint,
+    error: primitive.status.errorInk,
+    errorTint: primitive.status.errorTint,
+    info: primitive.status.infoInk,
+    infoTint: primitive.status.infoTint,
+  },
+  /** Area cloths: only on that area's data (marks, filled steps, chips). */
+  area: {
+    liturgy: {
+      cloth: primitive.burgundy[600],
+      tint: primitive.burgundy[50],
+      border: alpha(primitive.burgundy[600], 0.32),
+      ink: primitive.burgundy[700],
+    },
+    rehearsal: {
+      cloth: primitive.green[600],
+      tint: primitive.green[50],
+      border: alpha(primitive.green[600], 0.32),
+      ink: primitive.green[800],
+    },
+    practice: {
+      cloth: primitive.blue[600],
+      tint: primitive.blue[50],
+      border: alpha(primitive.blue[600], 0.3),
+      ink: primitive.blue[800],
+    },
+    roster: {
+      cloth: primitive.leather[600],
+      tint: primitive.leather[50],
+      border: alpha(primitive.leather[600], 0.3),
+      ink: primitive.leather[800],
+    },
+    /** Something waiting on the viewer; leaves when the count reaches zero. */
+    attention: {
+      cloth: primitive.ochre[500],
+      tint: primitive.ochre[50],
+      border: primitive.ochre[200],
+      ink: primitive.ochre[800],
+    },
+  },
+  /** Roll-call and review charts, always beside the outcome's name. */
+  outcome: {
+    good: primitive.green[600],
+    late: primitive.ochre[500],
+    /** 3.9:1 on base. */
+    excused: primitive.slate[500],
+    missed: primitive.burgundy[600],
+  },
+  brand: {
+    /** The logo tile: white H on Parish Burgundy, 7.3:1. */
+    mark: primitive.burgundy[600],
+  },
+  decor: {
+    /** Gold is a hairline, never text (2.15:1 on reading), never a status. */
+    gilt: primitive.gold.line,
+    giltSoft: primitive.gold.soft,
+    /** The only gold for text: "Lễ sáng / chiều / tối" on reading (5.8:1); not on giltSoft (4.46:1). */
+    giltInk: primitive.gold.ink,
+  },
+  season: primitive.season,
 } as const
 
-/** An event the Parish Priest made, on his calendar: a liturgy chip, apart from the synced liturgical days (grey). */
-export const priestEvent = {
-  background: sections.liturgy.tint,
-  border: sections.liturgy.border,
-  text: sections.liturgy.ink,
-} as const
-
+/** Surfaces at rest are flat (one 1px border); shadow appears only on interaction or floating layers. */
 export const shadows = {
   sm: '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
   md: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
@@ -160,35 +193,39 @@ export const shadows = {
   xl: '0 20px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
 } as const
 
-/** Card look: flat white on the grey ground, one quiet 1px border, no shadow. The Card theme gives the radius. */
-export const cardSurface = {
-  border: '1px solid rgba(0, 0, 0, 0.07)',
-  boxShadow: 'none',
-  background: colors.surface,
+/** Motion (artifact motion.md). Quiet at rest, alive on touch; reduced motion makes every change instant. */
+export const motion = {
+  instant: 100,
+  fast: 150,
+  base: 220,
+  panel: 280,
+  reveal: 480,
+  entrance: 640,
+  ease: 'cubic-bezier(0.16, 1, 0.3, 1)',
+  easeInOut: 'cubic-bezier(0.65, 0, 0.35, 1)',
 } as const
 
 /**
- * Be Vietnam Pro keeps Vietnamese diacritics clear at dashboard sizes (DESIGN(2).md §3).
- * Fonts are self-hosted via @fontsource (weights 400–700), imported in src/main.tsx. Dates, times and counts stay in
- * this face. It has no `tnum` feature, so `tabular-nums` does nothing; figures are proportional and line up by layout
- * (owner, 2026-10-31).
+ * Be Vietnam Pro for everything you read or operate; Cormorant Garamond for display only (hero, feast titles, season
+ * name, the date numeral). Page headings stay sans. Be Vietnam Pro has no `tnum`; figures line up by layout.
  */
 export const typography = {
   fontFamily:
     "'Be Vietnam Pro', Manrope, 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-  /**
-   * Season and celebration titles only, 24px or larger (brief 2026-10-31). Cormorant Garamond 600 passed the Vietnamese
-   * check ("Chúa Nhật Thứ Ba Mùa Vọng"); everything else stays in Be Vietnam Pro.
-   */
   displayFontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
   fontSize: 14,
-  /** Generous line height for Vietnamese diacritics (DESIGN(2).md: 1.55–1.65). */
+  /** Generous line height for stacked Vietnamese diacritics. */
   lineHeight: 1.6,
-  pageTitle: { fontSize: 24, lineHeight: 1.3, fontWeight: 600 },
-  /** Title inside a standalone panel such as the sign-in card. */
+  displayHero: { fontSize: 72, lineHeight: 0.98, fontWeight: 600 },
+  displayPublic: { fontSize: 48, lineHeight: 1.08, fontWeight: 600 },
+  displayCelebration: { fontSize: 36, lineHeight: 1.2, fontWeight: 600 },
+  displaySeason: { fontSize: 32, lineHeight: 1.2, fontWeight: 600 },
+  displayNumeral: { fontSize: 44, lineHeight: 1, fontWeight: 600 },
+  pageTitle: { fontSize: 28, lineHeight: 1.3, fontWeight: 600 },
   panelTitle: { fontSize: 24, lineHeight: 1.3 },
-  sectionHeading: { fontSize: 18, lineHeight: 1.4 },
+  sectionHeading: { fontSize: 20, lineHeight: 1.4 },
   cardHeading: { fontSize: 16, lineHeight: 1.4 },
+  label: { fontSize: 13 },
   metadata: { fontSize: 12 },
 } as const
 
@@ -201,26 +238,214 @@ export const spacing = {
   xxl: 48,
 } as const
 
-/** Tight corners, chosen once (2026-10-30): 4 for chips, 6 for controls, 8 for containers. */
+/** Chip 4, control 6, container 8, media 12. */
 export const radius = {
   sm: 4,
-  /** Buttons, inputs, navigation rows. */
   md: 6,
-  /** Containers: cards, modals, state panels, tables. */
   lg: 8,
+  media: 12,
 } as const
 
 export const sizes = {
-  /** Buttons 40–44px, inputs 42–46px (DESIGN(2).md §5). */
   controlHeight: 40,
-  /** Minimum touch target below the mobile breakpoint. */
+  /** Filters, row actions and the running-head search in dense pages; form inputs and primary buttons stay 40. */
+  controlHeightCompact: 36,
   touchTarget: 44,
 } as const
 
 export const layout = {
+  /** Width of the page list in the small-screen drawer. */
   sidebarWidth: 256,
-  headerHeight: 64,
+  /** Running head: the bookcloth band (areas, account), then the ivory band of the area's pages. */
+  headerHeight: 56,
+  subnavHeight: 44,
   contentMaxWidth: 1360,
   contentPaddingX: 32,
   contentPaddingXMobile: 16,
+} as const
+
+// ---------------------------------------------------------------- 3. Component
+export const component = {
+  table: {
+    headBg: semantic.surface.band,
+    headColor: semantic.area.liturgy.ink,
+    rowHover: semantic.surface.soft,
+    rowSelected: semantic.surface.selected,
+    /** 44px rows at 13px type; the compact density is 34px. */
+    rowPaddingBlock: 11,
+    rowPaddingBlockCompact: 6,
+    cellPaddingInline: 12,
+    fontSize: 13,
+  },
+  card: { border: `1px solid ${semantic.border.hairline}`, background: semantic.surface.base, headHeight: 44, padding: 16 },
+  drawer: { sm: 480, md: 600, lg: 720 },
+  skeleton: { from: semantic.surface.soft, to: semantic.surface.selected },
+  pageHeader: { title: { fontSize: 34, lineHeight: 1.1, fontWeight: 600 } },
+} as const
+
+// ---------------------------------------------------------------- CSS variables (`--hm-*`)
+const cssVars: Record<string, string> = {
+  'surface-page': semantic.surface.page,
+  'surface-base': semantic.surface.base,
+  'surface-soft': semantic.surface.soft,
+  'surface-selected': semantic.surface.selected,
+  'surface-reading': semantic.surface.reading,
+  'surface-band': semantic.surface.band,
+  'surface-chrome': semantic.surface.chrome,
+  'surface-chrome-hover': semantic.surface.chromeHover,
+  'surface-chrome-selected': semantic.surface.chromeSelected,
+  'surface-media': semantic.surface.media,
+  'text-primary': semantic.text.primary,
+  'text-body': semantic.text.body,
+  'text-muted': semantic.text.muted,
+  'text-disabled': semantic.text.disabled,
+  'text-on-brand': semantic.text.onBrand,
+  'text-on-chrome': semantic.text.onChrome,
+  'text-on-chrome-muted': semantic.text.onChromeMuted,
+  'text-on-media': semantic.text.onMedia,
+  'text-on-media-muted': semantic.text.onMediaMuted,
+  'border-default': semantic.border.default,
+  'border-strong': semantic.border.strong,
+  'border-hairline': semantic.border.hairline,
+  'border-control': semantic.border.control,
+  'action-primary': semantic.action.primary,
+  'action-primary-hover': semantic.action.primaryHover,
+  'action-link': semantic.action.link,
+  'action-link-hover': semantic.action.linkHover,
+  'action-focus': semantic.action.focus,
+  'action-focus-halo': semantic.action.focusHalo,
+  'action-selected-wash': semantic.action.selectedWash,
+  'success': semantic.status.success,
+  'success-tint': semantic.status.successTint,
+  'warning': semantic.status.warning,
+  'warning-tint': semantic.status.warningTint,
+  'error': semantic.status.error,
+  'error-tint': semantic.status.errorTint,
+  'info': semantic.status.info,
+  'info-tint': semantic.status.infoTint,
+  'outcome-good': semantic.outcome.good,
+  'outcome-late': semantic.outcome.late,
+  'outcome-excused': semantic.outcome.excused,
+  'outcome-missed': semantic.outcome.missed,
+  'season-purple': semantic.season.purple.cloth,
+  'gilt': semantic.decor.gilt,
+  'gilt-soft': semantic.decor.giltSoft,
+  'gilt-ink': semantic.decor.giltInk,
+  'shadow-sm': shadows.sm,
+  'shadow-md': shadows.md,
+  'shadow-lg': shadows.lg,
+  'shadow-xl': shadows.xl,
+  'font-ui': typography.fontFamily,
+  'font-display': typography.displayFontFamily,
+  'dur-instant': `${motion.instant}ms`,
+  'dur-fast': `${motion.fast}ms`,
+  'dur-base': `${motion.base}ms`,
+  'dur-panel': `${motion.panel}ms`,
+  'dur-reveal': `${motion.reveal}ms`,
+  'dur-entrance': `${motion.entrance}ms`,
+  'ease-in-out': motion.easeInOut,
+  'ease': motion.ease,
+  'radius-sm': `${radius.sm}px`,
+  'radius-md': `${radius.md}px`,
+  'radius-lg': `${radius.lg}px`,
+  'radius-media': `${radius.media}px`,
+  'header-height': `${layout.headerHeight}px`,
+  'subnav-height': `${layout.subnavHeight}px`,
+  'control-compact': `${sizes.controlHeightCompact}px`,
+}
+for (const [key, value] of Object.entries(semantic.area)) {
+  for (const [part, v] of Object.entries(value)) cssVars[`area-${key}-${part}`] = v
+}
+
+/** The `:root` block of every `--hm-*` variable; main.tsx injects it once before the first render. */
+export const cssVariables = `:root{${Object.entries(cssVars)
+  .map(([k, v]) => `--hm-${k}:${v}`)
+  .join(';')}}`
+
+// ---------------------------------------------------------------- Compatibility layer (existing imports)
+export const colors = {
+  background: semantic.surface.page,
+  surface: semantic.surface.base,
+  softSurface: semantic.surface.soft,
+  selectedSurface: semantic.surface.selected,
+  border: semantic.border.default,
+  mutedBorder: semantic.border.strong,
+  textPrimary: semantic.text.primary,
+  textBody: semantic.text.body,
+  textMuted: semantic.text.muted,
+  textDisabled: semantic.text.disabled,
+  /** Parish Burgundy: primary button, links, focus. */
+  primary: semantic.action.primary,
+  primaryHover: semantic.action.primaryHover,
+  primarySoft: semantic.action.selectedWash,
+  primaryFocus: semantic.action.focusHalo,
+  link: semantic.action.link,
+  linkHover: semantic.action.linkHover,
+  focus: semantic.action.focus,
+  /** The logo tile (BrandMark, favicon). */
+  brand: semantic.brand.mark,
+  ivory: semantic.surface.reading,
+  parchment: semantic.surface.band,
+  controlBorder: semantic.border.control,
+  error: semantic.status.error,
+} as const
+
+/** The Bookcloth Spine: the running head, the evening program head. Text 10.4:1, group titles 6.5:1. */
+export const spine = {
+  background: semantic.surface.chrome,
+  hover: semantic.surface.chromeHover,
+  selected: semantic.surface.chromeSelected,
+  text: semantic.text.onChrome,
+  groupTitle: semantic.text.onChromeMuted,
+} as const
+
+/** Gilt: hairlines and feast banners. `ink` is the only gold for text. */
+export const gold = {
+  line: semantic.decor.gilt,
+  soft: semantic.decor.giltSoft,
+  ink: semantic.decor.giltInk,
+} as const
+
+/** Liturgical-season colours, only in the season banner and chip, beside the season name. */
+export const seasonColors = primitive.season
+
+export const media = {
+  backdrop: semantic.surface.media,
+  text: semantic.text.onMedia,
+  textMuted: semantic.text.onMediaMuted,
+  signInScrim: `linear-gradient(0deg, ${alpha(primitive.night[950], 0.88)} 0%, ${alpha(primitive.night[950], 0)} 48%), linear-gradient(180deg, ${alpha(primitive.night[950], 0.55)} 0%, ${alpha(primitive.night[950], 0)} 22%)`,
+  heroScrim: `linear-gradient(180deg, ${alpha(primitive.night[950], 0.3)} 0%, ${alpha(primitive.night[950], 0.38)} 45%, ${alpha(primitive.night[950], 0.82)} 100%)`,
+  /** The hero's window of light: clear at the crown, dark under the heading and the button. */
+  windowScrim: `linear-gradient(180deg, ${alpha(primitive.night[950], 0)} 12%, ${alpha(primitive.night[950], 0.72)} 48%, ${alpha(primitive.night[950], 0.9)} 100%)`,
+  imageScrim: `linear-gradient(180deg, ${alpha(primitive.night[950], 0.05)} 30%, ${alpha(primitive.night[950], 0.82)} 100%)`,
+  controlBorder: 'rgba(255, 255, 255, 0.4)',
+  /** Controls drawn over media (pause button ground). */
+  controlGround: alpha(primitive.night[950], 0.72),
+} as const
+
+export type SectionKey = keyof typeof semantic.area
+
+export interface SectionColors {
+  cloth: string
+  tint: string
+  border: string
+  ink: string
+}
+
+export const sections: Record<SectionKey, SectionColors> = semantic.area
+
+export const outcomeColors = semantic.outcome
+
+/** An event the Parish Priest made, on his calendar: a liturgy chip. */
+export const priestEvent = {
+  background: semantic.area.liturgy.tint,
+  border: semantic.area.liturgy.border,
+  text: semantic.area.liturgy.ink,
+} as const
+
+/** Card look: flat white on the paper, one hairline, no shadow. */
+export const cardSurface = {
+  border: component.card.border,
+  boxShadow: 'none',
+  background: component.card.background,
 } as const

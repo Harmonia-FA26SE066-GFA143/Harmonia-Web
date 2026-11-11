@@ -1,8 +1,8 @@
 import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Flex, Input, Select, TreeSelect, Typography, type InputRef } from 'antd'
+import { Button, ConfigProvider, Flex, Input, Select, TreeSelect, Typography, type InputRef } from 'antd'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { themeTreeData, useCatalogOptions, useLookup, type CatalogOption } from '@/features/system-categories'
-import { colors, radius, sizes, spacing, typography } from '@/styles/tokens'
+import { colors, gold, radius, sizes, spacing, typography } from '@/styles/tokens'
 import { materialKindLabels, materialKinds, type SongFilters } from '../types'
 
 export interface SongFilterBarProps {
@@ -144,53 +144,67 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
     />,
   )
 
-  return (
-    <Flex vertical gap={spacing.md} style={libraryLayout
-      ? { padding: spacing.lg, background: colors.ivory, borderBottom: `1px solid ${colors.border}`, borderRadius: `${radius.lg}px ${radius.lg}px 0 0` }
-      : { padding: spacing.md }}>
-      <Flex align="end" gap={spacing.sm} wrap>
-        <Flex vertical gap={spacing.xs} style={{ flex: libraryLayout ? '1 1 420px' : '0 1 420px', minWidth: 0 }}>
-          <label htmlFor="song-filter-search" style={labelStyle}>
-            Tìm bài hát
-          </label>
-          <Input
-            ref={searchInput}
-            id="song-filter-search"
-            aria-keyshortcuts={libraryLayout ? '/' : undefined}
-            allowClear
-            prefix={<SearchOutlined aria-hidden />}
-            placeholder="Tên bài hát, nhạc sĩ, người viết lời"
-            value={search}
-            onCompositionStart={() => {
-              composing.current = true
-            }}
-            onCompositionEnd={(event) => {
-              composing.current = false
-              setSearch(event.currentTarget.value)
-              commitSearch(event.currentTarget.value)
-            }}
-            onChange={(event) => {
-              const next = event.target.value
-              setSearch(next)
-              if (!composing.current) commitSearch(next)
-            }}
-          />
-        </Flex>
-        <Button
-          ref={filterButton}
-          icon={<FilterOutlined />}
-          aria-expanded={open}
-          aria-controls="song-filter-panel"
-          onClick={() => setOpen(!open)}
-        >
-          {chips.length > 0 ? `Bộ lọc (${chips.length})` : 'Bộ lọc'}
-        </Button>
-      </Flex>
+  const searchField = (
+    <Flex vertical gap={spacing.xs} style={libraryLayout ? { minWidth: 0 } : { flex: '0 1 420px', minWidth: 0 }}>
+      <label htmlFor="song-filter-search" style={labelStyle}>
+        Tìm bài hát
+      </label>
+      <Input
+        ref={searchInput}
+        id="song-filter-search"
+        aria-keyshortcuts={libraryLayout ? '/' : undefined}
+        allowClear
+        prefix={<SearchOutlined aria-hidden />}
+        placeholder="Tên bài hát, nhạc sĩ, người viết lời"
+        value={search}
+        onCompositionStart={() => {
+          composing.current = true
+        }}
+        onCompositionEnd={(event) => {
+          composing.current = false
+          setSearch(event.currentTarget.value)
+          commitSearch(event.currentTarget.value)
+        }}
+        onChange={(event) => {
+          const next = event.target.value
+          setSearch(next)
+          if (!composing.current) commitSearch(next)
+        }}
+      />
+    </Flex>
+  )
 
-      {libraryLayout && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: spacing.md }}>
-        {selects.filter((select) => select.key === 'seasonId' || select.key === 'slotId').map(selectField)}
-        {themeField}
-      </div>}
+  const filterToggle = (
+    <Button
+      ref={filterButton}
+      icon={<FilterOutlined />}
+      aria-expanded={open}
+      aria-controls="song-filter-panel"
+      onClick={() => setOpen(!open)}
+    >
+      {chips.length > 0 ? `Bộ lọc (${chips.length})` : 'Bộ lọc'}
+    </Button>
+  )
+
+  return (
+    // The library's console is dense, like the filters of the other working pages.
+    <ConfigProvider theme={libraryLayout ? { token: { controlHeight: sizes.controlHeightCompact } } : undefined}>
+    <Flex vertical gap={spacing.sm + 4} style={libraryLayout
+      ? { padding: spacing.md, background: colors.ivory, borderBottom: `1px solid ${colors.border}`, borderTop: `1px solid ${gold.line}`, borderRadius: `${radius.lg}px ${radius.lg}px 0 0` }
+      : { padding: spacing.md }}>
+      {libraryLayout ? (
+        <div className="song-console">
+          {searchField}
+          {selects.filter((select) => select.key === 'seasonId' || select.key === 'slotId').map(selectField)}
+          {themeField}
+          {filterToggle}
+        </div>
+      ) : (
+        <Flex align="end" gap={spacing.sm} wrap>
+          {searchField}
+          {filterToggle}
+        </Flex>
+      )}
 
       {/* Kept in the page while shut (hidden), so aria-controls always points at it. */}
       <div
@@ -251,5 +265,6 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
         {extra}
       </Flex>
     </Flex>
+    </ConfigProvider>
   )
 }

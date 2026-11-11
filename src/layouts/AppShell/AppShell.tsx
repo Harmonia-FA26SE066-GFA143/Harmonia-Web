@@ -1,20 +1,21 @@
 import { MenuOutlined } from '@ant-design/icons'
-import { Button, ConfigProvider, Drawer, Flex, Grid, Layout, Menu, Typography, type MenuProps } from 'antd'
-import { createElement, useState } from 'react'
+import { Button, Drawer, Flex, Grid, Layout, Menu, type MenuProps } from 'antd'
+import { createElement, useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { BrandMark, OfflineNotice } from '@/shared/ui'
-import { spineTheme } from '@/app/theme'
-import { colors, gold, layout, sizes, spacing, spine, typography } from '@/styles/tokens'
+import { layout, sizes, spacing } from '@/styles/tokens'
 import { getSession } from '@/lib/auth/session'
 import { roleByApiName } from '@/shared/types/account'
 import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection, type Surface } from './navigation'
 import { NotificationBell } from '@/features/notifications'
 import { SystemAnnouncement } from '@/features/settings'
+import { RunningHead } from './RunningHead'
 import { UserMenu } from './UserMenu'
+import { WorkspaceGround } from './WorkspaceGround'
 
-const { Header, Sider, Content } = Layout
+const { Content } = Layout
 
-function toMenuItems(sections: NavSection[], selectedPath: string | undefined, onSpine: boolean): MenuProps['items'] {
+function toMenuItems(sections: NavSection[]): MenuProps['items'] {
   return sections.map((section) => ({
     type: 'group',
     key: section.label,
@@ -23,72 +24,50 @@ function toMenuItems(sections: NavSection[], selectedPath: string | undefined, o
       key: item.path,
       icon: createElement(item.icon),
       label: item.label,
-      // A single book-edge hairline makes the current place legible without adding another status colour.
-      style:
-        item.path === selectedPath
-          ? { boxShadow: `inset 3px 0 0 ${onSpine ? gold.line : colors.primary}` }
-          : undefined,
     })),
   }))
 }
 
-function Brand({ subtitle, onSpine }: Readonly<{ subtitle: string; onSpine?: boolean }>) {
+function Brand() {
   return (
-    <Flex align="center" gap={spacing.sm}>
-      <BrandMark size={32} />
-      <Flex vertical style={{ lineHeight: 1.25, minWidth: 0 }}>
-        <Typography.Text
-          strong
-          style={{ fontSize: typography.cardHeading.fontSize, color: onSpine ? colors.surface : colors.textPrimary }}
-        >
-          Harmonia
-        </Typography.Text>
-        <Typography.Text
-          ellipsis
-          style={{ fontSize: typography.metadata.fontSize, color: onSpine ? spine.groupTitle : colors.textMuted }}
-        >
-          {subtitle}
-        </Typography.Text>
-      </Flex>
+    <Flex align="center" gap={spacing.sm} style={{ flexShrink: 0 }}>
+      <BrandMark size={28} />
+      <span className="hm-brand">Harmonia</span>
     </Flex>
   )
 }
 
 /**
- * Authenticated application frame: role sidebar, header with user menu, and page content.
- * The desktop sidebar is the songbook's burgundy spine (owner 2026-10-31); area colours stay on the data, not on the
- * navigation or the page ground (2026-10-30).
- * Below the md breakpoint (768px) the sidebar moves into a drawer.
+ * Authenticated application frame: the running head (areas, the area's pages, notifications, account) over the page
+ * content and the workspace ground. Below the lg breakpoint (992px) the page list moves into a drawer.
  */
 export function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
   const screens = Grid.useBreakpoint()
-  const isMobile = screens.md === false
+  const isCompact = screens.lg === false
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
 
-  // Role-neutral pages (Hồ sơ cá nhân) keep the signed-in user's own sidebar; RoleGuard admits only these three roles.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Role-neutral pages (Hồ sơ cá nhân) keep the signed-in user's own navigation; RoleGuard admits only these three roles.
   const role = getSession()?.user.roleName
   const ownSurface = role ? (roleByApiName[role] as string) : undefined
   const surface =
     getSurface(location.pathname) ?? (ownSurface && ownSurface in surfaces ? (ownSurface as Surface) : undefined)
   const sections = surface ? surfaces[surface].sections : workspaceSections
   const selectedPath = findSelectedPath(sections, location.pathname)
-  const subtitle = surface ? surfaces[surface].label : 'Điều phối ca đoàn'
 
-  const menu = (
-    <nav aria-label="Điều hướng chính">
-      <Menu
-        mode="inline"
-        items={toMenuItems(sections, selectedPath, !isMobile)}
-        selectedKeys={selectedPath ? [selectedPath] : []}
-        onClick={({ key }) => {
-          setDrawerOpen(false)
-          navigate(key)
-        }}
-        style={{ borderInlineEnd: 0, background: 'transparent' }}
-      />
-    </nav>
+  const controls = (
+    <>
+      <NotificationBell />
+      <UserMenu compact={screens.xl === false} />
+    </>
   )
 
   return (
@@ -104,107 +83,69 @@ export function AppShell() {
       >
         Bỏ qua điều hướng, đến nội dung chính
       </a>
-      {!isMobile && (
-        <Sider
-          width={layout.sidebarWidth}
-          theme="light"
-          style={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            overflow: 'auto',
-            background: spine.background,
-            borderInlineEnd: `1px solid ${spine.edge}`,
-            // The Choir Director menu is taller than a laptop screen: a thin, quiet scrollbar.
-            scrollbarWidth: 'thin',
-            scrollbarColor: `${spine.selected} transparent`,
-          }}
-        >
-          {/* The head of the spine looks into the nave (owner 2026-11-03), then fades into the bookcloth. */}
-          <div
-            style={{
-              position: 'relative',
-              padding: `${spacing.xxl + spacing.md}px ${spacing.lg}px ${spacing.md}px`,
-              marginBottom: spacing.sm,
-              background: `${spine.photoScrim}, url(${spine.photo}) center 35% / cover`,
-            }}
-          >
-            <Brand subtitle={subtitle} onSpine />
-            <span
-              aria-hidden
-              style={{
-                position: 'absolute',
-                insetInline: spacing.lg,
-                bottom: 0,
-                height: 3,
-                borderBlock: `1px solid ${spine.edge}`,
-              }}
+      {isCompact ? (
+        <div className="hm-head">
+          <div className="hm-top">
+            <Button
+              className="hm-chrome-btn"
+              type="text"
+              icon={<MenuOutlined />}
+              aria-label="Mở menu điều hướng"
+              onClick={() => setDrawerOpen(true)}
+              style={{ width: sizes.touchTarget, height: sizes.touchTarget }}
             />
+            <Brand />
+            <div className="hm-top__end">{controls}</div>
           </div>
-          <ConfigProvider theme={spineTheme}>{menu}</ConfigProvider>
-        </Sider>
+        </div>
+      ) : (
+        <RunningHead
+          sections={sections}
+          selectedPath={selectedPath}
+          brand={<Brand />}
+          controls={controls}
+          scrolled={scrolled}
+        />
       )}
-      <Layout>
-        <Header
-          style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: spacing.md,
-            paddingInline: isMobile ? layout.contentPaddingXMobile : layout.contentPaddingX,
-            borderBottom: `1px solid ${gold.soft}`,
-            // An opaque band of the page ground (owner choice 2026-10-28), so nothing scrolling under it shows through.
-            background: colors.background,
-          }}
-        >
-          <Flex align="center" gap={spacing.sm} style={{ minWidth: 0 }}>
-            {isMobile && (
-              <>
-                <Button
-                  type="text"
-                  icon={<MenuOutlined />}
-                  aria-label="Mở menu điều hướng"
-                  onClick={() => setDrawerOpen(true)}
-                  style={{ width: sizes.touchTarget, height: sizes.touchTarget }}
-                />
-                <Brand subtitle={subtitle} />
-              </>
-            )}
-          </Flex>
-          <Flex align="center" gap={spacing.sm} style={{ marginInlineStart: 'auto' }}>
-            <NotificationBell />
-            <UserMenu compact={isMobile} />
-          </Flex>
-        </Header>
-        <Content
-          id="main-content"
-          tabIndex={-1}
-          style={{
-            padding: isMobile
-              ? `${spacing.lg}px ${layout.contentPaddingXMobile}px`
-              : `${spacing.lg}px ${layout.contentPaddingX}px ${spacing.xl}px`,
-          }}
-        >
-          <div style={{ maxWidth: layout.contentMaxWidth, marginInline: 'auto' }}>
-            <OfflineNotice />
-            <SystemAnnouncement />
-            <Outlet />
-          </div>
-        </Content>
-      </Layout>
-      {isMobile && (
+      {!isCompact && <WorkspaceGround />}
+      <Content
+        id="main-content"
+        tabIndex={-1}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          padding: isCompact
+            ? `${spacing.lg}px ${layout.contentPaddingXMobile}px`
+            : `${spacing.md}px ${layout.contentPaddingX}px ${spacing.xl}px`,
+        }}
+      >
+        <div style={{ maxWidth: layout.contentMaxWidth, marginInline: 'auto' }}>
+          <OfflineNotice />
+          <SystemAnnouncement />
+          <Outlet />
+        </div>
+      </Content>
+      {isCompact && (
         <Drawer
           placement="left"
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           size={layout.sidebarWidth}
-          title={<Brand subtitle={subtitle} />}
+          title="Harmonia"
           styles={{ body: { padding: `${spacing.sm}px 0` } }}
         >
-          {menu}
+          <nav aria-label="Điều hướng chính">
+            <Menu
+              mode="inline"
+              items={toMenuItems(sections)}
+              selectedKeys={selectedPath ? [selectedPath] : []}
+              onClick={({ key }) => {
+                setDrawerOpen(false)
+                navigate(key)
+              }}
+              style={{ borderInlineEnd: 0, background: 'transparent' }}
+            />
+          </nav>
         </Drawer>
       )}
     </Layout>

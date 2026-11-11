@@ -1,7 +1,7 @@
 import { Breadcrumb, Flex, Typography, type BreadcrumbProps } from 'antd'
 import type { ReactNode } from 'react'
-import { colors, spacing, typography } from '@/styles/tokens'
-import { ChantStaff } from './ChantStaff'
+import { colors, component, spacing, typography } from '@/styles/tokens'
+import { Incipit } from './ChantStaff'
 
 export interface PageHeaderProps {
   title: ReactNode
@@ -14,34 +14,28 @@ export interface PageHeaderProps {
 }
 
 /**
- * Page title block, set like the head of a chant page: the title in the display serif over a short chant incipit
- * (owner 2026-11-03), an optional one-line description, actions on the right. The breadcrumb shows
- * only on pages below a section (three levels or more); on a section's own page the sidebar already says where you are.
+ * The liturgical page head (Harmonia Design System): a short incipit over the title in the display serif, an optional
+ * one-line description, actions on the right. The breadcrumb shows only on pages below a section (three levels or more);
+ * on a section's own page the running head already says where you are. It enters once when the page opens.
  */
 export function PageHeader({ title, description, breadcrumb, tags, extra }: Readonly<PageHeaderProps>) {
   return (
-    <header style={{ marginBottom: spacing.lg }}>
-      <Flex wrap align="flex-end" justify="space-between" gap={spacing.md}>
+    <header className="hm-page-head" style={{ marginBottom: spacing.md }}>
+      <Flex wrap align="flex-end" justify="space-between" gap={spacing.lg}>
         <div style={{ minWidth: 0, flex: '1 1 auto' }}>
-          {breadcrumb && breadcrumb.length > 2 && (
-            <Breadcrumb
-              items={breadcrumb}
-              style={{
-                marginBottom: spacing.xs,
-                fontSize: typography.metadata.fontSize,
-                fontWeight: 500,
-              }}
-            />
-          )}
-          <Flex align="center" wrap gap={spacing.sm}>
+          <Flex align="center" gap={spacing.sm + 4}>
+            <Incipit />
+            {breadcrumb && breadcrumb.length > 2 && (
+              <Breadcrumb items={breadcrumb} style={{ fontSize: typography.metadata.fontSize, fontWeight: 500 }} />
+            )}
+          </Flex>
+          <Flex align="center" wrap gap={spacing.sm} style={{ marginTop: 2 }}>
             <Typography.Title
               level={1}
               style={{
                 margin: 0,
                 fontFamily: typography.displayFontFamily,
-                fontSize: 36,
-                fontWeight: 600,
-                lineHeight: 1.2,
+                ...component.pageHeader.title,
                 fontVariantNumeric: 'lining-nums',
               }}
             >
@@ -49,14 +43,12 @@ export function PageHeader({ title, description, breadcrumb, tags, extra }: Read
             </Typography.Title>
             {tags}
           </Flex>
-          <div style={{ marginTop: spacing.sm }}>
-            <ChantStaff />
-          </div>
           {description && (
             <Typography.Paragraph
               style={{
-                margin: `${spacing.xs}px 0 0`,
+                margin: '2px 0 0',
                 color: colors.textMuted,
+                fontSize: typography.label.fontSize,
                 maxWidth: 720,
                 lineHeight: 1.5,
               }}

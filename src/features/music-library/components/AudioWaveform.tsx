@@ -16,7 +16,7 @@ function IdleBars() {
             flex: '0 0 2px',
             height: 6 + Math.abs(Math.sin(index * 0.7)) * 18,
             borderRadius: 2,
-            background: 'rgba(142, 59, 75, 0.2)',
+            background: colors.mutedBorder,
           }}
         />
       ))}
@@ -52,7 +52,7 @@ export function AudioWaveform({ url, title }: Readonly<{ url: string; title: str
         container: container.current,
         url: latestUrl.current,
         height: 40,
-        waveColor: 'rgba(142, 59, 75, 0.28)',
+        waveColor: colors.controlBorder,
         progressColor: colors.primary,
         cursorWidth: 0,
         barWidth: 2,
@@ -86,7 +86,7 @@ export function AudioWaveform({ url, title }: Readonly<{ url: string; title: str
     <Flex
       align="center"
       gap={spacing.sm}
-      style={{ width: '100%', padding: `${spacing.xs}px ${spacing.sm}px`, background: '#fff', border: `1px solid ${colors.border}`, borderRadius: radius.md }}
+      style={{ width: '100%', padding: `${spacing.xs}px ${spacing.sm}px`, background: colors.surface, border: `1px solid ${colors.border}`, borderRadius: radius.md }}
     >
       <Button
         type="primary"

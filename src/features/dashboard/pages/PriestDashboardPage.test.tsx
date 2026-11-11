@@ -155,10 +155,11 @@ describe('DirectorDashboardPage', () => {
 
     expect(await screen.findByText('Mọi việc đã xong. Không có việc nào đang chờ bạn.')).toBeInTheDocument()
     expect(await screen.findByRole('region', { name: 'Mùa phụng vụ hôm nay' })).toHaveTextContent('Mùa Vọng')
-    expect(screen.getByRole('heading', { name: 'Lễ Các Đẳng' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Lễ Các Đẳng/, expanded: true })).toBeInTheDocument()
     // Independent preparation items: no item is presented as blocking a later one.
     expect(await screen.findByText('1/2 đã nhận lời')).toBeInTheDocument()
-    expect(screen.getByText(/Đã hoàn tất/)).toHaveTextContent('1/6')
+    expect(screen.getByRole('heading', { name: 'Còn thiếu 4 mục' })).toBeInTheDocument()
+    expect(screen.getByText(/Đã xong: Danh sách bài hát/)).toBeInTheDocument()
     expect(screen.getByText('1/2 buổi đã tập')).toBeInTheDocument()
     expect(screen.getByText('Chưa lập')).toBeInTheDocument()
     // A missing part is a dashed "Thiếu N" box.
@@ -166,8 +167,12 @@ describe('DirectorDashboardPage', () => {
     expect(screen.getByText('Bè Alto')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Mở phân công' })).toHaveAttribute('href', '/director/roster?programId=p3')
     expect(screen.getByText('Không có bản thu nào chờ chấm.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Lễ Thánh Giuse' })).toHaveAttribute('href', '/director/programs/p4')
-    expect(screen.getByRole('list', { name: 'Tình trạng các mục chuẩn bị' })).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Các mục còn thiếu' })).toBeInTheDocument()
+
+    // Opening another program closes the first.
+    fireEvent.click(screen.getByRole('button', { name: /Lễ Thánh Giuse/ }))
+    expect(screen.getByRole('button', { name: /Lễ Các Đẳng/ })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'Xem chi tiết: Lễ Thánh Giuse' })).toBeInTheDocument()
   })
 
   it('shows a recoverable error when the programs cannot be loaded', async () => {

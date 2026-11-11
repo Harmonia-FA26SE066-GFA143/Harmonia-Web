@@ -22,7 +22,7 @@ function SectionTitle({ id, children, extra }: Readonly<{ id: string; children: 
 }
 
 /**
- * Admin dashboard: the latest activity (FE-47–FE-54); each Admin area is in the sidebar, so no shortcut cards (#244). Dashboard-wide metrics are not shown: none are defined (TBD).
+ * Admin dashboard: the latest activity (FE-47–FE-54); each Admin area is in the running head, so no shortcut cards (#244). Dashboard-wide metrics are not shown: none are defined (TBD).
  * No pending-accounts card: accounts are created by the Admin and never wait for confirmation (D1, 2026-10-07).
  */
 export function AdminDashboardPage() {

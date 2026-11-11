@@ -1,24 +1,24 @@
 import { Typography } from 'antd'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import churchInterior from '@/assets/images/auth/church-interior-editorial-v2.webp'
-import { BrandMark } from '@/shared/ui'
+import { BrandMark, HeroNave } from '@/shared/ui'
 import { media, spacing, typography } from '@/styles/tokens'
 
+/** Width of the form panel in `AuthCard`; the scene is centred in what is left. */
+const panelWidth = 520
+
 /**
- * The sign-in backdrop: a church interior (decorative) across the window, darkened toward the form, with the brand at
- * the top and a psalm verse at the foot.
+ * The sign-in backdrop: the same drawn nave as the landing, one still frame so nothing moves beside a form, with the
+ * brand at the top and a psalm verse at the foot.
  */
 export function SignInImage() {
   return (
     <>
       <div aria-hidden style={{ position: 'fixed', inset: 0, background: media.backdrop }}>
-        <img
-          src={churchInterior}
-          alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }}
-        />
-        <div style={{ position: 'absolute', inset: 0, background: media.signInScrim }} />
+        <div style={{ position: 'absolute', inset: `0 ${panelWidth}px 0 0` }}>
+          <HeroNave still />
+          <div style={{ position: 'absolute', inset: 0, background: media.signInScrim }} />
+        </div>
       </div>
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: `${spacing.xl}px ${spacing.xxl}px`, minHeight: '100vh' }}>
         <Link to={paths.home} className="on-media-link" style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.sm, alignSelf: 'flex-start', textDecoration: 'none' }}>
@@ -27,7 +27,7 @@ export function SignInImage() {
             Harmonia
           </Typography.Text>
         </Link>
-        <figure style={{ margin: 0, maxWidth: 620, textShadow: '0 1px 12px rgba(0, 0, 0, 0.45)' }}>
+        <figure style={{ margin: 0, maxWidth: 620 }}>
           <blockquote lang="vi" style={{ margin: 0, fontFamily: typography.displayFontFamily, fontWeight: 600, fontSize: 44, lineHeight: 1.15, color: media.text }}>
             “Hát lên mừng Chúa{' '}
             <br />

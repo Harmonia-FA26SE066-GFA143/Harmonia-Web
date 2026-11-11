@@ -1,14 +1,14 @@
-import { ArrowLeftOutlined, AudioOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { AudioOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Segmented, Skeleton, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { env } from '@/config/env'
 import { isMidiFile, isPlayableAudio, useSongMaterials } from '@/features/music-library'
 import { ApiError } from '@/lib/api/errors'
-import { ErrorState } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { ErrorState, PageHeader } from '@/shared/ui'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { RecordingPanel } from '../components/RecordingPanel'
 import { MidiPracticePlayer } from '../components/MidiPracticePlayer'
 import { PracticeScoreViewer } from '../components/PracticeScoreViewer'
@@ -157,22 +157,19 @@ export function RehearsalPracticeRoomPage() {
 
   return (
     <div className="rehearsal-practice-room">
-      <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate(paths.director.rehearsals)} style={{ paddingInline: 0, marginBottom: spacing.sm }}>
-        Lịch tập
-      </Button>
-      <header style={{ marginBottom: spacing.lg }}>
-        <Typography.Title level={1} style={{ marginTop: 0, marginBottom: spacing.xs }}>Chi tiết buổi tập</Typography.Title>
-        <Typography.Title level={3} style={{ marginBottom: spacing.xs }}>{room.title}</Typography.Title>
-        <Typography.Text type="secondary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-          {dayjs(room.startAt).format('DD/MM')} · {dayjs(room.startAt).format('HH:mm')}–{dayjs(room.endAt).format('HH:mm')}
-          {room.locationName ? ` · ${room.locationName}` : ''}
-        </Typography.Text>
-        <Flex wrap gap={spacing.md} align="center" style={{ marginTop: spacing.sm }}>
-          {room.programName && <Typography.Text>Phục vụ: {room.programName}</Typography.Text>}
-          <Typography.Text type="secondary">{room.songs.length} bài hát</Typography.Text>
-          <Button type="primary" onClick={() => navigate(`${paths.director.attendance}?rehearsalId=${room.rehearsalId}`)}>Điểm danh</Button>
-        </Flex>
-      </header>
+      <PageHeader
+        title={room.title}
+        breadcrumb={[{ title: 'Ca trưởng' }, { title: <Link to={paths.director.rehearsals}>Lịch tập</Link> }, { title: 'Phòng tập' }]}
+        description={[
+          `${dayjs(room.startAt).format('DD/MM')} · ${dayjs(room.startAt).format('HH:mm')}–${dayjs(room.endAt).format('HH:mm')}`,
+          room.locationName,
+          room.programName && `Phục vụ: ${room.programName}`,
+          `${room.songs.length} bài hát`,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        extra={<Button type="primary" onClick={() => navigate(`${paths.director.attendance}?rehearsalId=${room.rehearsalId}`)}>Điểm danh</Button>}
+      />
 
       {room.songs.length === 0 ? (
         <Card><Typography.Title level={4}>Buổi tập chưa có bài hát</Typography.Title></Card>
@@ -182,21 +179,13 @@ export function RehearsalPracticeRoomPage() {
             <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {room.songs.map((item, index) => (
                 <li key={item.id}>
-                  <button
-                    type="button"
-                    aria-current={index === current ? 'true' : undefined}
-                    onClick={() => setSelectedIndex(index)}
-                    className="practice-song-item"
-                    style={{ width: '100%', border: 0, borderBottom: `1px solid ${colors.border}`, background: index === current ? colors.primarySoft : colors.surface, textAlign: 'left', padding: spacing.md }}
-                  >
-                    <Flex gap={spacing.md} align="start">
-                      <Typography.Text type="secondary" style={{ fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{String(index + 1).padStart(2, '0')}</Typography.Text>
-                      <div style={{ minWidth: 0 }}>
-                        <Typography.Text strong>{item.title}</Typography.Text>
-                        {item.section && <Typography.Text type="secondary" style={{ display: 'block' }}>{item.section}</Typography.Text>}
-                        <Typography.Text type="secondary" style={{ display: 'block' }}>{stateLabels[item.localState]}</Typography.Text>
-                      </div>
-                    </Flex>
+                  <button type="button" aria-current={index === current ? 'true' : undefined} onClick={() => setSelectedIndex(index)} className="practice-song-item">
+                    <span aria-hidden className="practice-song-item__number">{index + 1}</span>
+                    <span style={{ minWidth: 0 }}>
+                      <span className="practice-song-item__title">{item.title}</span>
+                      {item.section && <span className="practice-song-item__meta">{item.section}</span>}
+                      <span className="practice-song-item__meta">{stateLabels[item.localState]}</span>
+                    </span>
                   </button>
                 </li>
               ))}
@@ -204,9 +193,9 @@ export function RehearsalPracticeRoomPage() {
           </Card>
 
           <Card className="practice-room-player" styles={{ body: { padding: spacing.lg } }}>
-            <Typography.Title level={2} style={{ marginTop: 0 }}>{song.title}</Typography.Title>
-            {song.note && <Typography.Paragraph type="secondary">Cần tập: {song.note}</Typography.Paragraph>}
-            <Flex wrap justify="space-between" align="center" gap={spacing.sm}>
+            <Typography.Title level={2} style={{ margin: 0, fontFamily: typography.displayFontFamily, fontSize: 32, fontWeight: 600, lineHeight: 1.2, fontVariantNumeric: 'lining-nums' }}>{song.title}</Typography.Title>
+            {song.note && <Typography.Paragraph type="secondary" style={{ margin: `${spacing.xs}px 0 0` }}>Cần tập: {song.note}</Typography.Paragraph>}
+            <Flex wrap justify="space-between" align="center" gap={spacing.sm} style={{ marginTop: spacing.md }}>
               <Segmented value={shownPart} onChange={(value) => setPart(String(value))} options={parts} aria-label="Bản tập theo bè" />
               <Flex gap={4}><Button icon={<LeftOutlined />} aria-label="Bài trước" disabled={current === 0} onClick={previous} /><Button icon={<RightOutlined />} aria-label="Bài sau" disabled={current === room.songs.length - 1} onClick={next} /></Flex>
             </Flex>

@@ -1,7 +1,6 @@
-import { FileSearchOutlined } from '@ant-design/icons'
 import { Button, Flex, Result } from 'antd'
 import { useNavigate } from 'react-router'
-import { colors } from '@/styles/tokens'
+import { LostLeaf } from '@/shared/ui'
 
 export function NotFoundPage() {
   const navigate = useNavigate()
@@ -10,9 +9,9 @@ export function NotFoundPage() {
       <title>Không tìm thấy trang · Harmonia</title>
       <Result
         icon={
-          // A plain monochrome icon; the antd status pictures are purple.
+          // Drawn for Harmonia; the antd status pictures are purple.
           <Flex justify="center">
-            <span aria-hidden style={{ fontSize: 40, color: colors.textMuted }}><FileSearchOutlined /></span>
+            <LostLeaf />
           </Flex>
         }
         title="404"

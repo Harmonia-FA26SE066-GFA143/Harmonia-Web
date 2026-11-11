@@ -1,9 +1,9 @@
-import { AlignLeftOutlined, CustomerServiceOutlined, FileTextOutlined } from '@ant-design/icons'
+import { AlignLeftOutlined, ArrowRightOutlined, CustomerServiceOutlined } from '@ant-design/icons'
 import { Flex, Pagination, Spin, Tag } from 'antd'
 import type { ReactNode } from 'react'
 import { generatePath, Link, useLocation } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Reveal } from '@/shared/ui'
+import { SheetMusicOutlined } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { songListState } from '../songFilters'
 import { materialKindLabels, type MaterialKind, type Song } from '../types'
@@ -22,7 +22,7 @@ export interface SongIndexListProps {
 
 // Rehearsal material stays in the table's count; the index names what a singer looks for first.
 const shownMaterials: { kind: MaterialKind; icon: ReactNode }[] = [
-  { kind: 'sheetMusic', icon: <FileTextOutlined /> },
+  { kind: 'sheetMusic', icon: <SheetMusicOutlined /> },
   { kind: 'lyrics', icon: <AlignLeftOutlined /> },
   { kind: 'sampleAudio', icon: <CustomerServiceOutlined /> },
 ]
@@ -49,8 +49,8 @@ function MaterialMark({ kind, icon, available }: Readonly<{ kind: MaterialKind; 
 }
 
 /**
- * The music library as a songbook index (2026-10-31): one line per song of GET /api/songs, the title linking to the
- * song page, its credits, key and tempo and how often it served, and which materials it has (SongDto counts). SongDto
+ * The music library as the contents page of a hymnal: ruled lines, the number and title in the display serif, credits
+ * under the title, and which materials the song has (SongDto counts). The title's link covers the whole line. SongDto
  * carries no season or Mass part, so the index does not show them.
  */
 export function SongIndexList({
@@ -63,13 +63,12 @@ export function SongIndexList({
   onPageChange,
 }: Readonly<SongIndexListProps>) {
   const { search } = useLocation()
-  const rowPadding = density === 'compact' ? `${spacing.sm}px ${spacing.lg}px` : `${spacing.lg}px`
 
   return (
     <div role="region" aria-label="Mục lục bài hát">
       <Spin spinning={loading}>
         {/* role="list": the list-style reset drops list semantics in Safari. */}
-        <ul role="list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        <ul role="list" className={`hm-stagger song-index${density === 'compact' ? ' is-compact' : ''}`}>
           {songs.map((song, index) => {
             const credits = [song.composer, song.lyricist && song.lyricist !== song.composer && song.lyricist].filter(Boolean)
             const details = [
@@ -80,33 +79,13 @@ export function SongIndexList({
             ].filter(Boolean)
 
             return (
-              <Reveal
-                as="li"
-                key={song.id}
-                delay={index * 30}
-                className="hm-lift"
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: spacing.md,
-                  padding: rowPadding,
-                  borderBottom: `1px solid ${colors.border}`,
-                }}
-              >
-                <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+              <li key={song.id} className="song-index__row">
+                <span aria-hidden className="song-index__number">
+                  {(page - 1) * pageSize + index + 1}
+                </span>
+                <div style={{ minWidth: 0 }}>
                   <Flex align="center" gap={spacing.sm} wrap>
-                    <Link
-                      to={generatePath(paths.director.songDetail, { songId: song.id })}
-                      state={songListState(search)}
-                      style={{
-                        fontWeight: 600,
-                        fontSize: typography.cardHeading.fontSize,
-                        color: colors.primary,
-                        overflowWrap: 'anywhere',
-                      }}
-                    >
+                    <Link to={generatePath(paths.director.songDetail, { songId: song.id })} state={songListState(search)} className="song-index__title">
                       {song.title}
                     </Link>
                     {song.isClassified === false && (
@@ -115,19 +94,19 @@ export function SongIndexList({
                       </Tag>
                     )}
                   </Flex>
-                  <div style={{ marginTop: spacing.xs, fontSize: typography.metadata.fontSize, color: colors.textMuted, overflowWrap: 'anywhere' }}>
-                    {details.join(' · ')}
-                  </div>
+                  <div className="song-index__details">{details.join(' · ')}</div>
                 </div>
-
-                {song.materialCounts && (
-                  <Flex gap={spacing.sm} vertical style={{ flex: '0 1 200px', minWidth: 0 }}>
+                {song.materialCounts ? (
+                  <div className="song-index__materials">
                     {shownMaterials.map(({ kind, icon }) => (
                       <MaterialMark key={kind} kind={kind} icon={icon} available={(song.materialCounts?.[kind] ?? 0) > 0} />
                     ))}
-                  </Flex>
+                  </div>
+                ) : (
+                  <span />
                 )}
-              </Reveal>
+                <ArrowRightOutlined aria-hidden className="song-index__arrow" />
+              </li>
             )
           })}
         </ul>

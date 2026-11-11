@@ -5,7 +5,7 @@ import { generatePath, useLocation, useNavigate, useSearchParams } from 'react-r
 import { paths } from '@/app/router/paths'
 import { requestFailureMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptySongbook, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { SongFilterBar } from '../components/SongFilterBar'
 import { SongFormDrawer } from '../components/SongFormDrawer'
@@ -124,7 +124,7 @@ export function MusicLibraryPage() {
         )}
         {songs.data !== undefined && total === 0 && !filtered && (
           <EmptyState
-            title="Chưa có bài hát nào"
+            icon={<EmptySongbook />} title="Chưa có bài hát nào"
             description="Thêm bài hát để bắt đầu quản lý kho nhạc."
             action={addButton}
           />

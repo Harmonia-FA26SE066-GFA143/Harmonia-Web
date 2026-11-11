@@ -2,7 +2,7 @@ import { Card } from 'antd'
 import { useMemo } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, EmptyWeek, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { EventFilterBar } from '../components/EventFilterBar'
 import { ProgramTable } from '../components/ProgramTable'
@@ -45,7 +45,7 @@ export function DirectorProgramListPage() {
       )}
       {programs.data !== undefined && total === 0 && !filtered && (
         <EmptyState
-          title="Chưa có chương trình phụng vụ nào"
+          icon={<EmptyWeek />} title="Chưa có chương trình phụng vụ nào"
           description="Chương trình Cha xứ công bố sẽ xuất hiện tại đây."
         />
       )}

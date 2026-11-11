@@ -2,7 +2,7 @@ import { App, Card } from 'antd'
 import { useMemo, useState } from 'react'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { MemberFilterBar } from '../components/MemberFilterBar'
 import { MemberFormDrawer } from '../components/MemberFormDrawer'
@@ -75,7 +75,7 @@ export function MembersPage() {
       )}
       {members.data !== undefined && total === 0 && !filtered && (
         <EmptyState
-          title="Chưa có ca viên nào"
+          icon={<EmptyChoir />} title="Chưa có ca viên nào"
           description="Ca viên xuất hiện tại đây sau khi Quản trị viên tạo tài khoản với vai trò Ca viên."
         />
       )}

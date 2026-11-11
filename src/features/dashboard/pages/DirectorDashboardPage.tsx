@@ -1,31 +1,21 @@
-import { ArrowRightOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import { ArrowRightOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
 import { generatePath, Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import {
-  formatProgramDate,
-  MassTimeMark,
-  massTimeLabels,
-  massTimeOf,
-  PreparationOverview,
-  preparationItems,
-  SongListStatusTag,
-  usePreparationStatus,
-  useUpcomingPrograms,
-  type LiturgicalProgram,
-} from '@/features/liturgical-programs'
+import { formatProgramDate, useUpcomingPrograms, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { useSubmissions } from '@/features/practice'
 import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
-import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { cardSurface, colors, gold, massTimeSurfaces, spacing, spine, typography } from '@/styles/tokens'
+import { AllDone, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { cardSurface, colors, spacing, typography } from '@/styles/tokens'
+import { ProgramOrdo } from '../components/ProgramOrdo'
 import { TodaySeason } from '../components/TodaySeason'
 
 const taskLimit = 5
-const laterLimit = 4
+const programLimit = 5
 const firstFive = { pageNumber: 1, pageSize: 5 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
@@ -33,9 +23,6 @@ const rowStyle = (index: number) => ({
   padding: `${spacing.md}px ${spacing.lg}px`,
   borderTop: index > 0 ? `1px solid ${colors.border}` : undefined,
 })
-// The hour's arch: pale gold on the dark evening card, decorative gold at sunrise, Gold Ink on the afternoon parchment.
-const markColors = { morning: gold.line, afternoon: gold.ink, evening: gold.soft } as const
-const capitalize =(text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`
 const detailPath = (program: LiturgicalProgram) => generatePath(paths.director.programDetail, { programId: program.id })
 
 /** The Priest's note on the newest list, read only for the lists sent back. */
@@ -106,8 +93,8 @@ function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: numbe
       <ul className="hm-stagger" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
         {tasks.map((task, index) => (
           <li key={task.key} style={rowStyle(index)}>
-            <Flex align="center" justify="space-between" gap={spacing.md}>
-              <Flex vertical gap={spacing.xs} style={{ minWidth: 0, maxWidth: '72ch' }}>
+            <Flex vertical align="flex-start" gap={spacing.sm}>
+              <Flex vertical gap={spacing.xs} style={{ minWidth: 0 }}>
                 <Typography.Text>{task.text}</Typography.Text>
                 {(task.due || task.when) && (
                   <Typography.Text style={muted}>
@@ -134,118 +121,6 @@ function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: numbe
           </li>
         )}
       </ul>
-    </Card>
-  )
-}
-
-/** The next program: date, name, place and season, its independent preparation items, and a link out. */
-function NextProgram({ program, prep }: Readonly<{ program: LiturgicalProgram; prep: ReturnType<typeof usePreparationStatus> }>) {
-  const navigate = useNavigate()
-  const date = dayjs(program.date)
-  const items = preparationItems({ date: program.date, songListStatus: program.songListStatus, status: prep.data, failed: prep.isError, viewer: 'director' })
-  const hour = massTimeOf(program.time)
-  const surface = hour ? massTimeSurfaces[hour] : undefined
-  const dark = surface?.dark ?? false
-  const label = { color: dark ? spine.groupTitle : colors.textMuted, fontSize: typography.metadata.fontSize }
-  const meta = [program.locationName, program.seasonName].filter(Boolean).join(' · ')
-
-  return (
-    <Card style={cardSurface} styles={{ body: { padding: 0 } }}>
-      {/* The head takes the light of the Mass's hour (owner 2026-11-03); the preparation below stays on white. */}
-      <Flex
-        align="center"
-        gap={spacing.lg}
-        className={dark ? 'mass-time-dark' : undefined}
-        style={{ padding: spacing.lg, background: surface?.background }}
-      >
-        <Flex vertical align="center" style={{ minWidth: 72 }}>
-          <Typography.Text style={label}>{capitalize(date.format('dddd'))}</Typography.Text>
-          <span style={{ fontSize: 44, fontWeight: 600, lineHeight: 1, letterSpacing: '-0.03em', color: dark ? gold.soft : colors.primary }}>
-            {date.format('DD')}
-          </span>
-          <Typography.Text style={label}>Tháng {date.format('M')}</Typography.Text>
-        </Flex>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <Typography.Title
-            level={3}
-            style={{ margin: 0, fontFamily: typography.displayFontFamily, fontSize: 30, fontWeight: 600, lineHeight: 1.25, color: dark ? colors.surface : undefined }}
-          >
-            {program.eventName}
-          </Typography.Title>
-          <Typography.Text style={{ color: dark ? spine.text : colors.textMuted }}>
-            {hour && <strong style={{ color: dark ? gold.soft : gold.ink }}>{massTimeLabels[hour]} </strong>}
-            {[program.time, meta].filter(Boolean).join(' · ')}
-          </Typography.Text>
-        </div>
-        {hour && (
-          <MassTimeMark
-            time={hour}
-            color={markColors[hour]}
-            style={{ flexShrink: 0, alignSelf: 'flex-end', marginBottom: -spacing.lg, marginInline: spacing.sm }}
-          />
-        )}
-        <Button
-          ghost={dark}
-          onClick={() => navigate(detailPath(program))}
-          aria-label={`Xem chi tiết: ${program.eventName}`}
-          style={{ flexShrink: 0 }}
-        >
-          Xem chi tiết
-        </Button>
-      </Flex>
-      <div style={{ padding: spacing.lg, borderTop: `1px solid ${colors.border}` }}>
-        <PreparationOverview items={items} />
-        {prep.isError && (
-          <Flex align="center" gap={spacing.sm} wrap style={{ marginTop: spacing.md }}>
-            <Typography.Text type="danger">Không thể tải tình hình chuẩn bị.</Typography.Text>
-            <Button size="small" onClick={() => prep.refetch()} loading={prep.isFetching}>
-              Thử lại
-            </Button>
-          </Flex>
-        )}
-      </div>
-    </Card>
-  )
-}
-
-/** The next program's positions still short of people, as dashed "Thiếu N" boxes (brief §12.7: words and a dashed edge, no red). */
-function Parts({ program, prep }: Readonly<{ program: LiturgicalProgram; prep: ReturnType<typeof usePreparationStatus> }>) {
-  if (prep.isPending) return <SectionSkeleton rows={2} label="Đang tải các vị trí phục vụ" />
-  if (prep.isError) {
-    return <ErrorState headingLevel={3} title="Không thể tải các vị trí phục vụ" error={prep.error} hasData={false} onRetry={() => prep.refetch()} retrying={prep.isFetching} />
-  }
-  const shortages = prep.data?.rosterShortages ?? []
-  return (
-    <Card style={cardSurface}>
-      {shortages.length === 0 ? (
-        <Typography.Text style={{ color: colors.textMuted }}>
-          {program.songListStatus === 'approved'
-            ? 'Đủ người cho mọi vị trí đã khai.'
-            : 'Nhu cầu nhân sự được tính sau khi danh sách bài hát được duyệt.'}
-        </Typography.Text>
-      ) : (
-        <Flex vertical gap={spacing.md}>
-          <ul style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.sm, margin: 0, padding: 0, listStyle: 'none' }}>
-            {shortages.map((shortage) => (
-              <li
-                key={`${shortage.skillName}-${shortage.songTitle ?? ''}`}
-                style={{ padding: `${spacing.sm}px ${spacing.md}px`, border: `1px dashed ${colors.textMuted}`, borderRadius: 6, minWidth: 160 }}
-              >
-                <Typography.Text style={{ display: 'block', fontWeight: 600 }}>
-                  Thiếu {shortage.requiredCount - shortage.assignedCount}
-                </Typography.Text>
-                <Typography.Text style={{ display: 'block' }}>{shortage.skillName}</Typography.Text>
-                <Typography.Text style={muted}>
-                  {shortage.songTitle ? `${shortage.songTitle} · ` : 'Cả buổi lễ · '}đã có {shortage.assignedCount}/{shortage.requiredCount}
-                </Typography.Text>
-              </li>
-            ))}
-          </ul>
-          <Link to={`${paths.director.roster}?programId=${program.id}`} style={{ fontWeight: 500 }}>
-            Mở phân công <ArrowRightOutlined aria-hidden />
-          </Link>
-        </Flex>
-      )}
     </Card>
   )
 }
@@ -284,35 +159,6 @@ function PendingSubmissions({ submissions }: Readonly<{ submissions: ReturnType<
   )
 }
 
-/** The programs after the next one, one line each. */
-function LaterPrograms({ programs }: Readonly<{ programs: LiturgicalProgram[] }>) {
-  return (
-    <Card style={cardSurface} styles={{ body: { padding: 0 } }}>
-      <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-        {programs.map((program, index) => (
-          <li key={program.id} style={rowStyle(index)}>
-            <Flex align="center" gap={spacing.lg}>
-              <Typography.Text style={{ width: 88, flexShrink: 0, color: colors.textMuted }}>{formatProgramDate(program.date)}</Typography.Text>
-              <Flex vertical style={{ minWidth: 0, flex: 1 }}>
-                <Link to={detailPath(program)} style={{ fontWeight: 600 }}>
-                  {program.eventName}
-                </Link>
-                <Typography.Text style={muted}>{[program.time, program.seasonName].filter(Boolean).join(' · ')}</Typography.Text>
-              </Flex>
-              {/* No column header here, so the empty case names what is missing. */}
-              {program.songListStatus ? (
-                <SongListStatusTag status={program.songListStatus} />
-              ) : (
-                <Typography.Text style={muted}>Chưa có danh sách bài hát</Typography.Text>
-              )}
-            </Flex>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  )
-}
-
 function Section({ id, title, extra, children }: Readonly<{ id: string; title: string; extra?: ReactNode; children: ReactNode }>) {
   return (
     <section aria-labelledby={id}>
@@ -327,27 +173,11 @@ function Section({ id, title, extra, children }: Readonly<{ id: string; title: s
   )
 }
 
-/** The sections that need the next program's preparation counts, so they are read once for both. */
-function NextProgramSections({ program }: Readonly<{ program: LiturgicalProgram }>) {
-  const prep = usePreparationStatus(program.id)
-  return (
-    <>
-      <Section id="next-heading" title="Lễ sắp tới">
-        <NextProgram program={program} prep={prep} />
-      </Section>
-      <Section id="parts-heading" title="Các bè và vị trí">
-        <Parts program={program} prep={prep} />
-      </Section>
-    </>
-  )
-}
-
 /**
- * Choir Director dashboard (Pattern 4, Dashboard / Overview; brief §12.2): the season of today, then what waits on
- * the Director (at most five tasks, each starting with its verb, with its deadline and its button; more fold into
- * "và N việc khác"), the next program with its independent preparation items, its parts still short of people, the recordings
- * waiting for a grade, and the programs after it. Each part loads and fails on its own; every action leads to the
- * page where it is done.
+ * Choir Director dashboard (Pattern 4, Dashboard / Overview): the upcoming programs as a ruled list with the nearest
+ * open on what it still lacks, beside a column with the season of today, what waits on the Director (at most five
+ * tasks, each starting with its verb, with its deadline and its button; more fold into "và N việc khác") and the
+ * recordings waiting for a grade. Each part loads and fails on its own; every action leads to the page where it is done.
  */
 export function DirectorDashboardPage() {
   const navigate = useNavigate()
@@ -384,52 +214,49 @@ export function DirectorDashboardPage() {
   return (
     <div className="director-dashboard-page">
       <PageHeader title="Tổng quan" breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Tổng quan' }]} />
-      <Flex vertical gap={spacing.xl}>
-        <TodaySeason />
-
-        <Section id="todo-heading" title="Cần bạn xử lý">
-          {programs.isPending && <SectionSkeleton rows={3} label="Đang tải việc cần xử lý" />}
+      <div className="director-dashboard-grid">
+        <Section
+          id="next-heading"
+          title="Các lễ sắp tới"
+          extra={
+            <Link to={paths.director.programs} style={{ fontWeight: 500 }}>
+              Xem tất cả <ArrowRightOutlined aria-hidden />
+            </Link>
+          }
+        >
+          {programs.isPending && <SectionSkeleton rows={5} label="Đang tải các lễ sắp tới" />}
           {programs.isError && (
             <ErrorState headingLevel={3} title="Không thể tải chương trình sắp tới" error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
           )}
-          {programs.data !== undefined && countsLoaded && tasks.length === 0 && (
-            <Card style={cardSurface}>
-              <Flex align="center" gap={spacing.sm} role="status">
-                <CheckCircleOutlined aria-hidden style={{ color: colors.primary, fontSize: 18 }} />
-                <Typography.Text>Mọi việc đã xong. Không có việc nào đang chờ bạn.</Typography.Text>
-              </Flex>
-            </Card>
-          )}
-          {programs.data !== undefined && tasks.length > 0 && <TaskList tasks={tasks.slice(0, taskLimit)} overflow={Math.max(0, tasks.length - taskLimit)} />}
-        </Section>
-
-        {programs.data !== undefined && upcoming.length === 0 && (
-          <Section id="next-heading" title="Lễ sắp tới">
+          {programs.data !== undefined && upcoming.length === 0 && (
             <Card style={cardSurface}>
               <Typography.Text style={{ color: colors.textMuted }}>Chưa có chương trình sắp tới. Chương trình Cha xứ công bố sẽ xuất hiện tại đây.</Typography.Text>
             </Card>
-          </Section>
-        )}
-        {upcoming[0] && <NextProgramSections program={upcoming[0]} />}
-
-        <Section id="practice-heading" title="Bài tập chờ chấm" extra={submissionCount > 5 && <Typography.Text style={{ color: colors.textMuted }}>5 trong {submissionCount} bản thu</Typography.Text>}>
-          <PendingSubmissions submissions={submissions} />
+          )}
+          {upcoming.length > 0 && <ProgramOrdo programs={upcoming.slice(0, programLimit)} />}
         </Section>
 
-        {upcoming.length > 1 && (
-          <Section
-            id="later-heading"
-            title="Các lễ tiếp theo"
-            extra={
-              <Link to={paths.director.programs} style={{ fontWeight: 500 }}>
-                Xem tất cả <ArrowRightOutlined aria-hidden />
-              </Link>
-            }
-          >
-            <LaterPrograms programs={upcoming.slice(1, 1 + laterLimit)} />
+        <Flex vertical gap={spacing.lg} style={{ minWidth: 0 }}>
+          <TodaySeason />
+
+          <Section id="todo-heading" title="Cần bạn xử lý">
+            {programs.isPending && <SectionSkeleton rows={3} label="Đang tải việc cần xử lý" />}
+            {programs.data !== undefined && countsLoaded && tasks.length === 0 && (
+              <Card style={cardSurface}>
+                <Flex vertical align="center" gap={spacing.sm} role="status">
+                  <AllDone width={140} />
+                  <Typography.Text>Mọi việc đã xong. Không có việc nào đang chờ bạn.</Typography.Text>
+                </Flex>
+              </Card>
+            )}
+            {programs.data !== undefined && tasks.length > 0 && <TaskList tasks={tasks.slice(0, taskLimit)} overflow={Math.max(0, tasks.length - taskLimit)} />}
           </Section>
-        )}
-      </Flex>
+
+          <Section id="practice-heading" title="Bài tập chờ chấm" extra={submissionCount > 5 && <Typography.Text style={{ color: colors.textMuted }}>5 trong {submissionCount} bản thu</Typography.Text>}>
+            <PendingSubmissions submissions={submissions} />
+          </Section>
+        </Flex>
+      </div>
     </div>
   )
 }

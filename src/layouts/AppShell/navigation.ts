@@ -3,9 +3,6 @@ import {
   AppstoreOutlined,
   AuditOutlined,
   BarChartOutlined,
-  BookOutlined,
-  CalendarOutlined,
-  CheckSquareOutlined,
   FileTextOutlined,
   HistoryOutlined,
   IdcardOutlined,
@@ -22,6 +19,7 @@ import {
 } from '@ant-design/icons'
 import type { ComponentType } from 'react'
 import { paths } from '@/app/router/paths'
+import { AttendanceOutlined, SeasonOutlined, SheetMusicOutlined } from '@/shared/ui'
 
 /** A role workspace. Chosen from the URL prefix; it is not an authorization check. */
 export type Surface = 'priest' | 'director' | 'admin'
@@ -44,8 +42,8 @@ export interface SurfaceConfig {
 }
 
 /**
- * Sidebar per role, derived from the Stitch sidebars and limited to pages in the screen map.
- * RoleGuard admits each role to its own workspace only, so each role sees its own sidebar.
+ * Navigation per role, limited to pages in the screen map. Each section is an area of the running head.
+ * RoleGuard admits each role to its own workspace only, so each role sees its own navigation.
  */
 export const surfaces: Record<Surface, SurfaceConfig> = {
   priest: {
@@ -56,7 +54,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
       {
         label: 'Phụng vụ & lịch',
         items: [
-          { path: paths.priest.calendar, label: 'Lịch phụng vụ', icon: CalendarOutlined },
+          { path: paths.priest.calendar, label: 'Lịch phụng vụ', icon: SeasonOutlined },
           { path: paths.priest.programs, label: 'Chương trình phụng vụ', icon: UnorderedListOutlined },
         ],
       },
@@ -81,14 +79,14 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
         label: 'Phụng vụ & âm nhạc',
         items: [
           { path: paths.director.programs, label: 'Chương trình phụng vụ', icon: UnorderedListOutlined },
-          { path: paths.director.library, label: 'Kho bài hát', icon: BookOutlined },
+          { path: paths.director.library, label: 'Kho bài hát', icon: SheetMusicOutlined },
         ],
       },
       {
         label: 'Hoạt động ca đoàn',
         items: [
           { path: paths.director.rehearsals, label: 'Lịch tập', icon: ScheduleOutlined },
-          { path: paths.director.attendance, label: 'Điểm danh', icon: CheckSquareOutlined },
+          { path: paths.director.attendance, label: 'Điểm danh', icon: AttendanceOutlined },
           { path: paths.director.participation, label: 'Xác nhận tham gia', icon: UsergroupAddOutlined },
           { path: paths.director.roster, label: 'Phân công', icon: TeamOutlined },
           { path: paths.director.practice, label: 'Luyện tập', icon: SoundOutlined },

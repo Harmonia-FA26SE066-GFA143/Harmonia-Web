@@ -14,15 +14,16 @@ export interface AuthCardProps {
 }
 
 /**
- * Frame shared by the sign-in and password screens (desktop web only, owner decision 2026-10-23): the church fills the
- * window with a psalm verse, and the form sits on an ivory panel at the right (owner 2026-11-02). It covers the blank
- * layout's padding so the photograph reaches the edges.
+ * Frame shared by the sign-in and password screens (desktop web only, owner decision 2026-10-23): the drawn nave with a
+ * psalm verse, and the form on an ivory panel at the right (owner 2026-11-02). It covers the blank layout's padding so
+ * the scene reaches the edges.
  */
 export function AuthCard({ title, description, icon, children, footer }: Readonly<AuthCardProps>) {
   return (
     <div style={{ position: 'fixed', inset: 0, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 520px' }}>
       <SignInImage />
       <section
+        className="hm-paper"
         style={{
           position: 'relative',
           margin: spacing.lg,
@@ -44,12 +45,9 @@ export function AuthCard({ title, description, icon, children, footer }: Readonl
             {icon}
           </Flex>
         )}
-        <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Harmonia · Điều phối ca đoàn
-        </Typography.Text>
         <Typography.Title
           level={1}
-          style={{ margin: `${spacing.sm}px 0 0`, fontFamily: typography.displayFontFamily, fontWeight: 600, fontSize: 40, lineHeight: 1.1 }}
+          style={{ margin: 0, fontFamily: typography.displayFontFamily, fontWeight: 600, fontSize: 40, lineHeight: 1.1 }}
         >
           {title}
         </Typography.Title>

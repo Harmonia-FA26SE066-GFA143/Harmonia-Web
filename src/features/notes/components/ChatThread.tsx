@@ -3,6 +3,7 @@ import { App, Button, Flex, Input, Typography, theme } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useRef, useState } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
+import { colors } from '@/styles/tokens'
 import { ErrorState, SectionSkeleton } from '@/shared/ui'
 import { useSendMessage, useThread } from '../hooks/useNotes'
 import { noteErrorMessage } from '../notesErrors'
@@ -91,7 +92,7 @@ export function ChatThread({ partnerId, partnerName, selfId }: Readonly<{ partne
         ))}
         <div ref={bottom} />
       </Flex>
-      <Flex gap={8} align="flex-end" style={{ padding: 12, borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+      <Flex gap={8} align="flex-end" style={{ padding: 12, borderTop: `1px solid ${colors.border}` }}>
         <Input.TextArea
           aria-label={`Nhắn cho ${partnerName}`}
           placeholder="Nhập tin nhắn. Enter để gửi, Shift+Enter để xuống dòng."

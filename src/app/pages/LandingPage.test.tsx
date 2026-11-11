@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderPage } from '@/test/renderPage'
 import { LandingPage } from './LandingPage'
@@ -8,7 +8,8 @@ describe('LandingPage', () => {
     renderPage(<LandingPage />)
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Mỗi Thánh lễ, một ca đoàn sẵn sàng.')
-    expect(screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual([
+    const roles = within(screen.getByRole('region', { name: 'Mỗi người một việc, chung một lịch.' }))
+    expect(roles.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual([
       'Cha xứ',
       'Ca trưởng',
       'Ca viên, nhạc công',

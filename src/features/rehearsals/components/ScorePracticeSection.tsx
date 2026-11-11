@@ -23,8 +23,8 @@ import type { PlaybackTimeline } from '../score/timeline/types'
 import { MIN_ENGINE_PAGE_WIDTH, ScoreViewer, toEnginePageWidth } from '../score/viewer'
 import { LocalScoreFilePicker } from './LocalScoreFilePicker'
 
-/** The page decides how tall the sheet is; the viewer only fills it and scrolls inside. */
-const SHEET_FRAME_HEIGHT = 'min(60vh, 560px)'
+/** The page decides how tall the sheet is, leaving the play controls on screen; the viewer only fills it and scrolls inside. */
+const SHEET_FRAME_HEIGHT = 'clamp(320px, calc(100vh - 470px), 560px)'
 
 const devSource = new DevFixtureScoreSource()
 

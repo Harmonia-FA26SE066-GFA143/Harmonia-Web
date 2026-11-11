@@ -7,7 +7,7 @@ import { SignOutModal } from '@/features/auth'
 import { useMyProfile } from '@/features/profile'
 import { getSession } from '@/lib/auth/session'
 import { roleByApiName, roleLabels } from '@/shared/types/account'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, gold, spacing, spine, typography } from '@/styles/tokens'
 import { surfaces, type Surface } from './navigation'
 
 /**
@@ -51,15 +51,10 @@ export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
       >
         {/* The label repeats the visible name and role (WCAG 2.5.3) so voice control and screen readers match them. */}
         <Button
+          className="hm-chrome-btn"
           type="text"
           aria-label={`Menu người dùng: ${name}, ${role}`}
-          style={{
-            height: 'auto',
-            padding: '4px 10px 4px 6px',
-            borderRadius: 9999,
-            border: `1px solid ${colors.border}`,
-            background: colors.surface,
-          }}
+          style={{ height: 44, padding: '0 8px 0 4px' }}
         >
           <Flex align="center" gap={spacing.sm}>
             <Avatar
@@ -67,20 +62,20 @@ export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
               src={profile.data?.avatarUrl}
               icon={<UserOutlined />}
               alt=""
-              style={{ background: colors.primary }}
+              style={{ background: gold.soft, color: colors.textPrimary }}
             />
             {/* Small screens keep the avatar only, so the brand still fits beside it. */}
             {!compact && (
               <Flex vertical align="flex-start" style={{ lineHeight: 1.25, minWidth: 0, paddingRight: 4 }}>
-                <Typography.Text strong ellipsis style={{ maxWidth: 180, fontSize: 13 }}>
+                <Typography.Text strong ellipsis style={{ maxWidth: 180, fontSize: 13, color: colors.surface }}>
                   {name}
                 </Typography.Text>
-                <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted, fontWeight: 500 }}>
+                <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: spine.text, fontWeight: 500 }}>
                   {role}
                 </Typography.Text>
               </Flex>
             )}
-            <DownOutlined style={{ fontSize: 9, color: colors.textMuted }} />
+            <DownOutlined style={{ fontSize: 9, color: spine.text }} />
           </Flex>
         </Button>
       </Dropdown>

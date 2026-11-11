@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useUpcomingPrograms } from '@/features/liturgical-programs'
 import { isRehearsalDay, useRecentRehearsals, type Rehearsal } from '@/features/rehearsals'
-import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, EmptyWeek, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AttendanceSheet } from '../components/AttendanceSheet'
 import { SessionHeader } from '../components/SessionHeader'
@@ -104,7 +104,7 @@ export function AttendancePage() {
       )}
       {rehearsals.data !== undefined && !selected && (
         <EmptyState
-          title="Chưa có buổi tập để điểm danh"
+          icon={<EmptyWeek />} title="Chưa có buổi tập để điểm danh"
           description="Tạo buổi tập trong Lịch tập, sau đó quay lại đây để điểm danh."
           action={scheduleButton}
         />
