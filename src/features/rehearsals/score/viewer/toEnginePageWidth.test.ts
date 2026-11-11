@@ -1,6 +1,9 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   MIN_ENGINE_PAGE_WIDTH,
+  MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH,
   NARROW_CONTENT_PX,
   PHONE_ENGINE_PAGE_WIDTH,
   SCORE_LAYOUT_SCALE,
@@ -52,5 +55,52 @@ describe('toEnginePageWidth', () => {
     expect(toEnginePageWidth(Number.POSITIVE_INFINITY)).toBe(MIN_ENGINE_PAGE_WIDTH)
     expect(toEnginePageWidth(0)).toBe(MIN_ENGINE_PAGE_WIDTH)
     expect(toEnginePageWidth(-500)).toBe(MIN_ENGINE_PAGE_WIDTH)
+  })
+})
+
+describe('toEnginePageWidth by staff count (P10-A)', () => {
+  // every width the single-staff tests above use, and the bad ones
+  const WIDTHS = [Number.NaN, -500, 0, 1, 222, 285, 299, 300, 305, 321, 327, 340, 650, 656, 703, 1000, 1054, 1100]
+
+  it('one staff, or a count under two, keeps every value of the single-staff rule', () => {
+    for (const width of WIDTHS) {
+      expect(toEnginePageWidth(width, 1)).toBe(toEnginePageWidth(width))
+      expect(toEnginePageWidth(width, 0)).toBe(toEnginePageWidth(width))
+    }
+  })
+
+  it('two staves or more: never under the multi-staff floor, and SCORE_LAYOUT_SCALE times the width above it', () => {
+    for (const staves of [2, 4, 12]) {
+      for (const width of WIDTHS) {
+        const expected = Number.isFinite(width) && width > 0 ? Math.max(MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH, Math.round(width * SCORE_LAYOUT_SCALE)) : MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH
+        expect(toEnginePageWidth(width, staves)).toBe(expected)
+      }
+    }
+    expect(MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH).toBeGreaterThan(toEnginePageWidth(327)) // the 768 px sheet that squeezed a SATB
+  })
+
+  it('two staves or more: continuous and never decreasing as the sheet widens (no step)', () => {
+    let previous = toEnginePageWidth(1, 4)
+    for (let width = 2; width <= 1600; width += 1) {
+      const next = toEnginePageWidth(width, 4)
+      expect(next).toBeGreaterThanOrEqual(previous)
+      expect(next - previous).toBeLessThanOrEqual(2) // 1.3 px of page per px of sheet, rounded
+      previous = next
+    }
+  })
+
+  it('the floor is the measured 900, and the 1440 px sheets keep their page; the 768 px focus sheet now gets the floor', () => {
+    expect(MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH).toBe(900) // P10-A: 850 still let syllables touch on a dense 4-part score
+    expect(toEnginePageWidth(656, 4)).toBe(900) // was 853 (1.3 x 656), under the floor
+    expect(toEnginePageWidth(703, 4)).toBe(914)
+    expect(toEnginePageWidth(1054, 4)).toBe(1370)
+  })
+
+  it('the stylesheet keeps a multi-staff page at least floor / scale px wide, so a narrower sheet scrolls it', () => {
+    const css = readFileSync(join(process.cwd(), 'src/features/rehearsals/score/viewer/ScoreViewer.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
+    expect(Number(css.match(/--hm-multi-staff-page-units\s*:\s*([\d.]+)/)![1])).toBe(MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH)
+    expect(css).toMatch(
+      /\.hm-score-frame--multi-staff \.hm-score-page svg\s*\{[^}]*min-width\s*:\s*calc\(var\(--hm-multi-staff-page-units\)\s*\/\s*var\(--hm-layout-scale\)\s*\*\s*1px\)/,
+    )
   })
 })

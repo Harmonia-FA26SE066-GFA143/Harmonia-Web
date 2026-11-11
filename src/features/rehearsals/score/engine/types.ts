@@ -30,7 +30,8 @@ export interface ScoreEngine {
   dispose(): void
 }
 
-export type ScoreEngineErrorCode = 'init-failed' | 'load-failed' | 'render-failed' | 'not-loaded' | 'disposed' | 'superseded'
+/** `too-complex`: more notes than `MAX_SCORE_NOTES`; the score is refused, not tried again. */
+export type ScoreEngineErrorCode = 'init-failed' | 'load-failed' | 'render-failed' | 'not-loaded' | 'disposed' | 'superseded' | 'too-complex'
 
 /** The only error the engine throws. The library's own error, if any, stays in `cause` for logging, never in `message`. */
 export class ScoreEngineError extends Error {

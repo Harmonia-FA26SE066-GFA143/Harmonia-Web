@@ -4,12 +4,13 @@ import * as songsApi from '@/features/music-library/api/songsApi'
 import type { SongMaterial } from '@/features/music-library'
 import { ApiError } from '@/lib/api/errors'
 import { spacing } from '@/styles/tokens'
-import type { LoadedScore } from '../score/engine'
+import { MAX_SCORE_NOTES, ScoreEngineError, type LoadedScore } from '../score/engine'
 import { DevFixtureScoreSource } from '../score/source/DevFixtureScoreSource'
 import { ScoreSourceError, type ScorePackage } from '../score/source/types'
 import { ACTIVE_LYRIC_CLASS } from '../score/sync/useLyricSync'
 import { ACTIVE_NOTE_CLASS } from '../score/sync/useScoreSync'
 import { MIN_ENGINE_PAGE_WIDTH, PHONE_ENGINE_PAGE_WIDTH, toEnginePageWidth } from '../score/viewer'
+import { MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH } from '../score/viewer/toEnginePageWidth'
 import { MAX_PAGE_CHARS } from '../score/viewer/sanitizeSvg'
 import { ScorePracticeSection } from './ScorePracticeSection'
 
@@ -323,13 +324,13 @@ describe('ScorePracticeSection, a loaded package', () => {
 })
 
 /** The next engine's `load` waits for `finish()`; `relayout` draws a page with a marker note the test can find. */
-function holdNextLoad() {
+function holdNextLoad(mei = '<mei/>') {
   const engine = fakeEngine()
   let finish: () => void = () => {}
   engine.load.mockImplementation(
     () =>
       new Promise<LoadedScore>((resolve) => {
-        finish = () => resolve({ svgPages: [page('n1')], mei: '<mei/>', timemap: TIMEMAP, aliases: new Map() })
+        finish = () => resolve({ svgPages: [page('n1')], mei, timemap: TIMEMAP, aliases: new Map() })
       }),
   )
   engine.relayout.mockImplementation(() => [page('n1', 'relaid')])
@@ -505,6 +506,128 @@ describe('ScorePracticeSection, a width that changes while the engine loads', ()
     await waitFor(() => expect(FakeAudio.instances.at(-1)?.src).toBe('blob:audio-2'))
   })
 
+  const SATB_MEI = '<mei>' + [1, 2, 3, 4].map((n) => `<staffDef xml:id="P${n}" n="${n}" lines="5">`).join('') + '</mei>'
+  const frameOf = (sheet: HTMLElement) => sheet.closest('.hm-score-frame')!
+
+  it('a score of several staves is redrawn once, at the multi-staff page, before the viewer gets any page', async () => {
+    const held = holdNextLoad(SATB_MEI)
+    renderSection()
+    pickBoth()
+    await waitFor(() => expect(held.engine.load).toHaveBeenCalled())
+    await reportWidth(327) // 768 px window, normal mode
+    await held.finish()
+    const sheet = await findSheet()
+    // the load started before the width was known, at the minimum
+    expect(held.engine.load).toHaveBeenCalledWith(expect.anything(), { pageWidth: MIN_ENGINE_PAGE_WIDTH })
+    expect(held.engine.relayout.mock.calls).toEqual([[toEnginePageWidth(327, 4)]])
+    expect(toEnginePageWidth(327, 4)).toBe(MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH)
+    expect(sheet.querySelector('#relaid')).not.toBeNull()
+    expect(frameOf(sheet)).toHaveClass('hm-score-frame--multi-staff')
+  })
+
+  it('a score of several staves with no width reported yet is redrawn once at the multi-staff floor', async () => {
+    const held = holdNextLoad(SATB_MEI)
+    renderSection()
+    pickBoth()
+    await waitFor(() => expect(held.engine.load).toHaveBeenCalled())
+    await held.finish()
+    await findSheet()
+    expect(held.engine.load).toHaveBeenCalledWith(expect.anything(), { pageWidth: MIN_ENGINE_PAGE_WIDTH })
+    expect(held.engine.relayout.mock.calls).toEqual([[MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH]])
+  })
+
+  it('a score of several staves on a wide sheet gets the same page as one staff, and later widths use the staff count', async () => {
+    const held = holdNextLoad(SATB_MEI)
+    renderSection()
+    pickBoth()
+    await waitFor(() => expect(held.engine.load).toHaveBeenCalled())
+    await reportWidth(1054)
+    await held.finish()
+    await findSheet()
+    expect(held.engine.relayout.mock.calls).toEqual([[toEnginePageWidth(1054)]])
+    await reportWidth(321) // 412 px window, focus mode
+    expect(held.engine.relayout.mock.calls).toEqual([[toEnginePageWidth(1054)], [MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH]])
+  })
+
+  it('a single-staff score is never marked multi-staff', async () => {
+    const held = holdNextLoad()
+    renderSection()
+    pickBoth()
+    await waitFor(() => expect(held.engine.load).toHaveBeenCalled())
+    await reportWidth(327)
+    await held.finish()
+    const sheet = await findSheet()
+    expect(held.engine.relayout.mock.calls).toEqual([[toEnginePageWidth(327)]])
+    expect(frameOf(sheet)).not.toHaveClass('hm-score-frame--multi-staff')
+  })
+
+  const failNextRelayout = (engine: ReturnType<typeof fakeEngine>) =>
+    engine.relayout.mockImplementationOnce(() => {
+      throw new Error('relayout failed')
+    })
+
+  it('a redraw that fails after the load keeps the loaded page, its width and its stylesheet, and a later width tries again', async () => {
+    const held = holdNextLoad(SATB_MEI)
+    failNextRelayout(held.engine)
+    renderSection()
+    pickBoth()
+    await waitFor(() => expect(held.engine.load).toHaveBeenCalled())
+    await reportWidth(327)
+    await held.finish()
+    const sheet = await findSheet()
+    // still ready, on the page the load drew (MIN_ENGINE_PAGE_WIDTH): no error, no multi-staff floor stretching it
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `Phát ${TITLE}` })).toBeInTheDocument()
+    expect(sheet.querySelector('#relaid')).toBeNull()
+    expect(frameOf(sheet)).not.toHaveClass('hm-score-frame--multi-staff')
+    // nothing tries again until the sheet reports a width
+    await act(() => new Promise((resolve) => setTimeout(resolve, 500)))
+    expect(held.engine.relayout).toHaveBeenCalledTimes(1)
+    // 300 px maps to the same page (the floor) that failed: it is tried again, and now it draws
+    await reportWidth(300)
+    expect(held.engine.relayout.mock.calls).toEqual([[MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH], [MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH]])
+    await waitFor(() => expect(screen.getByRole('group', { name: 'Bản nhạc' }).querySelector('#relaid')).not.toBeNull())
+    expect(frameOf(screen.getByRole('group', { name: 'Bản nhạc' }))).toHaveClass('hm-score-frame--multi-staff')
+  })
+
+  it('a redraw that fails on a width change keeps the page and its width; the next width that maps to the same page tries again', async () => {
+    const held = holdNextLoad(SATB_MEI)
+    renderSection()
+    pickBoth()
+    await waitFor(() => expect(held.engine.load).toHaveBeenCalled())
+    await reportWidth(1054)
+    await held.finish()
+    const sheet = await findSheet()
+    expect(held.engine.relayout.mock.calls).toEqual([[toEnginePageWidth(1054)]])
+    expect(frameOf(sheet)).toHaveClass('hm-score-frame--multi-staff')
+    held.engine.relayout.mockImplementation(() => [page('n1', 'second')])
+    failNextRelayout(held.engine)
+    await reportWidth(321) // the floor: fails
+    await waitFor(() => expect(screen.getByRole('group', { name: 'Bản nhạc' }).querySelector('#relaid')).not.toBeNull())
+    expect(sheet.querySelector('#second')).toBeNull()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    await act(() => new Promise((resolve) => setTimeout(resolve, 500)))
+    expect(held.engine.relayout).toHaveBeenCalledTimes(2)
+    await reportWidth(285) // the floor again: tried again, draws
+    expect(held.engine.relayout.mock.calls).toEqual([[toEnginePageWidth(1054)], [MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH], [MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH]])
+    await waitFor(() => expect(screen.getByRole('group', { name: 'Bản nhạc' }).querySelector('#second')).not.toBeNull())
+  })
+
+  it('a one-staff redraw that fails is tried again by the next width that maps to the same page', async () => {
+    const held = holdNextLoad()
+    renderSection()
+    pickBoth()
+    await waitFor(() => expect(held.engine.load).toHaveBeenCalled())
+    await held.finish()
+    const sheet = await findSheet()
+    failNextRelayout(held.engine)
+    await reportWidth(222) // phone page: fails
+    expect(sheet.querySelector('#relaid')).toBeNull()
+    await reportWidth(260) // phone page again
+    expect(held.engine.relayout.mock.calls).toEqual([[PHONE_ENGINE_PAGE_WIDTH], [PHONE_ENGINE_PAGE_WIDTH]])
+    await waitFor(() => expect(screen.getByRole('group', { name: 'Bản nhạc' }).querySelector('#relaid')).not.toBeNull())
+  })
+
   it('does not redraw for a player that is gone', async () => {
     const held = holdNextLoad()
     const view = renderSection()
@@ -654,6 +777,30 @@ describe('ScorePracticeSection, failures', () => {
     expect(engine!.dispose).toHaveBeenCalledTimes(1)
     view.unmount()
     expect(vi.mocked(URL.revokeObjectURL).mock.calls).toEqual([['blob:audio-1']])
+    expect(engine!.dispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('a score the engine finds too complex is refused: a message, the fallback, everything freed once, no audio', async () => {
+    let engine: ReturnType<typeof fakeEngine> | undefined
+    mocks.createVerovioEngine.mockImplementationOnce(async () => {
+      engine = fakeEngine()
+      engine.load.mockRejectedValue(new ScoreEngineError('too-complex'))
+      return engine
+    })
+    const view = renderSection()
+    pickBoth()
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Bản nhạc quá dài để hiển thị trên web')
+    // the limit counts every <note> element: chord notes one by one, and (in MusicXML) rests
+    expect(alert).toHaveTextContent(`hơn ${MAX_SCORE_NOTES.toLocaleString('vi-VN')} nốt và dấu lặng`)
+    expect(alert).toHaveTextContent(MAX_SCORE_NOTES.toLocaleString('vi-VN'))
+    expect(screen.getByText(FALLBACK)).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Bản nhạc' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Thử lại/ })).not.toBeInTheDocument()
+    expect(FakeAudio.instances.filter((audio) => audio.src !== '')).toHaveLength(0)
+    expect(vi.mocked(URL.revokeObjectURL).mock.calls).toEqual([['blob:audio-1']])
+    expect(engine!.dispose).toHaveBeenCalledTimes(1)
+    view.unmount()
     expect(engine!.dispose).toHaveBeenCalledTimes(1)
   })
 
