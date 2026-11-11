@@ -247,7 +247,7 @@ describe('useFocusMode, listeners', () => {
     const added = onRoom(add)
     const removed = onRoom(remove)
     expect(added.length).toBeGreaterThan(0)
-    expect(removed.length).toBe(added.length)
+    expect(removed).toHaveLength(added.length)
     for (const [, listener] of added) expect(removed.some(([, gone]) => gone === listener)).toBe(true)
     add.mockRestore()
     remove.mockRestore()
