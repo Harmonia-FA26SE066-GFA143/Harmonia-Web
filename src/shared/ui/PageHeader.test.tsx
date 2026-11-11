@@ -25,7 +25,7 @@ describe('PageHeader', () => {
     expect(container.querySelector('.ant-breadcrumb')).toBeNull()
   })
 
-  it("omits the breadcrumb on a section's own page, which the sidebar already names", () => {
+  it("omits the breadcrumb on a section's own page, which the running head already names", () => {
     const { container } = render(<PageHeader title="Tổng quan" breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Tổng quan' }]} />)
     expect(container.querySelector('.ant-breadcrumb')).toBeNull()
   })

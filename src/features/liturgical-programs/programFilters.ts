@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { eventStatusLabels, type EventFilters, type EventStatus } from './types'
+import { canEditSongList, eventStatusLabels, type EventFilters, type EventStatus, type LiturgicalProgram } from './types'
 
 export const formatProgramDate = (date: string) => dayjs(date).format('DD/MM/YYYY')
 
@@ -30,4 +30,13 @@ export function writeEventListState({ status, fromDate, toDate }: EventFilters, 
   if (toDate) params.set('toDate', toDate)
   if (page > 1) params.set('page', String(page))
   return params
+}
+
+/** The reminder date of a list still to send (BE `songListDueDate`, B44); not enforced, so only words. */
+export function dueText(program: LiturgicalProgram, today: string) {
+  // Only an upcoming program still to send has a due date worth saying; a cancelled or past one has none.
+  if (!program.songListDueDate || !canEditSongList(program.songListStatus) || program.status === 'cancelled' || program.date < today) return undefined
+  const days = dayjs(program.songListDueDate).diff(dayjs(today), 'day')
+  if (days < 0) return { text: `Quá hạn gửi ${-days} ngày`, late: true }
+  return { text: days === 0 ? 'Hạn gửi hôm nay' : `Hạn gửi ${dayjs(program.songListDueDate).format('DD/MM')} · còn ${days} ngày`, late: false }
 }

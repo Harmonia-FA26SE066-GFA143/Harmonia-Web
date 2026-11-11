@@ -34,6 +34,26 @@ export function setSession(session: Session) {
   localStorage.setItem(storageKey, JSON.stringify(session))
 }
 
+/** sessionStorage keys of drafts that belong to the signed-in account (e.g. AI-extracted lyrics). */
+export const sessionDraftPrefix = 'harmonia.draft.'
+
+const clearedListeners = new Set<() => void>()
+
+/** Called whenever the session ends (sign-out, password change, a dead token), so account data in memory is dropped. */
+export function onSessionCleared(listener: () => void) {
+  clearedListeners.add(listener)
+  return () => {
+    clearedListeners.delete(listener)
+  }
+}
+
+/** Ends the session and drops what the account left in this tab: its drafts and, via the listeners, its tasks. */
 export function clearSession() {
   localStorage.removeItem(storageKey)
+  try {
+    for (const key of Object.keys(sessionStorage)) if (key.startsWith(sessionDraftPrefix)) sessionStorage.removeItem(key)
+  } catch {
+    // Storage blocked: nothing was saved there either.
+  }
+  for (const listener of clearedListeners) listener()
 }

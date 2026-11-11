@@ -1,6 +1,7 @@
 import { Alert, ConfigProvider } from 'antd'
-import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react'
 import { env } from '@/config/env'
+import type { SongMaterial } from '@/features/music-library'
 import { spacing } from '@/styles/tokens'
 import { usePlaybackClock } from '../score/clock/usePlaybackClock'
 import { FocusModeButton } from '../score/focus/FocusModeButton'
@@ -12,6 +13,7 @@ import { PlaybackControls } from '../score/controls/PlaybackControls'
 import { readLyrics, useLyricSelection, type ScoreLyrics } from '../score/controls/useLyricSelection'
 import { useScoreShortcuts } from '../score/controls/useScoreShortcuts'
 import { countStaves, createVerovioEngine, MAX_SCORE_NOTES, ScoreEngineError, type ScoreEngine } from '../score/engine'
+import { ApiScoreSource } from '../score/source/ApiScoreSource'
 import { ScoreCredit } from '../score/license/ScoreCredit'
 import { checkAlignment } from '../score/source/checkAlignment'
 import { DevFixtureScoreSource } from '../score/source/DevFixtureScoreSource'
@@ -27,10 +29,11 @@ import type { PlaybackTimeline } from '../score/timeline/types'
 import { MIN_ENGINE_PAGE_WIDTH, ScoreViewer, toEnginePageWidth } from '../score/viewer'
 import { MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH } from '../score/viewer/toEnginePageWidth'
 import { LocalScoreFilePicker } from './LocalScoreFilePicker'
+import { TimedLyricsView } from './TimedLyricsView'
 import '../score/focus/focusMode.css'
 
-/** The page decides how tall the sheet is; the viewer only fills it and scrolls inside. Focus mode lets the sheet take what the screen leaves. */
-const SHEET_FRAME_HEIGHT = 'min(60vh, 560px)'
+/** The page decides how tall the sheet is, leaving the play controls on screen; the viewer only fills it and scrolls inside. Focus mode lets the sheet take what the screen leaves. */
+const SHEET_FRAME_HEIGHT = 'clamp(320px, calc(100vh - 470px), 560px)'
 
 const devSource = new DevFixtureScoreSource()
 
@@ -55,6 +58,8 @@ type PlayerState =
       cursor: TimelineCursor
       onsets: PlaybackTimeline['onsets']
       timelineSeconds: number
+      /** From the server's notes.json; the check then compares it, not the WAV with its ringing tail. */
+      notesEndSeconds?: number
       /** Null for a score without lyrics: no lyric choice is shown. */
       lyrics: ScoreLyrics | null
       /**
@@ -128,7 +133,16 @@ function ScorePlayer({
   title,
   fallback,
   onRetry,
-}: Readonly<{ source: ScorePackageSource; title: string; fallback: ReactNode; onRetry: () => void }>) {
+  material,
+  onStale,
+}: Readonly<{
+  source: ScorePackageSource
+  title: string
+  fallback: ReactNode
+  onRetry: () => void
+  material?: SongMaterial
+  onStale?: () => void
+}>) {
   const [state, setState] = useState<PlayerState>({ status: 'loading' })
   const [viewerRoot, setViewerRoot] = useState<HTMLDivElement | null>(null)
   // The part of the page the keyboard shortcuts belong to: the sheet, its controls and the follow button.
@@ -185,7 +199,7 @@ function ScorePlayer({
         const loadWidth = pageWidth.current
         const loaded = await engine.load(scorePackage.score, { pageWidth: loadWidth })
         if (signal.aborted) return release()
-        const { score, audioUrl } = scorePackage
+        const { score, audioUrl, notesEndSeconds } = scorePackage
         // The tie map only adds group info and finalOff (lyrics hold over tied notes); note on/off times and onsets stay as they were.
         const timeline = parseTimemap(loaded.timemap, loaded.aliases, parseTieMap(loaded.mei))
         // Verovio accepts broken XML and draws an empty page; a score with no note to follow is refused like a wrong file.
@@ -206,6 +220,7 @@ function ScorePlayer({
           cursor: createTimelineCursor(timeline),
           onsets: timeline.onsets,
           timelineSeconds: timeline.duration,
+          notesEndSeconds,
           lyrics: readLyrics(loaded.mei, timeline),
           multiStaff: drawnByMultiStaffRule(pageWidth.current),
         })
@@ -248,7 +263,7 @@ function ScorePlayer({
   }
 
   const { active } = focus
-  const warning = ready && misalignmentNote(clock.duration, ready.timelineSeconds)
+  const warning = ready && misalignmentNote(ready.notesEndSeconds ?? clock.duration, ready.timelineSeconds)
   // An audio that never loaded (a corrupt WAV) can never sound, so the room's own player may come back beside the sheet.
   // A refused play() can still be retried, loaded or not: the fallback stays away then, or two players could sound at once.
   const audioDead = ready !== undefined && clock.sourceFailed === true && clock.duration <= 0
@@ -315,6 +330,8 @@ function ScorePlayer({
             onPart={lyricChoice.choosePart}
             onVerse={lyricChoice.chooseVerse}
           />
+          {/* The two lyric sources never show together: a score with its own lyrics lights them note by note. */}
+          {ready && !ready.lyrics && material && <TimedLyricsView material={material} clock={clock} onStale={onStale} />}
           {ready && <ScoreCredit />}
         </dialog>
       </ConfigProvider>
@@ -324,19 +341,28 @@ function ScorePlayer({
 }
 
 /**
- * The score player of the practice room. The source is the dev fixture when that flag is on, otherwise files from this
- * computer (temporary, see `LocalScoreFilePicker`). `fallback` is the room's existing MIDI/audio content: it stays while
- * there is no package or the package failed, and gives way to the score otherwise, so only one player has sound.
+ * The score player of the practice room. `material` is the song's InteractiveScore for the chosen voice part, loaded
+ * from the API. Without one: the dev fixture when that flag is on, or, in a dev build only, files from this computer
+ * (to try a score that is not uploaded). `fallback` is the room's existing MIDI/audio content: it stays while there is
+ * no package or the package failed, and gives way to the score otherwise, so only one player has sound.
  */
-export function ScorePracticeSection({ title, fallback }: Readonly<{ title: string; fallback: ReactNode }>) {
+export function ScorePracticeSection({
+  title,
+  fallback,
+  material,
+  onStale,
+}: Readonly<{ title: string; fallback: ReactNode; material?: SongMaterial; onStale?: () => void }>) {
   const [picked, setPicked] = useState<ScorePackageSource>()
   const [attempt, setAttempt] = useState(0)
   const nextAttempt = () => setAttempt((value) => value + 1)
-  const source = env.useDevFixtures ? devSource : picked
+  const materialId = material?.id
+  const revision = material?.fileRevision
+  const apiSource = useMemo(() => (materialId ? new ApiScoreSource(materialId) : undefined), [materialId])
+  const source = apiSource ?? (env.useDevFixtures ? devSource : picked)
 
   return (
     <>
-      {!env.useDevFixtures && (
+      {import.meta.env.DEV && !env.useDevFixtures && !material && (
         <LocalScoreFilePicker
           onPick={(next) => {
             setPicked(next)
@@ -344,7 +370,20 @@ export function ScorePracticeSection({ title, fallback }: Readonly<{ title: stri
           }}
         />
       )}
-      {source ? <ScorePlayer key={attempt} source={source} title={title} fallback={fallback} onRetry={nextAttempt} /> : fallback}
+      {source ? (
+        <ScorePlayer
+          // A new revision remounts and loads again; a list read again with new links does not.
+          key={`${materialId ?? 'local'}:${revision ?? 0}:${attempt}`}
+          source={source}
+          title={title}
+          fallback={fallback}
+          onRetry={nextAttempt}
+          material={material}
+          onStale={onStale}
+        />
+      ) : (
+        fallback
+      )}
     </>
   )
 }

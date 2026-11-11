@@ -166,6 +166,7 @@ export function NotificationBell() {
       >
         <Button
           ref={bell}
+          className="hm-chrome-btn"
           type="text"
           aria-label={unread ? `Thông báo, ${unread} chưa đọc` : 'Thông báo'}
           aria-haspopup="dialog"

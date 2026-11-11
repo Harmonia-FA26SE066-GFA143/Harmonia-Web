@@ -25,6 +25,6 @@ Evaluation is manual (LI-03, LI-05); advanced AI performance analysis is exclude
 - **Feedback** is required for Needs Revision and optional for Passed.
 - Audio format, length and size are not decided (5a.3 fixes only sample audio as MP3).
 
-## Open questions (the BE decides where it covers them; the rest belong in `design/tbd-backlog.md`)
+## Open questions (the BE decides where it covers them; the rest belong in [`tbd-backlog.md`](../tbd-backlog.md))
 
 Whether a submission made before the deadline but not reviewed by then is Overdue; whether the Director may change a result after the deadline; whether the audience follows later confirmation changes; deadline limits (future only, before the Mass); editing or deleting assignments; reminders to members who have not submitted.

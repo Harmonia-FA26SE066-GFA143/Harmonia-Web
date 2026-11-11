@@ -47,6 +47,20 @@ export function ChantStaff({ color = colors.primary }: Readonly<{ color?: string
   )
 }
 
+/** The page head's incipit: four lines and three square notes. Styled and animated by `.hm-incipit` in global.css. */
+export function Incipit() {
+  return (
+    <svg className="hm-incipit" aria-hidden width={72} height={20} viewBox="0 0 72 20" style={{ flex: 'none' }}>
+      {[0.5, 6.5, 12.5, 19.5].map((y) => (
+        <line key={y} x1={0} x2={72} y1={y} y2={y} />
+      ))}
+      <rect x={40} y={8} width={5} height={5} />
+      <rect x={50} y={2} width={5} height={5} />
+      <rect x={60} y={8} width={5} height={5} />
+    </svg>
+  )
+}
+
 const ruled = (w: number) => lines.map((y) => <line key={y} x1={0} x2={w} y1={y + 0.5} y2={y + 0.5} />)
 
 /** A staff with nothing written yet, a C clef at its head and a custos at its end (owner 2026-11-04): an empty state. */

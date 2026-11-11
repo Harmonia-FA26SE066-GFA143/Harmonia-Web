@@ -7,13 +7,14 @@ import { paths } from '@/app/router/paths'
 import { EventStatusTag, formatProgramDate, useEvent, useEventNames, useEvents } from '@/features/liturgical-programs'
 import { usePendingSongLists } from '@/features/song-list-review'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
-import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { AllDone, EmptyState, EmptyWeek, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { cardSurface, colors, sections, spacing, typography } from '@/styles/tokens'
 import { TodaySeason } from '../components/TodaySeason'
 
 const upcomingLimit = 5
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
+const capitalize = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`
 
 /** A submitted list, named after its event (the pending lists carry only the event id). */
 function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: string; version: number; submittedAt?: string }>) {
@@ -65,10 +66,10 @@ function Section({ id, title, extra, children }: Readonly<{ id: string; title: s
 }
 
 /**
- * Priest dashboard (Pattern 4, Dashboard / Overview; brief 2026-10-31, quiet and simple): today's season, the song
- * lists waiting for the Priest from `GET /api/song-lists/pending` (FE-17), then the upcoming liturgical events from
- * `GET /api/liturgical-events` (FE-15). Counts sit beside the section titles, no metric tiles. Each section loads and
- * fails on its own; reports (FE-22) are in the sidebar.
+ * Priest dashboard (Pattern 4, Dashboard / Overview; brief 2026-10-31, quiet and simple): the upcoming liturgical events
+ * from `GET /api/liturgical-events` (FE-15) as a ruled list, beside today's season and the song lists waiting for the
+ * Priest from `GET /api/song-lists/pending` (FE-17). Counts sit beside the section titles, no metric tiles. Each section
+ * loads and fails on its own; reports (FE-22) are in the running head.
  */
 export function PriestDashboardPage() {
   const navigate = useNavigate()
@@ -89,44 +90,7 @@ export function PriestDashboardPage() {
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Tổng quan' }]}
         extra={createButton}
       />
-      <Flex vertical gap={spacing.xl}>
-        <TodaySeason />
-
-        <Section
-          id="to-review-heading"
-          title="Cần xem xét"
-          // Waiting on the Priest: the count in ochre ink while above zero (DESIGN.md, The Amber Is Earned Rule).
-          extra={pending.data && pending.data.length > 0 && <Typography.Text style={{ color: sections.attention.ink, fontWeight: 600 }}>{pending.data.length} danh sách</Typography.Text>}
-        >
-          {pending.isPending && <SectionSkeleton rows={2} label="Đang tải danh sách bài hát chờ xem xét" />}
-          {pending.isError && (
-            <ErrorState
-              headingLevel={3}
-              title="Không thể tải danh sách bài hát chờ xem xét"
-              error={pending.error} hasData={pending.data !== undefined} onRetry={() => pending.refetch()}
-              retrying={pending.isFetching}
-            />
-          )}
-          {pending.data !== undefined && pending.data.length === 0 && (
-            <EmptyState
-              headingLevel={3}
-              title="Không có danh sách bài hát nào chờ xem xét"
-              description="Khi Ca trưởng gửi danh sách bài hát, danh sách sẽ xuất hiện tại đây."
-            />
-          )}
-          {pending.data !== undefined && pending.data.length > 0 && (
-            <Card style={cardSurface} styles={{ body: { padding: 0 } }}>
-              <ul className="hm-stagger" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                {pending.data.map((list, index) => (
-                  <li key={list.id} style={{ padding: `${spacing.md}px ${spacing.lg}px`, borderTop: index > 0 ? `1px solid ${colors.border}` : undefined }}>
-                    <PendingSongList eventId={list.eventId} version={list.version} submittedAt={list.submittedAt} />
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-        </Section>
-
+      <div className="director-dashboard-grid">
         <Section
           id="upcoming-heading"
           title="Sự kiện sắp tới"
@@ -146,45 +110,86 @@ export function PriestDashboardPage() {
           {upcoming.data !== undefined && upcoming.data.totalCount === 0 && (
             <EmptyState
               headingLevel={3}
-              title="Chưa có sự kiện sắp tới"
+              icon={<EmptyWeek />} title="Chưa có sự kiện sắp tới"
               description="Tạo và công bố sự kiện phụng vụ để Ca trưởng bắt đầu chuẩn bị."
               action={createButton}
             />
           )}
           {upcoming.data !== undefined && upcoming.data.totalCount > 0 && (
-            // One quiet line per event, not an admin table; the full table is on "Chương trình phụng vụ".
+            // One ruled line per event, like the Director's list; the full table is on "Chương trình phụng vụ".
+            <ol className="ordo">
+              {upcoming.data.items.map((event) => {
+                const title = eventName(event)
+                const season = name('season', event.seasonId)
+                const date = dayjs(event.date)
+                return (
+                  <li key={event.id} className="ordo-row">
+                    <div className="ordo-line">
+                      <span className="ordo-date">
+                        <span className="ordo-meta">{capitalize(date.format('dddd'))}</span>
+                        <span className="ordo-day">{date.format('DD')}</span>
+                        <span className="ordo-meta">Tháng {date.format('M')}</span>
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <Typography.Text className="ordo-name">{title}</Typography.Text>
+                        <span className="ordo-meta" style={{ display: 'block' }}>
+                          {[event.time, event.locationName, season].filter(Boolean).join(' · ')}
+                        </span>
+                      </div>
+                      <EventStatusTag status={event.status} />
+                      <Button
+                        onClick={() => navigate(generatePath(paths.priest.programDetail, { programId: event.id }))}
+                        aria-label={`Xem chi tiết ${title} ngày ${formatProgramDate(event.date)}`}
+                      >
+                        Xem
+                      </Button>
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
+          )}
+        </Section>
+
+        <Flex vertical gap={spacing.lg} style={{ minWidth: 0 }}>
+          <TodaySeason />
+
+        <Section
+          id="to-review-heading"
+          title="Cần xem xét"
+          // Waiting on the Priest: the count in ochre ink while above zero (DESIGN.md, The Amber Is Earned Rule).
+          extra={pending.data && pending.data.length > 0 && <Typography.Text style={{ color: sections.attention.ink, fontWeight: 600 }}>{pending.data.length} danh sách</Typography.Text>}
+        >
+          {pending.isPending && <SectionSkeleton rows={2} label="Đang tải danh sách bài hát chờ xem xét" />}
+          {pending.isError && (
+            <ErrorState
+              headingLevel={3}
+              title="Không thể tải danh sách bài hát chờ xem xét"
+              error={pending.error} hasData={pending.data !== undefined} onRetry={() => pending.refetch()}
+              retrying={pending.isFetching}
+            />
+          )}
+          {pending.data !== undefined && pending.data.length === 0 && (
+            <EmptyState
+              headingLevel={3}
+              icon={<AllDone />} title="Không có danh sách bài hát nào chờ xem xét"
+              description="Khi Ca trưởng gửi danh sách bài hát, danh sách sẽ xuất hiện tại đây."
+            />
+          )}
+          {pending.data !== undefined && pending.data.length > 0 && (
             <Card style={cardSurface} styles={{ body: { padding: 0 } }}>
-              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                {upcoming.data.items.map((event, index) => {
-                  const title = eventName(event)
-                  const season = name('season', event.seasonId)
-                  return (
-                    <li key={event.id} style={{ padding: `${spacing.md}px ${spacing.lg}px`, borderTop: index > 0 ? `1px solid ${colors.border}` : undefined }}>
-                      <Flex align="center" justify="space-between" gap={spacing.md}>
-                        <div style={{ minWidth: 0 }}>
-                          <Typography.Text style={{ display: 'block', fontWeight: 600 }}>{title}</Typography.Text>
-                          <Typography.Text style={muted}>
-                            {[`${formatProgramDate(event.date)} · ${event.time}`, event.locationName, season].filter(Boolean).join(' · ')}
-                          </Typography.Text>
-                        </div>
-                        <Flex align="center" gap={spacing.md} style={{ flexShrink: 0 }}>
-                          <EventStatusTag status={event.status} />
-                          <Button
-                            onClick={() => navigate(generatePath(paths.priest.programDetail, { programId: event.id }))}
-                            aria-label={`Xem chi tiết ${title} ngày ${formatProgramDate(event.date)}`}
-                          >
-                            Xem
-                          </Button>
-                        </Flex>
-                      </Flex>
-                    </li>
-                  )
-                })}
+              <ul className="hm-stagger" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                {pending.data.map((list, index) => (
+                  <li key={list.id} style={{ padding: `${spacing.md}px ${spacing.lg}px`, borderTop: index > 0 ? `1px solid ${colors.border}` : undefined }}>
+                    <PendingSongList eventId={list.eventId} version={list.version} submittedAt={list.submittedAt} />
+                  </li>
+                ))}
               </ul>
             </Card>
           )}
         </Section>
-      </Flex>
+        </Flex>
+      </div>
     </>
   )
 }

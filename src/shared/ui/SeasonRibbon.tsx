@@ -31,6 +31,7 @@ export function SeasonRibbon({ seasonKey, color, seasonName, celebrationName }: 
   return (
     <section
       aria-label="Mùa phụng vụ hôm nay"
+      className="hm-paper"
       style={{
         position: 'relative',
         overflow: 'hidden',

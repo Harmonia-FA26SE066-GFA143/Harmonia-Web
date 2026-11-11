@@ -1,5 +1,5 @@
 import { BulbOutlined, LockOutlined, NotificationOutlined, SoundOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Flex, Tooltip, Typography } from 'antd'
+import { Alert, App, Button, Flex, Segmented, Select, Tooltip, Typography } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
 import { ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
@@ -52,6 +52,8 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
   const finalizeWholeService = useFinalizeWholeService(programId)
   const notify = useSendRosterNotifications()
   const [notifying, setNotifying] = useState(false)
+  // One scope at a time: the whole service, or one song of the approved list.
+  const [songId, setSongId] = useState<string>()
 
   if (roster.isPending || shortages.isPending) return <SectionSkeleton rows={8} label="Đang tải phân công" />
   if (roster.isError || shortages.isError) {
@@ -64,6 +66,8 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
   }
 
   const current = roster.data
+  const pickedSong = approved ? songs.find((song) => song.id === songId) : undefined
+  const scope = pickedSong ? 'song' : 'service'
   const locked = current?.status === 'finalized'
   const wholeServiceLocked = Boolean(current?.wholeServiceFinalizedAt)
   const lines = current?.assignments ?? []
@@ -189,48 +193,62 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
           description="Vai cả buổi lễ chỉ còn thay người được; gửi thông báo được cho họ ngay. Phần theo bài vẫn sửa được."
         />
       )}
-      {shortages.data.length > 0 && (
-        <Alert
-          type="warning"
-          showIcon
-          title={`Còn thiếu người ở ${shortages.data.length} vị trí`}
-          description={
-            <ul style={{ margin: 0, paddingInlineStart: 18 }}>
-              {shortages.data.map((item) => (
-                <li key={`${item.songListItemId ?? 'whole-service'}-${item.skillId}`}>
-                  {item.songTitle ?? 'Cả buổi lễ'}: thiếu {item.requiredCount - item.assignedCount} {item.skillName}
-                </li>
-              ))}
-            </ul>
-          }
-        />
-      )}
-      <StaffingCard
-        programId={programId}
-        assignments={wholeServiceLines}
-        otherLines={songLines}
-        shortages={shortages.data.filter((item) => item.songListItemId === null)}
-        eligible={eligible}
-        skills={skills}
-        locked={locked}
-        linesLocked={wholeServiceLocked}
-      />
-      {approved
-        ? songs.map((song) => (
-            <StaffingCard
-              key={song.id}
-              programId={programId}
-              song={song}
-              assignments={songLines.filter((line) => line.songListItemId === song.id)}
-              otherLines={wholeServiceLines}
-              shortages={shortages.data.filter((item) => item.songListItemId === song.id)}
-              wholeServiceCounts={wholeServiceCounts}
-              eligible={eligible}
-              skills={skills}
-              locked={locked}
+      <Flex wrap gap={spacing.sm} align="center" justify="space-between">
+        <Flex wrap gap={spacing.sm} align="center">
+          <Segmented
+            aria-label="Phạm vi phân công"
+            value={scope}
+            onChange={(value) => setSongId(value === 'service' ? undefined : (songId ?? songs[0]?.id))}
+            options={[
+              { label: 'Cả Thánh lễ', value: 'service' },
+              { label: 'Theo bài hát', value: 'song', disabled: !approved || songs.length === 0 },
+            ]}
+          />
+          {scope === 'song' && (
+            <Select
+              aria-label="Bài hát"
+              value={songId}
+              onChange={setSongId}
+              options={songs.map((song) => {
+                const short = shortages.data.filter((item) => item.songListItemId === song.id).length
+                return { value: song.id, label: [song.liturgicalPart, song.title, short && `thiếu ${short}`].filter(Boolean).join(' · ') }
+              })}
+              style={{ minWidth: 280 }}
             />
-          ))
-        : songListNotice}
+          )}
+        </Flex>
+        <Typography.Text style={{ color: shortages.data.length ? 'var(--hm-area-attention-ink)' : colors.textMuted, fontWeight: 600 }}>
+          {shortages.data.length ? `Còn thiếu người ở ${shortages.data.length} vị trí` : 'Đủ người cho mọi vị trí đã khai'}
+        </Typography.Text>
+      </Flex>
+      {scope === 'service' ? (
+        <StaffingCard
+          programId={programId}
+          assignments={wholeServiceLines}
+          otherLines={songLines}
+          shortages={shortages.data.filter((item) => item.songListItemId === null)}
+          eligible={eligible}
+          skills={skills}
+          locked={locked}
+          linesLocked={wholeServiceLocked}
+        />
+      ) : (
+        pickedSong && (
+          <StaffingCard
+            key={pickedSong.id}
+            programId={programId}
+            song={pickedSong}
+            assignments={songLines.filter((line) => line.songListItemId === pickedSong.id)}
+            otherLines={wholeServiceLines}
+            shortages={shortages.data.filter((item) => item.songListItemId === pickedSong.id)}
+            wholeServiceCounts={wholeServiceCounts}
+            eligible={eligible}
+            skills={skills}
+            locked={locked}
+          />
+        )
+      )}
+      {!approved && songListNotice}
       <NotifyDrawer
         open={notifying}
         members={announceable}

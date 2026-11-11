@@ -13,8 +13,8 @@ const fields: { kind: FileKind; label: string; action: string; accept: string }[
 ]
 
 /**
- * TEMPORARY source: lets a score and its WAV be opened from this computer until Track A connects the API.
- * Remove this file and its one use in `ScorePracticeSection` then. Nothing here leaves the browser.
+ * Dev builds only: tries a score and its WAV from this computer without uploading them; the room reads scores from the
+ * API. `ScorePracticeSection` renders it behind `import.meta.env.DEV`, so production drops it. Nothing here leaves the browser.
  * The native file input is hidden: its button text follows the browser's language, so a Vietnamese button opens it.
  */
 export function LocalScoreFilePicker({ onPick }: Readonly<{ onPick: (source: ScorePackageSource) => void }>) {

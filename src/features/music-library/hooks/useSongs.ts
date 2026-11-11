@@ -3,14 +3,16 @@ import {
   createSong,
   deleteMaterial,
   deleteSong,
-  extractLyrics,
+  deleteTimedLyrics,
   getMaterialPlayback,
   getSong,
   getSongClassification,
+  getTimedLyrics,
   listLearningProgress,
   listMaterials,
   listSongs,
   replaceMaterialFile,
+  saveTimedLyrics,
   updateMaterial,
   updateSong,
   updateSongClassification,
@@ -24,6 +26,7 @@ import type {
   SongClassificationValues,
   SongFilters,
   SongValues,
+  TimedLyricLine,
   UploadMaterialValues,
 } from '../types'
 
@@ -83,6 +86,29 @@ export function useMaterialPlayback(materialId: string | undefined) {
   })
 }
 
+/** The revision is part of the key: a replaced file drops its timing on the server, so the old answer must not be reused. */
+const timedLyricsKey = (materialId: string, revision: number) => [...songsKey, 'timed-lyrics', materialId, revision] as const
+
+export function useTimedLyrics(materialId: string, revision: number) {
+  return useQuery({ queryKey: timedLyricsKey(materialId, revision), queryFn: () => getTimedLyrics(materialId) })
+}
+
+export function useSaveTimedLyrics(materialId: string, revision: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (values: { lyricsMaterialId: string; lines: TimedLyricLine[] }) => saveTimedLyrics(materialId, values),
+    onSuccess: (saved) => queryClient.setQueryData(timedLyricsKey(materialId, revision), saved),
+  })
+}
+
+export function useDeleteTimedLyrics(materialId: string, revision: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => deleteTimedLyrics(materialId),
+    onSuccess: () => queryClient.setQueryData(timedLyricsKey(materialId, revision), null),
+  })
+}
+
 export function useUploadMaterial(songId: string) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -97,11 +123,6 @@ export function useDeleteMaterial(songId: string) {
     mutationFn: (materialId: string) => deleteMaterial(materialId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
   })
-}
-
-/** Nothing is cached: each run asks the AI again, and the draft goes to the upload form. */
-export function useExtractLyrics() {
-  return useMutation({ mutationFn: extractLyrics })
 }
 
 /** The material keeps its id, so only its list (file name, size, link) is reloaded. */

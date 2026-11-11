@@ -98,7 +98,8 @@ describe('AttendancePage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Lưu điểm danh' }))
     await waitFor(() => expect(save).toHaveBeenCalledWith('r1', { m2: 'absent' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Lưu điểm danh' })).toBeDisabled())
+    // The button answers in its own place.
+    expect(await screen.findByRole('button', { name: 'Đã lưu' })).toBeDisabled()
     expect(within(screen.getByRole('radiogroup', { name: 'Điểm danh Simon Phan Văn Đức' })).getByRole('radio', { name: 'Vắng' })).toBeChecked()
   })
 
@@ -132,7 +133,7 @@ describe('AttendancePage', () => {
     await waitFor(() => expect(save).toHaveBeenCalledWith('r0', { m1: 'late' }))
   })
 
-  it('shows a session read-only until it starts', async () => {
+  it('keeps the sheet open before the start and keeps the marks when the server refuses', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions(
       { id: 'r0', eventId: 'p1', startAt: at(7, 19), endAt: at(7, 21), locationName: 'Nhà thờ', songs: [] },
     ))
@@ -141,9 +142,14 @@ describe('AttendancePage', () => {
     ])
     renderAttendance('/director/attendance?rehearsalId=r0')
 
-    expect(await screen.findByText(/Điểm danh được từ khi buổi tập bắt đầu/)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Lưu điểm danh' })).toBeNull()
-    const radios = within(screen.getByRole('radiogroup', { name: 'Điểm danh Maria Nguyễn Thu Hướng' })).getAllByRole('radio')
-    radios.forEach((radio) => expect(radio).toBeDisabled())
+    expect(await screen.findByText(/Giờ mở điểm danh tuỳ cấu hình của Admin/)).toBeInTheDocument()
+    const save = vi.spyOn(attendanceApi, 'saveAttendance').mockRejectedValue(new ApiError(409, { code: 'REHEARSAL_NOT_STARTED' }))
+    const group = within(screen.getByRole('radiogroup', { name: 'Điểm danh Maria Nguyễn Thu Hướng' }))
+    fireEvent.click(group.getByRole('radio', { name: 'Vắng' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu điểm danh' }))
+
+    expect(await screen.findByText(/Chưa tới giờ mở điểm danh/)).toBeInTheDocument()
+    expect(save).toHaveBeenCalled()
+    expect(screen.getByText(/1 thay đổi chưa lưu/)).toBeInTheDocument()
   })
 })

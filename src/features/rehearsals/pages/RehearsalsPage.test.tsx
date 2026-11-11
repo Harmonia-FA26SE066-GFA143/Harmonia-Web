@@ -97,18 +97,20 @@ describe('RehearsalsPage', () => {
     expect(await screen.findByText('Tuần này chưa có buổi tập nào.')).toBeInTheDocument()
     const week = screen.getByRole('list', { name: 'Lịch tập theo tuần' })
     expect(within(week).getAllByRole('listitem')).toHaveLength(7)
-    expect(screen.getAllByLabelText('Không có buổi tập')).toHaveLength(7)
+    // An empty day stays an empty column: no repeated empty sentence, and no session detail below.
+    expect(screen.queryAllByLabelText('Không có buổi tập')).toHaveLength(0)
+    expect(screen.queryByRole('region', { name: /^Chi tiết buổi tập/ })).toBeNull()
     // One action under the sentence besides the header's.
     expect(screen.getAllByRole('button', { name: /Lên lịch buổi tập/ })).toHaveLength(2)
     expect(screen.queryByText('Không tìm thấy buổi tập phù hợp.')).toBeNull()
   })
 
-  it('lays the week out as a timeline: sessions of one day by start time, each with its state, program and actions', async () => {
+  it('lays the week out as seven columns, sessions of a day by start time, and shows the picked one below', async () => {
     const monday = dayjs().subtract((dayjs().day() + 6) % 7, 'day').startOf('day')
     const inWeek = (day: number, hour: number) => monday.add(day, 'day').hour(hour).toISOString()
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(
       page([
-        { id: 'w1', eventId: 'p2', locationName: 'Phòng tập nhà xứ', startAt: inWeek(2, 18), endAt: inWeek(2, 20), songs: [{ songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ' }] },
+        { id: 'w1', eventId: 'p2', locationName: 'Phòng tập nhà xứ', startAt: inWeek(2, 18), endAt: inWeek(2, 20), songs: [{ songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ', note: 'Bè nam vào chậm' }] },
         { id: 'w2', startAt: inWeek(2, 8), endAt: inWeek(2, 9), songs: [] },
       ]),
     )
@@ -119,13 +121,22 @@ describe('RehearsalsPage', () => {
     const early = within(week).getByText('08:00–09:00')
     const late = within(week).getByText('18:00–20:00')
     expect(early.compareDocumentPosition(late) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(await within(week).findByRole('link', { name: 'Lễ Bổn mạng' })).toBeInTheDocument()
-    expect(within(week).getByText('Phòng tập nhà xứ · 1 bài cần tập: Con Bước Lên Bàn Thờ')).toBeInTheDocument()
-    expect(within(week).getByText('Không gắn chương trình')).toBeInTheDocument()
-    expect(within(week).getByText('Chưa chọn bài tập')).toBeInTheDocument()
+
+    fireEvent.click(await within(week).findByRole('button', { name: /, cho Lễ Bổn mạng$/ }))
+    let detail = screen.getByRole('region', { name: /^Chi tiết buổi tập/ })
+    expect(within(detail).getByText('Phòng tập nhà xứ')).toBeInTheDocument()
+    expect(within(detail).getByText('Con Bước Lên Bàn Thờ')).toBeInTheDocument()
+    expect(within(detail).getByText('Bè nam vào chậm')).toBeInTheDocument()
+    expect(within(detail).getByRole('link', { name: /Lễ Bổn mạng/ })).toBeInTheDocument()
     // States are words read from the times; the BE has none.
-    expect(within(week).getAllByText(/^(Sắp tới|Hôm nay|Đã qua)$/)).toHaveLength(2)
-    expect(within(week).getAllByRole('button', { name: /^Xoá buổi tập/ })).toHaveLength(2)
+    expect(within(detail).getAllByText(/^(Sắp tới|Hôm nay|Đã qua)$/)).toHaveLength(1)
+    expect(within(detail).getByRole('button', { name: /^Xoá buổi tập/ })).toBeInTheDocument()
+    expect(within(detail).getByRole('button', { name: 'Vào phòng tập' })).toBeInTheDocument()
+
+    fireEvent.click(early.closest('button')!)
+    detail = screen.getByRole('region', { name: /^Chi tiết buổi tập/ })
+    expect(within(detail).getByText('Không gắn chương trình')).toBeInTheDocument()
+    expect(within(detail).getByText('Chưa chọn bài tập.')).toBeInTheDocument()
     expect(screen.queryByText('Tuần này chưa có buổi tập nào.')).toBeNull()
   })
 
@@ -226,7 +237,7 @@ describe('RehearsalPracticeRoomPage', () => {
     kind: 'rehearsalMaterial',
     title: 'Emmanuel – organ',
     fileName: 'emmanuel.mid',
-    fileSizeBytes: 12000,
+    fileSizeBytes: 12000, fileRevision: 1,
     targetSkillId: null,
     targetSkillName: null,
     url: 'https://files.example/emmanuel.mid',
@@ -238,7 +249,7 @@ describe('RehearsalPracticeRoomPage', () => {
     kind: 'sheetMusic',
     title: 'Emmanuel – tổng phổ',
     fileName: 'emmanuel.pdf',
-    fileSizeBytes: 24000,
+    fileSizeBytes: 24000, fileRevision: 1,
     targetSkillId: null,
     targetSkillName: null,
     url: 'https://files.example/emmanuel.pdf',
@@ -366,7 +377,7 @@ describe('RehearsalPracticeRoomPage', () => {
         kind: 'sampleAudio',
         title: 'Emmanuel – Soprano',
         fileName: 'emmanuel-soprano.mp3',
-        fileSizeBytes: 9000,
+        fileSizeBytes: 9000, fileRevision: 1,
         targetSkillId: 'soprano',
         targetSkillName: 'Soprano',
         url: 'https://files.example/emmanuel-soprano.mp3',
@@ -391,7 +402,7 @@ describe('RehearsalPracticeRoomPage', () => {
       kind: 'sheetMusic',
       title: 'Emmanuel – Soprano',
       fileName: 'emmanuel-soprano.jpg',
-      fileSizeBytes: 18000,
+      fileSizeBytes: 18000, fileRevision: 1,
       targetSkillId: 'soprano',
       targetSkillName: 'Soprano',
       url: 'https://files.example/emmanuel-soprano.jpg',

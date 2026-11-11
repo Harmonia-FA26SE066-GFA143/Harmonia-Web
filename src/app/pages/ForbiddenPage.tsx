@@ -1,7 +1,6 @@
-import { LockOutlined } from '@ant-design/icons'
 import { Button, Flex, Result } from 'antd'
 import { useNavigate } from 'react-router'
-import { colors } from '@/styles/tokens'
+import { LockedDoor } from '@/shared/ui'
 
 /** Shown when a signed-in role opens another role's workspace; its own workspace is one click away. */
 export function ForbiddenPage({ homePath }: Readonly<{ homePath: string }>) {
@@ -11,9 +10,9 @@ export function ForbiddenPage({ homePath }: Readonly<{ homePath: string }>) {
       <title>Không có quyền truy cập · Harmonia</title>
       <Result
         icon={
-          // A plain monochrome icon; the antd status pictures are purple.
+          // Drawn for Harmonia; the antd status pictures are purple.
           <Flex justify="center">
-            <span aria-hidden style={{ fontSize: 40, color: colors.textMuted }}><LockOutlined /></span>
+            <LockedDoor />
           </Flex>
         }
         title="403"

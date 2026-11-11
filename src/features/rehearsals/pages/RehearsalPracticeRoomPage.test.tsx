@@ -78,6 +78,7 @@ const material = (id: string, kind: SongMaterial['kind'], fileName: string, targ
   title: id,
   fileName,
   fileSizeBytes: 1000,
+  fileRevision: 1,
   targetSkillId: targetSkillName,
   targetSkillName,
   url: `https://files.example/${fileName}`,

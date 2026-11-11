@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
+import * as registrationsApi from '@/features/member-registrations/api/memberRegistrationsApi'
 import * as notificationsApi from '@/features/notifications/api/notificationsApi'
 import * as profileApi from '@/features/profile/api/profileApi'
 import * as settingsApi from '@/features/settings/api/settingsApi'
@@ -45,26 +46,40 @@ afterEach(() => {
 })
 
 describe('AppShell', () => {
-  it('shows the sidebar for the role workspace in the URL and highlights the current page', async () => {
+  it('shows the running head for the role workspace in the URL and marks the current area and page', async () => {
     setViewportWidth(1280)
     renderShellAt('/director/rehearsals')
 
-    const nav = await screen.findByRole('navigation', { name: 'Điều hướng chính' })
-    expect(within(nav).getByText('Lịch tập').closest('li')).toHaveClass('ant-menu-item-selected')
-    expect(within(nav).queryByText('Tài khoản')).toBeNull()
+    const areas = await screen.findByRole('navigation', { name: 'Điều hướng chính' })
+    expect(within(areas).getByRole('link', { name: 'Hoạt động ca đoàn' })).toHaveAttribute('aria-current', 'true')
+    expect(within(areas).queryByText('Quản trị hệ thống')).toBeNull()
+    const pages = screen.getByRole('navigation', { name: 'Các trang của Hoạt động ca đoàn' })
+    expect(within(pages).getByRole('link', { name: 'Lịch tập' })).toHaveAttribute('aria-current', 'page')
+    expect(within(pages).queryByText('Tài khoản')).toBeNull()
     expect(screen.getByText('Nội dung trang')).toBeInTheDocument()
+  })
+
+  it('shows how many requests wait beside their tab, read with its name', async () => {
+    setViewportWidth(1440)
+    const list = vi.spyOn(registrationsApi, 'listRegistrations').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 1, totalCount: 3, totalPages: 3 })
+    renderShellAt('/admin/accounts')
+
+    const pages = await screen.findByRole('navigation', { name: 'Các trang của Quản trị hệ thống' })
+    expect(await within(pages).findByRole('link', { name: 'Đăng ký gia nhập 3 đang chờ' })).toBeInTheDocument()
+    expect(list).toHaveBeenCalledWith('', 1, 1)
+    expect(within(pages).getByRole('link', { name: 'Tài khoản' })).toBeInTheDocument()
   })
 
   it('offers the role workspaces on role-neutral pages', async () => {
     setViewportWidth(1280)
     renderShellAt('/profile')
 
-    const nav = await screen.findByRole('navigation', { name: 'Điều hướng chính' })
+    const nav = await screen.findByRole('navigation', { name: 'Các trang của Không gian làm việc' })
     expect(within(nav).getByText('Quản trị hệ thống')).toBeInTheDocument()
     expect(within(nav).getByText('Ca trưởng')).toBeInTheDocument()
   })
 
-  it("keeps the signed-in user's own sidebar on role-neutral pages", async () => {
+  it("keeps the signed-in user's own navigation on role-neutral pages", async () => {
     setViewportWidth(1280)
     setSession({
       accessToken: 'access',
@@ -75,11 +90,11 @@ describe('AppShell', () => {
     renderShellAt('/profile')
 
     const nav = await screen.findByRole('navigation', { name: 'Điều hướng chính' })
-    expect(within(nav).getByText('Lịch phụng vụ')).toBeInTheDocument()
+    expect(within(nav).getByText('Phụng vụ & lịch')).toBeInTheDocument()
     expect(within(nav).queryByText('Quản trị hệ thống')).toBeNull()
   })
 
-  it('moves the sidebar into a drawer on small screens', async () => {
+  it('moves the navigation into a drawer on small screens', async () => {
     setViewportWidth(375)
     renderShellAt('/admin')
 

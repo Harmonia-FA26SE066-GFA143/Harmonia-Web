@@ -1,14 +1,14 @@
 # Harmonia Web – Stitch Screen Map
 
-Nguồn: danh sách screen Stitch (file local của Web, không đưa lên Git) (115 screen DESKTOP + `DESIGN(2).md`), Stitch project `5445464059092912576`.
-Lập ở Phase 0 (2026-09-26), làm sạch 2026-10-20. File này chỉ nối **màn Stitch ↔ route ↔ feature folder**. Hành vi, trường, trạng thái và quyền do BE quyết định (quyết định owner 2026-10-07); xem `docs/business/` và `docs/tbd-backlog.md`. Route khai báo ở `src/app/router/paths.ts`.
+Nguồn lịch sử: danh sách screen Stitch (115 screen DESKTOP + `DESIGN(2).md`), project `5445464059092912576`.
+Lập ở Phase 0 (2026-09-26), làm sạch 2026-10-20, re-check route/BE 2026-11-10. Stitch đã nghỉ làm nguồn thiết kế từ 2026-10-27; file này chỉ là inventory nối **màn Stitch cũ ↔ route ↔ feature folder**, không quyết định UI mới. Hành vi, trường, trạng thái và quyền do BE quyết định; route thật ở `src/app/router/paths.ts`.
 
 ## Quy ước
 
 - Mỗi dòng là **một page**. Các screen cùng tên khác hậu tố (Đang tải Skeleton, Trạng thái Trống, Lỗi…, Không có kết quả lọc, Modal…) là **state** của page đó, không phải route riêng.
 - Actor suy ra từ sidebar của screen trên Stitch (shell Admin / Cha xứ / Ca trưởng) và ghi chú vai trò của Web (local). Stitch không phải nguồn business rule.
 - Tiền tố `/admin`, `/priest`, `/director` là không gian làm việc theo role; `RoleGuard` chỉ cho role tương ứng vào, còn quyền thật do BE kiểm soát.
-- Số thứ tự giữ nguyên như bản đầu để các tham chiếu cũ vẫn đúng; #3 (Đăng ký) và #5a (Chờ xác nhận) đã gỡ vì BE không có đăng ký công khai.
+- Số thứ tự giữ nguyên như bản đầu để các tham chiếu cũ vẫn đúng. #3 (Đăng ký) từng bị gỡ khi BE chưa có luồng công khai; từ `c7b514d` BE đã có `POST api/member-registrations`, nhưng Web chưa dựng lại form/màn xử lý. #5a (Chờ xác nhận tài khoản) vẫn không áp dụng.
 
 ## Bảng page (màn có trên Stitch)
 
@@ -37,7 +37,7 @@ Lập ở Phase 0 (2026-09-26), làm sạch 2026-10-20. File này chỉ nối **
 | 22 | Danh sách Chương trình phụng vụ (Ca trưởng) | Ca trưởng | `/director/programs` | `liturgical-programs` | `61ac899417d9405983c241e9d6bc279a` Mặc định<br>`a62a419b9c1c4081bfca6a7cb67c9c06` Đang tải Skeleton<br>`244dbce9737948329f0e5150baebe87a` Trạng thái Trống<br>`de0394c959854a98a8e892a6cd44e019` Không có kết quả lọc<br>`07ef41b16b3f4b81a378f6126f0454a5` Lỗi tải dữ liệu | Đã dựng, nối BE |
 | 23 | Chi tiết Chương trình phụng vụ (Ca trưởng) | Ca trưởng | `/director/programs/:programId` | `liturgical-programs` | `fc321cc65c464259b838ecfb6920fbea` Mặc định<br>`06f5914348e842668380ea7ca4c0d332` Chưa có bài hát<br>`a15b2cabd5cc43e3be72274cd87914a5` Đang tải Skeleton<br>`4c52caddec51436fb8c19dc879f7641c` Đã phê duyệt<br>`46dc04eaa2944b229e4273ff58b2c9bc` Yêu cầu chỉnh sửa | Đã dựng, nối BE |
 | 24 | Đề xuất danh sách bài hát | Ca trưởng | `/director/programs/:programId/song-list` | `song-lists` | `5974acf510274601bf03d592dd4a95e8` Mặc định<br>`be30ce763ed4447981cef5bed602b226` Đã gửi duyệt<br>`2427048a4a8244419c116dc796226dc2` Yêu cầu chỉnh sửa<br>`c057e67337284a69b59c9c08618e8d63` Đang tải Skeleton<br>`23ee45dee4424576b025c579c491d043` Trạng thái Trống<br>`df730dd692224b8bbc6f68d26073cf8a` Lỗi kết nối | Đã dựng, nối BE |
-| 25 | Lịch tập | Ca trưởng | `/director/rehearsals` | `rehearsals` | `0fdbe0e5a4554fe78418b8bd4ed4f622` Mặc định | Đã dựng, nối BE. Phòng luyện tập của một buổi: `/director/rehearsals/:rehearsalId` (audio mẫu theo bè, lời dạng văn bản, ghi chú từng bài, thu âm theo bài; lời chạy theo nhạc chờ B42) |
+| 25 | Lịch tập | Ca trưởng | `/director/rehearsals` | `rehearsals` | `0fdbe0e5a4554fe78418b8bd4ed4f622` Mặc định | Đã dựng, nối BE. Phòng luyện tập: `/director/rehearsals/:rehearsalId`; BE đã có timed lyrics ở `d74096c`, Web chưa nối nên hiện vẫn rơi về lời tĩnh |
 | 26 | Điểm danh | Ca trưởng | `/director/attendance` | `attendance` | `1b499f8f5c1c4879af09ce8720f42a09` Mặc định | Đã dựng, nối BE |
 | 27 | Xác nhận tham gia | Ca trưởng | `/director/participation` | `participation` | `cb679c6b86a24f0d9cdd3f5d33c334e0` Mặc định | Đã dựng, nối BE |
 | 28 | Yêu cầu nhân sự & Phân công | Ca trưởng | `/director/roster` | `roster` | `49b75e16525a41468110349f798c6902` Mặc định | Đã dựng, nối BE |
@@ -46,7 +46,7 @@ Lập ở Phase 0 (2026-09-26), làm sạch 2026-10-20. File này chỉ nối **
 | 31 | Kho bài hát | Ca trưởng | `/director/library` | `music-library` | `e7556b69066f4fc0bdb75fd2f1ff60ae` Mặc định (chọn; bản `9d462ed531074e32ab4f779495a0ffc6` bỏ vì tự thêm tên tác giả)<br>`84c6d1c1945a4bd1a5d4bb658d33d794` Modal Thêm bài hát<br>`c85e8d4bb0ac4fc29f7e559641c34f40` Đang tải Skeleton<br>`c8bd63639b004e3e935bf5834c004152` Trạng thái Trống<br>`c1c985b101dd4ecba3ee12dc740b0093` Không có kết quả lọc<br>`75d08692dc5a4132b8a4dadb9e672133` Lỗi tải dữ liệu | Đã dựng, nối BE |
 | 32 | Chi tiết bài hát | Ca trưởng | `/director/library/:songId` | `music-library` | `2edd5a15ed274d2fa03cde452694ee05` Mặc định (chọn; bản `7ac0d7d6096449eb93ab2f718fa35907` bỏ vì dồn tài liệu vào một bảng, không chia 4 nhóm và không có "Chưa phân loại")<br>`344309c695d44d90b9f3f3c83fcded90` Modal Xoá tài liệu | Đã dựng, nối BE |
 
-Screen Stitch không dựng: **Đăng ký** `04312fd5c7f945ba8f83dcf0f84c2051`. 115 screen ID gốc, mỗi ID thuộc đúng một page hoặc nằm trong danh sách này; dòng 31–32 là screen bổ sung, không có trong `stitch-screens.txt`. `15354935462241073431` là `DESIGN(2).md`, không phải screen.
+Screen Stitch chưa được Web dựng: **Đăng ký** `04312fd5c7f945ba8f83dcf0f84c2051`; BE nay đã hỗ trợ gửi đăng ký công khai. 115 screen ID gốc, mỗi ID thuộc đúng một page hoặc nằm trong danh sách này; dòng 31–32 là screen bổ sung, không có trong `stitch-screens.txt`. `15354935462241073431` là `DESIGN(2).md`, không phải screen.
 
 ## Page không có trên Stitch (dựng theo BE)
 
@@ -60,6 +60,8 @@ Screen Stitch không dựng: **Đăng ký** `04312fd5c7f945ba8f83dcf0f84c2051`. 
 | Duyệt kỹ năng | Ca trưởng | `/director/skill-approval` | `skill-approval` |
 | Ghi chú từ Cha xứ | Ca trưởng | `/director/notes` | `notes` |
 | Ghi chú cho Ca trưởng | Cha xứ | `/priest/notes` | `notes` |
+
+BE `d74096c` còn có các luồng Web chưa dựng route: Admin xử lý đăng ký gia nhập; Cha xứ/Ca trưởng đề cử và theo dõi đào tạo Ca trưởng; Admin bổ nhiệm. Khi triển khai, route lấy từ router hiện hành và UI theo hệ thống thiết kế hiện tại của Web, không hồi sinh màn Stitch như nguồn thiết kế.
 
 ## Các screen ID trùng tên – quyết định chọn bản
 
@@ -83,9 +85,9 @@ Quy tắc 3 của `stitch-implementation-plan.md` giả định các cặp trùn
 - **Chi tiết Stitch tự thêm** (mã tài khoản, thanh "Sandbox", "Căn cứ thẩm định", cột/nút không có trường BE tương ứng, thanh "Mô phỏng trạng thái") **không** được dựng. Khi một màn Stitch cần trường mà BE không có, ghi `TBD: Backend API missing` vào `tbd-backlog.md`.
 - **Locale:** `AppProviders` dùng `vi_VN` cho Ant Design và `vi` cho dayjs (lịch, phân trang, chữ mặc định).
 
-## Đối chiếu design tokens
+## Đối chiếu design tokens lịch sử — không áp dụng cho UI mới
 
-Nguồn: `DESIGN(2).md` (Stitch), design system của Web (local), `src/styles/tokens.ts`, `src/app/theme.ts`.
+Nguồn dưới đây ghi lại quyết định năm 2026-09/10. Giá trị triển khai hiện hành nằm trong `src/styles/tokens.ts` và `src/app/theme.ts`; đặc biệt không dùng JetBrains Mono, control radius hiện là 6px và container radius là 8px.
 
 | Hạng mục | DESIGN(2).md / screen Stitch | design-system.md | Áp dụng |
 |---|---|---|---|

@@ -17,6 +17,11 @@ export const priestRoutes: RouteObject[] = [
     async () => (await import('@/features/dashboard')).PriestDashboardPage,
   ),
   pageRoute(
+    paths.priest.nominations,
+    { title: 'Đề cử Ca trưởng', breadcrumb: [area, 'Đề cử Ca trưởng'] },
+    async () => (await import('@/features/director-nominations')).PriestNominationsPage,
+  ),
+  pageRoute(
     paths.priest.calendar,
     { title: 'Lịch phụng vụ', breadcrumb: [area, 'Lịch phụng vụ'] },
     async () => (await loadPrograms()).ProgramCalendarPage,

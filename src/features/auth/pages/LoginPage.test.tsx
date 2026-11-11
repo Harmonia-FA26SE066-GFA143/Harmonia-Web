@@ -69,6 +69,30 @@ describe('LoginPage', () => {
     expect(await screen.findByText(text)).toBeInTheDocument()
   })
 
+  it('covers the form with the rose while signing in, then names the workspace it opens', async () => {
+    let answer!: (result: { role: 'director'; mustChangePassword: boolean }) => void
+    vi.spyOn(authApi, 'signIn').mockReturnValue(new Promise((resolve) => (answer = resolve)))
+    renderPage(<LoginPage />, '/login')
+
+    submitCredentials()
+    expect(await screen.findByText('Đang xác thực tài khoản…')).toBeInTheDocument()
+    // Inert under the rose: the form is out of reach, so it cannot be sent twice.
+    expect(screen.getByRole('button', { name: 'Đăng nhập' }).closest('[inert]')).toHaveAttribute('aria-busy', 'true')
+
+    act(() => answer({ role: 'director', mustChangePassword: false }))
+    expect(await screen.findByTestId('location')).toHaveTextContent('/director')
+  })
+
+  it('lifts the rose on a refusal and moves the focus to the message', async () => {
+    vi.spyOn(authApi, 'signIn').mockRejectedValue(new ApiError(401, { code: 'AUTH_INVALID_CREDENTIALS' }))
+    renderPage(<LoginPage />, '/login')
+
+    submitCredentials()
+    const message = await screen.findByText('Email hoặc mật khẩu không chính xác.')
+    expect(screen.queryByText('Đang xác thực tài khoản…')).toBeNull()
+    await waitFor(() => expect(message.closest('[tabindex="-1"]')).toHaveFocus())
+  })
+
   it('hides the Google button while no client id is configured', () => {
     renderPage(<LoginPage />, '/login')
 

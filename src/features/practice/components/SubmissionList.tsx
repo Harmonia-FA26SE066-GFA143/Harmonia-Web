@@ -6,7 +6,7 @@ import { usePassSubmission, useSubmissions } from '../hooks/usePractice'
 import { practiceErrorMessage } from '../practiceErrors'
 import { formatDuration } from '../practiceFormat'
 import { practiceStatusLabels, practiceStatuses, type PracticeStatus, type ReviewResult } from '../types'
-import { ReviewDrawer } from './ReviewDrawer'
+import { ReviewPanel } from './ReviewPanel'
 import { SubmissionTable } from './SubmissionTable'
 
 const pageSize = 20
@@ -25,7 +25,7 @@ export function SubmissionList({ assignmentId, defaultStatus }: Readonly<Submiss
   const [open, setOpen] = useState<{ id: string; result?: ReviewResult; comment?: string }>()
   // A new key per opening resets the form; closing keeps it, so the drawer closes with its transition.
   const [opening, setOpening] = useState(0)
-  const openReview = (next: NonNullable<typeof open>) => {
+  const openReview = (next: typeof open) => {
     setOpen(next)
     setOpening((count) => count + 1)
   }
@@ -34,6 +34,15 @@ export function SubmissionList({ assignmentId, defaultStatus }: Readonly<Submiss
   // Rows marked "Đạt" here: they show their ✓ until the queue reloads without them.
   const [passed, setPassed] = useState<ReadonlySet<string>>(new Set())
   const total = submissions.data?.totalCount ?? 0
+  const items = submissions.data?.items ?? []
+  // The panel shows the picked submission, else the first of the queue.
+  const shown = open && items.some((item) => item.id === open.id) ? open : items[0] && { id: items[0].id }
+  // After a decision the next one in the queue is picked; the reloaded queue may no longer hold the one just decided.
+  const pickNext = () => {
+    const index = items.findIndex((item) => item.id === shown?.id)
+    const next = items[index + 1]
+    openReview(next ? { id: next.id } : undefined)
+  }
 
   return (
     <Flex vertical gap={spacing.md}>
@@ -61,39 +70,42 @@ export function SubmissionList({ assignmentId, defaultStatus }: Readonly<Submiss
         />
       )}
       {submissions.data !== undefined && total > 0 && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <SubmissionTable
-            submissions={submissions.data.items}
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            loading={submissions.isPlaceholderData}
-            passingId={pass.isPending ? pass.variables : undefined}
-            passedIds={passed}
-            onPageChange={setPage}
-            // The row's ✓ is the acknowledgement; only a refusal needs a message.
-            onPass={(submission) =>
-              !pass.isPending &&
-              pass.mutate(submission.id, {
-                onSuccess: () => setPassed((ids) => new Set(ids).add(submission.id)),
-                onError: (error) => message.error(practiceErrorMessage(error, 'Không thể lưu đánh giá. Vui lòng thử lại.')),
-              })
-            }
-            // The comment starts at the moment being heard, so the member finds the passage.
-            onNeedsRevision={(submission, atSeconds) =>
-              openReview({ id: submission.id, result: 'needsRevision', comment: atSeconds ? `[${formatDuration(Math.floor(atSeconds))}] ` : undefined })
-            }
-            onOpen={(submission) => openReview({ id: submission.id })}
+        <div className="hm-split hm-split--review">
+          <Card styles={{ body: { padding: 0 } }}>
+            <SubmissionTable
+              selectedId={shown?.id}
+              submissions={submissions.data.items}
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              loading={submissions.isPlaceholderData}
+              passingId={pass.isPending ? pass.variables : undefined}
+              passedIds={passed}
+              onPageChange={setPage}
+              // The row's ✓ is the acknowledgement; only a refusal needs a message.
+              onPass={(submission) =>
+                !pass.isPending &&
+                pass.mutate(submission.id, {
+                  onSuccess: () => setPassed((ids) => new Set(ids).add(submission.id)),
+                  onError: (error) => message.error(practiceErrorMessage(error, 'Không thể lưu đánh giá. Vui lòng thử lại.')),
+                })
+              }
+              // The comment starts at the moment being heard, so the member finds the passage.
+              onNeedsRevision={(submission, atSeconds) =>
+                openReview({ id: submission.id, result: 'needsRevision', comment: atSeconds ? `[${formatDuration(Math.floor(atSeconds))}] ` : undefined })
+              }
+              onOpen={(submission) => openReview({ id: submission.id })}
+            />
+          </Card>
+          <ReviewPanel
+            key={`${shown?.id ?? 'none'}:${opening}`}
+            submissionId={shown?.id}
+            initialResult={shown?.result}
+            initialComment={shown?.comment}
+            onDone={pickNext}
           />
-        </Card>
+        </div>
       )}
-      <ReviewDrawer
-        key={opening}
-        submissionId={open?.id}
-        initialResult={open?.result}
-        initialComment={open?.comment}
-        onClose={() => setOpen(undefined)}
-      />
     </Flex>
   )
 }

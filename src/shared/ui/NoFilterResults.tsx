@@ -1,6 +1,7 @@
-import { ClearOutlined, FileSearchOutlined } from '@ant-design/icons'
+import { ClearOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import type { ReactNode } from 'react'
+import { NoResults } from './Illustrations'
 import { StatePanel } from './StatePanel'
 
 export interface NoFilterResultsProps {
@@ -31,6 +32,6 @@ export function NoFilterResults({
     ) : undefined
 
   return (
-    <StatePanel role="status" icon={<FileSearchOutlined />} title={title} description={description} actions={actions} />
+    <StatePanel role="status" icon={<NoResults />} title={title} description={description} actions={actions} />
   )
 }

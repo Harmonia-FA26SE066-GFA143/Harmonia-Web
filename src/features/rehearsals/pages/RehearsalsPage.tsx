@@ -8,14 +8,13 @@ import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-pr
 import { vietnamToday } from '@/lib/api/dates'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, sizes, spacing } from '@/styles/tokens'
-import { RehearsalDetailDrawer } from '../components/RehearsalDetailDrawer'
 import { RehearsalFormDrawer } from '../components/RehearsalFormDrawer'
 import { RehearsalTable } from '../components/RehearsalTable'
-import { RehearsalWeek } from '../components/RehearsalWeek'
+import { RehearsalDetail, RehearsalWeek } from '../components/RehearsalWeek'
 import { useAllRehearsals, useDeleteRehearsal, useRehearsals, useSaveRehearsal } from '../hooks/useRehearsals'
-import { rehearsalLabel } from '../rehearsalFormat'
+import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
 import { rehearsalErrorMessage } from '../rehearsalErrors'
-import type { Rehearsal, RehearsalFilters, RehearsalValues } from '../types'
+import { isRehearsalDay, isUpcoming, type Rehearsal, type RehearsalFilters, type RehearsalValues } from '../types'
 
 const pageSize = 20
 
@@ -40,7 +39,7 @@ export function RehearsalsPage() {
   const weekFilters = { ...filters, fromDate: weekStart, toDate: dayjs(weekStart).add(6, 'day').format('YYYY-MM-DD') }
   const rehearsals = useRehearsals(filters, { pageNumber: page, pageSize })
   const weekRehearsals = useAllRehearsals(weekFilters)
-  const [detail, setDetail] = useState<Rehearsal>()
+  const [pickedId, setPickedId] = useState<string>()
   const programs = useUpcomingPrograms()
   const save = useSaveRehearsal()
   const remove = useDeleteRehearsal()
@@ -49,6 +48,14 @@ export function RehearsalsPage() {
 
   const programMap = useMemo(() => new Map((programs.data ?? []).map((program) => [program.id, program])), [programs.data])
   const activeProgram = filters.eventId ? programMap.get(filters.eventId) : undefined
+  // The session shown under the week: the one picked, else today's, else the next to come, else the first.
+  const weekItems = (weekRehearsals.data?.items ?? []).toSorted((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))
+  const picked =
+    weekItems.find((rehearsal) => rehearsal.id === pickedId) ??
+    weekItems.find((rehearsal) => isRehearsalDay(rehearsal)) ??
+    weekItems.find((rehearsal) => isUpcoming(rehearsal)) ??
+    weekItems[0]
+  const todays = weekItems.find((rehearsal) => isRehearsalDay(rehearsal) && isUpcoming(rehearsal))
   const total = rehearsals.data?.totalCount ?? 0
   const filtered = Boolean(filters.eventId || filters.fromDate || filters.toDate)
   const changeFilters = (next: RehearsalFilters) => {
@@ -219,16 +226,35 @@ export function RehearsalsPage() {
                       </Button>
                     </Flex>
                   )}
+                  {todays && (
+                    <div className="hm-today-band">
+                      <span>
+                        <b>Hôm nay có buổi tập</b> · {formatRehearsalTime(todays)}
+                        {todays.eventId && programMap.get(todays.eventId) ? ` · ${programMap.get(todays.eventId)?.eventName}` : ''}
+                      </span>
+                      <Button type="primary" onClick={() => openPracticeRoom(todays)}>
+                        Vào phòng tập
+                      </Button>
+                    </div>
+                  )}
                   <RehearsalWeek
                     weekStart={weekStart}
                     direction={direction}
-                    rehearsals={weekRehearsals.data.items}
+                    rehearsals={weekItems}
                     programs={programMap}
-                    onOpen={openPracticeRoom}
-                    onTakeAttendance={takeAttendance}
-                    onEdit={setEditing}
-                    onDelete={handleDelete}
+                    selectedId={picked?.id}
+                    onSelect={(rehearsal) => setPickedId(rehearsal.id)}
                   />
+                  {picked && (
+                    <RehearsalDetail
+                      rehearsal={picked}
+                      program={picked.eventId ? programMap.get(picked.eventId) : undefined}
+                      onOpenRoom={openPracticeRoom}
+                      onTakeAttendance={takeAttendance}
+                      onEdit={setEditing}
+                      onDelete={handleDelete}
+                    />
+                  )}
                 </>
               )
             ) : null
@@ -252,23 +278,6 @@ export function RehearsalsPage() {
             )
           )}
       </Card>
-      <RehearsalDetailDrawer
-        rehearsal={detail}
-        program={detail?.eventId ? programMap.get(detail.eventId) : undefined}
-        onClose={() => setDetail(undefined)}
-        onAttendance={(rehearsal) => {
-          setDetail(undefined)
-          takeAttendance(rehearsal)
-        }}
-        onEdit={(rehearsal) => {
-          setDetail(undefined)
-          setEditing(rehearsal)
-        }}
-        onDelete={(rehearsal) => {
-          setDetail(undefined)
-          handleDelete(rehearsal)
-        }}
-      />
       <RehearsalFormDrawer
         open={editing !== undefined}
         programs={programs.data ?? []}

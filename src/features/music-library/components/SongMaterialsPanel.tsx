@@ -5,6 +5,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   DownloadOutlined,
+  FieldTimeOutlined,
   ExportOutlined,
   FileTextOutlined,
   FolderOpenOutlined,
@@ -29,6 +30,7 @@ import {
   materialKinds,
   maxMaterialBytes,
   rendersPlayback,
+  supportsTimedLyrics,
   type MaterialKind,
   type SongMaterial,
 } from '../types'
@@ -53,8 +55,10 @@ export interface SongMaterialsPanelProps {
   onTypeLyrics?: () => void
   /** Asks the AI for a draft of the lyrics printed on a sheet music file. */
   onExtractLyrics?: (material: SongMaterial) => void
-  /** Sheet music whose lyrics are being read. */
-  extractingId?: string
+  /** Sheet music whose lyrics are being read (background tasks: several may run, each once). */
+  extractingIds?: ReadonlySet<string>
+  /** Opens the editor of the lyrics timed to an audio material. */
+  onTimedLyrics?: (material: SongMaterial) => void
 }
 
 function formatSize(bytes: number | null): string | undefined {
@@ -114,7 +118,7 @@ function UploadButton({ kind, loading, label, hintId, onPick }: Readonly<{
   )
 }
 
-type MaterialActions = Pick<SongMaterialsPanelProps, 'onDelete' | 'onEdit' | 'onProgress' | 'onReplace' | 'onExtractLyrics' | 'extractingId'>
+type MaterialActions = Pick<SongMaterialsPanelProps, 'onDelete' | 'onEdit' | 'onProgress' | 'onReplace' | 'onExtractLyrics' | 'extractingIds' | 'onTimedLyrics'>
 
 function MaterialRow({
   material,
@@ -124,7 +128,8 @@ function MaterialRow({
   onProgress,
   onReplace,
   onExtractLyrics,
-  extractingId,
+  extractingIds,
+  onTimedLyrics,
 }: Readonly<{ material: SongMaterial; readingLayout: boolean } & MaterialActions>) {
   const Icon = kindIcons[material.kind]
   return (
@@ -180,12 +185,16 @@ function MaterialRow({
         {onExtractLyrics && material.kind === 'sheetMusic' && material.url && (
           <Button
             icon={<BulbOutlined />}
-            loading={extractingId === material.id}
-            disabled={extractingId !== undefined && extractingId !== material.id}
+            loading={extractingIds?.has(material.id)}
             onClick={() => onExtractLyrics(material)}
             aria-label={`Trích lời từ ${material.title}`}
           >
             Trích lời
+          </Button>
+        )}
+        {onTimedLyrics && supportsTimedLyrics(material) && (
+          <Button icon={<FieldTimeOutlined />} onClick={() => onTimedLyrics(material)} aria-label={`Soạn lời theo thời gian cho ${material.title}`}>
+            Lời theo thời gian
           </Button>
         )}
         {onProgress && (

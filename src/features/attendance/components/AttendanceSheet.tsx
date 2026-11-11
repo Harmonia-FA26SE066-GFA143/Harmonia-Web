@@ -2,20 +2,12 @@ import { CheckOutlined, SearchOutlined } from '@ant-design/icons'
 import { App, Avatar, Button, Card, Flex, Input, Modal, Radio, Table, Typography, type TableColumnsType } from 'antd'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useBeforeUnload, useBlocker } from 'react-router'
-import { NoFilterResults } from '@/shared/ui'
+import { NoFilterResults, SaveButton, SummaryStrip, useJustSaved } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, media, outcomeColors, radius, shadows, spacing, spine, typography } from '@/styles/tokens'
 import { attendanceErrorMessage } from '../attendanceErrors'
 import { useSaveAttendance } from '../hooks/useAttendance'
 import { attendanceLabels, attendanceShortLabels, attendanceValues, type AttendanceRecord, type AttendanceValue } from '../types'
-
-/** Each result in its colour (`outcomeColors`, owner 2026-11-02); the checked button takes it in global.css. */
-const markColors: Record<AttendanceValue, string> = {
-  present: outcomeColors.good,
-  late: outcomeColors.late,
-  excused: outcomeColors.excused,
-  absent: outcomeColors.missed,
-}
 
 const options = attendanceValues.map((value) => ({
   value,
@@ -36,15 +28,14 @@ const initial = (name: string) => name.trim().split(/\s+/).at(-1)?.charAt(0).toU
 export interface AttendanceSheetProps {
   rehearsalId: string
   records: AttendanceRecord[]
-  /** False before the session starts (REHEARSAL_NOT_STARTED): the sheet is shown read-only. */
-  editable: boolean
   /** The session, given the count of the marks to show with it. */
   header: (tally: ReactNode) => ReactNode
 }
 
-export function AttendanceSheet({ rehearsalId, records, editable, header }: Readonly<AttendanceSheetProps>) {
+export function AttendanceSheet({ rehearsalId, records, header }: Readonly<AttendanceSheetProps>) {
   const { message } = App.useApp()
   const save = useSaveAttendance(rehearsalId)
+  const [justSaved, markSaved] = useJustSaved()
   // Only what the user changed; the rest reads from `records`. The sheet is not remounted when the records reload
   // (window refocus, after a save), so these edits, the search and the focus survive.
   const [edits, setEdits] = useState<Record<string, AttendanceValue>>({})
@@ -72,7 +63,7 @@ export function AttendanceSheet({ rehearsalId, records, editable, header }: Read
       observer.disconnect()
       root.style.removeProperty('scroll-padding-bottom')
     }
-  }, [editable])
+  }, [])
 
   const valueOf = (record: AttendanceRecord) => edits[record.memberId] ?? record.value
   const changed = records.filter((record) => record.memberId in edits)
@@ -101,7 +92,10 @@ export function AttendanceSheet({ rehearsalId, records, editable, header }: Read
   const handleSave = () => {
     if (save.isPending) return
     save.mutate(edits, {
-      onSuccess: () => message.success('Đã lưu điểm danh.'),
+      onSuccess: () => {
+        markSaved()
+        message.success('Đã lưu điểm danh.')
+      },
       onError: (error) => message.error(attendanceErrorMessage(error)),
     })
   }
@@ -137,7 +131,6 @@ export function AttendanceSheet({ rehearsalId, records, editable, header }: Read
       render: (_, record) => (
         <Radio.Group
           className="attendance-marks"
-          disabled={!editable}
           optionType="button"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}
           aria-label={`Điểm danh ${record.fullName}`}
@@ -154,28 +147,13 @@ export function AttendanceSheet({ rehearsalId, records, editable, header }: Read
       <Card styles={{ body: { padding: `${spacing.lg}px ${spacing.xl}px` } }}>
         {header(
         <div style={{ marginTop: spacing.md }}>
-          <Flex
-            role="img"
-            aria-label={`${marked} trên ${records.length} ca viên đã điểm danh`}
-            style={{ height: 6, maxWidth: 440, borderRadius: 3, overflow: 'hidden', background: colors.softSurface }}
-          >
-            {attendanceValues.map((value) => (counts[value] ? <span key={value} style={{ flex: counts[value], background: markColors[value] }} /> : null))}
-            {records.length > marked && <span style={{ flex: records.length - marked }} />}
-          </Flex>
-          <Flex component="ul" wrap gap={spacing.md} style={{ listStyle: 'none', margin: `${spacing.sm}px 0 0`, padding: 0, color: colors.textMuted }}>
-            <li>
-              <b style={{ color: colors.textPrimary }}>
-                {marked}/{records.length}
-              </b>{' '}
-              đã điểm danh
-            </li>
-            {attendanceValues.map((value) => (
-              <li key={value}>
-                <span aria-hidden style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: markColors[value], marginInlineEnd: 6 }} />
-                {counts[value]} {attendanceLabels[value].toLowerCase()}
-              </li>
-            ))}
-          </Flex>
+          <SummaryStrip
+            label={`Điểm danh: ${marked} trên ${records.length} ca viên`}
+            cells={[
+              ...attendanceValues.map((value) => ({ label: attendanceLabels[value], value: counts[value] })),
+              { label: 'Chưa điểm danh', value: records.length - marked, waiting: 'Còn chờ' },
+            ]}
+          />
         </div>,
         )}
       </Card>
@@ -194,11 +172,9 @@ export function AttendanceSheet({ rehearsalId, records, editable, header }: Read
               onChange={(event) => setSearch(event.target.value)}
             />
           </Flex>
-          {editable && (
-            <Button icon={<CheckOutlined />} onClick={markAllPresent} disabled={save.isPending}>
-              Đánh dấu tất cả có mặt
-            </Button>
-          )}
+          <Button icon={<CheckOutlined />} onClick={markAllPresent} disabled={save.isPending}>
+            Đánh dấu tất cả có mặt
+          </Button>
         </Flex>
         {visible.length === 0 ? (
           <div style={{ padding: spacing.md }}>
@@ -208,44 +184,42 @@ export function AttendanceSheet({ rehearsalId, records, editable, header }: Read
           <Table<AttendanceRecord> rowKey="memberId" columns={columns} dataSource={visible} pagination={false} scroll={{ x: 720 }} />
         )}
       </Card>
-      {editable && (
-        // Sticky at the bottom of the window, so Save stays in reach on a long list.
-        <Flex
-          ref={saveBar}
-          align="center"
-          justify="space-between"
-          gap={spacing.md}
-          style={{
-            position: 'sticky',
-            bottom: spacing.md,
-            zIndex: 3,
-            padding: `${spacing.sm + 4}px ${spacing.md}px ${spacing.sm + 4}px ${spacing.lg}px`,
-            borderRadius: radius.lg,
-            background: dirty ? spine.background : colors.surface,
-            border: dirty ? 'none' : `1px solid ${colors.border}`,
-            boxShadow: dirty ? shadows.lg : 'none',
-            color: dirty ? spine.text : colors.textMuted,
-          }}
-        >
-          <Typography.Text aria-live="polite" ellipsis style={{ color: 'inherit', minWidth: 0 }}>
-            {dirty ? (
-              <>
-                <b style={{ color: media.text }}>{changed.length} thay đổi chưa lưu</b> · {changed.map((record) => record.fullName).join(', ')}
-              </>
-            ) : (
-              'Chưa có thay đổi nào.'
-            )}
-          </Typography.Text>
-          <Flex gap={spacing.sm} style={{ flexShrink: 0 }}>
-            <Button ghost={dirty} onClick={discard} disabled={!dirty || save.isPending}>
-              Hủy thay đổi
-            </Button>
-            <Button type={dirty ? 'default' : 'primary'} onClick={handleSave} disabled={!dirty} loading={save.isPending} style={dirty ? { color: colors.primary, fontWeight: 600 } : undefined}>
-              Lưu điểm danh
-            </Button>
-          </Flex>
+      {/* Sticky at the bottom of the window, so Save stays in reach on a long list. */}
+      <Flex
+        ref={saveBar}
+        align="center"
+        justify="space-between"
+        gap={spacing.md}
+        style={{
+          position: 'sticky',
+          bottom: spacing.md,
+          zIndex: 3,
+          padding: `${spacing.sm + 4}px ${spacing.md}px ${spacing.sm + 4}px ${spacing.lg}px`,
+          borderRadius: radius.lg,
+          background: dirty ? spine.background : colors.surface,
+          border: dirty ? 'none' : `1px solid ${colors.border}`,
+          boxShadow: dirty ? shadows.lg : 'none',
+          color: dirty ? spine.text : colors.textMuted,
+        }}
+      >
+        <Typography.Text aria-live="polite" ellipsis style={{ color: 'inherit', minWidth: 0 }}>
+          {dirty ? (
+            <>
+              <b style={{ color: media.text }}>{changed.length} thay đổi chưa lưu</b> · {changed.map((record) => record.fullName).join(', ')}
+            </>
+          ) : (
+            'Chưa có thay đổi nào.'
+          )}
+        </Typography.Text>
+        <Flex gap={spacing.sm} style={{ flexShrink: 0 }}>
+          <Button ghost={dirty} onClick={discard} disabled={!dirty || save.isPending}>
+            Hủy thay đổi
+          </Button>
+          <SaveButton saved={justSaved && !dirty} type={dirty ? 'default' : 'primary'} onClick={handleSave} disabled={!dirty} loading={save.isPending} style={dirty ? { color: colors.primary, fontWeight: 600 } : undefined}>
+            Lưu điểm danh
+          </SaveButton>
         </Flex>
-      )}
+      </Flex>
       <Modal
         open={blocker.state === 'blocked'}
         title="Rời khỏi trang điểm danh?"

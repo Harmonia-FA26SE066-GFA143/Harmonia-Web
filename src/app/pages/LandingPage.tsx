@@ -1,22 +1,12 @@
 import { MailOutlined } from '@ant-design/icons'
 import { Button, Typography } from 'antd'
-import type { CSSProperties, MouseEvent } from 'react'
+import { useCallback, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useContactEmail } from '@/features/settings'
-import { BrandMark, StatusTag, type StatusTagProps } from '@/shared/ui'
+import { BrandMark, HeroNave, StatusTag, visuallyHidden, type StatusTagProps } from '@/shared/ui'
 import { colors, gold, media, radius, seasonColors, spacing, spine, typography } from '@/styles/tokens'
-import { HeroVideo } from './HeroVideo'
-
-/** One program from song list to celebration and who handles each part. */
-const steps = [
-  { title: 'Soạn danh sách', who: 'Ca trưởng', text: 'Chọn bài cho từng phần của Thánh lễ.' },
-  { title: 'Duyệt bài hát', who: 'Cha xứ', text: 'Duyệt, yêu cầu sửa hoặc từ chối kèm ghi chú.' },
-  { title: 'Xác nhận tham gia', who: 'Ca viên', text: 'Trả lời trên điện thoại: có, không hay chưa chắc.' },
-  { title: 'Phân công', who: 'Ca trưởng', text: 'Đủ người cho từng bè, từng nhạc cụ.' },
-  { title: 'Tập và luyện', who: 'Cả ca đoàn', text: 'Điểm danh buổi tập, nộp bản thu, nhận xét.' },
-  { title: 'Cử hành', who: 'Giáo xứ', text: 'Ca đoàn phục vụ Thánh lễ.' },
-]
+import { LandingStory } from './LandingStory'
 
 const roles = [
   { title: 'Cha xứ', where: 'Trên web', text: 'Lập chương trình phụng vụ, duyệt danh sách bài hát và theo dõi việc chuẩn bị cho các lễ quan trọng.' },
@@ -50,54 +40,70 @@ export function LandingPage() {
   const navigate = useNavigate()
   // Set by the Admin (Contact.Email, readable before signing in); the project address until then.
   const contactEmail = useContactEmail()
+  const aperture = useRef<HTMLCanvasElement>(null)
+  const [modelUnavailable, setModelUnavailable] = useState(false)
+  const showPhoto = useCallback(() => setModelUnavailable(true), [])
 
   // A real link (open in a new tab, visible URL); a plain click still navigates inside the app.
-  const goToSignIn = (event: MouseEvent) => {
+  const goTo = (path: string) => (event: MouseEvent) => {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
     event.preventDefault()
-    navigate(paths.login)
+    navigate(path)
   }
+  const goToSignIn = goTo(paths.login)
   const large = { paddingInline: spacing.xl, height: 52, fontSize: 16, fontWeight: 600 }
 
   return (
     <div style={{ background: colors.background }}>
-      {/* Hero: a decorative looping video under a scrim that keeps the text at AA contrast, full bleed. */}
-      <section
-        aria-labelledby="hero-heading"
-        className="landing-hero"
-        style={{ position: 'relative', overflow: 'hidden', isolation: 'isolate', minHeight: `max(600px, calc(100svh - ${bandHeight}px))`, background: media.backdrop, display: 'flex', flexDirection: 'column' }}
-      >
-        <HeroVideo />
+      {/*
+        Hero: the name set very large behind a window of light, which covers the foot of its middle letters. The drawn
+        nave and its scrim lie under both. The name is decoration here: the header and the heading say it to readers.
+      */}
+      <section aria-labelledby="hero-heading" className="landing-hero">
+        <HeroNave aperture={aperture} onUnavailable={showPhoto} />
         <div aria-hidden style={{ position: 'absolute', inset: 0, background: media.heroScrim }} />
-        <header style={{ ...measure, position: 'relative', zIndex: 1, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBlock: spacing.lg }}>
+        <header style={{ ...measure, position: 'relative', zIndex: 3, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBlock: spacing.lg }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: spacing.sm + 2, color: media.text, fontSize: 20, fontWeight: 600, letterSpacing: '-0.01em' }}>
             <BrandMark size={36} />
-            Harmonia
+            {/* The name is already written across the hero. */}
+            <span style={visuallyHidden}>Harmonia</span>
           </span>
           <Button ghost href={paths.login} onClick={goToSignIn} style={{ paddingInline: spacing.lg, height: 40, fontWeight: 600 }}>
             Đăng nhập
           </Button>
         </header>
-        <div style={{ ...measure, position: 'relative', zIndex: 1, width: '100%', flex: 1, display: 'flex', alignItems: 'center', paddingBottom: spacing.xxl }}>
-          <div style={{ maxWidth: 820 }}>
-            <Typography.Title id="hero-heading" level={1} style={{ ...serif, color: media.text, fontSize: 96, lineHeight: 0.98, letterSpacing: '-0.015em', textWrap: 'balance' }}>
+        <div aria-hidden className="landing-hero__name">
+          Harmonia
+        </div>
+        <div className="landing-hero__stage">
+          <Typography.Paragraph className="landing-hero__lead" style={{ margin: 0, color: media.textMuted, fontSize: 16, lineHeight: 1.6 }}>
+            Cha xứ duyệt bài hát, Ca trưởng lập lịch tập và phân công, ca viên luyện bài trên điện thoại. Harmonia giữ mọi
+            bước trên cùng một lịch phụng vụ.
+          </Typography.Paragraph>
+          <div className="landing-hero__window">
+            {modelUnavailable ? (
+              <img src="/media/church-light-poster.webp" alt="" aria-hidden className="landing-hero__light" />
+            ) : (
+              <canvas ref={aperture} className="landing-hero__light" />
+            )}
+            <div aria-hidden style={{ position: 'absolute', inset: 0, background: media.windowScrim }} />
+            <Typography.Title id="hero-heading" level={1} style={{ ...serif, position: 'relative', color: media.text, fontSize: 40, lineHeight: 1.08, textAlign: 'center', textWrap: 'balance' }}>
               Mỗi Thánh lễ, <br />
               một ca đoàn sẵn sàng.
             </Typography.Title>
-            <Typography.Paragraph style={{ margin: `${spacing.lg}px 0 ${spacing.xl + spacing.sm}px`, maxWidth: '54ch', color: media.textMuted, fontSize: 18, lineHeight: 1.65 }}>
-              Cha xứ duyệt bài hát, Ca trưởng lập lịch tập và phân công, ca viên luyện bài trên điện thoại. Harmonia giữ mọi
-              bước trên cùng một lịch phụng vụ.
-            </Typography.Paragraph>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.md }}>
-              {/* On the dark scrim the sign-in is a white button. */}
-              <Button className="landing-hero-sign-in" href={paths.login} onClick={goToSignIn} style={large}>
-                Đăng nhập
-              </Button>
-              {/* Accounts are created by an Admin, so writing to the administrators is how a newcomer gets one. */}
-              <Button ghost icon={<MailOutlined />} href={`mailto:${contactEmail}`} style={{ ...large, fontWeight: 500 }}>
-                Liên hệ quản trị viên
-              </Button>
-            </div>
+            {/* On the dark scrim the sign-in is a white button. */}
+            <Button className="landing-hero-sign-in" href={paths.login} onClick={goToSignIn} style={{ ...large, position: 'relative', marginTop: spacing.lg }}>
+              Đăng nhập
+            </Button>
+          </div>
+          <div className="landing-hero__contact">
+            {/* A request to join, not an account: an Admin decides and the server then emails the sign-in. */}
+            <Button ghost href={paths.join} onClick={goTo(paths.join)} style={{ height: 44, fontWeight: 500, marginInlineEnd: spacing.sm }}>
+              Đăng ký tham gia ca đoàn
+            </Button>
+            <Button ghost icon={<MailOutlined />} href={`mailto:${contactEmail}`} style={{ height: 44, fontWeight: 500 }}>
+              Liên hệ quản trị viên
+            </Button>
           </div>
         </div>
       </section>
@@ -144,39 +150,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* One program set like the printed order of a Mass: each part of the work and who does it. */}
-      <section
-        aria-labelledby="steps-heading"
-        style={{ ...measure, paddingBlock: `${spacing.xxl * 2 + spacing.lg}px ${spacing.xxl * 2 + spacing.lg}px`, display: 'grid', gridTemplateColumns: '400px minmax(0, 1fr)', gap: spacing.xxl + spacing.lg, alignItems: 'start' }}
-      >
-        <div>
-          <Typography.Title id="steps-heading" level={2} style={{ ...serif, fontSize: 52, lineHeight: 1.08, color: colors.textPrimary, textWrap: 'balance' }}>
-            Từ danh sách bài hát đến ngày cử hành
-          </Typography.Title>
-          <Typography.Paragraph style={{ margin: `${spacing.lg}px 0 0`, fontSize: 17, color: colors.textBody }}>
-            Mỗi Chúa Nhật trên lịch là một chương trình. Mỗi phần việc có người lo, và ai cũng thấy phần nào còn thiếu.
-          </Typography.Paragraph>
-        </div>
-        {/* Set like the printed program sheet handed out before Mass: a titled sheet, gold double rule, leader dots. */}
-        <div style={{ padding: `${spacing.xl + spacing.sm}px ${spacing.xxl}px ${spacing.lg}px`, background: colors.ivory, border: `1px solid ${colors.border}`, borderRadius: 2 }}>
-          <p style={{ ...serif, fontSize: 24, lineHeight: 1.2, color: colors.textPrimary, textAlign: 'center' }}>Chương trình ca đoàn</p>
-          <p style={{ margin: `${spacing.xs}px 0 0`, textAlign: 'center', fontSize: 13, color: colors.textMuted }}>Mỗi Thánh lễ, cùng những phần việc này</p>
-          <div aria-hidden style={{ marginTop: spacing.md, height: 4, borderBlock: goldRule }} />
-          <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-          {steps.map((step, index) => (
-            <li key={step.title} style={{ padding: `${spacing.lg}px 0`, borderTop: index ? `1px solid ${colors.border}` : undefined }}>
-              <p style={{ margin: 0, display: 'flex', alignItems: 'baseline', gap: spacing.md }}>
-                <span style={{ ...serif, fontSize: 28, lineHeight: 1.2, color: colors.textPrimary, whiteSpace: 'nowrap' }}>{step.title}</span>
-                {/* Leader dots, as in a printed Mass program. */}
-                <span aria-hidden style={{ flex: 1, alignSelf: 'center', borderBottom: `2px dotted ${gold.line}`, transform: 'translateY(6px)' }} />
-                <span style={{ fontSize: 14, fontWeight: 600, color: gold.ink, whiteSpace: 'nowrap' }}>{step.who}</span>
-              </p>
-              <p style={{ margin: `${spacing.xs}px 0 0`, fontSize: 15, color: colors.textBody }}>{step.text}</p>
-            </li>
-          ))}
-          </ul>
-        </div>
-      </section>
+      <LandingStory />
 
       {/* The close: the roles and the way in, on the songbook's bookcloth. */}
       <section aria-labelledby="roles-heading" style={{ background: spine.background, color: spine.text }}>

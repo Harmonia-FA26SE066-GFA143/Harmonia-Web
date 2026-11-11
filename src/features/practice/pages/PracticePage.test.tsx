@@ -94,15 +94,15 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
-    const dialog = await screen.findByRole('dialog')
+    const dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     expect(await within(dialog).findByLabelText('Bản thu của Giuse Vũ Đình Khôi')).toBeInTheDocument()
-    // "Cần chỉnh sửa" comes preselected from the row.
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu kết quả' }))
+    // "Cần chỉnh sửa" without a comment is refused in place.
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cần chỉnh sửa' }))
     expect(await within(dialog).findByText('Vui lòng nhập nhận xét khi cần chỉnh sửa.')).toBeInTheDocument()
     expect(review).not.toHaveBeenCalled()
 
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Nhận xét' }), { target: { value: ' Giữ nhịp ổn định hơn. ' } })
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu kết quả' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cần chỉnh sửa' }))
     await waitFor(() =>
       expect(review).toHaveBeenCalledWith('sub-1', { result: 'needsRevision', comment: 'Giữ nhịp ổn định hơn.' }),
     )
@@ -117,7 +117,7 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
-    const dialog = await screen.findByRole('dialog')
+    const dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     // Nothing is scored until asked: the server analyses the audio each time.
     expect(score).not.toHaveBeenCalled()
     fireEvent.click(await within(dialog).findByRole('button', { name: 'Chấm tự động' }))
@@ -139,7 +139,7 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
-    const dialog = await screen.findByRole('dialog')
+    const dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     const scoreButton = await within(dialog).findByRole('button', { name: 'Chấm tự động' })
 
     fireEvent.click(scoreButton)
@@ -173,17 +173,29 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
-    let dialog = await screen.findByRole('dialog')
+    let dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     fireEvent.click(await within(dialog).findByRole('button', { name: 'Chấm tự động' }))
     expect(await within(dialog).findByText('82/100')).toBeInTheDocument()
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Hủy' }))
-    await waitFor(() => expect(screen.queryByText('82/100')).toBeNull())
-
     fireEvent.click(screen.getByRole('button', { name: 'Cần chỉnh sửa bản thu của Anna Đặng Thị Mai' }))
-    dialog = await screen.findByRole('dialog')
+    dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     expect(await within(dialog).findByLabelText('Bản thu của Anna Đặng Thị Mai')).toBeInTheDocument()
     expect(within(dialog).getByRole('button', { name: 'Chấm tự động' })).toBeInTheDocument()
     expect(within(dialog).queryByText(/\/100$/)).toBeNull()
+  })
+
+  it('shows the first submission beside the queue, and after a decision moves on to the next', async () => {
+    const other = submission({ id: 'sub-2', memberName: 'Anna Đặng Thị Mai' })
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission(), other]))
+    vi.spyOn(practiceApi, 'getSubmission').mockImplementation(async (id) => (id === 'sub-2' ? other : submission()))
+    const review = vi.spyOn(practiceApi, 'reviewSubmission').mockResolvedValue()
+    renderPractice()
+
+    const panel = await screen.findByRole('complementary', { name: 'Chấm bài của Giuse Vũ Đình Khôi' })
+    fireEvent.click(await within(panel).findByRole('button', { name: 'Đạt' }))
+    await waitFor(() => expect(review).toHaveBeenCalledWith('sub-1', { result: 'passed', comment: undefined }))
+    // The decision shows in place, then the next one is picked.
+    expect(await screen.findByRole('status')).toHaveTextContent('Đã chấm: Đạt')
+    expect(await screen.findByRole('complementary', { name: 'Chấm bài của Anna Đặng Thị Mai' }, { timeout: 3000 })).toBeInTheDocument()
   })
 
   it('does not send the moment mark alone as the comment when "Đạt" is chosen instead', async () => {
@@ -193,11 +205,10 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
-    const dialog = await screen.findByRole('dialog')
+    const dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     // What the row fills in when the recording was paused at 0:12.
     fireEvent.change(await within(dialog).findByRole('textbox', { name: 'Nhận xét' }), { target: { value: '[0:12] ' } })
-    fireEvent.click(within(dialog).getByRole('radio', { name: 'Đạt' }))
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu kết quả' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Đạt' }))
 
     await waitFor(() => expect(review).toHaveBeenCalledWith('sub-1', { result: 'passed', comment: undefined }))
   })
@@ -215,7 +226,7 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Xem và nhận xét bản thu của Giuse Vũ Đình Khôi' }))
-    const dialog = await screen.findByRole('dialog')
+    const dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     expect(await within(dialog).findByText('Lên cao hơn ở điệp khúc.')).toBeInTheDocument()
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Nhận xét' }), { target: { value: 'Nghe thêm bản mẫu.' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi nhận xét' }))
@@ -255,7 +266,7 @@ describe('PracticePage', () => {
 
   it('attaches several materials of the song to the assignment', async () => {
     const material = (id: string, kind: 'sheetMusic' | 'sampleAudio', title: string, fileName: string) => ({
-      id, kind, title, fileName, fileSizeBytes: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, lyricsText: null, createdAt: '2026-10-01T00:00:00Z',
+      id, kind, title, fileName, fileSizeBytes: 1, fileRevision: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, lyricsText: null, createdAt: '2026-10-01T00:00:00Z',
     })
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cecilia', isActive: true }])
     vi.spyOn(songsApi, 'listSongs').mockResolvedValue({
@@ -301,7 +312,7 @@ describe('PracticePage', () => {
 
   it('offers MIDI and MusicXML materials as downloads, not as a tab to open', async () => {
     const material = (id: string, kind: 'sheetMusic' | 'interactiveScore' | 'rehearsalMaterial', title: string, fileName: string) => ({
-      id, kind, title, fileName, fileSizeBytes: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, lyricsText: null, createdAt: '2026-10-01T00:00:00Z',
+      id, kind, title, fileName, fileSizeBytes: 1, fileRevision: 1, targetSkillId: null, targetSkillName: null, url: `https://files.example/${fileName}`, lyricsText: null, createdAt: '2026-10-01T00:00:00Z',
     })
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cecilia', isActive: true }])
     vi.spyOn(songsApi, 'listSongs').mockResolvedValue({

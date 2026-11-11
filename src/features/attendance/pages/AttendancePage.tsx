@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useUpcomingPrograms } from '@/features/liturgical-programs'
 import { isRehearsalDay, useRecentRehearsals, type Rehearsal } from '@/features/rehearsals'
-import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, EmptyWeek, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AttendanceSheet } from '../components/AttendanceSheet'
 import { SessionHeader } from '../components/SessionHeader'
@@ -14,12 +14,7 @@ import { useAttendance } from '../hooks/useAttendance'
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Điểm danh' }]
 
-// The Admin may open attendance up to 120 minutes early (Harmonia-BE SystemSettingKeys,
-// Rehearsal.AttendanceOpensMinutesBefore, which the Choir Director cannot read): the sheet opens at the earliest
-// moment and the backend refuses a save made too early (REHEARSAL_NOT_STARTED).
-const maxMinutesEarly = 120
-const attendanceMayOpen = (rehearsal: Rehearsal) =>
-  Date.parse(rehearsal.startAt) - maxMinutesEarly * 60_000 <= Date.now()
+const hasNotStarted = (rehearsal: Rehearsal) => Date.parse(rehearsal.startAt) > Date.now()
 
 /** Today's session, otherwise the latest one that has started, otherwise the next one. */
 function defaultSession(rehearsals: Rehearsal[]): Rehearsal | undefined {
@@ -49,9 +44,10 @@ export function AttendancePage() {
 
   const attendance = useAttendance(selected?.id)
   const program = programs.data?.find((item) => item.id === (selected?.eventId ?? programId))
-  // The backend records attendance from the start of the session on, corrections included (RehearsalAttendanceService),
-  // which supersedes "on the day of the session only" (decision 2026-09-30, 6a.6).
-  const started = selected ? attendanceMayOpen(selected) : false
+  // TBD: Backend API missing (tbd-backlog B49). When attendance opens depends on two settings the Choir Director cannot
+  // read (Rehearsal.AttendanceStartCheckEnabled, AttendanceOpensMinutesBefore), so the sheet is never locked here: the
+  // server decides on save (409 REHEARSAL_NOT_STARTED) and the marks stay on the page.
+  const beforeStart = selected ? hasNotStarted(selected) : false
 
   const pick = (nextId: string) => {
     const next = new URLSearchParams(searchParams)
@@ -104,7 +100,7 @@ export function AttendancePage() {
       )}
       {rehearsals.data !== undefined && !selected && (
         <EmptyState
-          title="Chưa có buổi tập để điểm danh"
+          icon={<EmptyWeek />} title="Chưa có buổi tập để điểm danh"
           description="Tạo buổi tập trong Lịch tập, sau đó quay lại đây để điểm danh."
           action={scheduleButton}
         />
@@ -123,11 +119,12 @@ export function AttendancePage() {
           {attendance.data !== undefined && attendance.data.length === 0 && (
             <EmptyState title="Chưa có thành viên trong danh sách điểm danh" />
           )}
-          {attendance.data !== undefined && !started && (
+          {attendance.data !== undefined && beforeStart && (
             <Alert
               type="info"
               showIcon
-              title={`Điểm danh được từ khi buổi tập bắt đầu (${dayjs(selected.startAt).format('HH:mm DD/MM/YYYY')}), hoặc sớm hơn nếu Admin cho phép.`}
+              title={`Buổi tập bắt đầu lúc ${dayjs(selected.startAt).format('HH:mm DD/MM/YYYY')}.`}
+              description="Giờ mở điểm danh tuỳ cấu hình của Admin. Nếu chưa tới giờ, máy chủ sẽ từ chối khi lưu và các đánh dấu vẫn giữ trên trang."
             />
           )}
           {showSheet && (
@@ -136,7 +133,6 @@ export function AttendancePage() {
               key={selected.id}
               rehearsalId={selected.id}
               records={attendance.data}
-              editable={started}
               header={header}
             />
           )}

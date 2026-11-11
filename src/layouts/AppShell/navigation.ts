@@ -3,9 +3,6 @@ import {
   AppstoreOutlined,
   AuditOutlined,
   BarChartOutlined,
-  BookOutlined,
-  CalendarOutlined,
-  CheckSquareOutlined,
   FileTextOutlined,
   HistoryOutlined,
   IdcardOutlined,
@@ -14,6 +11,7 @@ import {
   ScheduleOutlined,
   SettingOutlined,
   SoundOutlined,
+  SolutionOutlined,
   TagsOutlined,
   TeamOutlined,
   UnorderedListOutlined,
@@ -22,6 +20,9 @@ import {
 } from '@ant-design/icons'
 import type { ComponentType } from 'react'
 import { paths } from '@/app/router/paths'
+import { useWaitingRegistrationCount } from '@/features/member-registrations'
+import { usePendingSkills } from '@/features/skill-approval'
+import { AttendanceOutlined, SeasonOutlined, SheetMusicOutlined } from '@/shared/ui'
 
 /** A role workspace. Chosen from the URL prefix; it is not an authorization check. */
 export type Surface = 'priest' | 'director' | 'admin'
@@ -30,6 +31,8 @@ export interface NavItem {
   path: string
   label: string
   icon: ComponentType
+  /** How many items wait on this page, when every row of its list is waiting. A hook: called once per tab, every render. */
+  useCount?: () => number | undefined
 }
 
 export interface NavSection {
@@ -43,9 +46,12 @@ export interface SurfaceConfig {
   sections: NavSection[]
 }
 
+/** The same one-row page the Director dashboard reads, so both share one request. */
+const usePendingSkillCount = () => usePendingSkills({ pageNumber: 1, pageSize: 1 }).data?.totalCount
+
 /**
- * Sidebar per role, derived from the Stitch sidebars and limited to pages in the screen map.
- * RoleGuard admits each role to its own workspace only, so each role sees its own sidebar.
+ * Navigation per role, limited to pages in the screen map. Each section is an area of the running head.
+ * RoleGuard admits each role to its own workspace only, so each role sees its own navigation.
  */
 export const surfaces: Record<Surface, SurfaceConfig> = {
   priest: {
@@ -56,10 +62,11 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
       {
         label: 'Phụng vụ & lịch',
         items: [
-          { path: paths.priest.calendar, label: 'Lịch phụng vụ', icon: CalendarOutlined },
+          { path: paths.priest.calendar, label: 'Lịch phụng vụ', icon: SeasonOutlined },
           { path: paths.priest.programs, label: 'Chương trình phụng vụ', icon: UnorderedListOutlined },
         ],
       },
+      { label: 'Ca trưởng', items: [{ path: paths.priest.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined }] },
       { label: 'Trao đổi', items: [{ path: paths.priest.notes, label: 'Trao đổi với Ca trưởng', icon: MessageOutlined }] },
       { label: 'Báo cáo', items: [{ path: paths.priest.reports, label: 'Báo cáo', icon: BarChartOutlined }] },
     ],
@@ -74,21 +81,22 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
         items: [
           { path: paths.director.members, label: 'Danh sách ca viên', icon: IdcardOutlined },
           { path: paths.director.choirs, label: 'Ca đoàn', icon: ApartmentOutlined },
-          { path: paths.director.skillApproval, label: 'Duyệt kỹ năng', icon: SafetyCertificateOutlined },
+          { path: paths.director.skillApproval, label: 'Duyệt kỹ năng', icon: SafetyCertificateOutlined, useCount: usePendingSkillCount },
+          { path: paths.director.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined },
         ],
       },
       {
         label: 'Phụng vụ & âm nhạc',
         items: [
           { path: paths.director.programs, label: 'Chương trình phụng vụ', icon: UnorderedListOutlined },
-          { path: paths.director.library, label: 'Kho bài hát', icon: BookOutlined },
+          { path: paths.director.library, label: 'Kho bài hát', icon: SheetMusicOutlined },
         ],
       },
       {
         label: 'Hoạt động ca đoàn',
         items: [
           { path: paths.director.rehearsals, label: 'Lịch tập', icon: ScheduleOutlined },
-          { path: paths.director.attendance, label: 'Điểm danh', icon: CheckSquareOutlined },
+          { path: paths.director.attendance, label: 'Điểm danh', icon: AttendanceOutlined },
           { path: paths.director.participation, label: 'Xác nhận tham gia', icon: UsergroupAddOutlined },
           { path: paths.director.roster, label: 'Phân công', icon: TeamOutlined },
           { path: paths.director.practice, label: 'Luyện tập', icon: SoundOutlined },
@@ -107,6 +115,8 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
         items: [
           { path: paths.admin.dashboard, label: 'Tổng quan', icon: AppstoreOutlined },
           { path: paths.admin.accounts, label: 'Tài khoản', icon: TeamOutlined },
+          { path: paths.admin.memberRegistrations, label: 'Đăng ký gia nhập', icon: UsergroupAddOutlined, useCount: useWaitingRegistrationCount },
+          { path: paths.admin.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined },
           { path: paths.admin.roles, label: 'Vai trò & Phân quyền', icon: UserSwitchOutlined },
           { path: paths.admin.skillCategories, label: 'Danh mục kỹ năng', icon: TagsOutlined },
           { path: paths.admin.liturgicalCategories, label: 'Danh mục phụng vụ', icon: FileTextOutlined },

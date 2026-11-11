@@ -3,7 +3,7 @@ import { App, Button, Card, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { accountErrorMessage, duplicateEmailMessage, isDuplicateEmail } from '../accountErrors'
 import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
@@ -138,7 +138,7 @@ export function AccountsPage() {
       )}
       {accounts.data !== undefined && total === 0 && !filtered && (
         <EmptyState
-          title="Chưa có tài khoản nào"
+          icon={<EmptyChoir />} title="Chưa có tài khoản nào"
           description="Tài khoản bạn tạo sẽ xuất hiện tại đây."
           action={createButton}
         />

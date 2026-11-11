@@ -14,7 +14,7 @@ Labels used in `docs/business/`: **EXPLICIT** (Report 1), **INTERPRETATION** (a 
 
 | Earlier decision | What the BE does |
 |---|---|
-| Self-registration with Admin confirmation, pending and rejected accounts | No registration endpoint; the Admin creates accounts and the BE emails a first password (`roles-permissions.md`). |
+| Self-registration with pending/rejected **accounts** | The BE now accepts an anonymous **join request**, not an account: `POST api/member-registrations`; the Admin accepts it to create a Choir Member account, or deletes it. Account creation still emails the first password (`roles-permissions.md`, BE `c7b514d`). |
 | Google sign-in not adopted | `POST /api/auth/google` exists for pre-created accounts. |
 | Programs per week or per day, "Draft → Confirmed → Cancelled", 7-step preparation, recurring events | Individual events, `Draft` / `Published` / `Cancelled`, no series or readiness states (`liturgical-program.md`). |
 | Per-song review with aggregation, rejection-reason catalog, Suspended / Superseded / Finalized | One decision for the whole list; five list states with versions (`song-approval.md`). |
@@ -51,6 +51,11 @@ Stored in the business files (`roles-permissions.md`, `choir-skills.md`, `liturg
 - **Substitute director candidates** (decided 2026-11-07): the Web offers only Choir Directors who already direct a choir, other than the choir's own director, until the BE lets the Parish Priest list directors (tbd-backlog B48).
 - **Attendance start check** (decided 2026-11-07): the Web does not read `Rehearsal.AttendanceStartCheckEnabled`; the attendance sheet stays read-only before the start time and relies on `REHEARSAL_NOT_STARTED` (tbd-backlog B49).
 
+## BE decisions 2026-11-10
+
+- **Substitute director candidates:** B48 is superseded by the existing `GET api/director-notes/recipients`, which returns every active Choir Director to the Parish Priest. The substitute picker may reuse that API; it no longer needs to restrict candidates to directors attached to a choir.
+- **Timed lyrics:** B42 is implemented per audio material, against one Lyrics material of the same song. The Choir Director writes whole line-level timing; every signed-in role reads it.
+- **Join requests and director succession:** the BE contract now defines anonymous member registration and the nomination → review → training/waiver → Admin appointment workflow. These are implemented contracts, not open owner decisions.
 ## Confirmed BA decisions — Daniel, 2026-10-01
 
 The owner's "Confirmed Business Decisions" of 2026-10-01 (kept locally, not published) is the owner-supplied record of intent for the event lifecycle, music program versioning, readiness and emergency handling. It carries a BE-override note at the top; follow the BE where they differ.

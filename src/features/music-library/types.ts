@@ -108,6 +108,41 @@ export interface MaterialPlaybackBundle {
   notes: MidiPlaybackNotes
 }
 
+/** `InteractiveScoreDto`: signed links and hashes of one revision of a score. Use at once; never store the links. */
+export interface InteractiveScore {
+  id: string
+  revision: number
+  scoreFormat: 'musicxml' | 'mxl'
+  fileName: string
+  scoreUrl: string
+  scoreSha256: string
+  audioUrl: string
+  audioSha256: string
+  notesUrl: string
+  /** Null for a score saved before hashes were kept. */
+  notesSha256: string | null
+  durationSeconds: number
+}
+
+export interface TimedLyricLine {
+  order: number
+  text: string
+  startSeconds: number
+  endSeconds: number
+}
+
+/** `TimedLyricsDto`: the timing of a Lyrics material against one audio material. Not the note-by-note lyrics of a MusicXML score. */
+export interface TimedLyrics {
+  lyricsMaterialId: string
+  audioMaterialId: string
+  audioRevision: number
+  lines: TimedLyricLine[]
+}
+
+/** Only these kinds can hold a timing (Harmonia-BE MusicMaterialService.UpdateTimedLyricsAsync, else 409 MATERIAL_NOT_AUDIO). */
+export const supportsTimedLyrics = ({ kind, url }: Pick<SongMaterial, 'kind' | 'url'>) =>
+  url !== null && (kind === 'sampleAudio' || kind === 'interactiveScore')
+
 /** A song of the choir's music library (FE-27), as `SongDto` of GET /api/songs. Missing texts arrive as null. */
 export interface Song {
   id: string
@@ -123,6 +158,8 @@ export interface Song {
   isClassified?: boolean
   /** Past published programs whose approved list has the song, as the song-usage report counts them. */
   timesUsed?: number
+  /** Non-expiring preview of page 1 of the song's sheet music; null when it has none. */
+  sheetMusicThumbnailUrl?: string | null
   /** YYYY-MM-DD of the latest of those programs. */
   lastUsedDate?: string
 }
@@ -188,6 +225,8 @@ export interface SongMaterial {
   /** Original name, for display only; null for typed lyrics. */
   fileName: string | null
   fileSizeBytes: number | null
+  /** 1 on upload, +1 on every file replacement; `TimedLyrics.audioRevision` is compared with it. */
+  fileRevision: number
   targetSkillId: string | null
   targetSkillName: string | null
   /** Short-lived signed URL: never stored, the list is fetched again instead. Null for typed lyrics. */

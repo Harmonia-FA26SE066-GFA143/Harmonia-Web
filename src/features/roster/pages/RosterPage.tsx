@@ -7,7 +7,7 @@ import { useChoirMembers } from '@/features/members'
 import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
 import { useLookup } from '@/features/system-categories'
-import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, MissingPosition, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { RosterPanel } from '../components/RosterPanel'
 
@@ -111,7 +111,7 @@ export function RosterPage() {
               skills={(skills.data ?? []).map(({ id, name }) => ({ id, name }))}
               songListNotice={
                 <EmptyState
-                  title="Chưa có danh sách bài hát đã duyệt"
+                  icon={<MissingPosition />} title="Chưa có danh sách bài hát đã duyệt"
                   description={
                     songList.data?.status === 'needsRevision'
                       ? `Cha xứ yêu cầu chỉnh sửa danh sách bài hát${lastNotes ? `: “${lastNotes}”` : ''}. Vui lòng cập nhật và gửi duyệt lại trước khi phân công theo bài.`

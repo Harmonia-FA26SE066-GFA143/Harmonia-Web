@@ -1,80 +1,117 @@
 import { Button, Flex, Table, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
+import dayjs from 'dayjs'
+import { SeasonChip } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
-import { formatProgramDate } from '../programFilters'
-import type { LiturgicalProgram } from '../types'
+import { dueText } from '../programFilters'
+import { canEditSongList, type LiturgicalProgram } from '../types'
 import { EventStatusTag } from './EventStatusTag'
 import { ProgramDateCell } from './ProgramDateCell'
 import { SongListStatusTag } from './SongListStatusTag'
 
 export interface ProgramTableProps {
   programs: LiturgicalProgram[]
+  /** The program shown in the preview beside the list; a row click picks it. */
+  selectedId?: string
+  onSelect: (program: LiturgicalProgram) => void
   onOpen: (program: LiturgicalProgram) => void
+  onPropose: (program: LiturgicalProgram) => void
   /** Server-side paging of GET /api/liturgical-events. */
   pagination?: TablePaginationConfig | false
   loading?: boolean
+  today: string
 }
 
 const secondary = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
 
-// Mass or ceremony type and season under the name, so the table fits without scrolling sideways. An untitled
-// program is already named after its type, which is then not repeated.
-const classification = ({ eventName, massTypeName, ceremonyTypeName, seasonName }: LiturgicalProgram) =>
-  [massTypeName, ceremonyTypeName, seasonName].filter((name) => name && name !== eventName).join(' · ')
-
-/** Programs of the Choir Director with their catalog names and song-list condition. */
-export function ProgramTable({ programs, onOpen, pagination = false, loading }: Readonly<ProgramTableProps>) {
+/**
+ * The Choir Director's programs as a dense ruled list (artifact ProgramsPage): the day large, the name over time and
+ * place, season, Mass type, song-list state and its due date, and the one action that fits the list's state.
+ */
+export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose, pagination = false, loading, today }: Readonly<ProgramTableProps>) {
   const columns: TableColumnsType<LiturgicalProgram> = [
     {
       key: 'date',
-      title: 'Ngày giờ',
-      width: 200,
-      render: (_, program) => <ProgramDateCell date={program.date} label={`${program.time} · ${formatProgramDate(program.date)}`} />,
+      title: 'Ngày',
+      width: 132,
+      render: (_, program) => <ProgramDateCell date={program.date} label={dayjs(program.date).format('DD/MM/YYYY')} />,
     },
     {
       key: 'name',
-      title: 'Tên sự kiện',
+      title: 'Thánh lễ',
       render: (_, program) => (
         <Flex vertical align="start" gap={2}>
           <Typography.Text strong>{program.eventName}</Typography.Text>
-          {classification(program) && <Typography.Text style={secondary}>{classification(program)}</Typography.Text>}
-          {program.status === 'cancelled' && <EventStatusTag status="cancelled" />}
+          <Typography.Text style={secondary}>{[program.time, program.locationName].filter(Boolean).join(' · ')}</Typography.Text>
         </Flex>
       ),
     },
-    { key: 'location', title: 'Nơi cử hành', width: 200, render: (_, program) => program.locationName },
+    {
+      key: 'season',
+      title: 'Mùa',
+      width: 150,
+      render: (_, program) => (program.seasonName ? <SeasonChip seasonName={program.seasonName} size="small" /> : <Typography.Text style={secondary}>—</Typography.Text>),
+    },
+    {
+      key: 'type',
+      title: 'Loại',
+      width: 150,
+      render: (_, program) => program.massTypeName ?? program.ceremonyTypeName ?? <Typography.Text style={secondary}>—</Typography.Text>,
+    },
     {
       key: 'songList',
       title: 'Danh sách bài hát',
-      width: 170,
-      render: (_, program) => <SongListStatusTag status={program.songListStatus} />,
+      width: 190,
+      render: (_, program) => {
+        const due = dueText(program, today)
+        return (
+          <Flex vertical align="start" gap={2}>
+            {program.songListStatus ? <SongListStatusTag status={program.songListStatus} /> : <Typography.Text style={secondary}>Chưa đề xuất</Typography.Text>}
+            {due && (
+              <Typography.Text style={{ ...secondary, color: due.late ? 'var(--hm-area-attention-ink)' : colors.textMuted, fontWeight: due.late ? 600 : undefined }}>
+                {due.text}
+              </Typography.Text>
+            )}
+          </Flex>
+        )
+      },
     },
     {
       key: 'actions',
-      title: 'Thao tác',
+      title: <span className="hm-visually-hidden">Thao tác</span>,
       align: 'right',
-      width: 140,
-      render: (_, program) =>
-        // The Choir Director's detail reads published events only (GET /api/schedule/events/{id}), so a cancelled one
-        // would open on "not found".
-        program.status === 'cancelled' ? (
-          <Typography.Text style={secondary}>Không xem được</Typography.Text>
-        ) : (
-          <Button onClick={() => onOpen(program)} aria-label={`Xem chi tiết ${program.eventName}`}>
-            Xem
+      width: 120,
+      render: (_, program) => {
+        // The Choir Director's detail reads published events only (GET /api/schedule/events/{id}).
+        if (program.status === 'cancelled') return <EventStatusTag status="cancelled" />
+        const propose = canEditSongList(program.songListStatus) && program.date >= today
+        return (
+          <Button
+            type={propose ? 'primary' : 'default'}
+            onClick={(event) => {
+              event.stopPropagation()
+              if (propose) onPropose(program)
+              else onOpen(program)
+            }}
+            aria-label={`${propose ? 'Đề xuất bài hát cho' : 'Xem'} ${program.eventName}`}
+          >
+            {propose ? 'Đề xuất' : 'Xem'}
           </Button>
-        ),
+        )
+      },
     },
   ]
 
   return (
     <Table<LiturgicalProgram>
       rowKey="id"
+      className="hm-table-pick"
       columns={columns}
       dataSource={programs}
       loading={loading}
       pagination={pagination}
-      // A fixed width, not the content's: long program names wrap instead of pushing the table sideways.
-      scroll={{ x: 960 }}
+      rowClassName={(program) => (program.id === selectedId ? 'is-picked' : '')}
+      onRow={(program) => ({ onClick: () => program.status !== 'cancelled' && onSelect(program) })}
+      scroll={{ x: 900 }}
     />
   )
 }

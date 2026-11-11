@@ -1,5 +1,5 @@
 import { Alert, Button, Divider, Flex, Input, Typography } from 'antd'
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useContactEmail } from '@/features/settings'
@@ -100,9 +100,19 @@ function FeedbackAlert({ feedback }: Readonly<{ feedback: LoginFeedback }>) {
 }
 
 export function LoginForm({ onSubmit, submitting = false, feedback, alternative }: Readonly<LoginFormProps>) {
+  const alertBox = useRef<HTMLDivElement>(null)
+  // A failed attempt moves the focus to its message (the form was inert under the rose). The note shown on arrival
+  // after a session ended leaves the focus in the email field.
+  useEffect(() => {
+    if (feedback && feedback.kind !== 'session-ended') alertBox.current?.focus()
+  }, [feedback])
   return (
     <Flex vertical gap={spacing.md}>
-      {feedback && <FeedbackAlert feedback={feedback} />}
+      {feedback && (
+        <div ref={alertBox} tabIndex={-1} style={{ outline: 'none' }}>
+          <FeedbackAlert feedback={feedback} />
+        </div>
+      )}
       {/* Not `disabled` while submitting: that would drop the focus of the field in use. The button's loading state and
           the page's pending guard stop a second submit. `noValidate` leaves the messages to Ant Design, in Vietnamese. */}
       <Form<SignInValues> layout="vertical" requiredMark={false} onFinish={onSubmit} noValidate>

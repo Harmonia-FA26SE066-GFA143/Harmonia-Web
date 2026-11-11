@@ -1,23 +1,9 @@
-// UI-only view model. Practice audio, lyrics and local progress are not API contract fields.
-export interface PracticeRoomLyricLine {
-  id: string
-  text: string
-  startSeconds: number
-  endSeconds: number
-}
-
-export type PracticeSongLocalState = 'notStarted' | 'inProgress' | 'listened'
-
+// View model of the practice room, built from the rehearsal; materials and lyrics come from the song's materials.
 export interface PracticeRoomSong {
   id: string
   title: string
-  section?: string
-  audioUrl?: string
   /** What to work on in this song, from the rehearsal. */
   note?: string
-  durationSeconds: number
-  lyrics: PracticeRoomLyricLine[]
-  localState: PracticeSongLocalState
 }
 
 export interface PracticeRoomView {
@@ -26,7 +12,6 @@ export interface PracticeRoomView {
   startAt: string
   endAt: string
   locationName?: string
-  programName?: string
   note?: string
   songs: PracticeRoomSong[]
 }

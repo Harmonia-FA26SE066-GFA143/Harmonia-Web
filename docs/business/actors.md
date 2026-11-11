@@ -1,6 +1,12 @@
 # Harmonia Actors
 
-Cleaned 2026-10-20. This file summarizes actor capabilities stated in Report 1. The BE decides what each role may call (`[Authorize(Roles = …)]`); see `roles-permissions.md`.
+Cleaned 2026-10-20; re-checked 2026-11-10 at BE `main@d74096c`. Report 1 capabilities stay under EXPLICIT; later BE workflows are listed separately. The BE decides what each role may call (`[Authorize(Roles = …)]`); see `roles-permissions.md`.
+
+## Public visitor (no account)
+
+### BE CONTRACT — `c7b514d`
+
+- Submit one request to join the choir with name, email, optional phone and note; the endpoint is anonymous and rate-limited (`POST api/member-registrations`, `MemberRegistrationsController.cs:16-25`). This is a request, not a user account or a login flow.
 
 ## Parish Priest / Liturgy Committee (BE role `ParishPriest`)
 
@@ -11,6 +17,10 @@ Cleaned 2026-10-20. This file summarizes actor capabilities stated in Report 1. 
 - View choir preparation status for important events (FE-21).
 - Access reports on choir service history, song usage, and event preparation (FE-22).
 - Send general notes or requests to the Choir Director (FE-23).
+
+### BE CONTRACT — director succession (`9c2d074` to `717e8d1`)
+
+- Nominate an eligible Choir Member for director formation; approve, reject or cancel a nomination; waive training or record training courses and outcomes before the Admin appoints.
 
 ## Choir Director (`ChoirDirector`)
 
@@ -25,6 +35,10 @@ Cleaned 2026-10-20. This file summarizes actor capabilities stated in Report 1. 
 - Send assignment notifications to selected members (FE-40).
 - Create practice assignments, listen to audio, evaluate submissions as Passed or Needs Revision, and provide feedback (FE-41–FE-44).
 - Take attendance at rehearsals or service-preparation sessions and track practice progress and attendance (FE-45–FE-46).
+
+### BE CONTRACT — director succession (`9c2d074` to `717e8d1`)
+
+- Nominate an eligible member and withdraw a nomination they created; read the nominations visible to them. Appointment remains an Admin action.
 
 ## Choir Member (`ChoirMember`; mobile app)
 
@@ -49,3 +63,8 @@ Cleaned 2026-10-20. This file summarizes actor capabilities stated in Report 1. 
 - Manage general system settings (FE-51).
 - View user activity, attendance, participation-confirmation, and assignment-completion reports; export by month, event, or liturgical season (FE-52–FE-53).
 - View activity history for role changes, skill approvals, song-list approvals, roster confirmation, attendance updates, and deleted materials (FE-54).
+
+### BE CONTRACT — registration and appointment (`c7b514d` to `717e8d1`)
+
+- List, accept or delete public choir-join registrations. Accepting creates the Choir Member account.
+- Perform the final appointment of an approved/trained (or training-waived) director nominee; director handover safeguards may require choir/event reassignment before an existing director's role can be removed.

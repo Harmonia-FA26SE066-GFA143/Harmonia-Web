@@ -1,4 +1,4 @@
-import { colors, gold, seasonColors } from '@/styles/tokens'
+import { cardSurface, colors, gold, seasonColors } from '@/styles/tokens'
 import type { RoseKind } from './RoseWindow'
 
 export interface SeasonTone {
@@ -11,7 +11,7 @@ export interface SeasonTone {
   rose: RoseKind
 }
 
-const hairline = 'rgba(0, 0, 0, 0.07)'
+const hairline = cardSurface.border.replace('1px solid ', '')
 
 // From the calendar's season code (`LiturgicalDayDto.SeasonName`): Advent and Lent purple, Ordinary Time green,
 // Christmas and Easter white with gold. An unknown code keeps the neutral burgundy. A day's own liturgical colour

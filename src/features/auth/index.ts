@@ -1,3 +1,4 @@
+export { AuthCard } from './components/AuthCard'
 export { SignOutModal } from './components/SignOutModal'
 export { ChangePasswordPage } from './pages/ChangePasswordPage'
 export { ForgotPasswordPage } from './pages/ForgotPasswordPage'

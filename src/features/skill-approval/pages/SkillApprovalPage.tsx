@@ -1,6 +1,6 @@
 import { App, Card, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { AllDone, EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { PendingSkillTable } from '../components/PendingSkillTable'
 import { RejectSkillModal } from '../components/RejectSkillModal'
@@ -109,7 +109,7 @@ export function SkillApprovalPage() {
         )}
         {pending.data !== undefined && total === 0 && (
           <EmptyState
-            title="Không có kỹ năng nào chờ duyệt"
+            icon={<AllDone />} title="Không có kỹ năng nào chờ duyệt"
             description="Khi ca viên khai báo kỹ năng trên ứng dụng, khai báo sẽ xuất hiện tại đây."
           />
         )}

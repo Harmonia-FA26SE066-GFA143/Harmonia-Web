@@ -5,11 +5,12 @@ import { pageRoute } from '../pageRoute'
 const loadAuth = () => import('@/features/auth')
 
 /**
- * Sign-in and related routes (phase 1). Accounts are created by an Admin (POST /api/users); the API has no
- * self-registration. These routes stay outside RoleGuard.
+ * Sign-in and related routes (phase 1). Accounts are created by an Admin; a visitor can only send a request to join
+ * (POST /api/member-registrations), which creates no account. These routes stay outside RoleGuard.
  */
 export const authRoutes: RouteObject[] = [
   pageRoute(paths.login, { title: 'Đăng nhập' }, async () => (await loadAuth()).LoginPage),
+  pageRoute(paths.join, { title: 'Đăng ký tham gia ca đoàn' }, async () => (await import('@/features/member-registrations')).JoinChoirPage),
   pageRoute(
     paths.forgotPassword,
     { title: 'Quên mật khẩu?' },
