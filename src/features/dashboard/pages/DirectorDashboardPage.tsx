@@ -90,39 +90,37 @@ function songListTask(program: LiturgicalProgram, open: () => void): Task | unde
 
 function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: number }>) {
   return (
-    <>
-      <ul className="hm-stagger" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-        {tasks.map((task, index) => (
-          <li key={task.key} style={rowStyle(index)}>
-            <Flex vertical align="flex-start" gap={spacing.sm}>
-              <Flex vertical gap={spacing.xs} style={{ minWidth: 0 }}>
-                <Typography.Text>{task.text}</Typography.Text>
-                {(task.due || task.when) && (
-                  <Typography.Text style={muted}>
-                    {task.due && (
-                      <Typography.Text strong={task.due.overdue} style={{ color: task.due.overdue ? colors.primary : 'inherit' }}>
-                        {task.due.overdue ? 'Quá hạn gửi' : 'Hạn gửi'} {task.due.date}
-                      </Typography.Text>
-                    )}
-                    {task.due && task.when && ' · '}
-                    {task.when && `Lễ cử hành ${task.when}`}
-                  </Typography.Text>
-                )}
-                {task.detail}
-              </Flex>
-              <div style={{ flexShrink: 0 }}>{task.action}</div>
+    <ul className="hm-stagger" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+      {tasks.map((task, index) => (
+        <li key={task.key} style={rowStyle(index)}>
+          <Flex vertical align="flex-start" gap={spacing.sm}>
+            <Flex vertical gap={spacing.xs} style={{ minWidth: 0 }}>
+              <Typography.Text>{task.text}</Typography.Text>
+              {(task.due || task.when) && (
+                <Typography.Text style={muted}>
+                  {task.due && (
+                    <Typography.Text strong={task.due.overdue} style={{ color: task.due.overdue ? colors.primary : 'inherit' }}>
+                      {task.due.overdue ? 'Quá hạn gửi' : 'Hạn gửi'} {task.due.date}
+                    </Typography.Text>
+                  )}
+                  {task.due && task.when && ' · '}
+                  {task.when && `Lễ cử hành ${task.when}`}
+                </Typography.Text>
+              )}
+              {task.detail}
             </Flex>
-          </li>
-        ))}
-        {overflow > 0 && (
-          <li style={rowStyle(tasks.length)}>
-            <Link to={paths.director.programs} style={{ fontWeight: 500 }}>
-              và {overflow} việc khác <ArrowRightOutlined aria-hidden />
-            </Link>
-          </li>
-        )}
-      </ul>
-    </>
+            <div style={{ flexShrink: 0 }}>{task.action}</div>
+          </Flex>
+        </li>
+      ))}
+      {overflow > 0 && (
+        <li style={rowStyle(tasks.length)}>
+          <Link to={paths.director.programs} style={{ fontWeight: 500 }}>
+            và {overflow} việc khác <ArrowRightOutlined aria-hidden />
+          </Link>
+        </li>
+      )}
+    </ul>
   )
 }
 

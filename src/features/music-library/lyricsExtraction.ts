@@ -52,14 +52,16 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
  * `jobId`, and resolves with the text once it succeeds. A failed job throws its `errorCode` as an ApiError.
  */
 export async function runLyricsExtraction(materialId: string, isCurrent: () => boolean, jobId?: string): Promise<string> {
-  let job = jobId ? await getLyricsExtraction(materialId, jobId) : await startLyricsExtraction(materialId)
   const deadline = Date.now() + giveUpMs
-  while (isOpenJob(job)) {
+  // One poll after another: each waits for the previous answer, so the server is never asked twice at once.
+  const follow = async (current: LyricsExtractionJob): Promise<LyricsExtractionJob> => {
+    if (!isOpenJob(current)) return current
     if (!isCurrent()) throw new Error('Session ended')
     if (Date.now() > deadline) throw new LyricsExtractionPending()
     await wait(pollMs)
-    job = await getLyricsExtraction(materialId, job.id)
+    return follow(await getLyricsExtraction(materialId, current.id))
   }
+  const job = await follow(jobId ? await getLyricsExtraction(materialId, jobId) : await startLyricsExtraction(materialId))
   if (isCurrent()) markSeen(job.id)
   if (job.status === 'Failed') throw new ApiError(422, { code: job.errorCode ?? 'INTERNAL_ERROR' })
   return job.lyricsText ?? ''

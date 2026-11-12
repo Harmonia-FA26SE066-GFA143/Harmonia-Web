@@ -14,6 +14,12 @@ import { ScorePage } from './SongCardGrid'
 const kinds: MaterialKind[] = ['sheetMusic', 'lyrics', 'sampleAudio', 'interactiveScore']
 const audioKinds = new Set<MaterialKind>(['sampleAudio', 'interactiveScore'])
 
+/** What the material's link does: upload one when there is none, else listen to audio or open the rest. */
+function materialAction(kind: MaterialKind, count: number) {
+  if (!count) return 'Tải lên'
+  return audioKinds.has(kind) ? 'Nghe' : 'Mở'
+}
+
 /**
  * The picked song beside the grid (artifact SongLibraryPage, quick look): its score page, number and part, credits,
  * the sample audio when it has one, its materials by kind, how often it was sung, and the ways on.
@@ -64,8 +70,8 @@ export function SongQuickLook({ song, number, part }: Readonly<{ song: Song; num
                     {materialKindLabels[kind]}
                     <small>{count ? `${count} tệp` : 'Chưa có'}</small>
                   </span>
-                  <Link to={detail} state={songListState(search)} aria-label={`${count ? 'Mở' : 'Tải lên'} ${materialKindLabels[kind].toLowerCase()} của ${song.title}`}>
-                    {count ? (audioKinds.has(kind) ? 'Nghe' : 'Mở') : 'Tải lên'}
+                  <Link to={detail} state={songListState(search)} aria-label={`${materialAction(kind, count)} ${materialKindLabels[kind].toLowerCase()} của ${song.title}`}>
+                    {materialAction(kind, count)}
                   </Link>
                 </li>
               )

@@ -12,7 +12,7 @@ const blankStaves = [44, 74, 104, 134, 164, 194]
  */
 function BlankScorePage({ className }: Readonly<{ className: string }>) {
   return (
-    <svg className={`${className} is-blank`} viewBox="0 0 160 220" width={160} height={220}>
+    <svg aria-hidden className={`${className} is-blank`} viewBox="0 0 160 220" width={160} height={220}>
       <rect x={0.5} y={0.5} width={159} height={219} fill="var(--hm-surface-base)" stroke="var(--hm-border-control)" strokeDasharray="4 3" />
       {blankStaves.map((top) => (
         <g key={top}>
