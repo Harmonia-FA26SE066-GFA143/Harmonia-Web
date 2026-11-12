@@ -16,6 +16,7 @@ interface UserDto {
   email: string
   fullName: string
   phone: string | null
+  saintName: string | null
   roleName: ApiRoleName
   isActive: boolean
   isPasswordChangeRequired: boolean

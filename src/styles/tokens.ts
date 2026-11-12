@@ -17,7 +17,7 @@
 const primitive = {
   burgundy: { 900: '#4A1D27', 850: '#5A2431', 800: '#6A2C39', 700: '#762E3D', 600: '#8E3B4B', 50: '#F6EBED' },
   rose: { 200: '#EADADD', 300: '#C9A9B0' },
-  ink: { 900: '#1E1A1C', 700: '#3F3639', 500: '#6B5F62', grey: '#5F6368', 400: '#8C8083' },
+  ink: { 900: '#1E1A1C', 700: '#3F3639', 500: '#615558', grey: '#575B60', 400: '#847779' },
   paper: {
     0: '#FFFFFF',
     page: '#F5F0E8',
@@ -28,12 +28,12 @@ const primitive = {
     line: '#E6DEDF',
     strong: '#D3C8CA',
   },
-  gold: { line: '#C5A46D', soft: '#E6D7B5', ink: '#7A5A1E' },
+  gold: { line: '#C5A46D', soft: '#E6D7B5', ink: '#6E5119' },
   green: { 800: '#24503F', 600: '#2F6150', 50: '#E7F1EC' },
   blue: { 800: '#24405F', 600: '#2E4D72', 50: '#E8EEF6' },
   leather: { 800: '#5A3E2B', 600: '#6B4A33', 50: '#F3ECE6' },
-  ochre: { 800: '#7A4F0C', 500: '#A8741A', 200: '#EBCF97', 50: '#FBF3E2' },
-  slate: { 500: '#73839A' },
+  ochre: { 800: '#7A4F0C', 500: '#8F610E', 200: '#EBCF97', 50: '#FBF3E2' },
+  slate: { 500: '#5F6E84' },
   status: {
     successInk: '#237804',
     successTint: '#F6FFED',
@@ -85,9 +85,9 @@ export const semantic = {
     primary: primitive.ink[900],
     /** 10.3:1 on page. */
     body: primitive.ink[700],
-    /** 5.4:1 on page. */
+    /** 6.3:1 on page, 5.0:1 on gold-soft (darkened 2026-11-12 from #6B5F62, 4.3:1 there). */
     muted: primitive.ink[500],
-    /** 5.5:1 on the disabled grey: readable, only not clickable. */
+    /** 6.8:1 on base, 4.8:1 on gold-soft: readable, only not clickable. */
     disabled: primitive.ink.grey,
     /** On brand-primary (7.3:1), the bookcloth and season cloths. */
     onBrand: primitive.paper[0],
@@ -104,7 +104,7 @@ export const semantic = {
     /** Hover edge of a quiet surface, decorative (1.6:1). */
     strong: primitive.paper.strong,
     hairline: 'rgba(0, 0, 0, 0.07)',
-    /** Control edges and the dashed draft / "Thiếu N" marks: 3.8:1 (WCAG 1.4.11). */
+    /** Control edges and the dashed draft / "Thiếu N" marks: 4.3:1 on base, 3.5:1 on parchment (WCAG 1.4.11). */
     control: primitive.ink[400],
   },
   action: {
@@ -167,7 +167,7 @@ export const semantic = {
   outcome: {
     good: primitive.green[600],
     late: primitive.ochre[500],
-    /** 3.9:1 on base. */
+    /** 5.2:1 on base, white on it 5.2:1 (darkened 2026-11-12 from #73839A, 3.9:1). */
     excused: primitive.slate[500],
     missed: primitive.burgundy[600],
   },
@@ -179,7 +179,7 @@ export const semantic = {
     /** Gold is a hairline, never text (2.15:1 on reading), never a status. */
     gilt: primitive.gold.line,
     giltSoft: primitive.gold.soft,
-    /** The only gold for text: "Lễ sáng / chiều / tối" on reading (5.8:1); not on giltSoft (4.46:1). */
+    /** The only gold for text: "Lễ sáng / chiều / tối" on reading (6.6:1), 5.2:1 on giltSoft. */
     giltInk: primitive.gold.ink,
   },
   season: primitive.season,

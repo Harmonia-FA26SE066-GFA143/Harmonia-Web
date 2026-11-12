@@ -112,7 +112,7 @@ export function AssignmentForm() {
         <Form<FormValues>
           form={form}
           layout="vertical"
-          initialValues={{ scope: 'all', eventId: urlProgramId, choirId: activeChoirs.length === 1 ? activeChoirs[0].id : undefined }}
+          initialValues={{ scope: 'all', eventId: urlProgramId, songId: params.get('songId') ?? undefined, choirId: activeChoirs.length === 1 ? activeChoirs[0].id : undefined }}
           onFinish={handleFinish}
         >
           <section className="hm-form-section">

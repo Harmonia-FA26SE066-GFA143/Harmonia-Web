@@ -65,6 +65,30 @@ describe('ParticipationPage', () => {
     await waitFor(() => expect(send).toHaveBeenCalledWith('p2', ['m1', 'm3']))
   })
 
+  it('counts the answers per voice part from approved skills and names the part with the fewest confirmations', async () => {
+    vi.mocked(membersApi.listChoirMembers).mockResolvedValue([
+      { id: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: ['Organ'] },
+      { id: 'm2', fullName: 'Simon Phan Văn Đức', skills: ['Bass'] },
+      { id: 'm3', fullName: 'Anna Đặng Thị Mai', skills: ['Soprano'] },
+      { id: 'm4', fullName: 'Têrêsa Lê Thu', skills: ['Giọng nữ cao'] },
+    ])
+    vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([
+      asked('m1', 'Maria Nguyễn Thu Hướng', { response: 'confirmed', respondedAt: requestedAt }),
+      asked('m2', 'Simon Phan Văn Đức', { response: 'declined', respondedAt: requestedAt }),
+      asked('m3', 'Anna Đặng Thị Mai', { response: 'confirmed', respondedAt: requestedAt }),
+      asked('m4', 'Têrêsa Lê Thu'),
+    ])
+    renderParticipation('/director/participation?programId=p2')
+
+    const parts = await screen.findByRole('complementary', { name: 'Phản hồi theo bè' })
+    // Soprano and "Giọng nữ cao" are one part; the organist is in none.
+    expect(await within(parts).findByText('1 xác nhận · 0 từ chối · 1 chưa')).toBeInTheDocument()
+    expect(within(parts).getByText('0 xác nhận · 1 từ chối · 0 chưa')).toBeInTheDocument()
+    expect(within(parts).getAllByText('Chưa mời ai')).toHaveLength(2)
+    expect(within(parts).getByText(/ít xác nhận nhất: 0 trên 1 người được mời/)).toHaveTextContent('Bè Bass')
+    expect(within(parts).getByRole('link', { name: /Mở phân công/ })).toHaveAttribute('href', '/director/roster?programId=p2')
+  })
+
   it('counts and filters the answers, shows notes, and sends more only to members not asked yet', async () => {
     vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([
       asked('m1', 'Maria Nguyễn Thu Hướng', { response: 'confirmed', respondedAt: requestedAt }),

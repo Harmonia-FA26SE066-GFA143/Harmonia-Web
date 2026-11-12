@@ -1,7 +1,7 @@
 import { sessionDraftPrefix } from '@/lib/auth/session'
 
-// An AI-extracted lyrics draft waits here, in this tab only, until the Director opens and saves it. The backend keeps
-// nothing (POST /api/music-materials/{id}/extract-lyrics answers the text once). Signing out clears the prefix.
+// An AI-extracted lyrics draft waits here, in this tab, until the Director opens and saves it. The server keeps the job
+// result for 24 hours (lyricsExtraction.ts picks it up again after a reload). Signing out clears the prefix.
 const ttlMs = 2 * 60 * 60 * 1000
 const keyOf = (songId: string, materialId: string) => `${sessionDraftPrefix}lyrics.${songId}.${materialId}`
 

@@ -110,3 +110,26 @@ export function StaffPlaceholder() {
     </svg>
   )
 }
+
+/** Section divider of a reading surface (artifact Patterns, staff-divider): two short staves round a small rose. */
+export function StaffDivider() {
+  const lines = [8, 14, 20, 26]
+  const spokes = Array.from({ length: 8 }, (_, k) => (k * Math.PI) / 4)
+  return (
+    <svg aria-hidden className="hm-staff-divider" width="320" height="34" viewBox="0 0 320 34" fill="none">
+      <g stroke="var(--hm-action-primary)" strokeOpacity="0.45">
+        {lines.map((y) => (
+          <path key={y} d={`M0 ${y}H136M184 ${y}H320`} />
+        ))}
+      </g>
+      <g stroke="var(--hm-gilt)">
+        {[14, 9, 3].map((r) => (
+          <circle key={r} cx="160" cy="17" r={r} />
+        ))}
+        {spokes.map((a) => (
+          <line key={a} x1={160 + 3 * Math.cos(a)} y1={17 + 3 * Math.sin(a)} x2={160 + 9 * Math.cos(a)} y2={17 + 9 * Math.sin(a)} />
+        ))}
+      </g>
+    </svg>
+  )
+}

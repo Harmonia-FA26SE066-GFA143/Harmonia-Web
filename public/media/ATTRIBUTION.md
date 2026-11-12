@@ -20,3 +20,11 @@ Photos and videos used on the public pages of Harmonia Web. All come from Pexels
 - Not allowed: showing identifiable people in a bad light or offensively; selling unaltered copies (prints, products); implying that people or brands in the media endorse the product; redistributing or selling them on other stock or wallpaper platforms; using them in a trademark, design mark, trade name, business name or service mark.
 
 These files are used as page decoration only; they are not part of the Harmonia logo or brand marks.
+
+## Public-domain artwork
+
+| File | Used on | Title | Source | Downloaded |
+| --- | --- | --- | --- | --- |
+| `src/assets/images/landing/nga-antiphonal-leaf-4.jpg` | Landing page, chapter I | Leaf 4 from an antiphonal fragment, Italian, c. 1275 | National Gallery of Art, Washington, Gift of Mr. Ladislaus and Beatrix von Hoffmann, 2009.1.1.7. Public domain (NGA Open Access). | 2026-11-10 |
+
+Shown uncropped in the file and cropped on the page by CSS only; no recolouring or filters.

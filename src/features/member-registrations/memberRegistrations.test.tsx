@@ -25,12 +25,13 @@ describe('JoinChoirPage', () => {
   it('sends the trimmed request and says it is not an account', async () => {
     const submit = vi.spyOn(api, 'submitRegistration').mockResolvedValue(undefined)
     renderPage(<JoinChoirPage />, '/join')
+    fill('Tên thánh', ' Giuse ')
     fill('Họ tên', '  An Nguyễn ')
     fill('Email', 'an@giaoxu.org')
     send()
 
     expect(await screen.findByText(/chưa phải tài khoản đăng nhập/)).toBeInTheDocument()
-    expect(submit.mock.calls[0][0]).toEqual({ fullName: 'An Nguyễn', email: 'an@giaoxu.org', phone: undefined, note: undefined })
+    expect(submit.mock.calls[0][0]).toEqual({ fullName: 'An Nguyễn', saintName: 'Giuse', email: 'an@giaoxu.org', phone: undefined, note: undefined })
   })
 
   it('keeps the form and explains the rate limit', async () => {
@@ -45,7 +46,7 @@ describe('JoinChoirPage', () => {
   })
 })
 
-const row: api.MemberRegistration = { id: 'r1', fullName: 'An Nguyễn', email: 'an@giaoxu.org', phone: null, note: 'Ca đoàn Cecilia', createdAt: '2026-11-09T08:00:00Z' }
+const row: api.MemberRegistration = { id: 'r1', fullName: 'An Nguyễn', email: 'an@giaoxu.org', phone: null, saintName: null, note: 'Ca đoàn Cecilia', createdAt: '2026-11-09T08:00:00Z' }
 const page = (items: api.MemberRegistration[]) => ({ items, pageNumber: 1, pageSize: 20, totalCount: items.length, totalPages: 1 })
 
 describe('MemberRegistrationsPage', () => {

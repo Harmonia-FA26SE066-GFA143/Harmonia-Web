@@ -1,8 +1,8 @@
 import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { App, Button, Card, Tabs, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { useEffect, useState } from 'react'
-import { generatePath, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
 import { ApiError, requestFailureMessage } from '@/lib/api/errors'
@@ -31,13 +31,13 @@ import {
   useUpdateMaterial,
   useUploadMaterial,
 } from '../hooks/useSongs'
-import { extractLyrics } from '../api/songsApi'
-import { readLyricsDraft, removeLyricsDraft, saveLyricsDraft } from '../lyricsDraft'
+import { getLatestLyricsExtraction } from '../api/songsApi'
+import { extractKeyPrefix, isOpenJob, lyricsExtractionTask, wasSeen } from '../lyricsExtraction'
+import { readLyricsDraft, removeLyricsDraft } from '../lyricsDraft'
 import { listSearchOf } from '../songFilters'
 import {
   classificationErrorMessage,
   duplicateTitleMessage,
-  extractLyricsErrorMessage,
   isDuplicateTitle,
   materialFileProblem,
   materialUpdateErrorMessage,
@@ -62,7 +62,6 @@ const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { tit
  * assignment uses (409 SONG_IN_USE, BE 718696c), as "only if never selected for a Mass" (song-approval.md, 5a.5) asks.
  * The three parts are tabs kept in `?tab=`, each with its own loading, empty and error states.
  */
-const extractKeyPrefix = 'extract-lyrics:'
 
 export function SongDetailPage() {
   const navigate = useNavigate()
@@ -92,6 +91,24 @@ export function SongDetailPage() {
   const [picked, setPicked] = useState<PendingMaterial>()
   // The sheet the open lyrics draft came from; its stored draft is removed once the lyrics are saved.
   const [draftOf, setDraftOf] = useState<string>()
+  const checkedSheets = useRef(new Set<string>())
+  const songTitle = song.data?.title
+  const { start: startTask } = tasks
+  useEffect(() => {
+    if (!songTitle) return
+    for (const sheet of materials.data ?? []) {
+      if (sheet.kind !== 'sheetMusic' || !sheet.url || checkedSheets.current.has(sheet.id)) continue
+      checkedSheets.current.add(sheet.id)
+      getLatestLyricsExtraction(sheet.id)
+        .then((job) => {
+          if (job && (isOpenJob(job) || (job.status === 'Succeeded' && !wasSeen(job.id)))) {
+            startTask(lyricsExtractionTask(songId, songTitle, sheet, job.id))
+          }
+        })
+        // Nothing to pick up is the usual case; a failed check only means no reminder.
+        .catch(() => undefined)
+    }
+  }, [materials.data, songId, songTitle, startTask])
   const extractingIds = new Set(
     tasks.tasks
       .filter((task) => task.status === 'running' && task.key.startsWith(extractKeyPrefix))
@@ -100,7 +117,6 @@ export function SongDetailPage() {
 
   // "Mở bản nháp" (task notification or list) comes back here with ?draft=<materialId>: open the lyrics form with it.
   const draftParam = params.get('draft')
-  const songTitle = song.data?.title
   useEffect(() => {
     if (!draftParam || songTitle === undefined) return
     const text = readLyricsDraft(songId, draftParam)
@@ -194,28 +210,12 @@ export function SongDetailPage() {
 
   const lyricsTitle = `Lời ${data.title}`.slice(0, 200)
 
-  // A background task: the Director may leave this page while the AI reads. The draft waits in this tab (never saved
-  // on the server) until opened from the notification; a sheet with no printed lyrics answers an empty text
-  // (GeminiLyricsExtractor), so there is nothing to open.
+  // A server job: the Director may leave this page or reload it while the AI reads. The draft waits in this tab (never
+  // saved as a material) until opened from the notification.
   const handleExtractLyrics = (material: SongMaterial) => {
-    const songPath = generatePath(paths.director.songDetail, { songId })
-    const started = tasks.start({
-      type: 'extract-lyrics',
-      key: `${extractKeyPrefix}${material.id}`,
-      title: `Trích lời từ ${material.title}`,
-      sourcePath: `${songPath}?tab=materials`,
-      errorMessage: extractLyricsErrorMessage,
-      run: async (isCurrent) => {
-        const text = await extractLyrics(material.id)
-        if (!text.trim()) return { summary: `Không tìm thấy lời trên “${material.title}”. Bạn có thể gõ lời trực tiếp.` }
-        if (isCurrent()) saveLyricsDraft(songId, material.id, text)
-        return {
-          summary: `Đã trích lời từ ${material.title} của bài ${data.title}.`,
-          action: { label: 'Mở bản nháp', to: `${songPath}?tab=materials&draft=${material.id}` },
-        }
-      },
-    })
-    if (started) message.info('Đang trích lời. Bạn có thể chuyển sang trang khác, Harmonia sẽ báo khi xong.')
+    if (tasks.start(lyricsExtractionTask(songId, data.title, material))) {
+      message.info('Đang trích lời. Bạn có thể chuyển trang hoặc tải lại trang, Harmonia sẽ báo khi xong.')
+    }
   }
 
   const handleUpload = (values: MaterialFormValues) => {

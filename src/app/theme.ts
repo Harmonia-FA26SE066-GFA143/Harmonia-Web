@@ -27,6 +27,8 @@ export const theme: ThemeConfig = {
     colorTextTertiary: semantic.text.muted,
     colorTextDisabled: semantic.text.disabled,
     colorTextPlaceholder: semantic.text.muted,
+    // Clear icons, select arrows and empty-state icons; antd's default (black at 25%) is 1.9:1 on white.
+    colorTextQuaternary: semantic.border.control,
     colorError: semantic.status.error,
     colorErrorBg: semantic.status.errorTint,
     colorSuccess: semantic.status.success,

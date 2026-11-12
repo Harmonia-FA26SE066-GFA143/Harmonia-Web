@@ -2,7 +2,7 @@ import { App, Card } from 'antd'
 import { useMemo, useState } from 'react'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, SummaryStrip } from '@/shared/ui'
+import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, SummaryStrip, inVoicePart, voiceParts } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { MemberFilterBar } from '../components/MemberFilterBar'
 import { MemberFormDrawer } from '../components/MemberFormDrawer'
@@ -14,13 +14,6 @@ import type { MemberFilters, MemberProfile, MemberProfileValues } from '../types
 
 const pageSize = 20
 
-/** The four voice parts, matched on the approved skill names as VoicePartIcon reads them. */
-const voiceParts = [
-  { label: 'Soprano', pattern: /soprano|nữ cao/i },
-  { label: 'Alto', pattern: /alto|nữ trầm/i },
-  { label: 'Tenor', pattern: /tenor|nam cao/i },
-  { label: 'Bass', pattern: /bass|nam trầm/i },
-]
 
 /**
  * Choir Director: choir members (FE-24) on `/api/member-profiles`. Members are ChoirMember accounts the Admin
@@ -46,7 +39,7 @@ export function MembersPage() {
   const active = useChoirMembers()
   const activeCells = active.data && [
     { label: 'Đang sinh hoạt', value: active.data.length },
-    ...voiceParts.map(({ label, pattern }) => ({ label, value: active.data.filter((member) => member.skills.some((skill) => pattern.test(skill))).length })),
+    ...voiceParts.map(({ label, pattern }) => ({ label, value: active.data.filter((member) => inVoicePart(member.skills, pattern)).length })),
   ]
   const [editing, setEditing] = useState<MemberProfile>()
 

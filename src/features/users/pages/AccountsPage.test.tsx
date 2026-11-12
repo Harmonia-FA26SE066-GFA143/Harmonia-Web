@@ -12,7 +12,7 @@ const account = (id: string, fullName: string, email: string, role: Account['rol
   id,
   fullName,
   email,
-  phone: null,
+  phone: null, saintName: null,
   role,
   isActive,
   isPasswordChangeRequired: false,

@@ -10,6 +10,8 @@ export interface Account {
   fullName: string
   email: string
   phone: string | null
+  /** Tên thánh; null when not given. */
+  saintName: string | null
   role: SystemRole
   isActive: boolean
   /** True until the user replaces the first password the backend emailed. */
@@ -22,21 +24,23 @@ export const accountStatusLabels = { active: 'Đang hoạt động', inactive: '
 export const accountName = (account: Pick<Account, 'fullName' | 'email'>) => account.fullName || account.email
 
 /**
- * Body of POST /api/users (CreateUserRequestValidator: fullName ≤ 100, phone ≤ 20). The backend generates the first
+ * Body of POST /api/users (CreateUserRequestValidator: fullName ≤ 100, phone ≤ 20, saintName ≤ 50). The backend generates the first
  * password and emails it to the user.
  */
 export interface CreateAccountValues {
   fullName?: string
   email: string
   phone?: string
+  saintName?: string
   role: SystemRole
 }
 
-/** Body of PUT /api/users/{id}: every field is replaced, so an empty name or phone clears it. */
+/** Body of PUT /api/users/{id}: every field is replaced, so an empty name, phone or saint name clears it. */
 export interface UpdateAccountValues {
   fullName?: string
   email: string
   phone?: string
+  saintName?: string
 }
 
 /** Query filters of GET /api/users; they combine with AND on the server. */

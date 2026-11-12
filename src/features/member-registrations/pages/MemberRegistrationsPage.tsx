@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
+import { personName } from '@/shared/utils/personName'
 import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { acceptRegistration, deleteRegistration, listRegistrations, type MemberRegistration } from '../api/memberRegistrationsApi'
@@ -86,7 +87,7 @@ export function MemberRegistrationsPage() {
       title: 'Người đăng ký',
       render: (_, item) => (
         <Flex vertical>
-          <Typography.Text strong>{item.fullName}</Typography.Text>
+          <Typography.Text strong>{personName(item.fullName, item.saintName)}</Typography.Text>
           <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{item.email}</Typography.Text>
         </Flex>
       ),
@@ -170,6 +171,7 @@ export function MemberRegistrationsPage() {
             column={1}
             items={[
               { key: 'status', label: 'Trạng thái', children: 'Đang chờ xử lý' },
+              { key: 'saint', label: 'Tên thánh', children: viewing.saintName ?? 'Chưa có' },
               { key: 'name', label: 'Họ tên', children: viewing.fullName },
               { key: 'email', label: 'Email', children: viewing.email },
               { key: 'phone', label: 'Điện thoại', children: viewing.phone ?? 'Chưa có' },

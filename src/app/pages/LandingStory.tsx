@@ -1,5 +1,6 @@
 import { Typography } from 'antd'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import antiphonalLeaf from '@/assets/images/landing/nga-antiphonal-leaf-4.jpg'
 import { StatusTag } from '@/shared/ui'
 import { seasonColors } from '@/styles/tokens'
 
@@ -83,6 +84,12 @@ export function LandingStory() {
                 <h3 className="landing-chapter__title">{chapter.title}</h3>
                 <p className="landing-chapter__who">{chapter.who}</p>
                 <p className="landing-chapter__text">{chapter.text}</p>
+                {index === 0 && (
+                  <figure className="landing-leaf">
+                    <img src={antiphonalLeaf} alt="Trang sách thánh ca cổ: khuông bốn dòng kẻ đỏ, nốt vuông màu đen và chữ đầu tô đỏ, xanh" loading="lazy" />
+                    <figcaption>Trang sách thánh ca, Ý, khoảng năm 1275. National Gallery of Art, Washington</figcaption>
+                  </figure>
+                )}
               </div>
             </li>
           ))}

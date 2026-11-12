@@ -660,6 +660,18 @@ textarea {
   background: var(--hm-surface-chrome-selected);
 }
 
+/* The active bar (owner 2026-11-12): marks the current area beyond its fill, which is only 1.36:1 on the bookcloth.
+   Navigation text colour, 7.9:1 on the pill and 10.4:1 on the band; it draws out once the pill has landed. */
+.hm-pill__bar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--hm-text-on-chrome);
+}
+
 .hm-area {
   position: relative;
   flex: none;
@@ -1008,18 +1020,306 @@ textarea {
   }
 }
 
-/* Director overview: the ruled list of upcoming programs beside the working column. */
-.director-dashboard-grid {
+/* Director overview (artifact DirectorDashboard): the working column, and the next Mass on the right third. */
+.dash-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 32px;
+  gap: 16px;
   align-items: start;
 }
 
+.dash-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dash-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.dash-aside {
+  position: sticky;
+  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+}
+
 @media (max-width: 1199px) {
-  .director-dashboard-grid {
+  .dash-grid,
+  .dash-pair {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .dash-aside {
+    position: static;
+  }
+}
+
+/* A sheet opened by a rubric (artifact ws-card). */
+.hm-sheet-section {
+  min-width: 0;
+  background: var(--hm-surface-base);
+  border: 1px solid var(--hm-border-hairline);
+  border-radius: var(--hm-radius-lg);
+  overflow: hidden;
+}
+
+.hm-sheet-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px 4px;
+}
+
+.hm-sheet-section__head .hm-rubric {
+  margin: 0;
+}
+
+.hm-sheet-section__link {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ant-typography.hm-sheet-section__empty {
+  margin: 0;
+  padding: 12px 16px 16px;
+  color: var(--hm-text-muted);
+}
+
+/* A date as the songbook prints it: the day in the display serif over a small label. */
+.hm-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 44px;
+  line-height: 1;
+}
+
+.hm-date b {
+  font-family: var(--hm-font-display);
+  font-size: 26px;
+  font-weight: 600;
+  font-variant-numeric: lining-nums;
+  color: var(--hm-text-primary);
+}
+
+.hm-date span {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--hm-text-muted);
+}
+
+.week-list,
+.upcoming-strip,
+.next-mass__signals,
+.next-mass__shortages {
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.week-list li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.week-list li.is-today {
+  background: var(--hm-area-rehearsal-tint);
+}
+
+.week-list__time {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-text-primary);
+}
+
+.week-list__meta,
+.upcoming-strip__meta {
+  display: block;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--hm-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upcoming-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.upcoming-strip > li + li {
+  border-left: 1px solid var(--hm-border-default);
+}
+
+.upcoming-strip__item {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 8px;
+  height: 100%;
+  padding: 12px 14px 14px;
+  color: inherit;
+  transition: background-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.upcoming-strip__item:hover {
+  background: var(--hm-surface-soft);
+  color: inherit;
+}
+
+.upcoming-strip__item:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: -2px;
+}
+
+.upcoming-strip__name {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--hm-text-primary);
+}
+
+.upcoming-strip .ant-tag {
+  margin: 6px 0 0;
+}
+
+/* The next Mass: the evening head on the bookcloth, then the preparation signals. */
+.next-mass {
+  overflow: hidden;
+  background: var(--hm-surface-base);
+  border: 1px solid var(--hm-border-hairline);
+  border-radius: var(--hm-radius-lg);
+}
+
+.next-mass__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  background: var(--hm-surface-chrome);
+  border-bottom: 1px solid var(--hm-gilt);
+}
+
+.next-mass__day {
+  font-family: var(--hm-font-display);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: lining-nums;
+  color: var(--hm-gilt-soft);
+}
+
+.next-mass__when,
+.next-mass__where {
+  display: block;
+  font-size: 12px;
+  color: var(--hm-text-on-chrome);
+}
+
+.next-mass__when {
+  color: var(--hm-gilt-soft);
+}
+
+.next-mass__name {
+  margin: 2px 0;
+  font-family: var(--hm-font-display);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--hm-text-on-brand);
+}
+
+.next-mass__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 20px 20px;
+}
+
+.next-mass__body .hm-rubric {
+  margin: 0;
+}
+
+.next-mass__signals li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--hm-border-default);
+  font-size: 13px;
+  color: var(--hm-text-primary);
+}
+
+/* Each signal states its value in words; the mark only echoes it. */
+.hm-signal {
+  padding: 0 8px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--hm-text-body);
+  white-space: nowrap;
+}
+
+.hm-signal.is-done {
+  border-color: var(--hm-area-rehearsal-border);
+  background: var(--hm-area-rehearsal-tint);
+  color: var(--hm-area-rehearsal-ink);
+}
+
+.hm-signal.is-waiting {
+  border-color: var(--hm-area-attention-border);
+  background: var(--hm-area-attention-tint);
+  color: var(--hm-area-attention-ink);
+  font-weight: 600;
+}
+
+.hm-signal.is-todo {
+  border-style: dashed;
+  border-color: var(--hm-border-control);
+  color: var(--hm-text-muted);
+}
+
+.next-mass__shortages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* A place still open: dashed, in the roster's leather, never red (artifact ws-missing). */
+.hm-missing {
+  padding: 1px 8px;
+  border: 1px dashed var(--hm-area-roster-cloth);
+  border-radius: var(--hm-radius-sm);
+  background: var(--hm-area-roster-tint);
+  font-size: 12px;
+  color: var(--hm-area-roster-ink);
+}
+
+.ant-typography.next-mass__ready {
+  color: var(--hm-area-rehearsal-ink);
+  font-weight: 500;
+}
+
+.next-mass__more {
+  align-self: flex-end;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .ordo {
@@ -2061,4 +2361,516 @@ textarea {
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+/* Xác nhận tham gia: answers per voice part (artifact ParticipationPage). */
+.hm-part-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.hm-part-bars__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.hm-part-bars__track {
+  display: flex;
+  gap: 2px;
+  min-width: 8px;
+  height: 10px;
+}
+
+.hm-part-bars__track span {
+  border-radius: 2px;
+}
+
+.hm-part-bars__track .is-confirmed {
+  background: var(--hm-outcome-good);
+}
+
+.hm-part-bars__track .is-declined {
+  background: repeating-linear-gradient(135deg, var(--hm-outcome-missed) 0 3px, transparent 3px 6px);
+  box-shadow: inset 0 0 0 1px var(--hm-outcome-missed);
+}
+
+.hm-part-bars__track .is-open {
+  background: var(--hm-border-strong);
+}
+
+/* A short reading of the figures, on the reading surface. */
+.hm-reading-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--hm-radius-md);
+  background: var(--hm-surface-reading);
+  border-top: 1px solid var(--hm-gilt);
+}
+
+/* An area with something waiting: an ochre dot after its name (artifact Spine). Light ochre on the bookcloth: 9.3:1,
+   6.8:1 on the selected area; the ochre cloth was 2.6:1 there. */
+.hm-area__dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--hm-area-attention-border);
+  vertical-align: middle;
+}
+
+/* The right end of the ivory band: today's season, then the next Mass. */
+.hm-head-day {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+  padding-left: 16px;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.hm-head-day__mass {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  color: var(--hm-text-primary);
+  font-size: 13px;
+}
+
+.hm-head-day__mass:hover .hm-head-day__name {
+  color: var(--hm-action-primary);
+}
+
+.hm-head-day__label {
+  color: var(--hm-text-muted);
+  font-size: 12px;
+}
+
+.hm-head-day__name {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  transition: color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.hm-head-day__hour {
+  color: var(--hm-gilt-ink);
+  font-weight: 600;
+}
+
+/* Kho bài hát (artifact SongLibraryPage): quick filters, the grid of score pages, and the quick look. */
+.song-layout {
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.song-layout.has-peek {
+  grid-template-columns: 196px minmax(0, 1fr) 340px;
+}
+
+.song-layout__main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.song-layout__sheet {
+  background: var(--hm-surface-base);
+  border: 1px solid var(--hm-border-hairline);
+  border-radius: var(--hm-radius-lg);
+  overflow: hidden;
+}
+
+.song-rail {
+  position: sticky;
+  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+}
+
+.song-rail__list {
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.song-rail__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: var(--hm-radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  text-align: start;
+  color: var(--hm-text-body);
+  cursor: pointer;
+  transition: background var(--hm-dur-fast) var(--hm-ease), color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.song-rail__item:hover {
+  background: var(--hm-surface-soft);
+  color: var(--hm-text-primary);
+}
+
+.song-rail__item[aria-pressed='true'] {
+  background: var(--hm-surface-base);
+  color: var(--hm-text-primary);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--hm-border-default);
+}
+
+.song-rail__item:focus-visible,
+.song-card:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
+}
+
+.song-rail__count {
+  min-width: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--hm-surface-band);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--hm-text-body);
+}
+
+.song-next {
+  background: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-hairline);
+  border-top: 1px solid var(--hm-gilt);
+  border-radius: var(--hm-radius-lg);
+  padding: 10px 14px 12px;
+}
+
+.song-next__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.song-next__open {
+  margin-inline-start: auto;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.song-next__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.song-next__item {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-sm);
+  background: var(--hm-surface-base);
+  color: var(--hm-text-primary);
+  transition: border-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+a.song-next__item:hover {
+  border-color: var(--hm-action-primary);
+  color: var(--hm-text-primary);
+}
+
+.song-next__item b {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.song-next__item.is-gap {
+  border-style: dashed;
+  border-color: var(--hm-area-roster-cloth);
+}
+
+.song-next__item.is-gap b {
+  font-weight: 500;
+  color: var(--hm-area-roster-ink);
+}
+
+.song-next__part {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--hm-text-muted);
+}
+
+.song-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.song-cards > li {
+  display: flex;
+}
+
+.song-cards__pager {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0 0;
+}
+
+.song-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--hm-border-hairline);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-surface-base);
+  font: inherit;
+  text-align: start;
+  color: inherit;
+  cursor: pointer;
+}
+
+.song-card[aria-pressed='true'] {
+  border-color: var(--hm-action-primary);
+  box-shadow: 0 0 0 1px var(--hm-action-primary), var(--hm-shadow-sm);
+}
+
+.song-card__thumb {
+  position: relative;
+  display: block;
+  height: 118px;
+  padding: 8px 14px 0;
+  overflow: hidden;
+  background: var(--hm-surface-band);
+  border-bottom: 1px solid var(--hm-border-default);
+}
+
+.song-card__page {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  box-shadow: var(--hm-shadow-sm);
+  transition: transform 600ms var(--hm-ease);
+}
+
+.song-card:hover .song-card__page,
+.song-card:focus-visible .song-card__page {
+  transform: translateY(-28px);
+}
+
+.song-card__no {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  padding: 2px 6px 0;
+  border-radius: var(--hm-radius-sm);
+  background: var(--hm-surface-reading);
+  font-family: var(--hm-font-display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--hm-action-primary);
+}
+
+.song-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+}
+
+.song-card__part {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--hm-area-liturgy-ink);
+}
+
+.song-card__title {
+  min-height: 38px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--hm-text-primary);
+}
+
+.song-card__meta {
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.song-card__mats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--hm-outcome-good);
+}
+
+.song-card__mats .is-miss {
+  color: var(--hm-text-muted);
+}
+
+.song-card__used {
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid var(--hm-border-default);
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.song-peek {
+  position: sticky;
+  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+  overflow: hidden;
+  background: var(--hm-surface-base);
+  border: 1px solid var(--hm-border-hairline);
+  border-radius: var(--hm-radius-lg);
+}
+
+.song-peek__in {
+  animation: hm-rise var(--hm-dur-base) var(--hm-ease) both;
+}
+
+.song-peek__page {
+  display: grid;
+  place-items: start center;
+  height: 190px;
+  padding-top: 14px;
+  overflow: hidden;
+  background: var(--hm-surface-band);
+  border-bottom: 1px solid var(--hm-border-default);
+}
+
+.song-peek__sheet {
+  width: 200px;
+  height: auto;
+  background: #fff;
+  box-shadow: var(--hm-shadow-md);
+}
+
+.song-peek__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 16px;
+}
+
+.song-peek__title {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--hm-text-primary);
+}
+
+.song-peek__audio {
+  width: 100%;
+  height: 36px;
+}
+
+.song-peek__files {
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.song-peek__files li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--hm-border-default);
+  font-size: 13px;
+  color: var(--hm-text-primary);
+}
+
+.song-peek__files li > span:not(.anticon) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.song-peek__files small {
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.song-peek__files .anticon,
+.song-peek__files li.is-miss {
+  color: var(--hm-text-muted);
+}
+
+/* Staff divider (artifact Patterns): two short staves round a small rose; at most one per reading page. */
+.hm-staff-divider {
+  display: block;
+  margin: 8px auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .song-card:hover .song-card__page,
+  .song-card:focus-visible .song-card__page {
+    transform: none;
+  }
+
+  .song-peek__in {
+    animation: none;
+  }
+}
+
+/* Chapter I: a few staves of a real chant page (artifact Imagery, NGA antiphonal leaf), kept as it is. */
+.landing-leaf {
+  margin: 20px 0 0;
+  max-width: 420px;
+}
+
+.landing-leaf img {
+  display: block;
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  object-position: 50% 32%;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-sm);
+}
+
+.landing-leaf figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--hm-text-muted);
 }

@@ -9,6 +9,7 @@ export interface MemberRegistration {
   fullName: string
   email: string
   phone: string | null
+  saintName: string | null
   note: string | null
   createdAt: string
 }
@@ -17,6 +18,7 @@ export interface RegistrationValues {
   fullName: string
   email: string
   phone?: string
+  saintName?: string
   note?: string
 }
 

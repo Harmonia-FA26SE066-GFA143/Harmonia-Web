@@ -11,14 +11,16 @@ interface UserDto {
   email: string
   fullName: string
   phone: string | null
+  saintName: string | null
   avatarUrl: string | null
   roleName: ApiRoleName
 }
 
-const toProfile = ({ email, fullName, phone, avatarUrl, roleName }: UserDto): Profile => ({
+const toProfile = ({ email, fullName, phone, saintName, avatarUrl, roleName }: UserDto): Profile => ({
   email,
   fullName,
   phone: phone ?? undefined,
+  saintName: saintName ?? undefined,
   avatarUrl: avatarUrl ?? undefined,
   role: roleByApiName[roleName],
 })
@@ -27,12 +29,16 @@ export async function getMyProfile(): Promise<Profile> {
   return toProfile(await apiRequest<UserDto>('/api/auth/me'))
 }
 
-/** Both fields are replaced: an empty name or phone clears it (UpdateMyUserRequestValidator: ≤ 100 / ≤ 20). */
-export async function updateMyProfile({ fullName, phone }: ProfileUpdateValues): Promise<Profile> {
+/** Every field is replaced: an empty one clears it (UpdateMyUserRequestValidator: name ≤ 100, phone ≤ 20, saint name ≤ 50). */
+export async function updateMyProfile({ fullName, phone, saintName }: ProfileUpdateValues): Promise<Profile> {
   return toProfile(
     await apiRequest<UserDto>('/api/auth/me', {
       method: 'PUT',
-      body: JSON.stringify({ fullName: fullName?.trim() || undefined, phone: phone?.trim() || undefined }),
+      body: JSON.stringify({
+        fullName: fullName?.trim() || undefined,
+        phone: phone?.trim() || undefined,
+        saintName: saintName?.trim() || undefined,
+      }),
     }),
   )
 }

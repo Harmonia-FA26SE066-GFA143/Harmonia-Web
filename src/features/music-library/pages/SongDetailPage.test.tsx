@@ -55,6 +55,7 @@ function withSong() {
   vi.spyOn(songsApi, 'getSong').mockResolvedValue(song)
   vi.spyOn(songsApi, 'getSongClassification').mockResolvedValue(classification)
   vi.spyOn(songsApi, 'listMaterials').mockResolvedValue(materials)
+  vi.spyOn(songsApi, 'getLatestLyricsExtraction').mockResolvedValue(null)
 }
 
 describe('SongDetailPage timed lyrics', () => {
@@ -277,20 +278,20 @@ describe('SongDetailPage', () => {
     )
   })
 
-  it('reads the lyrics of a sheet with AI as a background task and keeps the draft for "Mở bản nháp"', async () => {
+  it('reads the lyrics of a sheet with AI as a server job and keeps the draft for "Mở bản nháp"', async () => {
     withSong()
-    let answer!: (text: string) => void
-    vi.spyOn(songsApi, 'extractLyrics').mockReturnValue(new Promise((resolve) => (answer = resolve)))
+    let answer!: (job: songsApi.LyricsExtractionJob) => void
+    const start = vi.spyOn(songsApi, 'startLyricsExtraction').mockReturnValue(new Promise((resolve) => (answer = resolve)))
     renderDetail('materials')
 
     const extract = await screen.findByRole('button', { name: 'Trích lời từ Bản nhạc SATB' })
     fireEvent.click(extract)
-    expect(await screen.findByText('Đang trích lời. Bạn có thể chuyển sang trang khác, Harmonia sẽ báo khi xong.')).toBeInTheDocument()
+    expect(await screen.findByText(/Đang trích lời. Bạn có thể chuyển trang hoặc tải lại trang/)).toBeInTheDocument()
     // One run per sheet: a second click while it reads starts nothing.
     fireEvent.click(extract)
-    expect(songsApi.extractLyrics).toHaveBeenCalledTimes(1)
+    expect(start).toHaveBeenCalledTimes(1)
 
-    answer('Con bước lên bàn thờ Chúa')
+    answer({ id: 'j1', status: 'Succeeded', lyricsText: 'Con bước lên bàn thờ Chúa', errorCode: null })
     await waitFor(() => expect(readLyricsDraft('s1', 'm1')).toBe('Con bước lên bàn thờ Chúa'))
     // The form waits for the Director: the notification opens it.
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -321,15 +322,27 @@ describe('SongDetailPage', () => {
 
   it('keeps no draft when the AI finds no lyrics on the sheet', async () => {
     withSong()
-    vi.spyOn(songsApi, 'extractLyrics').mockResolvedValue('')
+    const start = vi.spyOn(songsApi, 'startLyricsExtraction').mockResolvedValue({ id: 'j1', status: 'Succeeded', lyricsText: '', errorCode: null })
     renderDetail('materials')
 
     fireEvent.click(await screen.findByRole('button', { name: 'Trích lời từ Bản nhạc SATB' }))
 
-    await waitFor(() => expect(songsApi.extractLyrics).toHaveBeenCalledWith('m1'))
+    await waitFor(() => expect(start).toHaveBeenCalledWith('m1'))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Trích lời từ Bản nhạc SATB' })).not.toHaveClass('ant-btn-loading'))
     expect(readLyricsDraft('s1', 'm1')).toBeUndefined()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('picks up a job that finished while the page was closed, without starting another', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'getLatestLyricsExtraction').mockResolvedValue({ id: 'j9', status: 'Succeeded', lyricsText: 'Lời đã trích', errorCode: null })
+    vi.spyOn(songsApi, 'getLyricsExtraction').mockResolvedValue({ id: 'j9', status: 'Succeeded', lyricsText: 'Lời đã trích', errorCode: null })
+    const start = vi.spyOn(songsApi, 'startLyricsExtraction')
+    renderDetail('materials')
+
+    await waitFor(() => expect(readLyricsDraft('s1', 'm1')).toBe('Lời đã trích'))
+    expect(songsApi.getLyricsExtraction).toHaveBeenCalledWith('m1', 'j9')
+    expect(start).not.toHaveBeenCalled()
   })
 
   it('says the draft is gone when ?draft= names none', async () => {

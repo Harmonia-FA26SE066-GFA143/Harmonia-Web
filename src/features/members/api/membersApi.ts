@@ -20,6 +20,7 @@ interface MemberProfileSummaryDto {
   fullName: string
   email: string
   phone: string | null
+  saintName: string | null
   dateOfBirth: string | null
   joinedDate: string
   status: ApiMemberStatus
@@ -61,6 +62,7 @@ const toMemberProfile = (dto: MemberProfileSummaryDto): MemberProfile => ({
   fullName: dto.fullName,
   email: dto.email,
   phone: dto.phone,
+  saintName: dto.saintName,
   dateOfBirth: dto.dateOfBirth,
   joinedDate: dto.joinedDate,
   status: statusByApi[dto.status],

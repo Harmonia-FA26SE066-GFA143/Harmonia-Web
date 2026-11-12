@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, App, Input, Select, Skeleton, Typography } from 'antd'
 import { useState } from 'react'
 import { useChoirs } from '@/features/choirs'
-import { useChoirMembers } from '@/features/members'
+import { searchMembers } from '@/features/members'
+import { getSession } from '@/lib/auth/session'
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { Form, FormDrawer } from '@/shared/ui'
 import { spacing, typography } from '@/styles/tokens'
 import { createNomination, getEligibility } from '../api/nominationsApi'
@@ -15,13 +17,28 @@ interface Values {
   proposedChoirId?: string
 }
 
-/** Choir Director: nominates a member of their own choirs. The record is shown before sending, as a warning only. */
+/**
+ * Choir Director (members of their choirs) or Parish Priest (any member of the parish, BE e18e49b) nominates a member.
+ * Members are searched on the server, so a parish larger than one page still finds everyone. The record is shown
+ * before sending, as a warning only.
+ */
 export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean; onClose: () => void }>) {
   const { message } = App.useApp()
   const queryClient = useQueryClient()
   const [form] = Form.useForm<Values>()
   const [problem, setProblem] = useState<string>()
-  const members = useChoirMembers(open)
+  const isPriest = getSession()?.user.roleName === 'ParishPriest'
+  const [keyword, setKeyword] = useState('')
+  const search = useDebouncedValue(keyword)
+  // The chosen member keeps its name in the field while the next search shows other people.
+  const [chosen, setChosen] = useState<{ value: string; label: string }>()
+  const members = useQuery({
+    queryKey: ['director-nominations', 'members', search],
+    queryFn: () => searchMembers({ search, status: 'active' }, { pageNumber: 1, pageSize: 20 }),
+    enabled: open,
+  })
+  const memberOptions = members.data?.items.map((member) => ({ value: member.id, label: member.fullName })) ?? []
+  if (chosen && !memberOptions.some((option) => option.value === chosen.value)) memberOptions.unshift(chosen)
   const choirs = useChoirs(open)
   const memberId = Form.useWatch('memberId', form)
   const eligibility = useQuery({
@@ -39,7 +56,7 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
       { ...values, reason: values.reason.trim() },
       {
         onSuccess: () => {
-          message.success('Đã gửi đề cử. Cha xứ sẽ nhận được thông báo.')
+          message.success(isPriest ? 'Đã tạo đề cử. Bạn có thể duyệt ngay trong danh sách.' : 'Đã gửi đề cử. Cha xứ sẽ nhận được thông báo.')
           void queryClient.invalidateQueries({ queryKey: ['director-nominations'] })
           onClose()
         },
@@ -58,6 +75,8 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
       onCancel={onClose}
       afterClose={() => {
         form.resetFields()
+        setKeyword('')
+        setChosen(undefined)
         setProblem(undefined)
       }}
       forceRender
@@ -65,11 +84,12 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
       <Form<Values> form={form} layout="vertical" requiredMark="optional" onFinish={submit} scrollToFirstError>
         <Form.Item name="memberId" label="Ca viên" rules={[{ required: true, message: 'Vui lòng chọn ca viên.' }]}>
           <Select
-            showSearch={{ optionFilterProp: 'label' }}
-            placeholder="Chọn ca viên trong ca đoàn của bạn"
-            loading={members.isPending && open}
-            options={members.data?.map((member) => ({ value: member.id, label: member.fullName }))}
-            notFoundContent={members.isError ? 'Không tải được danh sách ca viên' : 'Không có ca viên'}
+            showSearch={{ filterOption: false, onSearch: setKeyword }}
+            placeholder={isPriest ? 'Tìm ca viên trong giáo xứ theo họ tên hoặc email' : 'Tìm ca viên trong ca đoàn của bạn'}
+            loading={members.isFetching && open}
+            options={memberOptions}
+            onChange={(value: string, option) => setChosen(option && !Array.isArray(option) ? { value, label: String(option.label) } : undefined)}
+            notFoundContent={members.isError ? 'Không tải được danh sách ca viên' : 'Không có ca viên phù hợp'}
           />
         </Form.Item>
         {memberId && (

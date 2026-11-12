@@ -48,8 +48,8 @@ const BackgroundTasksContext = createContext<BackgroundTasksValue | undefined>(u
 
 /**
  * Tasks of this tab that outlive the page that started them: they run here, above the router, so moving to another
- * page neither stops them nor loses their result. Nothing survives a reload: the backend keeps no job for them yet
- * (TBD: Backend API missing — persistent AI lyrics extraction job). Signing out drops them all.
+ * page neither stops them nor loses their result. A reload drops this list; work the server keeps as a job (AI lyrics
+ * extraction) is picked up again by the page that owns it. Signing out drops them all.
  */
 export function BackgroundTaskProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [tasks, setTasks] = useState<BackgroundTask[]>([])

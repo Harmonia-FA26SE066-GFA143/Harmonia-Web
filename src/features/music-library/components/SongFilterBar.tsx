@@ -190,7 +190,7 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
     // The library's console is dense, like the filters of the other working pages.
     <ConfigProvider theme={libraryLayout ? { token: { controlHeight: sizes.controlHeightCompact } } : undefined}>
     <Flex vertical gap={spacing.sm + 4} style={libraryLayout
-      ? { padding: spacing.md, background: colors.ivory, borderBottom: `1px solid ${colors.border}`, borderTop: `1px solid ${gold.line}`, borderRadius: `${radius.lg}px ${radius.lg}px 0 0` }
+      ? { padding: spacing.md, background: colors.ivory, border: `1px solid ${colors.border}`, borderTop: `1px solid ${gold.line}`, borderRadius: radius.lg }
       : { padding: spacing.md }}>
       {libraryLayout ? (
         <div className="song-console">

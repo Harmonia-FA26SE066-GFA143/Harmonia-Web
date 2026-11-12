@@ -22,19 +22,30 @@ describe('ProfileDetails', () => {
 
     expect(screen.getByText('Nguyễn Văn An')).toBeInTheDocument()
     expect(screen.getByText('Ca trưởng')).toBeInTheDocument()
-    expect(screen.getByText('Chưa cập nhật')).toBeInTheDocument()
+    // Phone and saint name are both empty.
+    expect(screen.getAllByText('Chưa cập nhật')).toHaveLength(2)
     fireEvent.click(screen.getByRole('button', { name: /Chỉnh sửa/ }))
     expect(onEdit).toHaveBeenCalled()
   })
 
-  it('edits only the full name and phone', async () => {
+  it('edits only the full name, saint name and phone', async () => {
     const { onSave } = renderDetails({ editing: true })
 
-    expect(screen.getAllByRole('textbox')).toHaveLength(2)
+    expect(screen.getAllByRole('textbox')).toHaveLength(3)
+    fireEvent.change(screen.getByLabelText('Số điện thoại (không bắt buộc)'), { target: { value: '0901234567' } })
+    fireEvent.change(screen.getByLabelText('Tên thánh (không bắt buộc)'), { target: { value: 'Giuse' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ fullName: 'Nguyễn Văn An', phone: '0901234567', saintName: 'Giuse' }))
+  })
+
+  it('keeps the saint name when only the phone is changed, since the backend replaces every field', async () => {
+    const { onSave } = renderDetails({ editing: true, profile: { ...activeProfile, saintName: 'Maria' } })
+
     fireEvent.change(screen.getByLabelText('Số điện thoại (không bắt buộc)'), { target: { value: '0901234567' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
 
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ fullName: 'Nguyễn Văn An', phone: '0901234567' }))
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ saintName: 'Maria' })))
   })
 
   it('keeps name and phone within the backend limits', async () => {

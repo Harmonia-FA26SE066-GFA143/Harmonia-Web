@@ -9,6 +9,7 @@ import { roleByApiName } from '@/shared/types/account'
 import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection, type Surface } from './navigation'
 import { NotificationBell } from '@/features/notifications'
 import { SystemAnnouncement } from '@/features/settings'
+import { HeadDay } from './HeadDay'
 import { RouteStage } from './RouteStage'
 import { RunningHead } from './RunningHead'
 import { TaskCenter } from './TaskCenter'
@@ -107,6 +108,7 @@ export function AppShell() {
           selectedPath={selectedPath}
           brand={<Brand />}
           controls={controls}
+          day={<HeadDay surface={surface} />}
           scrolled={scrolled}
         />
       )}

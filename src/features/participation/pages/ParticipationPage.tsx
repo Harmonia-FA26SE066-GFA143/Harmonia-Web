@@ -10,6 +10,7 @@ import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, S
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { ResponseHeader } from '../components/ResponseHeader'
+import { ResponsesByPart } from '../components/ResponsesByPart'
 import { SendRequestDrawer } from '../components/SendRequestDrawer'
 import { useConfirmAllParticipation, useParticipation, useSendParticipationRequests } from '../hooks/useParticipation'
 import { participationErrorMessage } from '../participationErrors'
@@ -179,7 +180,7 @@ export function ParticipationPage() {
             />
           )}
           {participation.data !== undefined && requests.length > 0 && (
-            <Flex vertical gap={spacing.lg}>
+            <div className="hm-split">
               <Card styles={{ body: { padding: 0 } }}>
                 <Flex vertical gap={spacing.sm} style={{ padding: spacing.md }}>
                   <Flex wrap gap={spacing.sm} align="end" justify="space-between">
@@ -258,7 +259,8 @@ export function ParticipationPage() {
                   />
                 )}
               </Card>
-            </Flex>
+              <ResponsesByPart requests={requests} skillsOf={skillsOf} programId={program.id} />
+            </div>
           )}
         </Flex>
       )}

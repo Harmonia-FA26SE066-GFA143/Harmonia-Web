@@ -1,4 +1,4 @@
-import { TableOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, TableOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { Flex, Radio, Typography, type RadioChangeEvent } from 'antd'
 import { colors, spacing, typography } from '@/styles/tokens'
 import type { DensityMode, ViewMode } from './viewStorage'
@@ -38,6 +38,10 @@ export function ViewSwitcher({
           aria-label="Chế độ xem danh sách"
           onChange={(event: RadioChangeEvent) => onViewChange(event.target.value as ViewMode)}
         >
+          <Radio.Button value="grid">
+            <AppstoreOutlined aria-hidden style={{ marginInlineEnd: spacing.xs }} />
+            Thẻ
+          </Radio.Button>
           <Radio.Button value="index">
             <UnorderedListOutlined aria-hidden style={{ marginInlineEnd: spacing.xs }} />
             Mục lục
@@ -49,6 +53,7 @@ export function ViewSwitcher({
         </Radio.Group>
       </Flex>
 
+      {view !== 'grid' && (
       <Flex align="center" gap={spacing.xs}>
         <Typography.Text
           style={{
@@ -69,6 +74,7 @@ export function ViewSwitcher({
           <Radio.Button value="compact">Gọn</Radio.Button>
         </Radio.Group>
       </Flex>
+      )}
     </Flex>
   )
 }

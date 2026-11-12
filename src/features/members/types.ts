@@ -31,6 +31,8 @@ export interface MemberProfile {
   fullName: string
   email: string
   phone: string | null
+  /** Tên thánh, kept on the account; null when not given. */
+  saintName: string | null
   /** `DateOnly`, YYYY-MM-DD. */
   dateOfBirth: string | null
   /** `DateOnly`, YYYY-MM-DD. */
@@ -48,11 +50,12 @@ export interface MemberProfile {
 }
 
 /**
- * Body of PUT /api/member-profiles/{id} (UpdateMemberProfileRequestValidator): phone ≤ 20, dates not after today,
- * joined date required. Every field is replaced, so an empty phone or birth date clears it.
+ * Body of PUT /api/member-profiles/{id} (UpdateMemberProfileRequestValidator): phone ≤ 20, saint name ≤ 50, dates not
+ * after today, joined date required. Every field is replaced, so an empty phone, saint name or birth date clears it.
  */
 export interface MemberProfileValues {
   phone?: string
+  saintName?: string
   dateOfBirth?: string
   joinedDate: string
   status: MemberStatus

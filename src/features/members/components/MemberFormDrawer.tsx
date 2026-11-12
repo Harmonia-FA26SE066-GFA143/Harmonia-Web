@@ -5,6 +5,7 @@ import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { spacing } from '@/styles/tokens'
 import { memberStatuses, memberStatusLabels, type MemberProfile, type MemberProfileValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
+import { personName, saintNameRules } from '@/shared/utils/personName'
 
 export interface MemberFormDrawerProps {
   /** The member being edited; the drawer is closed without one. */
@@ -23,7 +24,7 @@ const notAfterToday = (message: string) => ({
 })
 
 /**
- * The Choir Director edits what the member record holds: phone, birth date, joining date and status. Name and email
+ * The Choir Director edits what the member record holds: phone, saint name, birth date, joining date and status. Name and email
  * belong to the account (the member or the Admin edits them), so they are shown read-only.
  */
 export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }: Readonly<MemberFormDrawerProps>) {
@@ -43,12 +44,15 @@ export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }:
           initialValues={
             member && {
               phone: member.phone ?? undefined,
+              saintName: member.saintName ?? undefined,
               dateOfBirth: member.dateOfBirth ?? undefined,
               joinedDate: member.joinedDate,
               status: member.status,
             }
           }
-          onFinish={(values) => onSubmit({ ...values, phone: values.phone?.trim() || undefined })}
+          onFinish={(values) =>
+            onSubmit({ ...values, phone: values.phone?.trim() || undefined, saintName: values.saintName?.trim() || undefined })
+          }
         >
           {dom}
         </Form>
@@ -56,9 +60,12 @@ export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }:
     >
       {member && (
         <Typography.Paragraph>
-          <Typography.Text strong>{member.fullName}</Typography.Text> · {member.email}
+          <Typography.Text strong>{personName(member.fullName, member.saintName)}</Typography.Text> · {member.email}
         </Typography.Paragraph>
       )}
+      <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
+        <Input autoComplete="off" placeholder="Giuse" />
+      </Form.Item>
       <Form.Item label="Số điện thoại (không bắt buộc)" name="phone" rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}>
         <Input type="tel" autoComplete="off" />
       </Form.Item>
