@@ -2,12 +2,17 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
+import dayjs from 'dayjs'
+import * as daysApi from '@/features/liturgical-programs/api/liturgicalDaysApi'
+import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as registrationsApi from '@/features/member-registrations/api/memberRegistrationsApi'
 import * as notificationsApi from '@/features/notifications/api/notificationsApi'
 import * as profileApi from '@/features/profile/api/profileApi'
 import * as settingsApi from '@/features/settings/api/settingsApi'
+import * as skillsApi from '@/features/skill-approval/api/memberSkillsApi'
 import { clearSession, setSession } from '@/lib/auth/session'
 import { AppShell } from './AppShell'
+import { programPage } from '@/test/programs'
 
 /** Emulates a viewport width for Ant Design's breakpoint queries. */
 function setViewportWidth(width: number) {
@@ -68,6 +73,28 @@ describe('AppShell', () => {
     expect(await within(pages).findByRole('link', { name: 'Đăng ký gia nhập 3 đang chờ' })).toBeInTheDocument()
     expect(list).toHaveBeenCalledWith('', 1, 1)
     expect(within(pages).getByRole('link', { name: 'Tài khoản' })).toBeInTheDocument()
+  })
+
+  it('marks an area with something waiting, and shows today’s season and the next Mass in the ivory band', async () => {
+    setViewportWidth(1440)
+    const today = dayjs().format('YYYY-MM-DD')
+    vi.spyOn(skillsApi, 'listPendingSkills').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 1, totalCount: 2, totalPages: 2 })
+    vi.spyOn(daysApi, 'listLiturgicalDays').mockResolvedValue([{ date: today, celebrationName: 'Thứ Năm', seasonKey: 'OrdinaryTime', seasonName: 'Mùa Thường Niên' }])
+    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(
+      programPage(
+        { id: 'p9', eventName: 'Lễ Các Thánh', date: dayjs().add(9, 'day').format('YYYY-MM-DD'), time: '17:30' },
+        { id: 'p3', eventName: 'Lễ Chúa Nhật', date: dayjs().add(3, 'day').format('YYYY-MM-DD'), time: '07:30' },
+      ),
+    )
+    renderShellAt('/director/rehearsals')
+
+    const areas = await screen.findByRole('navigation', { name: 'Điều hướng chính' })
+    expect(await within(areas).findByRole('link', { name: 'Ca viên có việc đang chờ' })).toBeInTheDocument()
+    expect(within(areas).getByRole('link', { name: 'Hoạt động ca đoàn' })).toBeInTheDocument()
+    const pages = screen.getByRole('navigation', { name: 'Các trang của Hoạt động ca đoàn' })
+    expect(await within(pages).findByText('Mùa Thường Niên')).toBeInTheDocument()
+    // The nearest one, not the first listed.
+    expect(await within(pages).findByRole('link', { name: /^Thánh lễ kế tiếp: Lễ Chúa Nhật/ })).toHaveAttribute('href', '/director/programs/p3')
   })
 
   it('offers the role workspaces on role-neutral pages', async () => {

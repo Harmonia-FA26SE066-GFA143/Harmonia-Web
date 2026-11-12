@@ -6,6 +6,7 @@ import { paths } from '@/app/router/paths'
 import { AuthCard } from '@/features/auth'
 import { ApiError, errorMessage } from '@/lib/api/errors'
 import { Form } from '@/shared/ui'
+import { saintNameRules } from '@/shared/utils/personName'
 import { spacing } from '@/styles/tokens'
 import { submitRegistration, type RegistrationValues } from '../api/memberRegistrationsApi'
 
@@ -40,8 +41,9 @@ export function JoinChoirPage() {
     )
   }
 
-  const trimmed = ({ fullName, email, phone, note }: RegistrationValues): RegistrationValues => ({
+  const trimmed = ({ fullName, email, phone, saintName, note }: RegistrationValues): RegistrationValues => ({
     fullName: fullName.trim(),
+    saintName: saintName?.trim() || undefined,
     email: email.trim(),
     phone: phone?.trim() || undefined,
     note: note?.trim() || undefined,
@@ -62,6 +64,9 @@ export function JoinChoirPage() {
           if (!submit.isPending) submit.mutate(trimmed(values))
         }}
       >
+        <Form.Item name="saintName" label="Tên thánh" rules={saintNameRules}>
+          <Input autoComplete="off" placeholder="Giuse" />
+        </Form.Item>
         <Form.Item name="fullName" label="Họ tên" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập họ tên.' }, { max: 100, message: 'Vui lòng nhập tối đa 100 ký tự.' }]}>
           <Input autoComplete="name" />
         </Form.Item>

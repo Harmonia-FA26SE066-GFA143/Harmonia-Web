@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import { StatusTag, type StatusTagColor } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { memberStatusLabels, type MemberProfile, type MemberStatus } from '../types'
+import { personName } from '@/shared/utils/personName'
 
 export interface MemberTableProps {
   members: MemberProfile[]
@@ -44,7 +45,7 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
             </Avatar>
             <Flex vertical style={{ flex: 1, minWidth: 0 }}>
               <Flex align="center" gap={spacing.sm} wrap>
-                <Typography.Text style={{ fontWeight: 600, fontSize: typography.cardHeading.fontSize }}>{member.fullName}</Typography.Text>
+                <Typography.Text style={{ fontWeight: 600, fontSize: typography.cardHeading.fontSize }}>{personName(member.fullName, member.saintName)}</Typography.Text>
                 {member.role !== 'member' ? (
                   <StatusTag color="default" style={{ marginInlineEnd: 0 }}>
                     Đã chuyển sang {roleLabels[member.role]}

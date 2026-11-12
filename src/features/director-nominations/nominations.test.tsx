@@ -131,7 +131,7 @@ describe('NominationsPage', () => {
   it('lets a Choir Director nominate after seeing the record, and explains an open nomination', async () => {
     asRole('ChoirDirector', 'u9')
     vi.spyOn(api, 'listNominations').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 })
-    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([{ id: 'm1', fullName: 'An Nguyễn', skills: [] }])
+    vi.spyOn(membersApi, 'searchMembers').mockResolvedValue({ items: [{ id: 'm1', fullName: 'An Nguyễn' } as never], pageNumber: 1, pageSize: 20, totalCount: 1, totalPages: 1 })
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
     vi.spyOn(api, 'getEligibility').mockResolvedValue(detail('Pending').stats)
     const create = vi.spyOn(api, 'createNomination').mockRejectedValue(new ApiError(409, { code: 'DIRECTOR_NOMINATION_ALREADY_OPEN' }))
@@ -143,7 +143,7 @@ describe('NominationsPage', () => {
     expect(await drawer.findByText('Vui lòng chọn ca viên.')).toBeInTheDocument()
     expect(create).not.toHaveBeenCalled()
 
-    await waitFor(() => expect(membersApi.listChoirMembers).toHaveBeenCalled())
+    await waitFor(() => expect(membersApi.searchMembers).toHaveBeenCalled())
     fireEvent.mouseDown(drawer.getByLabelText(/Ca viên/))
     fireEvent.click(await screen.findByTitle('An Nguyễn'))
     expect(await drawer.findByText(/Ca viên chưa đạt đủ ngưỡng/)).toBeInTheDocument()
@@ -153,11 +153,14 @@ describe('NominationsPage', () => {
     await waitFor(() => expect(create.mock.calls[0][0]).toMatchObject({ memberId: 'm1', reason: 'Bắt nhịp tốt' }))
     expect(await drawer.findByText(/đang có một đề cử chưa kết thúc/)).toBeInTheDocument()
   }, 30_000)
-  it('tells the Parish Priest why there is no way to nominate yet', async () => {
+  it('lets the Parish Priest search the whole parish to nominate', async () => {
     vi.spyOn(api, 'listNominations').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 })
+    const search = vi.spyOn(membersApi, 'searchMembers').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 })
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
     renderPage(<NominationsPage area="Khu" />, '/x')
 
-    expect(await screen.findByText(/chưa cấp danh sách ca viên/)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Đề cử Ca trưởng/ })).toBeNull()
+    fireEvent.click((await screen.findAllByRole('button', { name: /Đề cử Ca trưởng/ }))[0])
+    await waitFor(() => expect(search).toHaveBeenCalledWith({ search: '', status: 'active' }, { pageNumber: 1, pageSize: 20 }))
+    expect(screen.queryByText(/chưa cấp danh sách ca viên/)).toBeNull()
   })
 })

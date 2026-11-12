@@ -153,26 +153,20 @@ describe('DirectorDashboardPage', () => {
     })
     renderPage(<DirectorDashboardPage />, '/director')
 
-    expect(await screen.findByText('Mọi việc đã xong. Không có việc nào đang chờ bạn.')).toBeInTheDocument()
+    expect(await screen.findByText('Bạn đã xử lý hết. Không còn việc nào đang chờ.')).toBeInTheDocument()
     expect(await screen.findByRole('region', { name: 'Mùa phụng vụ hôm nay' })).toHaveTextContent('Mùa Vọng')
-    expect(screen.getByRole('button', { name: /Lễ Các Đẳng/, expanded: true })).toBeInTheDocument()
-    // Independent preparation items: no item is presented as blocking a later one.
-    expect(await screen.findByText('1/2 đã nhận lời')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Còn thiếu 4 mục' })).toBeInTheDocument()
-    expect(screen.getByText(/Đã xong: Danh sách bài hát/)).toBeInTheDocument()
-    expect(screen.getByText('1/2 buổi đã tập')).toBeInTheDocument()
-    expect(screen.getByText('Chưa lập')).toBeInTheDocument()
-    // A missing part is a dashed "Thiếu N" box.
-    expect(screen.getByText('Thiếu 2')).toBeInTheDocument()
-    expect(screen.getByText('Bè Alto')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Mở phân công' })).toHaveAttribute('href', '/director/roster?programId=p3')
+    // The nearest Mass stands on the right with its preparation signals, each an independent fact in words.
+    const next = screen.getByRole('region', { name: 'Lễ Các Đẳng' })
+    const signals = await within(next).findByRole('list', { name: 'Các mục chuẩn bị' })
+    expect(within(signals).getByText('1/2 đã nhận lời')).toBeInTheDocument()
+    expect(within(signals).getByText('1/2 buổi đã tập')).toBeInTheDocument()
+    expect(within(signals).getByText('Chưa lập')).toBeInTheDocument()
+    // A missing place is a dashed mark per voice part.
+    expect(within(next).getByRole('list', { name: 'Vị trí còn thiếu' })).toHaveTextContent('Thiếu 2 Bè Alto')
+    expect(within(next).getByRole('link', { name: /Xem chương trình/ })).toHaveAttribute('href', '/director/programs/p3')
+    // The Masses after it sit in the strip.
+    expect(screen.getByRole('link', { name: /Lễ Thánh Giuse/ })).toHaveAttribute('href', '/director/programs/p4')
     expect(screen.getByText('Không có bản thu nào chờ chấm.')).toBeInTheDocument()
-    expect(screen.getByRole('list', { name: 'Các mục còn thiếu' })).toBeInTheDocument()
-
-    // Opening another program closes the first.
-    fireEvent.click(screen.getByRole('button', { name: /Lễ Thánh Giuse/ }))
-    expect(screen.getByRole('button', { name: /Lễ Các Đẳng/ })).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.getByRole('button', { name: 'Xem chi tiết: Lễ Thánh Giuse' })).toBeInTheDocument()
   })
 
   it('shows a recoverable error when the programs cannot be loaded', async () => {

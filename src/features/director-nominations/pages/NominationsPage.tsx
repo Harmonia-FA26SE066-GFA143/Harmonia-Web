@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Alert, Button, Card, Select, Table, Typography, type TableColumnsType } from 'antd'
+import { Button, Card, Select, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
@@ -16,13 +16,13 @@ const pageSize = 20
 
 const intro = {
   ChoirDirector: 'Các đề cử do bạn tạo. Cha xứ duyệt và quản lý đào tạo, Admin bổ nhiệm.',
-  ParishPriest: 'Duyệt đề cử, cử đi học hoặc miễn đào tạo.',
+  ParishPriest: 'Đề cử ca viên, duyệt đề cử, cử đi học hoặc miễn đào tạo.',
   Admin: 'Bổ nhiệm các đề cử đã đào tạo xong hoặc được miễn.',
 } as const
 
 /**
  * The director nominations of one role's workspace: what the list holds and which actions show come from the role.
- * The Parish Priest cannot start one here yet: no endpoint gives them the list of members (tbd-backlog B50).
+ * The Choir Director and the Parish Priest start one here (the Priest searches the whole parish since BE e18e49b).
  */
 export function NominationsPage({ area }: Readonly<{ area: string }>) {
   const role = getSession()?.user.roleName
@@ -36,7 +36,8 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
     placeholderData: keepPreviousData,
   })
   const total = nominations.data?.totalCount ?? 0
-  const createButton = role === 'ChoirDirector' && (
+  const canNominate = role === 'ChoirDirector' || role === 'ParishPriest'
+  const createButton = canNominate && (
     <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreating(true)}>Đề cử Ca trưởng</Button>
   )
 
@@ -57,9 +58,6 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
         breadcrumb={[{ title: area }, { title: 'Đề cử Ca trưởng' }]}
         extra={createButton || undefined}
       />
-      {role === 'ParishPriest' && (
-        <Alert type="info" showIcon title="Cha xứ chưa tạo được đề cử trên web vì máy chủ chưa cấp danh sách ca viên cho vai trò này." style={{ marginBottom: spacing.md }} />
-      )}
       {nominations.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách đề cử" />}
       {nominations.isError && <ErrorState title="Không thể tải danh sách đề cử" error={nominations.error} hasData={nominations.data !== undefined} onRetry={() => nominations.refetch()} retrying={nominations.isFetching} />}
       {nominations.data !== undefined && total === 0 && !status && (
@@ -96,7 +94,7 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
         </Card>
       )}
       <NominationDetailDrawer id={openId} onClose={() => setOpenId(undefined)} />
-      {role === 'ChoirDirector' && <NominationFormDrawer open={creating} onClose={() => setCreating(false)} />}
+      {canNominate && <NominationFormDrawer open={creating} onClose={() => setCreating(false)} />}
     </>
   )
 }

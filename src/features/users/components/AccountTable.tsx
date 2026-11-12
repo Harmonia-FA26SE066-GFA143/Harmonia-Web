@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { roleLabels } from '@/shared/types/account'
 import { colors, typography } from '@/styles/tokens'
 import type { Account } from '../types'
+import { personName } from '@/shared/utils/personName'
 import { AccountStatusTag } from './AccountStatusTag'
 
 export interface AccountTableProps {
@@ -26,7 +27,7 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
       render: (_, account) => (
         <Flex vertical>
           {account.fullName ? (
-            <Typography.Text strong>{account.fullName}</Typography.Text>
+            <Typography.Text strong>{personName(account.fullName, account.saintName)}</Typography.Text>
           ) : (
             <Typography.Text style={{ color: colors.textMuted }}>Chưa có họ tên</Typography.Text>
           )}

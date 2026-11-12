@@ -1,21 +1,22 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
-import { Button, Card, Flex, Typography } from 'antd'
+import { Button, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
 import { generatePath, Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { formatProgramDate, useUpcomingPrograms, type LiturgicalProgram } from '@/features/liturgical-programs'
+import { formatProgramDate, useNextProgram, useUpcomingPrograms, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { useSubmissions } from '@/features/practice'
 import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
 import { AllDone, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { cardSurface, colors, spacing, typography } from '@/styles/tokens'
-import { ProgramOrdo } from '../components/ProgramOrdo'
+import { colors, spacing, typography } from '@/styles/tokens'
+import { NextMassPanel, UpcomingStrip } from '../components/NextMass'
 import { TodaySeason } from '../components/TodaySeason'
+import { WeekRehearsals } from '../components/WeekRehearsals'
 
 const taskLimit = 5
-const programLimit = 5
+const programLimit = 4
 const firstFive = { pageNumber: 1, pageSize: 5 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
@@ -89,7 +90,7 @@ function songListTask(program: LiturgicalProgram, open: () => void): Task | unde
 
 function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: number }>) {
   return (
-    <Card style={cardSurface} styles={{ body: { padding: 0 } }}>
+    <>
       <ul className="hm-stagger" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
         {tasks.map((task, index) => (
           <li key={task.key} style={rowStyle(index)}>
@@ -121,7 +122,7 @@ function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: numbe
           </li>
         )}
       </ul>
-    </Card>
+    </>
   )
 }
 
@@ -133,9 +134,9 @@ function PendingSubmissions({ submissions }: Readonly<{ submissions: ReturnType<
   }
   const items = submissions.data.items
   return (
-    <Card style={cardSurface} styles={{ body: { padding: items.length > 0 ? 0 : spacing.lg } }}>
+    <>
       {items.length === 0 ? (
-        <Typography.Text style={{ color: colors.textMuted }}>Không có bản thu nào chờ chấm.</Typography.Text>
+        <Typography.Paragraph className="hm-sheet-section__empty">Không có bản thu nào chờ chấm.</Typography.Paragraph>
       ) : (
         <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
           {items.map((item, index) => (
@@ -155,19 +156,20 @@ function PendingSubmissions({ submissions }: Readonly<{ submissions: ReturnType<
           ))}
         </ul>
       )}
-    </Card>
+    </>
   )
 }
 
+/** A sheet opened by a rubric (artifact ws-card): the title on the left, a link or a count on the right. */
 function Section({ id, title, extra, children }: Readonly<{ id: string; title: string; extra?: ReactNode; children: ReactNode }>) {
   return (
-    <section aria-labelledby={id}>
-      <Flex wrap align="baseline" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
-        <Typography.Title id={id} level={2} style={{ margin: 0 }}>
+    <section aria-labelledby={id} className="hm-sheet-section">
+      <header className="hm-sheet-section__head">
+        <h2 id={id} className="hm-rubric">
           {title}
-        </Typography.Title>
+        </h2>
         {extra}
-      </Flex>
+      </header>
       {children}
     </section>
   )
@@ -211,51 +213,63 @@ export function DirectorDashboardPage() {
   tasks.push(...songListTasks)
   const countsLoaded = !skills.isPending && !submissions.isPending
 
+  // The same next Mass as the running head: one whose hour has passed today is no longer next.
+  const next = useNextProgram()
+  const later = next ? upcoming.filter((program) => `${program.date}T${program.time}` > `${next.date}T${next.time}`) : []
+  const waiting = tasks.length
+
   return (
     <div className="director-dashboard-page">
       <PageHeader title="Tổng quan" breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Tổng quan' }]} />
-      <div className="director-dashboard-grid">
-        <Section
-          id="next-heading"
-          title="Các lễ sắp tới"
-          extra={
-            <Link to={paths.director.programs} style={{ fontWeight: 500 }}>
-              Xem tất cả <ArrowRightOutlined aria-hidden />
-            </Link>
-          }
-        >
-          {programs.isPending && <SectionSkeleton rows={5} label="Đang tải các lễ sắp tới" />}
-          {programs.isError && (
-            <ErrorState headingLevel={3} title="Không thể tải chương trình sắp tới" error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
-          )}
-          {programs.data !== undefined && upcoming.length === 0 && (
-            <Card style={cardSurface}>
-              <Typography.Text style={{ color: colors.textMuted }}>Chưa có chương trình sắp tới. Chương trình Cha xứ công bố sẽ xuất hiện tại đây.</Typography.Text>
-            </Card>
-          )}
-          {upcoming.length > 0 && <ProgramOrdo programs={upcoming.slice(0, programLimit)} />}
-        </Section>
-
-        <Flex vertical gap={spacing.lg} style={{ minWidth: 0 }}>
+      <div className="dash-grid">
+        <div className="dash-main">
           <TodaySeason />
-
-          <Section id="todo-heading" title="Cần bạn xử lý">
-            {programs.isPending && <SectionSkeleton rows={3} label="Đang tải việc cần xử lý" />}
-            {programs.data !== undefined && countsLoaded && tasks.length === 0 && (
-              <Card style={cardSurface}>
-                <Flex vertical align="center" gap={spacing.sm} role="status">
+          <div className="dash-pair">
+            <Section id="todo-heading" title="Cần bạn xử lý" extra={countsLoaded && waiting > 0 && <span className="hm-tab__count">{waiting}</span>}>
+              {programs.isPending && <SectionSkeleton rows={3} label="Đang tải việc cần xử lý" />}
+              {programs.data !== undefined && countsLoaded && waiting === 0 && (
+                <Flex vertical align="center" gap={spacing.sm} role="status" style={{ padding: spacing.lg }}>
                   <AllDone width={140} />
-                  <Typography.Text>Mọi việc đã xong. Không có việc nào đang chờ bạn.</Typography.Text>
+                  <Typography.Text>Bạn đã xử lý hết. Không còn việc nào đang chờ.</Typography.Text>
                 </Flex>
-              </Card>
+              )}
+              {programs.data !== undefined && waiting > 0 && <TaskList tasks={tasks.slice(0, taskLimit)} overflow={Math.max(0, waiting - taskLimit)} />}
+            </Section>
+            <WeekRehearsals />
+          </div>
+          <Section
+            id="upcoming-heading"
+            title="Chương trình sắp tới"
+            extra={
+              <Link to={paths.director.programs} className="hm-sheet-section__link">
+                Tất cả chương trình <ArrowRightOutlined aria-hidden />
+              </Link>
+            }
+          >
+            {programs.isPending && <SectionSkeleton rows={2} label="Đang tải chương trình sắp tới" />}
+            {programs.isError && (
+              <ErrorState headingLevel={3} title="Không thể tải chương trình sắp tới" error={programs.error} hasData={false} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
             )}
-            {programs.data !== undefined && tasks.length > 0 && <TaskList tasks={tasks.slice(0, taskLimit)} overflow={Math.max(0, tasks.length - taskLimit)} />}
+            {programs.data !== undefined && later.length === 0 && (
+              <Typography.Paragraph className="hm-sheet-section__empty">
+                {next ? 'Chưa có chương trình nào sau Thánh lễ kế tiếp.' : 'Chưa có chương trình sắp tới. Chương trình Cha xứ công bố sẽ xuất hiện tại đây.'}
+              </Typography.Paragraph>
+            )}
+            {later.length > 0 && <UpcomingStrip programs={later.slice(0, programLimit)} />}
           </Section>
-
-          <Section id="practice-heading" title="Bài tập chờ chấm" extra={submissionCount > 5 && <Typography.Text style={{ color: colors.textMuted }}>5 trong {submissionCount} bản thu</Typography.Text>}>
+          <Section id="practice-heading" title="Bài tập chờ chấm" extra={submissionCount > 5 && <Typography.Text style={muted}>5 trong {submissionCount} bản thu</Typography.Text>}>
             <PendingSubmissions submissions={submissions} />
           </Section>
-        </Flex>
+        </div>
+        <aside className="dash-aside" aria-label="Thánh lễ kế tiếp">
+          {programs.isPending && <SectionSkeleton rows={5} label="Đang tải Thánh lễ kế tiếp" />}
+          {next && <NextMassPanel program={next} />}
+          {programs.data !== undefined && !next && (
+            <section className="hm-sheet-section">
+              <Typography.Paragraph className="hm-sheet-section__empty">Chưa có Thánh lễ nào được công bố sắp tới.</Typography.Paragraph>
+            </section>
+          )}
+        </aside>
       </div>
     </div>
   )

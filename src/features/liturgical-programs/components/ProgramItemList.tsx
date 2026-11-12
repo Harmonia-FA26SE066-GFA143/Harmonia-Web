@@ -1,5 +1,6 @@
 import { Flex, Typography } from 'antd'
 import type { ReactNode } from 'react'
+import { StaffDivider } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { useSongCredits } from '../hooks/usePrograms'
 
@@ -38,6 +39,7 @@ function Credits({ songId }: Readonly<{ songId?: string }>) {
  */
 export function ProgramItemList({ items, renderAction }: Readonly<ProgramItemListProps>) {
   return (
+    <>
     <ol aria-label="Các bài hát theo thứ tự trong lễ" className="hm-stagger" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
       {items.map((item, index) => (
         <li
@@ -73,5 +75,8 @@ export function ProgramItemList({ items, renderAction }: Readonly<ProgramItemLis
         </li>
       ))}
     </ol>
+    {/* The end of the reading, once per page. */}
+    <StaffDivider />
+    </>
   )
 }

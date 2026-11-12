@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as client from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import type { PagedList } from '@/lib/api/paging'
@@ -34,6 +34,9 @@ afterEach(() => {
 })
 
 describe('MusicLibraryPage', () => {
+  // These cases read the contents-page view; the score-page cards (the default) have their own case below.
+  beforeEach(() => localStorage.setItem('harmonia:music-library:view', 'index'))
+
   it('shows a recoverable error when the library cannot be loaded', async () => {
     vi.spyOn(songsApi, 'listSongs').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<MusicLibraryPage />, '/director/library')
@@ -213,7 +216,7 @@ describe('MusicLibraryPage', () => {
     vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page(songs))
     renderPage(<MusicLibraryPage />, '/director/library')
 
-    // Default is index view
+    // The stored index view
     expect(await screen.findByRole('region', { name: 'Mục lục bài hát' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: /Mục lục/ })).toBeChecked()
 
@@ -250,8 +253,34 @@ describe('MusicLibraryPage', () => {
 
     expect(await screen.findByText('Bài Ca Tạ Ơn Thiên Chúa Đấng Tối Cao Ngự Trị Trên Các Tầng Trời và Ban Muôn Hồng Ân')).toBeInTheDocument()
     expect(screen.getByText('Chưa ghi tác giả · Giọng C · Nhịp 4/4')).toBeInTheDocument()
-    expect(screen.getByText('Bản nhạc')).toBeInTheDocument()
-    expect(screen.getByText('Lời bài hát')).toBeInTheDocument()
-    expect(screen.getByText('Chưa có audio mẫu')).toBeInTheDocument()
+    const index = screen.getByRole('region', { name: 'Mục lục bài hát' })
+    expect(within(index).getByText('Bản nhạc')).toBeInTheDocument()
+    expect(within(index).getByText('Lời bài hát')).toBeInTheDocument()
+    expect(within(index).getByText('Chưa có audio mẫu')).toBeInTheDocument()
+  })
+
+  it('shows the score-page cards by default and the picked song in the quick look', async () => {
+    localStorage.clear()
+    const withMaterials: Song = {
+      ...song('s1', 'Con Bước Lên Bàn Thờ', 'Lm. Kim Long'),
+      timesUsed: 3,
+      lastUsedDate: '2026-11-08',
+      materialCounts: { sheetMusic: 1, lyrics: 0, sampleAudio: 2, rehearsalMaterial: 0, interactiveScore: 0 },
+    }
+    vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page([withMaterials, song('s2', 'Xin Vâng')]))
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([])
+    renderPage(<MusicLibraryPage />, '/director/library')
+
+    const card = await screen.findByRole('button', { name: /Con Bước Lên Bàn Thờ/ })
+    expect(card).toHaveTextContent('Dùng 3 lần · gần nhất 08/11/2026')
+    expect(card).toHaveTextContent('Chưa có Lời')
+    const peek = screen.getByRole('complementary', { name: 'Xem nhanh bài hát' })
+    expect(within(peek).getByRole('heading', { name: 'Con Bước Lên Bàn Thờ' })).toBeInTheDocument()
+    expect(within(peek).getByText('2 tệp')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Xin Vâng/ }))
+    expect(screen.getByRole('button', { name: /Xin Vâng/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(peek).getByRole('heading', { name: 'Xin Vâng' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Lọc nhanh' })).toBeInTheDocument()
   })
 })

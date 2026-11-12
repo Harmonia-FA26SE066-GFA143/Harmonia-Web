@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import dayjs from 'dayjs'
 import { vietnamToday } from '@/lib/api/dates'
 import { getProgram, getSongCredits, listPrograms } from '../api/programsApi'
 import type { EventPage } from '../api/eventsApi'
@@ -26,6 +27,15 @@ export function useUpcomingPrograms() {
     queryKey: [...programsKey, 'upcoming', filters],
     queryFn: async () => (await listPrograms(filters, { pageNumber: 1, pageSize: 100 })).items,
   })
+}
+
+/** The nearest published program still to come (date and hour after now), or undefined. */
+export function useNextProgram() {
+  const programs = useUpcomingPrograms()
+  const now = dayjs()
+  return (programs.data ?? [])
+    .filter((program) => program.status === 'published' && dayjs(`${program.date}T${program.time}`).isAfter(now))
+    .toSorted((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))[0]
 }
 
 export function useProgram(id: string) {

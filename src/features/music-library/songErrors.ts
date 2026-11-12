@@ -103,7 +103,7 @@ export function materialUpdateErrorMessage(error: Error): string {
   }
 }
 
-/** POST /api/music-materials/{id}/extract-lyrics (Harmonia-BE MusicMaterialService.ExtractLyricsAsync). */
+/** A lyrics extraction job, on start or as its `errorCode` (Harmonia-BE 6c10d65, docs/error-codes.md). */
 export function extractLyricsErrorMessage(error: Error): string {
   switch (error instanceof ApiError ? error.code : undefined) {
     case 'MATERIAL_NOT_FOUND':
@@ -112,6 +112,10 @@ export function extractLyricsErrorMessage(error: Error): string {
       return 'Chỉ trích được lời từ bản nhạc dạng PDF hoặc ảnh.'
     case 'EXTERNAL_AI_FAILED':
       return 'Không đọc được lời từ bản nhạc lúc này. Vui lòng thử lại sau hoặc gõ lời trực tiếp.'
+    case 'LYRICS_EXTRACTION_INTERRUPTED':
+      return 'Máy chủ khởi động lại khi đang trích lời. Vui lòng thử lại.'
+    case 'LYRICS_EXTRACTION_NOT_FOUND':
+      return 'Kết quả trích lời đã hết hạn. Vui lòng trích lại.'
     default:
       return requestFailureMessage(error, 'Không thể trích lời bài hát. Vui lòng thử lại.')
   }

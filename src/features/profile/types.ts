@@ -8,13 +8,15 @@ export interface Profile {
   fullName: string
   email: string
   phone?: string
+  saintName?: string
   /** Public URL that does not expire (BE 90af733); absent without a picture. */
   avatarUrl?: string
   role: SystemRole
 }
 
-/** Fields the user may edit (owner decision 2026-09-27; `PUT /api/auth/me`): both optional. */
+/** Fields the user may edit (owner decision 2026-09-27; `PUT /api/auth/me`): all optional, all replaced. */
 export interface ProfileUpdateValues {
   fullName?: string
   phone?: string
+  saintName?: string
 }

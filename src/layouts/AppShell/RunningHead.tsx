@@ -5,7 +5,7 @@ import { motion } from '@/styles/tokens'
 import type { NavSection } from './navigation'
 
 /**
- * Keeps a marker (the area pill, the page underline) on the current item of `box`, gliding from where it was. Only
+ * Keeps a marker (the area pill with its active bar, the page underline) on the current item of `box`, gliding from where it was. Only
  * `transform` is animated: the width is set at once and the old width played back as a scale, which ends at scale 1.
  */
 function useGlidingMarker(selector: string, duration: number, delay: number, changeKey: unknown) {
@@ -36,6 +36,11 @@ function useGlidingMarker(selector: string, duration: number, delay: number, cha
           ],
           { duration, delay, easing: motion.ease, fill: 'backwards' },
         )
+        // The active bar draws out from its middle once the marker has landed.
+        el.querySelector('.hm-pill__bar')?.animate?.(
+          [{ transform: 'scaleX(0)', opacity: 0 }, { transform: 'scaleX(1)', opacity: 1 }],
+          { duration: 240, delay: delay + duration * 0.6, easing: motion.ease, fill: 'backwards' },
+        )
       }
       last.current = next
     }
@@ -54,6 +59,8 @@ interface RunningHeadProps {
   selectedPath: string | undefined
   brand: ReactNode
   controls: ReactNode
+  /** The right end of the ivory band: today's season and the next Mass. */
+  day?: ReactNode
   scrolled: boolean
 }
 
@@ -62,7 +69,7 @@ interface RunningHeadProps {
  * on the bookcloth band, the current area's pages on the ivory band below. Areas are the sections of `navigation.ts`,
  * so routes and role menus are unchanged. An area links to its first page.
  */
-export function RunningHead({ sections, selectedPath, brand, controls, scrolled }: Readonly<RunningHeadProps>) {
+export function RunningHead({ sections, selectedPath, brand, controls, day, scrolled }: Readonly<RunningHeadProps>) {
   const found = sections.findIndex((section) => section.items.some((item) => item.path === selectedPath))
   const areaIndex = Math.max(found, 0)
   const area = sections[areaIndex]
@@ -80,7 +87,9 @@ export function RunningHead({ sections, selectedPath, brand, controls, scrolled 
         {brand}
         <nav aria-label="Điều hướng chính" style={{ minWidth: 0 }}>
           <div ref={areasBox} className="hm-areas">
-            <span ref={pill} className="hm-pill" aria-hidden />
+            <span ref={pill} className="hm-pill" aria-hidden>
+              <span className="hm-pill__bar" />
+            </span>
             {sections.map((section, index) => (
               <Link
                 key={section.label}
@@ -89,6 +98,7 @@ export function RunningHead({ sections, selectedPath, brand, controls, scrolled 
                 aria-current={found === index ? 'true' : undefined}
               >
                 {section.label}
+                {section.items.map((item) => item.useCount && <AreaDot key={item.path} useCount={item.useCount} />)}
               </Link>
             ))}
           </div>
@@ -113,6 +123,7 @@ export function RunningHead({ sections, selectedPath, brand, controls, scrolled 
             ))}
           </div>
         </div>
+        {day}
       </nav>
     </div>
   )
@@ -130,6 +141,18 @@ function TabCount({ useCount }: Readonly<{ useCount: () => number | undefined }>
         {count}{' '}
         <span className="hm-visually-hidden">đang chờ</span>
       </span>
+    </>
+  )
+}
+
+/** An ochre dot on an area whose page has something waiting (artifact Spine); read aloud with the area name. */
+function AreaDot({ useCount }: Readonly<{ useCount: () => number | undefined }>) {
+  if (!useCount()) return null
+  return (
+    <>
+      {' '}
+      <span className="hm-area__dot" aria-hidden />
+      <span className="hm-visually-hidden">có việc đang chờ</span>
     </>
   )
 }

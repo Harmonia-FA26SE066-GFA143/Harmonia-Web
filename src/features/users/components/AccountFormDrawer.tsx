@@ -2,6 +2,7 @@ import { Input, Select } from 'antd'
 import { roleLabels } from '@/shared/types/account'
 import { assignableRoles } from '../roles'
 import type { Account, CreateAccountValues, UpdateAccountValues } from '../types'
+import { saintNameRules } from '@/shared/utils/personName'
 import { Form, FormDrawer } from '@/shared/ui'
 
 export interface AccountFormDrawerProps {
@@ -16,7 +17,7 @@ export interface AccountFormDrawerProps {
   onCancel: () => void
 }
 
-type FormValues = { fullName?: string; email: string; phone?: string; role?: CreateAccountValues['role'] }
+type FormValues = { fullName?: string; email: string; phone?: string; saintName?: string; role?: CreateAccountValues['role'] }
 
 /**
  * Admin creates an account (email and one role required, name and phone optional) or edits its email, name and
@@ -37,12 +38,14 @@ export function AccountFormDrawer({ open, account, saving = false, emailError, o
       drawerRender={(dom) => (
         <Form<FormValues>
           layout="vertical"
-          initialValues={account && { fullName: account.fullName, email: account.email, phone: account.phone ?? undefined }}
-          onFinish={({ fullName, email, phone, role }) =>
+          initialValues={account && { fullName: account.fullName, email: account.email, phone: account.phone ?? undefined, saintName: account.saintName ?? undefined }}
+          onFinish={({ fullName, email, phone, saintName, role }) =>
             onSubmit({
               email: email.trim(),
               fullName: fullName?.trim() || undefined,
               phone: phone?.trim() || undefined,
+              // PUT replaces every field: the saint name is always sent so editing the email does not clear it.
+              saintName: saintName?.trim() || undefined,
               ...(role && { role }),
             } as CreateAccountValues | UpdateAccountValues)
           }
@@ -63,6 +66,9 @@ export function AccountFormDrawer({ open, account, saving = false, emailError, o
         ]}
       >
         <Input autoFocus inputMode="email" autoComplete="off" placeholder="ten@giaoxu.org" />
+      </Form.Item>
+      <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
+        <Input autoComplete="off" placeholder="Giuse" />
       </Form.Item>
       <Form.Item
         label="Họ và tên (không bắt buộc)"

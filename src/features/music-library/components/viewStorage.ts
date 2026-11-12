@@ -1,4 +1,4 @@
-export type ViewMode = 'index' | 'table'
+export type ViewMode = 'grid' | 'index' | 'table'
 export type DensityMode = 'compact' | 'comfortable'
 
 const VIEW_STORAGE_KEY = 'harmonia:music-library:view'
@@ -7,11 +7,11 @@ const DENSITY_STORAGE_KEY = 'harmonia:music-library:density'
 export function getStoredViewMode(): ViewMode {
   try {
     const val = localStorage.getItem(VIEW_STORAGE_KEY)
-    if (val === 'index' || val === 'table') return val
+    if (val === 'grid' || val === 'index' || val === 'table') return val
   } catch {
     // localStorage may be restricted or disabled
   }
-  return 'index'
+  return 'grid'
 }
 
 export function setStoredViewMode(mode: ViewMode): void {

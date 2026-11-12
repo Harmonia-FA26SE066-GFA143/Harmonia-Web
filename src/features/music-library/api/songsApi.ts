@@ -199,12 +199,33 @@ export async function uploadMaterial(songId: string, values: UploadMaterialValue
   return toMaterial(await apiRequest<MusicMaterialDto>('/api/music-materials', { method: 'POST', body: form }))
 }
 
-/** Draft lyrics read by AI from a sheet music file (Choir Director); nothing is saved until it is uploaded as lyrics. */
-export async function extractLyrics(materialId: string): Promise<string> {
-  const { lyricsText } = await apiRequest<{ lyricsText: string }>(`/api/music-materials/${materialId}/extract-lyrics`, {
-    method: 'POST',
-  })
-  return lyricsText
+/** `LyricsExtractionJobDto` (Harmonia-BE 6c10d65): an AI reading of a sheet, kept 24 hours after it ends. */
+export interface LyricsExtractionJob {
+  id: string
+  status: 'Queued' | 'Running' | 'Succeeded' | 'Failed'
+  /** Set when Succeeded; empty when the sheet has no printed lyrics. */
+  lyricsText: string | null
+  /** Set when Failed, e.g. EXTERNAL_AI_FAILED, LYRICS_EXTRACTION_INTERRUPTED. */
+  errorCode: string | null
+}
+
+/** Starts a job, or answers the sheet's job still Queued or Running (Choir Director). Nothing is saved as a material. */
+export function startLyricsExtraction(materialId: string): Promise<LyricsExtractionJob> {
+  return apiRequest(`/api/music-materials/${materialId}/lyrics-extractions`, { method: 'POST' })
+}
+
+export function getLyricsExtraction(materialId: string, jobId: string): Promise<LyricsExtractionJob> {
+  return apiRequest(`/api/music-materials/${materialId}/lyrics-extractions/${jobId}`)
+}
+
+/** The sheet's newest unexpired job; null when there is none (404 LYRICS_EXTRACTION_NOT_FOUND). */
+export async function getLatestLyricsExtraction(materialId: string): Promise<LyricsExtractionJob | null> {
+  try {
+    return await apiRequest<LyricsExtractionJob>(`/api/music-materials/${materialId}/lyrics-extractions/latest`)
+  } catch (error) {
+    if (error instanceof ApiError && error.code === 'LYRICS_EXTRACTION_NOT_FOUND') return null
+    throw error
+  }
 }
 
 /** Deletes a material; FE-54 records deleted materials in the activity history. */

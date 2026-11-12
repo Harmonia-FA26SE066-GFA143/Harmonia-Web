@@ -5,6 +5,7 @@ import { roleLabels } from '@/shared/types/account'
 import { colors, radius, spacing } from '@/styles/tokens'
 import type { Profile, ProfileUpdateValues } from '../types'
 import { Form } from '@/shared/ui'
+import { saintNameRules } from '@/shared/utils/personName'
 
 export interface ProfileDetailsProps {
   profile: Profile
@@ -59,10 +60,13 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
         <Form<ProfileUpdateValues>
           form={form}
           layout="vertical"
-          initialValues={{ fullName: profile.fullName, phone: profile.phone }}
+          initialValues={{ fullName: profile.fullName, phone: profile.phone, saintName: profile.saintName }}
           onFinish={onSave}
           style={{ maxWidth: 560 }}
         >
+          <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
+            <Input autoComplete="off" placeholder="Giuse" />
+          </Form.Item>
           <Form.Item
             label="Họ và tên (không bắt buộc)"
             name="fullName"
@@ -94,6 +98,7 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
         <Descriptions
           column={1}
           items={[
+            { key: 'saintName', label: 'Tên thánh', children: profile.saintName || 'Chưa cập nhật' },
             { key: 'fullName', label: 'Họ và tên', children: profile.fullName || 'Chưa cập nhật' },
             readOnlyItems[0],
             { key: 'phone', label: 'Số điện thoại', children: profile.phone || 'Chưa cập nhật' },

@@ -158,7 +158,7 @@ describe('ChoirsPage', () => {
   it('lets the Admin add a choir with its director and shows a taken name under the name field', async () => {
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia, giuse])
     vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue({
-      items: [{ id: 'u2', fullName: 'Giuse Trần', email: 'giuse@giaoxu.org', phone: null, role: 'director', isActive: true, isPasswordChangeRequired: false }],
+      items: [{ id: 'u2', fullName: 'Giuse Trần', email: 'giuse@giaoxu.org', phone: null, saintName: null, role: 'director', isActive: true, isPasswordChangeRequired: false }],
       pageNumber: 1,
       pageSize: 100,
       totalCount: 1,
