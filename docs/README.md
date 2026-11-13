@@ -2,7 +2,7 @@
 
 Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì với BE, đọc trực tiếp sau khi `git pull` repo Harmonia-Web. Nội dung các file viết bằng tiếng Anh để giữ nguyên tên API, mã lỗi và trích dẫn code; file này là bản tóm tắt tiếng Việt.
 
-- Cập nhật lần cuối: 2026-11-10, đối chiếu với Harmonia-BE `main@d74096c`. Thay đổi hợp đồng phía BE ghi ở `docs/api-changelog.md` của repo BE.
+- Cập nhật lần cuối: 2026-11-13, đối chiếu với Harmonia-BE `main@088f30a`. Thay đổi hợp đồng phía BE ghi ở `docs/api-changelog.md` của repo BE.
 - Cách đọc trích dẫn: `File.cs:12-20` là đường dẫn và số dòng trong code BE ở commit trên; `src/...` là code Web.
 - Web làm theo BE ở mọi chỗ BE đã quy định (trường, trạng thái, ai được làm gì, mã lỗi). Chỗ BE chưa có thì ghi là cần BE bổ sung, kèm quyết định tạm của owner.
 
@@ -28,6 +28,10 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
 | Mục | Việc cần BE làm | Ghi chú |
 |---|---|---|
 | B49 | Ca trưởng đọc được setting `Rehearsal.AttendanceStartCheckEnabled` | Khi Admin tắt kiểm tra, điểm danh được bất cứ lúc nào, nhưng Web không biết nên vẫn khoá bảng điểm danh trước giờ tập. Đề xuất: đặt setting là public hoặc trả kèm buổi tập |
+| B52 | Ca trưởng thấy câu trả lời xác nhận tham gia của ca viên ngay khi có | Hub hiện chỉ đẩy thông báo và ghi chú; ca viên trả lời thì không ai được báo. Web đang đọc lại khi quay về cửa sổ hoặc bấm làm mới. Đề xuất: một message qua hub hoặc thông báo cho ca trưởng |
+| B53 | Ca trưởng phụ trách liệt kê được ca viên có thể mời, gồm cả ca đoàn phục vụ khác | Ca trưởng chỉ đọc được ca viên của ca đoàn mình quản lý, nên Web mời các ca đoàn khác theo cả nhóm (không gửi `memberIds`). Đề xuất: `GET api/event-participations/candidates?eventId=` |
+| B54 | Biết ca viên nào chưa thuộc ca đoàn nào | Tài khoản Ca viên mới tạo chưa có ca đoàn nên không được mời hay giao bài; `MemberProfileSummaryDto` không có ca đoàn. Web đang tự tính cho Admin từ danh sách từng ca đoàn. Đề xuất: thêm `choirs` vào summary hoặc bộ lọc `hasChoir=false` |
+| B55 | Chọn ca đoàn ngay khi tạo sự kiện từ giờ lễ cố định | Sự kiện tạo hàng loạt chưa có ca đoàn nên chưa công bố được. Web đang gọi `PUT …/choirs` cho từng bản nháp và công bố từng sự kiện một. Đề xuất: `choirIds`, `leadChoirId` trong request tạo hàng loạt, hoặc ca đoàn mặc định trên giờ lễ cố định |
 
 Các việc BE cần xem (không phải mục backlog, chi tiết ở cuối `tbd-backlog.md`):
 
@@ -38,6 +42,8 @@ Các việc BE cần xem (không phải mục backlog, chi tiết ở cuối `tb
 
 Owner đã chốt ngày 2026-10-27 (ghi ở `open-business-decisions.md`): giữ thứ tự gợi ý bài như BE; giữ cho khai bè S/A/T/B ở vai cả buổi lễ; đề nghị BE chặn phân công trùng giờ (B40, BE đã làm).
 
+- Đã xong ở `088f30a` (2026-11-13): Cha xứ gọi được `POST api/event-participations`; ca trưởng nhận thông báo vai trò ca đoàn lúc công bố, không còn lúc sự kiện là bản nháp. Web đã nối: công bố xong là mời ca viên của các ca đoàn phục vụ.
+- Đã xong ở `e18e49b` và `6c10d65` (2026-11-11 đến 12): B50 (Cha xứ tìm ca viên toàn giáo xứ), B51 (job trích lời bằng AI được lưu), `saintName` trên tài khoản, hồ sơ và đăng ký gia nhập.
 - Đã xong ở `d74096c` (2026-11-10): B42 (lời theo mốc thời gian cho audio/score); thumbnail trang đầu bản nhạc trong `SongDto`; `MusicMaterialDto.fileRevision`; notes schema v2 cho bản nhạc tương tác; upload audio hỏng trả `MATERIAL_AUDIO_INVALID`. Web chưa nối các trường và endpoint mới này.
 - Đã xong ở `f449a4b` đến `717e8d1` (2026-11-07 đến 09): chat Cha xứ–Ca trưởng trả danh sách mọi Ca trưởng đang hoạt động, nên B48 đã có nguồn dữ liệu; đăng ký gia nhập công khai; đề cử, đào tạo và bổ nhiệm Ca trưởng. Web hiện mới dùng chat, chưa có các màn đăng ký/đề cử.
 - Thay đổi bàn giao Ca trưởng ở `9f89eea` (2026-11-10): đổi role hoặc vô hiệu hoá người còn phụ trách trả `USER_STILL_DIRECTING`; `NotificationType` thêm `ChoirChanged`.
