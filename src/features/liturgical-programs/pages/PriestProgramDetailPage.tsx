@@ -16,7 +16,7 @@ import { ProgramHeader } from '../components/ProgramHeader'
 import { ProgramItemList } from '../components/ProgramItemList'
 import { SongListStatusTag } from '../components/SongListStatusTag'
 import { eventErrorMessage } from '../eventErrors'
-import { useCancelEvent, useEvent, usePreparationStatus, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
+import { inviteServingMembers, useCancelEvent, useEvent, usePreparationStatus, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
 import { useEventNames } from '../hooks/useEventNames'
 import { useProgram } from '../hooks/usePrograms'
 import { formatDateTime, vietnamToday } from '@/lib/api/dates'
@@ -160,16 +160,42 @@ export function PriestProgramDetailPage() {
       },
     )
 
+  // The event is published either way; only the members' participation requests are missing.
+  const inviteFailed = () =>
+    message.warning({
+      key: 'invite-failed',
+      duration: 0,
+      content: (
+        <>
+          Đã công bố sự kiện, nhưng chưa gửi được lời mời xác nhận tham gia cho ca viên.{' '}
+          <Button
+            size="small"
+            onClick={() => {
+              message.destroy('invite-failed')
+              void inviteServingMembers(data.id).then((invited) =>
+                invited ? message.success('Đã gửi lời mời xác nhận tham gia cho ca viên.') : inviteFailed(),
+              )
+            }}
+          >
+            Gửi lại
+          </Button>{' '}
+          <Button size="small" type="text" onClick={() => message.destroy('invite-failed')}>
+            Đóng
+          </Button>
+        </>
+      ),
+    })
+
   const confirmPublish = () =>
     modal.confirm({
       title: 'Công bố sự kiện?',
-      content: 'Ca trưởng và ca viên sẽ nhận thông báo và thấy sự kiện này trong lịch.',
+      content: 'Ca trưởng nhận thông báo, ca viên của các ca đoàn phục vụ được mời xác nhận tham gia, và sự kiện hiện trong lịch.',
       okText: 'Công bố',
       cancelText: 'Hủy',
       onOk: () =>
         publish
           .mutateAsync(data.id)
-          .then(() => message.success('Đã công bố sự kiện.'))
+          .then(({ invited }) => (invited ? message.success('Đã công bố sự kiện và mời ca viên xác nhận tham gia.') : inviteFailed()))
           .catch((error: Error) => message.error(eventErrorMessage(error, 'Không thể công bố sự kiện. Vui lòng thử lại.'))),
     })
 

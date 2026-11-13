@@ -1,3 +1,5 @@
+export { updateEventChoirs } from './api/choirsApi'
+export type { EventChoirsValues } from './types'
 export { EventChoirsCard } from './components/EventChoirsCard'
 export { LeadChoirNotice } from './components/LeadChoirNotice'
 export { AdminChoirsPage, DirectorChoirsPage } from './pages/ChoirsPage'

@@ -1,6 +1,8 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import * as choirsApi from '@/features/choirs/api/choirsApi'
+import * as participationApi from '@/features/participation/api/participationApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { vietnamToday } from '@/lib/api/dates'
 import { ApiError } from '@/lib/api/errors'
@@ -104,5 +106,58 @@ describe('PriestProgramListPage', () => {
       expect(generate).toHaveBeenCalledWith(today.format('YYYY-MM-DD'), today.add(27, 'day').format('YYYY-MM-DD')),
     )
     expect(await screen.findByText('Đã tạo 1 sự kiện nháp.')).toBeInTheDocument()
+  })
+
+  it('gives the created drafts the only active choir, as serving and lead choir', async () => {
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(page(events))
+    vi.spyOn(categoriesApi, 'listMassSchedules').mockResolvedValue([
+      { id: 'ms1', dayOfWeek: 'Sunday', time: '05:00', massTypeId: 'm1', locationId: 'loc-1', title: 'Lễ sáng sớm', isActive: true },
+    ])
+    vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([])
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
+      { id: 'c2', name: 'Ca đoàn cũ', isActive: false },
+    ])
+    vi.spyOn(eventsApi, 'generateEvents').mockResolvedValue([event('e3', 'Lễ sáng sớm', 'draft'), event('e4', 'Lễ sáng sớm', 'draft')])
+    const setChoirs = vi.spyOn(choirsApi, 'updateEventChoirs').mockResolvedValueOnce([]).mockRejectedValueOnce(new ApiError(500, undefined))
+    renderPage(<PriestProgramListPage />, '/priest/programs')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Tạo từ giờ lễ cố định/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(await within(dialog).findByText('Ca đoàn Cecilia')).toBeInTheDocument()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo sự kiện nháp' }))
+
+    expect(await screen.findByText(/Đã tạo 2 sự kiện nháp; 1 sự kiện chưa gán được ca đoàn/)).toBeInTheDocument()
+    expect(setChoirs.mock.calls).toEqual([
+      ['e3', { choirIds: ['c1'], leadChoirId: 'c1' }],
+      ['e4', { choirIds: ['c1'], leadChoirId: 'c1' }],
+    ])
+  })
+
+  it('publishes the selected upcoming drafts, invites their members and names each refusal', async () => {
+    const soon = dayjs(vietnamToday()).add(7, 'day').format('YYYY-MM-DD')
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(
+      page([event('e1', 'Lễ Chúa Nhật', 'published'), { ...event('e2', 'Lễ Bổn mạng', 'draft'), date: soon }, { ...event('e3', 'Lễ sáng', 'draft'), date: soon }, event('e4', 'Lễ đã qua', 'draft')]),
+    )
+    const publish = vi
+      .spyOn(eventsApi, 'publishEvent')
+      .mockImplementation(async (id) => {
+        if (id === 'e3') throw new ApiError(409, { code: 'LITURGICAL_EVENT_CHOIR_REQUIRED' })
+      })
+    const invite = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue()
+    renderPage(<PriestProgramListPage />, '/priest/programs')
+
+    // A published event and a past draft cannot be chosen.
+    expect(await screen.findByRole('checkbox', { name: /Chọn Lễ Chúa Nhật/ })).toBeDisabled()
+    expect(screen.getByRole('checkbox', { name: /Chọn Lễ đã qua/ })).toBeDisabled()
+    fireEvent.click(screen.getByRole('checkbox', { name: /Chọn Lễ Bổn mạng/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Chọn Lễ sáng/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Công bố 2 sự kiện đã chọn' }))
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Công bố' }))
+
+    expect((await screen.findAllByText('Đã công bố 1 trên 2 sự kiện')).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Lễ sáng: Chọn ca đoàn phục vụ và ca đoàn phụ trách/)).toBeInTheDocument()
+    expect(publish.mock.calls.map(([id]) => id)).toEqual(['e2', 'e3'])
+    expect(invite.mock.calls).toEqual([['e2']])
   })
 })
