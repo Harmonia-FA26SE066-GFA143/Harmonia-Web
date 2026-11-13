@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addChoirMembers,
   listChoirs,
@@ -23,6 +23,21 @@ export function useMembersOfChoir(choirId?: string) {
     queryKey: [...choirsKey, 'members', choirId],
     queryFn: () => listMembersOfChoir(choirId ?? ''),
     enabled: Boolean(choirId),
+  })
+}
+
+/** The members of several choirs as one list, each member once; `data` waits for every choir. */
+export function useMembersOfChoirs(choirIds: string[]) {
+  return useQueries({
+    queries: choirIds.map((choirId) => ({ queryKey: [...choirsKey, 'members', choirId], queryFn: () => listMembersOfChoir(choirId) })),
+    combine: (results) => ({
+      data: results.every((result) => result.data !== undefined)
+        ? [...new Map(results.flatMap((result) => result.data ?? []).map((member) => [member.memberId, member])).values()]
+        : undefined,
+      isError: results.some((result) => result.isError),
+      isFetching: results.some((result) => result.isFetching),
+      refetch: () => results.forEach((result) => result.isError && result.refetch()),
+    }),
   })
 }
 

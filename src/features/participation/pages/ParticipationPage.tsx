@@ -3,10 +3,11 @@ import { Alert, App, Avatar, Button, Card, Flex, Input, Popconfirm, Segmented, T
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { useUpcomingPrograms } from '@/features/liturgical-programs'
+import { usePickedProgram } from '@/features/liturgical-programs'
 import { SkillTags, useChoirMembers } from '@/features/members'
 import { formatDateTime } from '@/lib/api/dates'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
+import { nameInitial } from '@/shared/utils/personName'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { ResponseHeader } from '../components/ResponseHeader'
@@ -28,7 +29,7 @@ const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<Participa
     render: (_, request) => (
       <Flex align="center" gap={spacing.md}>
         <Avatar aria-hidden style={{ background: colors.softSurface, color: colors.textMuted, fontWeight: 600, flexShrink: 0 }}>
-          {request.fullName.trim().split(/s+/).at(-1)?.charAt(0).toUpperCase()}
+          {nameInitial(request.fullName)}
         </Avatar>
         <Typography.Text strong>{request.fullName}</Typography.Text>
       </Flex>
@@ -71,16 +72,14 @@ const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<Participa
  * (FE-06, FE-33–FE-34) on `/api/event-participations`. The Director picks the recipients; each member is asked once
  * per program, so a later send only reaches members not asked yet. This supersedes resending to non-responders
  * (decision 2026-09-29; owner decision 2026-10-07: follow the BE).
- * `?programId=` selects the program (link from the program detail); otherwise the next upcoming program.
+ * `?programId=` selects the program (link from the program detail), a past one included, read only; without it the
+ * next upcoming program. A program the backend does not know is said so, never replaced by another one.
  * TBD: "real time" latency (FE-34) – the list refreshes on focus and with the refresh button.
  */
 export function ParticipationPage() {
   const { message } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
-  const programs = useUpcomingPrograms()
-  const allPrograms = useMemo(() => programs.data ?? [], [programs.data])
-  const program =
-    allPrograms.find((item) => item.id === searchParams.get('programId')) ?? allPrograms[0]
+  const { programs, lookup, program, options: allPrograms, looking, missing } = usePickedProgram(searchParams.get('programId'))
   const today = dayjs().format('YYYY-MM-DD')
   // No request for a program that is already past (decision 2026-09-30, 6a.3).
   const isPast = program !== undefined && program.date < today
@@ -110,10 +109,10 @@ export function ParticipationPage() {
     (request) => filter === 'all' || (filter === 'none' ? !request.response : request.response === filter),
   )
 
-  const handleSend = (memberIds: string[]) =>
+  const handleSend = (memberIds?: string[]) =>
     send.mutate(memberIds, {
       onSuccess: () => {
-        message.success(`Đã gửi yêu cầu xác nhận cho ${memberIds.length} thành viên.`)
+        message.success(memberIds ? `Đã gửi yêu cầu xác nhận cho ${memberIds.length} thành viên.` : 'Đã gửi yêu cầu xác nhận cho các ca viên chưa được mời.')
         setPicking(false)
       },
       onError: (error) => message.error(participationErrorMessage(error, 'Không thể gửi yêu cầu. Vui lòng thử lại.')),
@@ -139,11 +138,21 @@ export function ParticipationPage() {
         // The first send is offered here; later ones reach members not asked yet, from the list toolbar.
         extra={program && !isPast && participation.data !== undefined && requests.length === 0 && sendButton}
       />
-      {programs.isPending && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
+      {(programs.isPending || looking) && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
       {programs.isError && (
         <ErrorState title="Không thể tải chương trình phụng vụ" error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
       )}
-      {programs.data !== undefined && !program && (
+      {lookup.isError && (
+        <ErrorState title="Không thể tải chương trình phụng vụ" error={lookup.error} hasData={false} onRetry={() => lookup.refetch()} retrying={lookup.isFetching} />
+      )}
+      {missing && (
+        <EmptyState
+          title="Không tìm thấy chương trình phụng vụ"
+          description="Chương trình không tồn tại, đã bị hủy hoặc đường dẫn không đúng."
+          action={<Button onClick={() => setSearchParams({})}>Xem chương trình sắp tới</Button>}
+        />
+      )}
+      {programs.data !== undefined && !program && !searchParams.get('programId') && (
         <EmptyState title="Chưa có chương trình phụng vụ" description="Yêu cầu xác nhận tham gia được gửi theo từng chương trình." />
       )}
       {program && (
@@ -264,13 +273,16 @@ export function ParticipationPage() {
           )}
         </Flex>
       )}
-      <SendRequestDrawer
-        open={picking}
-        excludedMemberIds={requests.map((request) => request.memberId)}
-        sending={send.isPending}
-        onSend={handleSend}
-        onCancel={() => setPicking(false)}
-      />
+      {program && (
+        <SendRequestDrawer
+          open={picking}
+          programId={program.id}
+          excludedMemberIds={requests.map((request) => request.memberId)}
+          sending={send.isPending}
+          onSend={handleSend}
+          onCancel={() => setPicking(false)}
+        />
+      )}
     </>
   )
 }

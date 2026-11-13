@@ -16,7 +16,7 @@ export function useParticipation(programId?: string) {
 export function useSendParticipationRequests(programId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (memberIds: string[]) => sendParticipationRequests(programId, memberIds),
+    mutationFn: (memberIds?: string[]) => sendParticipationRequests(programId, memberIds),
     onSettled: () => queryClient.invalidateQueries({ queryKey: participationKey(programId) }),
   })
 }

@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { vietnamToday } from '@/lib/api/dates'
 import { getProgram, getSongCredits, listPrograms } from '../api/programsApi'
 import type { EventPage } from '../api/eventsApi'
-import type { EventFilters } from '../types'
+import type { EventFilters, LiturgicalProgram } from '../types'
 
 // Programs of the Choir Director pages. Song-list changes invalidate this key too, since rows show the list status.
 const programsKey = ['liturgical-programs'] as const
@@ -36,6 +36,30 @@ export function useNextProgram() {
   return (programs.data ?? [])
     .filter((program) => program.status === 'published' && dayjs(`${program.date}T${program.time}`).isAfter(now))
     .toSorted((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))[0]
+}
+
+/**
+ * The program of a page with a program picker: the one named in the URL, read by id when it is not in the upcoming
+ * list (already celebrated), and the next upcoming one only when the URL names none. Another program never takes the
+ * place of the one asked for: `missing` says the backend has no published event with that id.
+ */
+export function usePickedProgram(requestedId: string | null) {
+  const programs = useUpcomingPrograms()
+  const listed = requestedId ? programs.data?.find((program) => program.id === requestedId) : undefined
+  const lookedUp = Boolean(requestedId) && programs.data !== undefined && !listed
+  // The key of useProgram, so the detail page and the picker pages share one answer.
+  const lookup = useQuery({ queryKey: [...programsKey, requestedId], queryFn: () => getProgram(requestedId ?? ''), enabled: lookedUp })
+  const program: LiturgicalProgram | undefined = requestedId ? (listed ?? lookup.data ?? undefined) : programs.data?.[0]
+  const upcoming = programs.data ?? []
+  return {
+    programs,
+    lookup,
+    program,
+    /** The picker's programs: the upcoming ones, after the past one when that is the one shown. */
+    options: program && lookedUp ? [program, ...upcoming] : upcoming,
+    looking: lookedUp && lookup.isPending,
+    missing: lookedUp && lookup.data === null,
+  }
 }
 
 export function useProgram(id: string) {

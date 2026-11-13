@@ -46,7 +46,11 @@ export async function confirmAllParticipation(eventId: string): Promise<void> {
   await apiRequest<unknown>(`/api/event-participations/confirm-all${toQuery({ eventId })}`, { method: 'POST' })
 }
 
-/** Asks the given members, none of whom may have been asked for this event (EVENT_PARTICIPATION_ALREADY_REQUESTED). */
-export async function sendParticipationRequests(eventId: string, memberIds: string[]): Promise<void> {
+/**
+ * Asks the given members, none of whom may have been asked for this event (EVENT_PARTICIPATION_ALREADY_REQUESTED) and
+ * all of whom belong to a choir serving it (MEMBER_NOT_FOUND). Without ids the backend asks every active member of the
+ * serving choirs who has not been asked yet (EventParticipationService.ResolveInviteesAsync).
+ */
+export async function sendParticipationRequests(eventId: string, memberIds?: string[]): Promise<void> {
   await apiRequest<unknown>('/api/event-participations', { method: 'POST', body: JSON.stringify({ eventId, memberIds }) })
 }
