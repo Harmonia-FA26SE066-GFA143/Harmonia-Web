@@ -12,10 +12,12 @@ export interface EventTableProps {
   /** Server-side paging of GET /api/liturgical-events; omit to show all rows. */
   pagination?: TablePaginationConfig | false
   loading?: boolean
+  /** Checkboxes on the rows `selectable` admits; omit for a table without selection. */
+  selection?: { selectedIds: string[]; onChange: (ids: string[]) => void; selectable: (event: LiturgicalEvent) => boolean }
 }
 
 /** Liturgical events of the Priest with date, time, place and status. */
-export function EventTable({ events, onOpen, pagination = false, loading }: Readonly<EventTableProps>) {
+export function EventTable({ events, onOpen, pagination = false, loading, selection }: Readonly<EventTableProps>) {
   const { name, eventName } = useEventNames()
   const columns: TableColumnsType<LiturgicalEvent> = [
     {
@@ -59,6 +61,13 @@ export function EventTable({ events, onOpen, pagination = false, loading }: Read
       columns={columns}
       dataSource={events}
       loading={loading}
+      rowSelection={
+        selection && {
+          selectedRowKeys: selection.selectedIds,
+          onChange: (keys) => selection.onChange(keys.map(String)),
+          getCheckboxProps: (event) => ({ disabled: !selection.selectable(event), 'aria-label': `Chọn ${eventName(event)} ngày ${formatProgramDate(event.date)}` }),
+        }
+      }
       pagination={pagination}
       // A fixed width, not the content's: long event names wrap instead of pushing the table sideways.
       scroll={{ x: 900 }}

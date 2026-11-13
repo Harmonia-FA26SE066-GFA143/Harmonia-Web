@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
+import * as participationApi from '@/features/participation/api/participationApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
@@ -126,16 +127,33 @@ describe('PriestProgramDetailPage', () => {
     expect(screen.getByText(/Thánh lễ Chúa Nhật .*Yêu cầu đặc biệt: Ưu tiên bài hát theo chủ đề Lời Chúa./)).toBeInTheDocument()
   })
 
-  it('publishes a draft after confirmation', async () => {
+  it('publishes a draft after confirmation, then invites the members of its choirs', async () => {
     vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
     const publish = vi.spyOn(eventsApi, 'publishEvent').mockResolvedValue()
+    const invite = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue()
     renderDetail()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Công bố' }))
     fireEvent.click(within(await confirmDialog('Công bố sự kiện?')).getByRole('button', { name: 'Công bố' }))
 
     await waitFor(() => expect(publish.mock.calls[0]?.[0]).toBe('e1'))
-    expect(await screen.findByText('Đã công bố sự kiện.')).toBeInTheDocument()
+    expect(await screen.findByText('Đã công bố sự kiện và mời ca viên xác nhận tham gia.')).toBeInTheDocument()
+    expect(invite.mock.calls).toEqual([['e1']])
+  })
+
+  it('keeps the publish and offers to send the invitations again when they fail', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
+    vi.spyOn(eventsApi, 'publishEvent').mockResolvedValue()
+    const invite = vi.spyOn(participationApi, 'sendParticipationRequests').mockRejectedValueOnce(new ApiError(500, undefined)).mockResolvedValue()
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Công bố' }))
+    fireEvent.click(within(await confirmDialog('Công bố sự kiện?')).getByRole('button', { name: 'Công bố' }))
+
+    expect(await screen.findByText(/Đã công bố sự kiện, nhưng chưa gửi được lời mời/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi lại' }))
+    expect(await screen.findByText('Đã gửi lời mời xác nhận tham gia cho ca viên.')).toBeInTheDocument()
+    expect(invite).toHaveBeenCalledTimes(2)
   })
 
   it('warns that a draft needs a season and explains a refused publish', async () => {

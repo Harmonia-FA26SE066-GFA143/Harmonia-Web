@@ -1,7 +1,8 @@
 import { ThunderboltOutlined } from '@ant-design/icons'
-import { Alert, App, Button, DatePicker, Flex, Typography } from 'antd'
+import { Alert, App, Button, DatePicker, Flex, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
+import { useChoirs } from '@/features/choirs'
 import { dayOfWeekLabels, useLookup, useMassSchedules } from '@/features/system-categories'
 import { vietnamToday } from '@/lib/api/dates'
 import { colors, spacing } from '@/styles/tokens'
@@ -39,16 +40,24 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
   const massTypes = useLookup('massTypes').data
   const locations = useLookup('worshipLocations').data
   const generate = useGenerateEvents()
+  const choirs = (useChoirs().data ?? []).filter((choir) => choir.isActive)
+  // Untouched, the only active choir is taken; the Priest may clear it.
+  const [pickedChoirIds, setPickedChoirIds] = useState<string[]>()
+  const [pickedLeadId, setPickedLeadId] = useState<string>()
+  const choirIds = pickedChoirIds ?? (choirs.length === 1 ? [choirs[0].id] : [])
+  const leadChoirId = pickedLeadId && choirIds.includes(pickedLeadId) ? pickedLeadId : choirIds[0]
   const active = (schedules.data ?? []).filter((schedule) => schedule.isActive)
   const nameIn = (entries: { id: string; name: string }[] | undefined, id: string) => entries?.find((entry) => entry.id === id)?.name
 
   const submit = () => {
     if (!range || generate.isPending) return
     generate.mutate(
-      { fromDate: range[0].format('YYYY-MM-DD'), toDate: range[1].format('YYYY-MM-DD') },
+      { fromDate: range[0].format('YYYY-MM-DD'), toDate: range[1].format('YYYY-MM-DD'), choirs: { choirIds, leadChoirId } },
       {
-        onSuccess: (created) => {
-          if (created.length > 0) message.success(`Đã tạo ${created.length} sự kiện nháp.`)
+        onSuccess: ({ created, withoutChoirs }) => {
+          if (withoutChoirs > 0)
+            message.warning(`Đã tạo ${created.length} sự kiện nháp; ${withoutChoirs} sự kiện chưa gán được ca đoàn, hãy chọn ca đoàn trong từng sự kiện đó.`, 8)
+          else if (created.length > 0) message.success(`Đã tạo ${created.length} sự kiện nháp.`)
           else message.info('Không có sự kiện mới: các giờ lễ trong khoảng này đã có sự kiện.')
           onClose()
         },
@@ -89,6 +98,30 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
             style={{ width: '100%' }}
           />
           <Typography.Text style={{ color: colors.textMuted }}>Từ hôm nay, tối đa {maxDays} ngày.</Typography.Text>
+        </Flex>
+        <Flex vertical gap={spacing.xs}>
+          <Typography.Text strong>Ca đoàn phục vụ (không bắt buộc)</Typography.Text>
+          <Select
+            mode="multiple"
+            allowClear
+            aria-label="Ca đoàn phục vụ"
+            placeholder="Chọn sau trong từng sự kiện"
+            value={choirIds}
+            onChange={setPickedChoirIds}
+            options={choirs.map((choir) => ({ value: choir.id, label: choir.name }))}
+            optionFilterProp="label"
+          />
+          {choirIds.length > 1 && (
+            <Select
+              aria-label="Ca đoàn phụ trách"
+              value={leadChoirId}
+              onChange={setPickedLeadId}
+              options={choirs.filter((choir) => choirIds.includes(choir.id)).map((choir) => ({ value: choir.id, label: `Phụ trách: ${choir.name}` }))}
+            />
+          )}
+          <Typography.Text style={{ color: colors.textMuted }}>
+            Gán cho mọi sự kiện mới tạo. Sự kiện chưa có ca đoàn phụ trách thì chưa công bố được.
+          </Typography.Text>
         </Flex>
         {schedules.isPending && <Typography.Text style={{ color: colors.textMuted }}>Đang tải giờ lễ cố định…</Typography.Text>}
         {schedules.isError && <Alert type="error" showIcon title="Không thể tải giờ lễ cố định." />}

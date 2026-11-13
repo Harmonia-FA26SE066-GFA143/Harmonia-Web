@@ -10,7 +10,9 @@ import {
   updateEvent,
   type EventPage,
 } from '../api/eventsApi'
-import type { EventFilters, EventFormValues } from '../types'
+import { updateEventChoirs, type EventChoirsValues } from '@/features/choirs'
+import { sendParticipationRequests } from '@/features/participation'
+import type { EventFilters, EventFormValues, LiturgicalEvent } from '../types'
 
 const eventsKey = ['liturgical-events'] as const
 
@@ -42,9 +44,59 @@ export const useCreateEvent = () => useEventMutation((values: EventFormValues) =
 export const useUpdateEvent = () =>
   useEventMutation(({ id, values }: { id: string; values: EventFormValues }) => updateEvent(id, values))
 
-export const usePublishEvent = () => useEventMutation((id: string) => publishEvent(id))
+/** Asks every member of the event's serving choirs who has not been asked yet; false when the request failed. */
+export const inviteServingMembers = (id: string) => sendParticipationRequests(id).then(
+  () => true,
+  () => false,
+)
+
+/**
+ * Publishes, then invites the members of the serving choirs (the Parish Priest may since BE 088f30a; calling again
+ * is safe). A failed invitation does not undo the publish: `invited` is false and the caller offers to send again.
+ */
+export const usePublishEvent = () =>
+  useEventMutation(async (id: string) => {
+    await publishEvent(id)
+    return { invited: await inviteServingMembers(id) }
+  })
 
 export const useCancelEvent = () => useEventMutation((id: string) => cancelEvent(id))
 
+/**
+ * Publishes the events one after another and invites their members. A refusal stops that event only; the answer
+ * names each refused event with its error.
+ */
+export const usePublishEvents = () =>
+  useEventMutation(async (events: LiturgicalEvent[]) => {
+    const refused: { event: LiturgicalEvent; error: Error }[] = []
+    let notInvited = 0
+    for (const event of events) {
+      try {
+        await publishEvent(event.id)
+        if (!(await inviteServingMembers(event.id))) notInvited += 1
+      } catch (error) {
+        refused.push({ event, error: error instanceof Error ? error : new Error(String(error)) })
+      }
+    }
+    return { published: events.length - refused.length, notInvited, refused }
+  })
+
+/**
+ * Creates the drafts, then gives each one the chosen choirs: the generation request carries no choir (tbd-backlog
+ * B55), and a draft without a lead choir cannot be published. `withoutChoirs` counts the drafts whose choirs were
+ * refused.
+ */
 export const useGenerateEvents = () =>
-  useEventMutation(({ fromDate, toDate }: { fromDate: string; toDate: string }) => generateEvents(fromDate, toDate))
+  useEventMutation(async ({ fromDate, toDate, choirs }: { fromDate: string; toDate: string; choirs?: EventChoirsValues }) => {
+    const created = await generateEvents(fromDate, toDate)
+    let withoutChoirs = 0
+    if (choirs?.choirIds.length) {
+      // ponytail: one PUT per draft, in order; B55 (choirs on the generation request) replaces the loop.
+      for (const event of created) {
+        await updateEventChoirs(event.id, choirs).catch(() => {
+          withoutChoirs += 1
+        })
+      }
+    }
+    return { created, withoutChoirs }
+  })
