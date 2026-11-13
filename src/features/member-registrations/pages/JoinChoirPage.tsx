@@ -20,8 +20,20 @@ const failureMessage = (error: Error) =>
     'Không thể gửi yêu cầu. Vui lòng thử lại.',
   )
 
-/** Field names of `errors` in a 400 VALIDATION_FAILED, as the backend sends them. */
-const fieldsOf = (error: Error | null) => (error instanceof ApiError && error.errors ? Object.keys(error.errors) : [])
+/** The form's labels for the backend's field names, whatever their case (`FullName`, `fullName`). */
+const fieldLabels: Record<string, string> = {
+  fullname: 'Họ tên',
+  email: 'Email',
+  phone: 'Số điện thoại',
+  saintname: 'Tên thánh',
+  note: 'Lời nhắn',
+}
+
+/** The fields of `errors` in a 400 VALIDATION_FAILED, by their label on this form; an unknown one is left out. */
+const fieldsOf = (error: Error | null) =>
+  error instanceof ApiError && error.errors
+    ? Object.keys(error.errors).flatMap((field) => fieldLabels[field.toLowerCase()] ?? [])
+    : []
 
 /** Public request to join the choir. It never creates an account: an Admin decides, then the server emails the sign-in. */
 export function JoinChoirPage() {

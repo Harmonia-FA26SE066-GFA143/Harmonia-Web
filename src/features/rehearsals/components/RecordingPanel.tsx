@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import { useEffect, useRef, useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
 import { clock } from '@/shared/utils/media'
+import { saveFile } from '@/shared/utils/saveFile'
 import { colors, spacing } from '@/styles/tokens'
 import { useCreateRecording, useDeleteRecording, useRecordings } from '../hooks/useRehearsals'
 import { rehearsalErrorMessage } from '../rehearsalErrors'
@@ -14,6 +15,19 @@ export interface RecordingPanelProps {
   songId: string
   songTitle: string
 }
+
+/** A recorded take with the song it belongs to, which may no longer be the one shown. */
+interface Take {
+  file: File
+  songId: string
+  songTitle: string
+  durationSeconds: number
+}
+
+/** Just under the backend's 20 MB (RehearsalRecordingService.MaxAudioSizeBytes), leaving room for the last chunk. */
+const stopAtBytes = 19 * 1024 * 1024
+
+const megabytes = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
 
 const canRecord = () => typeof MediaRecorder !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia)
 
@@ -30,6 +44,8 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
   const recorder = useRef<MediaRecorder>(null)
   const [startedAt, setStartedAt] = useState<number>()
   const [elapsed, setElapsed] = useState(0)
+  const [recordedBytes, setRecordedBytes] = useState(0)
+  const [unsaved, setUnsaved] = useState<Take>()
 
   useEffect(() => {
     if (startedAt === undefined) return
@@ -48,6 +64,22 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
     [songId],
   )
 
+  // A take that could not be saved stays on the page, to save again or keep as a file: it cannot be sung again.
+  const upload = (take: Take) =>
+    create.mutate(
+      { file: take.file, songId: take.songId, durationSeconds: take.durationSeconds },
+      {
+        onSuccess: () => {
+          setUnsaved(undefined)
+          message.success(`Đã lưu bản thu “${take.songTitle}”.`)
+        },
+        onError: (error) => {
+          setUnsaved(take)
+          message.error(rehearsalErrorMessage(error, 'Không thể lưu bản thu. Bản thu vẫn còn trên trang này.'))
+        },
+      },
+    )
+
   const start = async () => {
     let stream: MediaStream
     try {
@@ -59,7 +91,17 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
     const chunks: Blob[] = []
     const media = new MediaRecorder(stream)
     const began = Date.now()
-    media.ondataavailable = (event) => chunks.push(event.data)
+    let bytes = 0
+    media.ondataavailable = (event) => {
+      chunks.push(event.data)
+      bytes += event.data.size
+      setRecordedBytes(bytes)
+      // A take the server would refuse cannot be sung again: stop while it still fits.
+      if (bytes >= stopAtBytes && media.state === 'recording') {
+        message.warning('Bản thu đã gần 20 MB nên được dừng và lưu. Hãy thu tiếp thành một bản mới.')
+        media.stop()
+      }
+    }
     media.onstop = () => {
       stream.getTracks().forEach((track) => track.stop())
       setStartedAt(undefined)
@@ -67,16 +109,12 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
       const type = media.mimeType || 'audio/webm'
       const extension = type.includes('ogg') ? 'ogg' : type.includes('mp4') ? 'm4a' : 'webm'
       const file = new File(chunks, `ban-thu-${dayjs().format('YYYYMMDD-HHmmss')}.${extension}`, { type })
-      create.mutate(
-        { file, songId, durationSeconds: Math.round((Date.now() - began) / 1000) },
-        {
-          onSuccess: () => message.success(`Đã lưu bản thu “${songTitle}”.`),
-          onError: (error) => message.error(rehearsalErrorMessage(error, 'Không thể lưu bản thu. Vui lòng thử lại.')),
-        },
-      )
+      upload({ file, songId, songTitle, durationSeconds: Math.round((Date.now() - began) / 1000) })
     }
     recorder.current = media
-    media.start()
+    // A chunk a second, so the size is known while recording.
+    media.start(1000)
+    setRecordedBytes(0)
     setElapsed(0)
     setStartedAt(began)
   }
@@ -105,10 +143,11 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
       <Flex wrap gap={spacing.sm} align="center">
         {recording ? (
           <Button danger icon={<BorderOutlined />} onClick={() => recorder.current?.stop()}>
-            Dừng và lưu ({clock(elapsed)})
+            Dừng và lưu ({clock(elapsed)} · {megabytes(recordedBytes)})
           </Button>
         ) : (
-          <Button icon={<AudioOutlined />} onClick={start} disabled={unavailable} loading={create.isPending}>
+          // One take at a time: a new one would replace the take still waiting to be saved.
+          <Button icon={<AudioOutlined />} onClick={start} disabled={unavailable || unsaved !== undefined} loading={create.isPending}>
             Thu âm
           </Button>
         )}
@@ -117,6 +156,20 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
         )}
         {recording && <Typography.Text type="secondary" role="status">Đang thu “{songTitle}”…</Typography.Text>}
       </Flex>
+      {unsaved && (
+        <Flex wrap align="center" gap={spacing.sm} role="alert" style={{ marginTop: spacing.sm }}>
+          <Typography.Text type="danger">
+            Bản thu “{unsaved.songTitle}” ({megabytes(unsaved.file.size)}) chưa lưu được.
+          </Typography.Text>
+          <Button type="primary" onClick={() => upload(unsaved)} loading={create.isPending}>
+            Lưu lại
+          </Button>
+          <Button onClick={() => saveFile(unsaved.file, unsaved.file.name)}>Tải về máy</Button>
+          <Button type="text" danger onClick={() => setUnsaved(undefined)} disabled={create.isPending}>
+            Bỏ bản thu
+          </Button>
+        </Flex>
+      )}
       {rehearsalId && recordings.isError && (
         <Flex align="center" gap={spacing.sm} style={{ marginTop: spacing.sm }}>
           <Typography.Text type="danger">Không thể tải các bản thu.</Typography.Text>

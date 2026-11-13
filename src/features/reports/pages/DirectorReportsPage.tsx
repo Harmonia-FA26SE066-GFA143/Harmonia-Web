@@ -15,7 +15,7 @@ import { granularityLabels, periodOf, type Granularity } from '../directorReport
 import { useExportReport } from '../hooks/useReports'
 import { directorReportKinds, reportDefinitions } from '../reportDefinitions'
 import { reportErrorMessage } from '../reportErrors'
-import { saveFile } from '../saveFile'
+import { saveFile } from '@/shared/utils/saveFile'
 import { reportFormatLabels, type ActivityTrendQuery, type ReportFilters, type ReportFormat } from '../types'
 
 const granularities: Granularity[] = ['week', 'month', 'year']

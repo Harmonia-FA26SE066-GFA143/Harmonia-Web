@@ -187,4 +187,14 @@ describe('AccountsPage', () => {
 
     expect(await screen.findByText('Hệ thống cần ít nhất một Quản trị viên đang hoạt động.')).toBeInTheDocument()
   })
+
+  it('says a Choir Director who still directs a choir must hand it over first', async () => {
+    renderAccounts([...accounts, account('a6', 'Giuse Trần', 'giuse@giaoxu.org', 'director')])
+    vi.spyOn(accountsApi, 'setAccountActive').mockRejectedValue(new ApiError(409, { code: 'USER_STILL_DIRECTING' }))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ngừng hoạt động Giuse Trần' }))
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Ngừng hoạt động' }))
+
+    expect(await screen.findByText(/còn phụ trách ca đoàn\. Hãy giao ca đoàn cho ca trưởng khác/)).toBeInTheDocument()
+  })
 })
