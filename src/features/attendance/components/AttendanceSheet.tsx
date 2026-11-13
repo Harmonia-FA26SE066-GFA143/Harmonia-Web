@@ -2,7 +2,8 @@ import { CheckOutlined, SearchOutlined } from '@ant-design/icons'
 import { App, Avatar, Button, Card, Flex, Input, Modal, Radio, Table, Typography, type TableColumnsType } from 'antd'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useBeforeUnload, useBlocker } from 'react-router'
-import { NoFilterResults, SaveButton, SummaryStrip, useJustSaved } from '@/shared/ui'
+import { useChoirMembers } from '@/features/members'
+import { inVoicePart, NoFilterResults, SaveButton, SummaryStrip, useJustSaved, voiceParts } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, media, outcomeColors, radius, shadows, spacing, spine, typography } from '@/styles/tokens'
 import { attendanceErrorMessage } from '../attendanceErrors'
@@ -22,6 +23,9 @@ const withoutSaved = (edits: Record<string, AttendanceValue>, records: Attendanc
   return Object.fromEntries(Object.entries(edits).filter(([memberId, value]) => saved.get(memberId) !== value))
 }
 
+/** The member's voice parts in words, from their approved skills; none when no skill names a part. */
+const partsOf = (skills: readonly string[]) => voiceParts.filter(({ pattern }) => inVoicePart(skills, pattern)).map(({ label }) => label).join(', ')
+
 const initial = (name: string) => name.trim().split(/\s+/).at(-1)?.charAt(0).toUpperCase() ?? '?'
 
 /** Marks each member's attendance; changes stay on the page until saved (leaving asks first). */
@@ -35,6 +39,9 @@ export interface AttendanceSheetProps {
 export function AttendanceSheet({ rehearsalId, records, header }: Readonly<AttendanceSheetProps>) {
   const { message } = App.useApp()
   const save = useSaveAttendance(rehearsalId)
+  // Voice parts come from approved skills: the attendance rows carry none (artifact AttendancePage asks for the part).
+  const members = useChoirMembers()
+  const skillsOf = useMemo(() => new Map((members.data ?? []).map((member) => [member.id, member.skills])), [members.data])
   const [justSaved, markSaved] = useJustSaved()
   // Only what the user changed; the rest reads from `records`. The sheet is not remounted when the records reload
   // (window refocus, after a save), so these edits, the search and the focus survive.
@@ -122,6 +129,16 @@ export function AttendanceSheet({ rehearsalId, records, header }: Readonly<Atten
             {!valueOf(record) && <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Chưa điểm danh</Typography.Text>}
           </Flex>
         </Flex>
+      ),
+    },
+    {
+      key: 'part',
+      title: 'Bè',
+      width: 160,
+      render: (_, record) => (
+        <Typography.Text style={{ fontSize: typography.label.fontSize, color: colors.textMuted }}>
+          {partsOf(skillsOf.get(record.memberId) ?? []) || 'Chưa có bè'}
+        </Typography.Text>
       ),
     },
     {

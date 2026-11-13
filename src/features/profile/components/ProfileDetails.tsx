@@ -65,7 +65,7 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
           style={{ maxWidth: 560 }}
         >
           <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
-            <Input autoComplete="off" placeholder="Giuse" />
+            <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
           </Form.Item>
           <Form.Item
             label="Họ và tên (không bắt buộc)"

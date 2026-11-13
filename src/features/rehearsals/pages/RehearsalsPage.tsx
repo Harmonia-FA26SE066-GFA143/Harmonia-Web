@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
+import { useCurrentChoir } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, sizes, spacing } from '@/styles/tokens'
@@ -49,7 +50,11 @@ export function RehearsalsPage() {
   const programMap = useMemo(() => new Map((programs.data ?? []).map((program) => [program.id, program])), [programs.data])
   const activeProgram = filters.eventId ? programMap.get(filters.eventId) : undefined
   // The session shown under the week: the one picked, else today's, else the next to come, else the first.
-  const weekItems = (weekRehearsals.data?.items ?? []).toSorted((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))
+  // The choir picked in the running head; a session made before choirs had directors (no choirId) shows for all.
+  const currentChoir = useCurrentChoir()
+  const weekItems = (weekRehearsals.data?.items ?? [])
+    .filter((rehearsal) => !currentChoir || !rehearsal.choirId || rehearsal.choirId === currentChoir)
+    .toSorted((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))
   const picked =
     weekItems.find((rehearsal) => rehearsal.id === pickedId) ??
     weekItems.find((rehearsal) => isRehearsalDay(rehearsal)) ??

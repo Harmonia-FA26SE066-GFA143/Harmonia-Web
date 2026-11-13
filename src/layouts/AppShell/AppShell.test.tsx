@@ -3,6 +3,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
 import dayjs from 'dayjs'
+import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as daysApi from '@/features/liturgical-programs/api/liturgicalDaysApi'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as registrationsApi from '@/features/member-registrations/api/memberRegistrationsApi'
@@ -95,6 +96,26 @@ describe('AppShell', () => {
     expect(await within(pages).findByText('Mùa Thường Niên')).toBeInTheDocument()
     // The nearest one, not the first listed.
     expect(await within(pages).findByRole('link', { name: /^Thánh lễ kế tiếp: Lễ Chúa Nhật/ })).toHaveAttribute('href', '/director/programs/p3')
+  })
+
+  it('lets the Choir Director pick the choir they work in, kept in this browser', async () => {
+    setViewportWidth(1440)
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
+      { id: 'c2', name: 'Ca đoàn Thiếu nhi', isActive: true },
+      { id: 'c3', name: 'Ca đoàn cũ', isActive: false },
+    ])
+    renderShellAt('/director/rehearsals')
+
+    const picker = await screen.findByRole('combobox', { name: 'Ca đoàn đang làm việc' })
+    expect(screen.getByText('Tất cả ca đoàn')).toBeInTheDocument()
+    fireEvent.mouseDown(picker)
+    // Only the choirs still active are offered.
+    expect(await screen.findByRole('option', { name: 'Ca đoàn Thiếu nhi' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Ca đoàn cũ' })).toBeNull()
+    fireEvent.click(screen.getByRole('option', { name: 'Ca đoàn Thiếu nhi' }))
+    expect(localStorage.getItem('harmonia:current-choir')).toBe('c2')
+    localStorage.removeItem('harmonia:current-choir')
   })
 
   it('offers the role workspaces on role-neutral pages', async () => {

@@ -68,7 +68,7 @@ export function AccountFormDrawer({ open, account, saving = false, emailError, o
         <Input autoFocus inputMode="email" autoComplete="off" placeholder="ten@giaoxu.org" />
       </Form.Item>
       <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
-        <Input autoComplete="off" placeholder="Giuse" />
+        <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
       </Form.Item>
       <Form.Item
         label="Họ và tên (không bắt buộc)"
