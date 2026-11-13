@@ -76,6 +76,11 @@ function enterTime(value: string) {
 describe('CreateProgramPage', () => {
   it('requires date, time, place, a Mass or ceremony type and a serving choir', async () => {
     const create = vi.spyOn(eventsApi, 'createEvent')
+    // With two active choirs nothing is chosen for the Priest.
+    vi.mocked(choirsApi.listChoirs).mockResolvedValue([
+      { id: 'choir-1', name: 'Ca đoàn Cecilia', isActive: true },
+      { id: 'choir-2', name: 'Ca đoàn Têrêsa', isActive: true },
+    ])
     renderPage(<CreateProgramPage />, route)
 
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
@@ -96,10 +101,10 @@ describe('CreateProgramPage', () => {
     enterTime('18:30')
     await choose('Nơi cử hành', 'Nhà thờ chính')
     await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
-    // A switched-off choir cannot serve a new event; a single choir becomes the lead by itself.
+    // A switched-off choir cannot serve a new event; the only active choir is already chosen, as serving and lead.
     fireEvent.mouseDown(field('Ca đoàn phục vụ', 'combobox'))
     expect(screen.queryByTitle('Ca đoàn cũ')).toBeNull()
-    await choose('Ca đoàn phục vụ', 'Ca đoàn Cecilia')
+    expect(await screen.findAllByTitle('Ca đoàn Cecilia')).not.toHaveLength(0)
     fireEvent.change(field('Tiêu đề (không bắt buộc)'), { target: { value: '  Lễ Bổn mạng ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
@@ -129,7 +134,6 @@ describe('CreateProgramPage', () => {
     enterTime('18:30')
     await choose('Nơi cử hành', 'Nhà thờ chính')
     await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
-    await choose('Ca đoàn phục vụ', 'Ca đoàn Cecilia')
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
     expect(await screen.findByText('Đã tạo bản nháp sự kiện, mùa phụng vụ được điền là Mùa Thường Niên.')).toBeInTheDocument()
@@ -142,7 +146,6 @@ describe('CreateProgramPage', () => {
     enterTime('18:30')
     await choose('Nơi cử hành', 'Nhà thờ chính')
     await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
-    await choose('Ca đoàn phục vụ', 'Ca đoàn Cecilia')
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
     expect(await screen.findByText('Đã có sự kiện khác cùng ngày, giờ và nơi cử hành.')).toBeInTheDocument()

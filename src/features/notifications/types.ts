@@ -6,4 +6,7 @@ export interface AppNotification {
   /** Backend `DateTime`; read it with `parseUtc`. */
   createdAt: string
   isRead: boolean
+  /** Entity name of what the notification is about (e.g. `LiturgicalEvent`) and its id; absent on general ones. */
+  referenceType?: string | null
+  referenceId?: string | null
 }

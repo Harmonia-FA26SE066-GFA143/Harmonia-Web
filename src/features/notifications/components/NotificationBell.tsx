@@ -1,8 +1,10 @@
 import { BellOutlined } from '@ant-design/icons'
 import { App, Badge, Button, Dropdown, Flex, theme, Typography } from 'antd'
 import { useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { formatDateTime } from '@/lib/api/dates'
 import { requestFailureMessage } from '@/lib/api/errors'
+import { getSession } from '@/lib/auth/session'
 import { ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, radius, sizes, spacing, typography } from '@/styles/tokens'
 import {
@@ -11,6 +13,7 @@ import {
   useNotificationList,
   useUnreadNotificationCount,
 } from '../hooks/useNotifications'
+import { notificationPath } from '../notificationRoutes'
 import type { AppNotification } from '../types'
 
 function NotificationContent({ notification }: Readonly<{ notification: AppNotification }>) {
@@ -44,20 +47,24 @@ const itemStyle = {
   font: 'inherit',
 } as const
 
-/** An unread notification is a button that marks it read; a read one has nothing to do, so it is not a control. */
-function NotificationItem({ notification, onMarkRead }: Readonly<{ notification: AppNotification; onMarkRead: (id: string) => void }>) {
+/**
+ * A notification is a button when there is something to do: open the page of its subject, mark it read, or both. A
+ * read one about nothing the web shows is not a control.
+ */
+function NotificationItem({ notification, onOpen }: Readonly<{ notification: AppNotification; onOpen: (notification: AppNotification, path?: string) => void }>) {
+  const path = notificationPath(notification, getSession()?.user.roleName)
   return (
     <li>
-      {notification.isRead ? (
+      {notification.isRead && !path ? (
         <div style={{ ...itemStyle, background: 'transparent' }}>
           <NotificationContent notification={notification} />
         </div>
       ) : (
         <button
           type="button"
-          title="Bấm để đánh dấu đã đọc"
-          onClick={() => onMarkRead(notification.id)}
-          style={{ ...itemStyle, background: colors.background, cursor: 'pointer' }}
+          title={path ? 'Bấm để mở' : 'Bấm để đánh dấu đã đọc'}
+          onClick={() => onOpen(notification, path)}
+          style={{ ...itemStyle, background: notification.isRead ? 'transparent' : colors.background, cursor: 'pointer' }}
         >
           <NotificationContent notification={notification} />
         </button>
@@ -66,7 +73,7 @@ function NotificationItem({ notification, onMarkRead }: Readonly<{ notification:
   )
 }
 
-function NotificationList({ open, onMarkRead }: Readonly<{ open: boolean; onMarkRead: (id: string) => void }>) {
+function NotificationList({ open, onOpen }: Readonly<{ open: boolean; onOpen: (notification: AppNotification, path?: string) => void }>) {
   const list = useNotificationList(open)
   const items = list.data?.pages.flatMap((page) => page.items) ?? []
 
@@ -79,7 +86,7 @@ function NotificationList({ open, onMarkRead }: Readonly<{ open: boolean; onMark
     <Flex vertical gap={spacing.xs}>
       <Flex component="ul" vertical gap={spacing.xs} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {items.map((notification) => (
-          <NotificationItem key={notification.id} notification={notification} onMarkRead={onMarkRead} />
+          <NotificationItem key={notification.id} notification={notification} onOpen={onOpen} />
         ))}
       </Flex>
       {list.hasNextPage && (
@@ -93,7 +100,7 @@ function NotificationList({ open, onMarkRead }: Readonly<{ open: boolean; onMark
 
 /**
  * Header bell of every web workspace: unread count and the latest notifications (Harmonia-BE NotificationsController).
- * Opening an unread notification marks it read; "mark all" uses `PUT /api/notifications/read-all`.
+ * Opening a notification marks it read and goes to the page of its subject when the web has one; "mark all" uses `PUT /api/notifications/read-all`.
  *
  * The panel is a Dropdown, not a Popover: the Popover gives its content `role="tooltip"` and puts it at the end of the
  * page, out of the Tab order. Here it is rendered inside a relative wrapper right after the bell, so Tab leads into it,
@@ -101,6 +108,7 @@ function NotificationList({ open, onMarkRead }: Readonly<{ open: boolean; onMark
  */
 export function NotificationBell() {
   const { message } = App.useApp()
+  const navigate = useNavigate()
   const { token } = theme.useToken()
   const [open, setOpen] = useState(false)
   const wrapper = useRef<HTMLDivElement>(null)
@@ -109,8 +117,16 @@ export function NotificationBell() {
   const markRead = useMarkNotificationRead()
   const markAll = useMarkAllNotificationsRead()
 
-  const handleMarkRead = (id: string) =>
-    markRead.mutate(id, { onError: (error) => message.error(requestFailureMessage(error, 'Không thể đánh dấu đã đọc. Vui lòng thử lại.')) })
+  // Opening the subject does not wait for the mark: the page matters more than the badge.
+  const handleOpen = (notification: AppNotification, path?: string) => {
+    if (!notification.isRead) {
+      markRead.mutate(notification.id, { onError: (error) => message.error(requestFailureMessage(error, 'Không thể đánh dấu đã đọc. Vui lòng thử lại.')) })
+    }
+    if (path) {
+      setOpen(false)
+      navigate(path)
+    }
+  }
   const handleMarkAll = () =>
     markAll.mutate(undefined, { onError: (error) => message.error(requestFailureMessage(error, 'Không thể đánh dấu tất cả đã đọc. Vui lòng thử lại.')) })
 
@@ -159,7 +175,7 @@ export function NotificationBell() {
               )}
             </Flex>
             <div style={{ padding: spacing.sm, maxHeight: 420, overflowY: 'auto' }}>
-              <NotificationList open={open} onMarkRead={handleMarkRead} />
+              <NotificationList open={open} onOpen={handleOpen} />
             </div>
           </dialog>
         )}
