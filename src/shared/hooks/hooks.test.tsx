@@ -1,4 +1,4 @@
-import { act, render, renderHook } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useJustSaved } from '@/shared/ui/useJustSaved'
@@ -67,30 +67,37 @@ describe('useReducedMotion', () => {
 describe('useUrlTab', () => {
   const keys = ['songs', 'roster'] as const
 
-  function renderTab(entry: string, state?: unknown) {
-    let location: ReturnType<typeof useLocation> | undefined
-    const probe = { current: undefined as ReturnType<typeof useUrlTab<'songs' | 'roster'>> | undefined }
-    function Probe() {
-      probe.current = useUrlTab(keys, 'songs')
-      location = useLocation()
-      return null
-    }
-    const router = createMemoryRouter([{ path: '/p', element: <Probe /> }], { initialEntries: [{ pathname: '/p', search: entry, state }] })
-    render(<RouterProvider router={router} />)
-    return { probe, location: () => location }
+  function Probe() {
+    const [tab, setTab] = useUrlTab(keys, 'songs')
+    const { search, state } = useLocation()
+    return (
+      <>
+        <p data-testid="tab">{tab}</p>
+        <p data-testid="search">{search}</p>
+        <p data-testid="state">{JSON.stringify(state)}</p>
+        <button onClick={() => setTab('roster')}>roster</button>
+        <button onClick={() => setTab('songs')}>songs</button>
+      </>
+    )
   }
 
+  const renderTab = (search: string, state?: unknown) =>
+    render(<RouterProvider router={createMemoryRouter([{ path: '/p', element: <Probe /> }], { initialEntries: [{ pathname: '/p', search, state }] })} />)
+
   it('reads a known tab and falls back on an unknown one', () => {
-    expect(renderTab('?tab=roster').probe.current?.[0]).toBe('roster')
-    expect(renderTab('?tab=hack').probe.current?.[0]).toBe('songs')
+    renderTab('?tab=roster')
+    expect(screen.getByTestId('tab')).toHaveTextContent('roster')
+    cleanup()
+    renderTab('?tab=hack')
+    expect(screen.getByTestId('tab')).toHaveTextContent('songs')
   })
 
   it('writes the tab, drops it for the fallback, and keeps other params and router state', () => {
-    const { probe, location } = renderTab('?page=2', { listSearch: '?q=1' })
-    act(() => probe.current?.[1]('roster'))
-    expect(location()?.search).toBe('?page=2&tab=roster')
-    expect(location()?.state).toEqual({ listSearch: '?q=1' })
-    act(() => probe.current?.[1]('songs'))
-    expect(location()?.search).toBe('?page=2')
+    renderTab('?page=2', { listSearch: '?q=1' })
+    fireEvent.click(screen.getByRole('button', { name: 'roster' }))
+    expect(screen.getByTestId('search')).toHaveTextContent('?page=2&tab=roster')
+    expect(screen.getByTestId('state')).toHaveTextContent('{"listSearch":"?q=1"}')
+    fireEvent.click(screen.getByRole('button', { name: 'songs' }))
+    expect(screen.getByTestId('search')).toHaveTextContent(/^\?page=2$/)
   })
 })
