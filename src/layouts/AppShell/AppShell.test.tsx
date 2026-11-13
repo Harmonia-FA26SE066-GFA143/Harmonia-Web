@@ -44,6 +44,7 @@ function renderShellAt(path: string) {
       <RouterProvider router={router} />
     </AppProviders>,
   )
+  return router
 }
 
 afterEach(() => {
@@ -209,6 +210,38 @@ describe('AppShell', () => {
     fireEvent.click(item)
 
     await waitFor(() => expect(markRead).toHaveBeenCalledWith('n1'))
+  })
+
+  it('opens the page of what a notification is about, read or not, inside the reader’s workspace', async () => {
+    setViewportWidth(1280)
+    setSession({
+      accessToken: 'access',
+      accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+      refreshToken: 'refresh',
+      user: { id: 'u1', email: 'cathy@giaoxu.org', roleName: 'ChoirDirector' },
+    })
+    vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(1)
+    vi.spyOn(notificationsApi, 'listNotifications').mockResolvedValue({
+      items: [
+        { id: 'n1', title: 'Sự kiện mới được công bố', content: 'Lễ Chúa Nhật', createdAt: '2026-10-08T02:00:00Z', isRead: false, referenceType: 'LiturgicalEvent', referenceId: 'e1' },
+        { id: 'n2', title: 'Có đăng ký gia nhập mới', content: 'Của Admin', createdAt: '2026-10-07T02:00:00Z', isRead: true, referenceType: 'MemberRegistration', referenceId: 'r1' },
+      ],
+      pageNumber: 1,
+      pageSize: 10,
+      totalCount: 2,
+      totalPages: 1,
+    })
+    const markRead = vi.spyOn(notificationsApi, 'markNotificationRead').mockResolvedValue()
+    const router = renderShellAt('/director')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo, 1 chưa đọc' }))
+    // A subject of another role's workspace has no page here: the read notification stays plain text.
+    expect((await screen.findByText('Có đăng ký gia nhập mới')).closest('button')).toBeNull()
+    fireEvent.click(screen.getByText('Sự kiện mới được công bố'))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/director/programs/e1'))
+    expect(markRead).toHaveBeenCalledWith('n1')
+    expect(screen.getByRole('button', { name: /^Thông báo/ })).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('opens the notifications as a dialog next to the bell; only unread ones are buttons; Escape closes it', async () => {

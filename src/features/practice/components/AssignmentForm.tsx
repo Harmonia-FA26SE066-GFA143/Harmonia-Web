@@ -1,6 +1,7 @@
 import { SendOutlined } from '@ant-design/icons'
 import { App, Button, Card, DatePicker, Flex, Input, Radio, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
+import { useEffect } from 'react'
 import { useSearchParams } from 'react-router'
 import { useChoirs, useCurrentChoir, useMembersOfChoir } from '@/features/choirs'
 import { useSongMaterials, useSongs } from '@/features/music-library'
@@ -76,6 +77,12 @@ export function AssignmentForm() {
   const choirs = useChoirs()
   const activeChoirs = (choirs.data ?? []).filter((choir) => choir.isActive)
   const currentChoir = useCurrentChoir()
+  // The choir of the running head, else the only one the director leads. The form reads `initialValues` once, usually
+  // before the choirs have loaded, so the field is filled when they arrive, unless the director already chose.
+  const defaultChoirId = currentChoir ?? (activeChoirs.length === 1 ? activeChoirs[0].id : undefined)
+  useEffect(() => {
+    if (defaultChoirId && !form.getFieldValue('choirId')) form.setFieldValue('choirId', defaultChoirId)
+  }, [defaultChoirId, form])
   const members = useMembersOfChoir(choirId)
   const eventId = Form.useWatch('eventId', form)
   const dueDate = Form.useWatch('dueDate', form)
@@ -101,6 +108,7 @@ export function AssignmentForm() {
         onSuccess: () => {
           message.success('Đã giao bài tập. Ca viên sẽ nhận được thông báo.')
           form.resetFields()
+          if (defaultChoirId) form.setFieldValue('choirId', defaultChoirId)
         },
         onError: (error) => message.error(practiceErrorMessage(error, 'Không thể giao bài tập. Vui lòng thử lại.')),
       },
@@ -113,7 +121,7 @@ export function AssignmentForm() {
         <Form<FormValues>
           form={form}
           layout="vertical"
-          initialValues={{ scope: 'all', eventId: urlProgramId, songId: params.get('songId') ?? undefined, choirId: currentChoir ?? (activeChoirs.length === 1 ? activeChoirs[0].id : undefined) }}
+          initialValues={{ scope: 'all', eventId: urlProgramId, songId: params.get('songId') ?? undefined, choirId: defaultChoirId }}
           onFinish={handleFinish}
         >
           <section className="hm-form-section">

@@ -1,5 +1,6 @@
 import { Button, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
+import { useEffect } from 'react'
 import { useChoirs } from '@/features/choirs'
 import { useCatalogOptions } from '@/features/system-categories'
 import { spacing } from '@/styles/tokens'
@@ -76,6 +77,12 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
       ...(event ? {} : { choirIds: values.choirIds, leadChoirId: values.leadChoirId }),
     })
   }
+
+  // A parish with one active choir has nothing to choose: it serves and leads, and the Priest may still change it.
+  const onlyChoirId = !event && choirOptions.length === 1 ? choirOptions[0].value : undefined
+  useEffect(() => {
+    if (onlyChoirId && !form.isFieldTouched('choirIds')) form.setFieldsValue({ choirIds: [onlyChoirId], leadChoirId: onlyChoirId })
+  }, [onlyChoirId, form])
 
   // Keeps the lead among the chosen choirs, and picks the only one when a single choir serves.
   const chooseChoirs = (choirIds: string[]) => {
