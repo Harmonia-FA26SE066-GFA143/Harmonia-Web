@@ -82,4 +82,16 @@ describe('SettingsPage', () => {
     expect(update).toHaveBeenCalledWith('s3', 'true')
     expect(await screen.findByText('Đã lưu 2 thiết lập.')).toBeInTheDocument()
   })
+
+  it('says how many settings were stored when a later one is refused', async () => {
+    vi.spyOn(settingsApi, 'listSettings').mockResolvedValue(settings)
+    vi.spyOn(settingsApi, 'updateSetting').mockResolvedValueOnce().mockRejectedValueOnce(new ApiError(500, undefined))
+    renderPage(<SettingsPage />, '/admin/settings')
+
+    fireEvent.change(await screen.findByRole('spinbutton', { name: 'Số ngày tính là phục vụ gần đây' }), { target: { value: '90' } })
+    fireEvent.click(screen.getByRole('switch', { name: 'Cho nộp bài tập trễ hạn' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
+
+    expect(await screen.findByText(/^Đã lưu 1 trên 2 thiết lập, phần còn lại chưa lưu\./)).toBeInTheDocument()
+  })
 })

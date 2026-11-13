@@ -5,6 +5,8 @@ const messages: Record<string, string> = {
   USER_NOT_FOUND: 'Tài khoản không còn tồn tại. Vui lòng tải lại trang.',
   USER_CANNOT_MODIFY_SELF: 'Bạn không thể đổi vai trò hoặc ngừng hoạt động tài khoản của chính mình.',
   USER_LAST_ADMIN: 'Hệ thống cần ít nhất một Quản trị viên đang hoạt động.',
+  // UserService.DeactivateAsync / ChangeRoleAsync: a Choir Director who still directs a choir keeps the account as it is.
+  USER_STILL_DIRECTING: 'Ca trưởng này còn phụ trách ca đoàn. Hãy giao ca đoàn cho ca trưởng khác ở trang Ca đoàn trước.',
   USER_ALREADY_ACTIVE: 'Tài khoản đã đang hoạt động.',
   USER_ALREADY_INACTIVE: 'Tài khoản đã ngừng hoạt động.',
 }

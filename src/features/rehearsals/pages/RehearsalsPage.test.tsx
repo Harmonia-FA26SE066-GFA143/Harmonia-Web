@@ -334,6 +334,47 @@ describe('RehearsalPracticeRoomPage', () => {
     expect(get).toHaveBeenCalledWith('r2')
   })
 
+  it('keeps a take whose upload failed, to save again without singing it again', async () => {
+    // jsdom has neither a microphone nor a recorder: one chunk arrives when the take is stopped.
+    class FakeRecorder {
+      state = 'inactive'
+      mimeType = 'audio/webm'
+      ondataavailable: ((event: { data: Blob }) => void) | null = null
+      onstop: (() => void) | null = null
+      start() {
+        this.state = 'recording'
+      }
+      stop() {
+        this.state = 'inactive'
+        this.ondataavailable?.({ data: new Blob(['take']) })
+        this.onstop?.()
+      }
+    }
+    vi.stubGlobal('MediaRecorder', FakeRecorder)
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: async () => ({ getTracks: () => [] }) } })
+    vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({ ...rehearsals[1], songs: [{ songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ' }] })
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([])
+    vi.spyOn(rehearsalsApi, 'listRecordings').mockResolvedValue([])
+    const create = vi.spyOn(rehearsalsApi, 'createRecording').mockRejectedValueOnce(new ApiError(500, undefined)).mockResolvedValueOnce()
+    try {
+      renderPage(<RehearsalPracticeRoomPage />, '/director/rehearsals/:rehearsalId', '/director/rehearsals/r2')
+
+      fireEvent.click(await screen.findByRole('button', { name: /Thu âm$/ }))
+      fireEvent.click(await screen.findByRole('button', { name: /Dừng và lưu/ }))
+      expect(await screen.findByText(/Bản thu “Con Bước Lên Bàn Thờ” .* chưa lưu được\./)).toBeInTheDocument()
+      // No second take over the one still waiting.
+      expect(screen.getByRole('button', { name: /Thu âm$/ })).toBeDisabled()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Lưu lại' }))
+      await waitFor(() => expect(create).toHaveBeenCalledTimes(2))
+      expect(create.mock.calls[1][1].file).toBe(create.mock.calls[0][1].file)
+      await waitFor(() => expect(screen.queryByText(/chưa lưu được/)).toBeNull())
+    } finally {
+      vi.unstubAllGlobals()
+      Reflect.deleteProperty(navigator, 'mediaDevices')
+    }
+  })
+
   it('loads a rehearsal opened by its link and lists, plays and deletes the takes of the chosen song (B43)', async () => {
     vi.spyOn(rehearsalsApi, 'getRehearsal').mockResolvedValue({ ...rehearsals[1], songs: [{ songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ', note: 'Điệp khúc 2' }] })
     vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([])

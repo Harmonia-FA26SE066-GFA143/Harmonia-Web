@@ -65,7 +65,8 @@ export function MemberRegistrationsPage() {
               duration: 8,
               content: (
                 <>
-                  Đã tạo tài khoản Ca viên cho {item.fullName}. Mật khẩu đầu tiên đã được gửi qua email. Ca viên chưa thuộc ca đoàn nào.{' '}
+                  Đã tạo tài khoản Ca viên cho {item.fullName}. Mật khẩu đầu tiên được gửi qua email; nếu không nhận được, ca viên chọn “Quên mật khẩu?” ở trang
+                  đăng nhập. Ca viên chưa thuộc ca đoàn nào.{' '}
                   <Button type="link" size="small" style={{ padding: 0 }} onClick={() => navigate(paths.admin.choirs)}>
                     Xếp vào ca đoàn
                   </Button>

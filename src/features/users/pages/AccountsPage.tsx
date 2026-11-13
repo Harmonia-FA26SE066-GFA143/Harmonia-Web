@@ -53,7 +53,12 @@ export function AccountsPage() {
     setEmailError(undefined)
     const callbacks = {
       onSuccess: () => {
-        message.success(form.account ? 'Đã lưu thay đổi.' : 'Đã tạo tài khoản.')
+        // The backend creates the account even when the email cannot be sent (UserService.CreateAsync), so name the way in.
+        message.success(
+          form.account
+            ? 'Đã lưu thay đổi.'
+            : 'Đã tạo tài khoản. Mật khẩu đầu tiên được gửi qua email; nếu không nhận được, người dùng chọn “Quên mật khẩu?” ở trang đăng nhập.',
+        )
         closeForm()
       },
       onError: (error: Error) =>

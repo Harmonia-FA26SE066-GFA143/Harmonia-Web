@@ -91,7 +91,11 @@ export function SettingsPage() {
         markSaved()
         message.success(`Đã lưu ${changes.length} thiết lập.`)
       },
-      onError: (error) => message.error(settingErrorMessage(error, 'Không thể lưu cấu hình. Vui lòng thử lại.')),
+      onError: (error) => {
+        const reason = settingErrorMessage(error, 'Không thể lưu cấu hình. Vui lòng thử lại.')
+        const saved = (error as { savedCount?: number }).savedCount ?? 0
+        message.error(saved > 0 ? `Đã lưu ${saved} trên ${changes.length} thiết lập, phần còn lại chưa lưu. ${reason}` : reason)
+      },
     })
   }
 

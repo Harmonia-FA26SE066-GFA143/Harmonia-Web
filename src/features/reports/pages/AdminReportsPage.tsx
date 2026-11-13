@@ -17,7 +17,7 @@ import { useExportReport } from '../hooks/useReports'
 import { adminReportKinds, reportDefinitions } from '../reportDefinitions'
 import { reportErrorMessage } from '../reportErrors'
 import { hasActiveReportFilters, readReportFilters, writeReportParams } from '../reportFilters'
-import { saveFile } from '../saveFile'
+import { saveFile } from '@/shared/utils/saveFile'
 import type { AdminReportKind, ReportExportRequest, ReportFilters } from '../types'
 
 /**

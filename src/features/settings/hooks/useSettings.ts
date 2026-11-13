@@ -21,7 +21,16 @@ export function useUpdateSettings() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (changes: { id: string; value: string }[]) => {
-      for (const { id, value } of changes) await updateSetting(id, value)
+      let saved = 0
+      try {
+        for (const { id, value } of changes) {
+          await updateSetting(id, value)
+          saved += 1
+        }
+      } catch (error) {
+        // The settings before the refused one are stored: the page says how many, instead of "nothing was saved".
+        throw Object.assign(error as Error, { savedCount: saved })
+      }
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: settingsKey }),
   })

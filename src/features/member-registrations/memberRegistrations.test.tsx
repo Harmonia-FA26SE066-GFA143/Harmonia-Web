@@ -44,6 +44,18 @@ describe('JoinChoirPage', () => {
     expect(await screen.findByText(/thử lại sau 10 phút/)).toBeInTheDocument()
     expect(screen.getByLabelText(/Họ tên/)).toHaveValue('An')
   })
+
+  it('names the refused fields by their label on the form, not by the backend’s field names', async () => {
+    vi.spyOn(api, 'submitRegistration').mockRejectedValue(
+      new ApiError(400, { code: 'VALIDATION_FAILED', errors: { Email: ['x'], FullName: ['x'] } }),
+    )
+    renderPage(<JoinChoirPage />, '/join')
+    fill('Họ tên', 'An')
+    fill('Email', 'an@giaoxu.org')
+    send()
+
+    expect(await screen.findByText('Ô cần xem lại: Email, Họ tên.')).toBeInTheDocument()
+  })
 })
 
 const row: api.MemberRegistration = { id: 'r1', fullName: 'An Nguyễn', email: 'an@giaoxu.org', phone: null, saintName: null, note: 'Ca đoàn Cecilia', createdAt: '2026-11-09T08:00:00Z' }

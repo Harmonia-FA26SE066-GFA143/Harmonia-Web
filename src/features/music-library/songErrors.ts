@@ -70,6 +70,9 @@ export function uploadErrorMessage(error: Error): string {
       return 'Tệp vượt quá 20 MB. Vui lòng chọn tệp nhỏ hơn.'
     case 'MATERIAL_FILE_REQUIRED':
       return 'Tệp rỗng, vui lòng chọn tệp khác.'
+    // The length of a recorded .mp3 / .m4a / .wav could not be read (MusicMaterialService.ReadAudioDuration).
+    case 'MATERIAL_AUDIO_INVALID':
+      return 'Không đọc được tệp audio này, có thể tệp bị hỏng. Vui lòng xuất lại tệp hoặc chọn tệp khác.'
     case 'SKILL_INACTIVE':
     case 'SKILL_NOT_FOUND':
       return 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại. Vui lòng chọn kỹ năng khác.'
