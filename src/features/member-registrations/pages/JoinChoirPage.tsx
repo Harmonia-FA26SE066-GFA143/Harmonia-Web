@@ -65,7 +65,7 @@ export function JoinChoirPage() {
         }}
       >
         <Form.Item name="saintName" label="Tên thánh" rules={saintNameRules}>
-          <Input autoComplete="off" placeholder="Giuse" />
+          <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
         </Form.Item>
         <Form.Item name="fullName" label="Họ tên" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập họ tên.' }, { max: 100, message: 'Vui lòng nhập tối đa 100 ký tự.' }]}>
           <Input autoComplete="name" />

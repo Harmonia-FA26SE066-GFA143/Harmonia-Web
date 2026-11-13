@@ -64,7 +64,7 @@ export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }:
         </Typography.Paragraph>
       )}
       <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
-        <Input autoComplete="off" placeholder="Giuse" />
+        <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
       </Form.Item>
       <Form.Item label="Số điện thoại (không bắt buộc)" name="phone" rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}>
         <Input type="tel" autoComplete="off" />

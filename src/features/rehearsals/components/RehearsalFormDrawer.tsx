@@ -1,7 +1,7 @@
 import { App, Button, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
-import { useChoirs } from '@/features/choirs'
+import { useChoirs, useCurrentChoir } from '@/features/choirs'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { useSongs } from '@/features/music-library'
 import { useCatalogOptions } from '@/features/system-categories'
@@ -122,6 +122,7 @@ export function RehearsalFormDrawer({
   const locations = useCatalogOptions('worshipLocations')
   const choirs = useChoirs()
   const activeChoirs = (choirs.data ?? []).filter((choir) => choir.isActive)
+  const currentChoir = useCurrentChoir()
   // A session keeps a location switched off since, and a program no longer upcoming; both stay selectable.
   const locationOptions =
     rehearsal?.locationId && !locations.some((option) => option.value === rehearsal.locationId)
@@ -150,7 +151,7 @@ export function RehearsalFormDrawer({
         <Form<FormValues>
           layout="vertical"
           initialValues={{
-            choirId: activeChoirs.length === 1 ? activeChoirs[0].id : undefined,
+            choirId: currentChoir ?? (activeChoirs.length === 1 ? activeChoirs[0].id : undefined),
             eventId: rehearsal ? rehearsal.eventId : defaultProgramId,
             date: rehearsal ? dayjs(rehearsal.startAt) : undefined,
             time: rehearsal ? [dayjs(rehearsal.startAt), dayjs(rehearsal.endAt)] : undefined,

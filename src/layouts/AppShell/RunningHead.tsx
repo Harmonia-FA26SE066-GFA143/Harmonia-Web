@@ -59,6 +59,8 @@ interface RunningHeadProps {
   selectedPath: string | undefined
   brand: ReactNode
   controls: ReactNode
+  /** The start of the ivory band: the choir switcher, for the roles that work in a choir. */
+  choir?: ReactNode
   /** The right end of the ivory band: today's season and the next Mass. */
   day?: ReactNode
   scrolled: boolean
@@ -69,7 +71,7 @@ interface RunningHeadProps {
  * on the bookcloth band, the current area's pages on the ivory band below. Areas are the sections of `navigation.ts`,
  * so routes and role menus are unchanged. An area links to its first page.
  */
-export function RunningHead({ sections, selectedPath, brand, controls, day, scrolled }: Readonly<RunningHeadProps>) {
+export function RunningHead({ sections, selectedPath, brand, controls, choir, day, scrolled }: Readonly<RunningHeadProps>) {
   const found = sections.findIndex((section) => section.items.some((item) => item.path === selectedPath))
   const areaIndex = Math.max(found, 0)
   const area = sections[areaIndex]
@@ -106,6 +108,7 @@ export function RunningHead({ sections, selectedPath, brand, controls, day, scro
         <div className="hm-top__end">{controls}</div>
       </div>
       <nav className="hm-sub" aria-label={`Các trang của ${area.label}`}>
+        {choir}
         <div ref={tabsBox} className="hm-tabs">
           <span ref={underline} className="hm-underline" aria-hidden />
           <div key={areaIndex} className={['hm-tabs__list', seen.from && `in-from-${seen.from}`].filter(Boolean).join(' ')}>

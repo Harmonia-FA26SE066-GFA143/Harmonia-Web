@@ -2,7 +2,7 @@ import { SendOutlined } from '@ant-design/icons'
 import { App, Button, Card, DatePicker, Flex, Input, Radio, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useSearchParams } from 'react-router'
-import { useChoirs, useMembersOfChoir } from '@/features/choirs'
+import { useChoirs, useCurrentChoir, useMembersOfChoir } from '@/features/choirs'
 import { useSongMaterials, useSongs } from '@/features/music-library'
 import { useCatalogOptions } from '@/features/system-categories'
 import { colors, spacing } from '@/styles/tokens'
@@ -75,6 +75,7 @@ export function AssignmentForm() {
   const skills = useCatalogOptions('skills')
   const choirs = useChoirs()
   const activeChoirs = (choirs.data ?? []).filter((choir) => choir.isActive)
+  const currentChoir = useCurrentChoir()
   const members = useMembersOfChoir(choirId)
   const eventId = Form.useWatch('eventId', form)
   const dueDate = Form.useWatch('dueDate', form)
@@ -112,7 +113,7 @@ export function AssignmentForm() {
         <Form<FormValues>
           form={form}
           layout="vertical"
-          initialValues={{ scope: 'all', eventId: urlProgramId, songId: params.get('songId') ?? undefined, choirId: activeChoirs.length === 1 ? activeChoirs[0].id : undefined }}
+          initialValues={{ scope: 'all', eventId: urlProgramId, songId: params.get('songId') ?? undefined, choirId: currentChoir ?? (activeChoirs.length === 1 ? activeChoirs[0].id : undefined) }}
           onFinish={handleFinish}
         >
           <section className="hm-form-section">
