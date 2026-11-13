@@ -72,7 +72,7 @@ export function CatalogItemDrawer<T extends CatalogEntry, V extends { name: stri
         label="Đang sử dụng"
         name="isActive"
         valuePropName="checked"
-        extra="Mục ngừng dùng vẫn được giữ lại nhưng không còn hiện trong các danh sách chọn."
+        extra="Mục ngừng dùng vẫn được giữ lại nhưng không còn hiện trong các danh sách chọn. Nơi đang dùng mục này, chẳng hạn một sự kiện nháp, phải chọn mục khác trước khi lưu hoặc công bố."
       >
         <Switch />
       </Form.Item>
