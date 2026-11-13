@@ -16,8 +16,9 @@ export interface FormDrawerProps extends Omit<DrawerProps, 'footer' | 'onClose' 
 
 /**
  * Create/edit work that keeps the page in view: a panel from the right with Cancel and the action in its footer, the
- * modal-like API the forms already used. While the action is loading it cannot be closed (Escape, mask, ×, Cancel),
- * so a request in flight is not abandoned. Focus stays inside and returns to the trigger on close (antd defaults).
+ * modal-like API the forms already used. A click beside the panel does not close it, so a stray click cannot drop
+ * what was typed. While the action is loading it cannot be closed at all (Escape, ×, Cancel), so a request in flight
+ * is not abandoned. Focus stays inside and returns to the trigger on close (antd defaults).
  * Confirmations of one decision (delete, sign out, send) stay a Modal.
  */
 export function FormDrawer({
@@ -38,7 +39,7 @@ export function FormDrawer({
       onClose={onCancel}
       closable={!busy}
       keyboard={!busy}
-      mask={{ closable: !busy }}
+      mask={{ closable: false }}
       afterOpenChange={(open) => {
         if (!open) afterClose?.()
       }}

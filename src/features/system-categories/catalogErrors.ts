@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api/errors'
+import { ApiError, errorMessage } from '@/lib/api/errors'
 
 const codeOf = (error: Error) => (error instanceof ApiError ? error.code : undefined)
 
@@ -31,5 +31,5 @@ const messages: Record<string, string> = {
 }
 
 export function catalogErrorMessage(error: Error, fallback: string): string {
-  return messages[codeOf(error) ?? ''] ?? fallback
+  return errorMessage(error, messages, fallback)
 }

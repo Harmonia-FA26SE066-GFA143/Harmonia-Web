@@ -286,6 +286,20 @@ function OpenDrawer({ material, materials, onClose }: Readonly<{ material: SongM
     )
   }
 
+  // Timing a song line by line takes minutes; Escape, × and Cancel ask before dropping it.
+  const handleClose = () => {
+    if (!form.isFieldsTouched()) return onClose()
+    modal.confirm({
+      title: 'Bỏ các mốc thời gian chưa lưu?',
+      content: 'Những thay đổi từ lần lưu gần nhất sẽ mất.',
+      okText: 'Bỏ thay đổi',
+      okButtonProps: { danger: true },
+      cancelText: 'Tiếp tục sửa',
+      autoFocusButton: 'cancel',
+      onOk: onClose,
+    })
+  }
+
   const handleDelete = () =>
     modal.confirm({
       title: `Xoá mốc thời gian của “${material.title}”?`,
@@ -314,7 +328,7 @@ function OpenDrawer({ material, materials, onClose }: Readonly<{ material: SongM
       onOk={() => {
         if (timing.data !== undefined) form.submit()
       }}
-      onCancel={onClose}
+      onCancel={handleClose}
       destroyOnHidden
     >
       {timing.isPending && <Skeleton active paragraph={{ rows: 8 }} />}

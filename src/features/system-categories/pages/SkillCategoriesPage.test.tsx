@@ -181,7 +181,7 @@ describe('SkillCategoriesPage', () => {
     const dialog = await screen.findByRole('dialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu thay đổi' }))
 
-    expect(await screen.findByText('Không thể lưu kỹ năng. Vui lòng thử lại.')).toBeInTheDocument()
+    expect(await screen.findByText('Máy chủ đang gặp sự cố. Vui lòng thử lại sau.')).toBeInTheDocument()
     expect(within(dialog).getByRole('textbox', { name: 'Tên kỹ năng' })).toHaveValue('Organ')
   })
 
