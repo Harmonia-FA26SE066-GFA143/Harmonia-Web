@@ -157,6 +157,9 @@ describe('ChoirsPage', () => {
 
   it('lets the Admin add a choir with its director and shows a taken name under the name field', async () => {
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia, giuse])
+    // The Admin page also reads who is in no choir: one active member, in neither choir.
+    vi.spyOn(choirsApi, 'listMembersOfChoir').mockResolvedValue([])
+    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([{ id: 'm9', fullName: 'Anna Đặng Thị Mai', skills: [], roleName: 'ChoirMember' }])
     vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue({
       items: [{ id: 'u2', fullName: 'Giuse Trần', email: 'giuse@giaoxu.org', phone: null, saintName: null, role: 'director', isActive: true, isPasswordChangeRequired: false }],
       pageNumber: 1,
@@ -172,6 +175,8 @@ describe('ChoirsPage', () => {
     expect(await screen.findByText('Ca đoàn Cecilia')).toBeInTheDocument()
     expect(screen.getByText('Phêrô Lê')).toBeInTheDocument()
     expect(screen.getByText('Ngừng hoạt động')).toBeInTheDocument()
+    expect(await screen.findByText('1 ca viên chưa thuộc ca đoàn nào')).toBeInTheDocument()
+    expect(screen.getByText(/Anna Đặng Thị Mai/)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Thêm ca đoàn/ }))
     const dialog = await screen.findByRole('dialog')

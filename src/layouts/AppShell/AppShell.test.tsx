@@ -244,6 +244,33 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: /^Thông báo/ })).toHaveAttribute('aria-expanded', 'false')
   })
 
+  it('opens the review of the event a song-list notification is about', async () => {
+    setViewportWidth(1280)
+    setSession({
+      accessToken: 'access',
+      accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+      refreshToken: 'refresh',
+      user: { id: 'u2', email: 'cha@giaoxu.org', roleName: 'ParishPriest' },
+    })
+    vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(0)
+    vi.spyOn(notificationsApi, 'listNotifications').mockResolvedValue({
+      items: [{ id: 'n1', title: 'Danh sách bài hát chờ duyệt', content: 'Lễ Chúa Nhật', createdAt: '2026-10-08T02:00:00Z', isRead: true, referenceType: 'SongList', referenceId: 'l1' }],
+      pageNumber: 1,
+      pageSize: 10,
+      totalCount: 1,
+      totalPages: 1,
+    })
+    // The reference is the list's id; the page goes by its event.
+    const eventOf = vi.spyOn(notificationsApi, 'getSongListEventId').mockResolvedValue('e7')
+    const router = renderShellAt('/priest')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
+    fireEvent.click(await screen.findByText('Danh sách bài hát chờ duyệt'))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/priest/programs/e7/song-review'))
+    expect(eventOf).toHaveBeenCalledWith('l1')
+  })
+
   it('opens the notifications as a dialog next to the bell; only unread ones are buttons; Escape closes it', async () => {
     setViewportWidth(1280)
     vi.spyOn(notificationsApi, 'countUnreadNotifications').mockResolvedValue(1)

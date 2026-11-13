@@ -8,6 +8,7 @@ import { colors } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { ChoirFormDrawer } from '../components/ChoirFormDrawer'
 import { ChoirMembersDrawer } from '../components/ChoirMembersDrawer'
+import { UnplacedMembersNotice } from '../components/UnplacedMembersNotice'
 import { useChoirs, useSaveChoir } from '../hooks/useChoirs'
 import type { Choir, ChoirValues } from '../types'
 
@@ -156,6 +157,7 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
           action={addButton || undefined}
         />
       )}
+      {admin && choirs.isSuccess && choirs.data.length > 0 && <UnplacedMembersNotice choirs={choirs.data} />}
       {choirs.isSuccess && choirs.data.length > 0 && (
         <Card styles={{ body: { padding: 0 } }}>
           <Table<Choir> rowKey="id" pagination={false} dataSource={choirs.data} scroll={{ x: 'max-content' }} columns={columns} />

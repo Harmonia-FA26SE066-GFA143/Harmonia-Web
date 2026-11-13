@@ -13,7 +13,7 @@ import {
   useNotificationList,
   useUnreadNotificationCount,
 } from '../hooks/useNotifications'
-import { notificationPath } from '../notificationRoutes'
+import { notificationPath, resolveNotificationPath } from '../notificationRoutes'
 import type { AppNotification } from '../types'
 
 function NotificationContent({ notification }: Readonly<{ notification: AppNotification }>) {
@@ -124,7 +124,7 @@ export function NotificationBell() {
     }
     if (path) {
       setOpen(false)
-      navigate(path)
+      void resolveNotificationPath(notification, getSession()?.user.roleName).then((resolved) => navigate(resolved ?? path))
     }
   }
   const handleMarkAll = () =>

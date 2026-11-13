@@ -343,6 +343,17 @@ describe('PracticePage', () => {
     expect(screen.getByRole('link', { name: 'Mở Bản nhạc (tab mới)' })).toHaveAttribute('target', '_blank')
   })
 
+  it('searches the song library on the server, so a song beyond the first page can be given', async () => {
+    const listSongs = vi.mocked(songsApi.listSongs)
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
+    renderPractice()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Bài hát (không bắt buộc)' }), { target: { value: 'Xin Vâng' } })
+
+    await waitFor(() => expect(listSongs).toHaveBeenCalledWith({ search: 'Xin Vâng' }, { pageNumber: 1, pageSize: 50 }))
+  })
+
   it('shows the readiness of each member for the chosen upcoming event', async () => {
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
     vi.spyOn(practiceApi, 'listUpcomingEvents').mockResolvedValue([

@@ -8,6 +8,11 @@ export function listNotifications(pageNumber: number, pageSize: number): Promise
   return apiRequest<PagedList<AppNotification>>(`/api/notifications${toQuery({ pageNumber, pageSize })}`)
 }
 
+/** The event of a song list a notification refers to (`GET /api/song-lists/{id}`, Choir Director and Parish Priest). */
+export async function getSongListEventId(songListId: string): Promise<string> {
+  return (await apiRequest<{ eventId: string }>(`/api/song-lists/${songListId}`)).eventId
+}
+
 export function countUnreadNotifications(): Promise<number> {
   return apiRequest<number>('/api/notifications/unread-count')
 }

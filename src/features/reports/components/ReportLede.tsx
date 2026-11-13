@@ -91,7 +91,11 @@ export function ReportLede({ granularity, anchor, choirId }: Readonly<ReportLede
     ),
     absentTwice === undefined ? null : absentTwice ? (
       <>
-        <b>{absentTwice} ca viên</b> vắng từ hai buổi trở lên.
+        <b>{absentTwice} ca viên</b> vắng từ hai buổi trở lên
+        {/* Counted on one page of the report; say so when the period holds more members than it. */}
+        {members.data && members.data.totalCount > members.data.items.length
+          ? ` (trong ${members.data.items.length} ca viên đầu của ${members.data.totalCount} người).`
+          : '.'}
       </>
     ) : (
       'Không ca viên nào vắng quá một buổi.'
