@@ -1,5 +1,8 @@
 # Playwright E2E
 
+`smoke.spec.ts` needs no backend: each test answers the `/api` calls in the browser. Run it with
+`npm run test:e2e -- smoke --workers=1`; on a slow machine several browsers plus the dev server can run out of memory.
+
 The PDF score test uses the real backend contract and requires a rehearsal containing a PDF score.
 
 Set these environment variables before running `npm run test:e2e`:
