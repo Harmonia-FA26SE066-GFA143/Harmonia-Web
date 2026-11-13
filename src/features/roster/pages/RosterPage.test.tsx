@@ -322,4 +322,13 @@ describe('RosterPage', () => {
 
     await waitFor(() => expect(notify).toHaveBeenCalledWith('r1', ['m1']))
   })
+
+  it('never shows another program in place of the one in the link', async () => {
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue(null)
+    const getRoster = vi.spyOn(rosterApi, 'getRoster')
+    renderPage(<RosterPage />, '/director/roster', '/director/roster?programId=gone')
+
+    expect(await screen.findByRole('heading', { name: 'Không tìm thấy chương trình phụng vụ' })).toBeInTheDocument()
+    expect(getRoster).not.toHaveBeenCalled()
+  })
 })

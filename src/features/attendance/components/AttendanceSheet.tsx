@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useBeforeUnload, useBlocker } from 'react-router'
 import { useChoirMembers } from '@/features/members'
 import { inVoicePart, NoFilterResults, SaveButton, SummaryStrip, useJustSaved, voiceParts } from '@/shared/ui'
+import { nameInitial } from '@/shared/utils/personName'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, media, outcomeColors, radius, shadows, spacing, spine, typography } from '@/styles/tokens'
 import { attendanceErrorMessage } from '../attendanceErrors'
@@ -26,7 +27,7 @@ const withoutSaved = (edits: Record<string, AttendanceValue>, records: Attendanc
 /** The member's voice parts in words, from their approved skills; none when no skill names a part. */
 const partsOf = (skills: readonly string[]) => voiceParts.filter(({ pattern }) => inVoicePart(skills, pattern)).map(({ label }) => label).join(', ')
 
-const initial = (name: string) => name.trim().split(/\s+/).at(-1)?.charAt(0).toUpperCase() ?? '?'
+const initial = nameInitial
 
 /** Marks each member's attendance; changes stay on the page until saved (leaving asks first). */
 export interface AttendanceSheetProps {

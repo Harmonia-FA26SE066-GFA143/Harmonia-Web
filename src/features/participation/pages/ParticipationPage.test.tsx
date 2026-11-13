@@ -1,11 +1,12 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as membersApi from '@/features/members/api/membersApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
-import { programPage } from '@/test/programs'
+import { programPage, testProgram } from '@/test/programs'
 import * as participationApi from '../api/participationApi'
 import type { ParticipationRequest } from '../types'
 import { ParticipationPage } from './ParticipationPage'
@@ -20,7 +21,9 @@ const asked = (memberId: string, fullName: string, fields: Partial<Participation
   ...fields,
 })
 
-const renderParticipation = (initialEntry = '/director/participation') =>
+const member = (memberId: string, fullName: string) => ({ memberId, fullName, email: `${memberId}@example.test`, joinedDate: '2025-01-01' })
+
+const renderParticipation =(initialEntry = '/director/participation') =>
   renderPage(<ParticipationPage />, '/director/participation', initialEntry)
 
 beforeEach(() => {
@@ -34,6 +37,14 @@ beforeEach(() => {
     { id: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: ['Organ'] },
     { id: 'm2', fullName: 'Simon Phan Văn Đức', skills: ['Bass'] },
     { id: 'm3', fullName: 'Anna Đặng Thị Mai', skills: ['Soprano'] },
+  ])
+  // One choir serves the program and the director leads it, so its members are the ones who can be asked.
+  vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([{ choirId: 'c1', name: 'Ca đoàn Cécilia', isActive: true, isLead: true }])
+  vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cécilia', isActive: true }])
+  vi.spyOn(choirsApi, 'listMembersOfChoir').mockResolvedValue([
+    member('m1', 'Maria Nguyễn Thu Hướng'),
+    member('m2', 'Simon Phan Văn Đức'),
+    member('m3', 'Anna Đặng Thị Mai'),
   ])
 })
 
@@ -63,6 +74,59 @@ describe('ParticipationPage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi cho 2 thành viên' }))
 
     await waitFor(() => expect(send).toHaveBeenCalledWith('p2', ['m1', 'm3']))
+  })
+
+  it('offers only members of the serving choirs, and asks another director’s choir as a whole', async () => {
+    vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([])
+    const send = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue()
+    vi.mocked(choirsApi.listEventChoirs).mockResolvedValue([
+      { choirId: 'c1', name: 'Ca đoàn Cécilia', isActive: true, isLead: true },
+      { choirId: 'c2', name: 'Ca đoàn Têrêsa', isActive: true, isLead: false },
+    ])
+    // The parish list also holds a member of no serving choir; the backend would refuse the whole request for it.
+    vi.mocked(membersApi.listChoirMembers).mockResolvedValue([
+      { id: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: ['Organ'] },
+      { id: 'm9', fullName: 'Phêrô Trần Văn Ngoài', skills: [] },
+    ])
+    renderParticipation()
+
+    fireEvent.click((await screen.findAllByRole('button', { name: /Gửi yêu cầu xác nhận/ }))[0])
+    const dialog = await screen.findByRole('dialog')
+    const everyone = await within(dialog).findByRole('checkbox', { name: /Mời mọi ca viên của các ca đoàn phục vụ/ })
+    expect(everyone).toBeChecked()
+    expect(within(dialog).getByText(/Gồm cả Ca đoàn Têrêsa/)).toBeInTheDocument()
+
+    // By name: the director's own choir only, never the member outside the serving choirs.
+    fireEvent.click(everyone)
+    expect(await within(dialog).findByRole('checkbox', { name: /Maria Nguyễn Thu Hướng/ })).toBeInTheDocument()
+    expect(within(dialog).queryByRole('checkbox', { name: /Phêrô Trần Văn Ngoài/ })).toBeNull()
+    expect(choirsApi.listMembersOfChoir).not.toHaveBeenCalledWith('c2')
+
+    fireEvent.click(everyone)
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi cho mọi ca viên chưa được mời' }))
+    await waitFor(() => expect(send).toHaveBeenCalledWith('p2', undefined))
+  })
+
+  it('never shows another program in place of the one in the link', async () => {
+    const get = vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([])
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue(null)
+    renderParticipation('/director/participation?programId=gone')
+
+    expect(await screen.findByRole('heading', { name: 'Không tìm thấy chương trình phụng vụ' })).toBeInTheDocument()
+    expect(get).not.toHaveBeenCalled()
+  })
+
+  it('reads a past program that is no longer in the upcoming list, without sending', async () => {
+    const get = vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([asked('m3', 'Anna Đặng Thị Mai')])
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue({
+      ...testProgram({ id: 'old', eventName: 'Lễ Các Thánh', date: dayjs().subtract(20, 'day').format('YYYY-MM-DD') }),
+      songs: [],
+    })
+    renderParticipation('/director/participation?programId=old')
+
+    expect(await screen.findByRole('heading', { name: 'Lễ Các Thánh' })).toBeInTheDocument()
+    expect(get).toHaveBeenCalledWith('old')
+    expect(await screen.findByText('Chương trình đã qua: không gửi thêm yêu cầu xác nhận được.')).toBeInTheDocument()
   })
 
   it('counts the answers per voice part from approved skills and names the part with the fewest confirmations', async () => {

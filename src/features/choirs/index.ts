@@ -1,6 +1,6 @@
 export { EventChoirsCard } from './components/EventChoirsCard'
 export { LeadChoirNotice } from './components/LeadChoirNotice'
 export { AdminChoirsPage, DirectorChoirsPage } from './pages/ChoirsPage'
-export { useChoirs, useMembersOfChoir } from './hooks/useChoirs'
+export { useChoirs, useEventChoirs, useMembersOfChoir, useMembersOfChoirs } from './hooks/useChoirs'
 export { ChoirSwitcher } from './components/ChoirSwitcher'
 export { setCurrentChoir, useCurrentChoir } from './currentChoir'

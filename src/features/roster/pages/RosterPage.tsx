@@ -2,11 +2,12 @@ import { Alert, Button, Card, Flex, Select } from 'antd'
 import { useMemo } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { formatProgramDate, SongListStatusTag, useUpcomingPrograms } from '@/features/liturgical-programs'
+import { formatProgramDate, SongListStatusTag, usePickedProgram } from '@/features/liturgical-programs'
 import { useChoirMembers } from '@/features/members'
 import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
 import { useLookup } from '@/features/system-categories'
+import { vietnamToday } from '@/lib/api/dates'
 import { EmptyState, ErrorState, MissingPosition, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { RosterPanel } from '../components/RosterPanel'
@@ -15,16 +16,14 @@ import { RosterPanel } from '../components/RosterPanel'
  * Choir Director: staffing requirements and service roster of a program (FE-35–FE-40), as Harmonia-BE builds them
  * (see types.ts). Whole-service roles are staffed at any time; song positions wait for the approved song list
  * (ROSTER_SONG_LIST_NOT_APPROVED), which the page explains in their place.
- * `?programId=` selects the program (link from the program detail); otherwise the next upcoming program.
+ * `?programId=` selects the program (link from the program detail), a past one included; without it the next upcoming
+ * program. A program the backend does not know is said so, never replaced by another one.
  * The backend lists only the programs served by the director's choirs (LiturgicalEventService, choir scope).
  */
 export function RosterPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const programs = useUpcomingPrograms()
-  const allPrograms = useMemo(() => programs.data ?? [], [programs.data])
-  const program =
-    allPrograms.find((item) => item.id === searchParams.get('programId')) ?? allPrograms[0]
+  const { programs, lookup, program, options: allPrograms, looking, missing } = usePickedProgram(searchParams.get('programId'))
   const programId = program?.id ?? ''
   const songList = useSongList(programId, { enabled: Boolean(programId) })
   const approved = songList.data?.status === 'approved'
@@ -52,11 +51,21 @@ export function RosterPage() {
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Phân công' }]}
         description="Bè đồng ca không cần phân công, chỉ cần xác nhận tham gia."
       />
-      {programs.isPending && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
+      {(programs.isPending || looking) && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
       {programs.isError && (
         <ErrorState title="Không thể tải chương trình phụng vụ" error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
       )}
-      {programs.data !== undefined && !program && <EmptyState title="Chưa có chương trình phụng vụ" />}
+      {lookup.isError && (
+        <ErrorState title="Không thể tải chương trình phụng vụ" error={lookup.error} hasData={false} onRetry={() => lookup.refetch()} retrying={lookup.isFetching} />
+      )}
+      {missing && (
+        <EmptyState
+          title="Không tìm thấy chương trình phụng vụ"
+          description="Chương trình không tồn tại, đã bị hủy hoặc đường dẫn không đúng."
+          action={<Button onClick={() => setSearchParams({})}>Xem chương trình sắp tới</Button>}
+        />
+      )}
+      {programs.data !== undefined && !program && !searchParams.get('programId') && <EmptyState title="Chưa có chương trình phụng vụ" />}
       {program && (
         <Flex vertical gap={spacing.md}>
           <Card>
@@ -80,6 +89,8 @@ export function RosterPage() {
               </Flex>
             </Flex>
           </Card>
+          {/* The backend refuses every roster change once the day has passed (LITURGICAL_EVENT_ALREADY_PASSED). */}
+          {program.date < vietnamToday() && <Alert type="info" showIcon title="Chương trình đã qua: không thay đổi phân công được nữa." />}
           {failed && (
             <ErrorState
               title="Không thể tải dữ liệu phân công"
