@@ -2,7 +2,7 @@ import { Alert, Button, Card, Flex, Select } from 'antd'
 import { useMemo } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { formatProgramDate, SongListStatusTag, usePickedProgram } from '@/features/liturgical-programs'
+import { formatProgramDate, PickedProgramFeedback, SongListStatusTag, usePickedProgram } from '@/features/liturgical-programs'
 import { useChoirMembers } from '@/features/members'
 import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
@@ -51,20 +51,13 @@ export function RosterPage() {
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Phân công' }]}
         description="Bè đồng ca không cần phân công, chỉ cần xác nhận tham gia."
       />
-      {(programs.isPending || looking) && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
-      {programs.isError && (
-        <ErrorState title="Không thể tải chương trình phụng vụ" error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
-      )}
-      {lookup.isError && (
-        <ErrorState title="Không thể tải chương trình phụng vụ" error={lookup.error} hasData={false} onRetry={() => lookup.refetch()} retrying={lookup.isFetching} />
-      )}
-      {missing && (
-        <EmptyState
-          title="Không tìm thấy chương trình phụng vụ"
-          description="Chương trình không tồn tại, đã bị hủy hoặc đường dẫn không đúng."
-          action={<Button onClick={() => setSearchParams({})}>Xem chương trình sắp tới</Button>}
-        />
-      )}
+      <PickedProgramFeedback
+        programs={programs}
+        lookup={lookup}
+        looking={looking}
+        missing={missing}
+        onShowUpcoming={() => setSearchParams({})}
+      />
       {programs.data !== undefined && !program && !searchParams.get('programId') && <EmptyState title="Chưa có chương trình phụng vụ" />}
       {program && (
         <Flex vertical gap={spacing.md}>

@@ -3,7 +3,7 @@ import { Alert, App, Avatar, Button, Card, Flex, Input, Popconfirm, Segmented, T
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { usePickedProgram } from '@/features/liturgical-programs'
+import { PickedProgramFeedback, usePickedProgram } from '@/features/liturgical-programs'
 import { SkillTags, useChoirMembers } from '@/features/members'
 import { formatDateTime } from '@/lib/api/dates'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
@@ -138,20 +138,13 @@ export function ParticipationPage() {
         // The first send is offered here; later ones reach members not asked yet, from the list toolbar.
         extra={program && !isPast && participation.data !== undefined && requests.length === 0 && sendButton}
       />
-      {(programs.isPending || looking) && <SectionSkeleton rows={6} label="Đang tải chương trình phụng vụ" />}
-      {programs.isError && (
-        <ErrorState title="Không thể tải chương trình phụng vụ" error={programs.error} hasData={programs.data !== undefined} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
-      )}
-      {lookup.isError && (
-        <ErrorState title="Không thể tải chương trình phụng vụ" error={lookup.error} hasData={false} onRetry={() => lookup.refetch()} retrying={lookup.isFetching} />
-      )}
-      {missing && (
-        <EmptyState
-          title="Không tìm thấy chương trình phụng vụ"
-          description="Chương trình không tồn tại, đã bị hủy hoặc đường dẫn không đúng."
-          action={<Button onClick={() => setSearchParams({})}>Xem chương trình sắp tới</Button>}
-        />
-      )}
+      <PickedProgramFeedback
+        programs={programs}
+        lookup={lookup}
+        looking={looking}
+        missing={missing}
+        onShowUpcoming={() => setSearchParams({})}
+      />
       {programs.data !== undefined && !program && !searchParams.get('programId') && (
         <EmptyState title="Chưa có chương trình phụng vụ" description="Yêu cầu xác nhận tham gia được gửi theo từng chương trình." />
       )}

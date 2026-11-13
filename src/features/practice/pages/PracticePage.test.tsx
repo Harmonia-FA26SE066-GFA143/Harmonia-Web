@@ -287,8 +287,10 @@ describe('PracticePage', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
     const choir = await screen.findByLabelText('Ca đoàn')
     expect(choir).toHaveAttribute('role', 'combobox')
-    fireEvent.mouseDown(choir)
-    fireEvent.click(await screen.findByTitle('Ca đoàn Cecilia'))
+    expect(await screen.findByTitle('Ca đoàn Cecilia')).toBeInTheDocument()
+    // Reset keeps a default that arrived after Ant Design Form read its initialValues.
+    fireEvent.click(screen.getByRole('button', { name: 'Huỷ' }))
+    expect(screen.getByTitle('Ca đoàn Cecilia')).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Tiêu đề'), { target: { value: 'Tập bài nhập lễ' } })
     const song = screen.getByLabelText('Bài hát (không bắt buộc)')
     expect(song).toHaveAttribute('role', 'combobox')

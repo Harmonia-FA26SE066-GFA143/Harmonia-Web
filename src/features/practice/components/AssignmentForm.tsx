@@ -95,6 +95,12 @@ export function AssignmentForm() {
   const event = events.data?.find((item) => item.id === eventId)
   const skillNames = (skills ?? []).filter((skill) => skillIds?.includes(String(skill.value))).map((skill) => skill.label)
 
+  const resetForm = () => {
+    form.resetFields()
+    // `initialValues` may have been read before the choir query completed, so restore the asynchronous default too.
+    if (defaultChoirId) form.setFieldValue('choirId', defaultChoirId)
+  }
+
   const handleFinish = ({ dueDate, ...values }: FormValues) => {
     if (!dueDate || create.isPending) return
     create.mutate(
@@ -107,8 +113,7 @@ export function AssignmentForm() {
       {
         onSuccess: () => {
           message.success('Đã giao bài tập. Ca viên sẽ nhận được thông báo.')
-          form.resetFields()
-          if (defaultChoirId) form.setFieldValue('choirId', defaultChoirId)
+          resetForm()
         },
         onError: (error) => message.error(practiceErrorMessage(error, 'Không thể giao bài tập. Vui lòng thử lại.')),
       },
@@ -246,7 +251,7 @@ export function AssignmentForm() {
           </section>
           <Flex align="center" justify="flex-end" gap={spacing.md} wrap>
             <Typography.Text style={muted}>Bài tập đã giao xem lại ở thẻ “Bài đã giao”.</Typography.Text>
-            <Button onClick={() => form.resetFields()} disabled={create.isPending}>
+            <Button onClick={resetForm} disabled={create.isPending}>
               Huỷ
             </Button>
             <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={create.isPending}>
