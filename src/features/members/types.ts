@@ -1,3 +1,4 @@
+import type { ApiRoleName } from '@/lib/auth/session'
 import type { SystemRole } from '@/shared/types/account'
 /**
  * A choir member as the Choir Director sees them when sending confirmation requests (FE-33) and taking
@@ -9,6 +10,8 @@ export interface ChoirMember {
   id: string
   fullName: string
   skills: string[]
+  /** The account's role now: a profile is kept after its account stops being a Choir Member (BE 9b1f587, B46). */
+  roleName?: ApiRoleName
 }
 
 /** `MemberStatus` of Harmonia-BE. */

@@ -3,6 +3,8 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { App, Button, Card, Descriptions, Drawer, Flex, Input, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
+import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
@@ -32,6 +34,7 @@ const failure = (error: Error, fallback: string) =>
  */
 export function MemberRegistrationsPage() {
   const { message, modal } = App.useApp()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -57,7 +60,18 @@ export function MemberRegistrationsPage() {
         accept
           .mutateAsync(item.id)
           .then(() => {
-            message.success(`Đã tạo tài khoản Ca viên cho ${item.fullName}. Mật khẩu đầu tiên đã được gửi qua email.`)
+            // The new member is in no choir yet, and only members of a choir are asked to serve: lead on to that step.
+            message.success({
+              duration: 8,
+              content: (
+                <>
+                  Đã tạo tài khoản Ca viên cho {item.fullName}. Mật khẩu đầu tiên đã được gửi qua email. Ca viên chưa thuộc ca đoàn nào.{' '}
+                  <Button type="link" size="small" style={{ padding: 0 }} onClick={() => navigate(paths.admin.choirs)}>
+                    Xếp vào ca đoàn
+                  </Button>
+                </>
+              ),
+            })
             setViewing(undefined)
           })
           .catch((error: Error) => message.error(failure(error, 'Không thể chấp nhận yêu cầu. Vui lòng thử lại.'))),

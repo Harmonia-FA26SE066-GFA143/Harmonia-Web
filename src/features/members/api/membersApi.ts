@@ -37,7 +37,7 @@ export async function listChoirMembers(): Promise<ChoirMember[]> {
   const page = await apiRequest<PagedList<MemberProfileSummaryDto>>(
     `/api/member-profiles${toQuery({ status: 'Active', pageNumber: 1, pageSize: 100 })}`,
   )
-  return page.items.map((dto) => ({ id: dto.id, fullName: dto.fullName, skills: skillNames(dto) }))
+  return page.items.map((dto) => ({ id: dto.id, fullName: dto.fullName, skills: skillNames(dto), roleName: dto.roleName }))
 }
 
 export interface MemberPage {

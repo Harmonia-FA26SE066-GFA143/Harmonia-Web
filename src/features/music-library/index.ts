@@ -1,7 +1,7 @@
 export { SongFilterBar } from './components/SongFilterBar'
 export { SongMaterialsPanel } from './components/SongMaterialsPanel'
 export { getInteractiveScore } from './api/songsApi'
-export { useMaterialPlayback, useSongMaterials, useSongs, useTimedLyrics } from './hooks/useSongs'
+export { useMaterialPlayback, useSong, useSongMaterials, useSongs, useTimedLyrics } from './hooks/useSongs'
 export { MusicLibraryPage } from './pages/MusicLibraryPage'
 export { SongDetailPage } from './pages/SongDetailPage'
 export { hasActiveSongFilters } from './songFilters'

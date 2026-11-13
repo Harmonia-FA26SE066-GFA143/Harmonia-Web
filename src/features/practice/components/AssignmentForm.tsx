@@ -1,10 +1,13 @@
 import { SendOutlined } from '@ant-design/icons'
-import { App, Button, Card, DatePicker, Flex, Input, Radio, Select, Typography } from 'antd'
+import { App, Button, Card, DatePicker, Flex, Input, Radio, Select, Typography, type SelectProps } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useChoirs, useCurrentChoir, useMembersOfChoir } from '@/features/choirs'
-import { useSongMaterials, useSongs } from '@/features/music-library'
+import { useSong, useSongMaterials, useSongs } from '@/features/music-library'
+import { useSongList } from '@/features/song-lists'
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
+import { matchesSearch } from '@/shared/utils/search'
 import { useCatalogOptions } from '@/features/system-categories'
 import { colors, spacing } from '@/styles/tokens'
 import { useCreateAssignment, useUpcomingEvents } from '../hooks/usePractice'
@@ -70,8 +73,13 @@ export function AssignmentForm() {
   const choirId = Form.useWatch('choirId', form)
   const create = useCreateAssignment()
   const events = useUpcomingEvents()
-  // ponytail: the first 100 songs by title; a larger library would need the select to search the server.
-  const songs = useSongs({ search: '' }, { pageNumber: 1, pageSize: 100 })
+  // The library is searched on the server, like the rehearsal form: a page of titles never holds a whole library.
+  const [songSearch, setSongSearch] = useState('')
+  const songs = useSongs({ search: useDebouncedValue(songSearch) }, { pageNumber: 1, pageSize: 50 })
+  const urlSongId = params.get('songId') ?? undefined
+  // A song chosen earlier or named in the link may not be on the searched page; its title is kept apart.
+  const linkedSong = useSong(urlSongId ?? '', Boolean(urlSongId))
+  const [pickedSong, setPickedSong] = useState<{ value: string; label: string }>()
   const materials = useSongMaterials(songId ?? '')
   const skills = useCatalogOptions('skills')
   const choirs = useChoirs()
@@ -91,7 +99,21 @@ export function AssignmentForm() {
   const memberIds = Form.useWatch('memberIds', form)
   const recipients = recipientCount(scope, members.data?.length, memberIds)
   const choirName = activeChoirs.find((choir) => choir.id === choirId)?.name
-  const songTitle = songs.data?.items.find((song) => song.id === songId)?.title
+  // The songs of the chosen event's list come first: they are what the choir prepares for it.
+  const eventSongList = useSongList(eventId ?? '', { enabled: Boolean(eventId) })
+  const eventSongs = [...new Map((eventSongList.data?.items ?? []).map((item) => [item.songId, { value: item.songId, label: item.songTitle }])).values()]
+  const librarySongs = (songs.data?.items ?? []).map((song) => ({ value: song.id, label: song.title }))
+  const chosenSong =
+    [pickedSong, ...eventSongs, ...librarySongs].find((option) => option?.value === songId) ??
+    (linkedSong.data && linkedSong.data.id === songId ? { value: linkedSong.data.id, label: linkedSong.data.title } : undefined)
+  const inEvent = new Set(eventSongs.map((option) => option.value))
+  const shownEventSongs = eventSongs.filter((option) => matchesSearch(songSearch, option.label))
+  const otherSongs = [
+    ...(chosenSong && !inEvent.has(chosenSong.value) && !librarySongs.some((option) => option.value === chosenSong.value) ? [chosenSong] : []),
+    ...librarySongs.filter((option) => !inEvent.has(option.value)),
+  ]
+  const songOptions: SelectProps['options'] = shownEventSongs.length > 0 ? [{ label: 'Trong danh sách của sự kiện', options: shownEventSongs }, { label: 'Kho bài hát', options: otherSongs }] : otherSongs
+  const songTitle = chosenSong?.label
   const event = events.data?.find((item) => item.id === eventId)
   const skillNames = (skills ?? []).filter((skill) => skillIds?.includes(String(skill.value))).map((skill) => skill.label)
 
@@ -168,11 +190,16 @@ export function AssignmentForm() {
               <Select
                 allowClear
                 showSearch
-                optionFilterProp="label"
-                placeholder="Chọn bài hát"
-                loading={songs.isPending}
-                onChange={() => form.setFieldValue('materialIds', undefined)}
-                options={(songs.data?.items ?? []).map((song) => ({ value: song.id, label: song.title }))}
+                filterOption={false}
+                onSearch={setSongSearch}
+                placeholder="Gõ tên bài để tìm trong kho"
+                loading={songs.isFetching}
+                onChange={(value?: string) => {
+                  setPickedSong(value ? [...eventSongs, ...librarySongs].find((option) => option.value === value) : undefined)
+                  setSongSearch('')
+                  form.setFieldValue('materialIds', undefined)
+                }}
+                options={songOptions}
               />
             </Form.Item>
             {songId && materials.isPending && <Typography.Paragraph style={muted}>Đang tải tài liệu của bài…</Typography.Paragraph>}

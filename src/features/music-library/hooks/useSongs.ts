@@ -42,8 +42,8 @@ export function useSongs(filters: SongFilters, page: SongPage) {
   })
 }
 
-export function useSong(id: string) {
-  return useQuery({ queryKey: [...songsKey, 'song', id], queryFn: () => getSong(id) })
+export function useSong(id: string, enabled = true) {
+  return useQuery({ queryKey: [...songsKey, 'song', id], queryFn: () => getSong(id), enabled })
 }
 
 export function useSongClassification(id: string) {

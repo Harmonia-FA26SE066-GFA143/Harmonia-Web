@@ -11,7 +11,8 @@ const pageSize = 10
 
 /**
  * Unread count for the header badge. ponytail: polled every minute and on window focus instead of the backend's
- * SignalR hub (`/hubs/notifications`), which needs `@microsoft/signalr`; add it when notices must appear at once.
+ * SignalR hub (`/hubs/notifications`); the notes page already listens there (`useDirectorNotesLive`), so hoist that
+ * connection into the shell when notices must appear at once.
  */
 export function useUnreadNotificationCount() {
   return useQuery({

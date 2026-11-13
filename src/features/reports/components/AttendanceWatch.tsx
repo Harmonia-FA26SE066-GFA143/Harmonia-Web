@@ -63,6 +63,9 @@ export function AttendanceWatch({ filters, style }: Readonly<{ filters: ReportFi
           </ol>
           <Typography.Paragraph style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize, margin: 0, padding: `${spacing.sm}px ${spacing.lg}px ${spacing.md}px` }}>
             Thanh: có mặt · đi trễ · có phép · vắng, cùng màu với biểu đồ.
+            {/* One page of the report is ranked here; say so when the period holds more members than it. */}
+            {report.data && report.data.totalCount > report.data.items.length &&
+              ` Xếp trong ${report.data.items.length} ca viên đầu của ${report.data.totalCount} người trong kỳ.`}
           </Typography.Paragraph>
         </>
       )}
