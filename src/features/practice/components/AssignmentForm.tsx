@@ -279,7 +279,7 @@ export function AssignmentForm() {
           <Flex align="center" justify="flex-end" gap={spacing.md} wrap>
             <Typography.Text style={muted}>Bài tập đã giao xem lại ở thẻ “Bài đã giao”.</Typography.Text>
             <Button onClick={resetForm} disabled={create.isPending}>
-              Huỷ
+              Hủy
             </Button>
             <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={create.isPending}>
               {submitLabel(recipients)}

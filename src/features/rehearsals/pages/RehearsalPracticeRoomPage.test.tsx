@@ -232,7 +232,7 @@ describe('RehearsalPracticeRoomPage with the score player, each source error', (
 
   it.each<[ScoreSourceErrorCode, string]>([
     ['read-failed', 'Không đọc được bản nhạc mẫu.'],
-    ['aborted', 'Đã huỷ việc mở bản nhạc.'],
+    ['aborted', 'Đã hủy việc mở bản nhạc.'],
   ])('%s: the sheet offers a retry beside the room audio, and the retry loads again', async (code, message) => {
     loadRefuses(code, message)
     renderRoom()

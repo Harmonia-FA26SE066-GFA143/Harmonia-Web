@@ -1,7 +1,7 @@
 import { AudioOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Segmented, Skeleton, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { useState, type ReactNode } from 'react'
+import { lazy, Suspense, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { isMidiFile, isPlayableAudio, supportsTimedLyrics, useSongMaterials } from '@/features/music-library'
@@ -10,10 +10,12 @@ import { ErrorState, PageHeader } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { RecordingPanel } from '../components/RecordingPanel'
 import { MidiPracticePlayer } from '../components/MidiPracticePlayer'
-import { PracticeScoreViewer } from '../components/PracticeScoreViewer'
 import { ScorePracticeSection } from '../components/ScorePracticeSection'
 import { TimedAudioPlayer } from '../components/TimedAudioPlayer'
 import { usePracticeRoom } from '../hooks/usePracticeRoom'
+
+// The PDF library is large and only a song with a PDF score needs it; the rehearsal schedule shares this chunk.
+const PracticeScoreViewer = lazy(async () => ({ default: (await import('../components/PracticeScoreViewer')).PracticeScoreViewer }))
 import { useRehearsal } from '../hooks/useRehearsals'
 import type { Rehearsal } from '../types'
 
@@ -189,13 +191,15 @@ export function RehearsalPracticeRoomPage() {
             <ScorePracticeSection key={song.id} title={song.title} fallback={materialContent} material={partInteractiveScore} onStale={refreshMaterials} />
 
             {partScore && (
-              <PracticeScoreViewer
-                key={partScore.id}
-                material={partScore}
-                songTitle={song.title}
-                refreshing={materials.isFetching}
-                onRefresh={async () => { await materials.refetch() }}
-              />
+              <Suspense fallback={<Skeleton active title={false} paragraph={{ rows: 6 }} />}>
+                <PracticeScoreViewer
+                  key={partScore.id}
+                  material={partScore}
+                  songTitle={song.title}
+                  refreshing={materials.isFetching}
+                  onRefresh={async () => { await materials.refetch() }}
+                />
+              </Suspense>
             )}
 
             <RecordingPanel rehearsalId={room.rehearsalId} songId={song.id} songTitle={song.title} />

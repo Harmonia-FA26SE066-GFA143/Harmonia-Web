@@ -45,7 +45,7 @@ type Dialog = { kind: NoteAction } | { kind: 'appoint' } | { kind: 'training' } 
 
 const noteDialogs: Record<NoteAction, { title: string; label: string; ok: string; done: string; danger: boolean }> = {
   reject: { title: 'Từ chối đề cử', label: 'Lý do từ chối', ok: 'Từ chối đề cử', done: 'Đã từ chối đề cử. Người đề cử sẽ nhận được thông báo.', danger: true },
-  cancel: { title: 'Huỷ đề cử đã duyệt', label: 'Lý do huỷ', ok: 'Huỷ đề cử', done: 'Đã huỷ đề cử. Người đề cử và ca viên sẽ nhận được thông báo.', danger: true },
+  cancel: { title: 'Hủy đề cử đã duyệt', label: 'Lý do hủy', ok: 'Hủy đề cử', done: 'Đã hủy đề cử. Người đề cử và ca viên sẽ nhận được thông báo.', danger: true },
   waive: { title: 'Miễn đào tạo', label: 'Lý do miễn đào tạo', ok: 'Miễn đào tạo', done: 'Đã miễn đào tạo. Admin có thể bổ nhiệm.', danger: false },
 }
 
@@ -70,7 +70,7 @@ function historyOf(item: NominationDetail) {
   }
   if (item.trainingWaiverReason) entries.push({ key: 'waived', content: <>Cha xứ miễn đào tạo. Lý do: {item.trainingWaiverReason}</> })
   if (item.status === 'Cancelled') {
-    entries.push({ key: 'cancelled', content: item.reviewNote ? <>Cha xứ huỷ đề cử. Lý do: {item.reviewNote}</> : <>Người đề cử đã rút đề cử.</> })
+    entries.push({ key: 'cancelled', content: item.reviewNote ? <>Cha xứ hủy đề cử. Lý do: {item.reviewNote}</> : <>Người đề cử đã rút đề cử.</> })
   }
   if (item.appointedAt) entries.push({ key: 'appointed', content: <><strong>{moment(item.appointedAt)}</strong> · Admin bổ nhiệm làm Ca trưởng ca đoàn {item.appointedChoirName}.</> })
   return entries
@@ -281,7 +281,7 @@ export function NominationDetailDrawer({ id, onClose }: Readonly<{ id?: string; 
   const confirmWithdraw = (target: NominationDetail) =>
     modal.confirm({
       title: `Rút đề cử ${target.memberFullName}?`,
-      content: 'Đề cử sẽ chuyển sang Đã huỷ và không mở lại được.',
+      content: 'Đề cử sẽ chuyển sang Đã hủy và không mở lại được.',
       okText: 'Rút đề cử',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
@@ -302,7 +302,7 @@ export function NominationDetailDrawer({ id, onClose }: Readonly<{ id?: string; 
           <Flex wrap justify="flex-end" gap={spacing.sm}>
             {actions.includes('withdraw') && <Button danger onClick={() => confirmWithdraw(item)}>Rút đề cử</Button>}
             {actions.includes('reject') && <Button danger onClick={() => setDialog({ kind: 'reject' })}>Từ chối</Button>}
-            {actions.includes('cancel') && <Button danger onClick={() => setDialog({ kind: 'cancel' })}>Huỷ đề cử</Button>}
+            {actions.includes('cancel') && <Button danger onClick={() => setDialog({ kind: 'cancel' })}>Hủy đề cử</Button>}
             {actions.includes('waive') && <Button onClick={() => setDialog({ kind: 'waive' })}>Miễn đào tạo</Button>}
             {actions.includes('startTraining') && <Button onClick={() => setDialog({ kind: 'training' })}>Cử đi học</Button>}
             {actions.includes('approve') && <Button type="primary" onClick={() => confirmApprove(item)}>Duyệt</Button>}
