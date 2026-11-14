@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getSession, setSession, type Session } from '@/lib/auth/session'
-import { apiDownload, apiRequest } from './client'
+import { apiDownload, apiRequest, freshAccessToken } from './client'
 import { ApiError } from './errors'
 
 const session = (token: string): Session => ({
@@ -140,6 +140,17 @@ describe('apiRequest', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(getSession()).toBeUndefined()
     expect(assign).toHaveBeenCalledWith('/login?reason=session-ended')
+  })
+})
+
+describe('freshAccessToken', () => {
+  it('refreshes an expired token before handing it out, and leaves a valid one alone', async () => {
+    setSession(session('1'))
+    fetchMock.mockResolvedValueOnce(reply(200, { ...session('2'), accessTokenExpiresAt: '2099-01-01T00:00:00Z' }))
+
+    await expect(freshAccessToken()).resolves.toBe('access-2')
+    await expect(freshAccessToken()).resolves.toBe('access-2')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })
 

@@ -1,10 +1,12 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
+import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as membersApi from '@/features/members/api/membersApi'
 import * as songsApi from '@/features/music-library/api/songsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
+import { programPage } from '@/test/programs'
 import { renderPage } from '@/test/renderPage'
 import * as practiceApi from '../api/practiceApi'
 import type { PracticeSubmission } from '../types'
@@ -31,7 +33,7 @@ const page = (items: PracticeSubmission[]) => ({ items, pageNumber: 1, pageSize:
 
 beforeEach(() => {
   vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
-  vi.spyOn(practiceApi, 'listUpcomingEvents').mockResolvedValue([])
+  vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(programPage())
   vi.spyOn(songsApi, 'listSongs').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 })
   vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([
     { id: 'k-tenor', name: 'Tenor' },
@@ -356,9 +358,9 @@ describe('PracticePage', () => {
 
   it('shows the readiness of each member for the chosen upcoming event', async () => {
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
-    vi.spyOn(practiceApi, 'listUpcomingEvents').mockResolvedValue([
-      { id: 'ev-1', eventDate: '2026-10-18', time: '08:00:00', title: 'Lễ Chúa Nhật', locationName: 'Nhà thờ chính' },
-    ])
+    vi.mocked(programsApi.listPrograms).mockResolvedValue(
+      programPage({ id: 'ev-1', date: '2026-10-18', time: '08:00:00', eventName: 'Lễ Chúa Nhật', locationName: 'Nhà thờ chính' }),
+    )
     const progress = vi.spyOn(practiceApi, 'listPreparationProgress').mockResolvedValue([
       {
         memberId: 'm1',
@@ -386,9 +388,9 @@ describe('PracticePage', () => {
 
   it('lists the assignments given and opens the submissions of one', async () => {
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
-    vi.mocked(practiceApi.listUpcomingEvents).mockResolvedValue([
-      { id: 'e1', eventDate: '2026-10-25', time: '08:00:00', title: 'Lễ Bổn mạng', locationName: 'Nhà thờ' },
-    ])
+    vi.mocked(programsApi.listPrograms).mockResolvedValue(
+      programPage({ id: 'e1', date: '2026-10-25', time: '08:00:00', eventName: 'Lễ Bổn mạng', locationName: 'Nhà thờ' }),
+    )
     const assignments = vi.spyOn(practiceApi, 'listAssignments').mockResolvedValue({
       items: [
         { id: 'as-1', eventId: 'e1', title: 'Tập bè Tenor', scope: 'skillGroup', dueDate: '2026-10-20T12:00:00Z', skillIds: ['k-tenor'], memberIds: [] },

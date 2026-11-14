@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useUpcomingPrograms } from '@/features/liturgical-programs'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   commentSubmission,
@@ -7,9 +9,9 @@ import {
   listAssignmentSubmissions,
   listPreparationProgress,
   listSubmissions,
-  listUpcomingEvents,
   reviewSubmission,
   scoreSubmission,
+  type UpcomingEvent,
   type SubmissionPage,
 } from '../api/practiceApi'
 import type { AssignmentValues, PracticeStatus, ReviewResult } from '../types'
@@ -97,8 +99,18 @@ export function useCreateAssignment() {
   })
 }
 
+/**
+ * The upcoming published events an assignment can belong to: the list every other director page reads, limited by
+ * the backend to the choirs the director directs. `GET /api/schedule/events` answers the whole parish, and an
+ * assignment for an event the choir does not serve is refused (CHOIR_NOT_SERVING_EVENT).
+ */
 export function useUpcomingEvents() {
-  return useQuery({ queryKey: [...practiceKey, 'upcoming-events'], queryFn: listUpcomingEvents })
+  const programs = useUpcomingPrograms()
+  const data = useMemo(
+    () => programs.data?.map((program): UpcomingEvent => ({ id: program.id, eventDate: program.date, time: program.time, title: program.eventName, locationName: program.locationName })),
+    [programs.data],
+  )
+  return { ...programs, data }
 }
 
 export function usePreparationProgress(eventId?: string) {

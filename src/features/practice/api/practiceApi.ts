@@ -161,18 +161,13 @@ export async function createAssignment(values: AssignmentValues): Promise<void> 
   })
 }
 
-/** An upcoming published event the Choir Director can attach an assignment to (`LiturgicalEventSummaryDto`). */
+/** An upcoming published event the Choir Director can attach an assignment to. */
 export interface UpcomingEvent {
   id: string
   eventDate: string
   time: string
   title: string | null
   locationName: string
-}
-
-/** The only event list open to the Choir Director (`GET /api/schedule/events`): upcoming published events. */
-export function listUpcomingEvents(): Promise<UpcomingEvent[]> {
-  return apiRequest<UpcomingEvent[]>('/api/schedule/events')
 }
 
 type ApiParticipationStatus = 'Invited' | 'Confirmed' | 'Declined' | 'Unsure'
