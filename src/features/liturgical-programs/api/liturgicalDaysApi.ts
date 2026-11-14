@@ -31,10 +31,26 @@ export async function listLiturgicalDays(fromDate: string, toDate: string): Prom
   }))
 }
 
+/** An upcoming event on a day that got another celebration or rank from the sync (Harmonia-BE SyncAffectedEventDto.cs). */
+export interface SyncAffectedEvent {
+  eventId: string
+  title?: string | null
+  eventDate: string
+  time: string
+  previousCelebrationName?: string | null
+  celebrationName?: string | null
+}
+
+/** How many days were stored, and the upcoming events on days that changed (SyncLiturgicalDaysResponse.cs). */
+export interface SyncLiturgicalDaysResult {
+  syncedCount: number
+  affectedEvents: SyncAffectedEvent[]
+}
+
 /**
  * Fetches a civil year (1970–9999) from the Liturgical Calendar API and overwrites the cached days of that year
- * (LiturgicalDayService.SyncAsync); answers how many days the year has.
+ * (LiturgicalDayService.cs:105, BE 36b7f0e).
  */
-export function syncLiturgicalDays(year: number): Promise<number> {
-  return apiRequest<number>('/api/liturgical-days/sync', { method: 'POST', body: JSON.stringify({ year }) })
+export function syncLiturgicalDays(year: number): Promise<SyncLiturgicalDaysResult> {
+  return apiRequest<SyncLiturgicalDaysResult>('/api/liturgical-days/sync', { method: 'POST', body: JSON.stringify({ year }) })
 }

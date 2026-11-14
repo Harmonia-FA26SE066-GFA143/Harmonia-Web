@@ -1,5 +1,6 @@
 import type { ApiRoleName } from '@/lib/auth/session'
 import { roleByApiName } from '@/shared/types/account'
+import type { Gender } from '@/shared/utils/personName'
 import { apiRequest } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { ChoirMember, MemberFilters, MemberProfile, MemberProfileValues, MemberStatus } from '../types'
@@ -21,6 +22,7 @@ interface MemberProfileSummaryDto {
   email: string
   phone: string | null
   saintName: string | null
+  gender: Gender | null
   dateOfBirth: string | null
   joinedDate: string
   status: ApiMemberStatus
@@ -63,6 +65,7 @@ const toMemberProfile = (dto: MemberProfileSummaryDto): MemberProfile => ({
   email: dto.email,
   phone: dto.phone,
   saintName: dto.saintName,
+  gender: dto.gender,
   dateOfBirth: dto.dateOfBirth,
   joinedDate: dto.joinedDate,
   status: statusByApi[dto.status],

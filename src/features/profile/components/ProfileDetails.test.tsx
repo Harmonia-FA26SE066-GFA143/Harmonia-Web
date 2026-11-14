@@ -22,8 +22,8 @@ describe('ProfileDetails', () => {
 
     expect(screen.getByText('Nguyễn Văn An')).toBeInTheDocument()
     expect(screen.getByText('Ca trưởng')).toBeInTheDocument()
-    // Phone and saint name are both empty.
-    expect(screen.getAllByText('Chưa cập nhật')).toHaveLength(2)
+    // Phone, saint name and gender are all empty.
+    expect(screen.getAllByText('Chưa cập nhật')).toHaveLength(3)
     fireEvent.click(screen.getByRole('button', { name: /Chỉnh sửa/ }))
     expect(onEdit).toHaveBeenCalled()
   })

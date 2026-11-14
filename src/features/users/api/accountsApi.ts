@@ -1,6 +1,7 @@
 import { apiRequest } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 import type { ApiRoleName } from '@/lib/auth/session'
+import type { Gender } from '@/shared/utils/personName'
 import { apiNameByRole, roleByApiName, type SystemRole } from '@/shared/types/account'
 import type { Account, AccountFilters, CreateAccountValues, UpdateAccountValues } from '../types'
 
@@ -17,6 +18,7 @@ interface UserDto {
   fullName: string
   phone: string | null
   saintName: string | null
+  gender: Gender | null
   roleName: ApiRoleName
   isActive: boolean
   isPasswordChangeRequired: boolean

@@ -1,11 +1,11 @@
 import { EditOutlined } from '@ant-design/icons'
-import { Button, Descriptions, Flex, Input, Tag, Typography } from 'antd'
+import { Button, Descriptions, Flex, Input, Radio, Tag, Typography } from 'antd'
 import { useEffect, useRef } from 'react'
 import { roleLabels } from '@/shared/types/account'
 import { colors, radius, spacing } from '@/styles/tokens'
 import type { Profile, ProfileUpdateValues } from '../types'
 import { Form } from '@/shared/ui'
-import { saintNameRules } from '@/shared/utils/personName'
+import { genderLabel, genderOptions, saintNameRules } from '@/shared/utils/personName'
 
 export interface ProfileDetailsProps {
   profile: Profile
@@ -60,7 +60,7 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
         <Form<ProfileUpdateValues>
           form={form}
           layout="vertical"
-          initialValues={{ fullName: profile.fullName, phone: profile.phone, saintName: profile.saintName }}
+          initialValues={{ fullName: profile.fullName, phone: profile.phone, saintName: profile.saintName, gender: profile.gender }}
           onFinish={onSave}
           style={{ maxWidth: 560 }}
         >
@@ -73,6 +73,9 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
             rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}
           >
             <Input autoComplete="name" autoFocus />
+          </Form.Item>
+          <Form.Item label="Giới tính" name="gender">
+            <Radio.Group options={genderOptions} />
           </Form.Item>
           <Form.Item
             label="Số điện thoại (không bắt buộc)"
@@ -100,6 +103,7 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
           items={[
             { key: 'saintName', label: 'Tên thánh', children: profile.saintName || 'Chưa cập nhật' },
             { key: 'fullName', label: 'Họ và tên', children: profile.fullName || 'Chưa cập nhật' },
+            { key: 'gender', label: 'Giới tính', children: genderLabel(profile.gender) ?? 'Chưa cập nhật' },
             readOnlyItems[0],
             { key: 'phone', label: 'Số điện thoại', children: profile.phone || 'Chưa cập nhật' },
             ...readOnlyItems.slice(1),

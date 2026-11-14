@@ -1,12 +1,12 @@
 import { CheckCircleOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
-import { Alert, Button, Input } from 'antd'
+import { Alert, Button, Input, Radio } from 'antd'
 import { Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { AuthCard } from '@/features/auth'
 import { ApiError, errorMessage } from '@/lib/api/errors'
 import { Form } from '@/shared/ui'
-import { saintNameRules } from '@/shared/utils/personName'
+import { genderOptions, saintNameRules } from '@/shared/utils/personName'
 import { spacing } from '@/styles/tokens'
 import { submitRegistration, type RegistrationValues } from '../api/memberRegistrationsApi'
 
@@ -53,7 +53,8 @@ export function JoinChoirPage() {
     )
   }
 
-  const trimmed = ({ fullName, email, phone, saintName, note }: RegistrationValues): RegistrationValues => ({
+  const trimmed = ({ fullName, email, phone, saintName, gender, note }: RegistrationValues): RegistrationValues => ({
+    gender,
     fullName: fullName.trim(),
     saintName: saintName?.trim() || undefined,
     email: email.trim(),
@@ -81,6 +82,9 @@ export function JoinChoirPage() {
         </Form.Item>
         <Form.Item name="fullName" label="Họ tên" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập họ tên.' }, { max: 100, message: 'Vui lòng nhập tối đa 100 ký tự.' }]}>
           <Input autoComplete="name" />
+        </Form.Item>
+        <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: 'Vui lòng chọn giới tính.' }]}>
+          <Radio.Group options={genderOptions} />
         </Form.Item>
         <Form.Item
           name="email"

@@ -1,4 +1,5 @@
 import type { SystemRole } from '@/shared/types/account'
+import type { Gender } from '@/shared/utils/personName'
 
 /**
  * UI model of the signed-in user's profile. Every account is Admin-created with one role (D1, 2026-10-07).
@@ -9,6 +10,7 @@ export interface Profile {
   email: string
   phone?: string
   saintName?: string
+  gender?: Gender
   /** Public URL that does not expire (BE 90af733); absent without a picture. */
   avatarUrl?: string
   role: SystemRole
@@ -19,4 +21,6 @@ export interface ProfileUpdateValues {
   fullName?: string
   phone?: string
   saintName?: string
+  /** Left out, the backend keeps the stored one (UserService.cs:120). */
+  gender?: Gender
 }

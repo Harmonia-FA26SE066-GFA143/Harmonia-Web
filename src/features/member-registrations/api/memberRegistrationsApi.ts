@@ -1,4 +1,5 @@
 import { apiRequest } from '@/lib/api/client'
+import type { Gender } from '@/shared/utils/personName'
 import { toQuery, type PagedList } from '@/lib/api/paging'
 
 // `/api/member-registrations` (Harmonia-BE d74096c, MemberRegistrationsController.cs:16-42): anyone sends a request to
@@ -10,6 +11,7 @@ export interface MemberRegistration {
   email: string
   phone: string | null
   saintName: string | null
+  gender?: Gender | null
   note: string | null
   createdAt: string
 }
@@ -19,6 +21,7 @@ export interface RegistrationValues {
   email: string
   phone?: string
   saintName?: string
+  gender: Gender
   note?: string
 }
 

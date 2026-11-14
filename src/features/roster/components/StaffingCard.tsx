@@ -102,11 +102,10 @@ export function StaffingCard({
       .filter((member) => member.skills.includes(row.skillName) && !linesOf(row.skillId).some((line) => line.memberId === member.memberId))
       .map((member) => {
         const elsewhere = otherLines.some((line) => line.skillId === row.skillId && line.memberId === member.memberId)
-        return {
-          value: member.memberId,
-          label: elsewhere ? `${member.fullName} (${song ? 'đã giữ cả buổi lễ' : 'đang giữ ở bài, gỡ trước'})` : member.fullName,
-          disabled: elsewhere,
-        }
+        let why: string | undefined
+        if (member.hasTimeConflict) why = 'trùng giờ lễ khác'
+        else if (elsewhere) why = song ? 'đã giữ cả buổi lễ' : 'đang giữ ở bài, gỡ trước'
+        return { value: member.memberId, label: why ? `${member.fullName} (${why})` : member.fullName, disabled: Boolean(why) }
       })
 
   const handleSave = () =>

@@ -78,4 +78,6 @@ export interface EligibleMember {
   memberId: string
   fullName: string
   skills: string[]
+  /** Serves another event starting near this one; the backend refuses the line (ROSTER_MEMBER_TIME_CONFLICT). */
+  hasTimeConflict?: boolean
 }

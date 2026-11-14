@@ -1,6 +1,7 @@
 import { SyncOutlined } from '@ant-design/icons'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { App, Button, Flex, Tag, Typography } from 'antd'
+import dayjs from 'dayjs'
 import { SeasonChip } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { calendarErrorMessage } from '../calendarErrors'
@@ -58,7 +59,26 @@ export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
       onOk: () =>
         sync
           .mutateAsync(year)
-          .then((count) => message.success(`Đã đồng bộ ${count} ngày phụng vụ năm ${year}.`))
+          .then(({ syncedCount, affectedEvents }) => {
+            message.success(`Đã đồng bộ ${syncedCount} ngày phụng vụ năm ${year}.`)
+            if (!affectedEvents.length) return
+            // Upcoming events on a day that now has another celebration: the priest checks their readings and songs.
+            modal.info({
+              title: `${affectedEvents.length} chương trình sắp tới đổi ngày lễ`,
+              content: (
+                <ul style={{ paddingInlineStart: spacing.md, margin: 0 }}>
+                  {affectedEvents.map((event) => (
+                    <li key={event.eventId}>
+                      <Typography.Text strong>{event.title || 'Chương trình'}</Typography.Text>{' '}
+                      {dayjs(event.eventDate).format('DD/MM/YYYY')} {event.time.slice(0, 5)}:{' '}
+                      {event.previousCelebrationName ?? 'chưa có tên lễ'} → {event.celebrationName ?? 'chưa có tên lễ'}
+                    </li>
+                  ))}
+                </ul>
+              ),
+              okText: 'Đã hiểu',
+            })
+          })
           .catch((error: Error) => message.error(calendarErrorMessage(error, 'Không thể đồng bộ lịch phụng vụ. Vui lòng thử lại.'))),
     })
 

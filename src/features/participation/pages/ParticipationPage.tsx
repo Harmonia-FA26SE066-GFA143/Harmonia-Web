@@ -31,7 +31,15 @@ const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<Participa
         <Avatar aria-hidden style={{ background: colors.softSurface, color: colors.textMuted, fontWeight: 600, flexShrink: 0 }}>
           {nameInitial(request.fullName)}
         </Avatar>
-        <Typography.Text strong>{request.fullName}</Typography.Text>
+        <Flex vertical align="start" gap={2}>
+          <Typography.Text strong>{request.fullName}</Typography.Text>
+          {request.hasTimeConflict && (
+            // A warning only: assigning them in the roster would be refused (ROSTER_MEMBER_TIME_CONFLICT).
+            <StatusTag color="gold" style={{ marginInlineEnd: 0 }}>
+              Trùng giờ lễ khác
+            </StatusTag>
+          )}
+        </Flex>
       </Flex>
     ),
   },

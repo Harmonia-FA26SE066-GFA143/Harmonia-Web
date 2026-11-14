@@ -1,11 +1,11 @@
-import { DatePicker, Flex, Input, Select, Typography } from 'antd'
+import { DatePicker, Flex, Input, Radio, Select, Typography } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { vietnamToday } from '@/lib/api/dates'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { spacing } from '@/styles/tokens'
 import { memberStatuses, memberStatusLabels, type MemberProfile, type MemberProfileValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
-import { personName, saintNameRules } from '@/shared/utils/personName'
+import { genderOptions, personName, saintNameRules } from '@/shared/utils/personName'
 
 export interface MemberFormDrawerProps {
   /** The member being edited; the drawer is closed without one. */
@@ -45,6 +45,7 @@ export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }:
             member && {
               phone: member.phone ?? undefined,
               saintName: member.saintName ?? undefined,
+              gender: member.gender ?? undefined,
               dateOfBirth: member.dateOfBirth ?? undefined,
               joinedDate: member.joinedDate,
               status: member.status,
@@ -65,6 +66,9 @@ export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }:
       )}
       <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
         <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
+      </Form.Item>
+      <Form.Item label="Giới tính" name="gender">
+        <Radio.Group options={genderOptions} />
       </Form.Item>
       <Form.Item label="Số điện thoại (không bắt buộc)" name="phone" rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}>
         <Input type="tel" autoComplete="off" />

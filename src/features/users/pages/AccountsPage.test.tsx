@@ -115,10 +115,11 @@ describe('AccountsPage', () => {
     })
     fireEvent.mouseDown(within(dialog).getByRole('combobox'))
     fireEvent.click(await screen.findByTitle('Ca viên'))
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Nam' }))
     fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo tài khoản' }))
 
     await waitFor(() =>
-      expect(create).toHaveBeenCalledWith({ email: 'mai@giaoxu.org', fullName: 'Anna Mai', phone: undefined, role: 'member' }),
+      expect(create).toHaveBeenCalledWith({ email: 'mai@giaoxu.org', gender: 'Male', fullName: 'Anna Mai', phone: undefined, role: 'member' }),
     )
   })
 
@@ -131,6 +132,7 @@ describe('AccountsPage', () => {
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Email' }), { target: { value: 'tam2@giaoxu.org' } })
     fireEvent.mouseDown(within(dialog).getByRole('combobox'))
     fireEvent.click(await screen.findByTitle('Ca trưởng'))
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Nam' }))
     fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo tài khoản' }))
 
     expect(await screen.findByText(/Ca trưởng chưa phụ trách ca đoàn nào/)).toBeInTheDocument()

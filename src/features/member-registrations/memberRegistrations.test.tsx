@@ -28,10 +28,11 @@ describe('JoinChoirPage', () => {
     fill('Tên thánh', ' Giuse ')
     fill('Họ tên', '  An Nguyễn ')
     fill('Email', 'an@giaoxu.org')
+    fireEvent.click(screen.getByRole('radio', { name: 'Nữ' }))
     send()
 
     expect(await screen.findByText(/chưa phải tài khoản đăng nhập/)).toBeInTheDocument()
-    expect(submit.mock.calls[0][0]).toEqual({ fullName: 'An Nguyễn', saintName: 'Giuse', email: 'an@giaoxu.org', phone: undefined, note: undefined })
+    expect(submit.mock.calls[0][0]).toEqual({ gender: 'Female', fullName: 'An Nguyễn', saintName: 'Giuse', email: 'an@giaoxu.org', phone: undefined, note: undefined })
   })
 
   it('keeps the form and explains the rate limit', async () => {
@@ -39,6 +40,7 @@ describe('JoinChoirPage', () => {
     renderPage(<JoinChoirPage />, '/join')
     fill('Họ tên', 'An')
     fill('Email', 'an@giaoxu.org')
+    fireEvent.click(screen.getByRole('radio', { name: 'Nữ' }))
     send()
 
     expect(await screen.findByText(/thử lại sau 10 phút/)).toBeInTheDocument()
@@ -52,6 +54,7 @@ describe('JoinChoirPage', () => {
     renderPage(<JoinChoirPage />, '/join')
     fill('Họ tên', 'An')
     fill('Email', 'an@giaoxu.org')
+    fireEvent.click(screen.getByRole('radio', { name: 'Nữ' }))
     send()
 
     expect(await screen.findByText('Ô cần xem lại: Email, Họ tên.')).toBeInTheDocument()

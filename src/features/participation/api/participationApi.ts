@@ -22,6 +22,7 @@ interface EventParticipationDto {
   requestedAt: string
   respondedAt: string | null
   note: string | null
+  hasTimeConflict: boolean
 }
 
 /** Every request of the event, empty when none was sent. The counts of the answer are worked out by the page. */
@@ -35,6 +36,7 @@ export async function getParticipation(eventId: string): Promise<ParticipationRe
     response: responseByApi[dto.status],
     respondedAt: dto.respondedAt ?? undefined,
     note: dto.note ?? undefined,
+    hasTimeConflict: dto.hasTimeConflict,
   }))
 }
 

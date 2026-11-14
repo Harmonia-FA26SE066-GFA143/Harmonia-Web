@@ -22,4 +22,6 @@ export interface ParticipationRequest {
   respondedAt?: string
   /** The member's note with the answer. */
   note?: string
+  /** Already serves another event starting near this one (EventParticipationDto.cs:28, BE 33d3df7). */
+  hasTimeConflict?: boolean
 }
