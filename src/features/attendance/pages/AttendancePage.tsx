@@ -107,7 +107,7 @@ export function AttendancePage() {
       )}
       {selected && (
         <Flex vertical gap={spacing.md}>
-          {!showSheet && <Card styles={{ body: { padding: `${spacing.lg}px ${spacing.xl}px` } }}>{header()}</Card>}
+          {!showSheet && <Card styles={{ body: { padding: spacing.lg } }}>{header()}</Card>}
           {attendance.isPending && <SectionSkeleton rows={8} label="Đang tải danh sách điểm danh" />}
           {attendance.isError && (
             <ErrorState

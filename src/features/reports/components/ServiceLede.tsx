@@ -32,7 +32,7 @@ export function ServiceLede({ filters, scope }: Readonly<{ filters: ReportFilter
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.6fr)', gap: spacing.md, marginBottom: spacing.lg }}>
-      <Card styles={{ body: { padding: `${spacing.lg}px ${spacing.xl}px` } }}>
+      <Card styles={{ body: { padding: spacing.lg } }}>
         <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{scope}</Typography.Text>
         <div style={{ fontFamily: typography.displayFontFamily, fontWeight: 600, fontSize: 64, lineHeight: 1, color: colors.textPrimary, fontVariantNumeric: 'lining-nums', marginTop: spacing.xs }}>
           {services.data.totalCount}

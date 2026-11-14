@@ -158,7 +158,7 @@ export function ParticipationPage() {
       )}
       {program && (
         <Flex vertical gap={spacing.md}>
-          <Card styles={{ body: { padding: `${spacing.lg}px ${spacing.xl}px` } }}>
+          <Card styles={{ body: { padding: spacing.lg } }}>
             <ResponseHeader
               program={program}
               programs={allPrograms}

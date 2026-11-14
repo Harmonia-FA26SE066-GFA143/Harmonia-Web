@@ -35,7 +35,7 @@ function Figure({
 }: Readonly<{ label: string; rate?: number; previous?: number; since: string; basis: string; none: string }>) {
   const points = rate !== undefined && previous !== undefined ? Math.round(rate * 100) - Math.round(previous * 100) : undefined
   return (
-    <div style={{ padding: `${spacing.lg}px ${spacing.xl}px` }}>
+    <div style={{ padding: spacing.lg }}>
       <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{label}</Typography.Text>
       {rate === undefined ? (
         <Typography.Paragraph style={{ color: colors.textMuted, margin: `${spacing.md}px 0 0` }}>{none}</Typography.Paragraph>
@@ -131,7 +131,7 @@ export function ReportLede({ granularity, anchor, choirId }: Readonly<ReportLede
             none="Chưa có bài tập nào đến hạn."
           />
         </div>
-        <Flex vertical gap={spacing.xs} style={{ padding: `${spacing.lg}px ${spacing.xl}px`, background: colors.ivory }}>
+        <Flex vertical gap={spacing.xs} style={{ padding: spacing.lg, background: colors.ivory }}>
           <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{periodName(granularity, period.from, anchor)}, nói gọn</Typography.Text>
           {sentences.map((sentence, index) => (
             <Typography.Text key={index} style={{ color: colors.textPrimary, fontSize: 15 }}>

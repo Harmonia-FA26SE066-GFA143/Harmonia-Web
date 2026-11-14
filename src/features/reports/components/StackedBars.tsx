@@ -62,7 +62,7 @@ export function StackedBars<K extends string>({
                   )}
                 </div>
               </Tooltip>
-              <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, marginTop: 6, whiteSpace: 'nowrap' }}>
+              <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, whiteSpace: 'nowrap' }}>
                 {bucket.label}
               </Typography.Text>
               <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, minHeight: 18, fontVariantNumeric: 'tabular-nums' }}>
@@ -74,7 +74,7 @@ export function StackedBars<K extends string>({
       </Flex>
       <Flex wrap gap={spacing.md} component="ul" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {series.map(({ key, label, color }) => (
-          <Flex component="li" key={key} align="center" gap={6} style={{ fontSize: 13 }}>
+          <Flex component="li" key={key} align="center" gap={spacing.sm} style={{ fontSize: 13 }}>
             <span aria-hidden style={{ width: 10, height: 10, borderRadius: 3, background: color }} />
             {label}
           </Flex>

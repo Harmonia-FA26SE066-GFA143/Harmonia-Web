@@ -446,7 +446,7 @@ textarea {
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: baseline;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 12px 16px;
   border: 0;
   border-bottom: 1px solid var(--hm-border-default);
   background: var(--hm-surface-base);
@@ -814,16 +814,16 @@ textarea {
 
 /* How many wait on that page: a small burgundy count after the name. */
 .hm-tab__count {
-  margin-left: 6px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
+  margin-left: 8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 10px;
   background: var(--hm-action-primary);
   color: var(--hm-text-on-brand);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 20px;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -1116,7 +1116,7 @@ textarea {
 
 .hm-date span {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--hm-text-muted);
 }
 
@@ -1174,7 +1174,7 @@ textarea {
   grid-template-columns: 44px minmax(0, 1fr);
   gap: 8px;
   height: 100%;
-  padding: 12px 14px 14px;
+  padding: 12px 16px 16px;
   color: inherit;
   transition: background-color var(--hm-dur-fast) var(--hm-ease);
 }
@@ -1199,7 +1199,7 @@ textarea {
 }
 
 .upcoming-strip .ant-tag {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
 }
 
 /* The next Mass: the evening head on the bookcloth, then the preparation signals. */
@@ -1213,8 +1213,8 @@ textarea {
 .next-mass__head {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 20px;
+  gap: 16px;
+  padding: 24px;
   background: var(--hm-surface-chrome);
   border-bottom: 1px solid var(--hm-gilt);
 }
@@ -1252,8 +1252,8 @@ textarea {
 .next-mass__body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 20px 20px;
+  gap: 12px;
+  padding: 16px 24px 24px;
 }
 
 .next-mass__body .hm-rubric {
@@ -1304,7 +1304,7 @@ textarea {
 .next-mass__shortages {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 /* A place still open: dashed, in the roster's leather, never red (artifact ws-missing). */
@@ -1358,7 +1358,7 @@ textarea {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) auto 88px 16px;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   padding: 12px 24px;
   border: 0;
   background: transparent;
@@ -1448,7 +1448,7 @@ textarea {
   display: grid;
   grid-template-columns: 160px minmax(0, 1fr);
   gap: 24px;
-  padding: 20px 24px 24px;
+  padding: 24px;
   animation: hm-rise-small var(--hm-dur-panel) var(--hm-ease) both;
 }
 
@@ -1467,7 +1467,7 @@ textarea {
   grid-template-columns: 20px minmax(0, 1fr) minmax(0, auto) 124px;
   align-items: center;
   gap: 4px 12px;
-  padding: 10px 0;
+  padding: 12px 0;
 }
 
 .ordo-missing + .ordo-missing {
@@ -1480,7 +1480,7 @@ textarea {
 
 .ordo-missing__extra {
   grid-column: 2 / -1;
-  padding-top: 6px;
+  padding-top: 8px;
 }
 
 .ordo-missing__icon {
@@ -1499,7 +1499,7 @@ textarea {
 }
 
 .ordo-shortage {
-  padding: 6px 12px;
+  padding: 8px 12px;
   border: 1px dashed var(--hm-border-control);
   border-radius: var(--hm-radius-md);
   background: var(--hm-surface-base);
@@ -1542,7 +1542,7 @@ textarea {
 }
 
 .song-index.is-compact .song-index__row {
-  padding-block: 5px;
+  padding-block: 4px;
 }
 
 .song-index__thumb {
@@ -1737,7 +1737,7 @@ textarea {
   position: sticky;
   top: 48px;
   overflow: hidden;
-  padding: 40px 40px 28px;
+  padding: 40px 40px 32px;
   background: var(--hm-surface-reading);
   border: 1px solid var(--hm-border-default);
   border-top: 1px solid var(--hm-gilt);
@@ -1795,7 +1795,7 @@ textarea {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding: 7px 0;
+  padding: 8px 0;
 }
 
 .landing-sheet__part {
@@ -1847,7 +1847,7 @@ textarea {
 
 .landing-sheet__ready {
   min-height: 32px;
-  margin: 20px 0 0;
+  margin: 24px 0 0;
   font-family: var(--hm-font-display);
   font-weight: 600;
   font-size: 26px;
@@ -1884,7 +1884,7 @@ textarea {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   padding: 12px 24px;
 }
 
@@ -2089,11 +2089,16 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 20px 24px;
+  padding: 24px;
   background-color: var(--hm-surface-reading);
   border: 1px solid var(--hm-border-hairline);
   border-top: 1px solid var(--hm-gilt);
   border-radius: var(--hm-radius-lg);
+}
+
+/* The panel's gap spaces the rubric; its own bottom margin would add to it. */
+.hm-preview > .hm-rubric {
+  margin: 0;
 }
 
 .hm-preview__title {
@@ -2115,7 +2120,7 @@ textarea {
   display: grid;
   grid-template-columns: 112px minmax(0, 1fr);
   gap: 8px;
-  padding: 6px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--hm-border-hairline);
 }
 
@@ -2182,7 +2187,7 @@ textarea {
 .hm-week__items {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding: 8px;
 }
 
@@ -2191,7 +2196,7 @@ textarea {
   flex-direction: column;
   gap: 1px;
   width: 100%;
-  padding: 6px 8px;
+  padding: 8px;
   text-align: left;
   font: inherit;
   font-size: 12px;
@@ -2207,8 +2212,8 @@ textarea {
 }
 
 .hm-week__card small {
-  font-size: 11px;
-  opacity: 0.8;
+  font-size: 12px;
+  color: var(--hm-text-muted);
 }
 
 .hm-week__card.is-rehearsal {
@@ -2242,7 +2247,7 @@ textarea {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
   gap: 24px;
-  padding: 20px 24px;
+  padding: 24px;
   border-top: 1px solid var(--hm-border-default);
 }
 
@@ -2303,7 +2308,7 @@ textarea {
 .hm-review-panel {
   position: sticky;
   top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
-  padding: 20px 24px;
+  padding: 24px;
   background: var(--hm-surface-base);
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-lg);
@@ -2326,7 +2331,7 @@ textarea {
 .hm-review-panel__done {
   display: block;
   margin: 0;
-  padding: 10px 12px;
+  padding: 12px;
   border-radius: var(--hm-radius-md);
   background: var(--hm-area-practice-tint);
   color: var(--hm-area-practice-ink);
@@ -2415,8 +2420,8 @@ textarea {
 .hm-reading-note {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 12px 16px;
   border-radius: var(--hm-radius-md);
   background: var(--hm-surface-reading);
   border-top: 1px solid var(--hm-gilt);
@@ -2428,7 +2433,7 @@ textarea {
   display: inline-block;
   width: 6px;
   height: 6px;
-  margin-left: 6px;
+  margin-left: 8px;
   border-radius: 50%;
   background: var(--hm-area-attention-border);
   vertical-align: middle;
@@ -2520,7 +2525,7 @@ textarea {
   justify-content: space-between;
   width: 100%;
   min-height: 32px;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border: 0;
   border-radius: var(--hm-radius-sm);
   background: transparent;
@@ -2552,7 +2557,7 @@ textarea {
 
 .song-rail__count {
   min-width: 22px;
-  padding: 0 6px;
+  padding: 0 8px;
   border-radius: 999px;
   background: var(--hm-surface-band);
   font-size: 12px;
@@ -2566,13 +2571,13 @@ textarea {
   border: 1px solid var(--hm-border-hairline);
   border-top: 1px solid var(--hm-gilt);
   border-radius: var(--hm-radius-lg);
-  padding: 10px 14px 12px;
+  padding: 12px 16px;
 }
 
 .song-next__head {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   margin-bottom: 8px;
 }
 
@@ -2595,7 +2600,7 @@ textarea {
 .song-next__item {
   display: flex;
   flex-direction: column;
-  padding: 6px 10px;
+  padding: 8px 12px;
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-sm);
   background: var(--hm-surface-base);
@@ -2676,7 +2681,7 @@ a.song-next__item:hover {
   position: relative;
   display: block;
   height: 118px;
-  padding: 8px 14px 0;
+  padding: 8px 16px 0;
   overflow: hidden;
   background: var(--hm-surface-band);
   border-bottom: 1px solid var(--hm-border-default);
@@ -2700,7 +2705,7 @@ a.song-next__item:hover {
   position: absolute;
   left: 8px;
   bottom: 6px;
-  padding: 2px 6px 0;
+  padding: 2px 8px 0;
   border-radius: var(--hm-radius-sm);
   background: var(--hm-surface-reading);
   font-family: var(--hm-font-display);
@@ -2715,7 +2720,7 @@ a.song-next__item:hover {
   flex: 1;
   flex-direction: column;
   gap: 2px;
-  padding: 10px 12px 12px;
+  padding: 12px;
 }
 
 .song-card__part {
@@ -2740,7 +2745,8 @@ a.song-next__item:hover {
 .song-card__mats {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 10px;
+  gap: 4px 12px;
+  /* 8px with the body's 2px gap. */
   margin-top: 6px;
   font-size: 12px;
   color: var(--hm-outcome-good);
@@ -2752,7 +2758,7 @@ a.song-next__item:hover {
 
 .song-card__used {
   margin-top: auto;
-  padding-top: 6px;
+  padding-top: 8px;
   border-top: 1px solid var(--hm-border-default);
   font-size: 12px;
   color: var(--hm-text-muted);
@@ -2775,7 +2781,7 @@ a.song-next__item:hover {
   display: grid;
   place-items: start center;
   height: 190px;
-  padding-top: 14px;
+  padding-top: 16px;
   overflow: hidden;
   background: var(--hm-surface-band);
   border-bottom: 1px solid var(--hm-border-default);
@@ -2792,7 +2798,7 @@ a.song-next__item:hover {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 16px 16px;
+  padding: 16px;
 }
 
 .song-peek__title {
@@ -2818,8 +2824,8 @@ a.song-next__item:hover {
 .song-peek__files li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 0;
+  gap: 12px;
+  padding: 8px 0;
   border-top: 1px solid var(--hm-border-default);
   font-size: 13px;
   color: var(--hm-text-primary);
@@ -2861,7 +2867,7 @@ a.song-next__item:hover {
 
 /* Chapter I: a few staves of a real chant page (artifact Imagery, NGA antiphonal leaf), kept as it is. */
 .landing-leaf {
-  margin: 20px 0 0;
+  margin: 24px 0 0;
   max-width: 420px;
 }
 
@@ -2876,7 +2882,7 @@ a.song-next__item:hover {
 }
 
 .landing-leaf figcaption {
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 12px;
   color: var(--hm-text-muted);
 }
@@ -2885,7 +2891,7 @@ a.song-next__item:hover {
 .hm-choir {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-right: 16px;
   padding-right: 16px;
   border-right: 1px solid var(--hm-border-default);
