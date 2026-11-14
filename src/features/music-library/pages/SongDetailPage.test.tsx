@@ -102,6 +102,14 @@ describe('SongDetailPage timed lyrics', () => {
     }))
     expect(await screen.findByText(/kết thúc sau khi âm thanh đã hết/)).toBeInTheDocument()
   }, 30_000)
+  it('asks before closing once the lines were changed, even by a button that fills them', async () => {
+    await openDrawer()
+    fireEvent.click(screen.getByRole('button', { name: 'Hủy' }))
+
+    expect((await screen.findAllByText('Bỏ các mốc thời gian chưa lưu?')).length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Tiếp tục sửa' }))
+    expect(screen.getByLabelText('Lời dòng 2')).toHaveValue('Dòng hai')
+  }, 30_000)
 })
 
 afterEach(() => {

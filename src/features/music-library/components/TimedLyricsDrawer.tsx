@@ -286,9 +286,20 @@ function OpenDrawer({ material, materials, onClose }: Readonly<{ material: SongM
     )
   }
 
-  // Timing a song line by line takes minutes; Escape, × and Cancel ask before dropping it.
+  const initialValues: FormValues | undefined =
+    timing.data === undefined
+      ? undefined
+      : {
+          lyricsMaterialId: timing.data?.lyricsMaterialId ?? (lyricsMaterials.length === 1 ? lyricsMaterials[0].id : undefined),
+          lines: timing.data?.lines ?? [],
+        }
+
+  // Timing a song line by line takes minutes; Escape, × and Cancel ask before dropping it. Compared by value: the
+  // "mark now" and "fill the lines" buttons write with setFieldValue, which leaves the fields untouched.
   const handleClose = () => {
-    if (!form.isFieldsTouched()) return onClose()
+    const snapshot = (values?: FormValues) => JSON.stringify([values?.lyricsMaterialId, values?.lines])
+    const current: FormValues = form.getFieldsValue(true)
+    if (!initialValues || snapshot(current) === snapshot(initialValues)) return onClose()
     modal.confirm({
       title: 'Bỏ các mốc thời gian chưa lưu?',
       content: 'Những thay đổi từ lần lưu gần nhất sẽ mất.',
@@ -333,16 +344,13 @@ function OpenDrawer({ material, materials, onClose }: Readonly<{ material: SongM
     >
       {timing.isPending && <Skeleton active paragraph={{ rows: 8 }} />}
       {timing.isError && <ErrorState headingLevel={3} title="Không thể tải mốc thời gian" error={timing.error} onRetry={() => timing.refetch()} retrying={timing.isFetching} />}
-      {timing.data !== undefined && (
+      {initialValues && (
         <TimedLyricsEditor
           material={material}
           lyricsMaterials={lyricsMaterials}
           form={form}
-          initialValues={{
-            lyricsMaterialId: timing.data?.lyricsMaterialId ?? (lyricsMaterials.length === 1 ? lyricsMaterials[0].id : undefined),
-            lines: timing.data?.lines ?? [],
-          }}
-          hasTiming={timing.data !== null}
+          initialValues={initialValues}
+          hasTiming={Boolean(timing.data)}
           onSubmit={handleSubmit}
           onDelete={handleDelete}
           deleting={remove.isPending}
