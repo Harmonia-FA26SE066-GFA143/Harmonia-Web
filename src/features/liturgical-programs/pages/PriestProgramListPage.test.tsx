@@ -115,7 +115,7 @@ describe('PriestProgramListPage', () => {
     ])
     vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([])
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
-      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true, directorId: 'u1' },
       { id: 'c2', name: 'Ca đoàn cũ', isActive: false },
     ])
     vi.spyOn(eventsApi, 'generateEvents').mockResolvedValue([event('e3', 'Lễ sáng sớm', 'draft'), event('e4', 'Lễ sáng sớm', 'draft')])

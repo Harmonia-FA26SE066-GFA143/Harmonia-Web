@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { NoChoirNotice } from '@/features/choirs'
 import { EmptyState, EmptyWeek, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { EventFilterBar } from '../components/EventFilterBar'
@@ -52,6 +53,7 @@ export function DirectorProgramListPage() {
         title="Danh sách chương trình phụng vụ"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Chương trình phụng vụ' }]}
       />
+      <NoChoirNotice />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách chương trình" />}
       {programs.isError && (
         <ErrorState

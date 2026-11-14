@@ -184,8 +184,8 @@ describe('PriestProgramDetailPage', () => {
   it('chooses the lead choir among the choirs serving the event', async () => {
     vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
     vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([
-      { choirId: 'c1', name: 'Ca đoàn Cecilia', isActive: true, isLead: false },
-      { choirId: 'c2', name: 'Ca đoàn Giuse', isActive: true, isLead: false },
+      { choirId: 'c1', name: 'Ca đoàn Cecilia', isActive: true, isLead: false, directorId: 'u1' },
+      { choirId: 'c2', name: 'Ca đoàn Giuse', isActive: true, isLead: false, directorId: 'u1' },
     ])
     const update = vi.spyOn(choirsApi, 'updateEventChoirs').mockResolvedValue([])
     renderDetail()
@@ -204,7 +204,7 @@ describe('PriestProgramDetailPage', () => {
   it('adds an active choir of the parish to an event that has none, as its lead', async () => {
     vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
-      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true, directorId: 'u1' },
       { id: 'c2', name: 'Ca đoàn Giuse', isActive: false },
     ])
     const update = vi.spyOn(choirsApi, 'updateEventChoirs').mockResolvedValue([])
@@ -224,11 +224,24 @@ describe('PriestProgramDetailPage', () => {
     await waitFor(() => expect(update).toHaveBeenCalledWith('e1', { choirIds: ['c1'], leadChoirId: 'c1' }))
   })
 
+  it('warns that nobody can plan while the lead choir has neither director nor substitute', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
+    vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([
+      { choirId: 'c1', name: 'Ca đoàn Cecilia', isActive: true, isLead: true },
+      { choirId: 'c2', name: 'Ca đoàn Giuse', isActive: true, isLead: false, directorId: 'u2', directorName: 'Chị Maria' },
+    ])
+    renderDetail()
+
+    expect(await screen.findByText('Ca đoàn phụ trách chưa có ca trưởng')).toBeInTheDocument()
+    expect(screen.getByText(/Ca đoàn Cecilia · Phụ trách \(chưa có ca trưởng\)/)).toBeInTheDocument()
+    expect(screen.getByText(/Ca đoàn Giuse \(Chị Maria\)/)).toBeInTheDocument()
+  })
+
   it('asks why a choir leaves a published event', async () => {
     vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({ ...draft, status: 'published', publishedAt: '2026-09-20T02:00:00Z' })
     vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([
-      { choirId: 'c1', name: 'Ca đoàn Cecilia', isActive: true, isLead: true },
-      { choirId: 'c2', name: 'Ca đoàn Giuse', isActive: true, isLead: false },
+      { choirId: 'c1', name: 'Ca đoàn Cecilia', isActive: true, isLead: true, directorId: 'u1' },
+      { choirId: 'c2', name: 'Ca đoàn Giuse', isActive: true, isLead: false, directorId: 'u2' },
     ])
     const update = vi.spyOn(choirsApi, 'updateEventChoirs').mockResolvedValue([])
     renderDetail()

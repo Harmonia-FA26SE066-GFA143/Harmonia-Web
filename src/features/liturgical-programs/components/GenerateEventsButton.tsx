@@ -2,7 +2,7 @@ import { ThunderboltOutlined } from '@ant-design/icons'
 import { Alert, App, Button, DatePicker, Flex, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
-import { useChoirs } from '@/features/choirs'
+import { choirOptionLabel, useChoirs } from '@/features/choirs'
 import { dayOfWeekLabels, useLookup, useMassSchedules } from '@/features/system-categories'
 import { vietnamToday } from '@/lib/api/dates'
 import { colors, spacing } from '@/styles/tokens'
@@ -108,7 +108,7 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
             placeholder="Chọn sau trong từng sự kiện"
             value={choirIds}
             onChange={setPickedChoirIds}
-            options={choirs.map((choir) => ({ value: choir.id, label: choir.name }))}
+            options={choirs.map((choir) => ({ value: choir.id, label: choirOptionLabel(choir) }))}
             optionFilterProp="label"
           />
           {choirIds.length > 1 && (
@@ -116,7 +116,7 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
               aria-label="Ca đoàn phụ trách"
               value={leadChoirId}
               onChange={setPickedLeadId}
-              options={choirs.filter((choir) => choirIds.includes(choir.id)).map((choir) => ({ value: choir.id, label: `Phụ trách: ${choir.name}` }))}
+              options={choirs.filter((choir) => choirIds.includes(choir.id)).map((choir) => ({ value: choir.id, label: `Phụ trách: ${choirOptionLabel(choir)}` }))}
             />
           )}
           <Typography.Text style={{ color: colors.textMuted }}>

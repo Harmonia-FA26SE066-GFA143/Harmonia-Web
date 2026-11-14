@@ -122,6 +122,21 @@ describe('AccountsPage', () => {
     )
   })
 
+  it('says a new Choir Director has no choir yet and offers the choir page', async () => {
+    renderAccounts()
+    vi.spyOn(accountsApi, 'createAccount').mockResolvedValue(accounts[1])
+
+    fireEvent.click(await screen.findByRole('button', { name: /Tạo tài khoản/ }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Email' }), { target: { value: 'tam2@giaoxu.org' } })
+    fireEvent.mouseDown(within(dialog).getByRole('combobox'))
+    fireEvent.click(await screen.findByTitle('Ca trưởng'))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo tài khoản' }))
+
+    expect(await screen.findByText(/Ca trưởng chưa phụ trách ca đoàn nào/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Giao ca đoàn' })).toBeInTheDocument()
+  })
+
   it('validates email and role when creating an account', async () => {
     renderAccounts()
     const create = vi.spyOn(accountsApi, 'createAccount')
