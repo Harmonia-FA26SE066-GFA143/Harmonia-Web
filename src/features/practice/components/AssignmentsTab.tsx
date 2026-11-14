@@ -76,7 +76,7 @@ export function AssignmentsTab() {
       render: (_, assignment) => {
         if (!assignment.eventId) return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
         const event = eventsById.get(assignment.eventId)
-        // The Choir Director can name upcoming events only (GET /api/schedule/events).
+        // Only upcoming events are listed, so an assignment of a past event shows without its name.
         return event ? formatEventOption(event) : <Typography.Text style={{ color: colors.textMuted }}>Chương trình đã qua</Typography.Text>
       },
     },

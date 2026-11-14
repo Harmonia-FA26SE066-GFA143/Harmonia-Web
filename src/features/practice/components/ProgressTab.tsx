@@ -61,7 +61,7 @@ const columns: TableColumnsType<MemberProgress> = [
 /**
  * Choir Director: each active member's readiness for an upcoming event (FE-46,
  * `GET /api/liturgical-events/{id}/preparation-progress`): participation answer, rehearsals attended out of those
- * held, assignments passed and overdue. Events come from `GET /api/schedule/events`, the upcoming published ones.
+ * held, assignments passed and overdue. Events are the upcoming published ones of the director's choirs.
  * Preselects event from `?programId=` or `?eventId=` when provided.
  */
 export function ProgressTab() {

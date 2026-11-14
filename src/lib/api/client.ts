@@ -1,5 +1,6 @@
 import { env } from '@/config/env'
 import { clearSession, getSession, setSession, type Session } from '@/lib/auth/session'
+import { parseUtc } from './dates'
 import { ApiError } from './errors'
 
 /**
@@ -69,6 +70,17 @@ async function send(path: string, init: RequestInit, asBlob = false) {
 async function readBody(response: Response) {
   const text = await response.text()
   return text ? safeJson(text) : undefined
+}
+
+/**
+ * The access token for a connection that does not go through `apiRequest` (the SignalR hub): refreshed first when
+ * it has expired, so a reconnect after the token's lifetime still signs in. Empty without a session; a refresh that
+ * cannot reach the server hands out the old token and the connection retries on its own schedule.
+ */
+export async function freshAccessToken(): Promise<string> {
+  const session = getSession()
+  if (session && parseUtc(session.accessTokenExpiresAt).getTime() <= Date.now()) await refreshSessionOnce().catch(() => false)
+  return getSession()?.accessToken ?? ''
 }
 
 let refreshing: Promise<boolean> | undefined

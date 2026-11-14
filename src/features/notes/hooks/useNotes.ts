@@ -2,7 +2,7 @@ import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { env } from '@/config/env'
-import { getSession } from '@/lib/auth/session'
+import { freshAccessToken } from '@/lib/api/client'
 import {
   listConversations,
   listRecipients,
@@ -77,7 +77,7 @@ export function useDirectorNotesLive(): boolean {
     const refresh = () => void queryClient.invalidateQueries({ queryKey: notesKey })
     const connection = new HubConnectionBuilder()
       // Absolute: SignalR cannot resolve a relative URL outside a browser page (and the dev proxy keeps it same-origin).
-      .withUrl(new URL(`${env.apiBaseUrl}/hubs/notifications`, location.href).href, { accessTokenFactory: () => getSession()?.accessToken ?? '' })
+      .withUrl(new URL(`${env.apiBaseUrl}/hubs/notifications`, location.href).href, { accessTokenFactory: freshAccessToken })
       .withAutomaticReconnect()
       .build()
     // Wire names are the INotificationClient method names, suffix included.
