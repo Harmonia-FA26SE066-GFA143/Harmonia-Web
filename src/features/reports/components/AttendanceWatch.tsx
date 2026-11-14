@@ -41,17 +41,17 @@ export function AttendanceWatch({ filters, style }: Readonly<{ filters: ReportFi
       {rows.length > 0 && (
         <>
           <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {rows.map((row) => {
+            {rows.map((row, index) => {
               const words = marks.filter(({ key }) => count(row.cells, key)).map(({ key, label }) => `${count(row.cells, key)} ${label}`).join(', ')
               return (
                 <li
                   key={row.id}
-                  style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 120px 72px', gap: spacing.md, alignItems: 'center', padding: `10px ${spacing.lg}px`, borderTop: `1px solid ${colors.border}` }}
+                  style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 120px 72px', gap: spacing.md, alignItems: 'center', padding: `${spacing.sm + spacing.xs}px ${spacing.lg}px`, borderTop: `1px solid ${colors.border}` }}
                 >
                   <Typography.Text ellipsis style={{ fontWeight: 500, color: colors.textPrimary }}>
                     {row.cells.fullName}
                   </Typography.Text>
-                  <Flex role="img" aria-label={`${row.cells.fullName}: ${words}`} style={{ height: 8, borderRadius: 4, overflow: 'hidden', background: colors.softSurface }}>
+                  <Flex role="img" aria-label={`${row.cells.fullName}: ${words}`} className="mg-fill" style={{ '--i': index, height: 8, borderRadius: 4, overflow: 'hidden', background: colors.softSurface } as CSSProperties}>
                     {marks.map(({ key, color }) => (count(row.cells, key) ? <span key={key} style={{ flex: count(row.cells, key), background: color }} /> : null))}
                   </Flex>
                   <Typography.Text style={{ textAlign: 'end', color: colors.textMuted, fontVariantNumeric: 'tabular-nums' }}>

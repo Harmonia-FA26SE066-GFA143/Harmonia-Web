@@ -88,7 +88,7 @@ export function SongIndexList({
             ].filter(Boolean)
 
             return (
-              <li key={song.id} className="song-index__row">
+              <li key={song.id} data-row-key={song.id} className="song-index__row">
                 <span aria-hidden className="song-index__number">
                   {(page - 1) * pageSize + index + 1}
                 </span>

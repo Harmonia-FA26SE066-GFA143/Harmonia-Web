@@ -1,5 +1,7 @@
 import { Flex, Tooltip, Typography } from 'antd'
+import type { CSSProperties } from 'react'
 import { colors, radius, spacing } from '@/styles/tokens'
+
 /** One column: a short label under it and a long name for screen readers and tooltips. */
 export interface Bucket {
   label: string
@@ -46,7 +48,9 @@ export function StackedBars<K extends string>({
                 <div
                   role="img"
                   aria-label={`${bucket.title}: ${description}`}
+                  className="mg-rise"
                   style={{
+                    '--i': index,
                     width: '100%',
                     maxWidth: 44,
                     height: Math.max(total ? 4 : 2, (total / max) * chartHeight),
@@ -55,7 +59,7 @@ export function StackedBars<K extends string>({
                     borderRadius: `${radius.sm}px ${radius.sm}px 0 0`,
                     overflow: 'hidden',
                     background: total ? undefined : colors.border,
-                  }}
+                  } as CSSProperties}
                 >
                   {series.map(({ key, color }) =>
                     counts[key] ? <div key={key} style={{ flex: counts[key], background: color }} /> : null,

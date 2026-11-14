@@ -6,7 +6,7 @@ import { paths } from '@/app/router/paths'
 import { canEditSongList, formatProgramDate, ProgramInfo, useProgram, type LiturgicalProgram } from '@/features/liturgical-programs'
 import type { SongFilters } from '@/features/music-library'
 import { useCatalogOptions, type CatalogOption } from '@/features/system-categories'
-import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/shared/ui'
+import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SaveButton, useJustSaved } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { ProposalTable, type DraftItem } from '../components/ProposalTable'
 import { SongListStatusAlert } from '../components/SongListStatusAlert'
@@ -55,6 +55,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
   const [suggesting, setSuggesting] = useState(false)
   const suggestedFilters = useEventSongFilters(program)
   const [confirming, setConfirming] = useState(false)
+  const [justSaved, markSaved] = useJustSaved()
 
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname,
@@ -80,6 +81,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
         onSuccess: () => {
           setDirty(false)
           setConfirming(false)
+          if (!submit) markSaved()
           message.success(submit ? 'Đã gửi danh sách bài hát để duyệt.' : 'Đã lưu bản nháp.')
         },
         onError: (error) => {
@@ -115,14 +117,15 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
               <Flex wrap gap={spacing.sm}>
                 {suggestButton}
                 {addButton}
-                <Button
-                  icon={<SaveOutlined />}
+                <SaveButton
+                  saved={justSaved}
+                  icon={justSaved ? undefined : <SaveOutlined />}
                   disabled={!dirty || items.length === 0}
                   loading={save.isPending && !confirming}
                   onClick={() => handleSave(false)}
                 >
                   Lưu nháp
-                </Button>
+                </SaveButton>
                 <Button type="primary" icon={<SendOutlined />} disabled={items.length === 0} onClick={() => setConfirming(true)}>
                   Gửi duyệt
                 </Button>

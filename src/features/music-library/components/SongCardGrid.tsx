@@ -72,7 +72,7 @@ export function SongCardGrid({ songs, page, pageSize, total, loading, selectedId
         {songs.map((song, index) => {
           const part = partOf(song)
           return (
-            <li key={song.id}>
+            <li key={song.id} data-row-key={song.id}>
               <button type="button" className="song-card hm-lift" aria-pressed={song.id === selectedId} onClick={() => onSelect(song)}>
                 <span className="song-card__thumb" aria-hidden>
                   <ScorePage url={song.sheetMusicThumbnailUrl} />

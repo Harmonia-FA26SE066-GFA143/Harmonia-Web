@@ -37,6 +37,7 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
         {members.map((member) => (
           <li
             key={member.id}
+            data-row-key={member.id}
             style={{ display: 'flex', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderTop: `1px solid ${colors.border}` }}
           >
             {/* Neutral: burgundy belongs to the brand and the liturgy, not to member data. */}

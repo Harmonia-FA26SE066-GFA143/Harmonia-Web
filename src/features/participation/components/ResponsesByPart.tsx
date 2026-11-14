@@ -1,5 +1,6 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { Typography } from 'antd'
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { inVoicePart, voiceParts } from '@/shared/ui'
@@ -46,7 +47,7 @@ export function ResponsesByPart({ requests, skillsOf, programId }: Readonly<{ re
         <Typography.Text style={muted}>Chưa có ca viên nào được mời có kỹ năng bè đã duyệt.</Typography.Text>
       ) : (
         <ul className="hm-part-bars">
-          {parts.map((part) => (
+          {parts.map((part, index) => (
             <li key={part.label}>
               <div className="hm-part-bars__head">
                 <b>{part.label}</b>
@@ -54,7 +55,7 @@ export function ResponsesByPart({ requests, skillsOf, programId }: Readonly<{ re
                   {part.total === 0 ? 'Chưa mời ai' : `${part.confirmed} xác nhận · ${part.declined} từ chối · ${part.open} chưa`}
                 </span>
               </div>
-              <div className="hm-part-bars__track" aria-hidden style={{ width: `${(part.total / largest) * 100}%` }}>
+              <div className="hm-part-bars__track mg-fill" aria-hidden style={{ '--i': index, width: `${(part.total / largest) * 100}%` } as CSSProperties}>
                 {part.confirmed > 0 && <span className="is-confirmed" style={{ flex: part.confirmed }} />}
                 {part.declined > 0 && <span className="is-declined" style={{ flex: part.declined }} />}
                 {part.open > 0 && <span className="is-open" style={{ flex: part.open }} />}

@@ -244,18 +244,29 @@ body {
   }
 }
 
-/* A list arriving as a list: its rows rise in turn, 30ms apart, the delay capped at 180ms (seventh row on). */
-.hm-stagger > * {
-  animation: hm-rise var(--hm-dur-base) var(--hm-ease) both;
+/*
+ * A list arriving as a list: its rows rise in turn, 40ms apart, the delay capped at 240ms (seventh row on). Table rows
+ * do the same when they are inserted (first load, a new page, a new filter); a re-sort keeps its rows and stays still.
+ */
+.hm-stagger > *,
+.ant-table-tbody > tr.ant-table-row {
+  animation: hm-rise var(--hm-dur-base) var(--hm-ease) backwards;
 }
 
-.hm-stagger > :nth-child(2) { animation-delay: 30ms; }
-.hm-stagger > :nth-child(3) { animation-delay: 60ms; }
-.hm-stagger > :nth-child(4) { animation-delay: 90ms; }
-.hm-stagger > :nth-child(5) { animation-delay: 120ms; }
-.hm-stagger > :nth-child(6) { animation-delay: 150ms; }
-.hm-stagger > :nth-child(7) { animation-delay: 180ms; }
-.hm-stagger > :nth-child(n + 8) { animation-delay: 180ms; }
+.hm-stagger > :nth-child(2), .ant-table-tbody > tr.ant-table-row:nth-child(2) { animation-delay: 40ms; }
+.hm-stagger > :nth-child(3), .ant-table-tbody > tr.ant-table-row:nth-child(3) { animation-delay: 80ms; }
+.hm-stagger > :nth-child(4), .ant-table-tbody > tr.ant-table-row:nth-child(4) { animation-delay: 120ms; }
+.hm-stagger > :nth-child(5), .ant-table-tbody > tr.ant-table-row:nth-child(5) { animation-delay: 160ms; }
+.hm-stagger > :nth-child(6), .ant-table-tbody > tr.ant-table-row:nth-child(6) { animation-delay: 200ms; }
+.hm-stagger > :nth-child(n + 7), .ant-table-tbody > tr.ant-table-row:nth-child(n + 7) { animation-delay: 240ms; }
+
+/* Reduced motion: the rows are there at once, without waiting out their turn. */
+@media (prefers-reduced-motion: reduce) {
+  .hm-stagger > *,
+  .ant-table-tbody > tr.ant-table-row {
+    animation: none;
+  }
+}
 
 /* The rehearsal week slides in from the side it was paged to. */
 .hm-week-next {
@@ -2917,4 +2928,88 @@ a.song-next__item:hover {
 
 .hm-choir__select.ant-select .ant-select-selection-item {
   color: var(--hm-text-primary);
+}
+
+/*
+ * The 25% motion share (owner 2026-11-14, DESIGN "Motion"): save confirmed, tab content, waiting counts, chart bars.
+ * Transform, opacity and colour only; each runs once when its element arrives or changes.
+ */
+
+/* Save confirmed: the row of the record just saved washes once (shared/motion/savedRow). */
+@keyframes hm-saved-wash {
+  from { background-color: color-mix(in srgb, var(--hm-action-primary) 16%, transparent); }
+}
+
+[data-just-saved],
+[data-just-saved] > td {
+  animation: hm-saved-wash 1800ms var(--hm-ease);
+}
+
+/* Tab content rises into place when its tab is picked (antd 6 mounts the new tab's content in the active panel). */
+.ant-tabs-content-active > * {
+  animation: hm-rise-small var(--hm-dur-base) var(--hm-ease);
+}
+
+/* A waiting count breathes once when it appears, then stays still. */
+@keyframes hm-attention-once {
+  0%, 100% { transform: scale(1); }
+  35% { transform: scale(1.18); }
+}
+
+.hm-tab__count {
+  animation: hm-attention-once 1200ms var(--hm-ease-in-out) 200ms;
+}
+
+/* Floating week cards lift on touch, like every clickable card. */
+.hm-week__card {
+  transition:
+    transform var(--hm-dur-fast) var(--hm-ease),
+    box-shadow var(--hm-dur-fast) var(--hm-ease);
+}
+
+.hm-week__card:hover,
+.hm-week__card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--hm-lift-shadow);
+}
+
+.hm-week__card:active {
+  transform: translateY(0);
+}
+
+/* Data arriving: bars grow from their baseline (mg-rise) or fill from the left (mg-fill), 40ms apart, once. */
+@keyframes mg-rise {
+  from { transform: scaleY(0); }
+}
+
+@keyframes mg-fill {
+  from { transform: scaleX(0); }
+}
+
+.mg-rise {
+  transform-origin: bottom;
+  animation: mg-rise 520ms var(--hm-ease) backwards;
+  animation-delay: min(calc(var(--i, 0) * 40ms), 480ms);
+}
+
+.mg-fill {
+  transform-origin: left;
+  animation: mg-fill 520ms var(--hm-ease) backwards;
+  animation-delay: min(calc(120ms + var(--i, 0) * 40ms), 480ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-just-saved],
+  [data-just-saved] > td,
+  .ant-tabs-content-active > *,
+  .hm-tab__count,
+  .mg-rise,
+  .mg-fill {
+    animation: none;
+  }
+
+  .hm-week__card:hover,
+  .hm-week__card:focus-visible {
+    transform: none;
+  }
 }

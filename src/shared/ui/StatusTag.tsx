@@ -1,5 +1,5 @@
 import { Tag, theme, type TagProps } from 'antd'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { colors } from '@/styles/tokens'
 
 /** The Ant Design preset names the status maps already use; `processing` reads as blue. */
@@ -20,8 +20,12 @@ export interface StatusTagProps extends Omit<TagProps, 'color' | 'children'> {
  * tags put the -7 shade on the -1 background: green 3.4:1 and gold 2.8:1 fall short, so those use the -8 / -9 shade.
  * The label, not the color, still carries the meaning.
  */
-export function StatusTag({ color = 'default', mark, style, children, ...props }: Readonly<StatusTagProps>) {
+export function StatusTag({ color = 'default', mark, style, className, children, ...props }: Readonly<StatusTagProps>) {
   const { token } = theme.useToken()
+  // A state that changes while the tag is on screen pops once (DESIGN "Motion": StatusTag); the first render does not.
+  const state = `${color}|${mark ?? ''}|${typeof children === 'string' ? children : ''}`
+  const [firstState] = useState(state)
+  const changed = state !== firstState
   // [text, background, border]
   const tones = {
     default: [colors.textBody, colors.softSurface, colors.border],
@@ -35,6 +39,8 @@ export function StatusTag({ color = 'default', mark, style, children, ...props }
 
   return (
     <Tag
+      key={changed ? state : undefined}
+      className={[className, changed && 'hm-pop'].filter(Boolean).join(' ') || undefined}
       style={{
         borderRadius: 9999,
         padding: '2px 10px',
