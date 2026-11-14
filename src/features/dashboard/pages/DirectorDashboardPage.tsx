@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
 import { generatePath, Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { NoChoirNotice } from '@/features/choirs'
 import { formatProgramDate, useNextProgram, useUpcomingPrograms, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { useSubmissions } from '@/features/practice'
 import { usePendingSkills } from '@/features/skill-approval'
@@ -219,6 +220,7 @@ export function DirectorDashboardPage() {
   return (
     <div className="director-dashboard-page">
       <PageHeader title="Tổng quan" breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Tổng quan' }]} />
+      <NoChoirNotice />
       <div className="dash-grid">
         <div className="dash-main">
           <TodaySeason />

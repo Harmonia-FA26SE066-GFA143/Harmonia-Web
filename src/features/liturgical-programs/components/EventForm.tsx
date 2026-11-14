@@ -1,7 +1,7 @@
 import { Button, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useEffect } from 'react'
-import { useChoirs } from '@/features/choirs'
+import { choirOptionLabel, useChoirs } from '@/features/choirs'
 import { useCatalogOptions } from '@/features/system-categories'
 import { spacing } from '@/styles/tokens'
 import type { EventFormValues, LiturgicalEvent } from '../types'
@@ -46,6 +46,9 @@ const toFields = (event: LiturgicalEvent): FormFields => ({
   specialRequirements: event.specialRequirements,
 })
 
+// Only the Admin edits the catalogs; an empty list says where they are kept instead of antd's bare "no data".
+const emptyCatalog = 'Chưa có mục nào. Quản trị viên thêm ở Danh mục phụng vụ.'
+
 /**
  * Event fields with the backend's rules (Create/UpdateLiturgicalEventRequestValidator): date, time and place are
  * required, and a Mass type or a ceremony type. Shared by the create page and the edit dialog. Creating also needs
@@ -55,7 +58,7 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
   const [form] = Form.useForm<FormFields>()
   const chosenChoirIds = Form.useWatch('choirIds', form) ?? []
   const choirs = useChoirs(!event)
-  const choirOptions = (choirs.data ?? []).filter((choir) => choir.isActive).map((choir) => ({ value: choir.id, label: choir.name }))
+  const choirOptions = (choirs.data ?? []).filter((choir) => choir.isActive).map((choir) => ({ value: choir.id, label: choirOptionLabel(choir) }))
   const locations = useCatalogOptions('worshipLocations')
   const categories = useCatalogOptions('eventCategories')
   const seasons = useCatalogOptions('seasons')
@@ -117,7 +120,7 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
           rules={[{ required: true, message: 'Vui lòng chọn nơi cử hành.' }]}
           style={{ flex: '2 1 240px' }}
         >
-          <Select placeholder="Chọn nơi cử hành" options={locations} />
+          <Select placeholder="Chọn nơi cử hành" options={locations} notFoundContent={emptyCatalog} />
         </Form.Item>
       </Flex>
       <Flex wrap gap={spacing.md}>
@@ -135,10 +138,10 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
           ]}
           style={{ flex: '1 1 200px' }}
         >
-          <Select allowClear placeholder="Chọn loại Thánh lễ" options={massTypes} />
+          <Select allowClear placeholder="Chọn loại Thánh lễ" options={massTypes} notFoundContent={emptyCatalog} />
         </Form.Item>
         <Form.Item label="Loại nghi thức" name="ceremonyTypeId" style={{ flex: '1 1 200px' }}>
-          <Select allowClear placeholder="Chọn loại nghi thức" options={ceremonyTypes} />
+          <Select allowClear placeholder="Chọn loại nghi thức" options={ceremonyTypes} notFoundContent={emptyCatalog} />
         </Form.Item>
       </Flex>
       <Flex wrap gap={spacing.md}>
@@ -152,10 +155,10 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
           }
           style={{ flex: '1 1 200px' }}
         >
-          <Select allowClear placeholder="Chọn mùa phụng vụ" options={seasons} />
+          <Select allowClear placeholder="Chọn mùa phụng vụ" options={seasons} notFoundContent={emptyCatalog} />
         </Form.Item>
         <Form.Item label="Loại sự kiện" name="categoryId" style={{ flex: '1 1 200px' }}>
-          <Select allowClear placeholder="Chọn loại sự kiện" options={categories} />
+          <Select allowClear placeholder="Chọn loại sự kiện" options={categories} notFoundContent={emptyCatalog} />
         </Form.Item>
       </Flex>
       {!event && (
@@ -173,6 +176,7 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
               placeholder="Chọn ca đoàn"
               loading={choirs.isPending}
               options={choirOptions}
+              notFoundContent="Chưa có ca đoàn đang hoạt động. Quản trị viên thêm ở trang Ca đoàn."
               onChange={chooseChoirs}
             />
           </Form.Item>

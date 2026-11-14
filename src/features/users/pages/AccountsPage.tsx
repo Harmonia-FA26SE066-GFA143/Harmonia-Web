@@ -1,6 +1,8 @@
 import { UserAddOutlined } from '@ant-design/icons'
 import { App, Button, Card, Typography } from 'antd'
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { paths } from '@/app/router/paths'
 import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
@@ -22,6 +24,7 @@ const pageSize = 20
  */
 export function AccountsPage() {
   const { message, modal } = App.useApp()
+  const navigate = useNavigate()
   const [filters, setFilters] = useState<AccountFilters>(emptyAccountFilters)
   const [page, setPage] = useState(1)
   const search = useDebouncedValue(filters.search)
@@ -54,11 +57,22 @@ export function AccountsPage() {
     const callbacks = {
       onSuccess: () => {
         // The backend creates the account even when the email cannot be sent (UserService.CreateAsync), so name the way in.
-        message.success(
-          form.account
-            ? 'Đã lưu thay đổi.'
-            : 'Đã tạo tài khoản. Mật khẩu đầu tiên được gửi qua email; nếu không nhận được, người dùng chọn “Quên mật khẩu?” ở trang đăng nhập.',
-        )
+        const created = 'Đã tạo tài khoản. Mật khẩu đầu tiên được gửi qua email; nếu không nhận được, người dùng chọn “Quên mật khẩu?” ở trang đăng nhập.'
+        if (form.account) message.success('Đã lưu thay đổi.')
+        else if ((values as CreateAccountValues).role !== 'director') message.success(created)
+        else
+          // A new Choir Director directs no choir yet and sees no program until one is theirs.
+          message.success({
+            duration: 8,
+            content: (
+              <>
+                {created} Ca trưởng chưa phụ trách ca đoàn nào.{' '}
+                <Button type="link" size="small" style={{ padding: 0 }} onClick={() => navigate(paths.admin.choirs)}>
+                  Giao ca đoàn
+                </Button>
+              </>
+            ),
+          })
         closeForm()
       },
       onError: (error: Error) =>

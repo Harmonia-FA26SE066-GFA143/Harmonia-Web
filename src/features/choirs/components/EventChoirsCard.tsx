@@ -5,6 +5,7 @@ import { CardTitle, ErrorState, Form, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { useChoirs, useEventChoirs, useUpdateEventChoirs } from '../hooks/useChoirs'
+import { choirOptionLabel } from '../leadChoir'
 import type { EventChoir } from '../types'
 import { SubstituteDirectorModal } from './SubstituteDirectorModal'
 
@@ -48,7 +49,10 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false, publ
   }, [draft])
 
   const current = serving.data ?? []
-  const currentLead = current.find((choir) => choir.isLead)?.choirId
+  const lead = current.find((choir) => choir.isLead)
+  const currentLead = lead?.choirId
+  // Only the lead choir's director, or their substitute at this event, may plan it (ChoirScopeService.CanLeadEventAsync).
+  const nobodyPlans = Boolean(lead) && !lead?.directorId && !lead?.substituteDirectorId
   const unchanged =
     draft !== undefined &&
     draft.leadChoirId === currentLead &&
@@ -81,10 +85,10 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false, publ
     }))
 
   const options = [
-    ...current.map((choir) => ({ value: choir.choirId, label: choir.isActive ? choir.name : `${choir.name} (ngừng hoạt động)` })),
+    ...current.map((choir) => ({ value: choir.choirId, label: choir.isActive ? choirOptionLabel(choir) : `${choir.name} (ngừng hoạt động)` })),
     ...(parish.data ?? [])
       .filter((choir) => choir.isActive && !current.some(({ choirId }) => choirId === choir.id))
-      .map((choir) => ({ value: choir.id, label: choir.name })),
+      .map((choir) => ({ value: choir.id, label: choirOptionLabel(choir) })),
   ]
 
   return (
@@ -114,7 +118,7 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false, publ
                   <Tag color={choir.isLead ? 'gold' : undefined} style={{ marginInlineEnd: 0 }}>
                     {choir.name}
                     {choir.isLead && ' · Phụ trách'}
-                    {choir.directorName && ` (${choir.directorName})`}
+                    {choir.directorId ? choir.directorName && ` (${choir.directorName})` : ' (chưa có ca trưởng)'}
                   </Tag>
                   {choir.substituteDirectorName && (
                     <Typography.Text>Ca trưởng thay thế: {choir.substituteDirectorName}</Typography.Text>
@@ -130,6 +134,14 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false, publ
             </Flex>
           ) : (
             <Typography.Text style={muted}>{locked ? 'Chương trình không có ca đoàn phục vụ.' : 'Chưa có ca đoàn phục vụ.'}</Typography.Text>
+          )}
+          {nobodyPlans && (
+            <Alert
+              type="warning"
+              showIcon
+              title="Ca đoàn phụ trách chưa có ca trưởng"
+              description="Chưa ai lập được danh sách bài, mời tham gia hay phân công cho chương trình này. Cha xứ đặt ca trưởng thay thế, hoặc Quản trị viên chọn ca trưởng cho ca đoàn."
+            />
           )}
           {current.length > 0 && !currentLead && (
             <Typography.Text style={muted}>

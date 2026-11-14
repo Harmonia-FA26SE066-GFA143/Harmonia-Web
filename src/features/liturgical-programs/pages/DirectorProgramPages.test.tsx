@@ -52,6 +52,15 @@ describe('DirectorProgramListPage', () => {
     expect(await screen.findByTestId('location')).toHaveTextContent('/director/programs/p1')
   })
 
+  it('tells a Choir Director without a choir why no program appears', async () => {
+    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(programPage())
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
+    renderPage(<DirectorProgramListPage />, '/director/programs')
+
+    expect(await screen.findByText('Bạn chưa phụ trách ca đoàn nào')).toBeInTheDocument()
+    expect(screen.getByText(/Quản trị viên chọn ca trưởng cho ca đoàn ở trang Ca đoàn/)).toBeInTheDocument()
+  })
+
   it('pages on the server and marks cancelled programs', async () => {
     const list = vi
       .spyOn(programsApi, 'listPrograms')

@@ -38,7 +38,7 @@ beforeEach(() => {
           : [],
   )
   vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
-    { id: 'choir-1', name: 'Ca đoàn Cecilia', isActive: true },
+    { id: 'choir-1', name: 'Ca đoàn Cecilia', isActive: true, directorId: 'u1' },
     { id: 'choir-off', name: 'Ca đoàn cũ', isActive: false },
   ])
 })
@@ -78,8 +78,8 @@ describe('CreateProgramPage', () => {
     const create = vi.spyOn(eventsApi, 'createEvent')
     // With two active choirs nothing is chosen for the Priest.
     vi.mocked(choirsApi.listChoirs).mockResolvedValue([
-      { id: 'choir-1', name: 'Ca đoàn Cecilia', isActive: true },
-      { id: 'choir-2', name: 'Ca đoàn Têrêsa', isActive: true },
+      { id: 'choir-1', name: 'Ca đoàn Cecilia', isActive: true, directorId: 'u1' },
+      { id: 'choir-2', name: 'Ca đoàn Têrêsa', isActive: true, directorId: 'u1' },
     ])
     renderPage(<CreateProgramPage />, route)
 
