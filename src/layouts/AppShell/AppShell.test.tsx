@@ -277,7 +277,7 @@ describe('AppShell', () => {
     vi.spyOn(notificationsApi, 'listNotifications').mockResolvedValue({
       items: [
         { id: 'n1', title: 'Sự kiện mới được công bố', content: 'Chưa đọc', createdAt: '2026-10-08T02:00:00Z', isRead: false },
-        { id: 'n2', title: 'Sự kiện đã bị huỷ', content: 'Đã đọc', createdAt: '2026-10-07T02:00:00Z', isRead: true },
+        { id: 'n2', title: 'Sự kiện đã bị hủy', content: 'Đã đọc', createdAt: '2026-10-07T02:00:00Z', isRead: true },
       ],
       pageNumber: 1,
       pageSize: 10,
@@ -296,8 +296,8 @@ describe('AppShell', () => {
     // Inside the bell's wrapper, so Tab goes from the bell into the panel.
     expect(bell.parentElement).toContainElement(dialog)
     expect(await within(dialog).findByRole('button', { name: /Sự kiện mới được công bố/ })).toBeInTheDocument()
-    expect(within(dialog).queryByRole('button', { name: /Sự kiện đã bị huỷ/ })).toBeNull()
-    expect(within(dialog).getByText('Sự kiện đã bị huỷ')).toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: /Sự kiện đã bị hủy/ })).toBeNull()
+    expect(within(dialog).getByText('Sự kiện đã bị hủy')).toBeInTheDocument()
 
     fireEvent.keyDown(dialog, { key: 'Escape' })
     expect(bell).toHaveAttribute('aria-expanded', 'false')

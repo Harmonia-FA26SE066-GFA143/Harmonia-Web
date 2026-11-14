@@ -30,7 +30,7 @@ export class ScoreSourceError extends Error {
   }
 }
 
-export const abortedError = () => new ScoreSourceError('aborted', 'Đã huỷ việc mở bản nhạc.')
+export const abortedError = () => new ScoreSourceError('aborted', 'Đã hủy việc mở bản nhạc.')
 
 /** Settles with `work`, or rejects with `aborted` as soon as `signal` fires. */
 export function untilAborted<T>(work: Promise<T>, signal?: AbortSignal): Promise<T> {

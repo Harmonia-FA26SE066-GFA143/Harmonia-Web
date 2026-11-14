@@ -67,7 +67,7 @@ export const statusLabels: Record<NominationStatus, string> = {
   Trained: 'Chờ bổ nhiệm',
   Appointed: 'Đã bổ nhiệm',
   Rejected: 'Bị từ chối',
-  Cancelled: 'Đã huỷ',
+  Cancelled: 'Đã hủy',
 }
 
 export const statusColors: Record<NominationStatus, StatusTagColor> = {
