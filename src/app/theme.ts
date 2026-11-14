@@ -67,6 +67,9 @@ export const theme: ThemeConfig = {
     motionDurationSlow: seconds(motion.panel),
     motionEaseOut: motion.ease,
     motionEaseOutCirc: motion.ease,
+    // antd's back curves overshoot (checkbox and radio marks, zoom-out); Harmonia does not bounce.
+    motionEaseOutBack: motion.ease,
+    motionEaseInBack: motion.easeInOut,
   },
   components: {
     Layout: {
