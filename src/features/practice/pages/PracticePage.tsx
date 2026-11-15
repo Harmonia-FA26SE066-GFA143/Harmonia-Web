@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons'
 import { Alert, Button, Flex, Tabs, Typography } from 'antd'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -10,7 +10,7 @@ import { AssignmentForm } from '../components/AssignmentForm'
 import { AssignmentsTab } from '../components/AssignmentsTab'
 import { ProgressTab } from '../components/ProgressTab'
 import { SubmissionList } from '../components/SubmissionList'
-import { useUpcomingEvents } from '../hooks/usePractice'
+import { useSubmissions, useUpcomingEvents } from '../hooks/usePractice'
 
 /**
  * Choir Director: practice (FE-41–FE-44) as Harmonia-BE offers it (owner choice 2026-10-10). "Chấm bài" is the review
@@ -26,6 +26,9 @@ export function PracticePage() {
   const [tab, setTab] = useUrlTab(['review', 'assignments', 'assign', 'progress'], defaultTab)
 
   const events = useUpcomingEvents()
+  // Same query as the review queue's first page, so the tab count costs no extra request.
+  const waiting = useSubmissions('submitted', { pageNumber: 1, pageSize: 20 })
+  const waitingCount = waiting.data?.totalCount
   const activeEvent = programId ? (events.data ?? []).find((event) => event.id === programId) : undefined
 
   const clearEventContext = () => {
@@ -35,20 +38,44 @@ export function PracticePage() {
     setParams(next, { replace: true })
   }
 
+  // Giao bài tập is its own page (artifact AssignPracticePage), kept on `?tab=assign` so existing links still land on it.
+  if (tab === 'assign') {
+    return (
+      <>
+        <PageHeader
+          title="Giao bài tập"
+          breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Luyện tập' }, { title: 'Giao bài tập' }]}
+          description="Ca viên sẽ nhận được thông báo khi bạn giao bài."
+          extra={
+            <Button icon={<ArrowLeftOutlined />} onClick={() => setTab('assignments')}>
+              Về Luyện tập
+            </Button>
+          }
+        />
+        <AssignmentForm />
+      </>
+    )
+  }
+
   return (
     <>
       <PageHeader
-        title="Bài tập & Tiến độ luyện tập"
+        title="Luyện tập"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Luyện tập' }]}
         extra={
-          activeEvent ? (
-            <Button
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate(generatePath(paths.director.programDetail, { programId: activeEvent.id }))}
-            >
-              Về chi tiết chương trình
+          <>
+            {activeEvent && (
+              <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate(generatePath(paths.director.programDetail, { programId: activeEvent.id }))}
+              >
+                Về chi tiết chương trình
+              </Button>
+            )}
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setTab('assign')}>
+              Giao bài tập
             </Button>
-          ) : undefined
+          </>
         }
       />
       {activeEvent && (
@@ -74,9 +101,16 @@ export function PracticePage() {
         activeKey={tab}
         onChange={setTab}
         items={[
-          { key: 'review', label: 'Chấm bài', children: <SubmissionList defaultStatus="submitted" /> },
+          {
+            key: 'review',
+            label: (
+              <span>
+                Chấm bài{waitingCount ? <span className="ctb-tab-count">{waitingCount}</span> : null}
+              </span>
+            ),
+            children: <SubmissionList defaultStatus="submitted" />,
+          },
           { key: 'assignments', label: 'Bài đã giao', children: <AssignmentsTab /> },
-          { key: 'assign', label: 'Giao bài', children: <AssignmentForm /> },
           { key: 'progress', label: 'Tiến độ', children: <ProgressTab /> },
         ]}
       />

@@ -250,7 +250,7 @@ describe('PracticePage', () => {
     const create = vi.spyOn(practiceApi, 'createAssignment')
     renderPractice()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Giao bài tập/ }))
     const title = await screen.findByLabelText('Tiêu đề')
     expect(title.matches('input:not([type]), input[type="text"], textarea')).toBe(true)
     fireEvent.change(title, { target: { value: 'Tập bè Tenor' } })
@@ -286,7 +286,7 @@ describe('PracticePage', () => {
     const create = vi.spyOn(practiceApi, 'createAssignment').mockResolvedValue()
     renderPractice()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Giao bài tập/ }))
     const choir = await screen.findByLabelText('Ca đoàn')
     expect(choir).toHaveAttribute('role', 'combobox')
     expect(await screen.findByTitle('Ca đoàn Cecilia')).toBeInTheDocument()
@@ -334,7 +334,7 @@ describe('PracticePage', () => {
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
     renderPractice()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Giao bài tập/ }))
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bài hát (không bắt buộc)' }))
     fireEvent.click(await screen.findByTitle('Con Bước Lên Bàn Thờ'))
 
@@ -350,7 +350,7 @@ describe('PracticePage', () => {
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
     renderPractice()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Giao bài' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Giao bài tập/ }))
     fireEvent.change(screen.getByRole('combobox', { name: 'Bài hát (không bắt buộc)' }), { target: { value: 'Xin Vâng' } })
 
     await waitFor(() => expect(listSongs).toHaveBeenCalledWith({ search: 'Xin Vâng' }, { pageNumber: 1, pageSize: 50 }))

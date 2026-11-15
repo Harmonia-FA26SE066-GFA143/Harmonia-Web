@@ -1,4 +1,4 @@
-import { CheckSquareOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
+import { CalendarOutlined, CheckSquareOutlined, DeleteOutlined, EditOutlined, EnvironmentOutlined, ReadOutlined } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { generatePath, Link } from 'react-router'
@@ -73,7 +73,7 @@ export function RehearsalWeek({ weekStart, direction, rehearsals, programs, sele
                   >
                     <b>{time(rehearsal)}</b>
                     <span>{program?.eventName ?? 'Buổi tập'}</span>
-                    <small>{rehearsal.songs.length > 0 ? `${rehearsal.songs.length} bài` : 'Chưa chọn bài'}</small>
+                    <small>{rehearsal.locationName ?? (rehearsal.songs.length > 0 ? `${rehearsal.songs.length} bài` : 'Chưa chọn bài')}</small>
                   </button>
                 )
               })}
@@ -105,37 +105,46 @@ export interface RehearsalDetailProps {
 export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendance, onEdit, onDelete }: Readonly<RehearsalDetailProps>) {
   const label = rehearsalLabel(rehearsal)
   return (
-    <section className="hm-rehearsal-detail" aria-label={`Chi tiết buổi tập ${label}`}>
+    <section className="hm-rehearsal-detail ctb-detail" aria-label={`Chi tiết buổi tập ${label}`}>
       <div>
-        <p className="hm-rubric">Thời gian và Thánh lễ</p>
+        <p className="hm-rubric">Buổi tập đang chọn</p>
         <Flex align="center" gap={spacing.sm} wrap>
-          <Typography.Text strong>{formatRehearsalTime(rehearsal)}</Typography.Text>
+          <h3 className="ctb-detail__title">{program?.eventName ? `Tập cho ${program.eventName}` : 'Buổi tập'}</h3>
           <SessionState rehearsal={rehearsal} />
         </Flex>
-        {rehearsal.locationName && <Typography.Text style={{ ...muted, display: 'block' }}>{rehearsal.locationName}</Typography.Text>}
-        <div style={{ marginTop: spacing.sm }}>
-          {rehearsal.eventId ? (
-            <Link to={generatePath(paths.director.programDetail, { programId: rehearsal.eventId })}>
-              {program ? `${program.eventName} · ${formatProgramDate(program.date)}` : 'Xem chương trình'}
-            </Link>
-          ) : (
-            <Typography.Text style={muted}>Không gắn chương trình</Typography.Text>
+        <ul className="ctb-facts">
+          <li>
+            <CalendarOutlined aria-hidden />
+            {formatRehearsalTime(rehearsal)}
+          </li>
+          {rehearsal.locationName && (
+            <li>
+              <EnvironmentOutlined aria-hidden />
+              {rehearsal.locationName}
+            </li>
           )}
-        </div>
+          <li>
+            <ReadOutlined aria-hidden />
+            {rehearsal.eventId ? (
+              <Link to={generatePath(paths.director.programDetail, { programId: rehearsal.eventId })}>
+                Cho Thánh lễ: {program ? `${program.eventName} · ${formatProgramDate(program.date)}` : 'xem chương trình'}
+              </Link>
+            ) : (
+              <Typography.Text style={muted}>Không gắn chương trình</Typography.Text>
+            )}
+          </li>
+        </ul>
       </div>
       <div>
-        <p className="hm-rubric">Bài hát · {rehearsal.songs.length}</p>
+        <p className="hm-rubric">Bài tập · {rehearsal.songs.length}</p>
         {rehearsal.songs.length === 0 ? (
           <Typography.Text style={muted}>Chưa chọn bài tập.</Typography.Text>
         ) : (
-          <ol className="hm-preview__songs">
-            {rehearsal.songs.map((song, index) => (
-              <li key={song.songId} style={{ gridTemplateColumns: '24px minmax(0, 1fr)' }}>
-                <span style={muted}>{index + 1}</span>
-                <span>
-                  {song.songTitle}
-                  {song.note && <Typography.Text style={{ ...muted, display: 'block' }}>{song.note}</Typography.Text>}
-                </span>
+          <ol className="ctb-songs">
+            {rehearsal.songs.map((song) => (
+              <li key={song.songId}>
+                <b>{song.songTitle}</b>
+                {song.note && <span>{song.note}</span>}
               </li>
             ))}
           </ol>

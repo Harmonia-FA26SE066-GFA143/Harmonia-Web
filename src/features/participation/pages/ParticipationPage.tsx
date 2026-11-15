@@ -4,28 +4,31 @@ import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { PickedProgramFeedback, usePickedProgram } from '@/features/liturgical-programs'
-import { SkillTags, useChoirMembers } from '@/features/members'
+import { useChoirMembers } from '@/features/members'
 import { formatDateTime } from '@/lib/api/dates'
-import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
+import { EmptyState, ErrorState, inVoicePart, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, voiceParts, type StatusTagColor } from '@/shared/ui'
 import { nameInitial } from '@/shared/utils/personName'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
-import { ResponseHeader } from '../components/ResponseHeader'
+import { ProgramPicker, ResponseSummary } from '../components/ResponseSummary'
 import { ResponsesByPart } from '../components/ResponsesByPart'
 import { SendRequestDrawer } from '../components/SendRequestDrawer'
 import { useConfirmAllParticipation, useParticipation, useSendParticipationRequests } from '../hooks/useParticipation'
 import { participationErrorMessage } from '../participationErrors'
 import { participationResponseLabels, type ParticipationRequest, type ParticipationResponse } from '../types'
 
-type ResponseFilter = 'all' | ParticipationResponse | 'none'
+type ResponseFilter = 'all' | ParticipationResponse | 'none' | 'note'
 
 const responseColors: Record<ParticipationResponse, StatusTagColor> = { confirmed: 'green', unsure: 'gold', declined: 'red' }
+
+/** The member's voice parts in words, from their approved skills. */
+const partsOf = (skills: readonly string[]) => voiceParts.filter(({ pattern }) => inVoicePart(skills, pattern)).map(({ label }) => label).join(', ')
 
 /** Skills are not part of a request; they come from the member profiles. */
 const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<ParticipationRequest> => [
   {
     key: 'name',
-    title: 'Thành viên',
+    title: 'Ca viên',
     render: (_, request) => (
       <Flex align="center" gap={spacing.md}>
         <Avatar aria-hidden style={{ background: colors.softSurface, color: colors.textMuted, fontWeight: 600, flexShrink: 0 }}>
@@ -43,34 +46,33 @@ const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<Participa
       </Flex>
     ),
   },
-  { key: 'skills', title: 'Kỹ năng', render: (_, request) => <SkillTags skills={skillsOf.get(request.memberId) ?? []} /> },
   {
-    key: 'requestedAt',
-    title: 'Gửi yêu cầu lúc',
-    render: (_, request) => (
-      <Typography.Text style={{ fontVariantNumeric: 'tabular-nums' }}>{formatDateTime(request.requestedAt)}</Typography.Text>
-    ),
+    key: 'part',
+    title: 'Bè',
+    render: (_, request) => partsOf(skillsOf.get(request.memberId) ?? []) || <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>,
   },
   {
     key: 'response',
     title: 'Phản hồi',
     render: (_, request) =>
       request.response ? (
-        <Flex vertical gap={2} align="flex-start">
-          <StatusTag color={responseColors[request.response]} style={{ marginInlineEnd: 0 }}>
-            {participationResponseLabels[request.response]}
-          </StatusTag>
-          <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
-            {request.respondedAt ? formatDateTime(request.respondedAt) : '—'}
-          </Typography.Text>
-        </Flex>
+        <StatusTag color={responseColors[request.response]} style={{ marginInlineEnd: 0 }}>
+          {participationResponseLabels[request.response]}
+        </StatusTag>
       ) : (
         <Tag style={{ marginInlineEnd: 0 }}>Chưa phản hồi</Tag>
       ),
   },
   {
+    key: 'respondedAt',
+    title: 'Thời điểm',
+    render: (_, request) => (
+      <Typography.Text style={{ fontVariantNumeric: 'tabular-nums' }}>{request.respondedAt ? formatDateTime(request.respondedAt) : '—'}</Typography.Text>
+    ),
+  },
+  {
     key: 'note',
-    title: 'Ghi chú của thành viên',
+    title: 'Ghi chú',
     render: (_, request) => request.note ?? <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>,
   },
 ]
@@ -104,7 +106,7 @@ export function ParticipationPage() {
   const requests = useMemo(() => participation.data ?? [], [participation.data])
   const countResponses = (list: ParticipationRequest[]) => {
     const count = (response?: ParticipationResponse) => list.filter((request) => request.response === response).length
-    return { sent: list.length, confirmed: count('confirmed'), unsure: count('unsure'), declined: count('declined'), none: count() }
+    return { sent: list.length, confirmed: count('confirmed'), unsure: count('unsure'), declined: count('declined'), none: count(), note: list.filter((request) => request.note).length }
   }
   // The summary counts every request; the filter tabs count the ones that match the search, like the list below them.
   const counts = useMemo(() => countResponses(requests), [requests])
@@ -113,8 +115,12 @@ export function ParticipationPage() {
     [requests, search, skillsOf],
   )
   const tabCounts = useMemo(() => countResponses(searched), [searched])
+  // The first send; later sends only reach members not asked yet.
+  const firstRequest = requests.reduce<string | undefined>((first, request) => (!first || request.requestedAt < first ? request.requestedAt : first), undefined)
+  const invitedOn = firstRequest ? dayjs(firstRequest).format('DD/MM') : undefined
   const visible = searched.filter(
-    (request) => filter === 'all' || (filter === 'none' ? !request.response : request.response === filter),
+    (request) =>
+      filter === 'all' || (filter === 'none' ? !request.response : filter === 'note' ? Boolean(request.note) : request.response === filter),
   )
 
   const handleSend = (memberIds?: string[]) =>
@@ -144,7 +150,9 @@ export function ParticipationPage() {
         title="Xác nhận tham gia"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Xác nhận tham gia' }]}
         // The first send is offered here; later ones reach members not asked yet, from the list toolbar.
-        extra={program && !isPast && participation.data !== undefined && requests.length === 0 && sendButton}
+        extra={
+          program && participation.data !== undefined && (requests.length > 0 ? <ResponseSummary counts={counts} /> : !isPast && sendButton)
+        }
       />
       <PickedProgramFeedback
         programs={programs}
@@ -157,16 +165,31 @@ export function ParticipationPage() {
         <EmptyState title="Chưa có chương trình phụng vụ" description="Yêu cầu xác nhận tham gia được gửi theo từng chương trình." />
       )}
       {program && (
-        <Flex vertical gap={spacing.md}>
-          <Card styles={{ body: { padding: spacing.lg } }}>
-            <ResponseHeader
-              program={program}
-              programs={allPrograms}
-              today={today}
-              onPick={(programId) => setSearchParams({ programId })}
-              counts={participation.data === undefined ? undefined : counts}
-            />
-          </Card>
+        <Flex vertical gap={spacing.lg}>
+          <div className="ctb-filters">
+            <ProgramPicker program={program} programs={allPrograms} today={today} onPick={(programId) => setSearchParams({ programId })} />
+            {requests.length > 0 && (
+              <Segmented<ResponseFilter>
+                aria-label="Lọc phản hồi"
+                value={filter}
+                onChange={setFilter}
+                style={{ maxWidth: '100%', overflowX: 'auto' }}
+                options={[
+                  { value: 'all', label: `Tất cả (${tabCounts.sent})` },
+                  { value: 'none', label: `Chưa phản hồi (${tabCounts.none})` },
+                  { value: 'note', label: `Có ghi chú (${tabCounts.note})` },
+                  { value: 'confirmed', label: `${participationResponseLabels.confirmed} (${tabCounts.confirmed})` },
+                  { value: 'unsure', label: `${participationResponseLabels.unsure} (${tabCounts.unsure})` },
+                  { value: 'declined', label: `${participationResponseLabels.declined} (${tabCounts.declined})` },
+                ]}
+              />
+            )}
+            {invitedOn && (
+              <span className="ctb-filters__end">
+                Lời mời gửi ngày {invitedOn} · {requests.length} ca viên
+              </span>
+            )}
+          </div>
           {isPast && requests.length > 0 && (
             <Alert type="info" showIcon title="Chương trình đã qua: không gửi thêm yêu cầu xác nhận được." />
           )}
@@ -192,7 +215,7 @@ export function ParticipationPage() {
           {participation.data !== undefined && requests.length > 0 && (
             <div className="hm-split">
               <Card styles={{ body: { padding: 0 } }}>
-                <Flex vertical gap={spacing.sm} style={{ padding: spacing.md }}>
+                <Flex vertical gap={spacing.sm} style={{ padding: spacing.lg, borderBottom: `1px solid ${colors.border}` }}>
                   <Flex wrap gap={spacing.sm} align="end" justify="space-between">
                     <Flex vertical gap={4} style={{ flex: '1 1 240px', maxWidth: 380 }}>
                       <label htmlFor="participation-search" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
@@ -237,18 +260,6 @@ export function ParticipationPage() {
                       )}
                     </Flex>
                   </Flex>
-                  <Segmented<ResponseFilter>
-                    value={filter}
-                    onChange={setFilter}
-                    style={{ alignSelf: 'flex-start', maxWidth: '100%', overflowX: 'auto' }}
-                    options={[
-                      { value: 'all', label: `Tất cả (${tabCounts.sent})` },
-                      { value: 'confirmed', label: `${participationResponseLabels.confirmed} (${tabCounts.confirmed})` },
-                      { value: 'unsure', label: `${participationResponseLabels.unsure} (${tabCounts.unsure})` },
-                      { value: 'declined', label: `${participationResponseLabels.declined} (${tabCounts.declined})` },
-                      { value: 'none', label: `Chưa phản hồi (${tabCounts.none})` },
-                    ]}
-                  />
                 </Flex>
                 {visible.length === 0 ? (
                   <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>

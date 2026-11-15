@@ -1,7 +1,7 @@
 import { CalendarOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Flex } from 'antd'
+import { Alert, Button, Flex } from 'antd'
 import dayjs from 'dayjs'
-import { useMemo, type ReactNode } from 'react'
+import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useUpcomingPrograms } from '@/features/liturgical-programs'
@@ -9,7 +9,7 @@ import { isRehearsalDay, useRecentRehearsals, type Rehearsal } from '@/features/
 import { EmptyState, EmptyWeek, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AttendanceSheet } from '../components/AttendanceSheet'
-import { SessionHeader } from '../components/SessionHeader'
+import { SessionPicker, SessionSummary } from '../components/SessionPicker'
 import { useAttendance } from '../hooks/useAttendance'
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Điểm danh' }]
@@ -54,10 +54,7 @@ export function AttendancePage() {
     next.set('rehearsalId', nextId)
     setSearchParams(next)
   }
-  const header = (tally?: ReactNode) =>
-    selected && (
-      <SessionHeader session={selected} sessions={sessions} program={program && selected.eventId === program.id ? program : undefined} onPick={pick} tally={tally} />
-    )
+  const picker = selected && <SessionPicker session={selected} sessions={sessions} onPick={pick} />
   const showSheet = attendance.data !== undefined && attendance.data.length > 0
 
   const scheduleButton = (
@@ -71,6 +68,11 @@ export function AttendancePage() {
       <PageHeader
         title="Điểm danh"
         breadcrumb={breadcrumb}
+        description={
+          selected ? (
+            <SessionSummary session={selected} program={program && selected.eventId === program.id ? program : undefined} />
+          ) : undefined
+        }
         extra={scheduleButton}
       />
       {programId && !sessions.some((r) => r.eventId === programId) && (
@@ -106,8 +108,8 @@ export function AttendancePage() {
         />
       )}
       {selected && (
-        <Flex vertical gap={spacing.md}>
-          {!showSheet && <Card styles={{ body: { padding: spacing.lg } }}>{header()}</Card>}
+        <Flex vertical gap={spacing.lg}>
+          {!showSheet && <div className="ctb-filters">{picker}</div>}
           {attendance.isPending && <SectionSkeleton rows={8} label="Đang tải danh sách điểm danh" />}
           {attendance.isError && (
             <ErrorState
@@ -133,7 +135,7 @@ export function AttendancePage() {
               key={selected.id}
               rehearsalId={selected.id}
               records={attendance.data}
-              header={header}
+              picker={picker}
             />
           )}
         </Flex>

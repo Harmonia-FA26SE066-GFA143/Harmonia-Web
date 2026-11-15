@@ -187,12 +187,12 @@ describe('DirectorReportsPage', () => {
     expect(screen.getByRole('columnheader', { name: 'Đi trễ' })).toBeInTheDocument()
     expect(request).toHaveBeenCalledWith('/api/reports/columns/RehearsalAttendance')
     for (const name of ['Điểm danh', 'Xác nhận tham gia', 'Hoàn thành bài tập']) {
-      expect(screen.getByRole('tab', { name })).toBeInTheDocument()
+      expect(screen.getAllByRole('radio', { name }).length).toBeGreaterThan(0)
     }
     expect(request).toHaveBeenCalledWith(
       '/api/reports/rehearsal-attendance?fromDate=2026-10-01&toDate=2026-10-31&choirId=c1&pageNumber=1&pageSize=20',
     )
-    expect(screen.getByText('Từ 01/10/2026 đến 31/10/2026')).toBeInTheDocument()
+    expect(screen.getByText('01/10 – 31/10/2026')).toBeInTheDocument()
   })
 
   it('exports the open report for the chosen week in the chosen format', async () => {
@@ -201,7 +201,7 @@ describe('DirectorReportsPage', () => {
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     renderPage(<DirectorReportsPage />, '/director/reports', '/director/reports?tab=participation&by=week&date=2026-10-15')
 
-    fireEvent.click(await screen.findByRole('button', { name: /Xuất xác nhận tham gia/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Xuất báo cáo/ }))
     fireEvent.click(await screen.findByText('Excel (XLSX)'))
 
     await waitFor(() =>

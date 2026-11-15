@@ -124,7 +124,7 @@ describe('ParticipationPage', () => {
     })
     renderParticipation('/director/participation?programId=old')
 
-    expect(await screen.findByRole('heading', { name: 'Lễ Các Thánh' })).toBeInTheDocument()
+    expect(await screen.findByText(/Lễ Các Thánh/)).toBeInTheDocument()
     expect(get).toHaveBeenCalledWith('old')
     expect(await screen.findByText('Chương trình đã qua: không gửi thêm yêu cầu xác nhận được.')).toBeInTheDocument()
   })
