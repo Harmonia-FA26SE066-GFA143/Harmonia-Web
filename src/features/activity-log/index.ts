@@ -1,3 +1,5 @@
+export { ActivityDetailDrawer } from './components/ActivityDetailDrawer'
 export { ActivityTable } from './components/ActivityTable'
 export { useActivityLog } from './hooks/useActivityLog'
 export { ActivityLogPage } from './pages/ActivityLogPage'
+export type { ActivityRecord } from './types'

@@ -78,6 +78,7 @@ export function AdminReportsPage() {
       <ActivityTrendCard query={trendQuery} title={`Điểm danh và bài tập 12 tháng đến ${trendEnd.format('MM/YYYY')}`} />
       <Flex vertical gap={spacing.lg}>
         <Tabs
+          className="khop-seg-tabs"
           destroyOnHidden
           activeKey={kind}
           onChange={(key) => show(key as AdminReportKind, filters)}

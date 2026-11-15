@@ -75,6 +75,7 @@ export function SkillCategoriesPage() {
         description="Kỹ năng ca viên khai báo và Ca trưởng duyệt, xếp theo nhóm. Mục không dùng nữa được tắt, không xoá."
       />
       <Tabs
+        className="khop-seg-tabs"
         destroyOnHidden
         activeKey={tab}
         onChange={setTab}

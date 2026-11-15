@@ -3965,3 +3965,50 @@ html[data-door='close'] .landing-close__window {
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
+
+/* khop-admin-chung: Admin pages matched to their artifact mockups (SkillCatalogPage, LiturgicalCatalogPage,
+ * AdminReportsPage): the in-page tabs drawn as the mockups' segmented control (ws-seg), keeping the antd tablist. */
+.khop-seg-tabs > .ant-tabs-nav {
+  margin-bottom: 24px;
+}
+
+.khop-seg-tabs > .ant-tabs-nav::before,
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-ink-bar {
+  display: none;
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-nav-wrap {
+  flex: 0 1 auto;
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-nav-list {
+  gap: 2px;
+  padding: 3px;
+  background: var(--hm-surface-soft);
+  border: 1px solid var(--hm-border-control);
+  border-radius: var(--hm-radius-md);
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab {
+  margin: 0;
+  padding: 0 12px;
+  height: 30px;
+  border-radius: var(--hm-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color var(--hm-dur-base) var(--hm-ease);
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
+  color: var(--hm-text-body);
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab-active {
+  background: var(--hm-surface-base);
+  box-shadow: var(--hm-shadow-sm);
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--hm-text-primary);
+  font-weight: 600;
+}
