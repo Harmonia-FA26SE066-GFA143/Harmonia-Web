@@ -1,6 +1,7 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { Button, DatePicker, Flex, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
+import type { CSSProperties, ReactNode } from 'react'
 import { visuallyHidden } from '@/shared/ui'
 import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { hasActiveEventFilters } from '../programFilters'
@@ -13,6 +14,12 @@ export interface EventFilterBarProps {
   resultCount: number
   /** Statuses offered; the Choir Director never sees drafts. */
   statuses?: EventStatus[]
+  /** A control before the status (the Director's "Sắp tới / Đã qua"). */
+  leading?: ReactNode
+  /** What the count counts; "sự kiện" by default. */
+  unit?: string
+  /** Outside a card the bar keeps no padding of its own. */
+  style?: CSSProperties
 }
 
 /** The filters GET /api/liturgical-events offers: status and a date range. */
@@ -24,10 +31,14 @@ export function EventFilterBar({
   onReset,
   resultCount,
   statuses = allStatuses,
+  leading,
+  unit = 'sự kiện',
+  style,
 }: Readonly<EventFilterBarProps>) {
   const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
   return (
-    <Flex wrap align="end" gap={spacing.sm} style={{ padding: spacing.md }}>
+    <Flex wrap align="end" gap={spacing.sm} style={{ padding: spacing.md, ...style }}>
+      {leading}
       <Flex vertical gap={4} style={{ flex: '0 1 200px', minWidth: 170 }}>
         <label htmlFor="event-filter-status" style={labelStyle}>
           Trạng thái
@@ -71,7 +82,7 @@ export function EventFilterBar({
         Đặt lại bộ lọc
       </Button>
       <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
-        {resultCount} sự kiện
+        {resultCount} {unit}
       </Typography.Text>
     </Flex>
   )

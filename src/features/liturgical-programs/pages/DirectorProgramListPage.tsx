@@ -1,4 +1,4 @@
-import { Card } from 'antd'
+import { Card, Flex, Segmented } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
@@ -15,6 +15,12 @@ import type { EventFilters } from '../types'
 
 const pageSize = 20
 
+type When = 'all' | 'upcoming' | 'past'
+
+/** "Sắp tới / Đã qua" (artifact ProgramsPage) as the date range GET /api/liturgical-events filters on. */
+const whenOf = (filters: EventFilters, today: string, yesterday: string): When =>
+  filters.fromDate === today && !filters.toDate ? 'upcoming' : !filters.fromDate && filters.toDate === yesterday ? 'past' : 'all'
+
 /**
  * Choir Director: liturgical programs to prepare song lists for (FE-30), on `GET /api/liturgical-events`, which
  * leaves out the Priest's drafts and filters on the server. The Director does not create programs.
@@ -25,13 +31,14 @@ export function DirectorProgramListPage() {
   const { filters, page } = useMemo(() => readEventListState(searchParams), [searchParams])
   const programs = usePrograms(filters, { pageNumber: page, pageSize })
 
+  const today = dayjs().format('YYYY-MM-DD')
+  const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
   const total = programs.data?.totalCount ?? 0
   const filtered = hasActiveEventFilters(filters)
   // Filters and page are in the URL, so reload and the back button keep them.
   const changeFilters = (next: EventFilters) => setSearchParams(writeEventListState(next, 1), { replace: true })
   const setPage = (next: number) => setSearchParams(writeEventListState(filters, next), { replace: true })
   const resetFilters = () => changeFilters({})
-  const today = dayjs().format('YYYY-MM-DD')
   const items = programs.data?.items ?? []
   // The previewed program is kept in the URL beside the filters; the first row until one is picked.
   const picked = items.find((program) => program.id === searchParams.get('program')) ?? items.find((program) => program.status !== 'cancelled')
@@ -44,14 +51,21 @@ export function DirectorProgramListPage() {
       },
       { replace: true },
     )
+  const changeWhen = (when: When) =>
+    changeFilters({
+      ...filters,
+      fromDate: when === 'upcoming' ? today : undefined,
+      toDate: when === 'past' ? yesterday : undefined,
+    })
   const openProgram = (id: string) => navigate(generatePath(paths.director.programDetail, { programId: id }))
   const propose = (id: string) => navigate(generatePath(paths.director.songListProposal, { programId: id }))
 
   return (
     <>
       <PageHeader
-        title="Danh sách chương trình phụng vụ"
+        title="Chương trình phụng vụ"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Chương trình phụng vụ' }]}
+        description="Các Thánh lễ Cha xứ đã lên lịch; Ca trưởng đề xuất danh sách bài hát cho từng lễ."
       />
       <NoChoirNotice />
       {programs.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách chương trình" />}
@@ -69,17 +83,35 @@ export function DirectorProgramListPage() {
         />
       )}
       {programs.data !== undefined && (total > 0 || filtered) && (
+        <>
+        <EventFilterBar
+          value={filters}
+          onChange={changeFilters}
+          onReset={resetFilters}
+          resultCount={total}
+          unit="chương trình"
+          statuses={['published', 'cancelled']}
+          style={{ padding: 0, marginBottom: spacing.lg }}
+          leading={
+            <Flex vertical gap={4}>
+              <span style={{ fontSize: 12, color: 'var(--hm-text-muted)' }}>Thời gian</span>
+              <Segmented<When>
+                aria-label="Khoảng thời gian"
+                value={whenOf(filters, today, yesterday)}
+                onChange={changeWhen}
+                options={[
+                  { value: 'all', label: 'Tất cả' },
+                  { value: 'upcoming', label: 'Sắp tới' },
+                  { value: 'past', label: 'Đã qua' },
+                ]}
+              />
+            </Flex>
+          }
+        />
         <div className="hm-split">
           <Card styles={{ body: { padding: 0 } }}>
-            <EventFilterBar
-              value={filters}
-              onChange={changeFilters}
-              onReset={resetFilters}
-              resultCount={total}
-              statuses={['published', 'cancelled']}
-            />
             {total === 0 ? (
-              <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+              <div style={{ padding: spacing.lg }}>
                 <NoFilterResults onClearFilters={resetFilters} />
               </div>
             ) : (
@@ -97,6 +129,7 @@ export function DirectorProgramListPage() {
           </Card>
           {picked && <ProgramPreview program={picked} today={today} onOpen={() => openProgram(picked.id)} onPropose={() => propose(picked.id)} />}
         </div>
+        </>
       )}
     </>
   )

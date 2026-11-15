@@ -3965,3 +3965,43 @@ html[data-door='close'] .landing-close__window {
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
+
+/* khop-ct-a: Ca trưởng pages matched to their artifact mockups (dashboard, members, programs, library, skills…). */
+.dash-task {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.dash-task > .hm-chip {
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+.hm-chip.dash-chip--liturgy {
+  background: var(--hm-area-liturgy-tint);
+  border-color: var(--hm-area-liturgy-border);
+  color: var(--hm-area-liturgy-ink);
+}
+
+.hm-chip.dash-chip--practice {
+  background: var(--hm-area-practice-tint);
+  border-color: var(--hm-area-practice-border);
+  color: var(--hm-area-practice-ink);
+}
+
+.hm-chip.dash-chip--attention {
+  background: var(--hm-area-attention-tint);
+  border-color: var(--hm-area-attention-border);
+  color: var(--hm-area-attention-ink);
+}
+
+/* Choir cards and the skill waiting band keep the 24px gap between blocks. */
+.ct-choirs {
+  gap: 24px;
+}
+
+.ct-waiting {
+  margin-bottom: 24px;
+}

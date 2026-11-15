@@ -17,7 +17,7 @@ export function MemberFilterBar({ value, onChange, onReset, resultCount }: Reado
   const skills = useCatalogOptions('skills')
   const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
   return (
-    <Flex wrap align="end" gap={spacing.sm} style={{ padding: spacing.md }}>
+    <Flex wrap align="end" gap={spacing.sm} style={{ marginBottom: spacing.lg }}>
       {/* Visible labels: once a value is typed or chosen the placeholder is gone and the fields would look alike. */}
       <Flex vertical gap={4} style={{ flex: '1 1 260px', maxWidth: 360 }}>
         <label htmlFor="member-filter-search" style={labelStyle}>

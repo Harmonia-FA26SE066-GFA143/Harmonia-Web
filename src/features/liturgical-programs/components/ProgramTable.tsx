@@ -1,11 +1,10 @@
 import { Button, Flex, Table, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
 import dayjs from 'dayjs'
-import { SeasonChip } from '@/shared/ui'
+import { SeasonChip, StatusTag } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { dueText } from '../programFilters'
 import { canEditSongList, type LiturgicalProgram } from '../types'
 import { EventStatusTag } from './EventStatusTag'
-import { ProgramDateCell } from './ProgramDateCell'
 import { SongListStatusTag } from './SongListStatusTag'
 
 export interface ProgramTableProps {
@@ -23,6 +22,12 @@ export interface ProgramTableProps {
 
 const secondary = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
 
+/** "CN", "T2"…"T7", as the artifact's date blocks print the weekday. */
+const weekdayMark = (date: string) => {
+  const day = dayjs(date).day()
+  return day === 0 ? 'CN' : `T${day + 1}`
+}
+
 /**
  * The Choir Director's programs as a dense ruled list (artifact ProgramsPage): the day large, the name over time and
  * place, season, Mass type, song-list state and its due date, and the one action that fits the list's state.
@@ -30,18 +35,20 @@ const secondary = { color: colors.textMuted, fontSize: typography.metadata.fontS
 export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose, pagination = false, loading, today }: Readonly<ProgramTableProps>) {
   const columns: TableColumnsType<LiturgicalProgram> = [
     {
-      key: 'date',
-      title: 'Ngày',
-      width: 132,
-      render: (_, program) => <ProgramDateCell date={program.date} label={dayjs(program.date).format('DD/MM/YYYY')} />,
-    },
-    {
       key: 'name',
-      title: 'Thánh lễ',
+      title: 'Chương trình',
       render: (_, program) => (
-        <Flex vertical align="start" gap={2}>
-          <Typography.Text strong>{program.eventName}</Typography.Text>
-          <Typography.Text style={secondary}>{[program.time, program.locationName].filter(Boolean).join(' · ')}</Typography.Text>
+        <Flex align="center" gap={12}>
+          <span className="hm-date" aria-hidden>
+            <b>{dayjs(program.date).format('DD')}</b>
+            <span>{weekdayMark(program.date)}</span>
+          </span>
+          <Flex vertical align="start" gap={2} style={{ minWidth: 0 }}>
+            <Typography.Text strong>{program.eventName}</Typography.Text>
+            <Typography.Text style={secondary}>
+              {[dayjs(program.date).format('DD/MM/YYYY'), program.time, program.locationName].filter(Boolean).join(' · ')}
+            </Typography.Text>
+          </Flex>
         </Flex>
       ),
     },
@@ -53,25 +60,33 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
     },
     {
       key: 'type',
-      title: 'Loại',
-      width: 150,
+      title: 'Loại lễ',
+      width: 140,
       render: (_, program) => program.massTypeName ?? program.ceremonyTypeName ?? <Typography.Text style={secondary}>—</Typography.Text>,
+    },
+    {
+      key: 'status',
+      title: 'Trạng thái lễ',
+      width: 130,
+      render: (_, program) => <EventStatusTag status={program.status} />,
     },
     {
       key: 'songList',
       title: 'Danh sách bài hát',
-      width: 190,
+      width: 170,
+      render: (_, program) => program.songListStatus ? <SongListStatusTag status={program.songListStatus} /> : <StatusTag mark="draft" style={{ marginInlineEnd: 0 }}>Chưa đề xuất</StatusTag>,
+    },
+    {
+      key: 'due',
+      title: 'Hạn đề xuất',
+      width: 150,
       render: (_, program) => {
         const due = dueText(program, today)
+        if (!due) return <Typography.Text style={secondary}>—</Typography.Text>
         return (
-          <Flex vertical align="start" gap={2}>
-            {program.songListStatus ? <SongListStatusTag status={program.songListStatus} /> : <Typography.Text style={secondary}>Chưa đề xuất</Typography.Text>}
-            {due && (
-              <Typography.Text style={{ ...secondary, color: due.late ? 'var(--hm-area-attention-ink)' : colors.textMuted, fontWeight: due.late ? 600 : undefined }}>
-                {due.text}
-              </Typography.Text>
-            )}
-          </Flex>
+          <Typography.Text style={{ ...secondary, color: due.late ? 'var(--hm-area-attention-ink)' : colors.textMuted, fontWeight: due.late ? 600 : undefined }}>
+            {due.text}
+          </Typography.Text>
         )
       },
     },
@@ -82,11 +97,11 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
       width: 120,
       render: (_, program) => {
         // The Choir Director's detail reads published events only (GET /api/schedule/events/{id}).
-        if (program.status === 'cancelled') return <EventStatusTag status="cancelled" />
+        if (program.status === 'cancelled') return null
         const propose = canEditSongList(program.songListStatus) && program.date >= today
         return (
           <Button
-            type={propose ? 'primary' : 'default'}
+            type="link"
             onClick={(event) => {
               event.stopPropagation()
               if (propose) onPropose(program)

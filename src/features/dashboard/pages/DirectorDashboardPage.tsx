@@ -36,8 +36,16 @@ function PriestNote({ programId }: Readonly<{ programId: string }>) {
   return <Typography.Text style={{ fontSize: 13 }}>Cha xứ: “{notes}”</Typography.Text>
 }
 
+/** The area a task belongs to, as a chip in its area's cloth (artifact DirectorDashboard). */
+const areas = {
+  program: { label: 'Chương trình', tone: 'liturgy' },
+  practice: { label: 'Luyện tập', tone: 'practice' },
+  skill: { label: 'Kỹ năng', tone: 'attention' },
+} as const
+
 interface Task {
   key: string
+  area: keyof typeof areas
   /** Starts with the verb. */
   text: ReactNode
   /** The celebration date the task serves. */
@@ -64,6 +72,7 @@ function songListTask(program: LiturgicalProgram, open: () => void): Task | unde
   const sentBack = status === 'needsRevision' || status === 'rejected'
   return {
     key: program.id,
+    area: 'program',
     text: (
       <>
         {wording.verb} cho{' '}
@@ -82,8 +91,8 @@ function songListTask(program: LiturgicalProgram, open: () => void): Task | unde
       program.specialRequirements && <Typography.Text style={{ fontSize: 13 }}>Yêu cầu: {program.specialRequirements}</Typography.Text>
     ),
     action: (
-      <Button type={sentBack ? 'primary' : 'default'} aria-label={`${wording.aria} danh sách bài hát: ${program.eventName}`} onClick={open}>
-        {wording.button}
+      <Button type="link" style={{ paddingInline: 0, fontWeight: sentBack ? 600 : 500 }} aria-label={`${wording.aria} danh sách bài hát: ${program.eventName}`} onClick={open}>
+        {wording.button} <ArrowRightOutlined aria-hidden />
       </Button>
     ),
   }
@@ -93,9 +102,9 @@ function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: numbe
   return (
     <ul className="hm-stagger" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
       {tasks.map((task, index) => (
-        <li key={task.key} style={rowStyle(index)}>
-          <Flex vertical align="flex-start" gap={spacing.sm}>
-            <Flex vertical gap={spacing.xs} style={{ minWidth: 0 }}>
+        <li key={task.key} style={rowStyle(index)} className="dash-task">
+          <span className={`hm-chip dash-chip--${areas[task.area].tone}`}>{areas[task.area].label}</span>
+          <Flex vertical gap={spacing.xs} style={{ minWidth: 0 }}>
               <Typography.Text>{task.text}</Typography.Text>
               {(task.due || task.when) && (
                 <Typography.Text style={muted}>
@@ -109,9 +118,8 @@ function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: numbe
                 </Typography.Text>
               )}
               {task.detail}
-            </Flex>
-            <div style={{ flexShrink: 0 }}>{task.action}</div>
           </Flex>
+          <div style={{ flexShrink: 0 }}>{task.action}</div>
         </li>
       ))}
       {overflow > 0 && (
@@ -197,15 +205,17 @@ export function DirectorDashboardPage() {
   if (skills.isError || skillCount > 0) {
     tasks.push({
       key: 'skills',
+      area: 'skill',
       text: skills.isError ? <Typography.Text type="danger">Không thể tải số kỹ năng chờ duyệt.</Typography.Text> : `Duyệt ${skillCount} kỹ năng ca viên đã khai`,
-      action: <Link to={paths.director.skillApproval} style={{ fontWeight: 500 }}>Duyệt kỹ năng</Link>,
+      action: <Link to={paths.director.skillApproval} aria-label="Duyệt kỹ năng" style={{ fontWeight: 500 }}>Duyệt <ArrowRightOutlined aria-hidden /></Link>,
     })
   }
   if (submissions.isError || submissionCount > 0) {
     tasks.push({
       key: 'submissions',
+      area: 'practice',
       text: submissions.isError ? <Typography.Text type="danger">Không thể tải số bản thu chờ chấm.</Typography.Text> : `Chấm ${submissionCount} bản thu bài tập`,
-      action: <Link to={paths.director.practice} style={{ fontWeight: 500 }}>Chấm bài</Link>,
+      action: <Link to={paths.director.practice} style={{ fontWeight: 500 }}>Chấm bài <ArrowRightOutlined aria-hidden /></Link>,
     })
   }
   // Skills and recordings first: what folds into "và N việc khác" is then song lists, which that link leads to.
