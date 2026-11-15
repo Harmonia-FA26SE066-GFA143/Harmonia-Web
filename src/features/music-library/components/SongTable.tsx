@@ -1,4 +1,5 @@
-import { Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Table, Typography, type TableColumnsType } from 'antd'
+import { StatusTag } from '@/shared/ui'
 import { generatePath, Link, useLocation } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { colors } from '@/styles/tokens'
@@ -81,9 +82,9 @@ export function SongTable({ songs, page, pageSize, total, loading, density = 'co
       // Only the songs that still need classifying carry a mark; the others stay quiet.
       render: (_, song) =>
         song.isClassified === false ? (
-          <Tag color="warning" style={{ marginInlineEnd: 0 }}>
+          <StatusTag color="gold">
             Chưa phân loại
-          </Tag>
+          </StatusTag>
         ) : null,
     },
   ]

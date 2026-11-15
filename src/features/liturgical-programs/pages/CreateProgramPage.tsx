@@ -54,7 +54,7 @@ export function CreateProgramPage() {
         description="Lưu dưới dạng bản nháp; công bố ở trang chi tiết."
       />
       {/* A long form on its own page with a short summary on the right third (artifact PriestCreateProgram). */}
-      <div className="hm-split">
+      <div className="hm-split priest-create">
         <section className="hm-sheet-section priest-form" aria-label="Thông tin sự kiện">
           <EventForm
             initialDate={initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) ? initialDate : undefined}

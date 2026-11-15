@@ -123,7 +123,7 @@ export function AppShell() {
           zIndex: 1,
           padding: isCompact
             ? `${spacing.lg}px ${layout.contentPaddingXMobile}px`
-            : `${spacing.md}px ${layout.contentPaddingX}px ${spacing.xl}px`,
+            : `${spacing.lg}px ${layout.contentPaddingX}px ${spacing.xl}px`,
         }}
       >
         <div style={{ maxWidth: layout.contentMaxWidth, marginInline: 'auto' }}>

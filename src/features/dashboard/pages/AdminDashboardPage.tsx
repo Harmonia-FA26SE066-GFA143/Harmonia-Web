@@ -1,7 +1,8 @@
 import { Flex } from 'antd'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { ActivityTable, useActivityLog } from '@/features/activity-log'
+import { ActivityDetailDrawer, ActivityTable, useActivityLog, type ActivityRecord } from '@/features/activity-log'
 import { useWaitingRegistrationCount } from '@/features/member-registrations'
 import { useRoleCounts } from '@/features/users'
 import { roleLabels, type SystemRole } from '@/shared/types/account'
@@ -23,6 +24,7 @@ export function AdminDashboardPage() {
   const recent = log.data?.items ?? []
   const counts = useRoleCounts()
   const waiting = useWaitingRegistrationCount()
+  const [selected, setSelected] = useState<ActivityRecord>()
 
   return (
     <>
@@ -57,9 +59,10 @@ export function AdminDashboardPage() {
               description="Các hoạt động sẽ được hệ thống tự động ghi lại và hiển thị tại đây."
             />
           )}
-          {recent.length > 0 && <ActivityTable records={recent} />}
+          {recent.length > 0 && <ActivityTable records={recent} onShowDetail={setSelected} />}
         </section>
       </Flex>
+      <ActivityDetailDrawer record={selected} onClose={() => setSelected(undefined)} />
     </>
   )
 }

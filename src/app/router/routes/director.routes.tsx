@@ -33,7 +33,7 @@ export const directorRoutes: RouteObject[] = [
   // Director variants of the program list/detail feed the song-list loop, so they are built in phase 5.
   pageRoute(
     paths.director.programs,
-    { title: 'Danh sách chương trình phụng vụ', breadcrumb: [area, programs] },
+    { title: 'Chương trình phụng vụ', breadcrumb: [area, programs] },
     async () => (await import('@/features/liturgical-programs')).DirectorProgramListPage,
   ),
   pageRoute(
@@ -88,7 +88,7 @@ export const directorRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.director.practice,
-    { title: 'Bài tập & Tiến độ luyện tập', breadcrumb: [area, 'Luyện tập'] },
+    { title: 'Luyện tập', breadcrumb: [area, 'Luyện tập'] },
     async () => (await import('@/features/practice')).PracticePage,
   ),
   pageRoute(

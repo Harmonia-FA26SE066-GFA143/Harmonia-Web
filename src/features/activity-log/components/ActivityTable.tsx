@@ -1,4 +1,3 @@
-import { EyeOutlined } from '@ant-design/icons'
 import { Button, Flex, Table, Tag, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
 import { colors, typography } from '@/styles/tokens'
 import { actionLabel, actorName, entityLabel } from '../activityFilters'
@@ -68,15 +67,15 @@ export function ActivityTable({ records, onShowDetail, onPickUser, pagination, l
       ? [
           {
             key: 'detail',
-            title: 'Chi tiết',
+            title: <span className="hm-visually-hidden">Chi tiết</span>,
             align: 'right' as const,
             render: (_: unknown, record: ActivityRecord) => (
               <Button
-                icon={<EyeOutlined />}
+                type="link"
                 onClick={() => onShowDetail(record)}
                 aria-label={`Xem chi tiết: ${actionLabel(record.action)} ${entityLabel(record.entityType)} lúc ${formatDateTime(record.createdAt)}`}
               >
-                Xem
+                Chi tiết
               </Button>
             ),
           },

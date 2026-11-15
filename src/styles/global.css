@@ -1045,21 +1045,21 @@ textarea {
 .dash-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 16px;
+  gap: 24px;
   align-items: start;
 }
 
 .dash-main {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   min-width: 0;
 }
 
 .dash-pair {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 16px;
+  gap: 24px;
   align-items: start;
 }
 
@@ -1093,7 +1093,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px 4px;
+  padding: 16px 24px 8px;
 }
 
 .hm-sheet-section__head .hm-rubric {
@@ -1108,7 +1108,7 @@ textarea {
 
 .ant-typography.hm-sheet-section__empty {
   margin: 0;
-  padding: 12px 16px 16px;
+  padding: 16px 24px 24px;
   color: var(--hm-text-muted);
 }
 
@@ -1149,7 +1149,7 @@ textarea {
   grid-template-columns: 48px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 8px 16px;
+  padding: 8px 24px;
   border-top: 1px solid var(--hm-border-default);
 }
 
@@ -1950,6 +1950,27 @@ textarea {
   .ant-drawer-open .ant-drawer-body > * {
     animation: hm-rise-small var(--hm-dur-panel) var(--hm-ease) 60ms both;
   }
+
+  /* A dialog opens from 0.97, not antd's zoom from 0.2 (DS "Motion": modals, hm-pop-in); closing keeps antd's zoom. */
+  .ant-modal-root .ant-modal.ant-zoom-enter,
+  .ant-modal-root .ant-modal.ant-zoom-appear {
+    animation-name: hm-pop-in;
+  }
+}
+
+@keyframes hm-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+/*
+ * The blocks of a page stand at least 24px apart (owner 2026-11-15: "cramped"; DS token space-24). Sibling margins
+ * collapse, so a block's own 16px bottom margin grows to 24 and a larger one stays.
+ */
+.hm-stage > * + * {
+  margin-top: 24px;
 }
 
 /* The old page dims while the next one is fetched; the new one then rises in (RouteStage). */
@@ -2094,7 +2115,7 @@ textarea {
 .hm-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 16px;
+  gap: 24px;
   align-items: start;
 }
 
@@ -2278,7 +2299,7 @@ textarea {
   gap: 16px;
   flex-wrap: wrap;
   margin: 0 16px 12px;
-  padding: 12px 16px;
+  padding: 16px 24px;
   border-radius: var(--hm-radius-lg);
   background: var(--hm-area-rehearsal-tint);
   color: var(--hm-area-rehearsal-ink);
@@ -2296,7 +2317,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px;
+  padding: 16px;
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-lg);
   background: var(--hm-surface-base);
@@ -2504,7 +2525,7 @@ textarea {
 .song-layout {
   display: grid;
   grid-template-columns: 196px minmax(0, 1fr);
-  gap: 16px;
+  gap: 24px;
   align-items: start;
   margin-top: 16px;
 }
@@ -2590,7 +2611,7 @@ textarea {
   border: 1px solid var(--hm-border-hairline);
   border-top: 1px solid var(--hm-gilt);
   border-radius: var(--hm-radius-lg);
-  padding: 12px 16px;
+  padding: 16px 24px;
 }
 
 .song-next__head {
@@ -3034,7 +3055,7 @@ a.song-next__item:hover {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  padding: 12px 16px;
+  padding: 12px 24px;
   border-top: 1px solid var(--hm-border-default);
 }
 
@@ -3075,7 +3096,7 @@ a.song-next__item:hover {
 }
 
 .priest-sheet__body {
-  padding: 4px 16px 16px;
+  padding: 8px 24px 24px;
 }
 
 .hm-sheet-section.priest-reading {
@@ -3866,7 +3887,7 @@ html[data-door='close'] .landing-close__window {
 
 .ct-reading__body,
 .ct-sheet-body {
-  padding: 8px 16px 16px;
+  padding: 8px 24px 24px;
 }
 
 .ct-sheet-head {
@@ -3940,7 +3961,7 @@ html[data-door='close'] .landing-close__window {
   align-items: baseline;
   gap: 8px;
   margin: 0 0 16px;
-  padding: 8px 16px;
+  padding: 8px 24px;
   border: 1px solid var(--hm-area-attention-border);
   border-radius: var(--hm-radius-lg);
   background: var(--hm-area-attention-tint);
@@ -3956,4 +3977,307 @@ html[data-door='close'] .landing-close__window {
   line-height: 1;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
+}
+
+/* khop-ct-a: Ca trưởng pages matched to their artifact mockups (dashboard, members, programs, library, skills…). */
+.dash-task {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.dash-task > .hm-chip {
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+.hm-chip.dash-chip--liturgy {
+  background: var(--hm-area-liturgy-tint);
+  border-color: var(--hm-area-liturgy-border);
+  color: var(--hm-area-liturgy-ink);
+}
+
+.hm-chip.dash-chip--practice {
+  background: var(--hm-area-practice-tint);
+  border-color: var(--hm-area-practice-border);
+  color: var(--hm-area-practice-ink);
+}
+
+.hm-chip.dash-chip--attention {
+  background: var(--hm-area-attention-tint);
+  border-color: var(--hm-area-attention-border);
+  color: var(--hm-area-attention-ink);
+}
+
+/* Choir cards and the skill waiting band keep the 24px gap between blocks. */
+.ct-choirs {
+  gap: 24px;
+}
+
+.ct-waiting {
+  margin-bottom: 24px;
+}
+
+/* khop-ct-b: Ca trưởng activity pages matched to their artifact mockups (Lịch tập, Điểm danh, Xác nhận tham gia,
+   Phân công, Luyện tập, Báo cáo, Trao đổi). Prefix ctb-. */
+.ctb-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ctb-filters__end {
+  margin-inline-start: auto;
+  color: var(--hm-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ctb-today.hm-today-band {
+  justify-content: flex-start;
+  margin: 0;
+}
+
+.ctb-today b {
+  font-weight: 600;
+}
+
+.ctb-today__chip {
+  padding: 2px 8px;
+  border-radius: var(--hm-radius-sm);
+  border: 1px solid var(--hm-area-rehearsal-border);
+  background: var(--hm-surface-base);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ctb-today__meta {
+  color: var(--hm-text-muted);
+}
+
+.ctb-today > .ant-btn {
+  margin-inline-start: auto;
+}
+
+.ctb-week-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ctb-detail.hm-rehearsal-detail {
+  border-top: 0;
+}
+
+.ctb-detail > div + div {
+  padding-inline-start: 24px;
+  border-inline-start: 1px solid var(--hm-border-default);
+}
+
+.ctb-detail__title {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--hm-text-primary);
+}
+
+.ctb-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctb-facts li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ctb-facts .anticon {
+  color: var(--hm-text-muted);
+}
+
+.ctb-songs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding-inline-start: 20px;
+}
+
+.ctb-songs li::marker {
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  color: var(--hm-text-muted);
+}
+
+.ctb-songs b {
+  display: block;
+  font-weight: 600;
+}
+
+.ctb-songs span {
+  display: block;
+  color: var(--hm-text-muted);
+  font-size: 13px;
+}
+
+/* Xác nhận tham gia: the answers' strip on the head's right. */
+.ctb-head-strip {
+  min-width: 480px;
+}
+
+/* Phân công: columns and their padding at the page rhythm (24px). */
+.hm-roster-cols {
+  gap: 24px;
+}
+
+.hm-roster-col {
+  padding: 24px;
+}
+
+/* Luyện tập: the review queue's size beside its tab label. */
+.ctb-tab-count {
+  margin-inline-start: 8px;
+  padding: 0 8px;
+  border-radius: var(--hm-radius-sm);
+  border: 1px solid var(--hm-area-attention-border);
+  background: var(--hm-area-attention-tint);
+  color: var(--hm-area-attention-ink);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Báo cáo: four headline figures on reading cards, then the chart beside the watch list. */
+.ctb-figures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.ctb-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 24px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-surface-reading);
+}
+
+.ctb-figure span {
+  color: var(--hm-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ctb-figure b {
+  font-family: var(--hm-font-display);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: lining-nums;
+  color: var(--hm-text-primary);
+}
+
+.ctb-figure small {
+  color: var(--hm-text-muted);
+  font-size: 13px;
+}
+
+.ctb-report-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 24px;
+}
+
+/* khop-cha-xu: Cha xứ pages matched to the artifact mockups (PriestDashboard, PriestCalendar, PriestCreateProgram,
+   PriestProgramDetail). */
+.priest-queue__note {
+  margin: 0;
+  padding: 12px 24px 24px;
+  border-top: 1px solid var(--hm-border-default);
+  font-size: 13px;
+  color: var(--hm-text-muted);
+}
+
+.priest-calendar__key {
+  margin: 12px 0 0;
+  padding: 12px 0 0;
+  list-style: none;
+  border-top: 1px solid var(--hm-border-hairline);
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.hm-split.priest-create {
+  grid-template-columns: minmax(0, 760px) 340px;
+  justify-content: start;
+}
+
+.priest-actions__gap {
+  width: 16px;
+}
+
+@media (max-width: 1199px) {
+  .hm-split.priest-create {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* khop-admin-chung: Admin pages matched to their artifact mockups (SkillCatalogPage, LiturgicalCatalogPage,
+ * AdminReportsPage): the in-page tabs drawn as the mockups' segmented control (ws-seg), keeping the antd tablist. */
+.khop-seg-tabs > .ant-tabs-nav {
+  margin-bottom: 24px;
+}
+
+.khop-seg-tabs > .ant-tabs-nav::before,
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-ink-bar {
+  display: none;
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-nav-wrap {
+  flex: 0 1 auto;
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-nav-list {
+  gap: 2px;
+  padding: 3px;
+  background: var(--hm-surface-soft);
+  border: 1px solid var(--hm-border-control);
+  border-radius: var(--hm-radius-md);
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab {
+  margin: 0;
+  padding: 0 12px;
+  height: 30px;
+  border-radius: var(--hm-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color var(--hm-dur-base) var(--hm-ease);
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
+  color: var(--hm-text-body);
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab-active {
+  background: var(--hm-surface-base);
+  box-shadow: var(--hm-shadow-sm);
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--hm-text-primary);
+  font-weight: 600;
 }

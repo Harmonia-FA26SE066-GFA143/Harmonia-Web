@@ -246,6 +246,8 @@ export function PriestProgramDetailPage() {
                 Sửa
               </Button>
             )}
+            {/* The danger action in its own group (artifact PriestProgramDetail). */}
+            {canCancel && <span className="priest-actions__gap" aria-hidden />}
             {canCancel && (
               <Button danger icon={<StopOutlined />} onClick={confirmCancel}>
                 Hủy sự kiện

@@ -44,10 +44,10 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
   const columns: TableColumnsType<Nomination> = [
     { key: 'member', title: 'Ca viên', render: (_, item) => <Typography.Text strong>{item.memberFullName}</Typography.Text> },
     { key: 'by', title: 'Người đề cử', render: (_, item) => item.nominatedByFullName },
-    { key: 'choir', title: 'Ca đoàn đề xuất', render: (_, item) => item.proposedChoirName ?? 'Chưa đề xuất' },
+    { key: 'choir', title: 'Ca đoàn đề xuất', render: (_, item) => item.proposedChoirName ?? <Typography.Text style={{ color: colors.textMuted }}>Chưa đề xuất</Typography.Text> },
     { key: 'status', title: 'Trạng thái', render: (_, item) => <StatusTag color={statusColors[item.status]} mark={item.status === 'Cancelled' ? 'struck' : undefined}>{statusLabels[item.status]}</StatusTag> },
     { key: 'at', title: 'Ngày đề cử', render: (_, item) => dayjs(parseUtc(item.createdAt)).format('DD/MM/YYYY') },
-    { key: 'open', title: 'Thao tác', align: 'right', render: (_, item) => <Button onClick={() => setOpenId(item.id)} aria-label={`Xem đề cử ${item.memberFullName}`}>Xem</Button> },
+    { key: 'open', title: <span className="hm-visually-hidden">Thao tác</span>, align: 'right', render: (_, item) => <Button type="link" onClick={() => setOpenId(item.id)} aria-label={`Xem đề cử ${item.memberFullName}`}>Xem</Button> },
   ]
 
   return (
@@ -66,7 +66,7 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
       {nominations.data !== undefined && (total > 0 || status) && (
         // One sheet: the status filter with the result count, then the table (artifact NominationsPage).
         <Card styles={{ body: { padding: 0 } }}>
-          <Flex align="center" gap={spacing.sm} wrap style={{ padding: `${spacing.sm + 4}px ${spacing.md}px` }}>
+          <Flex align="center" gap={spacing.sm} wrap style={{ padding: `${spacing.sm + 4}px ${spacing.lg}px` }}>
             <label htmlFor="nomination-status" style={{ fontSize: typography.label.fontSize, color: colors.textMuted }}>Trạng thái</label>
             <Select
               id="nomination-status"
@@ -83,7 +83,7 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
             <Typography.Text aria-live="polite" style={{ marginLeft: 'auto', color: colors.textMuted, fontSize: typography.label.fontSize }}>{total} đề cử</Typography.Text>
           </Flex>
           {total === 0 ? (
-            <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><NoFilterResults onClearFilters={() => setStatus(undefined)} /></div>
+            <div style={{ padding: `0 ${spacing.lg}px ${spacing.lg}px` }}><NoFilterResults onClearFilters={() => setStatus(undefined)} /></div>
           ) : (
             <Table<Nomination>
               rowKey="id"

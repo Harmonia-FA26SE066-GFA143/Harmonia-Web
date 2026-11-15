@@ -12,6 +12,7 @@ import { TodaySeason } from '../components/TodaySeason'
 
 const upcomingLimit = 5
 const order = (index: number) => ({ '--i': index }) as CSSProperties
+const capitalize = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`
 
 /** A submitted list, named after its event (the pending lists carry only the event id). */
 function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: string; version: number; submittedAt?: string }>) {
@@ -125,7 +126,7 @@ export function PriestDashboardPage() {
                     <li key={event.id} style={order(index)}>
                       <span className="hm-date">
                         <b>{date.format('DD')}</b>
-                        <span>Th {date.format('M')}</span>
+                        <span>{capitalize(date.format('dd'))}</span>
                       </span>
                       <span style={{ minWidth: 0 }}>
                         <span className="week-list__time">{title}</span>
@@ -152,7 +153,13 @@ export function PriestDashboardPage() {
             title="Cần Cha xứ xem xét"
             className="hm-sheet-section priest-queue hm-paper"
             // Waiting on the Priest: the count breathes once and leaves at zero.
-            extra={lists.length > 0 && <span className="hm-tab__count">{lists.length} danh sách</span>}
+            extra={
+              lists.length > 0 && (
+                <span className="hm-tab__count" aria-label={`${lists.length} danh sách chờ xem xét`}>
+                  {lists.length}
+                </span>
+              )
+            }
           >
             {pending.isPending && <SectionSkeleton rows={2} label="Đang tải danh sách bài hát chờ xem xét" />}
             {pending.isError && (
@@ -178,6 +185,9 @@ export function PriestDashboardPage() {
                   </li>
                 ))}
               </ul>
+            )}
+            {lists.length > 0 && (
+              <p className="priest-queue__note">Duyệt, yêu cầu sửa hoặc từ chối ở trang danh sách. Ca trưởng nhận thông báo.</p>
             )}
           </Section>
         </aside>

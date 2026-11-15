@@ -44,7 +44,7 @@ export function RouteStage({ children }: Readonly<{ children: ReactNode }>) {
 
   return (
     <div style={{ position: 'relative' }} aria-busy={slow || undefined}>
-      <div ref={stage} className={leaving ? 'hm-route-leaving' : undefined}>
+      <div ref={stage} className={leaving ? 'hm-stage hm-route-leaving' : 'hm-stage'}>
         {children}
       </div>
       {slow && (

@@ -71,7 +71,7 @@ export function ActivityFilterBar({ value, onChange, onReset, resultCount }: Rea
         Đặt lại bộ lọc
       </Button>
       <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
-        {resultCount} bản ghi
+        {resultCount.toLocaleString('vi-VN')} hoạt động
       </Typography.Text>
     </Flex>
   )

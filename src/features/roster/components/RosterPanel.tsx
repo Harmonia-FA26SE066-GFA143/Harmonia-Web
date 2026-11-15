@@ -28,6 +28,12 @@ export interface RosterPanelProps {
   songListNotice?: ReactNode
   eligible: EligibleMember[]
   skills: { id: string; name: string }[]
+  /** The page head, given the roster status and actions (artifact RosterPage: they sit on the head's right). */
+  head: (actions?: ReactNode) => ReactNode
+  /** The Mass picker, first in the filter row. */
+  picker: ReactNode
+  /** Notices shown between the head and the roster. */
+  children?: ReactNode
 }
 
 const statusColors = { draft: 'default', suggested: 'blue', finalized: 'green' } as const
@@ -42,7 +48,7 @@ const uniqueMembers = (lines: RosterAssignment[]) => [
  * list. Suggestion (FE-36), shortages computed by the backend (FE-37), manual lines (FE-38), finalization that locks
  * everything (FE-39) and the assignment notification (FE-40).
  */
-export function RosterPanel({ programId, approved, songs, songListNotice, eligible, skills }: Readonly<RosterPanelProps>) {
+export function RosterPanel({ programId, approved, songs, songListNotice, eligible, skills, head, picker, children }: Readonly<RosterPanelProps>) {
   const { message, modal } = App.useApp()
   const roster = useRoster(programId)
   const shortages = useShortages(programId)
@@ -55,13 +61,20 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
   // One scope at a time: the whole service, or one song of the approved list.
   const [songId, setSongId] = useState<string>()
 
-  if (roster.isPending || shortages.isPending) return <SectionSkeleton rows={8} label="Đang tải phân công" />
-  if (roster.isError || shortages.isError) {
+  if (roster.isPending || shortages.isPending || roster.isError || shortages.isError) {
     return (
-      <ErrorState
-        title="Không thể tải phân công"
-        onRetry={() => [roster, shortages].forEach((query) => query.isError && query.refetch())}
-      />
+      <>
+        {head()}
+        <Flex vertical gap={spacing.lg}>
+          <div className="ctb-filters">{picker}</div>
+          {children}
+          {roster.isPending || shortages.isPending ? (
+            <SectionSkeleton rows={8} label="Đang tải phân công" />
+          ) : (
+            <ErrorState title="Không thể tải phân công" onRetry={() => [roster, shortages].forEach((query) => query.isError && query.refetch())} />
+          )}
+        </Flex>
+      </>
     )
   }
 
@@ -142,48 +155,77 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
     )
   }
 
+  const hasSuggestion = lines.some((line) => line.source === 'suggested')
+  const actions = (
+    <>
+      {current ? (
+        <StatusTag color={statusColors[current.status]} style={{ marginInlineEnd: 0 }}>
+          {rosterStatusLabels[current.status]}
+        </StatusTag>
+      ) : (
+        <Typography.Text style={{ color: colors.textMuted }}>Chưa có phân công</Typography.Text>
+      )}
+      <Button icon={<BulbOutlined />} onClick={handleSuggest} disabled={locked} loading={suggest.isPending}>
+        {hasSuggestion ? 'Gợi ý lại' : 'Gợi ý phân công'}
+      </Button>
+      {(wholeService.data?.length ?? 0) > 0 && (
+        <Button
+          icon={<SoundOutlined />}
+          onClick={handleFinalizeWholeService}
+          disabled={!current || locked || wholeServiceLocked || wholeServiceLines.length === 0}
+        >
+          Chốt nhạc công
+        </Button>
+      )}
+      <Tooltip title={locked || wholeServiceLocked ? undefined : 'Chốt phân công (hoặc chốt nhạc công) trước khi gửi thông báo.'}>
+        <Button
+          icon={<NotificationOutlined />}
+          onClick={() => setNotifying(true)}
+          disabled={!(locked || wholeServiceLocked) || announceable.length === 0}
+        >
+          Gửi thông báo phân công
+        </Button>
+      </Tooltip>
+      <Tooltip title={approved ? undefined : 'Chốt phân công được sau khi danh sách bài hát được duyệt.'}>
+        <Button type="primary" icon={<LockOutlined />} onClick={handleFinalize} disabled={!current || locked || !approved}>
+          Chốt phân công
+        </Button>
+      </Tooltip>
+    </>
+  )
+
   return (
-    <Flex vertical gap={spacing.md}>
-      <Flex wrap gap={spacing.sm} align="center" justify="space-between">
-        <Flex gap={spacing.xs} align="center">
-          <Typography.Text style={{ color: colors.textMuted }}>Phân công:</Typography.Text>
-          {current ? (
-            <StatusTag color={statusColors[current.status]} style={{ marginInlineEnd: 0 }}>
-              {rosterStatusLabels[current.status]}
-            </StatusTag>
-          ) : (
-            <Typography.Text style={{ color: colors.textMuted }}>Chưa có</Typography.Text>
-          )}
-        </Flex>
-        <Flex wrap gap={spacing.sm}>
-          <Button icon={<BulbOutlined />} onClick={handleSuggest} disabled={locked} loading={suggest.isPending}>
-            Gợi ý phân công
-          </Button>
-          {(wholeService.data?.length ?? 0) > 0 && (
-            <Button
-              icon={<SoundOutlined />}
-              onClick={handleFinalizeWholeService}
-              disabled={!current || locked || wholeServiceLocked || wholeServiceLines.length === 0}
-            >
-              Chốt nhạc công
-            </Button>
-          )}
-          <Tooltip title={approved ? undefined : 'Chốt phân công được sau khi danh sách bài hát được duyệt.'}>
-            <Button icon={<LockOutlined />} onClick={handleFinalize} disabled={!current || locked || !approved}>
-              Chốt phân công
-            </Button>
-          </Tooltip>
-          <Tooltip title={locked || wholeServiceLocked ? undefined : 'Chốt phân công (hoặc chốt nhạc công) trước khi gửi thông báo.'}>
-            <Button
-              icon={<NotificationOutlined />}
-              onClick={() => setNotifying(true)}
-              disabled={!(locked || wholeServiceLocked) || announceable.length === 0}
-            >
-              Gửi thông báo phân công
-            </Button>
-          </Tooltip>
-        </Flex>
-      </Flex>
+    <>
+    {head(actions)}
+    <Flex vertical gap={spacing.lg}>
+      <div className="ctb-filters">
+        {picker}
+        <Segmented
+          aria-label="Phạm vi phân công"
+          value={scope}
+          onChange={(value) => setSongId(value === 'service' ? undefined : (songId ?? songs[0]?.id))}
+          options={[
+            { label: 'Cả Thánh lễ', value: 'service' },
+            { label: 'Theo bài hát', value: 'song', disabled: !approved || songs.length === 0 },
+          ]}
+        />
+        {scope === 'song' && (
+          <Select
+            aria-label="Bài hát"
+            value={songId}
+            onChange={setSongId}
+            options={songs.map((song) => {
+              const short = shortages.data.filter((item) => item.songListItemId === song.id).length
+              return { value: song.id, label: [song.liturgicalPart, song.title, short && `thiếu ${short}`].filter(Boolean).join(' · ') }
+            })}
+            style={{ minWidth: 280 }}
+          />
+        )}
+        <span className="ctb-filters__end" style={shortages.data.length ? { color: 'var(--hm-area-attention-ink)', fontWeight: 600 } : undefined}>
+          {shortages.data.length ? `${shortages.data.length} vị trí còn thiếu` : 'Đủ người cho mọi vị trí đã khai'}
+        </span>
+      </div>
+      {children}
       {locked && <Alert type="success" showIcon title="Phân công đã chốt. Yêu cầu nhân sự và phân công chỉ còn xem." />}
       {!locked && wholeServiceLocked && current?.wholeServiceFinalizedAt && (
         <Alert
@@ -193,34 +235,6 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
           description="Vai cả buổi lễ chỉ còn thay người được; gửi thông báo được cho họ ngay. Phần theo bài vẫn sửa được."
         />
       )}
-      <Flex wrap gap={spacing.sm} align="center" justify="space-between">
-        <Flex wrap gap={spacing.sm} align="center">
-          <Segmented
-            aria-label="Phạm vi phân công"
-            value={scope}
-            onChange={(value) => setSongId(value === 'service' ? undefined : (songId ?? songs[0]?.id))}
-            options={[
-              { label: 'Cả Thánh lễ', value: 'service' },
-              { label: 'Theo bài hát', value: 'song', disabled: !approved || songs.length === 0 },
-            ]}
-          />
-          {scope === 'song' && (
-            <Select
-              aria-label="Bài hát"
-              value={songId}
-              onChange={setSongId}
-              options={songs.map((song) => {
-                const short = shortages.data.filter((item) => item.songListItemId === song.id).length
-                return { value: song.id, label: [song.liturgicalPart, song.title, short && `thiếu ${short}`].filter(Boolean).join(' · ') }
-              })}
-              style={{ minWidth: 280 }}
-            />
-          )}
-        </Flex>
-        <Typography.Text style={{ color: shortages.data.length ? 'var(--hm-area-attention-ink)' : colors.textMuted, fontWeight: 600 }}>
-          {shortages.data.length ? `Còn thiếu người ở ${shortages.data.length} vị trí` : 'Đủ người cho mọi vị trí đã khai'}
-        </Typography.Text>
-      </Flex>
       {scope === 'service' ? (
         <StaffingCard
           programId={programId}
@@ -257,5 +271,6 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
         onCancel={() => setNotifying(false)}
       />
     </Flex>
+    </>
   )
 }

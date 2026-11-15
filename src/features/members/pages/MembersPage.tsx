@@ -1,5 +1,7 @@
 import { App, Card } from 'antd'
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
+import { usePendingSkills } from '@/features/skill-approval'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, SummaryStrip, inVoicePart, voiceParts } from '@/shared/ui'
@@ -10,9 +12,33 @@ import { MemberTable } from '../components/MemberTable'
 import { useChoirMembers } from '../hooks/useChoirMembers'
 import { useMemberProfiles, useUpdateMemberProfile } from '../hooks/useMemberProfiles'
 import { emptyMemberFilters, hasActiveMemberFilters } from '../memberFilters'
-import type { MemberFilters, MemberProfile, MemberProfileValues } from '../types'
+import { memberStatuses, type MemberFilters, type MemberProfile, type MemberProfileValues, type MemberStatus } from '../types'
 
 const pageSize = 20
+const onePage = { pageNumber: 1, pageSize: 1 }
+const onLeave = { search: '', status: 'inactive' as const }
+
+/** Filters and page live in the URL (artifact MembersPage), so a filtered list can be shared or reopened. */
+function readState(params: URLSearchParams): { filters: MemberFilters; page: number } {
+  const status = params.get('status')
+  return {
+    filters: {
+      search: params.get('q') ?? '',
+      status: memberStatuses.includes(status as MemberStatus) ? (status as MemberStatus) : undefined,
+      skillId: params.get('skill') ?? undefined,
+    },
+    page: Math.max(1, Number(params.get('page')) || 1),
+  }
+}
+
+function writeState(filters: MemberFilters, page: number) {
+  const params = new URLSearchParams()
+  if (filters.search) params.set('q', filters.search)
+  if (filters.status) params.set('status', filters.status)
+  if (filters.skillId) params.set('skill', filters.skillId)
+  if (page > 1) params.set('page', String(page))
+  return params
+}
 
 
 /**
@@ -29,26 +55,30 @@ const updateMessages: Record<string, string> = {
 
 export function MembersPage() {
   const { message } = App.useApp()
-  const [filters, setFilters] = useState<MemberFilters>(emptyMemberFilters)
-  const [page, setPage] = useState(1)
+  const [params, setParams] = useSearchParams()
+  const { filters, page } = useMemo(() => readState(params), [params])
+  const setPage = (next: number) => setParams(writeState(filters, next), { replace: true })
   const search = useDebouncedValue(filters.search)
   const query = useMemo(() => ({ ...filters, search }), [filters, search])
   const members = useMemberProfiles(query, { pageNumber: page, pageSize })
   const update = useUpdateMemberProfile()
   // Active members with their approved skills, for the counts above the list (the same request other pages share).
   const active = useChoirMembers()
+  const leave = useMemberProfiles(onLeave, onePage)
   const activeCells = active.data && [
     { label: 'Đang sinh hoạt', value: active.data.length },
     ...voiceParts.map(({ label, pattern }) => ({ label, value: active.data.filter((member) => inVoicePart(member.skills, pattern)).length })),
+    ...(leave.data ? [{ label: 'Tạm nghỉ', value: leave.data.totalCount }] : []),
   ]
+  const pendingSkills = usePendingSkills(onePage).data?.totalCount ?? 0
+  const description = active.data
+    ? [`${active.data.length} ca viên đang sinh hoạt`, pendingSkills > 0 && `${pendingSkills} yêu cầu duyệt kỹ năng`].filter(Boolean).join(' · ')
+    : 'Tài khoản ca viên do Quản trị viên tạo.'
   const [editing, setEditing] = useState<MemberProfile>()
 
   const total = members.data?.totalCount ?? 0
   const filtered = hasActiveMemberFilters(query)
-  const changeFilters = (next: MemberFilters) => {
-    setFilters(next)
-    setPage(1)
-  }
+  const changeFilters = (next: MemberFilters) => setParams(writeState(next, 1), { replace: true })
   const resetFilters = () => changeFilters(emptyMemberFilters)
 
   const handleSubmit = (values: MemberProfileValues) => {
@@ -74,10 +104,10 @@ export function MembersPage() {
       <PageHeader
         title="Danh sách ca viên"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Danh sách ca viên' }]}
-        description="Tài khoản ca viên do Quản trị viên tạo."
+        description={description}
       />
       {activeCells && (
-        <div style={{ marginBottom: spacing.md }}>
+        <div style={{ marginBottom: spacing.lg }}>
           <SummaryStrip label="Ca viên đang sinh hoạt theo bè" cells={activeCells} />
         </div>
       )}
@@ -93,10 +123,11 @@ export function MembersPage() {
         />
       )}
       {members.data !== undefined && (total > 0 || filtered) && (
+        <>
+        <MemberFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
         <Card styles={{ body: { padding: 0 } }}>
-          <MemberFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
           {total === 0 ? (
-            <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+            <div style={{ padding: spacing.lg }}>
               <NoFilterResults onClearFilters={resetFilters} />
             </div>
           ) : (
@@ -111,6 +142,7 @@ export function MembersPage() {
             />
           )}
         </Card>
+        </>
       )}
 
       <MemberFormDrawer

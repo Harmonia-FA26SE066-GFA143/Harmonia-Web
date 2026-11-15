@@ -16,7 +16,7 @@ import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useSongList } from '@/features/song-lists'
 import { parseUtc } from '@/lib/api/dates'
-import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, radius, sections, spacing, typography } from '@/styles/tokens'
 import { usePreparationStatus } from '../hooks/useEvents'
 import type { LiturgicalProgramDetail } from '../types'
@@ -254,13 +254,13 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               totalInvited === 0 ? (
                 <Tag style={{ marginInlineEnd: 0 }}>Chưa gửi</Tag>
               ) : confirmedCount > 0 ? (
-                <Tag color="success" style={{ marginInlineEnd: 0 }}>
+                <StatusTag color="green">
                   {confirmedCount} đã xác nhận
-                </Tag>
+                </StatusTag>
               ) : (
-                <Tag color="warning" style={{ marginInlineEnd: 0 }}>
+                <StatusTag color="gold">
                   Chờ phản hồi
-                </Tag>
+                </StatusTag>
               )
             }
             actions={
@@ -302,9 +302,9 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               rehearsalsTotal === 0 ? (
                 <Tag style={{ marginInlineEnd: 0 }}>Chưa có lịch</Tag>
               ) : (
-                <Tag color="processing" style={{ marginInlineEnd: 0 }}>
+                <StatusTag color="processing">
                   {rehearsalsHeld}/{rehearsalsTotal} buổi đã tập
-                </Tag>
+                </StatusTag>
               )
             }
             actions={
@@ -351,13 +351,13 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               practiceExpected === 0 ? (
                 <Tag style={{ marginInlineEnd: 0 }}>Chưa giao bài</Tag>
               ) : practiceOverdue > 0 ? (
-                <Tag color="error" style={{ marginInlineEnd: 0 }}>
+                <StatusTag color="red">
                   {practiceOverdue} quá hạn
-                </Tag>
+                </StatusTag>
               ) : (
-                <Tag color="success" style={{ marginInlineEnd: 0 }}>
+                <StatusTag color="green">
                   {practicePassed}/{practiceExpected} đạt
-                </Tag>
+                </StatusTag>
               )
             }
             actions={
@@ -415,13 +415,13 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               !songListApproved ? (
                 <Tag style={{ marginInlineEnd: 0 }}>Chờ duyệt bài hát</Tag>
               ) : rosterFinalized ? (
-                <Tag color="success" style={{ marginInlineEnd: 0 }}>
+                <StatusTag color="green">
                   Đã chốt phân công
-                </Tag>
+                </StatusTag>
               ) : (
-                <Tag color="processing" style={{ marginInlineEnd: 0 }}>
+                <StatusTag color="processing">
                   Đang phân công
-                </Tag>
+                </StatusTag>
               )
             }
             actions={

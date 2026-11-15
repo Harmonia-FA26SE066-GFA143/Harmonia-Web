@@ -95,7 +95,7 @@ export function PriestProgramListPage() {
   return (
     <>
       <PageHeader
-        title="Danh sách chương trình phụng vụ"
+        title="Chương trình phụng vụ"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }]}
         extra={
           <Flex wrap gap={spacing.sm}>
