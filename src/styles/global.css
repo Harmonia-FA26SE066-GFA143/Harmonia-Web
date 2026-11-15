@@ -3966,6 +3966,7 @@ html[data-door='close'] .landing-close__window {
   color: var(--hm-text-primary);
 }
 
+<<<<<<< HEAD
 /* khop-ct-a: Ca trưởng pages matched to their artifact mockups (dashboard, members, programs, library, skills…). */
 .dash-task {
   display: grid;
@@ -4186,4 +4187,38 @@ html[data-door='close'] .landing-close__window {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: 24px;
+=======
+/* khop-cha-xu: Cha xứ pages matched to the artifact mockups (PriestDashboard, PriestCalendar, PriestCreateProgram,
+   PriestProgramDetail). */
+.priest-queue__note {
+  margin: 0;
+  padding: 12px 24px 24px;
+  border-top: 1px solid var(--hm-border-default);
+  font-size: 13px;
+  color: var(--hm-text-muted);
+}
+
+.priest-calendar__key {
+  margin: 12px 0 0;
+  padding: 12px 0 0;
+  list-style: none;
+  border-top: 1px solid var(--hm-border-hairline);
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.hm-split.priest-create {
+  grid-template-columns: minmax(0, 760px) 340px;
+  justify-content: start;
+}
+
+.priest-actions__gap {
+  width: 16px;
+}
+
+@media (max-width: 1199px) {
+  .hm-split.priest-create {
+    grid-template-columns: minmax(0, 1fr);
+  }
+>>>>>>> claude/khop-cha-xu-863706
 }

@@ -28,7 +28,7 @@ export const priestRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.priest.programs,
-    { title: 'Danh sách chương trình phụng vụ', breadcrumb: [area, programs] },
+    { title: 'Chương trình phụng vụ', breadcrumb: [area, programs] },
     async () => (await loadPrograms()).PriestProgramListPage,
   ),
   pageRoute(

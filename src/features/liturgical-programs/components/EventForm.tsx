@@ -102,6 +102,8 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
       onFinish={handleFinish}
       style={{ maxWidth: 720 }}
     >
+      {/* Grouped under rubrics (artifact PriestCreateProgram). */}
+      <h2 className="hm-rubric">Thời gian và nơi</h2>
       <Flex wrap gap={spacing.md}>
         <Form.Item
           label="Ngày cử hành"
@@ -123,6 +125,7 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
           <Select placeholder="Chọn nơi cử hành" options={locations} notFoundContent={emptyCatalog} />
         </Form.Item>
       </Flex>
+      <h2 className="hm-rubric">Phụng vụ</h2>
       <Flex wrap gap={spacing.md}>
         <Form.Item
           label="Loại Thánh lễ"
@@ -161,6 +164,14 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
           <Select allowClear placeholder="Chọn loại sự kiện" options={categories} notFoundContent={emptyCatalog} />
         </Form.Item>
       </Flex>
+      <Form.Item
+        label="Tiêu đề (không bắt buộc)"
+        name="title"
+        rules={[{ max: 200, message: 'Tiêu đề tối đa 200 ký tự.' }]}
+      >
+        <Input placeholder="Ví dụ: Thánh lễ Chúa Nhật tuần XXVI Thường Niên" />
+      </Form.Item>
+      {!event && <h2 className="hm-rubric">Ca đoàn phục vụ</h2>}
       {!event && (
         <Flex wrap gap={spacing.md}>
           <Form.Item
@@ -195,13 +206,7 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
           </Form.Item>
         </Flex>
       )}
-      <Form.Item
-        label="Tiêu đề (không bắt buộc)"
-        name="title"
-        rules={[{ max: 200, message: 'Tiêu đề tối đa 200 ký tự.' }]}
-      >
-        <Input placeholder="Ví dụ: Thánh lễ Chúa Nhật tuần XXVI Thường Niên" />
-      </Form.Item>
+      <h2 className="hm-rubric">Ghi chú</h2>
       <Form.Item
         label="Yêu cầu đặc biệt (không bắt buộc)"
         name="specialRequirements"

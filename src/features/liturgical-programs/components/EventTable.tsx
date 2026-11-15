@@ -1,4 +1,5 @@
 import { Button, Flex, Table, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
+import { visuallyHidden } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { useEventNames } from '../hooks/useEventNames'
 import { formatProgramDate } from '../programFilters'
@@ -34,7 +35,9 @@ export function EventTable({ events, onOpen, pagination = false, loading, select
       title: 'Sự kiện',
       render: (_, event) => (
         <Flex vertical>
-          <Typography.Text strong>{eventName(event)}</Typography.Text>
+          <Typography.Text strong delete={event.status === 'cancelled'}>
+            {eventName(event)}
+          </Typography.Text>
           {name('season', event.seasonId) && (
             <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
               {name('season', event.seasonId)}
@@ -47,7 +50,7 @@ export function EventTable({ events, onOpen, pagination = false, loading, select
     { key: 'status', title: 'Trạng thái', width: 130, render: (_, event) => <EventStatusTag status={event.status} /> },
     {
       key: 'actions',
-      title: 'Thao tác',
+      title: <span style={visuallyHidden}>Thao tác</span>,
       align: 'right',
       width: 120,
       render: (_, event) => (
