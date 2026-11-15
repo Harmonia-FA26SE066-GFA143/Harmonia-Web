@@ -268,7 +268,7 @@ export function SongListReviewPage() {
           <ConfigProvider theme={readingTheme}>
             <section className="hm-sheet-section priest-reading" aria-labelledby="review-list-heading">
               <header className="hm-sheet-section__head">
-                <h2 id="review-list-heading" className="hm-rubric">{`Duyệt danh sách bài hát (${list.items.length} bài)`}</h2>
+                <h2 id="review-list-heading" className="hm-rubric">{`Danh sách bài hát (${list.items.length} bài)`}</h2>
               </header>
               <div className="priest-sheet__body">
               <div style={{ marginBottom: spacing.md }}>

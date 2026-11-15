@@ -173,6 +173,36 @@ export function ProgramCalendarPage() {
                 label: `${status === 'all' ? 'Tất cả' : eventStatusLabels[status]} (${countOf(status)})`,
               }))}
             />
+            {/* Year, month, today and the view on the same line as the month (artifact PriestCalendar). */}
+            <Flex wrap gap={spacing.sm} style={{ marginInlineStart: 'auto' }}>
+              <Select
+                aria-label="Năm"
+                value={selected.year()}
+                onChange={(year: number) => setSelected(selected.year(year))}
+                options={Array.from({ length: 21 }, (_, index) => ({ value: selected.year() - 10 + index, label: selected.year() - 10 + index }))}
+                style={{ minWidth: 84 }}
+              />
+              {mode === 'month' && (
+                <Select
+                  aria-label="Tháng"
+                  value={selected.month()}
+                  onChange={(monthIndex: number) => setSelected(selected.month(monthIndex))}
+                  options={monthOptions}
+                  style={{ minWidth: 112 }}
+                />
+              )}
+              <Button onClick={() => setSelected(dayjs())}>Hôm nay</Button>
+              <Radio.Group
+                optionType="button"
+                aria-label="Chế độ xem lịch"
+                value={mode}
+                onChange={(event) => setMode(event.target.value)}
+                options={[
+                  { value: 'month', label: 'Tháng' },
+                  { value: 'year', label: 'Năm' },
+                ]}
+              />
+            </Flex>
           </Flex>
           {/* The day panel sits beside the calendar, so picking a day shows its events without scrolling. */}
           <div className="hm-split">
@@ -189,55 +219,24 @@ export function ProgramCalendarPage() {
                     mode={mode}
                     onSelect={setSelected}
                     onPanelChange={(_, next) => setMode(next)}
-                    headerRender={({ value, type, onChange, onTypeChange }) => (
-                      <Flex justify="space-between" align="center" wrap gap={spacing.sm} style={{ paddingBlockEnd: spacing.sm }}>
-                        {/* Each key is drawn the way the cells draw it. */}
-                        {type === 'month' && screens.md ? (
-                          <Flex component="ul" aria-label="Chú thích lịch" align="center" wrap gap={spacing.md} style={{ listStyle: 'none', margin: 0, padding: 0, fontSize: typography.metadata.fontSize }}>
-                            <li style={eventChip('published')}>Sự kiện do cha xứ tạo</li>
-                            <li style={eventChip('draft')}>
-                              <EditOutlined aria-hidden /> {eventStatusLabels.draft}
-                            </li>
-                            <li style={{ fontSize: typography.metadata.fontSize, color: colors.textBody }}>Ngày phụng vụ đồng bộ từ lịch trực tuyến</li>
-                          </Flex>
-                        ) : (
-                          <span />
-                        )}
-                        <Flex wrap gap={spacing.sm}>
-                          <Select
-                            aria-label="Năm"
-                            value={value.year()}
-                            onChange={(year: number) => onChange(value.year(year))}
-                            options={Array.from({ length: 21 }, (_, index) => ({ value: value.year() - 10 + index, label: value.year() - 10 + index }))}
-                            style={{ minWidth: 84 }}
-                          />
-                          {type === 'month' && (
-                            <Select
-                              aria-label="Tháng"
-                              value={value.month()}
-                              onChange={(monthIndex: number) => onChange(value.month(monthIndex))}
-                              options={monthOptions}
-                              style={{ minWidth: 112 }}
-                            />
-                          )}
-                          <Button onClick={() => setSelected(dayjs())}>Hôm nay</Button>
-                          <Radio.Group
-                            optionType="button"
-                            aria-label="Chế độ xem lịch"
-                            value={type}
-                            onChange={(event) => onTypeChange(event.target.value)}
-                            options={[
-                              { value: 'month', label: 'Tháng' },
-                              { value: 'year', label: 'Năm' },
-                            ]}
-                          />
-                        </Flex>
-                      </Flex>
-                    )}
+                    headerRender={() => null}
                     cellRender={(date, info) => (info.type === 'date' ? renderDate(date) : info.originNode)}
                   />
                 </div>
               </Spin>
+              {/* The key under the grid, each drawn the way the cells draw it. */}
+              {mode === 'month' && screens.md && (
+                <Flex component="ul" aria-label="Chú thích lịch" align="center" wrap gap={spacing.md} className="priest-calendar__key">
+                  <li style={eventChip('published')}>Sự kiện do cha xứ tạo</li>
+                  <li style={eventChip('draft')}>
+                    <EditOutlined aria-hidden /> {eventStatusLabels.draft}
+                  </li>
+                  <li style={eventChip('cancelled')}>
+                    <StopOutlined aria-hidden /> <s>{eventStatusLabels.cancelled}</s>
+                  </li>
+                  <li>Ngày phụng vụ đồng bộ từ lịch trực tuyến</li>
+                </Flex>
+              )}
             </section>
             {/* The picked day, read on the reading surface (artifact PriestCalendar). */}
             <aside className="hm-preview hm-paper" aria-label={dayTitle(selected)}>

@@ -75,7 +75,7 @@ describe('PriestDashboardPage', () => {
     expect(await screen.findByText('Lễ Chúa Nhật tới')).toBeInTheDocument()
     // Counts sit beside the section titles; no metric tiles.
     expect(screen.getByText('7 sự kiện')).toBeInTheDocument()
-    expect(screen.getByText('1 danh sách')).toBeInTheDocument()
+    expect(screen.getByLabelText('1 danh sách chờ xem xét')).toBeInTheDocument()
 
     expect(await screen.findByText('Lễ Bổn mạng · 11/10/2099')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Xem danh sách bài hát: Lễ Bổn mạng · 11/10/2099' }))
