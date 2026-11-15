@@ -139,12 +139,14 @@ export function AccountsPage() {
     </Button>
   )
 
+  const totalLine = accounts.data && !filtered ? `${total} tài khoản. ` : ''
+
   return (
     <>
       <PageHeader
         title="Tài khoản"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Tài khoản' }]}
-        description={`${accounts.data && !filtered ? `${total} tài khoản. ` : ''}Mật khẩu đầu tiên được gửi qua email khi tạo.`}
+        description={`${totalLine}Mật khẩu đầu tiên được gửi qua email khi tạo.`}
         extra={createButton}
       />
 

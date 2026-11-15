@@ -640,6 +640,7 @@ textarea {
   font-size: 24px;
   line-height: 1;
   color: var(--hm-text-on-brand);
+  view-transition-name: hm-brand;
 }
 
 .hm-top__end {
@@ -837,6 +838,8 @@ textarea {
   line-height: 20px;
   text-align: center;
   font-variant-numeric: tabular-nums;
+  /* A waiting count breathes once when it appears (DESIGN "Motion"). */
+  animation: hm-attention-once 1200ms var(--hm-ease-in-out) 200ms;
 }
 
 .hm-visually-hidden {
@@ -2216,7 +2219,11 @@ textarea {
   border-radius: var(--hm-radius-md);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: border-color var(--hm-dur-fast) var(--hm-ease), box-shadow var(--hm-dur-fast) var(--hm-ease);
+  /* Floating week cards lift on touch, like every clickable card. */
+  transition:
+    border-color var(--hm-dur-fast) var(--hm-ease),
+    transform var(--hm-dur-fast) var(--hm-ease),
+    box-shadow var(--hm-dur-fast) var(--hm-ease);
 }
 
 .hm-week__card b {
@@ -2957,17 +2964,6 @@ a.song-next__item:hover {
   35% { transform: scale(1.18); }
 }
 
-.hm-tab__count {
-  animation: hm-attention-once 1200ms var(--hm-ease-in-out) 200ms;
-}
-
-/* Floating week cards lift on touch, like every clickable card. */
-.hm-week__card {
-  transition:
-    transform var(--hm-dur-fast) var(--hm-ease),
-    box-shadow var(--hm-dur-fast) var(--hm-ease);
-}
-
 .hm-week__card:hover,
 .hm-week__card:focus-visible {
   transform: translateY(-2px);
@@ -3506,10 +3502,6 @@ h1.ant-typography.hm-auth__title {
   view-transition-name: hm-window;
 }
 
-.hm-brand {
-  view-transition-name: hm-brand;
-}
-
 ::view-transition-group(hm-window),
 ::view-transition-group(hm-name),
 ::view-transition-group(hm-brand) {
@@ -3550,10 +3542,18 @@ h1.ant-typography.hm-auth__title {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* The named selectors match the rules above, so coming later wins without !important. */
   ::view-transition-group(*),
   ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
+  ::view-transition-new(*),
+  ::view-transition-group(hm-window),
+  ::view-transition-group(hm-name),
+  ::view-transition-group(hm-brand),
+  ::view-transition-old(hm-window),
+  ::view-transition-new(hm-window),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
   }
 }
 

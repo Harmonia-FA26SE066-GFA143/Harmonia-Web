@@ -28,8 +28,8 @@ export function highlightSavedRow(id: string | undefined) {
     const row = document.querySelector<HTMLElement>(selector)
     if (row) {
       row.removeAttribute(attribute)
-      // Restart the wash if the same row is saved twice in a row.
-      void row.offsetWidth
+      // Restart the wash if the same row is saved twice in a row: reading layout forces a reflow between the two.
+      row.getBoundingClientRect()
       row.setAttribute(attribute, '')
       setTimeout(() => row.removeAttribute(attribute), holdMs)
     } else if (Date.now() - started < lookForMs) {
