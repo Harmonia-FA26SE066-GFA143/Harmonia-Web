@@ -55,16 +55,18 @@ export function ProfilePage() {
           retrying={profile.isFetching}
         />
       )}
-      {profile.data && <ProfileAvatar profile={profile.data} />}
       {profile.data && (
-        <ProfileDetails
-          profile={profile.data}
-          editing={editing}
-          saving={update.isPending}
-          onEdit={() => setEditing(true)}
-          onCancel={() => setEditing(false)}
-          onSave={handleSave}
-        />
+        <div className="hm-profile">
+          <ProfileAvatar profile={profile.data} />
+          <ProfileDetails
+            profile={profile.data}
+            editing={editing}
+            saving={update.isPending}
+            onEdit={() => setEditing(true)}
+            onCancel={() => setEditing(false)}
+            onSave={handleSave}
+          />
+        </div>
       )}
 
       <SignOutModal open={confirmingSignOut} onClose={() => setConfirmingSignOut(false)} />

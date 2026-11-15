@@ -2,7 +2,8 @@ import { DeleteOutlined, UploadOutlined, UserOutlined } from '@ant-design/icons'
 import { App, Avatar, Button, Flex, Typography, Upload } from 'antd'
 import { errorMessage } from '@/lib/api/errors'
 import { fileExtension } from '@/shared/utils/media'
-import { colors, radius, spacing } from '@/styles/tokens'
+import { personName } from '@/shared/utils/personName'
+import { colors, spacing } from '@/styles/tokens'
 import { useDeleteMyAvatar, useUpdateMyAvatar } from '../hooks/useMyProfile'
 import type { Profile } from '../types'
 
@@ -24,7 +25,7 @@ function fileProblem(file: File) {
   return undefined
 }
 
-/** The signed-in user's picture, shown in the header menu too; any role changes or removes their own. */
+/** The identity card: the signed-in user's picture (shown in the header menu too), name and email; any role changes or removes their own picture. */
 export function ProfileAvatar({ profile }: Readonly<{ profile: Profile }>) {
   const { message, modal } = App.useApp()
   const update = useUpdateMyAvatar()
@@ -56,42 +57,33 @@ export function ProfileAvatar({ profile }: Readonly<{ profile: Profile }>) {
           .catch((error: Error) => message.error(errorMessage(error, messages, 'Không thể xoá ảnh đại diện. Vui lòng thử lại.'))),
     })
 
+  const name = personName(profile.fullName, profile.saintName)
+
   return (
-    <section
-      aria-label="Ảnh đại diện"
-      style={{
-        padding: spacing.lg,
-        marginBottom: spacing.md,
-        background: colors.surface,
-        border: `1px solid ${colors.border}`,
-        borderRadius: radius.lg,
-      }}
-    >
-      <Flex align="center" gap={spacing.lg} wrap>
-        <Avatar size={72} src={profile.avatarUrl} icon={<UserOutlined />} alt="" style={{ background: colors.primary, flexShrink: 0 }} />
-        <Flex vertical gap={spacing.xs}>
-          <Flex gap={spacing.sm} wrap>
-            <Upload
-              showUploadList={false}
-              accept={accepted.join(',')}
-              beforeUpload={(file) => {
-                handlePick(file)
-                return false
-              }}
-            >
-              <Button icon={<UploadOutlined />} loading={update.isPending} disabled={busy && !update.isPending}>
-                {profile.avatarUrl ? 'Đổi ảnh' : 'Tải ảnh lên'}
-              </Button>
-            </Upload>
-            {profile.avatarUrl && (
-              <Button icon={<DeleteOutlined />} danger loading={remove.isPending} disabled={busy && !remove.isPending} onClick={handleRemove}>
-                Xoá ảnh
-              </Button>
-            )}
-          </Flex>
-          <Typography.Text style={{ color: colors.textMuted }}>JPG, PNG hoặc WEBP, tối đa 2 MB.</Typography.Text>
-        </Flex>
+    <aside aria-label="Ảnh đại diện" className="hm-profile-id">
+      <Avatar size={96} src={profile.avatarUrl} icon={<UserOutlined />} alt="" style={{ background: colors.primary, flexShrink: 0 }} />
+      {name && <p className="hm-profile-id__name">{name}</p>}
+      <p className="hm-profile-id__mail">{profile.email}</p>
+      <Flex gap={spacing.sm} wrap justify="center" className="hm-profile-id__actions">
+        <Upload
+          showUploadList={false}
+          accept={accepted.join(',')}
+          beforeUpload={(file) => {
+            handlePick(file)
+            return false
+          }}
+        >
+          <Button icon={<UploadOutlined />} loading={update.isPending} disabled={busy && !update.isPending}>
+            {profile.avatarUrl ? 'Đổi ảnh' : 'Tải ảnh lên'}
+          </Button>
+        </Upload>
+        {profile.avatarUrl && (
+          <Button icon={<DeleteOutlined />} danger loading={remove.isPending} disabled={busy && !remove.isPending} onClick={handleRemove}>
+            Xoá ảnh
+          </Button>
+        )}
       </Flex>
-    </section>
+      <Typography.Text className="hm-profile-id__hint">JPG, PNG hoặc WEBP, tối đa 2 MB.</Typography.Text>
+    </aside>
   )
 }

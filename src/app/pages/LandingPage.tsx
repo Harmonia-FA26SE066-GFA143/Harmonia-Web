@@ -1,11 +1,11 @@
 import { MailOutlined } from '@ant-design/icons'
 import { Button, Typography } from 'antd'
-import { useCallback, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useContactEmail } from '@/features/settings'
 import { BrandMark, HeroNave, StatusTag, visuallyHidden, type StatusTagProps } from '@/shared/ui'
-import { colors, gold, media, radius, seasonColors, spacing, spine, typography } from '@/styles/tokens'
+import { colors, gold, media, seasonColors, spacing, spine, typography } from '@/styles/tokens'
 import { LandingStory } from './LandingStory'
 
 const roles = [
@@ -45,12 +45,23 @@ export function LandingPage() {
   const showPhoto = useCallback(() => setModelUnavailable(true), [])
 
   // A real link (open in a new tab, visible URL); a plain click still navigates inside the app.
-  const goTo = (path: string) => (event: MouseEvent) => {
+  const goTo = (path: string, viewTransition = false) => (event: MouseEvent) => {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
     event.preventDefault()
-    navigate(path)
+    navigate(path, { viewTransition })
   }
-  const goToSignIn = goTo(paths.login)
+  // Signing in opens the hero's window: the sign-in page holds the same window and name (AuthCard), and the browser
+  // morphs one into the other where it supports view transitions.
+  const goToSignIn = goTo(paths.login, true)
+  // From the close, its own window is the one that opens (global.css, html[data-door]).
+  const goToSignInFromClose = (event: MouseEvent) => {
+    document.documentElement.dataset.door = 'close'
+    goToSignIn(event)
+  }
+  // Back on this page, the hero window is the door again.
+  useLayoutEffect(() => {
+    delete document.documentElement.dataset.door
+  }, [])
   const large = { paddingInline: spacing.xl, height: 52, fontSize: 16, fontWeight: 600 }
 
   return (
@@ -63,7 +74,7 @@ export function LandingPage() {
         <HeroNave aperture={aperture} onUnavailable={showPhoto} />
         <div aria-hidden style={{ position: 'absolute', inset: 0, background: media.heroScrim }} />
         <header style={{ ...measure, position: 'relative', zIndex: 3, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBlock: spacing.lg }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: spacing.sm + 2, color: media.text, fontSize: 20, fontWeight: 600, letterSpacing: '-0.01em' }}>
+          <span className="hm-brand" style={{ display: 'flex', alignItems: 'center', gap: spacing.sm + 2, color: media.text, fontSize: 20, fontWeight: 600, letterSpacing: '-0.01em' }}>
             <BrandMark size={36} />
             {/* The name is already written across the hero. */}
             <span style={visuallyHidden}>Harmonia</span>
@@ -172,41 +183,42 @@ export function LandingPage() {
               </article>
             ))}
           </div>
-
-          <div
-            style={{
-              marginTop: spacing.xxl * 2,
-              paddingTop: spacing.xxl,
-              borderTop: goldRule,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: spacing.xl,
-              flexWrap: 'wrap',
-            }}
-          >
-            <div>
-              <Typography.Title id="contact-heading" level={2} style={{ ...serif, fontSize: 40, lineHeight: 1.1, color: media.text }}>
-                Cần tài khoản cho giáo xứ?
-              </Typography.Title>
-              <Typography.Paragraph style={{ margin: `${spacing.sm}px 0 0`, fontSize: 16, color: spine.text }}>
-                Quản trị viên Harmonia sẽ cấp tài khoản và vai trò cho bạn.
-              </Typography.Paragraph>
-            </div>
-            <a
-              href={`mailto:${contactEmail}`}
-              className="on-media-link"
-              style={{ display: 'inline-flex', alignItems: 'center', height: 52, paddingInline: spacing.xl, borderRadius: radius.md, background: media.text, color: colors.primary, fontSize: 16, fontWeight: 600 }}
-            >
-              {contactEmail}
-            </a>
-          </div>
-
-          <footer style={{ marginTop: spacing.xxl * 2, display: 'flex', alignItems: 'center', gap: spacing.sm, color: spine.groupTitle, fontSize: 13 }}>
-            <BrandMark size={20} />
-            Harmonia · Hệ thống điều phối ca đoàn và quản lý âm nhạc phụng vụ
-          </footer>
         </div>
+      </section>
+
+      {/*
+        The close answers the opening: the nave again under the same arched window, now holding the ways in. Its
+        "Đăng nhập" opens this window into the sign-in form, as the hero's does.
+      */}
+      <section aria-labelledby="contact-heading" className="landing-close">
+        <div aria-hidden className="landing-close__nave">
+          <HeroNave still />
+          <div style={{ position: 'absolute', inset: 0, background: media.heroScrim }} />
+        </div>
+        <div className="landing-close__window">
+          <Typography.Title id="contact-heading" level={2} className="landing-close__title">
+            Cần tài khoản cho giáo xứ?
+          </Typography.Title>
+          <Typography.Paragraph className="landing-close__lead">
+            Quản trị viên Harmonia cấp tài khoản và vai trò cho từng người. Đã có tài khoản thì đăng nhập để tiếp tục.
+          </Typography.Paragraph>
+          <Button className="landing-hero-sign-in" href={paths.login} onClick={goToSignInFromClose} style={large}>
+            Đăng nhập
+          </Button>
+          <Button ghost href={paths.join} onClick={goTo(paths.join)} style={{ height: 44, fontWeight: 500, marginTop: spacing.sm }}>
+            Đăng ký tham gia ca đoàn
+          </Button>
+          <a href={`mailto:${contactEmail}`} className="on-media-link landing-close__mail">
+            <MailOutlined aria-hidden /> {contactEmail}
+          </a>
+        </div>
+        <footer className="landing-close__foot">
+          <span className="landing-close__brand">
+            <BrandMark size={24} />
+            Harmonia · Hệ thống điều phối ca đoàn và quản lý âm nhạc phụng vụ
+          </span>
+          <span>Trang thánh ca: National Gallery of Art, Washington</span>
+        </footer>
       </section>
     </div>
   )

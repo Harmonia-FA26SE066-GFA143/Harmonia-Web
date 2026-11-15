@@ -77,15 +77,22 @@ export function JoinChoirPage() {
           if (!submit.isPending) submit.mutate(trimmed(values))
         }}
       >
-        <Form.Item name="saintName" label="Tên thánh" rules={saintNameRules}>
-          <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
-        </Form.Item>
-        <Form.Item name="fullName" label="Họ tên" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập họ tên.' }, { max: 100, message: 'Vui lòng nhập tối đa 100 ký tự.' }]}>
-          <Input autoComplete="name" />
-        </Form.Item>
-        <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: 'Vui lòng chọn giới tính.' }]}>
-          <Radio.Group options={genderOptions} />
-        </Form.Item>
+        <div className="hm-auth__pair">
+          <Form.Item name="saintName" label="Tên thánh" rules={saintNameRules}>
+            <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
+          </Form.Item>
+          <Form.Item name="fullName" label="Họ tên" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập họ tên.' }, { max: 100, message: 'Vui lòng nhập tối đa 100 ký tự.' }]}>
+            <Input autoComplete="name" />
+          </Form.Item>
+        </div>
+        <div className="hm-auth__pair">
+          <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: 'Vui lòng chọn giới tính.' }]}>
+            <Radio.Group options={genderOptions} />
+          </Form.Item>
+          <Form.Item name="phone" label="Số điện thoại" rules={[{ max: 20, message: 'Vui lòng nhập tối đa 20 ký tự.' }]}>
+            <Input type="tel" autoComplete="tel" />
+          </Form.Item>
+        </div>
         <Form.Item
           name="email"
           label="Email"
@@ -93,9 +100,6 @@ export function JoinChoirPage() {
           rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập email.' }, { type: 'email', message: 'Vui lòng nhập email dạng ten@giaoxu.org.' }, { max: 256, message: 'Vui lòng nhập tối đa 256 ký tự.' }]}
         >
           <Input type="email" autoComplete="email" />
-        </Form.Item>
-        <Form.Item name="phone" label="Số điện thoại" rules={[{ max: 20, message: 'Vui lòng nhập tối đa 20 ký tự.' }]}>
-          <Input type="tel" autoComplete="tel" />
         </Form.Item>
         <Form.Item name="note" label="Lời nhắn" extra="Ví dụ ca đoàn bạn muốn tham gia." rules={[{ max: 500, message: 'Vui lòng nhập tối đa 500 ký tự.' }]}>
           <Input.TextArea rows={3} showCount maxLength={500} />

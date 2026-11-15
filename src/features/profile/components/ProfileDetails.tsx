@@ -1,8 +1,8 @@
 import { EditOutlined } from '@ant-design/icons'
-import { Button, Descriptions, Flex, Input, Radio, Tag, Typography } from 'antd'
+import { Button, Flex, Input, Radio, Typography } from 'antd'
 import { useEffect, useRef } from 'react'
 import { roleLabels } from '@/shared/types/account'
-import { colors, radius, spacing } from '@/styles/tokens'
+import { spacing } from '@/styles/tokens'
 import type { Profile, ProfileUpdateValues } from '../types'
 import { Form } from '@/shared/ui'
 import { genderLabel, genderOptions, saintNameRules } from '@/shared/utils/personName'
@@ -28,31 +28,27 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
     wasEditing.current = editing
   }, [editing])
 
-  const readOnlyItems = [
-    { key: 'email', label: 'Email', children: profile.email },
-    { key: 'role', label: 'Vai trò', children: <Tag>{roleLabels[profile.role]}</Tag> },
+  const rows = [
+    { key: 'saintName', label: 'Tên thánh', value: profile.saintName },
+    { key: 'fullName', label: 'Họ và tên', value: profile.fullName },
+    { key: 'gender', label: 'Giới tính', value: genderLabel(profile.gender) },
+    { key: 'phone', label: 'Số điện thoại', value: profile.phone },
+    { key: 'email', label: 'Email', value: profile.email },
+    { key: 'role', label: 'Vai trò', value: roleLabels[profile.role] },
   ]
 
   return (
-    <section
-      aria-labelledby="profile-info-heading"
-      style={{
-        padding: spacing.lg,
-        background: colors.surface,
-        border: `1px solid ${colors.border}`,
-        borderRadius: radius.lg,
-      }}
-    >
-      <Flex justify="space-between" align="center" wrap gap={spacing.sm} style={{ marginBottom: spacing.md }}>
-        <Typography.Title id="profile-info-heading" level={2} style={{ margin: 0 }}>
+    <section aria-labelledby="profile-info-heading" className="hm-sheet-section">
+      <div className="hm-sheet-section__head hm-profile-head">
+        <h2 id="profile-info-heading" className="hm-rubric">
           Thông tin cá nhân
-        </Typography.Title>
+        </h2>
         {!editing && (
           <Button ref={editButton} icon={<EditOutlined />} onClick={onEdit}>
             Chỉnh sửa
           </Button>
         )}
-      </Flex>
+      </div>
 
       {editing ? (
         // Not `disabled` while saving (that would drop the focus of the field in use); the page ignores a second save.
@@ -62,33 +58,24 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
           layout="vertical"
           initialValues={{ fullName: profile.fullName, phone: profile.phone, saintName: profile.saintName, gender: profile.gender }}
           onFinish={onSave}
-          style={{ maxWidth: 560 }}
+          className="hm-profile-form"
         >
-          <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
-            <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
-          </Form.Item>
-          <Form.Item
-            label="Họ và tên (không bắt buộc)"
-            name="fullName"
-            rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}
-          >
-            <Input autoComplete="name" autoFocus />
-          </Form.Item>
-          <Form.Item label="Giới tính" name="gender">
-            <Radio.Group options={genderOptions} />
-          </Form.Item>
-          <Form.Item
-            label="Số điện thoại (không bắt buộc)"
-            name="phone"
-            rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}
-          >
-            <Input type="tel" autoComplete="tel" />
-          </Form.Item>
-          <Descriptions column={1} size="small" items={readOnlyItems} />
-          <Typography.Paragraph style={{ margin: `${spacing.sm}px 0 ${spacing.lg}px`, color: colors.textMuted }}>
-            Email và vai trò không chỉnh sửa tại đây.
-          </Typography.Paragraph>
-          <Flex gap={spacing.sm}>
+          <div className="hm-profile-form__grid">
+            <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
+              <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
+            </Form.Item>
+            <Form.Item label="Họ và tên (không bắt buộc)" name="fullName" rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}>
+              <Input autoComplete="name" autoFocus />
+            </Form.Item>
+            <Form.Item label="Giới tính" name="gender">
+              <Radio.Group options={genderOptions} />
+            </Form.Item>
+            <Form.Item label="Số điện thoại (không bắt buộc)" name="phone" rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}>
+              <Input type="tel" autoComplete="tel" />
+            </Form.Item>
+          </div>
+          <Typography.Paragraph className="hm-profile-form__note">Email và vai trò không chỉnh sửa tại đây.</Typography.Paragraph>
+          <Flex justify="flex-end" gap={spacing.sm}>
             <Button onClick={onCancel} disabled={saving}>
               Hủy
             </Button>
@@ -98,17 +85,14 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
           </Flex>
         </Form>
       ) : (
-        <Descriptions
-          column={1}
-          items={[
-            { key: 'saintName', label: 'Tên thánh', children: profile.saintName || 'Chưa cập nhật' },
-            { key: 'fullName', label: 'Họ và tên', children: profile.fullName || 'Chưa cập nhật' },
-            { key: 'gender', label: 'Giới tính', children: genderLabel(profile.gender) ?? 'Chưa cập nhật' },
-            readOnlyItems[0],
-            { key: 'phone', label: 'Số điện thoại', children: profile.phone || 'Chưa cập nhật' },
-            ...readOnlyItems.slice(1),
-          ]}
-        />
+        <dl className="hm-profile-list">
+          {rows.map(({ key, label, value }) => (
+            <div key={key}>
+              <dt>{label}</dt>
+              <dd className={value ? undefined : 'is-empty'}>{value || 'Chưa cập nhật'}</dd>
+            </div>
+          ))}
+        </dl>
       )}
     </section>
   )

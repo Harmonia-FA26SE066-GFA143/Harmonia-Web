@@ -1010,11 +1010,12 @@ textarea {
 }
 
 @keyframes landing-rise {
-  from { opacity: 0; transform: translateY(12px); }
+  from { transform: translateY(12px); }
 }
 
+/* The window is there from the first frame (the drawn nave can hold the main thread for seconds); it only settles. */
 @keyframes landing-window {
-  from { opacity: 0; transform: translateY(32px); }
+  from { transform: translateY(32px); }
 }
 
 @media (max-width: 991px) {
@@ -3012,4 +3013,580 @@ a.song-next__item:hover {
   .hm-week__card:focus-visible {
     transform: none;
   }
+}
+
+/* Shared pages (redesign-trang-chung: sign-in, password, join, profile, 404/403/error; artifact AuthPages,
+   ProfilePage, StatusPages). */
+
+/* Sign-in frame (artifact AuthPages): the landing hero held still, its arched window of light opened to hold the
+   form. The name sits behind the window's crown; a long form lengthens the window and the page scrolls. */
+.hm-auth {
+  --name: 220px;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 480px minmax(0, 1fr);
+  grid-template-rows: calc(40px + var(--name) * 0.56) max-content;
+  min-height: 100vh;
+  padding-inline: 40px;
+  column-gap: 40px;
+  background: var(--hm-surface-media);
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth__scene {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+.hm-auth__brand.on-media-link {
+  position: absolute;
+  top: 24px;
+  left: 40px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth__name {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: var(--name);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--hm-text-on-media);
+  pointer-events: none;
+}
+
+.hm-auth__verse {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: end;
+  position: sticky;
+  bottom: 0;
+  margin: 0;
+  padding-bottom: 40px;
+}
+
+.hm-auth__verse blockquote {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.15;
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth__verse figcaption {
+  margin-top: 8px;
+  color: var(--hm-text-on-media-muted);
+}
+
+/* The window: a 240px crown on a 1px gilt edge, dark from the crown down so the form reads on it. */
+.hm-auth__window {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: safe flex-end;
+  min-height: calc(100vh - 40px - var(--name) * 0.56);
+  border: 1px solid var(--hm-gilt);
+  border-bottom: 0;
+  border-radius: 240px 240px 0 0;
+  background: linear-gradient(180deg, rgb(28 12 17 / 0.35) 0%, rgb(28 12 17 / 0.86) 26%, rgb(28 12 17 / 0.94) 100%);
+}
+
+.hm-auth__body {
+  padding: 112px 32px 40px;
+}
+
+.hm-auth__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  border: 1px solid var(--hm-gilt);
+  border-radius: 50%;
+  color: var(--hm-text-on-media);
+  font-size: 24px;
+}
+
+h1.ant-typography.hm-auth__title {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1.08;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--hm-text-on-media);
+}
+
+.ant-typography.hm-auth__lead {
+  margin: 8px 0 0;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--hm-text-on-media-muted);
+}
+
+.hm-auth__content {
+  margin-top: 32px;
+}
+
+.hm-auth__foot {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid rgb(255 255 255 / 0.18);
+  font-size: 13px;
+  text-align: center;
+  color: var(--hm-text-on-media-muted);
+}
+
+/* Form parts on the dark window: white labels and links, white fields, a white primary with burgundy text. */
+.hm-auth__window .ant-form-item-label > label,
+.hm-auth__window .ant-radio-wrapper,
+.hm-auth__window .ant-divider-inner-text,
+.hm-auth__window .ant-input-data-count {
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth__window .ant-form-item-label > label .ant-form-item-optional,
+.hm-auth__window .ant-form-item-extra {
+  color: var(--hm-text-on-media-muted);
+}
+
+.hm-auth__window .ant-form-item-explain-error {
+  color: #ffb3bd;
+}
+
+.hm-auth__window .ant-divider-horizontal.ant-divider-with-text::before,
+.hm-auth__window .ant-divider-horizontal.ant-divider-with-text::after {
+  border-block-start-color: rgb(255 255 255 / 0.18);
+}
+
+.hm-auth__window a,
+.hm-auth__window a.ant-typography.ant-typography-link,
+.hm-auth__window .ant-btn-link {
+  color: var(--hm-text-on-media);
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 0.4);
+  text-underline-offset: 3px;
+}
+
+.hm-auth__window a:hover,
+.hm-auth__window a.ant-typography.ant-typography-link:hover,
+.hm-auth__window .ant-btn-link:not(:disabled):hover {
+  color: var(--hm-text-on-media);
+  text-decoration-color: currentColor;
+}
+
+.hm-auth__window .ant-alert a {
+  color: inherit;
+}
+
+.hm-auth__window .ant-btn-primary.ant-btn-primary {
+  background: var(--hm-surface-base);
+  color: var(--hm-action-primary);
+  box-shadow: none;
+}
+
+.hm-auth__window .ant-btn-primary.ant-btn-primary:not(:disabled):hover {
+  background: var(--hm-surface-soft);
+  color: var(--hm-action-primary-hover);
+}
+
+.hm-auth__window .ant-btn-default.ant-btn-default {
+  background: transparent;
+  border-color: rgb(255 255 255 / 0.4);
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth__window .ant-btn-default.ant-btn-default:not(:disabled):hover {
+  border-color: var(--hm-text-on-media);
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth :focus-visible {
+  outline: 2px solid var(--hm-text-on-media);
+  outline-offset: 2px;
+}
+
+.hm-auth ::selection {
+  background: var(--hm-action-primary);
+  color: var(--hm-text-on-media);
+}
+
+/* Two short fields side by side (join form). */
+.hm-auth__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+
+/*
+ * Landing and sign-in are one scene (owner 2026-11-15: "liền mạch"). Moving between them, the browser morphs the
+ * mark, the name and the arched window (React Router viewTransition): signing in, the window rises and grows to hold
+ * the form while the name settles smaller above it; going home, it closes back. Width is shared (480px), so the
+ * window's picture is pinned to its top instead of being stretched.
+ */
+.landing-hero__name,
+.hm-auth__name {
+  view-transition-name: hm-name;
+}
+
+.landing-hero__window,
+.hm-auth__window {
+  view-transition-name: hm-window;
+}
+
+.hm-brand {
+  view-transition-name: hm-brand;
+}
+
+::view-transition-group(hm-window),
+::view-transition-group(hm-name),
+::view-transition-group(hm-brand) {
+  animation-duration: var(--hm-dur-entrance);
+  animation-timing-function: var(--hm-ease);
+}
+
+::view-transition-group(hm-window) {
+  overflow: clip;
+}
+
+::view-transition-old(hm-window),
+::view-transition-new(hm-window) {
+  height: 100%;
+  object-fit: none;
+  object-position: top center;
+}
+
+::view-transition-old(hm-window) {
+  animation: hm-vt-out var(--hm-dur-fast) var(--hm-ease) both;
+}
+
+::view-transition-new(hm-window) {
+  animation: hm-vt-in var(--hm-dur-panel) var(--hm-ease) var(--hm-dur-fast) both;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--hm-dur-panel);
+}
+
+@keyframes hm-vt-out {
+  to { opacity: 0; }
+}
+
+@keyframes hm-vt-in {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* Status pages (404, 403, render error): the brand top left, one reading leaf in the middle. */
+.hm-status {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 96px 32px;
+  background: var(--hm-surface-page);
+}
+
+.hm-status__brand {
+  position: absolute;
+  top: 32px;
+  left: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--hm-text-primary);
+}
+
+.hm-status__brand:hover {
+  color: var(--hm-action-primary);
+}
+
+.hm-status__leaf {
+  width: 560px;
+  max-width: 100%;
+  padding: 48px;
+  text-align: center;
+  background-color: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-hairline);
+  border-top: 1px solid var(--hm-gilt);
+  border-radius: var(--hm-radius-lg);
+  animation: hm-rise-small var(--hm-dur-base) var(--hm-ease) both;
+}
+
+.hm-status__code {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-area-liturgy-ink);
+}
+
+h1.ant-typography.hm-status__title {
+  margin: 4px 0 0;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1.1;
+}
+
+.ant-typography.hm-status__lead {
+  max-width: 420px;
+  margin: 16px auto 0;
+  color: var(--hm-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-status__leaf {
+    animation: none;
+  }
+}
+
+/* Profile: identity card on a reading surface beside the details sheet. */
+.hm-profile {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 720px);
+  gap: 16px;
+  align-items: start;
+}
+
+.hm-profile-id {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 24px;
+  text-align: center;
+  background-color: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-hairline);
+  border-top: 1px solid var(--hm-gilt);
+  border-radius: var(--hm-radius-lg);
+}
+
+.hm-profile-id__name {
+  margin: 16px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--hm-text-primary);
+}
+
+.hm-profile-id__mail {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--hm-text-muted);
+}
+
+.hm-profile-id__actions {
+  width: 100%;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.ant-typography.hm-profile-id__hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.hm-profile-head {
+  padding: 16px 24px 8px;
+}
+
+.hm-profile-list {
+  margin: 0;
+  padding: 0 24px 8px;
+}
+
+.hm-profile-list > div {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px;
+  align-items: center;
+  min-height: 48px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.hm-profile-list dt {
+  font-size: 13px;
+  color: var(--hm-text-muted);
+}
+
+.hm-profile-list dd {
+  margin: 0;
+  font-weight: 500;
+  color: var(--hm-text-primary);
+}
+
+.hm-profile-list dd.is-empty {
+  font-weight: 400;
+  color: var(--hm-text-muted);
+}
+
+.hm-profile-form {
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.hm-profile-form__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+}
+
+.ant-typography.hm-profile-form__note {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--hm-text-muted);
+}
+
+/* Landing close (redesign-trang-chung): the page ends as it opens, the nave under the same arched window, which now
+   holds the ways in, over a footer bar with the credits. */
+.landing-close {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  min-height: 760px;
+  padding-top: 96px;
+  background: var(--hm-surface-media);
+  color: var(--hm-text-on-media);
+}
+
+.landing-close__nave {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.landing-close__window {
+  box-sizing: border-box;
+  align-self: end;
+  width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 160px 32px 56px;
+  text-align: center;
+  border: 1px solid var(--hm-gilt);
+  border-bottom: 0;
+  border-radius: 240px 240px 0 0;
+  background: linear-gradient(180deg, rgb(28 12 17 / 0.2) 0%, rgb(28 12 17 / 0.8) 40%, rgb(28 12 17 / 0.92) 100%);
+}
+
+h2.ant-typography.landing-close__title {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1.08;
+  text-wrap: balance;
+  color: var(--hm-text-on-media);
+}
+
+.ant-typography.landing-close__lead {
+  margin: 16px 0 32px;
+  text-wrap: balance;
+  color: var(--hm-text-on-media-muted);
+}
+
+.landing-close .ant-btn.landing-hero-sign-in.landing-hero-sign-in {
+  width: 100%;
+  border: 0;
+  background: var(--hm-surface-base);
+  color: var(--hm-action-primary);
+}
+
+.landing-close .ant-btn.landing-hero-sign-in.landing-hero-sign-in:not(:disabled):hover {
+  background: var(--hm-surface-soft);
+  color: var(--hm-action-primary-hover);
+}
+
+.landing-close .ant-btn.ant-btn-background-ghost.ant-btn-background-ghost {
+  width: 100%;
+  border-color: var(--hm-text-on-media-muted);
+  color: var(--hm-text-on-media);
+}
+
+.landing-close .ant-btn.ant-btn-background-ghost.ant-btn-background-ghost:not(:disabled):hover {
+  border-color: var(--hm-text-on-media);
+  background: transparent;
+  color: var(--hm-text-on-media);
+}
+
+.landing-close__mail.on-media-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 4px 8px;
+  border-radius: var(--hm-radius-md);
+  color: var(--hm-text-on-media);
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 0.4);
+  text-underline-offset: 3px;
+}
+
+.landing-close__foot {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 40px;
+  border-top: 1px solid var(--hm-gilt);
+  background: rgb(28 12 17 / 0.92);
+  font-size: 13px;
+  color: var(--hm-text-on-media-muted);
+}
+
+.landing-close__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.landing-close :focus-visible {
+  outline: 2px solid var(--hm-text-on-media);
+  outline-offset: 2px;
+}
+
+/* From the close, its window is the door into the sign-in (LandingPage sets html[data-door]). */
+html[data-door='close'] .landing-hero__window,
+html[data-door='close'] .landing-hero__name {
+  view-transition-name: none;
+}
+
+html[data-door='close'] .landing-close__window {
+  view-transition-name: hm-window;
 }
