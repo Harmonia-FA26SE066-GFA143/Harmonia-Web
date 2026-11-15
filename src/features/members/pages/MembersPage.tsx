@@ -17,6 +17,7 @@ import { memberStatuses, type MemberFilters, type MemberProfile, type MemberProf
 const pageSize = 20
 const onePage = { pageNumber: 1, pageSize: 1 }
 const onLeave = { search: '', status: 'inactive' as const }
+const allActive = { search: '', status: 'active' as const }
 
 /** Filters and page live in the URL (artifact MembersPage), so a filtered list can be shared or reopened. */
 function readState(params: URLSearchParams): { filters: MemberFilters; page: number } {
@@ -63,16 +64,18 @@ export function MembersPage() {
   const members = useMemberProfiles(query, { pageNumber: page, pageSize })
   const update = useUpdateMemberProfile()
   // Active members with their approved skills, for the counts above the list (the same request other pages share).
+  // ponytail: the voice-part cells count that one page of 100; past it they need a count from the backend.
   const active = useChoirMembers()
+  const activeTotal = useMemberProfiles(allActive, onePage).data?.totalCount
   const leave = useMemberProfiles(onLeave, onePage)
   const activeCells = active.data && [
-    { label: 'Đang sinh hoạt', value: active.data.length },
+    { label: 'Đang sinh hoạt', value: activeTotal ?? active.data.length },
     ...voiceParts.map(({ label, pattern }) => ({ label, value: active.data.filter((member) => inVoicePart(member.skills, pattern)).length })),
     ...(leave.data ? [{ label: 'Tạm nghỉ', value: leave.data.totalCount }] : []),
   ]
   const pendingSkills = usePendingSkills(onePage).data?.totalCount ?? 0
   const description = active.data
-    ? [`${active.data.length} ca viên đang sinh hoạt`, pendingSkills > 0 && `${pendingSkills} yêu cầu duyệt kỹ năng`].filter(Boolean).join(' · ')
+    ? [`${activeTotal ?? active.data.length} ca viên đang sinh hoạt`, pendingSkills > 0 && `${pendingSkills} yêu cầu duyệt kỹ năng`].filter(Boolean).join(' · ')
     : 'Tài khoản ca viên do Quản trị viên tạo.'
   const [editing, setEditing] = useState<MemberProfile>()
 

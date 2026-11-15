@@ -213,6 +213,18 @@ describe('RehearsalsPage', () => {
     expect(save).not.toHaveBeenCalled()
   })
 
+  it('marks a joint rehearsal and leaves its edit and delete to the lead choir director', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(page([{ ...rehearsals[0], isJoint: true }, rehearsals[1]]))
+    vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([{ choirId: 'c9', name: 'Ca đoàn Cecilia', isActive: true, isLead: true, directorId: 'someone-else', substituteDirectorId: 'another' }])
+    renderRehearsals()
+
+    expect(await screen.findByText('Buổi tập chung')).toBeInTheDocument()
+    // Both sessions are upcoming; only the director's own keeps its actions.
+    await waitFor(() => expect(screen.queryAllByRole('button', { name: /^Sửa buổi tập/ })).toHaveLength(1))
+    expect(screen.queryAllByRole('button', { name: /^Xoá buổi tập/ })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: /điểm danh buổi tập/i })).toHaveLength(2)
+  })
+
   it('explains why a session with attendance cannot be deleted', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(page(rehearsals))
     vi.spyOn(rehearsalsApi, 'deleteRehearsal').mockRejectedValue(new ApiError(409, { code: 'REHEARSAL_HAS_ATTENDANCE' }))

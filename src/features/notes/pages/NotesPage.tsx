@@ -78,7 +78,7 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
           <Flex gap={8} align="center">
             {/* The state in words; the dot only echoes it. */}
             <output className={`notes-live${live ? ' is-live' : ''}`}>
-              {live ? 'Đang kết nối' : 'Mất kết nối, đang thử lại'}
+              {live ? 'Đã kết nối' : 'Mất kết nối, đang thử lại'}
             </output>
             {sender && (
               <Button icon={<SendOutlined />} onClick={() => setNoting(true)}>

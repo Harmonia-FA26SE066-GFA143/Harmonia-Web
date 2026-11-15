@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { PickedProgramFeedback, usePickedProgram } from '@/features/liturgical-programs'
+import { NoChoirNotice } from '@/features/choirs'
 import { useChoirMembers } from '@/features/members'
 import { formatDateTime } from '@/lib/api/dates'
 import { EmptyState, ErrorState, inVoicePart, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, voiceParts, type StatusTagColor } from '@/shared/ui'
@@ -179,7 +180,10 @@ export function ParticipationPage() {
         onShowUpcoming={() => setSearchParams({})}
       />
       {programs.data !== undefined && !program && !searchParams.get('programId') && (
-        <EmptyState title="Chưa có chương trình phụng vụ" description="Yêu cầu xác nhận tham gia được gửi theo từng chương trình." />
+        <>
+          <NoChoirNotice />
+          <EmptyState title="Chưa có chương trình phụng vụ" description="Yêu cầu xác nhận tham gia được gửi theo từng chương trình." />
+        </>
       )}
       {program && (
         <Flex vertical gap={spacing.lg}>

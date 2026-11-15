@@ -8,6 +8,7 @@ import { StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
 import { isRehearsalDay, isUpcoming, type Rehearsal } from '../types'
+import { JointChip, PlannerOnly } from './JointRehearsal'
 
 export interface RehearsalWeekProps {
   weekStart: string
@@ -73,7 +74,10 @@ export function RehearsalWeek({ weekStart, direction, rehearsals, programs, sele
                   >
                     <b>{time(rehearsal)}</b>
                     <span>{program?.eventName ?? 'Buổi tập'}</span>
-                    <small>{rehearsal.locationName ?? (rehearsal.songs.length > 0 ? `${rehearsal.songs.length} bài` : 'Chưa chọn bài')}</small>
+                    <small>
+                      {rehearsal.isJoint && 'Tập chung · '}
+                      {rehearsal.locationName ?? (rehearsal.songs.length > 0 ? `${rehearsal.songs.length} bài` : 'Chưa chọn bài')}
+                    </small>
                   </button>
                 )
               })}
@@ -111,6 +115,7 @@ export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendan
         <Flex align="center" gap={spacing.sm} wrap>
           <h3 className="ctb-detail__title">{program?.eventName ? `Tập cho ${program.eventName}` : 'Buổi tập'}</h3>
           <SessionState rehearsal={rehearsal} />
+          <JointChip rehearsal={rehearsal} />
         </Flex>
         <ul className="ctb-facts">
           <li>
@@ -162,6 +167,7 @@ export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendan
           <Button icon={<CheckSquareOutlined />} onClick={() => onTakeAttendance(rehearsal)} aria-label={`${isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${label}`}>
             {isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
           </Button>
+          <PlannerOnly rehearsal={rehearsal}>
           {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
           {isUpcoming(rehearsal) && (
             <Button icon={<EditOutlined />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${label}`}>
@@ -171,6 +177,7 @@ export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendan
           <Button danger icon={<DeleteOutlined />} onClick={() => onDelete(rehearsal)} aria-label={`Xoá buổi tập ${label}`}>
             Xoá
           </Button>
+          </PlannerOnly>
         </Flex>
       </div>
     </section>
