@@ -5,10 +5,15 @@
  */
 export interface Rehearsal {
   id: string
-  /** The choir holding it (D8); absent on sessions made before choirs had directors. Set on creation only. */
+  /** The choir holding it (D8); absent on sessions made before choirs had directors, and on a joint one. Set on creation only. */
   choirId?: string
   /** The liturgical program it prepares, if any. */
   eventId?: string
+  /**
+   * A joint rehearsal of every choir serving the program (BE 69c9d47, `CreateRehearsalRequest.IsJoint`): it has no choir,
+   * needs a program, only the lead choir's director plans it, and its program cannot change (REHEARSAL_JOINT_EVENT_LOCKED).
+   */
+  isJoint?: boolean
   /** A worship location of the catalog. */
   locationId?: string
   locationName?: string

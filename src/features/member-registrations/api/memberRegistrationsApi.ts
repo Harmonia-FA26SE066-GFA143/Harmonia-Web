@@ -14,6 +14,19 @@ export interface MemberRegistration {
   gender?: Gender | null
   note: string | null
   createdAt: string
+  /**
+   * Another waiting request or an existing account with the same phone, or the same full name and saint name (Harmonia-BE
+   * 69c9d47, `RegistrationDuplicateDto.cs`, `MemberRegistrationService.cs:90-108`). Only a hint for the Admin.
+   */
+  possibleDuplicates?: RegistrationDuplicate[]
+}
+
+export interface RegistrationDuplicate {
+  kind: 'Registration' | 'User'
+  id: string
+  fullName: string
+  email: string
+  matchedOn: 'Phone' | 'Name'
 }
 
 export interface RegistrationValues {
@@ -39,6 +52,11 @@ export async function acceptRegistration(id: string): Promise<void> {
   await apiRequest<unknown>(`/api/member-registrations/${id}/accept`, { method: 'POST' })
 }
 
-export function deleteRegistration(id: string): Promise<void> {
-  return apiRequest<void>(`/api/member-registrations/${id}`, { method: 'DELETE' })
+/**
+ * Turns a request down with a reason (required, at most 500 characters), which the server emails to the applicant
+ * (Harmonia-BE 69c9d47, `MemberRegistrationsController.cs:39-43`, `DeleteMemberRegistrationRequestValidator.cs`,
+ * `MemberRegistrationService.cs:183-188`).
+ */
+export function deleteRegistration({ id, reason }: { id: string; reason: string }): Promise<void> {
+  return apiRequest<void>(`/api/member-registrations/${id}`, { method: 'DELETE', body: JSON.stringify({ reason: reason.trim() }) })
 }

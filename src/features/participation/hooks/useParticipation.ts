@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { confirmAllParticipation, getParticipation, sendParticipationRequests } from '../api/participationApi'
+import { confirmAllParticipation, getParticipation, remindParticipation, sendParticipationRequests } from '../api/participationApi'
 
 const participationKey = (programId: string) => ['participation', programId] as const
 
@@ -19,6 +19,11 @@ export function useSendParticipationRequests(programId: string) {
     mutationFn: (memberIds?: string[]) => sendParticipationRequests(programId, memberIds),
     onSettled: () => queryClient.invalidateQueries({ queryKey: participationKey(programId) }),
   })
+}
+
+/** Reminds the members still to answer; the list itself does not change. */
+export function useRemindParticipation(programId: string) {
+  return useMutation({ mutationFn: () => remindParticipation(programId) })
 }
 
 export function useConfirmAllParticipation(programId: string) {

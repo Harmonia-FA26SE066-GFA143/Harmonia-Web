@@ -49,6 +49,15 @@ export async function confirmAllParticipation(eventId: string): Promise<void> {
 }
 
 /**
+ * Reminds the members still to answer (`POST …/reminders?eventId=`, Parish Priest or the lead choir's director,
+ * Harmonia-BE 69c9d47 `EventParticipationsController.cs:40-46`). Members reminded within
+ * `Participation.ReminderCooldownHours` are skipped; when that is all of them, 409 `EVENT_PARTICIPATION_REMINDER_TOO_SOON`.
+ */
+export function remindParticipation(eventId: string): Promise<{ remindedCount: number; pendingCount: number }> {
+  return apiRequest(`/api/event-participations/reminders${toQuery({ eventId })}`, { method: 'POST' })
+}
+
+/**
  * Asks the given members, none of whom may have been asked for this event (EVENT_PARTICIPATION_ALREADY_REQUESTED) and
  * all of whom belong to a choir serving it (MEMBER_NOT_FOUND). Without ids the backend asks every active member of the
  * serving choirs who has not been asked yet (EventParticipationService.ResolveInviteesAsync).

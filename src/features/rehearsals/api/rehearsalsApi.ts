@@ -23,6 +23,18 @@ interface RehearsalDto {
   endTime: string
   note: string | null
   songs: RehearsalSongDto[]
+  isJoint?: boolean
+  /** Only on the POST / PUT response (BE 69c9d47, `RehearsalMemberConflictDto.cs`). */
+  memberConflicts?: RehearsalMemberConflict[]
+}
+
+/** A member of the rehearsing choir(s) who serves a program at that time; a warning, the save went through. */
+export interface RehearsalMemberConflict {
+  memberId: string
+  fullName: string
+  eventId: string
+  eventDate: string
+  time: string
 }
 
 export interface RehearsalPage {
@@ -39,6 +51,7 @@ const toRehearsal = (dto: RehearsalDto): Rehearsal => ({
   id: dto.id,
   choirId: dto.choirId ?? undefined,
   eventId: dto.eventId ?? undefined,
+  isJoint: dto.isJoint ?? false,
   locationId: dto.locationId ?? undefined,
   locationName: dto.locationName ?? undefined,
   startAt: parseUtc(dto.startTime).toISOString(),
@@ -57,9 +70,10 @@ export async function listRehearsals(filters: RehearsalFilters, page: RehearsalP
 
 /**
  * Creates a rehearsal with its songs, or updates one: the details first, then the songs (PUT {id}/songs replaces
- * the whole programme). Members are notified of a change.
+ * the whole programme). Members are notified of a change. Answers the members who serve a program at that time
+ * (BE 69c9d47): the save is not refused, the Director is told.
  */
-export async function saveRehearsal({ id, values }: { id?: string; values: RehearsalValues }): Promise<void> {
+export async function saveRehearsal({ id, values }: { id?: string; values: RehearsalValues }): Promise<RehearsalMemberConflict[]> {
   const details = {
     eventId: values.eventId,
     locationId: values.locationId,
@@ -68,18 +82,25 @@ export async function saveRehearsal({ id, values }: { id?: string; values: Rehea
     note: values.note,
   }
   if (!id) {
-    await apiRequest<unknown>('/api/rehearsals', {
+    const created = await apiRequest<RehearsalDto>('/api/rehearsals', {
       method: 'POST',
-      // D8: a new session belongs to one of the director's choirs, which must serve the program when one is chosen.
-      body: JSON.stringify({ ...details, choirId: values.choirId, songs: toSongItems(values.songs) }),
+      // D8: a session belongs to one of the director's choirs, which must serve the program when one is chosen; a
+      // joint one has no choir and needs the program (CreateRehearsalRequestValidator, BE 69c9d47).
+      body: JSON.stringify({
+        ...details,
+        choirId: values.isJoint ? null : values.choirId,
+        isJoint: Boolean(values.isJoint),
+        songs: toSongItems(values.songs),
+      }),
     })
-    return
+    return created?.memberConflicts ?? []
   }
-  await apiRequest<unknown>(`/api/rehearsals/${id}`, { method: 'PUT', body: JSON.stringify(details) })
+  const updated = await apiRequest<RehearsalDto>(`/api/rehearsals/${id}`, { method: 'PUT', body: JSON.stringify(details) })
   await apiRequest<unknown>(`/api/rehearsals/${id}/songs`, {
     method: 'PUT',
     body: JSON.stringify({ items: toSongItems(values.songs) }),
   })
+  return updated?.memberConflicts ?? []
 }
 
 /** Refused once attendance was recorded (REHEARSAL_HAS_ATTENDANCE). */

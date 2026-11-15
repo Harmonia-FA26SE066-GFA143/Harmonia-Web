@@ -11,6 +11,8 @@ const messages: Record<string, string> = {
   LITURGICAL_EVENT_CANCELLED: 'Chương trình đã bị hủy.',
   LITURGICAL_EVENT_NOT_PUBLISHED: 'Chương trình chưa được công bố.',
   LITURGICAL_EVENT_ALREADY_PASSED: 'Chương trình đã bắt đầu, không gửi yêu cầu được nữa.',
+  // 69c9d47: everyone still to answer was reminded within Participation.ReminderCooldownHours.
+  EVENT_PARTICIPATION_REMINDER_TOO_SOON: 'Các thành viên chưa phản hồi vừa được nhắc gần đây. Hãy nhắc lại sau.',
 }
 
 export function participationErrorMessage(error: Error, fallback: string): string {

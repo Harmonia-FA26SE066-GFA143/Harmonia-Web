@@ -45,6 +45,8 @@ export interface RosterAssignment {
   note?: string
   /** Suggested by the backend (FE-36) or added by the Choir Director (FE-38). */
   source: 'suggested' | 'manual'
+  /** The member's choir has a rehearsal at the time of the event (BE 69c9d47); the line stays, the Director is warned. */
+  hasRehearsalConflict?: boolean
 }
 
 /**

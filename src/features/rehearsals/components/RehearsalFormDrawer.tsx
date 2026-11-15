@@ -1,4 +1,4 @@
-import { App, Button, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
+import { App, Button, Checkbox, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
 import { useChoirs, useCurrentChoir } from '@/features/choirs'
@@ -33,6 +33,7 @@ interface SongOption {
 interface FormValues {
   choirId?: string
   eventId?: string
+  isJoint?: boolean
   date: Dayjs
   time: [Dayjs, Dayjs]
   locationId?: string
@@ -105,6 +106,40 @@ function SongsField() {
   )
 }
 
+/** The choir of a new session; a joint one has none (it gathers every choir serving the program). */
+function ChoirField({ activeChoirs, loading, noChoir }: Readonly<{ activeChoirs: { id: string; name: string }[]; loading: boolean; noChoir: boolean }>) {
+  const isJoint: boolean | undefined = Form.useWatch('isJoint')
+  if (isJoint) return null
+  return (
+    <Form.Item
+      label="Ca đoàn"
+      name="choirId"
+      rules={[{ required: true, message: 'Vui lòng chọn ca đoàn.' }]}
+      extra={
+        noChoir
+          ? 'Bạn chưa phụ trách ca đoàn nào đang hoạt động. Quản trị viên chọn ca trưởng cho ca đoàn.'
+          : 'Danh sách điểm danh và thông báo chỉ gồm ca viên của ca đoàn này.'
+      }
+    >
+      <Select placeholder="Chọn ca đoàn" loading={loading} options={activeChoirs.map((choir) => ({ value: choir.id, label: choir.name }))} />
+    </Form.Item>
+  )
+}
+
+/**
+ * A joint rehearsal of every choir serving the chosen program (BE 69c9d47): offered once a program is chosen; only the
+ * lead choir's director may plan it (CHOIR_NOT_LEAD otherwise).
+ */
+function JointField() {
+  const eventId: string | undefined = Form.useWatch('eventId')
+  if (!eventId) return null
+  return (
+    <Form.Item name="isJoint" valuePropName="checked" extra="Mọi ca đoàn phục vụ chương trình cùng tập; chỉ ca trưởng ca đoàn phụ trách lên lịch được.">
+      <Checkbox>Buổi tập chung các ca đoàn phục vụ chương trình</Checkbox>
+    </Form.Item>
+  )
+}
+
 /**
  * Create or edit a rehearsal (FE-26) as Harmonia-BE takes it: a new one belongs to one of the director's choirs (D8,
  * required, fixed afterwards); date and time required; program, worship location, songs and note (≤ 500) optional.
@@ -162,7 +197,8 @@ export function RehearsalFormDrawer({
           }}
           onFinish={(values) =>
             onSubmit({
-              choirId: rehearsal ? rehearsal.choirId : values.choirId,
+              choirId: rehearsal ? rehearsal.choirId : values.isJoint ? undefined : values.choirId,
+              isJoint: rehearsal ? rehearsal.isJoint : Boolean(values.isJoint && values.eventId),
               eventId: values.eventId,
               locationId: values.locationId,
               startAt: withTime(values.date, values.time[0]).toISOString(),
@@ -180,27 +216,16 @@ export function RehearsalFormDrawer({
         </Form>
       )}
     >
-      {!rehearsal && (
-        <Form.Item
-          label="Ca đoàn"
-          name="choirId"
-          rules={[{ required: true, message: 'Vui lòng chọn ca đoàn.' }]}
-          extra={
-            choirs.isSuccess && activeChoirs.length === 0
-              ? 'Bạn chưa phụ trách ca đoàn nào đang hoạt động. Quản trị viên chọn ca trưởng cho ca đoàn.'
-              : 'Danh sách điểm danh và thông báo chỉ gồm ca viên của ca đoàn này.'
-          }
-        >
-          <Select
-            placeholder="Chọn ca đoàn"
-            loading={choirs.isPending}
-            options={activeChoirs.map((choir) => ({ value: choir.id, label: choir.name }))}
-          />
-        </Form.Item>
-      )}
-      <Form.Item label="Chương trình phụng vụ (không bắt buộc)" name="eventId">
-        <Select allowClear showSearch optionFilterProp="label" placeholder="Chọn chương trình" options={programOptions} />
+      {!rehearsal && <ChoirField activeChoirs={activeChoirs} loading={choirs.isPending} noChoir={choirs.isSuccess && activeChoirs.length === 0} />}
+      <Form.Item
+        label={rehearsal?.isJoint ? 'Chương trình phụng vụ' : 'Chương trình phụng vụ (không bắt buộc)'}
+        name="eventId"
+        // BE 69c9d47: a joint rehearsal keeps its program (REHEARSAL_JOINT_EVENT_LOCKED).
+        extra={rehearsal?.isJoint ? 'Buổi tập chung gắn với chương trình này, không đổi được.' : undefined}
+      >
+        <Select allowClear={!rehearsal?.isJoint} disabled={rehearsal?.isJoint} showSearch optionFilterProp="label" placeholder="Chọn chương trình" options={programOptions} />
       </Form.Item>
+      {!rehearsal && <JointField />}
       <Flex wrap gap={spacing.md}>
         <Form.Item label="Ngày tập" name="date" rules={[{ required: true, message: 'Vui lòng chọn ngày tập.' }]} style={{ flex: '1 1 200px' }}>
           <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />

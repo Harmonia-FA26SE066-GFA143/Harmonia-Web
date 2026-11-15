@@ -153,7 +153,7 @@ describe('RehearsalsPage', () => {
 
   it('edits an upcoming session only, and saves it with its time and location', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(page(rehearsals))
-    const save = vi.spyOn(rehearsalsApi, 'saveRehearsal').mockResolvedValue()
+    const save = vi.spyOn(rehearsalsApi, 'saveRehearsal').mockResolvedValue([])
     renderRehearsals()
 
     await screen.findByText('Chuẩn bị phục vụ')

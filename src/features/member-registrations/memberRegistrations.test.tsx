@@ -94,13 +94,30 @@ describe('MemberRegistrationsPage', () => {
     expect(await screen.findByText(/Email này đã có tài khoản/)).toBeInTheDocument()
   })
 
-  it('deletes only after the confirmation', async () => {
+  it('turns a request down only with a reason, which is sent with it', async () => {
     vi.spyOn(api, 'listRegistrations').mockResolvedValue(page([row]))
     const remove = vi.spyOn(api, 'deleteRegistration').mockResolvedValue(undefined)
     renderPage(<MemberRegistrationsPage />, '/admin/member-registrations')
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Xoá yêu cầu của An Nguyễn' }))
-    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Xoá yêu cầu' }))
-    await waitFor(() => expect(remove.mock.calls[0][0]).toBe('r1'))
+    fireEvent.click(await screen.findByRole('button', { name: 'Từ chối yêu cầu của An Nguyễn' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Từ chối yêu cầu' }))
+    expect(await within(dialog).findByText('Vui lòng nhập lý do từ chối.')).toBeInTheDocument()
+    expect(remove).not.toHaveBeenCalled()
+
+    fireEvent.change(within(dialog).getByLabelText('Lý do từ chối'), { target: { value: 'Ca đoàn đã đủ người' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Từ chối yêu cầu' }))
+    await waitFor(() => expect(remove.mock.calls[0][0]).toEqual({ id: 'r1', reason: 'Ca đoàn đã đủ người' }))
+  })
+
+  it('names the possible duplicates of a request', async () => {
+    vi.spyOn(api, 'listRegistrations').mockResolvedValue(
+      page([{ ...row, possibleDuplicates: [{ kind: 'User', id: 'u1', fullName: 'An Nguyễn', email: 'an@x.vn', matchedOn: 'Phone' }] }]),
+    )
+    renderPage(<MemberRegistrationsPage />, '/admin/member-registrations')
+
+    expect(await screen.findByText('Có thể trùng 1 tài khoản hoặc yêu cầu')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Xem yêu cầu của An Nguyễn' }))
+    expect(await screen.findByText(/Tài khoản: An Nguyễn \(an@x\.vn\), trùng số điện thoại/)).toBeInTheDocument()
   })
 })

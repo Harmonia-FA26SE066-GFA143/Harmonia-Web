@@ -233,10 +233,13 @@ export function StaffingCard({
           <Flex vertical gap={spacing.xs} align="stretch">
             {linesOf(row.skillId).map((line) => {
               const label = line.note ? `${line.memberName} · ${line.note}` : line.memberName
+              // 69c9d47: the member's choir rehearses at this time. A warning in words, never a block.
+              const rehearsing = line.hasRehearsalConflict ? ' (trùng buổi tập)' : ''
               if (locked) {
                 return (
                   <Tag key={line.id} style={{ marginInlineEnd: 0 }}>
                     {label}
+                    {rehearsing}
                   </Tag>
                 )
               }
@@ -273,12 +276,13 @@ export function StaffingCard({
                         if (node) chips.current.set(key, node)
                         else chips.current.delete(key)
                       }}
-                      aria-label={`${label}, ${row.skillName}: thay, ghi chú hoặc gỡ`}
+                      aria-label={`${label}${rehearsing}, ${row.skillName}: thay, ghi chú hoặc gỡ`}
                       // No transition: antd's `transition: all` would keep it hidden in the frame where Escape focuses it.
                       style={{ gridArea: '1 / 1', visibility: inReplace ? 'hidden' : undefined, transition: 'none' }}
                     >
                       {label}
                       {line.source === 'suggested' && <Typography.Text style={muted}>· gợi ý</Typography.Text>}
+                      {line.hasRehearsalConflict && <Typography.Text style={muted}>· trùng buổi tập</Typography.Text>}
                       <DownOutlined aria-hidden />
                     </Button>
                   </Dropdown>

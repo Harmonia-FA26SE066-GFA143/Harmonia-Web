@@ -39,7 +39,15 @@ function useEventMutation<TVariables, TResult>(mutationFn: (variables: TVariable
   return useMutation({ mutationFn, onSuccess: () => queryClient.invalidateQueries({ queryKey: eventsKey }) })
 }
 
-export const useCreateEvent = () => useEventMutation((values: EventFormValues) => createEvent(values))
+/**
+ * Creates a draft, or a published event (BE 69c9d47), then for a published one invites the members of its serving
+ * choirs, like a publish from the detail page. A failed invitation leaves `invited` false.
+ */
+export const useCreateEvent = () =>
+  useEventMutation(async (values: EventFormValues) => {
+    const event = await createEvent(values)
+    return { event, invited: values.isPublished ? await inviteServingMembers(event.id) : true }
+  })
 
 export const useUpdateEvent = () =>
   useEventMutation(({ id, values }: { id: string; values: EventFormValues }) => updateEvent(id, values))

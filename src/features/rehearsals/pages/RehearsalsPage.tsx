@@ -106,8 +106,16 @@ export function RehearsalsPage() {
     save.mutate(
       { id: editing?.id, values },
       {
-        onSuccess: () => {
+        onSuccess: (conflicts) => {
           message.success(editing ? 'Đã lưu thay đổi buổi tập.' : 'Đã tạo buổi tập.')
+          // BE 69c9d47: members serving a program at that time are named; the session is saved anyway.
+          if (conflicts?.length) {
+            const names = [...new Set(conflicts.map((conflict) => conflict.fullName))]
+            message.warning({
+              duration: 8,
+              content: `${names.length} ca viên đang được phân công ở lễ trùng giờ: ${names.slice(0, 5).join(', ')}${names.length > 5 ? '…' : ''}.`,
+            })
+          }
           setEditing(undefined)
         },
         onError: (error) => message.error(rehearsalErrorMessage(error, 'Không thể lưu buổi tập. Vui lòng thử lại.')),

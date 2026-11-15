@@ -1,6 +1,6 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Avatar, Button, Card, Descriptions, Drawer, Flex, Input, Table, Typography, type TableColumnsType } from 'antd'
+import { Alert, App, Avatar, Button, Card, Descriptions, Drawer, Flex, Form, Input, Modal, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -9,7 +9,7 @@ import { parseUtc } from '@/lib/api/dates'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { genderLabel, nameInitial, personName } from '@/shared/utils/personName'
-import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { acceptRegistration, deleteRegistration, listRegistrations, type MemberRegistration } from '../api/memberRegistrationsApi'
 import { registrationsKey } from '../hooks/useWaitingRegistrations'
@@ -39,6 +39,8 @@ export function MemberRegistrationsPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [viewing, setViewing] = useState<MemberRegistration>()
+  const [rejecting, setRejecting] = useState<MemberRegistration>()
+  const [rejectForm] = Form.useForm<{ reason: string }>()
   const keyword = useDebouncedValue(search)
   const registrations = useQuery({
     queryKey: [...key, keyword, page],
@@ -78,23 +80,23 @@ export function MemberRegistrationsPage() {
           .catch((error: Error) => message.error(failure(error, 'Không thể chấp nhận yêu cầu. Vui lòng thử lại.'))),
     })
 
-  const handleDelete = (item: MemberRegistration) =>
-    modal.confirm({
-      title: `Xoá yêu cầu của ${item.fullName}?`,
-      content: 'Yêu cầu sẽ bị xoá và không khôi phục được. Không có tài khoản nào được tạo.',
-      okText: 'Xoá yêu cầu',
-      okButtonProps: { danger: true },
-      cancelText: 'Hủy',
-      autoFocusButton: 'cancel',
-      onOk: () =>
-        remove
-          .mutateAsync(item.id)
-          .then(() => {
-            message.success('Đã xoá yêu cầu.')
-            setViewing(undefined)
-          })
-          .catch((error: Error) => message.error(failure(error, 'Không thể xoá yêu cầu. Vui lòng thử lại.'))),
-    })
+  const handleDelete = (item: MemberRegistration) => {
+    rejectForm.resetFields()
+    setRejecting(item)
+  }
+
+  const submitReject = ({ reason }: { reason: string }) => {
+    if (!rejecting) return
+    const item = rejecting
+    remove
+      .mutateAsync({ id: item.id, reason })
+      .then(() => {
+        message.success(`Đã từ chối yêu cầu. Lý do được gửi tới ${item.email}.`)
+        setRejecting(undefined)
+        setViewing(undefined)
+      })
+      .catch((error: Error) => message.error(failure(error, 'Không thể từ chối yêu cầu. Vui lòng thử lại.')))
+  }
 
   const columns: TableColumnsType<MemberRegistration> = [
     {
@@ -105,9 +107,14 @@ export function MemberRegistrationsPage() {
           <Avatar aria-hidden style={{ flexShrink: 0, background: colors.softSurface, color: colors.textBody, fontWeight: 600 }}>
             {nameInitial(item.fullName)}
           </Avatar>
-          <Flex vertical>
+          <Flex vertical align="flex-start">
             <Typography.Text strong>{personName(item.fullName, item.saintName)}</Typography.Text>
             <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{item.email}</Typography.Text>
+            {item.possibleDuplicates?.length ? (
+              <StatusTag color="gold" style={{ marginTop: spacing.xs }}>
+                Có thể trùng {item.possibleDuplicates.length} {item.possibleDuplicates.some((d) => d.kind === 'User') ? 'tài khoản hoặc yêu cầu' : 'yêu cầu'}
+              </StatusTag>
+            ) : null}
           </Flex>
         </Flex>
       ),
@@ -123,7 +130,7 @@ export function MemberRegistrationsPage() {
         <Flex justify="flex-end" gap={spacing.xs}>
           <Button onClick={() => setViewing(item)} aria-label={`Xem yêu cầu của ${item.fullName}`}>Xem</Button>
           <Button type="primary" onClick={() => handleAccept(item)} aria-label={`Chấp nhận yêu cầu của ${item.fullName}`}>Chấp nhận</Button>
-          <Button type="text" danger onClick={() => handleDelete(item)} aria-label={`Xoá yêu cầu của ${item.fullName}`}>Xoá</Button>
+          <Button type="text" danger onClick={() => handleDelete(item)} aria-label={`Từ chối yêu cầu của ${item.fullName}`}>Từ chối</Button>
         </Flex>
       ),
     },
@@ -189,7 +196,7 @@ export function MemberRegistrationsPage() {
         footer={
           viewing && (
             <Flex justify="flex-end" gap={spacing.sm}>
-              <Button danger onClick={() => handleDelete(viewing)}>Xoá yêu cầu</Button>
+              <Button danger onClick={() => handleDelete(viewing)}>Từ chối</Button>
               <Button type="primary" onClick={() => handleAccept(viewing)}>Chấp nhận</Button>
             </Flex>
           )
@@ -210,7 +217,52 @@ export function MemberRegistrationsPage() {
             ]}
           />
         )}
+        {viewing?.possibleDuplicates?.length ? (
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginTop: spacing.lg }}
+            message="Có thể trùng người đã đăng ký"
+            description={
+              <ul style={{ margin: 0, paddingInlineStart: spacing.lg }}>
+                {viewing.possibleDuplicates.map((d) => (
+                  <li key={`${d.kind}-${d.id}`}>
+                    {d.kind === 'User' ? 'Tài khoản' : 'Yêu cầu khác'}: {d.fullName} ({d.email}), trùng {d.matchedOn === 'Phone' ? 'số điện thoại' : 'họ tên và tên thánh'}
+                  </li>
+                ))}
+              </ul>
+            }
+          />
+        ) : null}
       </Drawer>
+
+      <Modal
+        open={Boolean(rejecting)}
+        title={rejecting ? `Từ chối yêu cầu của ${rejecting.fullName}?` : 'Từ chối yêu cầu'}
+        okText="Từ chối yêu cầu"
+        okButtonProps={{ danger: true, loading: remove.isPending }}
+        cancelText="Hủy"
+        onOk={() => rejectForm.submit()}
+        onCancel={() => setRejecting(undefined)}
+        destroyOnHidden
+      >
+        <Typography.Paragraph style={{ color: colors.textMuted }}>
+          Yêu cầu sẽ rời danh sách và không tạo tài khoản nào. Lý do được gửi qua email tới {rejecting?.email}.
+        </Typography.Paragraph>
+        <Form form={rejectForm} layout="vertical" onFinish={submitReject}>
+          <Form.Item
+            name="reason"
+            label="Lý do từ chối"
+            rules={[
+              { required: true, whitespace: true, message: 'Vui lòng nhập lý do từ chối.' },
+              { max: 500, message: 'Vui lòng nhập tối đa 500 ký tự.' },
+            ]}
+            style={{ marginBottom: 0 }}
+          >
+            <Input.TextArea rows={3} showCount maxLength={500} />
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   )
 }
