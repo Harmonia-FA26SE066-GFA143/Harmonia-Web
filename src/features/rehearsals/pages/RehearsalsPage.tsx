@@ -106,8 +106,16 @@ export function RehearsalsPage() {
     save.mutate(
       { id: editing?.id, values },
       {
-        onSuccess: () => {
+        onSuccess: (conflicts) => {
           message.success(editing ? 'Đã lưu thay đổi buổi tập.' : 'Đã tạo buổi tập.')
+          // BE 69c9d47: members serving a program at that time are named; the session is saved anyway.
+          if (conflicts?.length) {
+            const names = [...new Set(conflicts.map((conflict) => conflict.fullName))]
+            message.warning({
+              duration: 8,
+              content: `${names.length} ca viên đang được phân công ở lễ trùng giờ: ${names.slice(0, 5).join(', ')}${names.length > 5 ? '…' : ''}.`,
+            })
+          }
           setEditing(undefined)
         },
         onError: (error) => message.error(rehearsalErrorMessage(error, 'Không thể lưu buổi tập. Vui lòng thử lại.')),
@@ -141,6 +149,36 @@ export function RehearsalsPage() {
   const thursday = dayjs(weekStart).add(3, 'day')
   const weekNumber = Math.ceil((thursday.diff(thursday.startOf('year'), 'day') + 1) / 7)
   const weekLabel = `Tuần ${weekNumber} · ${dayjs(weekStart).format('DD/MM')} – ${weekEnd.format('DD/MM/YYYY')}`
+
+  /** The list view's body: loading, error, empty, no match, or the table. */
+  const listBody = () => {
+    if (rehearsals.isPending) return <SectionSkeleton rows={6} label="Đang tải lịch tập" />
+    if (rehearsals.isError) {
+      return <ErrorState title="Không thể tải lịch tập" error={rehearsals.error} hasData={rehearsals.data !== undefined} onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
+    }
+    if (total === 0) {
+      return (
+        <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+          {filtered ? (
+            <NoFilterResults onClearFilters={() => changeFilters({})} />
+          ) : (
+            <EmptyState title="Chưa có buổi tập nào" description="Lên lịch buổi tập để ca đoàn chuẩn bị cho các lễ sắp tới." action={createButton} />
+          )}
+        </div>
+      )
+    }
+    return (
+      <RehearsalTable
+        rehearsals={rehearsals.data.items}
+        programs={programMap}
+        loading={rehearsals.isPlaceholderData}
+        pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
+        onTakeAttendance={takeAttendance}
+        onEdit={setEditing}
+        onDelete={handleDelete}
+      />
+    )
+  }
 
   return (
     <>
@@ -277,23 +315,7 @@ export function RehearsalsPage() {
               )
             ) : null
           ) : (
-            <Card styles={{ body: { padding: 0 } }}>{rehearsals.isPending ? <SectionSkeleton rows={6} label="Đang tải lịch tập" /> : rehearsals.isError ? (
-              <ErrorState title="Không thể tải lịch tập" error={rehearsals.error} hasData={rehearsals.data !== undefined} onRetry={() => rehearsals.refetch()} retrying={rehearsals.isFetching} />
-            ) : total === 0 && !filtered ? (
-              <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><EmptyState title="Chưa có buổi tập nào" description="Lên lịch buổi tập để ca đoàn chuẩn bị cho các lễ sắp tới." action={createButton} /></div>
-            ) : total === 0 ? (
-              <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><NoFilterResults onClearFilters={() => changeFilters({})} /></div>
-            ) : (
-              <RehearsalTable
-                rehearsals={rehearsals.data.items}
-                programs={programMap}
-                loading={rehearsals.isPlaceholderData}
-                pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
-                onTakeAttendance={takeAttendance}
-                onEdit={setEditing}
-                onDelete={handleDelete}
-              />
-            )}</Card>
+            <Card styles={{ body: { padding: 0 } }}>{listBody()}</Card>
           )}
       </Flex>
       <RehearsalFormDrawer

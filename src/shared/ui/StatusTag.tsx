@@ -38,8 +38,8 @@ export function StatusTag({ color = 'default', mark, style, className, children,
   } as const
   const [toneText, toneBackground, toneBorder] = tones[color === 'processing' ? 'blue' : color]
   // Draft: a dashed control edge and no fill. Cancelled: struck through, muted, on the soft surface.
-  const text = mark === 'struck' ? colors.textMuted : mark === 'draft' ? colors.textBody : toneText
-  const background = mark === 'draft' ? 'transparent' : mark === 'struck' ? colors.softSurface : toneBackground
+  const marked = { draft: [colors.textBody, 'transparent'], struck: [colors.textMuted, colors.softSurface] } as const
+  const [text, background] = mark ? marked[mark] : [toneText, toneBackground]
   const border = mark ? colors.controlBorder : toneBorder
 
   return (

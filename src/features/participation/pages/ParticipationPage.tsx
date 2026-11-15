@@ -1,4 +1,4 @@
-import { CheckOutlined, ReloadOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
+import { BellOutlined, CheckOutlined, ReloadOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { Alert, App, Avatar, Button, Card, Flex, Input, Popconfirm, Segmented, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
@@ -13,13 +13,21 @@ import { colors, spacing, typography } from '@/styles/tokens'
 import { ProgramPicker, ResponseSummary } from '../components/ResponseSummary'
 import { ResponsesByPart } from '../components/ResponsesByPart'
 import { SendRequestDrawer } from '../components/SendRequestDrawer'
-import { useConfirmAllParticipation, useParticipation, useSendParticipationRequests } from '../hooks/useParticipation'
+import { useConfirmAllParticipation, useParticipation, useRemindParticipation, useSendParticipationRequests } from '../hooks/useParticipation'
 import { participationErrorMessage } from '../participationErrors'
 import { participationResponseLabels, type ParticipationRequest, type ParticipationResponse } from '../types'
 
 type ResponseFilter = 'all' | ParticipationResponse | 'none' | 'note'
 
 const responseColors: Record<ParticipationResponse, StatusTagColor> = { confirmed: 'green', unsure: 'gold', declined: 'red' }
+
+/** Whether a request shows under the chosen filter tab. */
+function inFilter(request: ParticipationRequest, filter: ResponseFilter) {
+  if (filter === 'all') return true
+  if (filter === 'none') return !request.response
+  if (filter === 'note') return Boolean(request.note)
+  return request.response === filter
+}
 
 /** The member's voice parts in words, from their approved skills. */
 const partsOf = (skills: readonly string[]) => voiceParts.filter(({ pattern }) => inVoicePart(skills, pattern)).map(({ label }) => label).join(', ')
@@ -96,6 +104,7 @@ export function ParticipationPage() {
   const participation = useParticipation(program?.id)
   const send = useSendParticipationRequests(program?.id ?? '')
   const confirmAll = useConfirmAllParticipation(program?.id ?? '')
+  const remind = useRemindParticipation(program?.id ?? '')
   const [picking, setPicking] = useState(false)
   const [filter, setFilter] = useState<ResponseFilter>('all')
   const [search, setSearch] = useState('')
@@ -118,10 +127,7 @@ export function ParticipationPage() {
   // The first send; later sends only reach members not asked yet.
   const firstRequest = requests.reduce<string | undefined>((first, request) => (!first || request.requestedAt < first ? request.requestedAt : first), undefined)
   const invitedOn = firstRequest ? dayjs(firstRequest).format('DD/MM') : undefined
-  const visible = searched.filter(
-    (request) =>
-      filter === 'all' || (filter === 'none' ? !request.response : filter === 'note' ? Boolean(request.note) : request.response === filter),
-  )
+  const visible = searched.filter((request) => inFilter(request, filter))
 
   const handleSend = (memberIds?: string[]) =>
     send.mutate(memberIds, {
@@ -130,6 +136,17 @@ export function ParticipationPage() {
         setPicking(false)
       },
       onError: (error) => message.error(participationErrorMessage(error, 'Không thể gửi yêu cầu. Vui lòng thử lại.')),
+    })
+
+  const handleRemind = () =>
+    remind.mutate(undefined, {
+      onSuccess: ({ remindedCount, pendingCount }) =>
+        message.success(
+          remindedCount === pendingCount
+            ? `Đã nhắc ${remindedCount} thành viên chưa phản hồi.`
+            : `Đã nhắc ${remindedCount} trong ${pendingCount} thành viên chưa phản hồi; những người còn lại vừa được nhắc gần đây.`,
+        ),
+      onError: (error) => message.error(participationErrorMessage(error, 'Không thể gửi lời nhắc. Vui lòng thử lại.')),
     })
 
   const handleConfirmAll = () =>
@@ -245,6 +262,11 @@ export function ParticipationPage() {
                       <Button icon={<SendOutlined />} onClick={() => setPicking(true)} disabled={isPast || send.isPending}>
                         Gửi thêm cho thành viên chưa được mời
                       </Button>
+                      {counts.none > 0 && !isPast && (
+                        <Button icon={<BellOutlined />} onClick={handleRemind} loading={remind.isPending}>
+                          Nhắc người chưa phản hồi
+                        </Button>
+                      )}
                       {counts.none > 0 && (
                         <Popconfirm
                           title={`Xác nhận hộ ${counts.none} thành viên chưa phản hồi?`}

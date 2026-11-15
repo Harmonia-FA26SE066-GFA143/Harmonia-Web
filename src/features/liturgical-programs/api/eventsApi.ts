@@ -67,6 +67,7 @@ const toBody = (values: EventFormValues) =>
     // `/choirs`.
     choirIds: values.choirIds,
     leadChoirId: values.leadChoirId,
+    isPublished: values.isPublished,
   })
 
 /** Ordered by date then time on the server. */

@@ -120,6 +120,8 @@ export interface EventFormValues {
   /** Create only: the serving choirs (at least one) and the lead one among them (BE 678fc34). */
   choirIds?: string[]
   leadChoirId?: string
+  /** Create only (BE 69c9d47, `CreateLiturgicalEventRequest.IsPublished`): publish at once instead of saving a draft. */
+  isPublished?: boolean
 }
 
 /** Query filters of GET /api/liturgical-events; they combine with AND on the server. */

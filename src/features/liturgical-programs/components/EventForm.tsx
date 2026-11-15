@@ -1,6 +1,6 @@
 import { Button, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { choirOptionLabel, useChoirs } from '@/features/choirs'
 import { useCatalogOptions } from '@/features/system-categories'
 import { spacing } from '@/styles/tokens'
@@ -28,6 +28,8 @@ export interface EventFormProps {
   initialDate?: string
   saving?: boolean
   submitText: string
+  /** Create only: a second button that saves and publishes at once (BE 69c9d47). */
+  publishText?: string
   onSubmit: (values: EventFormValues) => void
   onCancel: () => void
   /** Called on the first edit, so the page can warn before leaving with unsaved input. */
@@ -54,8 +56,10 @@ const emptyCatalog = 'Chưa có mục nào. Quản trị viên thêm ở Danh m�
  * required, and a Mass type or a ceremony type. Shared by the create page and the edit dialog. Creating also needs
  * the serving choirs and the lead one (BE 678fc34); once created, they change on the event's choir card.
  */
-export function EventForm({ event, initialDate, saving = false, submitText, onSubmit, onCancel, onDirty }: Readonly<EventFormProps>) {
+export function EventForm({ event, initialDate, saving = false, submitText, publishText, onSubmit, onCancel, onDirty }: Readonly<EventFormProps>) {
   const [form] = Form.useForm<FormFields>()
+  // Which button submitted: the plain save or "save and publish". Read once validation passes.
+  const publishing = useRef(false)
   const chosenChoirIds = Form.useWatch('choirIds', form) ?? []
   const choirs = useChoirs(!event)
   const choirOptions = (choirs.data ?? []).filter((choir) => choir.isActive).map((choir) => ({ value: choir.id, label: choirOptionLabel(choir) }))
@@ -77,7 +81,7 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
       massTypeId: values.massTypeId,
       ceremonyTypeId: values.ceremonyTypeId,
       specialRequirements: values.specialRequirements?.trim() || undefined,
-      ...(event ? {} : { choirIds: values.choirIds, leadChoirId: values.leadChoirId }),
+      ...(event ? {} : { choirIds: values.choirIds, leadChoirId: values.leadChoirId, isPublished: publishing.current }),
     })
   }
 
@@ -216,9 +220,20 @@ export function EventForm({ event, initialDate, saving = false, submitText, onSu
       </Form.Item>
       <Flex justify="flex-end" gap={spacing.sm}>
         <Button onClick={onCancel}>Hủy</Button>
-        <Button type="primary" htmlType="submit" loading={saving}>
-          {submitText}
-        </Button>
+        {publishText && !event ? (
+          <>
+            <Button htmlType="submit" loading={saving} onClick={() => (publishing.current = false)}>
+              {submitText}
+            </Button>
+            <Button type="primary" htmlType="submit" loading={saving} onClick={() => (publishing.current = true)}>
+              {publishText}
+            </Button>
+          </>
+        ) : (
+          <Button type="primary" htmlType="submit" loading={saving}>
+            {submitText}
+          </Button>
+        )}
       </Flex>
     </Form>
   )

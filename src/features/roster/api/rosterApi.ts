@@ -37,6 +37,8 @@ export interface RosterAssignmentDto {
   songTitle: string | null
   note: string | null
   source: 'Suggested' | 'Manual'
+  /** 69c9d47: the member's choir rehearses at the time of this event (`RosterAssignmentDto.cs:26`). A warning only. */
+  hasRehearsalConflict?: boolean
 }
 
 export interface ServiceRosterDto {
@@ -66,6 +68,7 @@ const toAssignment = (dto: RosterAssignmentDto): RosterAssignment => ({
   songListItemId: dto.songListItemId,
   note: dto.note ?? undefined,
   source: dto.source === 'Suggested' ? 'suggested' : 'manual',
+  hasRehearsalConflict: dto.hasRehearsalConflict ?? false,
 })
 
 const toRoster = (

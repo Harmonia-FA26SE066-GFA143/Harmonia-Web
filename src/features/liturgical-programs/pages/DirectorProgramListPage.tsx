@@ -18,8 +18,10 @@ const pageSize = 20
 type When = 'all' | 'upcoming' | 'past'
 
 /** "Sắp tới / Đã qua" (artifact ProgramsPage) as the date range GET /api/liturgical-events filters on. */
-const whenOf = (filters: EventFilters, today: string, yesterday: string): When =>
-  filters.fromDate === today && !filters.toDate ? 'upcoming' : !filters.fromDate && filters.toDate === yesterday ? 'past' : 'all'
+const whenOf = (filters: EventFilters, today: string, yesterday: string): When => {
+  if (filters.fromDate === today && !filters.toDate) return 'upcoming'
+  return !filters.fromDate && filters.toDate === yesterday ? 'past' : 'all'
+}
 
 /**
  * Choir Director: liturgical programs to prepare song lists for (FE-30), on `GET /api/liturgical-events`, which

@@ -33,12 +33,13 @@ export function CreateProgramPage() {
 
   const handleSubmit = (values: EventFormValues) =>
     create.mutate(values, {
-      onSuccess: (event) => {
+      onSuccess: ({ event, invited }) => {
         // Left empty, the season is filled by the backend with the one covering the date (BE d1ca63e).
         const filled = !values.seasonId && event.seasonId && seasons.find((season) => season.value === event.seasonId)
-        message.success(
-          filled ? `Đã tạo bản nháp sự kiện, mùa phụng vụ được điền là ${filled.label}.` : 'Đã tạo bản nháp sự kiện.',
-        )
+        const created = values.isPublished ? 'Đã tạo và công bố sự kiện' : 'Đã tạo bản nháp sự kiện'
+        message.success(filled ? `${created}, mùa phụng vụ được điền là ${filled.label}.` : `${created}.`)
+        // Published at once: the members were invited like a publish from the detail page, which offers to resend.
+        if (!invited) message.warning('Chưa gửi được lời mời cho ca viên. Mở chương trình để gửi lại.')
         saved.current = true
         navigate(generatePath(paths.priest.programDetail, { programId: event.id }))
       },
@@ -51,7 +52,7 @@ export function CreateProgramPage() {
       <PageHeader
         title="Tạo chương trình"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }, { title: 'Tạo chương trình' }]}
-        description="Lưu dưới dạng bản nháp; công bố ở trang chi tiết."
+        description="Lưu bản nháp để công bố sau, hoặc tạo và công bố ngay."
       />
       {/* A long form on its own page with a short summary on the right third (artifact PriestCreateProgram). */}
       <div className="hm-split priest-create">
@@ -60,6 +61,7 @@ export function CreateProgramPage() {
             initialDate={initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) ? initialDate : undefined}
             saving={create.isPending}
             submitText="Lưu bản nháp"
+            publishText="Tạo và công bố"
             onSubmit={handleSubmit}
             onCancel={() => navigate(paths.priest.programs)}
             onDirty={() => setDirty(true)}

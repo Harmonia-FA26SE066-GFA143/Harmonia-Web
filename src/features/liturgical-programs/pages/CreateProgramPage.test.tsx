@@ -121,6 +121,7 @@ describe('CreateProgramPage', () => {
         specialRequirements: undefined,
         choirIds: ['choir-1'],
         leadChoirId: 'choir-1',
+        isPublished: false,
       }),
     )
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/new-1')
