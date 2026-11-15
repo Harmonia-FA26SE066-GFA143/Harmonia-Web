@@ -1,5 +1,6 @@
-import { Card, Flex, Typography } from 'antd'
-import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
+import { Flex, Typography } from 'antd'
+import type { CSSProperties } from 'react'
+import { ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, sections, spacing, typography } from '@/styles/tokens'
 import { useReport } from '../hooks/useReports'
 import type { ReportFilters } from '../types'
@@ -31,8 +32,9 @@ export function ServiceLede({ filters, scope }: Readonly<{ filters: ReportFilter
   const most = Math.max(1, ...top.map((song) => song.times))
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.6fr)', gap: spacing.md, marginBottom: spacing.lg }}>
-      <Card styles={{ body: { padding: spacing.lg } }}>
+    <div className="priest-lede">
+      <section className="hm-sheet-section priest-queue hm-paper" aria-label="Tổng quan phục vụ">
+        <div className="priest-sheet__body" style={{ paddingTop: spacing.lg }}>
         <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{scope}</Typography.Text>
         <div style={{ fontFamily: typography.displayFontFamily, fontWeight: 600, fontSize: 64, lineHeight: 1, color: colors.textPrimary, fontVariantNumeric: 'lining-nums', marginTop: spacing.xs }}>
           {services.data.totalCount}
@@ -52,26 +54,34 @@ export function ServiceLede({ filters, scope }: Readonly<{ filters: ReportFilter
             <b>{songs.data.totalCount} bài hát</b> khác nhau đã được hát.
           </Typography.Text>
         </Flex>
-      </Card>
-      <Card title={<CardTitle>Bài hát được hát nhiều nhất</CardTitle>}>
+        </div>
+      </section>
+      <section className="hm-sheet-section" aria-labelledby="top-songs-heading">
+        <header className="hm-sheet-section__head">
+          <h2 id="top-songs-heading" className="hm-rubric">
+            Bài hát được hát nhiều nhất
+          </h2>
+        </header>
+        <div className="priest-sheet__body">
         {top.length === 0 ? (
           <Typography.Text style={{ color: colors.textMuted }}>Chưa có bài hát nào được dùng trong khoảng này.</Typography.Text>
         ) : (
           <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: spacing.sm }}>
-            {top.map((song) => (
+            {top.map((song, index) => (
               <li key={song.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 220px) minmax(0, 1fr) 48px', gap: spacing.md, alignItems: 'center' }}>
                 <Typography.Text ellipsis={{ tooltip: song.composer ? `${song.title} · ${song.composer}` : song.title }} style={{ color: colors.textPrimary, fontWeight: 500 }}>
                   {song.title}
                 </Typography.Text>
                 <span aria-hidden style={{ height: 10, borderRadius: 5, background: colors.softSurface, overflow: 'hidden' }}>
-                  <span style={{ display: 'block', height: '100%', width: `${(song.times / most) * 100}%`, background: sections.liturgy.cloth, borderRadius: 5 }} />
+                  <span className="mg-fill" style={{ display: 'block', height: '100%', width: `${(song.times / most) * 100}%`, background: sections.liturgy.cloth, borderRadius: 5, '--i': index } as CSSProperties} />
                 </span>
                 <Typography.Text style={{ textAlign: 'end', color: colors.textMuted, fontVariantNumeric: 'tabular-nums' }}>{song.times} lần</Typography.Text>
               </li>
             ))}
           </ol>
         )}
-      </Card>
+        </div>
+      </section>
     </div>
   )
 }

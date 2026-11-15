@@ -8,6 +8,7 @@ import { EmptyState, EmptyWeek, ErrorState, NoFilterResults, PageHeader, Section
 import { spacing } from '@/styles/tokens'
 import { EventFilterBar } from '../components/EventFilterBar'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
+import { EventPreview } from '../components/EventPreview'
 import { EventTable } from '../components/EventTable'
 import { eventErrorMessage } from '../eventErrors'
 import { useEventNames } from '../hooks/useEventNames'
@@ -71,6 +72,19 @@ export function PriestProgramListPage() {
   const changeFilters = (next: EventFilters) => setSearchParams(writeEventListState(next, 1), { replace: true })
   const setPage = (next: number) => setSearchParams(writeEventListState(filters, next), { replace: true })
   const resetFilters = () => changeFilters({})
+  // The previewed event is kept in the URL beside the filters; the first row until one is picked (as for Ca trưởng).
+  const items = events.data?.items ?? []
+  const picked = items.find((event) => event.id === searchParams.get('program')) ?? items[0]
+  const pick = (id: string) =>
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        next.set('program', id)
+        return next
+      },
+      { replace: true },
+    )
+  const openEvent = (id: string) => navigate(generatePath(paths.priest.programDetail, { programId: id }))
 
   const createButton = (
     <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
@@ -102,6 +116,7 @@ export function PriestProgramListPage() {
         />
       )}
       {events.data !== undefined && (total > 0 || filtered) && (
+        <div className="hm-split">
         <Card styles={{ body: { padding: 0 } }}>
           <EventFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
           {total === 0 ? (
@@ -122,11 +137,21 @@ export function PriestProgramListPage() {
                 events={events.data.items}
                 loading={events.isPlaceholderData}
                 pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
-                onOpen={(event) => navigate(generatePath(paths.priest.programDetail, { programId: event.id }))}
+                onOpen={(event) => openEvent(event.id)}
+                pickedId={picked?.id}
+                onPick={(event) => pick(event.id)}
               />
             </>
           )}
         </Card>
+        {picked && (
+          <EventPreview
+            event={picked}
+            onOpen={() => openEvent(picked.id)}
+            onReview={() => navigate(generatePath(paths.priest.songListReview, { programId: picked.id }))}
+          />
+        )}
+        </div>
       )}
     </>
   )

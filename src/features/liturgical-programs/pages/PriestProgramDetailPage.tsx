@@ -1,12 +1,12 @@
 import { ArrowLeftOutlined, EditOutlined, FileSearchOutlined, StopOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Card, ConfigProvider, Drawer, Flex, Typography } from 'antd'
+import { Alert, App, Button, ConfigProvider, Drawer, Flex, Typography } from 'antd'
 import { useState } from 'react'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
 import { EventChoirsCard } from '@/features/choirs'
-import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
-import { cardSurface, colors, spacing } from '@/styles/tokens'
+import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
+import { colors, spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { PreparationStatusCard } from '../components/PreparationStatusCard'
@@ -37,13 +37,20 @@ function PriestSteps({ event }: Readonly<{ event: LiturgicalEvent }>) {
     viewer: 'priest',
   })
   return (
-    <Card style={cardSurface} title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>
-      {status.isPending && <SectionSkeleton rows={2} label="Đang tải tình hình chuẩn bị" />}
-      {status.isError && (
-        <ErrorState headingLevel={3} title="Không thể tải tiến trình chuẩn bị" error={status.error} hasData={false} onRetry={() => status.refetch()} retrying={status.isFetching} />
-      )}
-      {status.isSuccess && <PreparationOverview items={items} />}
-    </Card>
+    <section className="hm-sheet-section priest-queue hm-paper" aria-labelledby="prep-heading">
+      <header className="hm-sheet-section__head">
+        <h2 id="prep-heading" className="hm-rubric">
+          Tình hình chuẩn bị
+        </h2>
+      </header>
+      <div className="priest-sheet__body">
+        {status.isPending && <SectionSkeleton rows={2} label="Đang tải tình hình chuẩn bị" />}
+        {status.isError && (
+          <ErrorState headingLevel={3} title="Không thể tải tiến trình chuẩn bị" error={status.error} hasData={false} onRetry={() => status.refetch()} retrying={status.isFetching} />
+        )}
+        {status.isSuccess && <PreparationOverview items={items} />}
+      </div>
+    </section>
   )
 }
 
@@ -57,21 +64,21 @@ function PriestProgramSongs({ eventId }: Readonly<{ eventId: string }>) {
   const reviewPath = generatePath(paths.priest.songListReview, { programId: eventId })
   return (
     <ConfigProvider theme={readingTheme}>
-      <Card
-        style={{ border: cardSurface.border, boxShadow: 'none' }}
-        title={
+      <section className="hm-sheet-section priest-reading" aria-labelledby="songs-heading">
+        <header className="hm-sheet-section__head">
           <Flex align="center" gap={spacing.sm} wrap>
-            <CardTitle>Chương trình</CardTitle> {program.data && <SongListStatusTag status={program.data.songListStatus} />}
+            <h2 id="songs-heading" className="hm-rubric">
+              Chương trình
+            </h2>
+            {program.data && <SongListStatusTag status={program.data.songListStatus} />}
           </Flex>
-        }
-        extra={
-          songs.length > 0 && (
-            <Link to={reviewPath} style={{ fontWeight: 500 }}>
+          {songs.length > 0 && (
+            <Link to={reviewPath} className="hm-sheet-section__link">
               {program.data?.songListStatus === 'submitted' ? 'Duyệt danh sách bài hát' : 'Xem tài liệu và lịch sử duyệt'}
             </Link>
-          )
-        }
-      >
+          )}
+        </header>
+        <div className="priest-sheet__body">
         {program.isPending && <SectionSkeleton rows={3} label="Đang tải danh sách bài hát" />}
         {program.isError && (
           <ErrorState headingLevel={3} title="Không thể tải danh sách bài hát" error={program.error} hasData={false} onRetry={() => program.refetch()} retrying={program.isFetching} />
@@ -82,7 +89,8 @@ function PriestProgramSongs({ eventId }: Readonly<{ eventId: string }>) {
         {songs.length > 0 && (
           <ProgramItemList items={songs.map(({ id, songId, liturgicalPart, title, note }) => ({ id, songId, slotName: liturgicalPart, title, note }))} />
         )}
-      </Card>
+        </div>
+      </section>
     </ConfigProvider>
   )
 }
@@ -276,10 +284,21 @@ export function PriestProgramDetailPage() {
             description="Sự kiện cần có mùa phụng vụ trước khi công bố. Bấm “Sửa” để chọn mùa."
           />
         )}
-        {data.status === 'published' && <PriestSteps event={data} />}
-        {data.status === 'published' && <PriestProgramSongs eventId={data.id} />}
-        <EventChoirsCard eventId={data.id} canEdit locked={cancelled || !upcoming} published={data.status === 'published'} />
-        {data.status === 'published' && <PreparationStatusCard eventId={data.id} />}
+        {/* Preparation starts once the event is published; a draft or a cancelled event shows only its choirs. */}
+        {data.status === 'published' ? (
+          <div className="dash-grid">
+            <div className="dash-main">
+              <PriestProgramSongs eventId={data.id} />
+              <EventChoirsCard eventId={data.id} canEdit locked={cancelled || !upcoming} published />
+            </div>
+            <aside className="dash-aside dash-main" aria-label="Tình hình chuẩn bị">
+              <PriestSteps event={data} />
+              <PreparationStatusCard eventId={data.id} />
+            </aside>
+          </div>
+        ) : (
+          <EventChoirsCard eventId={data.id} canEdit locked={cancelled || !upcoming} published={false} />
+        )}
       </Flex>
       {/* The form has its own Save and Cancel; while saving the drawer cannot be closed. */}
       <Drawer

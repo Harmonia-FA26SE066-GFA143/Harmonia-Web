@@ -1,10 +1,9 @@
-import { App, Card, Modal } from 'antd'
+import { App, Modal } from 'antd'
 import { useRef, useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useCatalogOptions } from '@/features/system-categories'
 import { PageHeader } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
 import { eventErrorMessage } from '../eventErrors'
 import { useCreateEvent } from '../hooks/useEvents'
@@ -54,16 +53,30 @@ export function CreateProgramPage() {
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }, { title: 'Tạo chương trình' }]}
         description="Lưu dưới dạng bản nháp; công bố ở trang chi tiết."
       />
-      <Card style={{ maxWidth: 720 + spacing.lg * 2 }}>
-        <EventForm
-          initialDate={initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) ? initialDate : undefined}
-          saving={create.isPending}
-          submitText="Lưu bản nháp"
-          onSubmit={handleSubmit}
-          onCancel={() => navigate(paths.priest.programs)}
-          onDirty={() => setDirty(true)}
-        />
-      </Card>
+      {/* A long form on its own page with a short summary on the right third (artifact PriestCreateProgram). */}
+      <div className="hm-split">
+        <section className="hm-sheet-section priest-form" aria-label="Thông tin sự kiện">
+          <EventForm
+            initialDate={initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) ? initialDate : undefined}
+            saving={create.isPending}
+            submitText="Lưu bản nháp"
+            onSubmit={handleSubmit}
+            onCancel={() => navigate(paths.priest.programs)}
+            onDirty={() => setDirty(true)}
+          />
+        </section>
+        {/* What the backend does with the event (LiturgicalEventService); nothing here is decided by the page. */}
+        <aside className="hm-preview hm-paper" aria-labelledby="after-save-heading">
+          <p id="after-save-heading" className="hm-rubric">
+            Sau khi lưu
+          </p>
+          <ul className="priest-day-events priest-facts">
+            <li>Sự kiện được lưu là bản nháp; Ca trưởng chưa thấy.</li>
+            <li>Công bố cần có mùa phụng vụ. Để trống, mùa của ngày cử hành được điền sẵn.</li>
+            <li>Khi công bố, Ca trưởng nhận thông báo và ca viên của các ca đoàn phục vụ được mời xác nhận tham gia.</li>
+          </ul>
+        </aside>
+      </div>
       <Modal
         open={blocker.state === 'blocked'}
         title="Rời khỏi trang tạo chương trình?"

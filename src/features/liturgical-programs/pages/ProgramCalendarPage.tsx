@@ -1,11 +1,11 @@
 import { EditOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
-import { Alert, Badge, Button, Calendar, Card, Col, Flex, Grid, Radio, Row, Select, Spin, Tag, Typography } from 'antd'
+import { Alert, Badge, Button, Calendar, Flex, Grid, Radio, Segmented, Select, Spin, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useId, useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { CardTitle, ErrorState, PageHeader, SeasonChip, SectionSkeleton, visuallyHidden } from '@/shared/ui'
-import { cardSurface, colors, priestEvent, radius, spacing, typography } from '@/styles/tokens'
+import { ErrorState, PageHeader, SeasonChip, SectionSkeleton, visuallyHidden } from '@/shared/ui'
+import { colors, gold, priestEvent, radius, spacing, typography } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
 import { LiturgicalDayInfo, SyncCalendarButton } from '../components/LiturgicalDayInfo'
@@ -160,28 +160,23 @@ export function ProgramCalendarPage() {
       )}
       {events.data !== undefined && (
         <Flex vertical gap={spacing.md}>
-          <Flex wrap align="center" justify="space-between" gap={spacing.md}>
-            <Typography.Title level={2} style={{ margin: 0 }}>
+          <Flex wrap align="center" gap={spacing.md}>
+            <Typography.Title level={2} className="priest-calendar__month">
               {selected.format('[Tháng] M, YYYY')}
             </Typography.Title>
-            <Flex component="ul" aria-label="Lọc theo trạng thái" wrap gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {statusFilters.map((status) => (
-                <li key={status}>
-                  <Tag.CheckableTag
-                    checked={statusFilter === status}
-                    onChange={() => setStatusFilter(status)}
-                    style={{ border: `1px solid ${statusFilter === status ? colors.primary : colors.mutedBorder}`, padding: '2px 10px', fontSize: 13, marginInlineEnd: 0 }}
-                  >
-                    {status === 'all' ? 'Tất cả' : eventStatusLabels[status]} ({countOf(status)})
-                  </Tag.CheckableTag>
-                </li>
-              ))}
-            </Flex>
+            <Segmented<EventStatus | 'all'>
+              aria-label="Lọc theo trạng thái"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={statusFilters.map((status) => ({
+                value: status,
+                label: `${status === 'all' ? 'Tất cả' : eventStatusLabels[status]} (${countOf(status)})`,
+              }))}
+            />
           </Flex>
-          {/* From xl the day panel sits beside the calendar, so picking a day shows its events without scrolling. */}
-          <Row gutter={[spacing.md, spacing.md]}>
-            <Col xs={24} xl={18}>
-              <Card style={cardSurface} styles={{ body: { padding: screens.md ? spacing.md : spacing.sm } }}>
+          {/* The day panel sits beside the calendar, so picking a day shows its events without scrolling. */}
+          <div className="hm-split">
+            <section className="hm-sheet-section priest-calendar__grid" aria-label="Lịch tháng">
               {/* The previous month stays on screen while the next one loads (keepPreviousData), so it is dimmed. */}
               <Spin spinning={events.isPlaceholderData} description="Đang tải tháng…">
                 <div role="group" aria-label="Lịch sự kiện phụng vụ" aria-describedby={hintId} onKeyDown={moveByKey}>
@@ -200,41 +195,42 @@ export function ProgramCalendarPage() {
                         {type === 'month' && screens.md ? (
                           <Flex component="ul" aria-label="Chú thích lịch" align="center" wrap gap={spacing.md} style={{ listStyle: 'none', margin: 0, padding: 0, fontSize: typography.metadata.fontSize }}>
                             <li style={eventChip('published')}>Sự kiện do cha xứ tạo</li>
+                            <li style={eventChip('draft')}>
+                              <EditOutlined aria-hidden /> {eventStatusLabels.draft}
+                            </li>
                             <li style={{ fontSize: typography.metadata.fontSize, color: colors.textBody }}>Ngày phụng vụ đồng bộ từ lịch trực tuyến</li>
                           </Flex>
                         ) : (
                           <span />
                         )}
                         <Flex wrap gap={spacing.sm}>
-                        <Select
-                          aria-label="Năm"
-                          value={value.year()}
-                          onChange={(year: number) => onChange(value.year(year))}
-                          options={Array.from({ length: 21 }, (_, index) => ({ value: value.year() - 10 + index, label: value.year() - 10 + index }))}
-                          style={{ minWidth: 84 }}
-                        />
-                        {type === 'month' && (
                           <Select
-                            aria-label="Tháng"
-                            value={value.month()}
-                            onChange={(monthIndex: number) => onChange(value.month(monthIndex))}
-                            options={monthOptions}
-                            style={{ minWidth: 112 }}
+                            aria-label="Năm"
+                            value={value.year()}
+                            onChange={(year: number) => onChange(value.year(year))}
+                            options={Array.from({ length: 21 }, (_, index) => ({ value: value.year() - 10 + index, label: value.year() - 10 + index }))}
+                            style={{ minWidth: 84 }}
                           />
-                        )}
-                        <Button onClick={() => setSelected(dayjs())}>
-                          Hôm nay
-                        </Button>
-                        <Radio.Group
-                          optionType="button"
-                          aria-label="Chế độ xem lịch"
-                          value={type}
-                          onChange={(event) => onTypeChange(event.target.value)}
-                          options={[
-                            { value: 'month', label: 'Tháng' },
-                            { value: 'year', label: 'Năm' },
-                          ]}
-                        />
+                          {type === 'month' && (
+                            <Select
+                              aria-label="Tháng"
+                              value={value.month()}
+                              onChange={(monthIndex: number) => onChange(value.month(monthIndex))}
+                              options={monthOptions}
+                              style={{ minWidth: 112 }}
+                            />
+                          )}
+                          <Button onClick={() => setSelected(dayjs())}>Hôm nay</Button>
+                          <Radio.Group
+                            optionType="button"
+                            aria-label="Chế độ xem lịch"
+                            value={type}
+                            onChange={(event) => onTypeChange(event.target.value)}
+                            options={[
+                              { value: 'month', label: 'Tháng' },
+                              { value: 'year', label: 'Năm' },
+                            ]}
+                          />
                         </Flex>
                       </Flex>
                     )}
@@ -242,62 +238,53 @@ export function ProgramCalendarPage() {
                   />
                 </div>
               </Spin>
-              </Card>
-            </Col>
-            <Col xs={24} xl={6}>
-              <Flex vertical gap={spacing.md}>
-              {/* Kept out of the calendar column so switching between empty and busy months does not move the grid. */}
+            </section>
+            {/* The picked day, read on the reading surface (artifact PriestCalendar). */}
+            <aside className="hm-preview hm-paper" aria-label={dayTitle(selected)}>
+              <span role="status" style={visuallyHidden}>
+                {events.isPlaceholderData ? '' : `Ngày ${selected.format('DD/MM/YYYY')}: ${selectedEvents.length} sự kiện`}
+              </span>
+              <Typography.Text style={{ color: gold.ink, fontSize: typography.label.fontSize, fontWeight: 600 }}>{dayTitle(selected)}</Typography.Text>
+              <LiturgicalDayInfo date={selectedKey} days={days} />
+              <Button icon={<PlusOutlined />} onClick={createForDate}>
+                Tạo chương trình cho ngày này
+              </Button>
               {!events.isPlaceholderData && events.data.totalCount === 0 && (
                 <Alert
                   type="info"
                   showIcon
                   title="Chưa có sự kiện nào trong tháng này."
-                  description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình” trong ô ngày bên cạnh."
+                  description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình cho ngày này”."
                 />
               )}
-              <Card title={<CardTitle>{dayTitle(selected)}</CardTitle>}>
-                <span role="status" style={visuallyHidden}>
-                  {events.isPlaceholderData ? '' : `Ngày ${selected.format('DD/MM/YYYY')}: ${selectedEvents.length} sự kiện`}
-                </span>
-                <div style={{ marginBottom: spacing.md }}>
-                  <LiturgicalDayInfo date={selectedKey} days={days} />
-                </div>
-                {/* The panel is narrow beside the calendar: a short label on one line; its name says which day. */}
-                <Button block icon={<PlusOutlined />} onClick={createForDate} aria-label="Tạo chương trình cho ngày này" style={{ marginBottom: spacing.md }}>
-                  Tạo chương trình
-                </Button>
-                {events.isPlaceholderData && (
-                  <Typography.Text style={{ color: colors.textMuted }}>Đang tải sự kiện…</Typography.Text>
-                )}
+              <div>
+                <p className="hm-rubric">Sự kiện trong ngày</p>
+                {events.isPlaceholderData && <Typography.Text style={{ color: colors.textMuted }}>Đang tải sự kiện…</Typography.Text>}
                 {!events.isPlaceholderData && selectedEvents.length === 0 && (
                   <Typography.Text style={{ color: colors.textMuted }}>Chưa có sự kiện nào trong ngày này.</Typography.Text>
                 )}
                 {!events.isPlaceholderData && selectedEvents.length > 0 && (
-                  <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                  <ul className="priest-day-events">
                     {selectedEvents.map((event) => (
-                      <Flex component="li" key={event.id} wrap align="center" justify="space-between" gap={spacing.sm}>
-                        <Flex vertical>
+                      <li key={event.id}>
+                        <Flex vertical gap={2} style={{ minWidth: 0 }}>
                           <Typography.Text strong>
                             {event.time} · {eventName(event)}
                           </Typography.Text>
-                          <Flex align="center" gap={spacing.xs} wrap style={{ color: colors.textMuted }}>
+                          <Flex align="center" gap={spacing.xs} wrap style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
                             {event.locationName} <EventStatusTag status={event.status} />
                           </Flex>
                         </Flex>
-                        <Button
-                          onClick={() => openEvent(event)}
-                          aria-label={`Xem chi tiết ${eventName(event)} lúc ${event.time}`}
-                        >
-                          Xem chi tiết
+                        <Button onClick={() => openEvent(event)} aria-label={`Xem chi tiết ${eventName(event)} lúc ${event.time}`}>
+                          Xem
                         </Button>
-                      </Flex>
+                      </li>
                     ))}
-                  </Flex>
+                  </ul>
                 )}
-              </Card>
-              </Flex>
-            </Col>
-          </Row>
+              </div>
+            </aside>
+          </div>
         </Flex>
       )}
     </div>

@@ -1,6 +1,6 @@
-import { Button, Card, Flex, Input, Typography } from 'antd'
-import { CardTitle, Form } from '@/shared/ui'
-import { cardSurface, colors, spacing } from '@/styles/tokens'
+import { Button, Flex, Input, Typography } from 'antd'
+import { Form } from '@/shared/ui'
+import { colors, spacing } from '@/styles/tokens'
 import type { ReviewDecision, ReviewValues } from '../types'
 
 export interface ReviewFormProps {
@@ -34,7 +34,13 @@ export function ReviewForm({ saving = false, onSubmit }: Readonly<ReviewFormProp
   }
 
   return (
-    <Card style={cardSurface} title={<CardTitle>Quyết định của Cha xứ</CardTitle>}>
+    <section className="hm-sheet-section" aria-labelledby="review-decision-heading">
+      <header className="hm-sheet-section__head">
+        <h2 id="review-decision-heading" className="hm-rubric">
+          Quyết định của Cha xứ
+        </h2>
+      </header>
+      <div className="priest-sheet__body">
       <Form form={form} layout="vertical" onValuesChange={() => form.setFields([{ name: 'notes', errors: [] }])}>
         <Form.Item
           label="Nhận xét gửi Ca trưởng"
@@ -44,9 +50,9 @@ export function ReviewForm({ saving = false, onSubmit }: Readonly<ReviewFormProp
         >
           <Input.TextArea rows={3} showCount maxLength={1000} />
         </Form.Item>
-        <Flex wrap justify="space-between" align="center" gap={spacing.sm}>
-          <Typography.Text style={{ color: colors.textMuted }}>Quyết định áp dụng cho cả danh sách.</Typography.Text>
-          <Flex wrap gap={spacing.sm}>
+        {/* The narrow side column: the three actions on their own line, the primary last. */}
+        <Flex vertical align="flex-end" gap={spacing.sm}>
+          <Flex wrap justify="flex-end" gap={spacing.sm}>
             <Button danger disabled={saving} onClick={() => decide('reject')}>
               Từ chối
             </Button>
@@ -57,8 +63,10 @@ export function ReviewForm({ saving = false, onSubmit }: Readonly<ReviewFormProp
               Duyệt
             </Button>
           </Flex>
+          <Typography.Text style={{ color: colors.textMuted, fontSize: 13 }}>Quyết định áp dụng cho cả danh sách.</Typography.Text>
         </Flex>
       </Form>
-    </Card>
+      </div>
+    </section>
   )
 }

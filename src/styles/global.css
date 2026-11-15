@@ -3013,3 +3013,161 @@ a.song-next__item:hover {
     transform: none;
   }
 }
+
+/* Cha xứ pages (artifact PriestDashboard, PriestCalendar, PriestPrograms, PriestProgramDetail, PriestCreateProgram,
+   PriestSongListReview, PriestReports, PriestNotes). */
+.week-list.priest-events li {
+  grid-template-columns: 48px minmax(0, 1fr) auto auto;
+}
+
+/* What waits on the Priest: the reading surface with a gilt top edge (artifact ws-card--reading). */
+.hm-sheet-section.priest-queue {
+  background-color: var(--hm-surface-reading);
+  border-top-color: var(--hm-gilt);
+}
+
+.priest-queue__list {
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.priest-queue__list li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.priest-queue__list .week-list__meta {
+  margin-bottom: 4px;
+  white-space: normal;
+}
+
+.ant-typography.priest-calendar__month {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: lining-nums;
+}
+
+.hm-sheet-section.priest-calendar__grid {
+  padding: 16px;
+}
+
+.priest-day-events {
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.priest-day-events li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--hm-border-hairline);
+}
+
+.priest-day-events li:first-child {
+  border-top: 0;
+}
+
+.priest-sheet__body {
+  padding: 4px 16px 16px;
+}
+
+.hm-sheet-section.priest-reading {
+  background-color: var(--hm-surface-reading);
+}
+
+.hm-sheet-section.priest-form {
+  padding: 24px;
+}
+
+.priest-facts li {
+  display: block;
+  line-height: 1.6;
+}
+
+.hm-split.priest-review {
+  grid-template-columns: minmax(0, 1fr) 400px;
+}
+
+/* Báo cáo: the lede figures beside the songs sung most. */
+.priest-lede {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.priest-lede .priest-sheet__body {
+  padding: 8px 24px 24px;
+}
+
+/* Trao đổi: the people on the reading surface, the open one marked by a burgundy edge and aria-current. */
+.notes-people {
+  width: 280px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 12px 0;
+  background-color: var(--hm-surface-reading);
+  border-right: 1px solid var(--hm-border-default);
+}
+
+.notes-people .hm-rubric {
+  padding: 0 16px;
+}
+
+.notes-person {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.notes-person:hover {
+  background: var(--hm-surface-soft);
+}
+
+.notes-person[aria-current='true'] {
+  border-left-color: var(--hm-action-primary);
+  background: var(--hm-surface-base);
+}
+
+.notes-person:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: -2px;
+}
+
+.notes-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--hm-area-attention-ink);
+}
+
+.notes-live::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.notes-live.is-live {
+  color: var(--hm-status-success-ink, var(--hm-text-body));
+}
