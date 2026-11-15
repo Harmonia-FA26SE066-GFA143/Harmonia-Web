@@ -18,7 +18,7 @@ export const materialKindLabels: Record<MaterialKind, string> = {
 
 const documentExtensions = ['.pdf', '.png', '.jpg']
 const audioExtensions = ['.mp3', '.m4a', '.wav']
-// The backend renders MIDI for the mobile piano roll; browsers cannot play it, so the Web only offers the download.
+// The backend renders MIDI into audio and note data: the practice room and the mobile app play that, the library offers the file.
 const midiExtensions = ['.mid', '.midi']
 // MusicXML, plain or zipped: the backend converts it to MIDI and renders its playback the same way (BE d550665).
 const scoreExtensions = ['.musicxml', '.mxl']

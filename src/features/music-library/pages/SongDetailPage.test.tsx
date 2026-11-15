@@ -467,7 +467,7 @@ describe('SongDetailPage', () => {
     const dialog = await screen.findByRole('dialog')
     const file = new File(['<score-partwise/>'], 'moi.musicxml')
     fireEvent.change(dialog.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } })
-    expect(await within(dialog).findByText('Nhạc cụ phát trên ứng dụng di động')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Nhạc cụ phát trong phòng tập và ứng dụng di động')).toBeInTheDocument()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Thay file' }))
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith('m4', file, false, 'piano'))
@@ -485,11 +485,11 @@ describe('SongDetailPage', () => {
     const dialog = await screen.findByRole('dialog')
     const input = dialog.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['m'], 'moi.mid')] } })
-    expect(await within(dialog).findByText('Nhạc cụ phát trên ứng dụng di động')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Nhạc cụ phát trong phòng tập và ứng dụng di động')).toBeInTheDocument()
     const mp3 = new File(['a'], 'moi.mp3', { type: 'audio/mpeg' })
     // The upload field is remounted after each pick.
     fireEvent.change(dialog.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [mp3] } })
-    await waitFor(() => expect(within(dialog).queryByText('Nhạc cụ phát trên ứng dụng di động')).toBeNull())
+    await waitFor(() => expect(within(dialog).queryByText('Nhạc cụ phát trong phòng tập và ứng dụng di động')).toBeNull())
     fireEvent.click(within(dialog).getByRole('button', { name: 'Thay file' }))
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith('m5', mp3, false, undefined))
