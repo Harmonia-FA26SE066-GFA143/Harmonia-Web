@@ -88,7 +88,7 @@ export const directorRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.director.practice,
-    { title: 'Bài tập & Tiến độ luyện tập', breadcrumb: [area, 'Luyện tập'] },
+    { title: 'Luyện tập', breadcrumb: [area, 'Luyện tập'] },
     async () => (await import('@/features/practice')).PracticePage,
   ),
   pageRoute(

@@ -118,7 +118,7 @@ describe('RosterPage', () => {
     renderRoster()
 
     expect(await screen.findByRole('heading', { name: 'Chưa có danh sách bài hát đã duyệt' })).toBeInTheDocument()
-    expect(screen.getByText('Còn thiếu người ở 1 vị trí')).toBeInTheDocument()
+    expect(screen.getByText('1 vị trí còn thiếu')).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'Theo bài hát' })).toBeDisabled()
     // The whole roster is finalized only once the list is approved.
     expect(screen.getByRole('button', { name: /Chốt phân công/ })).toBeDisabled()
@@ -239,7 +239,7 @@ describe('RosterPage', () => {
     const add = vi.spyOn(rosterApi, 'addAssignment').mockResolvedValue()
     renderRoster()
 
-    expect(await screen.findByText('Còn thiếu người ở 1 vị trí')).toBeInTheDocument()
+    expect(await screen.findByText('1 vị trí còn thiếu')).toBeInTheDocument()
     await showSongs()
     // The song picker counts each song's shortages.
     expect(await screen.findByText(/Con Bước Lên Bàn Thờ · thiếu 1/)).toBeInTheDocument()
@@ -285,7 +285,7 @@ describe('RosterPage', () => {
     const suggest = vi.spyOn(rosterApi, 'suggestRoster').mockResolvedValue({ roster, isAiGenerated: false })
     renderRoster()
 
-    fireEvent.click(await screen.findByRole('button', { name: /Gợi ý phân công/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Gợi ý (phân công|lại)/ }))
     const confirm = await confirmDialog('Gợi ý lại phân công?')
     fireEvent.click(within(confirm).getByRole('button', { name: 'Gợi ý lại' }))
 
@@ -314,7 +314,7 @@ describe('RosterPage', () => {
 
     expect(await screen.findByText('Phân công đã chốt. Yêu cầu nhân sự và phân công chỉ còn xem.')).toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Thêm ca viên cho Tenor' })).toBeNull()
-    expect(screen.getByRole('button', { name: /Gợi ý phân công/ })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Gợi ý (phân công|lại)/ })).toBeDisabled()
 
     fireEvent.click(screen.getByRole('button', { name: /Gửi thông báo phân công/ }))
     const dialog = await screen.findByRole('dialog')

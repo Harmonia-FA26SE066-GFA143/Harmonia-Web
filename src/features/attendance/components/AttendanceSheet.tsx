@@ -33,11 +33,11 @@ const initial = nameInitial
 export interface AttendanceSheetProps {
   rehearsalId: string
   records: AttendanceRecord[]
-  /** The session, given the count of the marks to show with it. */
-  header: (tally: ReactNode) => ReactNode
+  /** The session picker, first in the filter row. */
+  picker: ReactNode
 }
 
-export function AttendanceSheet({ rehearsalId, records, header }: Readonly<AttendanceSheetProps>) {
+export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<AttendanceSheetProps>) {
   const { message } = App.useApp()
   const save = useSaveAttendance(rehearsalId)
   // Voice parts come from approved skills: the attendance rows carry none (artifact AttendancePage asks for the part).
@@ -111,7 +111,7 @@ export function AttendanceSheet({ rehearsalId, records, header }: Readonly<Atten
   const columns: TableColumnsType<AttendanceRecord> = [
     {
       key: 'name',
-      title: 'Thành viên',
+      title: 'Ca viên',
       render: (_, record) => (
         <Flex align="center" gap={spacing.md}>
           <Avatar aria-hidden style={{ background: colors.softSurface, color: colors.textMuted, fontWeight: 600, flexShrink: 0 }}>
@@ -161,40 +161,34 @@ export function AttendanceSheet({ rehearsalId, records, header }: Readonly<Atten
   ]
 
   return (
-    <Flex vertical gap={spacing.md}>
-      <Card styles={{ body: { padding: spacing.lg } }}>
-        {/* 16px below the header line, counting the header column's 2px gap. */}
-        {header(
-        <div style={{ marginTop: spacing.md - 2 }}>
-          <SummaryStrip
-            label={`Điểm danh: ${marked} trên ${records.length} ca viên`}
-            cells={[
-              ...attendanceValues.map((value) => ({ label: attendanceLabels[value], value: counts[value] })),
-              { label: 'Chưa điểm danh', value: records.length - marked, waiting: 'Còn chờ' },
-            ]}
-          />
-        </div>,
-        )}
-      </Card>
+    <Flex vertical gap={spacing.lg}>
+      {/* Artifact AttendancePage: the session and the bulk start in one filter row, the counts, then the sheet. */}
+      <Flex wrap gap={spacing.sm} align="center" className="ctb-filters">
+        {picker}
+        <Button icon={<CheckOutlined />} onClick={markAllPresent} disabled={save.isPending}>
+          Đánh dấu tất cả có mặt
+        </Button>
+        <Input
+          aria-label="Tìm ca viên"
+          allowClear
+          prefix={<SearchOutlined aria-hidden />}
+          placeholder="Tìm ca viên…"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          style={{ width: 240 }}
+        />
+        <span className="ctb-filters__end">
+          {marked} / {records.length} đã điểm danh
+        </span>
+      </Flex>
+      <SummaryStrip
+        label={`Điểm danh: ${marked} trên ${records.length} ca viên`}
+        cells={[
+          ...attendanceValues.map((value) => ({ label: attendanceLabels[value], value: counts[value] })),
+          { label: 'Chưa điểm danh', value: records.length - marked, waiting: 'Còn chờ' },
+        ]}
+      />
       <Card styles={{ body: { padding: 0 } }}>
-        <Flex wrap gap={spacing.sm} align="end" justify="space-between" style={{ padding: spacing.md, borderBottom: `1px solid ${colors.border}` }}>
-          <Flex vertical gap={4} style={{ flex: '1 1 240px', maxWidth: 380 }}>
-            <label htmlFor="attendance-search" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
-              Tìm thành viên
-            </label>
-            <Input
-              id="attendance-search"
-              allowClear
-              prefix={<SearchOutlined aria-hidden />}
-              placeholder="Họ tên…"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </Flex>
-          <Button icon={<CheckOutlined />} onClick={markAllPresent} disabled={save.isPending}>
-            Đánh dấu tất cả có mặt
-          </Button>
-        </Flex>
         {visible.length === 0 ? (
           <div style={{ padding: spacing.md }}>
             <NoFilterResults onClearFilters={() => setSearch('')} />

@@ -1,5 +1,5 @@
-import { Alert, Button, Card, Flex, Select } from 'antd'
-import { useMemo } from 'react'
+import { Alert, Button, Flex, Select } from 'antd'
+import { useMemo, type ReactNode } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, PickedProgramFeedback, SongListStatusTag, usePickedProgram } from '@/features/liturgical-programs'
@@ -9,7 +9,7 @@ import { useSongList } from '@/features/song-lists'
 import { useLookup } from '@/features/system-categories'
 import { vietnamToday } from '@/lib/api/dates'
 import { EmptyState, ErrorState, MissingPosition, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { spacing } from '@/styles/tokens'
 import { RosterPanel } from '../components/RosterPanel'
 
 /**
@@ -42,15 +42,36 @@ export function RosterPage() {
   const loading = songList.isPending || participation.isPending || skills.isPending || members.isPending
   const failed = [songList, participation, skills, members].find((query) => query.isError)
   const lastNotes = songList.data?.reviews.at(-1)?.notes
+  const picker = (current: NonNullable<typeof program>) => (
+    <>
+      <Select
+        aria-label="Thánh lễ"
+        showSearch
+        optionFilterProp="label"
+        value={current.id}
+        onChange={(id: string) => setSearchParams({ programId: id })}
+        options={allPrograms.map((item) => ({ value: item.id, label: `${item.eventName} · ${formatProgramDate(item.date)}` }))}
+        style={{ width: 360, maxWidth: '100%' }}
+      />
+      <SongListStatusTag status={current.songListStatus} />
+      <Link to={generatePath(paths.director.programDetail, { programId: current.id })}>Xem chương trình</Link>
+    </>
+  )
   const revise = songList.data?.status === 'needsRevision' || songList.data?.status === 'rejected'
+
+  const head = (actions?: ReactNode) => (
+    <PageHeader
+      title="Phân công"
+      breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Phân công' }]}
+      description="Bè đồng ca không cần phân công, chỉ cần xác nhận tham gia."
+      extra={actions}
+    />
+  )
+  const panelShown = Boolean(program) && !failed && !loading
 
   return (
     <>
-      <PageHeader
-        title="Phân công"
-        breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Phân công' }]}
-        description="Bè đồng ca không cần phân công, chỉ cần xác nhận tham gia."
-      />
+      {!panelShown && head()}
       <PickedProgramFeedback
         programs={programs}
         lookup={lookup}
@@ -59,29 +80,9 @@ export function RosterPage() {
         onShowUpcoming={() => setSearchParams({})}
       />
       {programs.data !== undefined && !program && !searchParams.get('programId') && <EmptyState title="Chưa có chương trình phụng vụ" />}
-      {program && (
-        <Flex vertical gap={spacing.md}>
-          <Card>
-            <Flex wrap gap={spacing.md} align="center" justify="space-between">
-              <Flex vertical gap={4} style={{ flex: '1 1 280px', maxWidth: 420, minWidth: 0 }}>
-              <label htmlFor="roster-program" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
-                Chương trình phụng vụ
-              </label>
-              <Select
-                id="roster-program"
-                showSearch
-                optionFilterProp="label"
-                value={program.id}
-                onChange={(id: string) => setSearchParams({ programId: id })}
-                options={allPrograms.map((item) => ({ value: item.id, label: `${item.eventName} · ${formatProgramDate(item.date)}` }))}
-              />
-              </Flex>
-              <Flex wrap gap={spacing.sm} align="center">
-                <SongListStatusTag status={program.songListStatus} />
-                <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>Xem chi tiết chương trình</Link>
-              </Flex>
-            </Flex>
-          </Card>
+      {program && !panelShown && (
+        <Flex vertical gap={spacing.lg}>
+          <div className="ctb-filters">{picker(program)}</div>
           {/* The backend refuses every roster change once the day has passed (LITURGICAL_EVENT_ALREADY_PASSED). */}
           {program.date < vietnamToday() && <Alert type="info" showIcon title="Chương trình đã qua: không thay đổi phân công được nữa." />}
           {failed && (
@@ -91,21 +92,12 @@ export function RosterPage() {
             />
           )}
           {!failed && loading && <SectionSkeleton rows={8} label="Đang tải phân công" />}
-          {!failed && !loading && participation.data?.length === 0 && (
-            <Alert
-              type="info"
-              showIcon
-              title="Chưa gửi yêu cầu xác nhận tham gia"
-              description={
-                <>
-                  Chỉ phân công được ca viên trả lời Xác nhận hoặc Chưa chắc chắn.{' '}
-                  <Link to={`${paths.director.participation}?programId=${program.id}`}>Gửi yêu cầu xác nhận</Link>
-                </>
-              }
-            />
-          )}
-          {!failed && !loading && (
+        </Flex>
+      )}
+      {program && panelShown && (
             <RosterPanel
+              head={head}
+              picker={picker(program)}
               // A program change starts from that program's saved requirements.
               key={program.id}
               programId={program.id}
@@ -135,9 +127,23 @@ export function RosterPage() {
                   }
                 />
               }
-            />
-          )}
-        </Flex>
+            >
+              {/* The backend refuses every roster change once the day has passed (LITURGICAL_EVENT_ALREADY_PASSED). */}
+              {program.date < vietnamToday() && <Alert type="info" showIcon title="Chương trình đã qua: không thay đổi phân công được nữa." />}
+              {participation.data?.length === 0 && (
+                <Alert
+                  type="info"
+                  showIcon
+                  title="Chưa gửi yêu cầu xác nhận tham gia"
+                  description={
+                    <>
+                      Chỉ phân công được ca viên trả lời Xác nhận hoặc Chưa chắc chắn.{' '}
+                      <Link to={`${paths.director.participation}?programId=${program.id}`}>Gửi yêu cầu xác nhận</Link>
+                    </>
+                  }
+                />
+              )}
+            </RosterPanel>
       )}
     </>
   )

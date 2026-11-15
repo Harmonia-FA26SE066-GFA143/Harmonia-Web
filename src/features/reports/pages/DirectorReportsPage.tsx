@@ -1,15 +1,15 @@
 import { DownloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { App, Button, DatePicker, Dropdown, Flex, Segmented, Select, Tabs, Typography } from 'antd'
+import { App, Button, DatePicker, Dropdown, Flex, Segmented, Select } from 'antd'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router'
 import { setCurrentChoir, useChoirs, useCurrentChoir } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { PageHeader } from '@/shared/ui'
-import { colors, sizes, spacing, typography } from '@/styles/tokens'
+import { spacing } from '@/styles/tokens'
 import { ActivityTrendCard } from '../components/ActivityTrendCard'
 import { AttendanceWatch } from '../components/AttendanceWatch'
-import { ReportLede } from '../components/ReportLede'
+import { ReportHeadlines } from '../components/ReportHeadlines'
 import { ReportPanel } from '../components/ReportPanel'
 import { granularityLabels, periodOf, type Granularity } from '../directorReport'
 import { useExportReport } from '../hooks/useReports'
@@ -21,7 +21,6 @@ import { reportFormatLabels, type ActivityTrendQuery, type ReportFilters, type R
 const granularities: Granularity[] = ['week', 'month', 'year']
 const pickerFormats: Record<Granularity, string> = { week: '[Tuần của] DD/MM/YYYY', month: 'MM/YYYY', year: 'YYYY' }
 const formats = Object.keys(reportFormatLabels) as ReportFormat[]
-const label = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
 
 /**
  * Choir Director: the three per-member reports of the backend (attendance, participation, practice completion,
@@ -101,28 +100,21 @@ export function DirectorReportsPage() {
               onClick: ({ key }) => handleExport(key as ReportFormat),
             }}
           >
-            <Button type="primary" icon={<DownloadOutlined />} loading={exportReport.isPending}>
-              Xuất {reportDefinitions[tab].label.toLowerCase()}
+            <Button icon={<DownloadOutlined />} loading={exportReport.isPending}>
+              Xuất báo cáo
             </Button>
           </Dropdown>
         }
       />
-      <Flex wrap align="end" gap={spacing.sm} style={{ marginBottom: spacing.md }}>
-        <Flex vertical gap={4}>
-          <span id="report-granularity" style={label}>
-            Thống kê theo
-          </span>
-          <Segmented<Granularity>
-            aria-labelledby="report-granularity"
-            value={granularity}
-            onChange={(by) => show({ by })}
-            options={granularities.map((value) => ({ value, label: granularityLabels[value] }))}
+      {/* Artifact ReportsPage: the report kind, the period and the cycle in one row; figures first, then the detail. */}
+      <Flex vertical gap={spacing.lg}>
+        <div className="ctb-filters">
+          <Segmented<typeof tab>
+            aria-label="Loại báo cáo"
+            value={tab}
+            onChange={setTab}
+            options={directorReportKinds.map((kind) => ({ value: kind, label: reportDefinitions[kind].label }))}
           />
-        </Flex>
-        <Flex vertical gap={4}>
-          <label htmlFor="report-period" style={label}>
-            Kỳ báo cáo
-          </label>
           <Flex align="center" gap={spacing.xs}>
             <Button icon={<LeftOutlined />} aria-label={`${granularityLabels[granularity]} trước`} onClick={() => step(-1)} />
             <DatePicker
@@ -130,21 +122,16 @@ export function DirectorReportsPage() {
               value={anchor}
               allowClear={false}
               format={pickerFormats[granularity]}
-              id="report-period"
+              aria-label="Kỳ báo cáo"
               onChange={(date) => date && show({ date })}
             />
             <Button icon={<RightOutlined />} aria-label={`${granularityLabels[granularity]} sau`} onClick={() => step(1)} />
           </Flex>
-        </Flex>
-        <Flex vertical gap={4}>
-          <label htmlFor="report-choir" style={label}>
-            Ca đoàn
-          </label>
           <Select
             allowClear
             showSearch
             optionFilterProp="label"
-            id="report-choir"
+            aria-label="Ca đoàn"
             placeholder="Tất cả ca đoàn"
             loading={choirs.isPending}
             value={choirId}
@@ -153,36 +140,31 @@ export function DirectorReportsPage() {
               value: choir.id,
               label: choir.isActive ? choir.name : `${choir.name} (ngừng hoạt động)`,
             }))}
-            style={{ minWidth: 220 }}
+            style={{ minWidth: 200 }}
           />
-        </Flex>
-        <Typography.Text style={{ color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
-          Từ {dayjs(period.from).format('DD/MM/YYYY')} đến {dayjs(period.to).format('DD/MM/YYYY')}
-        </Typography.Text>
+          <Segmented<Granularity>
+            aria-label="Chu kỳ"
+            value={granularity}
+            onChange={(by) => show({ by })}
+            options={granularities.map((value) => ({ value, label: granularityLabels[value] }))}
+          />
+          <span className="ctb-filters__end">
+            {dayjs(period.from).format('DD/MM')} – {dayjs(period.to).format('DD/MM/YYYY')}
+          </span>
+        </div>
+        <ReportHeadlines kind={tab} query={{ groupBy: granularity, fromDate: period.from, toDate: period.to, choirId }} />
+        <div className="ctb-report-split">
+          <ActivityTrendCard query={trend.query} title={trend.title} style={{ marginBottom: 0 }} />
+          <AttendanceWatch filters={filters} />
+        </div>
+        <ReportPanel
+          key={`${tab}:${JSON.stringify(filters)}`}
+          kind={tab}
+          filters={filters}
+          filtered={Boolean(choirId)}
+          onClearFilters={() => show({ choirId: null })}
+        />
       </Flex>
-      <ReportLede granularity={granularity} anchor={anchor} choirId={choirId} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)', gap: spacing.md, marginBottom: spacing.lg }}>
-        <ActivityTrendCard query={trend.query} title={trend.title} style={{ marginBottom: 0 }} />
-        <AttendanceWatch filters={filters} />
-      </div>
-      <Tabs
-        destroyOnHidden
-        activeKey={tab}
-        onChange={setTab}
-        items={directorReportKinds.map((kind) => ({
-          key: kind,
-          label: reportDefinitions[kind].label,
-          children: (
-            <ReportPanel
-              key={JSON.stringify(filters)}
-              kind={kind}
-              filters={filters}
-              filtered={Boolean(choirId)}
-              onClearFilters={() => show({ choirId: null })}
-            />
-          ),
-        }))}
-      />
     </>
   )
 }

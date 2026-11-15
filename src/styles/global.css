@@ -4005,3 +4005,185 @@ html[data-door='close'] .landing-close__window {
 .ct-waiting {
   margin-bottom: 24px;
 }
+
+/* khop-ct-b: Ca trưởng activity pages matched to their artifact mockups (Lịch tập, Điểm danh, Xác nhận tham gia,
+   Phân công, Luyện tập, Báo cáo, Trao đổi). Prefix ctb-. */
+.ctb-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ctb-filters__end {
+  margin-inline-start: auto;
+  color: var(--hm-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ctb-today.hm-today-band {
+  justify-content: flex-start;
+  margin: 0;
+}
+
+.ctb-today b {
+  font-weight: 600;
+}
+
+.ctb-today__chip {
+  padding: 2px 8px;
+  border-radius: var(--hm-radius-sm);
+  border: 1px solid var(--hm-area-rehearsal-border);
+  background: var(--hm-surface-base);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ctb-today__meta {
+  color: var(--hm-text-muted);
+}
+
+.ctb-today > .ant-btn {
+  margin-inline-start: auto;
+}
+
+.ctb-week-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ctb-detail.hm-rehearsal-detail {
+  border-top: 0;
+}
+
+.ctb-detail > div + div {
+  padding-inline-start: 24px;
+  border-inline-start: 1px solid var(--hm-border-default);
+}
+
+.ctb-detail__title {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--hm-text-primary);
+}
+
+.ctb-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctb-facts li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ctb-facts .anticon {
+  color: var(--hm-text-muted);
+}
+
+.ctb-songs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding-inline-start: 20px;
+}
+
+.ctb-songs li::marker {
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  color: var(--hm-text-muted);
+}
+
+.ctb-songs b {
+  display: block;
+  font-weight: 600;
+}
+
+.ctb-songs span {
+  display: block;
+  color: var(--hm-text-muted);
+  font-size: 13px;
+}
+
+/* Xác nhận tham gia: the answers' strip on the head's right. */
+.ctb-head-strip {
+  min-width: 480px;
+}
+
+/* Phân công: columns and their padding at the page rhythm (24px). */
+.hm-roster-cols {
+  gap: 24px;
+}
+
+.hm-roster-col {
+  padding: 24px;
+}
+
+/* Luyện tập: the review queue's size beside its tab label. */
+.ctb-tab-count {
+  margin-inline-start: 8px;
+  padding: 0 8px;
+  border-radius: var(--hm-radius-sm);
+  border: 1px solid var(--hm-area-attention-border);
+  background: var(--hm-area-attention-tint);
+  color: var(--hm-area-attention-ink);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Báo cáo: four headline figures on reading cards, then the chart beside the watch list. */
+.ctb-figures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.ctb-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 24px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-surface-reading);
+}
+
+.ctb-figure span {
+  color: var(--hm-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ctb-figure b {
+  font-family: var(--hm-font-display);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: lining-nums;
+  color: var(--hm-text-primary);
+}
+
+.ctb-figure small {
+  color: var(--hm-text-muted);
+  font-size: 13px;
+}
+
+.ctb-report-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 24px;
+}
