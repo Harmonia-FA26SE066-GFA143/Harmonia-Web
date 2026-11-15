@@ -3966,8 +3966,6 @@ html[data-door='close'] .landing-close__window {
   color: var(--hm-text-primary);
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 /* khop-ct-a: Ca trưởng pages matched to their artifact mockups (dashboard, members, programs, library, skills…). */
 .dash-task {
   display: grid;
@@ -4188,7 +4186,8 @@ html[data-door='close'] .landing-close__window {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: 24px;
-=======
+}
+
 /* khop-cha-xu: Cha xứ pages matched to the artifact mockups (PriestDashboard, PriestCalendar, PriestCreateProgram,
    PriestProgramDetail). */
 .priest-queue__note {
@@ -4221,9 +4220,8 @@ html[data-door='close'] .landing-close__window {
   .hm-split.priest-create {
     grid-template-columns: minmax(0, 1fr);
   }
->>>>>>> claude/khop-cha-xu-863706
 }
-=======
+
 /* khop-admin-chung: Admin pages matched to their artifact mockups (SkillCatalogPage, LiturgicalCatalogPage,
  * AdminReportsPage): the in-page tabs drawn as the mockups' segmented control (ws-seg), keeping the antd tablist. */
 .khop-seg-tabs > .ant-tabs-nav {
@@ -4270,4 +4268,3 @@ html[data-door='close'] .landing-close__window {
   color: var(--hm-text-primary);
   font-weight: 600;
 }
->>>>>>> claude/khop-admin-chung-801883
