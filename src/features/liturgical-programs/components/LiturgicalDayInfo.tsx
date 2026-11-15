@@ -2,6 +2,8 @@ import { SyncOutlined } from '@ant-design/icons'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { App, Button, Flex, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
+import { generatePath, useNavigate } from 'react-router'
+import { paths } from '@/app/router/paths'
 import { SeasonChip } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { calendarErrorMessage } from '../calendarErrors'
@@ -49,6 +51,7 @@ export function LiturgicalDayInfo({ date, days }: Readonly<{ date: string; days:
 export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
   const { message, modal } = App.useApp()
   const sync = useSyncLiturgicalDays()
+  const navigate = useNavigate()
 
   const confirm = () =>
     modal.confirm({
@@ -63,13 +66,23 @@ export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
             message.success(`Đã đồng bộ ${syncedCount} ngày phụng vụ năm ${year}.`)
             if (!affectedEvents.length) return
             // Upcoming events on a day that now has another celebration: the priest checks their readings and songs.
-            modal.info({
+            // The dialog is drawn outside the router's tree, so it closes itself and navigates.
+            const dialog = modal.info({
               title: `${affectedEvents.length} chương trình sắp tới đổi ngày lễ`,
               content: (
                 <ul style={{ paddingInlineStart: spacing.md, margin: 0 }}>
                   {affectedEvents.map((event) => (
                     <li key={event.eventId}>
-                      <Typography.Text strong>{event.title || 'Chương trình'}</Typography.Text>{' '}
+                      <Button
+                        type="link"
+                        style={{ padding: 0, height: 'auto', fontWeight: 600 }}
+                        onClick={() => {
+                          dialog.destroy()
+                          navigate(generatePath(paths.priest.programDetail, { programId: event.eventId }))
+                        }}
+                      >
+                        {event.title || 'Chương trình'}
+                      </Button>{' '}
                       {dayjs(event.eventDate).format('DD/MM/YYYY')} {event.time.slice(0, 5)}:{' '}
                       {event.previousCelebrationName ?? 'chưa có tên lễ'} → {event.celebrationName ?? 'chưa có tên lễ'}
                     </li>

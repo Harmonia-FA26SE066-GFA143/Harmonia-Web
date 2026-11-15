@@ -101,7 +101,7 @@ function TimedLyricsEditor({ material, lyricsMaterials, form, initialValues, has
       content: 'Lời các dòng sẽ được lấy lại từ tài liệu đã chọn. Mốc thời gian giữ nguyên theo thứ tự dòng.',
       okText: 'Thay lời',
       cancelText: 'Hủy',
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: apply,
     })
   }
@@ -306,7 +306,7 @@ function OpenDrawer({ material, materials, onClose }: Readonly<{ material: SongM
       okText: 'Bỏ thay đổi',
       okButtonProps: { danger: true },
       cancelText: 'Tiếp tục sửa',
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: onClose,
     })
   }
@@ -318,7 +318,7 @@ function OpenDrawer({ material, materials, onClose }: Readonly<{ material: SongM
       okText: 'Xoá mốc thời gian',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
         remove
           .mutateAsync()

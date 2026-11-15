@@ -57,7 +57,7 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
       // Enter on a destructive dialog must not run it.
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
         remove
           .mutateAsync(member.memberId)

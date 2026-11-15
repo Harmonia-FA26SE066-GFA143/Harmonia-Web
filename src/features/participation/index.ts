@@ -1,3 +1,4 @@
 export { sendParticipationRequests } from './api/participationApi'
-export { useParticipation } from './hooks/useParticipation'
+export { useParticipation, useRemindParticipation } from './hooks/useParticipation'
+export { participationErrorMessage } from './participationErrors'
 export { ParticipationPage } from './pages/ParticipationPage'

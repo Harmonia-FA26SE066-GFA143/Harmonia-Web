@@ -246,14 +246,21 @@ describe('MidiPracticePlayer synchronized playback', () => {
     expect(screen.getByRole('button', { name: 'Phát Kyrie' })).toBeDisabled()
   })
 
-  it('locks playback with the legacy warning when play is rejected', async () => {
+  it('warns when play is rejected and lets the user try again', async () => {
     FakeAudio.playError = new Error('NotAllowedError')
     renderPlayer()
 
     fireEvent.click(screen.getByRole('button', { name: 'Phát Kyrie' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Không thể phát bản MIDI. Vui lòng tải lại bản phát rồi thử lại.')
-    expect(screen.getByRole('button', { name: 'Phát Kyrie' })).toBeDisabled()
+    // The audio itself loaded: a second press may be allowed (the browser refuses a play it did not see a gesture for).
+    expect(screen.getByRole('button', { name: 'Phát Kyrie' })).toBeEnabled()
+
+    FakeAudio.playError = null
+    fireEvent.click(screen.getByRole('button', { name: 'Phát Kyrie' }))
+
+    expect(await screen.findByRole('button', { name: 'Tạm dừng Kyrie' })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('draws every frame without re-rendering every frame', async () => {
