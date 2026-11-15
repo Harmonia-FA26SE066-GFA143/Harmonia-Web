@@ -84,7 +84,7 @@ export function ReplaceMaterialFileDrawer({ material, saving = false, onSubmit, 
           {missing && <Alert type="error" showIcon title="Vui lòng chọn file mới." />}
           {playback && !problem && (
             <Flex vertical gap={spacing.xs}>
-              <Typography.Text id="replace-instrument">Nhạc cụ phát trên ứng dụng di động</Typography.Text>
+              <Typography.Text id="replace-instrument">Nhạc cụ phát trong phòng tập và ứng dụng di động</Typography.Text>
               <Select
                 aria-labelledby="replace-instrument"
                 value={instrument}

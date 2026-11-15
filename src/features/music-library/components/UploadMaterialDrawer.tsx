@@ -136,7 +136,7 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
         </Form.Item>
       )}
       {playback && (
-        <Form.Item label="Nhạc cụ phát" name="instrument" extra="Máy chủ dựng bản phát bằng nhạc cụ này cho ứng dụng di động. Trình duyệt không mở được MIDI hay MusicXML, Web chỉ cho tải về.">
+        <Form.Item label="Nhạc cụ phát" name="instrument" extra="Máy chủ dựng bản phát bằng nhạc cụ này cho phòng tập và ứng dụng di động.">
           <Select options={instrumentOptions} />
         </Form.Item>
       )}
