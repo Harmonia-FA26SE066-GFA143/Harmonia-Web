@@ -72,6 +72,7 @@ export function SkillCategoriesPage() {
       <PageHeader
         title="Danh mục kỹ năng"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Danh mục kỹ năng' }]}
+        description="Kỹ năng ca viên khai báo và Ca trưởng duyệt, xếp theo nhóm. Mục không dùng nữa được tắt, không xoá."
       />
       <Tabs
         destroyOnHidden

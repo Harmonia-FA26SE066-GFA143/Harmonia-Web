@@ -1,6 +1,4 @@
-import { Card, Col, Row, theme, Typography } from 'antd'
 import { roleLabels, type SystemRole } from '@/shared/types/account'
-import { colors, spacing, typography } from '@/styles/tokens'
 import { assignableRoles, roleDescriptions } from '../roles'
 
 export interface RoleSummaryProps {
@@ -8,27 +6,23 @@ export interface RoleSummaryProps {
   counts?: Record<SystemRole, number>
 }
 
-/** The fixed FE-48 roles with their responsibilities. Roles are not created or edited here. */
+/**
+ * The fixed FE-48 roles with their responsibilities, as one sheet split by 1px rules (artifact RolesPage): name, one
+ * line of responsibility, the accounts holding it in the serif figure. Roles are not created or edited here.
+ */
 export function RoleSummary({ counts }: Readonly<RoleSummaryProps>) {
-  const { token } = theme.useToken()
   return (
-    <Row gutter={[spacing.md, spacing.md]}>
+    <ul className="admin-roles">
       {assignableRoles.map((role) => (
-        <Col key={role} xs={24} sm={12} xl={6}>
-          <Card style={{ height: '100%' }} styles={{ body: { padding: spacing.md } }}>
-            {/* A level 2 heading (the page has no level 2 before these cards), sized like a level 3. */}
-            <Typography.Title level={2} style={{ margin: 0, fontSize: token.fontSizeHeading3, lineHeight: token.lineHeightHeading3 }}>
-              {roleLabels[role]}
-            </Typography.Title>
-            <Typography.Paragraph style={{ margin: `${spacing.xs}px 0 ${spacing.sm}px`, color: colors.textMuted }}>
-              {roleDescriptions[role]}
-            </Typography.Paragraph>
-            <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textBody }}>
-              Đang gán: <strong>{counts?.[role] ?? '–'}</strong> tài khoản
-            </Typography.Text>
-          </Card>
-        </Col>
+        <li key={role}>
+          {/* A level 2 heading: the page has no level 2 before this sheet. */}
+          <h2>{roleLabels[role]}</h2>
+          <p>{roleDescriptions[role]}</p>
+          <span className="admin-roles__label">Đang gán</span>
+          <span className="hm-summary__figure">{counts?.[role] ?? '–'}</span>
+          <span className="hm-visually-hidden"> tài khoản</span>
+        </li>
       ))}
-    </Row>
+    </ul>
   )
 }
