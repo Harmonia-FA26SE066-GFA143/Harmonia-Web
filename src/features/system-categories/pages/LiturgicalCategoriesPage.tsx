@@ -216,6 +216,7 @@ export function LiturgicalCategoriesPage() {
       <PageHeader
         title="Danh mục phụng vụ"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Danh mục phụng vụ' }]}
+        description="Danh mục dùng khi lập chương trình phụng vụ và lịch lễ."
       />
       <Tabs destroyOnHidden activeKey={tab} onChange={setTab} items={tabs} />
     </>

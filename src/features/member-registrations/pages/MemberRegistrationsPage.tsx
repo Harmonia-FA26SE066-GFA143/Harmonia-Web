@@ -1,6 +1,6 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Card, Descriptions, Drawer, Flex, Input, Table, Typography, type TableColumnsType } from 'antd'
+import { App, Avatar, Button, Card, Descriptions, Drawer, Flex, Input, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -10,12 +10,14 @@ import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { genderLabel, personName } from '@/shared/utils/personName'
 import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { acceptRegistration, deleteRegistration, listRegistrations, type MemberRegistration } from '../api/memberRegistrationsApi'
 import { registrationsKey } from '../hooks/useWaitingRegistrations'
 
 const pageSize = 20
 const key = registrationsKey
+// The given name's first letter, as on the members list.
+const initial = (fullName: string) => fullName.trim().split(/s+/).at(-1)?.charAt(0).toUpperCase() ?? ''
 const when = (value: string) => dayjs(parseUtc(value)).format('DD/MM/YYYY HH:mm')
 
 const failure = (error: Error, fallback: string) =>
@@ -101,9 +103,14 @@ export function MemberRegistrationsPage() {
       key: 'person',
       title: 'Người đăng ký',
       render: (_, item) => (
-        <Flex vertical>
-          <Typography.Text strong>{personName(item.fullName, item.saintName)}</Typography.Text>
-          <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{item.email}</Typography.Text>
+        <Flex align="center" gap={spacing.sm}>
+          <Avatar aria-hidden style={{ flexShrink: 0, background: colors.softSurface, color: colors.textBody, fontWeight: 600 }}>
+            {initial(item.fullName)}
+          </Avatar>
+          <Flex vertical>
+            <Typography.Text strong>{personName(item.fullName, item.saintName)}</Typography.Text>
+            <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{item.email}</Typography.Text>
+          </Flex>
         </Flex>
       ),
     },
@@ -128,7 +135,11 @@ export function MemberRegistrationsPage() {
     <>
       <PageHeader
         title="Đăng ký gia nhập"
-        description="Yêu cầu tham gia ca đoàn gửi từ trang chủ đang chờ xử lý."
+        description={
+          registrations.data && !keyword
+            ? `${total} yêu cầu đang chờ xử lý, gửi từ trang chủ.`
+            : 'Yêu cầu tham gia ca đoàn gửi từ trang chủ đang chờ xử lý.'
+        }
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Đăng ký gia nhập' }]}
       />
       {registrations.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách yêu cầu" />}
@@ -140,19 +151,24 @@ export function MemberRegistrationsPage() {
       )}
       {registrations.data !== undefined && (total > 0 || keyword) && (
         <Card styles={{ body: { padding: 0 } }}>
-          <div style={{ padding: spacing.md, maxWidth: 400 }}>
-            <label htmlFor="registration-search" style={{ display: 'block', marginBottom: 4, fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Tìm theo họ tên hoặc email</label>
-            <Input
-              id="registration-search"
-              allowClear
-              prefix={<SearchOutlined aria-hidden />}
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value)
-                setPage(1)
-              }}
-            />
-          </div>
+          <Flex wrap align="end" gap={spacing.sm} style={{ padding: spacing.md }}>
+            <Flex vertical gap={4} style={{ flex: '1 1 260px', maxWidth: 360 }}>
+              <label htmlFor="registration-search" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Tìm theo họ tên hoặc email</label>
+              <Input
+                id="registration-search"
+                allowClear
+                prefix={<SearchOutlined aria-hidden />}
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
+              />
+            </Flex>
+            <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
+              {total} yêu cầu
+            </Typography.Text>
+          </Flex>
           {total === 0 ? (
             <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><NoFilterResults onClearFilters={() => setSearch('')} /></div>
           ) : (

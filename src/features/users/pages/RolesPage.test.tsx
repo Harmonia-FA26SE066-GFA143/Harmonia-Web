@@ -47,7 +47,7 @@ describe('RolesPage', () => {
     renderRoles()
 
     const heading = await screen.findByRole('heading', { level: 2, name: 'Ca viên' })
-    await waitFor(() => expect(heading.closest('.ant-card')).toHaveTextContent('Đang gán: 2 tài khoản'))
+    await waitFor(() => expect(heading.closest('li')).toHaveTextContent(/Đang gáns*2 tài khoản/))
     // The four role cards and the assignment section are level 2 headings: nothing skips from the page title to a level 3.
     expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(5)
     expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0)

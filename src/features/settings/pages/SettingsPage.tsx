@@ -71,7 +71,8 @@ export function SettingsPage() {
   const [justSaved, markSaved] = useJustSaved()
   const all = (settings.data ?? []).toSorted((a, b) => a.order - b.order)
   // One card per section, in the order of its first setting.
-  const sections = [...new Set(all.map((setting) => setting.group))].map((title) => ({
+  const sections = [...new Set(all.map((setting) => setting.group))].map((title, index) => ({
+    id: `settings-group-${index}`,
     title: title || 'Khác',
     items: all.filter((setting) => setting.group === title),
   }))
@@ -104,6 +105,7 @@ export function SettingsPage() {
       <PageHeader
         title="Cấu hình chung"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Cấu hình chung' }]}
+        description="Thiết lập do hệ thống quy định. Chỉ những mục bạn thay đổi được lưu."
       />
       {settings.isPending && <SectionSkeleton rows={6} label="Đang tải cấu hình" />}
       {settings.isError && (
@@ -115,22 +117,41 @@ export function SettingsPage() {
           layout="vertical"
           initialValues={Object.fromEntries(all.map((setting) => [setting.id, toField(setting)]))}
           onFinish={handleFinish}
-          style={{ maxWidth: 720 }}
         >
-          <Flex vertical gap={spacing.lg}>
-            {sections.map((section) => (
-              <Card key={section.title} title={<CardTitle>{section.title}</CardTitle>}>
-                {section.items.map((setting) => (
-                  <SettingField key={setting.id} setting={setting} />
-                ))}
-              </Card>
-            ))}
-            <Flex justify="flex-end">
-              <SaveButton saved={justSaved} type="primary" htmlType="submit" loading={update.isPending}>
+          {/* The groups in the BE order, with their index and the save button kept in view on the right (artifact SettingsPage). */}
+          <div className="admin-settings">
+            <Flex vertical gap={spacing.md}>
+              {sections.map((section) => (
+                <Card key={section.title} id={section.id} className="admin-settings__group" title={<CardTitle>{section.title}</CardTitle>}>
+                  {section.items.map((setting) => (
+                    <SettingField key={setting.id} setting={setting} />
+                  ))}
+                </Card>
+              ))}
+            </Flex>
+            <aside className="admin-settings__aside">
+              <nav aria-labelledby="settings-index-heading" className="hm-sheet-section">
+                <header className="hm-sheet-section__head">
+                  <h2 id="settings-index-heading" className="hm-rubric">
+                    Nhóm thiết lập
+                  </h2>
+                </header>
+                <ul className="admin-settings__index">
+                  {sections.map((section) => (
+                    <li key={section.id}>
+                      <a href={`#${section.id}`}>
+                        {section.title}
+                        <span>{section.items.length}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <SaveButton saved={justSaved} type="primary" htmlType="submit" loading={update.isPending} block>
                 Lưu thay đổi
               </SaveButton>
-            </Flex>
-          </Flex>
+            </aside>
+          </div>
         </Form>
       )}
     </>
