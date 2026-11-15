@@ -2310,14 +2310,14 @@ textarea {
 .hm-roster-cols {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
+  gap: 24px;
 }
 
 .hm-roster-col {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 16px;
+  padding: 24px;
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-lg);
   background: var(--hm-surface-base);
@@ -3930,7 +3930,7 @@ html[data-door='close'] .landing-close__window {
 .ct-choirs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 24px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3960,7 +3960,7 @@ html[data-door='close'] .landing-close__window {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin: 0 0 16px;
+  margin: 0 0 24px;
   padding: 8px 24px;
   border: 1px solid var(--hm-area-attention-border);
   border-radius: var(--hm-radius-lg);
@@ -4008,15 +4008,6 @@ html[data-door='close'] .landing-close__window {
   background: var(--hm-area-attention-tint);
   border-color: var(--hm-area-attention-border);
   color: var(--hm-area-attention-ink);
-}
-
-/* Choir cards and the skill waiting band keep the 24px gap between blocks. */
-.ct-choirs {
-  gap: 24px;
-}
-
-.ct-waiting {
-  margin-bottom: 24px;
 }
 
 /* khop-ct-b: Ca trưởng activity pages matched to their artifact mockups (Lịch tập, Điểm danh, Xác nhận tham gia,
@@ -4134,15 +4125,6 @@ html[data-door='close'] .landing-close__window {
 /* Xác nhận tham gia: the answers' strip on the head's right. */
 .ctb-head-strip {
   min-width: 480px;
-}
-
-/* Phân công: columns and their padding at the page rhythm (24px). */
-.hm-roster-cols {
-  gap: 24px;
-}
-
-.hm-roster-col {
-  padding: 24px;
 }
 
 /* Luyện tập: the review queue's size beside its tab label. */

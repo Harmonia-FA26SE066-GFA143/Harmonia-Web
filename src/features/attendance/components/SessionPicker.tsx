@@ -26,8 +26,10 @@ export function SessionPicker({ session, sessions, onPick }: Readonly<SessionPic
   )
 }
 
-const timing = (session: Rehearsal) =>
-  Date.parse(session.endAt) < Date.now() ? 'Đã qua' : isRehearsalDay(session) ? 'Hôm nay' : 'Sắp tới'
+const timing = (session: Rehearsal) => {
+  if (Date.parse(session.endAt) < Date.now()) return 'Đã qua'
+  return isRehearsalDay(session) ? 'Hôm nay' : 'Sắp tới'
+}
 
 /** One line under the page title: when, where, the state from the times, and the program it prepares for. */
 export function SessionSummary({ session, program }: Readonly<{ session: Rehearsal; program?: { id: string; eventName: string; date: string } }>) {

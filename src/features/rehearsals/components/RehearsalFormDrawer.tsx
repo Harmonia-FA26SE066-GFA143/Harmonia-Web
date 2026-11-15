@@ -45,6 +45,9 @@ interface FormValues {
 
 const withTime = (date: Dayjs, time: Dayjs) => date.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
 
+/** A new session belongs to the chosen choir; a joint one has none. */
+const newSessionChoir = (values: FormValues) => (values.isJoint ? undefined : values.choirId)
+
 /** Songs of the music library, searched on the server; the program's approved list can fill the field. */
 function SongsField() {
   const { message } = App.useApp()
@@ -197,7 +200,7 @@ export function RehearsalFormDrawer({
           }}
           onFinish={(values) =>
             onSubmit({
-              choirId: rehearsal ? rehearsal.choirId : values.isJoint ? undefined : values.choirId,
+              choirId: rehearsal ? rehearsal.choirId : newSessionChoir(values),
               isJoint: rehearsal ? rehearsal.isJoint : Boolean(values.isJoint && values.eventId),
               eventId: values.eventId,
               locationId: values.locationId,

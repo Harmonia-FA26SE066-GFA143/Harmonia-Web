@@ -21,6 +21,14 @@ type ResponseFilter = 'all' | ParticipationResponse | 'none' | 'note'
 
 const responseColors: Record<ParticipationResponse, StatusTagColor> = { confirmed: 'green', unsure: 'gold', declined: 'red' }
 
+/** Whether a request shows under the chosen filter tab. */
+function inFilter(request: ParticipationRequest, filter: ResponseFilter) {
+  if (filter === 'all') return true
+  if (filter === 'none') return !request.response
+  if (filter === 'note') return Boolean(request.note)
+  return request.response === filter
+}
+
 /** The member's voice parts in words, from their approved skills. */
 const partsOf = (skills: readonly string[]) => voiceParts.filter(({ pattern }) => inVoicePart(skills, pattern)).map(({ label }) => label).join(', ')
 
@@ -119,10 +127,7 @@ export function ParticipationPage() {
   // The first send; later sends only reach members not asked yet.
   const firstRequest = requests.reduce<string | undefined>((first, request) => (!first || request.requestedAt < first ? request.requestedAt : first), undefined)
   const invitedOn = firstRequest ? dayjs(firstRequest).format('DD/MM') : undefined
-  const visible = searched.filter(
-    (request) =>
-      filter === 'all' || (filter === 'none' ? !request.response : filter === 'note' ? Boolean(request.note) : request.response === filter),
-  )
+  const visible = searched.filter((request) => inFilter(request, filter))
 
   const handleSend = (memberIds?: string[]) =>
     send.mutate(memberIds, {
