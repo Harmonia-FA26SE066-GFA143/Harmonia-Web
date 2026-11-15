@@ -1045,21 +1045,21 @@ textarea {
 .dash-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 16px;
+  gap: 24px;
   align-items: start;
 }
 
 .dash-main {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   min-width: 0;
 }
 
 .dash-pair {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 16px;
+  gap: 24px;
   align-items: start;
 }
 
@@ -1093,7 +1093,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px 4px;
+  padding: 16px 24px 8px;
 }
 
 .hm-sheet-section__head .hm-rubric {
@@ -1108,7 +1108,7 @@ textarea {
 
 .ant-typography.hm-sheet-section__empty {
   margin: 0;
-  padding: 12px 16px 16px;
+  padding: 16px 24px 24px;
   color: var(--hm-text-muted);
 }
 
@@ -1149,7 +1149,7 @@ textarea {
   grid-template-columns: 48px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 8px 16px;
+  padding: 8px 24px;
   border-top: 1px solid var(--hm-border-default);
 }
 
@@ -1952,6 +1952,14 @@ textarea {
   }
 }
 
+/*
+ * The blocks of a page stand at least 24px apart (owner 2026-11-15: "cramped"; DS token space-24). Sibling margins
+ * collapse, so a block's own 16px bottom margin grows to 24 and a larger one stays.
+ */
+.hm-stage > * + * {
+  margin-top: 24px;
+}
+
 /* The old page dims while the next one is fetched; the new one then rises in (RouteStage). */
 .hm-route-leaving {
   opacity: 0.6;
@@ -2094,7 +2102,7 @@ textarea {
 .hm-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 16px;
+  gap: 24px;
   align-items: start;
 }
 
@@ -2278,7 +2286,7 @@ textarea {
   gap: 16px;
   flex-wrap: wrap;
   margin: 0 16px 12px;
-  padding: 12px 16px;
+  padding: 16px 24px;
   border-radius: var(--hm-radius-lg);
   background: var(--hm-area-rehearsal-tint);
   color: var(--hm-area-rehearsal-ink);
@@ -2296,7 +2304,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px;
+  padding: 16px;
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-lg);
   background: var(--hm-surface-base);
@@ -2504,7 +2512,7 @@ textarea {
 .song-layout {
   display: grid;
   grid-template-columns: 196px minmax(0, 1fr);
-  gap: 16px;
+  gap: 24px;
   align-items: start;
   margin-top: 16px;
 }
@@ -2590,7 +2598,7 @@ textarea {
   border: 1px solid var(--hm-border-hairline);
   border-top: 1px solid var(--hm-gilt);
   border-radius: var(--hm-radius-lg);
-  padding: 12px 16px;
+  padding: 16px 24px;
 }
 
 .song-next__head {
@@ -3034,7 +3042,7 @@ a.song-next__item:hover {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  padding: 12px 16px;
+  padding: 12px 24px;
   border-top: 1px solid var(--hm-border-default);
 }
 
@@ -3075,7 +3083,7 @@ a.song-next__item:hover {
 }
 
 .priest-sheet__body {
-  padding: 4px 16px 16px;
+  padding: 8px 24px 24px;
 }
 
 .hm-sheet-section.priest-reading {
@@ -3866,7 +3874,7 @@ html[data-door='close'] .landing-close__window {
 
 .ct-reading__body,
 .ct-sheet-body {
-  padding: 8px 16px 16px;
+  padding: 8px 24px 24px;
 }
 
 .ct-sheet-head {
@@ -3940,7 +3948,7 @@ html[data-door='close'] .landing-close__window {
   align-items: baseline;
   gap: 8px;
   margin: 0 0 16px;
-  padding: 8px 16px;
+  padding: 8px 24px;
   border: 1px solid var(--hm-area-attention-border);
   border-radius: var(--hm-radius-lg);
   background: var(--hm-area-attention-tint);
