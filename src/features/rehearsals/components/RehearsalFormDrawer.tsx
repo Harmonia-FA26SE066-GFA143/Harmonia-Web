@@ -1,7 +1,7 @@
 import { App, Button, Checkbox, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState } from 'react'
-import { useChoirs, useCurrentChoir } from '@/features/choirs'
+import { isPlanningDirector, useChoirs, useCurrentChoir, useEventChoirs } from '@/features/choirs'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { useSongs } from '@/features/music-library'
 import { useCatalogOptions } from '@/features/system-categories'
@@ -131,11 +131,16 @@ function ChoirField({ activeChoirs, loading, noChoir }: Readonly<{ activeChoirs:
 
 /**
  * A joint rehearsal of every choir serving the chosen program (BE 69c9d47): offered once a program is chosen; only the
- * lead choir's director may plan it (CHOIR_NOT_LEAD otherwise).
+ * lead choir's director may plan it (CHOIR_NOT_LEAD otherwise), so the others are not offered it.
  */
 function JointField() {
   const eventId: string | undefined = Form.useWatch('eventId')
-  if (!eventId) return null
+  return eventId ? <JointOption eventId={eventId} /> : null
+}
+
+function JointOption({ eventId }: Readonly<{ eventId: string }>) {
+  const choirs = useEventChoirs(eventId)
+  if (choirs.data && !isPlanningDirector(choirs.data)) return null
   return (
     <Form.Item name="isJoint" valuePropName="checked" extra="Mọi ca đoàn phục vụ chương trình cùng tập; chỉ ca trưởng ca đoàn phụ trách lên lịch được.">
       <Checkbox>Buổi tập chung các ca đoàn phục vụ chương trình</Checkbox>

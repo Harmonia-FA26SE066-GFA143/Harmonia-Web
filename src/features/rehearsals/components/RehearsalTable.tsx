@@ -6,6 +6,7 @@ import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical
 import { colors, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
 import { isRehearsalDay, isUpcoming, type Rehearsal } from '../types'
+import { JointChip, PlannerOnly } from './JointRehearsal'
 
 export interface RehearsalTableProps {
   rehearsals: Rehearsal[]
@@ -37,6 +38,9 @@ export function RehearsalTable({
       render: (_, rehearsal) => (
         <Flex vertical gap={2}>
           <Typography.Text strong>{formatRehearsalTime(rehearsal)}</Typography.Text>
+          <div>
+            <JointChip rehearsal={rehearsal} />
+          </div>
           {rehearsal.locationName && <Typography.Text style={muted}>{rehearsal.locationName}</Typography.Text>}
           {rehearsal.note && (
             <Typography.Text style={muted} ellipsis={{ tooltip: rehearsal.note }}>
@@ -94,6 +98,7 @@ export function RehearsalTable({
           >
             {isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
           </Button>
+          <PlannerOnly rehearsal={rehearsal}>
           {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
           {isUpcoming(rehearsal) && (
             <Tooltip title="Sửa buổi tập" trigger={['hover', 'focus']}>
@@ -109,6 +114,7 @@ export function RehearsalTable({
               aria-label={`Xoá buổi tập ${rehearsalLabel(rehearsal)}`}
             />
           </Tooltip>
+          </PlannerOnly>
         </Flex>
       ),
     },

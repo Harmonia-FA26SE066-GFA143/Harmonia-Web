@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useReducedMotion } from '@/shared/ui'
 import { motion } from '@/styles/tokens'
@@ -82,6 +82,38 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
 
   const { box: areasBox, marker: pill } = useGlidingMarker('[aria-current="true"]', 320, 0, areaIndex)
   const { box: tabsBox, marker: underline } = useGlidingMarker('[aria-current="page"]', 280, 60, selectedPath)
+
+  // An area with many pages (Admin has eleven) is wider than the band: the strip has no scrollbar, so the current
+  // tab is brought into view, the cut edge fades, and the wheel scrolls it sideways.
+  useEffect(() => {
+    const box = tabsBox.current
+    if (!box) return
+    const mark = () => {
+      box.classList.toggle('has-more-start', box.scrollLeft > 1)
+      box.classList.toggle('has-more-end', box.scrollLeft + box.clientWidth < box.scrollWidth - 1)
+    }
+    const wheel = (event: WheelEvent) => {
+      if (box.scrollWidth <= box.clientWidth || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+      event.preventDefault()
+      box.scrollLeft += event.deltaY
+    }
+    // Also when the strip or its tabs change width: the web font lands after the first layout and widens them.
+    const settle = () => {
+      box.querySelector('[aria-current="page"]')?.scrollIntoView?.({ inline: 'nearest', block: 'nearest' })
+      mark()
+    }
+    settle()
+    box.addEventListener('scroll', mark, { passive: true })
+    box.addEventListener('wheel', wheel, { passive: false })
+    const observer = new ResizeObserver(settle)
+    observer.observe(box)
+    if (box.lastElementChild) observer.observe(box.lastElementChild)
+    return () => {
+      box.removeEventListener('scroll', mark)
+      box.removeEventListener('wheel', wheel)
+      observer.disconnect()
+    }
+  }, [tabsBox, selectedPath, areaIndex])
 
   return (
     <div className={`hm-head${scrolled ? ' is-scrolled' : ''}`}>

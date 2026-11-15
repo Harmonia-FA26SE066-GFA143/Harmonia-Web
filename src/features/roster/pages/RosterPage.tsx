@@ -3,6 +3,7 @@ import { useMemo, type ReactNode } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, PickedProgramFeedback, SongListStatusTag, usePickedProgram } from '@/features/liturgical-programs'
+import { NoChoirNotice } from '@/features/choirs'
 import { useChoirMembers } from '@/features/members'
 import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
@@ -79,7 +80,12 @@ export function RosterPage() {
         missing={missing}
         onShowUpcoming={() => setSearchParams({})}
       />
-      {programs.data !== undefined && !program && !searchParams.get('programId') && <EmptyState title="Chưa có chương trình phụng vụ" />}
+      {programs.data !== undefined && !program && !searchParams.get('programId') && (
+        <>
+          <NoChoirNotice />
+          <EmptyState title="Chưa có chương trình phụng vụ" />
+        </>
+      )}
       {program && !panelShown && (
         <Flex vertical gap={spacing.lg}>
           <div className="ctb-filters">{picker(program)}</div>

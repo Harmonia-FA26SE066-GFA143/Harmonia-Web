@@ -769,6 +769,19 @@ textarea {
   align-items: stretch;
 }
 
+/* Tabs cut by the band fade out at that edge, so it reads as "more this way". */
+.hm-tabs.has-more-end {
+  mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
+}
+
+.hm-tabs.has-more-start {
+  mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent);
+}
+
+.hm-tabs.has-more-start.has-more-end {
+  mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+}
+
 .hm-tabs__list {
   display: flex;
   align-items: stretch;
