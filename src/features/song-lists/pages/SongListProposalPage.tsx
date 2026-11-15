@@ -1,13 +1,13 @@
 import { ArrowLeftOutlined, BulbOutlined, FileSearchOutlined, PlusOutlined, SaveOutlined, SendOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Modal, Typography } from 'antd'
+import { App, Button, Flex, Modal, Typography } from 'antd'
 import { useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { canEditSongList, formatProgramDate, ProgramInfo, useProgram, type LiturgicalProgram } from '@/features/liturgical-programs'
 import type { SongFilters } from '@/features/music-library'
 import { useCatalogOptions, type CatalogOption } from '@/features/system-categories'
-import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SaveButton, useJustSaved } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { EmptyState, ErrorState, PageHeader, PageSkeleton, SaveButton, useJustSaved } from '@/shared/ui'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { ProposalTable, type DraftItem } from '../components/ProposalTable'
 import { SongListStatusAlert } from '../components/SongListStatusAlert'
 import { SongPickerDrawer } from '../components/SongPickerDrawer'
@@ -107,33 +107,18 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
 
   return (
     <>
-      <Flex vertical gap={spacing.lg}>
-        {list && <SongListStatusAlert list={list} />}
-        <ProgramInfo program={program} />
-        <Card
-          title={<CardTitle>{`Danh sách bài hát (${items.length})`}</CardTitle>}
-          extra={
-            editable && (
+      {/* The list on the left, where it is composed; where it stands, the Mass and the send action on the right (artifact SongListProposalPage). */}
+      <div className="hm-split">
+        <section className="hm-sheet-section" aria-labelledby="proposal-songs">
+          <div className="hm-sheet-section__head ct-sheet-head">
+            <h2 id="proposal-songs" className="hm-rubric">{`Danh sách bài hát (${items.length})`}</h2>
+            {editable && items.length > 0 && (
               <Flex wrap gap={spacing.sm}>
                 {suggestButton}
                 {addButton}
-                <SaveButton
-                  saved={justSaved}
-                  icon={justSaved ? undefined : <SaveOutlined />}
-                  disabled={!dirty || items.length === 0}
-                  loading={save.isPending && !confirming}
-                  onClick={() => handleSave(false)}
-                >
-                  Lưu nháp
-                </SaveButton>
-                <Button type="primary" icon={<SendOutlined />} disabled={items.length === 0} onClick={() => setConfirming(true)}>
-                  Gửi duyệt
-                </Button>
               </Flex>
-            )
-          }
-          styles={{ body: { padding: items.length > 0 ? 0 : spacing.lg } }}
-        >
+            )}
+          </div>
           {items.length > 0 ? (
             <ProposalTable items={items} editable={editable} onChange={change} />
           ) : (
@@ -151,14 +136,34 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
               }
             />
           )}
-        </Card>
-        {editable && items.length > 0 && (
-          <Typography.Text style={{ color: colors.textMuted }}>
-            Khi lưu, yêu cầu nhân sự của từng bài được điền sẵn theo kho bài hát và phần phụng vụ (ví dụ Đáp ca cần 1 người
-            xướng); xem và sửa ở trang Phân công phục vụ.
-          </Typography.Text>
-        )}
-      </Flex>
+        </section>
+        <aside className="hm-preview hm-paper" aria-label="Tình trạng và gửi duyệt">
+          {list ? <SongListStatusAlert list={list} /> : <p className="hm-rubric">Chưa có đề xuất</p>}
+          <ProgramInfo program={program} />
+          {editable && (
+            <>
+              <Flex wrap gap={spacing.sm}>
+                <SaveButton
+                  saved={justSaved}
+                  icon={justSaved ? undefined : <SaveOutlined />}
+                  disabled={!dirty || items.length === 0}
+                  loading={save.isPending && !confirming}
+                  onClick={() => handleSave(false)}
+                >
+                  Lưu nháp
+                </SaveButton>
+                <Button type="primary" icon={<SendOutlined />} disabled={items.length === 0} onClick={() => setConfirming(true)}>
+                  Gửi duyệt
+                </Button>
+              </Flex>
+              <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
+                Khi lưu, yêu cầu nhân sự của từng bài được điền sẵn theo kho bài hát và phần phụng vụ (ví dụ Đáp ca cần 1 người
+                xướng); xem và sửa ở trang Phân công phục vụ.
+              </Typography.Text>
+            </>
+          )}
+        </aside>
+      </div>
 
       {picking && (
         <SongPickerDrawer

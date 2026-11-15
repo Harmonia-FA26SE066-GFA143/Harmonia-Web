@@ -139,17 +139,16 @@ describe('SongDetailPage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Con Bước Lên Bàn Thờ' })).toBeInTheDocument()
     expect(screen.getByText('Lm. Kim Long')).toBeInTheDocument()
     expect(screen.getByText('Rê trưởng')).toBeInTheDocument()
-    // Key metadata stands under the title on every tab.
+    // Key metadata stands under the title.
     expect(screen.getByText('Giọng Rê trưởng · Nhạc: Lm. Kim Long')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Phân loại' }))
+    // Classification and materials sit beside the facts, no tab to pick.
     expect(await screen.findByText('Mùa Thường Niên')).toBeInTheDocument()
     expect(screen.getByText('Mùa Chay')).toBeInTheDocument()
     expect(screen.getByText('Đáp ca')).toBeInTheDocument()
     expect(screen.getByText('Soprano ×1 (bắt buộc)')).toBeInTheDocument()
     expect(screen.getAllByText('Chưa phân loại')).toHaveLength(4)
 
-    fireEvent.click(await screen.findByRole('tab', { name: 'Tài liệu (2)' }))
     for (const kind of ['Bản nhạc', 'Lời bài hát', 'Audio mẫu', 'Tài liệu tập luyện']) {
       expect(await screen.findByRole('heading', { level: 2, name: kind })).toBeInTheDocument()
     }
@@ -211,7 +210,7 @@ describe('SongDetailPage', () => {
     }
 
     async function openEditor() {
-      fireEvent.click(await screen.findByRole('button', { name: /Chỉnh sửa phân loại/ }))
+      fireEvent.click(await screen.findByRole('button', { name: /Sửa phân loại/ }))
       return screen.findByRole('dialog')
     }
 

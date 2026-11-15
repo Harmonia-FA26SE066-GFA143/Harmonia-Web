@@ -431,19 +431,27 @@ textarea {
 
 .practice-room-layout {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
   align-items: start;
 }
 
-/* The running order stays in reach while the sheet is read. */
+/* The running order on the reading surface stays in reach while the sheet is read (artifact RehearsalPracticeRoomPage). */
 .practice-room-layout .practice-song-list {
   position: sticky;
   top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+  padding: 16px;
+  gap: 8px;
+}
+
+.practice-song-list ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .practice-room-layout .practice-room-player {
-  border-top: 1px solid var(--hm-gilt);
+  padding: 24px;
 }
 
 .practice-room-layout .practice-song-list,
@@ -457,30 +465,31 @@ textarea {
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: baseline;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 8px;
   border: 0;
-  border-bottom: 1px solid var(--hm-border-default);
-  background: var(--hm-surface-base);
+  border-radius: var(--hm-radius-md);
+  box-shadow: inset 2px 0 0 transparent;
+  background: transparent;
   color: var(--hm-text-primary);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--hm-dur-fast) var(--hm-ease);
+  transition: background-color var(--hm-dur-fast) var(--hm-ease), box-shadow var(--hm-dur-fast) var(--hm-ease);
 }
 
 .practice-song-item:hover {
-  background: var(--hm-surface-soft);
+  background: var(--hm-surface-base);
 }
 
 .practice-song-item:focus-visible {
   outline: 2px solid var(--hm-action-focus);
-  outline-offset: -3px;
+  outline-offset: -2px;
 }
 
 .practice-song-item__number {
   font-family: var(--hm-font-display);
   font-weight: 600;
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1;
   text-align: right;
   font-variant-numeric: lining-nums;
@@ -489,11 +498,9 @@ textarea {
 
 .practice-song-item__title {
   display: block;
-  font-family: var(--hm-font-display);
+  font-size: 14px;
   font-weight: 600;
-  font-size: 20px;
-  line-height: 1.2;
-  font-variant-numeric: lining-nums;
+  line-height: 1.4;
 }
 
 .practice-song-item__meta {
@@ -502,21 +509,14 @@ textarea {
   color: var(--hm-text-muted);
 }
 
+/* The current song: a white sheet with a burgundy edge, and its number in burgundy. */
 .practice-song-item[aria-current='true'] {
-  background: var(--hm-action-primary);
-  color: var(--hm-text-on-brand);
+  background: var(--hm-surface-base);
+  box-shadow: inset 2px 0 0 var(--hm-action-primary);
 }
 
 .practice-song-item[aria-current='true'] .practice-song-item__number {
-  color: var(--hm-gilt-soft);
-}
-
-.practice-song-item[aria-current='true'] .practice-song-item__meta {
-  color: var(--hm-text-on-chrome);
-}
-
-.practice-song-item[aria-current='true']:focus-visible {
-  outline-color: var(--hm-text-on-chrome);
+  color: var(--hm-action-primary);
 }
 
 .karaoke-lyrics {
@@ -3012,4 +3012,119 @@ a.song-next__item:hover {
   .hm-week__card:focus-visible {
     transform: none;
   }
+}
+
+/*
+ * Ca trưởng detail pages (artifact DirectorProgramDetailPage, SongListProposalPage, SongDetailPage,
+ * RehearsalPracticeRoomPage, ChoirsPage): main column beside a side panel, fact lists, choir sheets.
+ */
+.ct-main,
+.ct-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Several panels in one column can outgrow the window, so they scroll with the page instead of sticking. */
+.ct-aside > .hm-preview {
+  position: static;
+}
+
+.hm-sheet-section.ct-reading {
+  background-color: var(--hm-surface-reading);
+}
+
+.ct-reading__body,
+.ct-sheet-body {
+  padding: 8px 16px 16px;
+}
+
+.ct-sheet-head {
+  padding-bottom: 12px;
+}
+
+.ct-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.ct-facts .is-wide {
+  grid-column: 1 / -1;
+}
+
+.ct-facts dt {
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.ct-facts dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  color: var(--hm-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.ct-facts .ct-facts__text {
+  font-weight: 400;
+  white-space: pre-line;
+}
+
+.ct-facts__none {
+  font-weight: 400;
+  color: var(--hm-text-muted);
+}
+
+.ct-choirs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-choir {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  background: var(--hm-surface-base);
+  border: 1px solid var(--hm-border-hairline);
+  border-radius: var(--hm-radius-lg);
+}
+
+.ct-choir__name {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--hm-text-primary);
+}
+
+/* Duyệt kỹ năng: the queue's size in the attention colours; it leaves at zero (artifact SkillApprovalPage). */
+.ct-waiting {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 8px 16px;
+  border: 1px solid var(--hm-area-attention-border);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-area-attention-tint);
+  color: var(--hm-area-attention-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ct-waiting b {
+  font-family: var(--hm-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+  color: var(--hm-text-primary);
 }

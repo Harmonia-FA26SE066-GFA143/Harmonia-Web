@@ -1,12 +1,10 @@
-import { Typography } from 'antd'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
 import type { Song } from '../types'
 
-const none = <span style={{ color: colors.textMuted, fontWeight: 400 }}>Chưa ghi</span>
+const none = <span className="ct-facts__none">Chưa ghi</span>
 
 /**
- * Song fields of GET /api/songs/{id} as one description list: label over value, four across, then the notes. The
- * "Thông tin" tab of the song page.
+ * Song fields of GET /api/songs/{id} as one description list: label over value, two across, then the notes, on the
+ * reading surface of the song page's side panel (artifact SongDetailPage).
  */
 export function SongInfoPanel({ song }: Readonly<{ song: Song }>) {
   const facts = [
@@ -16,21 +14,19 @@ export function SongInfoPanel({ song }: Readonly<{ song: Song }>) {
     { label: 'Người viết lời', value: song.lyricist },
   ]
   return (
-    <div style={{ background: colors.ivory, border: `1px solid ${colors.border}`, borderRadius: radius.lg, padding: spacing.lg }}>
-      <dl style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: spacing.lg, margin: 0 }}>
-        {facts.map(({ label, value }) => (
-          <div key={label} style={{ minWidth: 0 }}>
-            <dt style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{label}</dt>
-            <dd style={{ margin: `${spacing.xs}px 0 0`, fontWeight: 600, overflowWrap: 'anywhere' }}>{value || none}</dd>
-          </div>
-        ))}
-      </dl>
+    <dl className="ct-facts">
+      {facts.map(({ label, value }) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>{value || none}</dd>
+        </div>
+      ))}
       {song.notes && (
-        <div style={{ marginTop: spacing.lg, paddingTop: spacing.md, borderTop: `1px solid ${colors.border}` }}>
-          <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>Ghi chú</Typography.Text>
-          <Typography.Paragraph style={{ margin: 0, whiteSpace: 'pre-line', maxWidth: '72ch', overflowWrap: 'anywhere' }}>{song.notes}</Typography.Paragraph>
+        <div className="is-wide">
+          <dt>Ghi chú</dt>
+          <dd className="ct-facts__text">{song.notes}</dd>
         </div>
       )}
-    </div>
+    </dl>
   )
 }
