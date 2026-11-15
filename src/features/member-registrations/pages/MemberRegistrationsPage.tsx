@@ -8,7 +8,7 @@ import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { genderLabel, personName } from '@/shared/utils/personName'
+import { genderLabel, nameInitial, personName } from '@/shared/utils/personName'
 import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { acceptRegistration, deleteRegistration, listRegistrations, type MemberRegistration } from '../api/memberRegistrationsApi'
@@ -16,8 +16,6 @@ import { registrationsKey } from '../hooks/useWaitingRegistrations'
 
 const pageSize = 20
 const key = registrationsKey
-// The given name's first letter, as on the members list.
-const initial = (fullName: string) => fullName.trim().split(/s+/).at(-1)?.charAt(0).toUpperCase() ?? ''
 const when = (value: string) => dayjs(parseUtc(value)).format('DD/MM/YYYY HH:mm')
 
 const failure = (error: Error, fallback: string) =>
@@ -105,7 +103,7 @@ export function MemberRegistrationsPage() {
       render: (_, item) => (
         <Flex align="center" gap={spacing.sm}>
           <Avatar aria-hidden style={{ flexShrink: 0, background: colors.softSurface, color: colors.textBody, fontWeight: 600 }}>
-            {initial(item.fullName)}
+            {nameInitial(item.fullName)}
           </Avatar>
           <Flex vertical>
             <Typography.Text strong>{personName(item.fullName, item.saintName)}</Typography.Text>

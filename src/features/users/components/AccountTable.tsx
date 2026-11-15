@@ -1,9 +1,9 @@
-import { Avatar, Flex, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Avatar, Flex, Table, Typography, type TableColumnsType } from 'antd'
 import type { ReactNode } from 'react'
 import { roleLabels } from '@/shared/types/account'
 import { colors, spacing, typography } from '@/styles/tokens'
 import type { Account } from '../types'
-import { personName } from '@/shared/utils/personName'
+import { nameInitial, personName } from '@/shared/utils/personName'
 import { AccountStatusTag } from './AccountStatusTag'
 
 export interface AccountTableProps {
@@ -18,8 +18,6 @@ export interface AccountTableProps {
 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
-// The given name's first letter, as on the members list (artifact AccountsPage).
-const initial = (fullName: string) => fullName.trim().split(/s+/).at(-1)?.charAt(0).toUpperCase() ?? ''
 
 export function AccountTable({ accounts, page, pageSize, total, loading, onPageChange, renderActions }: Readonly<AccountTableProps>) {
   const columns: TableColumnsType<Account> = [
@@ -30,7 +28,7 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
         <Flex align="center" gap={spacing.sm}>
           {/* Neutral: burgundy belongs to the brand and the liturgy, not to account data. */}
           <Avatar aria-hidden style={{ flexShrink: 0, background: colors.softSurface, color: colors.textBody, fontWeight: 600 }}>
-            {initial(account.fullName ?? '')}
+            {nameInitial(account.fullName ?? '')}
           </Avatar>
           <Flex vertical>
           {account.fullName ? (
@@ -47,7 +45,7 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
     {
       key: 'role',
       title: 'Vai trò',
-      render: (_, account) => <Tag style={{ marginInlineEnd: 0 }}>{roleLabels[account.role]}</Tag>,
+      render: (_, account) => roleLabels[account.role],
     },
     {
       key: 'status',
