@@ -1,10 +1,11 @@
-import { ArrowLeftOutlined, EditOutlined, FileSearchOutlined, StopOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, BellOutlined, EditOutlined, FileSearchOutlined, StopOutlined } from '@ant-design/icons'
 import { Alert, App, Button, ConfigProvider, Drawer, Flex, Typography } from 'antd'
 import { useState } from 'react'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
 import { EventChoirsCard } from '@/features/choirs'
+import { participationErrorMessage, useRemindParticipation } from '@/features/participation'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
@@ -109,6 +110,7 @@ export function PriestProgramDetailPage() {
   const update = useUpdateEvent()
   const publish = usePublishEvent()
   const cancel = useCancelEvent()
+  const remind = useRemindParticipation(programId ?? '')
   const { eventName, name } = useEventNames()
   const [editing, setEditing] = useState(false)
 
@@ -194,6 +196,19 @@ export function PriestProgramDetailPage() {
       ),
     })
 
+  // The Priest cannot read the answers (GET api/event-participations is the director's), so the button is always
+  // offered on a published upcoming event and the backend says when nobody is due (BE 69c9d47).
+  const handleRemind = () =>
+    remind.mutate(undefined, {
+      onSuccess: ({ remindedCount, pendingCount }) =>
+        message.success(
+          pendingCount === 0
+            ? 'Mọi ca viên được mời đã phản hồi.'
+            : `Đã nhắc ${remindedCount} trong ${pendingCount} ca viên chưa phản hồi.`,
+        ),
+      onError: (error) => message.error(participationErrorMessage(error, 'Không thể gửi lời nhắc. Vui lòng thử lại.')),
+    })
+
   const confirmPublish = () =>
     modal.confirm({
       title: 'Công bố sự kiện?',
@@ -218,7 +233,7 @@ export function PriestProgramDetailPage() {
       okButtonProps: { danger: true },
       cancelText: 'Quay lại',
       // Enter on a destructive dialog must not run it.
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
         cancel
           .mutateAsync(data.id)
@@ -244,6 +259,11 @@ export function PriestProgramDetailPage() {
             {!cancelled && (
               <Button icon={<EditOutlined />} onClick={() => setEditing(true)}>
                 Sửa
+              </Button>
+            )}
+            {data.status === 'published' && upcoming && (
+              <Button icon={<BellOutlined />} onClick={handleRemind} loading={remind.isPending}>
+                Nhắc xác nhận tham gia
               </Button>
             )}
             {/* The danger action in its own group (artifact PriestProgramDetail). */}

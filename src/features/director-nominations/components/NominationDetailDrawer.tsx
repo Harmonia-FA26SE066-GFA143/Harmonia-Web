@@ -226,7 +226,7 @@ function TrainingRow({ training, nominationId, canManage, onResult }: Readonly<{
       okText: 'Xoá khoá học',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () => remove.mutateAsync().then(() => message.success('Đã xoá khoá học.')).catch((error: Error) => message.error(nominationErrorMessage(error, 'Không thể xoá khoá học. Vui lòng thử lại.'))),
     })
 
@@ -285,7 +285,7 @@ export function NominationDetailDrawer({ id, onClose }: Readonly<{ id?: string; 
       okText: 'Rút đề cử',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () => withdraw.mutateAsync(target.id).then(() => message.success('Đã rút đề cử.')).catch((error: Error) => message.error(nominationErrorMessage(error, 'Không thể rút đề cử. Vui lòng thử lại.'))),
     })
 

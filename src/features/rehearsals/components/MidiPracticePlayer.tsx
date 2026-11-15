@@ -204,7 +204,7 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMate
   const [currentTime, setCurrentTime] = useState(0)
   const fallbackDuration = Math.max(durationSeconds, score.durationSeconds)
   const playbackClock = usePlaybackClock(audioUrl, fallbackDuration)
-  const { playing, duration, error, play, pause, seek: seekPlayback, getTime, subscribe } = playbackClock
+  const { playing, duration, error, sourceFailed, play, pause, seek: seekPlayback, getTime, subscribe } = playbackClock
   const maxNoteDuration = useMemo(
     () => score.notes.reduce((longest, note) => Math.max(longest, note.duration), 0),
     [score.notes],
@@ -282,7 +282,7 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMate
           shape="circle"
           icon={playing ? <PauseOutlined /> : <CaretRightFilled />}
           onClick={() => void toggle()}
-          disabled={Boolean(error)}
+          disabled={sourceFailed}
           aria-label={`${playing ? 'Tạm dừng' : 'Phát'} ${title}`}
         />
         <Slider
