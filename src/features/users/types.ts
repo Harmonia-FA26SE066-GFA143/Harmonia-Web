@@ -1,4 +1,5 @@
 import type { SystemRole } from '@/shared/types/account'
+import type { Gender } from '@/shared/utils/personName'
 
 /**
  * An account as the Admin sees it in User Accounts (FE-47) and role assignment (FE-48): `UserDto` of `/api/users`
@@ -12,6 +13,7 @@ export interface Account {
   phone: string | null
   /** Tên thánh; null when not given. */
   saintName: string | null
+  gender?: Gender | null
   role: SystemRole
   isActive: boolean
   /** True until the user replaces the first password the backend emailed. */
@@ -32,6 +34,8 @@ export interface CreateAccountValues {
   email: string
   phone?: string
   saintName?: string
+  /** Required (CreateUserRequestValidator, BE d743688). */
+  gender: Gender
   role: SystemRole
 }
 
@@ -41,6 +45,8 @@ export interface UpdateAccountValues {
   email: string
   phone?: string
   saintName?: string
+  /** Left out, the backend keeps the stored one (UserService.cs:105). */
+  gender?: Gender
 }
 
 /** Query filters of GET /api/users; they combine with AND on the server. */

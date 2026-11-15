@@ -1,7 +1,7 @@
 import { DeleteOutlined, DownOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import { App, Button, Card, Dropdown, Flex, Input, InputNumber, Select, Tag, Typography, type TableColumnsType } from 'antd'
 import { useRef, useState, type ReactNode } from 'react'
-import { CardTitle, FormDrawer, SectionSkeleton, StatusTag } from '@/shared/ui'
+import { CardTitle, FormDrawer, SaveButton, SectionSkeleton, StatusTag, useJustSaved } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import {
   useAddAssignment,
@@ -78,6 +78,7 @@ export function StaffingCard({
   const remove = useRemoveAssignment(programId)
   const updateNote = useUpdateAssignmentNote(programId)
   const [draft, setDraft] = useState<PersonnelRequirement[]>()
+  const [justSaved, markSaved] = useJustSaved()
   const [newSkillId, setNewSkillId] = useState<string>()
   const [replacing, setReplacing] = useState<RosterAssignment>()
   // Member buttons by skill and member, so focus can return to the person now holding the position.
@@ -102,17 +103,17 @@ export function StaffingCard({
       .filter((member) => member.skills.includes(row.skillName) && !linesOf(row.skillId).some((line) => line.memberId === member.memberId))
       .map((member) => {
         const elsewhere = otherLines.some((line) => line.skillId === row.skillId && line.memberId === member.memberId)
-        return {
-          value: member.memberId,
-          label: elsewhere ? `${member.fullName} (${song ? 'đã giữ cả buổi lễ' : 'đang giữ ở bài, gỡ trước'})` : member.fullName,
-          disabled: elsewhere,
-        }
+        let why: string | undefined
+        if (member.hasTimeConflict) why = 'trùng giờ lễ khác'
+        else if (elsewhere) why = song ? 'đã giữ cả buổi lễ' : 'đang giữ ở bài, gỡ trước'
+        return { value: member.memberId, label: why ? `${member.fullName} (${why})` : member.fullName, disabled: Boolean(why) }
       })
 
   const handleSave = () =>
     save.mutate(rows, {
       onSuccess: () => {
         setDraft(undefined)
+        markSaved()
         message.success(song ? `Đã lưu yêu cầu nhân sự của “${song.title}”.` : 'Đã lưu vai cả buổi lễ.')
       },
       onError: failed('Không thể lưu yêu cầu nhân sự. Vui lòng thử lại.'),
@@ -385,14 +386,24 @@ export function StaffingCard({
         </Flex>
       }
       extra={
-        dirty && (
+        // The button stays a moment after saving to answer "Đã lưu" in its own place.
+        (dirty || justSaved) && (
           <Flex gap={spacing.xs}>
-            <Button onClick={() => setDraft(undefined)} disabled={save.isPending}>
-              Hủy
-            </Button>
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} loading={save.isPending}>
+            {dirty && (
+              <Button onClick={() => setDraft(undefined)} disabled={save.isPending}>
+                Hủy
+              </Button>
+            )}
+            <SaveButton
+              saved={justSaved && !dirty}
+              type="primary"
+              icon={justSaved && !dirty ? undefined : <SaveOutlined />}
+              onClick={handleSave}
+              loading={save.isPending}
+              disabled={!dirty}
+            >
               Lưu yêu cầu
-            </Button>
+            </SaveButton>
           </Flex>
         )
       }

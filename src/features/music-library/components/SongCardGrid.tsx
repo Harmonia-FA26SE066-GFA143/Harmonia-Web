@@ -30,8 +30,9 @@ function BlankScorePage({ className }: Readonly<{ className: string }>) {
           </g>
         </g>
       ))}
-      <rect x={34} y={18} width={92} height={18} rx={3} fill="var(--hm-surface-reading)" stroke="var(--hm-border-control)" strokeDasharray="3 2" />
-      <text x={80} y={30.5} textAnchor="middle" fontSize={9.5} fill="var(--hm-text-muted)" style={{ fontFamily: 'var(--hm-font-ui)' }}>
+      {/* 12.5 in a 160-wide viewBox drawn ~155px wide renders at 12px, the floor for text. */}
+      <rect x={20} y={15} width={120} height={24} rx={3} fill="var(--hm-surface-reading)" stroke="var(--hm-border-control)" strokeDasharray="3 2" />
+      <text x={80} y={31.5} textAnchor="middle" fontSize={12.5} fill="var(--hm-text-muted)" style={{ fontFamily: 'var(--hm-font-ui)' }}>
         Chưa có bản nhạc
       </text>
     </svg>
@@ -72,7 +73,7 @@ export function SongCardGrid({ songs, page, pageSize, total, loading, selectedId
         {songs.map((song, index) => {
           const part = partOf(song)
           return (
-            <li key={song.id}>
+            <li key={song.id} data-row-key={song.id}>
               <button type="button" className="song-card hm-lift" aria-pressed={song.id === selectedId} onClick={() => onSelect(song)}>
                 <span className="song-card__thumb" aria-hidden>
                   <ScorePage url={song.sheetMusicThumbnailUrl} />

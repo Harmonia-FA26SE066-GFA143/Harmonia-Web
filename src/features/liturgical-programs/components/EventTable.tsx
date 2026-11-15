@@ -14,10 +14,13 @@ export interface EventTableProps {
   loading?: boolean
   /** Checkboxes on the rows `selectable` admits; omit for a table without selection. */
   selection?: { selectedIds: string[]; onChange: (ids: string[]) => void; selectable: (event: LiturgicalEvent) => boolean }
+  /** The event shown in the preview beside the list; a row click picks it. */
+  pickedId?: string
+  onPick?: (event: LiturgicalEvent) => void
 }
 
 /** Liturgical events of the Priest with date, time, place and status. */
-export function EventTable({ events, onOpen, pagination = false, loading, selection }: Readonly<EventTableProps>) {
+export function EventTable({ events, onOpen, pagination = false, loading, selection, pickedId, onPick }: Readonly<EventTableProps>) {
   const { name, eventName } = useEventNames()
   const columns: TableColumnsType<LiturgicalEvent> = [
     {
@@ -48,7 +51,12 @@ export function EventTable({ events, onOpen, pagination = false, loading, select
       align: 'right',
       width: 120,
       render: (_, event) => (
-        <Button onClick={() => onOpen(event)} aria-label={`Xem chi tiết ${eventName(event)} ngày ${formatProgramDate(event.date)}`}>
+        <Button
+          onClick={(click) => {
+            click.stopPropagation()
+            onOpen(event)
+          }}
+          aria-label={`Xem chi tiết ${eventName(event)} ngày ${formatProgramDate(event.date)}`}>
           Xem
         </Button>
       ),
@@ -58,6 +66,9 @@ export function EventTable({ events, onOpen, pagination = false, loading, select
   return (
     <Table<LiturgicalEvent>
       rowKey="id"
+      className={onPick && 'hm-table-pick'}
+      rowClassName={(event) => (event.id === pickedId ? 'is-picked' : '')}
+      onRow={(event) => ({ onClick: () => onPick?.(event) })}
       columns={columns}
       dataSource={events}
       loading={loading}

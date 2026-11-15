@@ -1,8 +1,8 @@
-import { Input, Select } from 'antd'
+import { Input, Radio, Select } from 'antd'
 import { roleLabels } from '@/shared/types/account'
 import { assignableRoles } from '../roles'
 import type { Account, CreateAccountValues, UpdateAccountValues } from '../types'
-import { saintNameRules } from '@/shared/utils/personName'
+import { genderOptions, saintNameRules, type Gender } from '@/shared/utils/personName'
 import { Form, FormDrawer } from '@/shared/ui'
 
 export interface AccountFormDrawerProps {
@@ -17,7 +17,7 @@ export interface AccountFormDrawerProps {
   onCancel: () => void
 }
 
-type FormValues = { fullName?: string; email: string; phone?: string; saintName?: string; role?: CreateAccountValues['role'] }
+type FormValues = { fullName?: string; email: string; phone?: string; saintName?: string; gender?: Gender; role?: CreateAccountValues['role'] }
 
 /**
  * Admin creates an account (email and one role required, name and phone optional) or edits its email, name and
@@ -38,10 +38,11 @@ export function AccountFormDrawer({ open, account, saving = false, emailError, o
       drawerRender={(dom) => (
         <Form<FormValues>
           layout="vertical"
-          initialValues={account && { fullName: account.fullName, email: account.email, phone: account.phone ?? undefined, saintName: account.saintName ?? undefined }}
-          onFinish={({ fullName, email, phone, saintName, role }) =>
+          initialValues={account && { fullName: account.fullName, email: account.email, phone: account.phone ?? undefined, saintName: account.saintName ?? undefined, gender: account.gender ?? undefined }}
+          onFinish={({ fullName, email, phone, saintName, gender, role }) =>
             onSubmit({
               email: email.trim(),
+              gender,
               fullName: fullName?.trim() || undefined,
               phone: phone?.trim() || undefined,
               // PUT replaces every field: the saint name is always sent so editing the email does not clear it.
@@ -76,6 +77,10 @@ export function AccountFormDrawer({ open, account, saving = false, emailError, o
         rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}
       >
         <Input autoComplete="off" />
+      </Form.Item>
+      {/* Required on a new account (CreateUserRequestValidator); an older account may still have none. */}
+      <Form.Item label="Giới tính" name="gender" rules={account ? undefined : [{ required: true, message: 'Vui lòng chọn giới tính.' }]}>
+        <Radio.Group options={genderOptions} />
       </Form.Item>
       <Form.Item
         label="Số điện thoại (không bắt buộc)"

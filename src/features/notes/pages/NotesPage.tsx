@@ -1,5 +1,5 @@
 import { SendOutlined } from '@ant-design/icons'
-import { App, Badge, Button, Card, Flex, Tag, Typography, theme } from 'antd'
+import { App, Badge, Button, Card, Flex, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { getSession } from '@/lib/auth/session'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
@@ -29,7 +29,6 @@ interface Contact {
  */
 function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
   const { message } = App.useApp()
-  const { token } = theme.useToken()
   const selfId = getSession()?.user.id ?? ''
   const live = useDirectorNotesLive()
   const conversations = useConversations()
@@ -77,7 +76,10 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
         description="Nhắn tin trực tiếp, tin mới hiện ngay không cần tải lại trang."
         extra={
           <Flex gap={8} align="center">
-            <Tag color={live ? 'success' : 'warning'}>{live ? 'Đang kết nối' : 'Mất kết nối, đang thử lại'}</Tag>
+            {/* The state in words; the dot only echoes it. */}
+            <output className={`notes-live${live ? ' is-live' : ''}`}>
+              {live ? 'Đang kết nối' : 'Mất kết nối, đang thử lại'}
+            </output>
             {sender && (
               <Button icon={<SendOutlined />} onClick={() => setNoting(true)}>
                 Gửi ghi chú theo ngày/sự kiện
@@ -99,23 +101,17 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
       )}
       {!loading && !failed && selected && (
         <Card styles={{ body: { padding: 0, display: 'flex', height: 'min(70vh, 640px)', minHeight: 420 } }}>
-          <nav aria-label="Cuộc trò chuyện" style={{ width: 280, flexShrink: 0, overflowY: 'auto', borderRight: `1px solid ${token.colorBorderSecondary}` }}>
+          <nav aria-labelledby="notes-people-heading" className="notes-people hm-paper">
+            <h2 id="notes-people-heading" className="hm-rubric">
+              Cuộc trò chuyện
+            </h2>
             {contacts.map((contact) => (
               <button
                 key={contact.id}
                 type="button"
+                className="notes-person"
                 aria-current={contact.id === selected.id}
                 onClick={() => setSelectedId(contact.id)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  border: 0,
-                  cursor: 'pointer',
-                  color: 'inherit',
-                  background: contact.id === selected.id ? token.colorFillTertiary : 'transparent',
-                }}
               >
                 <Flex justify="space-between" align="center" gap={8}>
                   <Typography.Text strong ellipsis>{contact.name}</Typography.Text>

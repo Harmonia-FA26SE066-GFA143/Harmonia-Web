@@ -1,6 +1,7 @@
 import { apiRequest } from '@/lib/api/client'
 import type { ApiRoleName } from '@/lib/auth/session'
 import { roleByApiName } from '@/shared/types/account'
+import type { Gender } from '@/shared/utils/personName'
 import type { Profile, ProfileUpdateValues } from '../types'
 
 // `GET/PUT /api/auth/me` (Harmonia-BE AuthController): every signed-in role reads its own account and edits its own
@@ -12,15 +13,17 @@ interface UserDto {
   fullName: string
   phone: string | null
   saintName: string | null
+  gender: Gender | null
   avatarUrl: string | null
   roleName: ApiRoleName
 }
 
-const toProfile = ({ email, fullName, phone, saintName, avatarUrl, roleName }: UserDto): Profile => ({
+const toProfile = ({ email, fullName, phone, saintName, gender, avatarUrl, roleName }: UserDto): Profile => ({
   email,
   fullName,
   phone: phone ?? undefined,
   saintName: saintName ?? undefined,
+  gender: gender ?? undefined,
   avatarUrl: avatarUrl ?? undefined,
   role: roleByApiName[roleName],
 })
@@ -30,7 +33,7 @@ export async function getMyProfile(): Promise<Profile> {
 }
 
 /** Every field is replaced: an empty one clears it (UpdateMyUserRequestValidator: name ≤ 100, phone ≤ 20, saint name ≤ 50). */
-export async function updateMyProfile({ fullName, phone, saintName }: ProfileUpdateValues): Promise<Profile> {
+export async function updateMyProfile({ fullName, phone, saintName, gender }: ProfileUpdateValues): Promise<Profile> {
   return toProfile(
     await apiRequest<UserDto>('/api/auth/me', {
       method: 'PUT',
@@ -38,6 +41,7 @@ export async function updateMyProfile({ fullName, phone, saintName }: ProfileUpd
         fullName: fullName?.trim() || undefined,
         phone: phone?.trim() || undefined,
         saintName: saintName?.trim() || undefined,
+        gender,
       }),
     }),
   )

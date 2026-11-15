@@ -162,9 +162,10 @@ export function AttendanceSheet({ rehearsalId, records, header }: Readonly<Atten
 
   return (
     <Flex vertical gap={spacing.md}>
-      <Card styles={{ body: { padding: `${spacing.lg}px ${spacing.xl}px` } }}>
+      <Card styles={{ body: { padding: spacing.lg } }}>
+        {/* 16px below the header line, counting the header column's 2px gap. */}
         {header(
-        <div style={{ marginTop: spacing.md }}>
+        <div style={{ marginTop: spacing.md - 2 }}>
           <SummaryStrip
             label={`Điểm danh: ${marked} trên ${records.length} ca viên`}
             cells={[

@@ -99,7 +99,12 @@ describe('ProgramCalendarPage', () => {
 
   it('syncs the year on view after asking, since the backend overwrites it', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(empty)
-    const sync = vi.spyOn(daysApi, 'syncLiturgicalDays').mockResolvedValue(365)
+    const sync = vi.spyOn(daysApi, 'syncLiturgicalDays').mockResolvedValue({
+      syncedCount: 365,
+      affectedEvents: [
+        { eventId: 'e1', title: 'Lễ Chúa Nhật', eventDate: '2027-03-14', time: '07:00:00', previousCelebrationName: 'Chúa Nhật IV Mùa Chay', celebrationName: 'Thánh Giuse' },
+      ],
+    })
     renderPage(<ProgramCalendarPage />, '/priest/calendar', '/priest/calendar?date=2027-03-10')
 
     expect(await screen.findByText(/Đồng bộ lịch phụng vụ của năm để hiển thị/)).toBeInTheDocument()
@@ -111,6 +116,9 @@ describe('ProgramCalendarPage', () => {
 
     await waitFor(() => expect(sync).toHaveBeenCalledWith(2027))
     expect(await screen.findByText('Đã đồng bộ 365 ngày phụng vụ năm 2027.')).toBeInTheDocument()
+    // Upcoming events on a day whose celebration changed are listed for the priest.
+    expect((await screen.findAllByText('1 chương trình sắp tới đổi ngày lễ'))[0]).toBeInTheDocument()
+    expect(screen.getByText(/Chúa Nhật IV Mùa Chay → Thánh Giuse/)).toBeInTheDocument()
   })
 
   it('explains when the external calendar cannot be reached', async () => {

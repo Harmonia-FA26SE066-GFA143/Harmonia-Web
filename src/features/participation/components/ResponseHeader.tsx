@@ -55,8 +55,9 @@ export function ResponseHeader({ program, programs, today, onPick, counts }: Rea
           {formatProgramDate(program.date)} ·{' '}
           <Link to={generatePath(paths.director.programDetail, { programId: program.id })}>Xem chi tiết chương trình</Link>
         </Typography.Text>
+        {/* 16px from the line above, counting the column's 2px gap. */}
         {counts && counts.sent > 0 && (
-          <div style={{ marginTop: spacing.md }}>
+          <div style={{ marginTop: spacing.md - 2 }}>
             <SummaryStrip
               label={`Phản hồi trên ${counts.sent} yêu cầu đã gửi`}
               cells={[

@@ -1,5 +1,6 @@
 import type { ApiRoleName } from '@/lib/auth/session'
 import type { SystemRole } from '@/shared/types/account'
+import type { Gender } from '@/shared/utils/personName'
 /**
  * A choir member as the Choir Director sees them when sending confirmation requests (FE-33) and taking
  * attendance (FE-45). `skills` are the member's approved skills (FE-02, FE-25) as display names, mapped from
@@ -36,6 +37,7 @@ export interface MemberProfile {
   phone: string | null
   /** Tên thánh, kept on the account; null when not given. */
   saintName: string | null
+  gender?: Gender | null
   /** `DateOnly`, YYYY-MM-DD. */
   dateOfBirth: string | null
   /** `DateOnly`, YYYY-MM-DD. */
@@ -59,6 +61,8 @@ export interface MemberProfile {
 export interface MemberProfileValues {
   phone?: string
   saintName?: string
+  /** Left out, the backend keeps the stored one (MemberProfileService.cs:78). */
+  gender?: Gender
   dateOfBirth?: string
   joinedDate: string
   status: MemberStatus

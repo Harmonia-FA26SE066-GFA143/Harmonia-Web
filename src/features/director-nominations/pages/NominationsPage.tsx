@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Button, Card, Select, Table, Typography, type TableColumnsType } from 'antd'
+import { Button, Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
@@ -64,14 +64,15 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
         <EmptyState icon={<EmptyChoir />} title="Chưa có đề cử nào" description="Đề cử Ca trưởng sẽ xuất hiện tại đây." action={createButton || undefined} />
       )}
       {nominations.data !== undefined && (total > 0 || status) && (
+        // One sheet: the status filter with the result count, then the table (artifact NominationsPage).
         <Card styles={{ body: { padding: 0 } }}>
-          <div style={{ padding: spacing.md, maxWidth: 280 }}>
-            <label htmlFor="nomination-status" style={{ display: 'block', marginBottom: 4, fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Trạng thái</label>
+          <Flex align="center" gap={spacing.sm} wrap style={{ padding: `${spacing.sm + 4}px ${spacing.md}px` }}>
+            <label htmlFor="nomination-status" style={{ fontSize: typography.label.fontSize, color: colors.textMuted }}>Trạng thái</label>
             <Select
               id="nomination-status"
               allowClear
               placeholder="Tất cả trạng thái"
-              style={{ width: '100%' }}
+              style={{ width: 240 }}
               value={status}
               onChange={(value?: NominationStatus) => {
                 setStatus(value)
@@ -79,7 +80,8 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
               }}
               options={(Object.keys(statusLabels) as NominationStatus[]).map((value) => ({ value, label: statusLabels[value] }))}
             />
-          </div>
+            <Typography.Text aria-live="polite" style={{ marginLeft: 'auto', color: colors.textMuted, fontSize: typography.label.fontSize }}>{total} đề cử</Typography.Text>
+          </Flex>
           {total === 0 ? (
             <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><NoFilterResults onClearFilters={() => setStatus(undefined)} /></div>
           ) : (

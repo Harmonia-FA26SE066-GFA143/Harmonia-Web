@@ -87,7 +87,7 @@ describe('router', () => {
 
   it('renders the not-found page for unknown routes', async () => {
     renderAt('/does-not-exist')
-    expect(await screen.findByText('404')).toBeInTheDocument()
+    expect(await screen.findByText('Lỗi 404')).toBeInTheDocument()
   })
 
   it('shows a Vietnamese error page when a page throws', async () => {
@@ -135,7 +135,7 @@ describe('route guard', () => {
   ] as const)('shows 403 when %s opens %s', async (roleName, path) => {
     signInAs(roleName)
     renderAt(path)
-    expect(await screen.findByText('403')).toBeInTheDocument()
+    expect(await screen.findByText('Lỗi 403')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Về trang của tôi' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
   })

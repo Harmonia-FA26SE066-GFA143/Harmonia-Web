@@ -1,5 +1,5 @@
 import { SwapOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Typography } from 'antd'
+import { App, Button, Flex, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -63,6 +63,7 @@ export function RolesPage() {
       <PageHeader
         title="Vai trò & Phân quyền"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Vai trò & Phân quyền' }]}
+        description="Mỗi tài khoản giữ đúng một vai trò. Quyền của từng vai trò do hệ thống quy định."
       />
 
       {accounts.isPending && <SectionSkeleton rows={6} label="Đang tải vai trò và tài khoản" />}
@@ -76,10 +77,12 @@ export function RolesPage() {
       {accounts.data !== undefined && (
         <Flex vertical gap={spacing.lg}>
           <RoleSummary counts={counts} />
-          <section aria-labelledby="role-assignment-heading">
-            <Typography.Title id="role-assignment-heading" level={2} style={{ margin: `0 0 ${spacing.md}px` }}>
-              Gán vai trò cho tài khoản
-            </Typography.Title>
+          <section aria-labelledby="role-assignment-heading" className="hm-sheet-section">
+            <header className="hm-sheet-section__head">
+              <h2 id="role-assignment-heading" className="hm-rubric">
+                Gán vai trò cho tài khoản
+              </h2>
+            </header>
             {total === 0 && !filtered ? (
               <EmptyState
                 headingLevel={3}
@@ -88,7 +91,7 @@ export function RolesPage() {
                 action={<Button onClick={() => navigate(paths.admin.accounts)}>Đến trang Tài khoản</Button>}
               />
             ) : (
-              <Card styles={{ body: { padding: 0 } }}>
+              <>
                 <AccountFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
                 {total === 0 ? (
                   <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
@@ -118,7 +121,7 @@ export function RolesPage() {
                     }
                   />
                 )}
-              </Card>
+              </>
             )}
           </section>
         </Flex>

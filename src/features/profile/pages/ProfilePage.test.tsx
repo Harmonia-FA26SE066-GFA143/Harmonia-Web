@@ -27,7 +27,7 @@ describe('ProfilePage', () => {
     })
     renderPage(<ProfilePage />, '/profile')
 
-    expect(await screen.findByText('Nguyễn Văn An')).toBeInTheDocument()
+    expect((await screen.findAllByText('Nguyễn Văn An')).length).toBeGreaterThan(0)
     expect(screen.getByText('Cha xứ')).toBeInTheDocument()
   })
 

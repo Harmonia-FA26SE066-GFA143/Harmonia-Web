@@ -164,7 +164,9 @@ export function ReviewPanel({ submissionId, initialResult, initialComment, onDon
                 <Input />
               </Form.Item>
             )}
+            {/* The panel's 16px gap separates it from the buttons; antd's own 24px margin would make 40. */}
             <Form.Item
+              style={{ marginBottom: 0 }}
               label="Nhận xét"
               name="comment"
               dependencies={['result']}

@@ -1,7 +1,7 @@
-import { Flex, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Avatar, Flex, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import type { ReactNode } from 'react'
 import { roleLabels } from '@/shared/types/account'
-import { colors, typography } from '@/styles/tokens'
+import { colors, spacing, typography } from '@/styles/tokens'
 import type { Account } from '../types'
 import { personName } from '@/shared/utils/personName'
 import { AccountStatusTag } from './AccountStatusTag'
@@ -18,6 +18,8 @@ export interface AccountTableProps {
 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
+// The given name's first letter, as on the members list (artifact AccountsPage).
+const initial = (fullName: string) => fullName.trim().split(/s+/).at(-1)?.charAt(0).toUpperCase() ?? ''
 
 export function AccountTable({ accounts, page, pageSize, total, loading, onPageChange, renderActions }: Readonly<AccountTableProps>) {
   const columns: TableColumnsType<Account> = [
@@ -25,7 +27,12 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
       key: 'account',
       title: 'Tài khoản',
       render: (_, account) => (
-        <Flex vertical>
+        <Flex align="center" gap={spacing.sm}>
+          {/* Neutral: burgundy belongs to the brand and the liturgy, not to account data. */}
+          <Avatar aria-hidden style={{ flexShrink: 0, background: colors.softSurface, color: colors.textBody, fontWeight: 600 }}>
+            {initial(account.fullName ?? '')}
+          </Avatar>
+          <Flex vertical>
           {account.fullName ? (
             <Typography.Text strong>{personName(account.fullName, account.saintName)}</Typography.Text>
           ) : (
@@ -33,6 +40,7 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
           )}
           <Typography.Text style={muted}>{account.email}</Typography.Text>
           {account.phone && <Typography.Text style={muted}>{account.phone}</Typography.Text>}
+          </Flex>
         </Flex>
       ),
     },

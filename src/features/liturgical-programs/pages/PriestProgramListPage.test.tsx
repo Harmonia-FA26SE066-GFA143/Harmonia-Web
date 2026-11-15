@@ -55,9 +55,12 @@ describe('PriestProgramListPage', () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(page(events))
     renderPage(<PriestProgramListPage />, '/priest/programs')
 
-    expect(await screen.findByText('Lễ Chúa Nhật')).toBeInTheDocument()
-    expect(screen.getByText('Bản nháp')).toBeInTheDocument()
-    expect(screen.getAllByText('04/10/2026 · 07:00')).toHaveLength(2)
+    // The picked row is also read in the preview beside the table, so the rows are read in the table.
+    const table = within(await screen.findByRole('table'))
+    expect(await table.findByText('Lễ Chúa Nhật')).toBeInTheDocument()
+    expect(table.getByText('Bản nháp')).toBeInTheDocument()
+    expect(table.getAllByText('04/10/2026 · 07:00')).toHaveLength(2)
+    expect(screen.getByRole('complementary', { name: /Xem trước/ })).toBeInTheDocument()
     expect(screen.getByText('2 sự kiện')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Lễ Bổn mạng ngày 04/10/2026' }))

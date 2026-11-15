@@ -1,5 +1,7 @@
 import { Flex, Tooltip, Typography } from 'antd'
+import type { CSSProperties } from 'react'
 import { colors, radius, spacing } from '@/styles/tokens'
+
 /** One column: a short label under it and a long name for screen readers and tooltips. */
 export interface Bucket {
   label: string
@@ -46,7 +48,9 @@ export function StackedBars<K extends string>({
                 <div
                   role="img"
                   aria-label={`${bucket.title}: ${description}`}
+                  className="mg-rise"
                   style={{
+                    '--i': index,
                     width: '100%',
                     maxWidth: 44,
                     height: Math.max(total ? 4 : 2, (total / max) * chartHeight),
@@ -55,14 +59,14 @@ export function StackedBars<K extends string>({
                     borderRadius: `${radius.sm}px ${radius.sm}px 0 0`,
                     overflow: 'hidden',
                     background: total ? undefined : colors.border,
-                  }}
+                  } as CSSProperties}
                 >
                   {series.map(({ key, color }) =>
                     counts[key] ? <div key={key} style={{ flex: counts[key], background: color }} /> : null,
                   )}
                 </div>
               </Tooltip>
-              <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, marginTop: 6, whiteSpace: 'nowrap' }}>
+              <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, whiteSpace: 'nowrap' }}>
                 {bucket.label}
               </Typography.Text>
               <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, minHeight: 18, fontVariantNumeric: 'tabular-nums' }}>
@@ -74,7 +78,7 @@ export function StackedBars<K extends string>({
       </Flex>
       <Flex wrap gap={spacing.md} component="ul" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {series.map(({ key, label, color }) => (
-          <Flex component="li" key={key} align="center" gap={6} style={{ fontSize: 13 }}>
+          <Flex component="li" key={key} align="center" gap={spacing.sm} style={{ fontSize: 13 }}>
             <span aria-hidden style={{ width: 10, height: 10, borderRadius: 3, background: color }} />
             {label}
           </Flex>

@@ -271,11 +271,11 @@ export const component = {
     headColor: semantic.area.liturgy.ink,
     rowHover: semantic.surface.soft,
     rowSelected: semantic.surface.selected,
-    /** 44px rows at 13px type; the compact density is 34px. */
-    rowPaddingBlock: 11,
-    rowPaddingBlockCompact: 6,
-    cellPaddingInline: 12,
-    fontSize: 13,
+    /** 46px rows at 14px type (body size for primary content), 16px from the table edge; the compact density is 38px. */
+    rowPaddingBlock: 12,
+    rowPaddingBlockCompact: 8,
+    cellPaddingInline: 16,
+    fontSize: 14,
   },
   card: { border: `1px solid ${semantic.border.hairline}`, background: semantic.surface.base, headHeight: 44, padding: 16 },
   drawer: { sm: 480, md: 600, lg: 720 },

@@ -66,14 +66,16 @@ export function AdminReportsPage() {
       <PageHeader
         title="Báo cáo"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Báo cáo' }]}
+        description="Số liệu toàn giáo xứ; lọc theo tháng, mùa phụng vụ hoặc ca đoàn."
         extra={
           <Button type="primary" icon={<DownloadOutlined />} onClick={() => setExporting(true)}>
             Xuất báo cáo
           </Button>
         }
       />
-      <ActivityTrendCard query={trendQuery} title={`Điểm danh và bài tập 12 tháng đến ${trendEnd.format('MM/YYYY')}`} />
+      {/* Filters first: they narrow the chart and the reports below (artifact AdminReportsPage). */}
       <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={() => show(kind, {})} seasons={seasons} choirs={choirOptions} />
+      <ActivityTrendCard query={trendQuery} title={`Điểm danh và bài tập 12 tháng đến ${trendEnd.format('MM/YYYY')}`} />
       <Flex vertical gap={spacing.lg}>
         <Tabs
           destroyOnHidden

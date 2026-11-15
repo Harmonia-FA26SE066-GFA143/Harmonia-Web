@@ -244,18 +244,29 @@ body {
   }
 }
 
-/* A list arriving as a list: its rows rise in turn, 30ms apart, the delay capped at 180ms (seventh row on). */
-.hm-stagger > * {
-  animation: hm-rise var(--hm-dur-base) var(--hm-ease) both;
+/*
+ * A list arriving as a list: its rows rise in turn, 40ms apart, the delay capped at 240ms (seventh row on). Table rows
+ * do the same when they are inserted (first load, a new page, a new filter); a re-sort keeps its rows and stays still.
+ */
+.hm-stagger > *,
+.ant-table-tbody > tr.ant-table-row {
+  animation: hm-rise var(--hm-dur-base) var(--hm-ease) backwards;
 }
 
-.hm-stagger > :nth-child(2) { animation-delay: 30ms; }
-.hm-stagger > :nth-child(3) { animation-delay: 60ms; }
-.hm-stagger > :nth-child(4) { animation-delay: 90ms; }
-.hm-stagger > :nth-child(5) { animation-delay: 120ms; }
-.hm-stagger > :nth-child(6) { animation-delay: 150ms; }
-.hm-stagger > :nth-child(7) { animation-delay: 180ms; }
-.hm-stagger > :nth-child(n + 8) { animation-delay: 180ms; }
+.hm-stagger > :nth-child(2), .ant-table-tbody > tr.ant-table-row:nth-child(2) { animation-delay: 40ms; }
+.hm-stagger > :nth-child(3), .ant-table-tbody > tr.ant-table-row:nth-child(3) { animation-delay: 80ms; }
+.hm-stagger > :nth-child(4), .ant-table-tbody > tr.ant-table-row:nth-child(4) { animation-delay: 120ms; }
+.hm-stagger > :nth-child(5), .ant-table-tbody > tr.ant-table-row:nth-child(5) { animation-delay: 160ms; }
+.hm-stagger > :nth-child(6), .ant-table-tbody > tr.ant-table-row:nth-child(6) { animation-delay: 200ms; }
+.hm-stagger > :nth-child(n + 7), .ant-table-tbody > tr.ant-table-row:nth-child(n + 7) { animation-delay: 240ms; }
+
+/* Reduced motion: the rows are there at once, without waiting out their turn. */
+@media (prefers-reduced-motion: reduce) {
+  .hm-stagger > *,
+  .ant-table-tbody > tr.ant-table-row {
+    animation: none;
+  }
+}
 
 /* The rehearsal week slides in from the side it was paged to. */
 .hm-week-next {
@@ -420,19 +431,27 @@ textarea {
 
 .practice-room-layout {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
   align-items: start;
 }
 
-/* The running order stays in reach while the sheet is read. */
+/* The running order on the reading surface stays in reach while the sheet is read (artifact RehearsalPracticeRoomPage). */
 .practice-room-layout .practice-song-list {
   position: sticky;
   top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+  padding: 16px;
+  gap: 8px;
+}
+
+.practice-song-list ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .practice-room-layout .practice-room-player {
-  border-top: 1px solid var(--hm-gilt);
+  padding: 24px;
 }
 
 .practice-room-layout .practice-song-list,
@@ -446,30 +465,31 @@ textarea {
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: baseline;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px;
   border: 0;
-  border-bottom: 1px solid var(--hm-border-default);
-  background: var(--hm-surface-base);
+  border-radius: var(--hm-radius-md);
+  box-shadow: inset 2px 0 0 transparent;
+  background: transparent;
   color: var(--hm-text-primary);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--hm-dur-fast) var(--hm-ease);
+  transition: background-color var(--hm-dur-fast) var(--hm-ease), box-shadow var(--hm-dur-fast) var(--hm-ease);
 }
 
 .practice-song-item:hover {
-  background: var(--hm-surface-soft);
+  background: var(--hm-surface-base);
 }
 
 .practice-song-item:focus-visible {
   outline: 2px solid var(--hm-action-focus);
-  outline-offset: -3px;
+  outline-offset: -2px;
 }
 
 .practice-song-item__number {
   font-family: var(--hm-font-display);
   font-weight: 600;
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1;
   text-align: right;
   font-variant-numeric: lining-nums;
@@ -478,11 +498,9 @@ textarea {
 
 .practice-song-item__title {
   display: block;
-  font-family: var(--hm-font-display);
+  font-size: 14px;
   font-weight: 600;
-  font-size: 20px;
-  line-height: 1.2;
-  font-variant-numeric: lining-nums;
+  line-height: 1.4;
 }
 
 .practice-song-item__meta {
@@ -491,21 +509,14 @@ textarea {
   color: var(--hm-text-muted);
 }
 
+/* The current song: a white sheet with a burgundy edge, and its number in burgundy. */
 .practice-song-item[aria-current='true'] {
-  background: var(--hm-action-primary);
-  color: var(--hm-text-on-brand);
+  background: var(--hm-surface-base);
+  box-shadow: inset 2px 0 0 var(--hm-action-primary);
 }
 
 .practice-song-item[aria-current='true'] .practice-song-item__number {
-  color: var(--hm-gilt-soft);
-}
-
-.practice-song-item[aria-current='true'] .practice-song-item__meta {
-  color: var(--hm-text-on-chrome);
-}
-
-.practice-song-item[aria-current='true']:focus-visible {
-  outline-color: var(--hm-text-on-chrome);
+  color: var(--hm-action-primary);
 }
 
 .karaoke-lyrics {
@@ -629,6 +640,7 @@ textarea {
   font-size: 24px;
   line-height: 1;
   color: var(--hm-text-on-brand);
+  view-transition-name: hm-brand;
 }
 
 .hm-top__end {
@@ -814,18 +826,20 @@ textarea {
 
 /* How many wait on that page: a small burgundy count after the name. */
 .hm-tab__count {
-  margin-left: 6px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
+  margin-left: 8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 10px;
   background: var(--hm-action-primary);
   color: var(--hm-text-on-brand);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 20px;
   text-align: center;
   font-variant-numeric: tabular-nums;
+  /* A waiting count breathes once when it appears (DESIGN "Motion"). */
+  animation: hm-attention-once 1200ms var(--hm-ease-in-out) 200ms;
 }
 
 .hm-visually-hidden {
@@ -999,11 +1013,12 @@ textarea {
 }
 
 @keyframes landing-rise {
-  from { opacity: 0; transform: translateY(12px); }
+  from { transform: translateY(12px); }
 }
 
+/* The window is there from the first frame (the drawn nave can hold the main thread for seconds); it only settles. */
 @keyframes landing-window {
-  from { opacity: 0; transform: translateY(32px); }
+  from { transform: translateY(32px); }
 }
 
 @media (max-width: 991px) {
@@ -1116,7 +1131,7 @@ textarea {
 
 .hm-date span {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--hm-text-muted);
 }
 
@@ -1174,7 +1189,7 @@ textarea {
   grid-template-columns: 44px minmax(0, 1fr);
   gap: 8px;
   height: 100%;
-  padding: 12px 14px 14px;
+  padding: 12px 16px 16px;
   color: inherit;
   transition: background-color var(--hm-dur-fast) var(--hm-ease);
 }
@@ -1199,7 +1214,7 @@ textarea {
 }
 
 .upcoming-strip .ant-tag {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
 }
 
 /* The next Mass: the evening head on the bookcloth, then the preparation signals. */
@@ -1213,8 +1228,8 @@ textarea {
 .next-mass__head {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 20px;
+  gap: 16px;
+  padding: 24px;
   background: var(--hm-surface-chrome);
   border-bottom: 1px solid var(--hm-gilt);
 }
@@ -1252,8 +1267,8 @@ textarea {
 .next-mass__body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 20px 20px;
+  gap: 12px;
+  padding: 16px 24px 24px;
 }
 
 .next-mass__body .hm-rubric {
@@ -1304,7 +1319,7 @@ textarea {
 .next-mass__shortages {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 /* A place still open: dashed, in the roster's leather, never red (artifact ws-missing). */
@@ -1358,7 +1373,7 @@ textarea {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) auto 88px 16px;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   padding: 12px 24px;
   border: 0;
   background: transparent;
@@ -1448,7 +1463,7 @@ textarea {
   display: grid;
   grid-template-columns: 160px minmax(0, 1fr);
   gap: 24px;
-  padding: 20px 24px 24px;
+  padding: 24px;
   animation: hm-rise-small var(--hm-dur-panel) var(--hm-ease) both;
 }
 
@@ -1467,7 +1482,7 @@ textarea {
   grid-template-columns: 20px minmax(0, 1fr) minmax(0, auto) 124px;
   align-items: center;
   gap: 4px 12px;
-  padding: 10px 0;
+  padding: 12px 0;
 }
 
 .ordo-missing + .ordo-missing {
@@ -1480,7 +1495,7 @@ textarea {
 
 .ordo-missing__extra {
   grid-column: 2 / -1;
-  padding-top: 6px;
+  padding-top: 8px;
 }
 
 .ordo-missing__icon {
@@ -1499,7 +1514,7 @@ textarea {
 }
 
 .ordo-shortage {
-  padding: 6px 12px;
+  padding: 8px 12px;
   border: 1px dashed var(--hm-border-control);
   border-radius: var(--hm-radius-md);
   background: var(--hm-surface-base);
@@ -1542,7 +1557,7 @@ textarea {
 }
 
 .song-index.is-compact .song-index__row {
-  padding-block: 5px;
+  padding-block: 4px;
 }
 
 .song-index__thumb {
@@ -1737,7 +1752,7 @@ textarea {
   position: sticky;
   top: 48px;
   overflow: hidden;
-  padding: 40px 40px 28px;
+  padding: 40px 40px 32px;
   background: var(--hm-surface-reading);
   border: 1px solid var(--hm-border-default);
   border-top: 1px solid var(--hm-gilt);
@@ -1795,7 +1810,7 @@ textarea {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding: 7px 0;
+  padding: 8px 0;
 }
 
 .landing-sheet__part {
@@ -1847,7 +1862,7 @@ textarea {
 
 .landing-sheet__ready {
   min-height: 32px;
-  margin: 20px 0 0;
+  margin: 24px 0 0;
   font-family: var(--hm-font-display);
   font-weight: 600;
   font-size: 26px;
@@ -1884,7 +1899,7 @@ textarea {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   padding: 12px 24px;
 }
 
@@ -2089,11 +2104,16 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 20px 24px;
+  padding: 24px;
   background-color: var(--hm-surface-reading);
   border: 1px solid var(--hm-border-hairline);
   border-top: 1px solid var(--hm-gilt);
   border-radius: var(--hm-radius-lg);
+}
+
+/* The panel's gap spaces the rubric; its own bottom margin would add to it. */
+.hm-preview > .hm-rubric {
+  margin: 0;
 }
 
 .hm-preview__title {
@@ -2115,7 +2135,7 @@ textarea {
   display: grid;
   grid-template-columns: 112px minmax(0, 1fr);
   gap: 8px;
-  padding: 6px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--hm-border-hairline);
 }
 
@@ -2182,7 +2202,7 @@ textarea {
 .hm-week__items {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding: 8px;
 }
 
@@ -2191,7 +2211,7 @@ textarea {
   flex-direction: column;
   gap: 1px;
   width: 100%;
-  padding: 6px 8px;
+  padding: 8px;
   text-align: left;
   font: inherit;
   font-size: 12px;
@@ -2199,7 +2219,11 @@ textarea {
   border-radius: var(--hm-radius-md);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: border-color var(--hm-dur-fast) var(--hm-ease), box-shadow var(--hm-dur-fast) var(--hm-ease);
+  /* Floating week cards lift on touch, like every clickable card. */
+  transition:
+    border-color var(--hm-dur-fast) var(--hm-ease),
+    transform var(--hm-dur-fast) var(--hm-ease),
+    box-shadow var(--hm-dur-fast) var(--hm-ease);
 }
 
 .hm-week__card b {
@@ -2207,8 +2231,8 @@ textarea {
 }
 
 .hm-week__card small {
-  font-size: 11px;
-  opacity: 0.8;
+  font-size: 12px;
+  color: var(--hm-text-muted);
 }
 
 .hm-week__card.is-rehearsal {
@@ -2242,7 +2266,7 @@ textarea {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
   gap: 24px;
-  padding: 20px 24px;
+  padding: 24px;
   border-top: 1px solid var(--hm-border-default);
 }
 
@@ -2303,7 +2327,7 @@ textarea {
 .hm-review-panel {
   position: sticky;
   top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
-  padding: 20px 24px;
+  padding: 24px;
   background: var(--hm-surface-base);
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-lg);
@@ -2326,7 +2350,7 @@ textarea {
 .hm-review-panel__done {
   display: block;
   margin: 0;
-  padding: 10px 12px;
+  padding: 12px;
   border-radius: var(--hm-radius-md);
   background: var(--hm-area-practice-tint);
   color: var(--hm-area-practice-ink);
@@ -2415,8 +2439,8 @@ textarea {
 .hm-reading-note {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 12px 16px;
   border-radius: var(--hm-radius-md);
   background: var(--hm-surface-reading);
   border-top: 1px solid var(--hm-gilt);
@@ -2428,7 +2452,7 @@ textarea {
   display: inline-block;
   width: 6px;
   height: 6px;
-  margin-left: 6px;
+  margin-left: 8px;
   border-radius: 50%;
   background: var(--hm-area-attention-border);
   vertical-align: middle;
@@ -2520,7 +2544,7 @@ textarea {
   justify-content: space-between;
   width: 100%;
   min-height: 32px;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border: 0;
   border-radius: var(--hm-radius-sm);
   background: transparent;
@@ -2552,7 +2576,7 @@ textarea {
 
 .song-rail__count {
   min-width: 22px;
-  padding: 0 6px;
+  padding: 0 8px;
   border-radius: 999px;
   background: var(--hm-surface-band);
   font-size: 12px;
@@ -2566,13 +2590,13 @@ textarea {
   border: 1px solid var(--hm-border-hairline);
   border-top: 1px solid var(--hm-gilt);
   border-radius: var(--hm-radius-lg);
-  padding: 10px 14px 12px;
+  padding: 12px 16px;
 }
 
 .song-next__head {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   margin-bottom: 8px;
 }
 
@@ -2595,7 +2619,7 @@ textarea {
 .song-next__item {
   display: flex;
   flex-direction: column;
-  padding: 6px 10px;
+  padding: 8px 12px;
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-sm);
   background: var(--hm-surface-base);
@@ -2676,7 +2700,7 @@ a.song-next__item:hover {
   position: relative;
   display: block;
   height: 118px;
-  padding: 8px 14px 0;
+  padding: 8px 16px 0;
   overflow: hidden;
   background: var(--hm-surface-band);
   border-bottom: 1px solid var(--hm-border-default);
@@ -2700,7 +2724,7 @@ a.song-next__item:hover {
   position: absolute;
   left: 8px;
   bottom: 6px;
-  padding: 2px 6px 0;
+  padding: 2px 8px 0;
   border-radius: var(--hm-radius-sm);
   background: var(--hm-surface-reading);
   font-family: var(--hm-font-display);
@@ -2715,7 +2739,7 @@ a.song-next__item:hover {
   flex: 1;
   flex-direction: column;
   gap: 2px;
-  padding: 10px 12px 12px;
+  padding: 12px;
 }
 
 .song-card__part {
@@ -2740,7 +2764,8 @@ a.song-next__item:hover {
 .song-card__mats {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 10px;
+  gap: 4px 12px;
+  /* 8px with the body's 2px gap. */
   margin-top: 6px;
   font-size: 12px;
   color: var(--hm-outcome-good);
@@ -2752,7 +2777,7 @@ a.song-next__item:hover {
 
 .song-card__used {
   margin-top: auto;
-  padding-top: 6px;
+  padding-top: 8px;
   border-top: 1px solid var(--hm-border-default);
   font-size: 12px;
   color: var(--hm-text-muted);
@@ -2775,7 +2800,7 @@ a.song-next__item:hover {
   display: grid;
   place-items: start center;
   height: 190px;
-  padding-top: 14px;
+  padding-top: 16px;
   overflow: hidden;
   background: var(--hm-surface-band);
   border-bottom: 1px solid var(--hm-border-default);
@@ -2792,7 +2817,7 @@ a.song-next__item:hover {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 16px 16px;
+  padding: 16px;
 }
 
 .song-peek__title {
@@ -2818,8 +2843,8 @@ a.song-next__item:hover {
 .song-peek__files li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 0;
+  gap: 12px;
+  padding: 8px 0;
   border-top: 1px solid var(--hm-border-default);
   font-size: 13px;
   color: var(--hm-text-primary);
@@ -2861,7 +2886,7 @@ a.song-next__item:hover {
 
 /* Chapter I: a few staves of a real chant page (artifact Imagery, NGA antiphonal leaf), kept as it is. */
 .landing-leaf {
-  margin: 20px 0 0;
+  margin: 24px 0 0;
   max-width: 420px;
 }
 
@@ -2876,16 +2901,17 @@ a.song-next__item:hover {
 }
 
 .landing-leaf figcaption {
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 12px;
   color: var(--hm-text-muted);
+  text-wrap: balance;
 }
 
 /* The choir switcher at the start of the ivory band (artifact Spine), set off from the page tabs by a rule. */
 .hm-choir {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-right: 16px;
   padding-right: 16px;
   border-right: 1px solid var(--hm-border-default);
@@ -2909,5 +2935,1025 @@ a.song-next__item:hover {
 }
 
 .hm-choir__select.ant-select .ant-select-selection-item {
+  color: var(--hm-text-primary);
+}
+
+/*
+ * The 25% motion share (owner 2026-11-14, DESIGN "Motion"): save confirmed, tab content, waiting counts, chart bars.
+ * Transform, opacity and colour only; each runs once when its element arrives or changes.
+ */
+
+/* Save confirmed: the row of the record just saved washes once (shared/motion/savedRow). */
+@keyframes hm-saved-wash {
+  from { background-color: color-mix(in srgb, var(--hm-action-primary) 16%, transparent); }
+}
+
+[data-just-saved],
+[data-just-saved] > td {
+  animation: hm-saved-wash 1800ms var(--hm-ease);
+}
+
+/* Tab content rises into place when its tab is picked (antd 6 mounts the new tab's content in the active panel). */
+.ant-tabs-content-active > * {
+  animation: hm-rise-small var(--hm-dur-base) var(--hm-ease);
+}
+
+/* A waiting count breathes once when it appears, then stays still. */
+@keyframes hm-attention-once {
+  0%, 100% { transform: scale(1); }
+  35% { transform: scale(1.18); }
+}
+
+.hm-week__card:hover,
+.hm-week__card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--hm-lift-shadow);
+}
+
+.hm-week__card:active {
+  transform: translateY(0);
+}
+
+/* Data arriving: bars grow from their baseline (mg-rise) or fill from the left (mg-fill), 40ms apart, once. */
+@keyframes mg-rise {
+  from { transform: scaleY(0); }
+}
+
+@keyframes mg-fill {
+  from { transform: scaleX(0); }
+}
+
+.mg-rise {
+  transform-origin: bottom;
+  animation: mg-rise 520ms var(--hm-ease) backwards;
+  animation-delay: min(calc(var(--i, 0) * 40ms), 480ms);
+}
+
+.mg-fill {
+  transform-origin: left;
+  animation: mg-fill 520ms var(--hm-ease) backwards;
+  animation-delay: min(calc(120ms + var(--i, 0) * 40ms), 480ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-just-saved],
+  [data-just-saved] > td,
+  .ant-tabs-content-active > *,
+  .hm-tab__count,
+  .mg-rise,
+  .mg-fill {
+    animation: none;
+  }
+
+  .hm-week__card:hover,
+  .hm-week__card:focus-visible {
+    transform: none;
+  }
+}
+
+/* Cha xứ pages (artifact PriestDashboard, PriestCalendar, PriestPrograms, PriestProgramDetail, PriestCreateProgram,
+   PriestSongListReview, PriestReports, PriestNotes). */
+.week-list.priest-events li {
+  grid-template-columns: 48px minmax(0, 1fr) auto auto;
+}
+
+/* What waits on the Priest: the reading surface with a gilt top edge (artifact ws-card--reading). */
+.hm-sheet-section.priest-queue {
+  background-color: var(--hm-surface-reading);
+  border-top-color: var(--hm-gilt);
+}
+
+.priest-queue__list {
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.priest-queue__list li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.priest-queue__list .week-list__meta {
+  margin-bottom: 4px;
+  white-space: normal;
+}
+
+.ant-typography.priest-calendar__month {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: lining-nums;
+}
+
+.hm-sheet-section.priest-calendar__grid {
+  padding: 16px;
+}
+
+.priest-day-events {
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.priest-day-events li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--hm-border-hairline);
+}
+
+.priest-day-events li:first-child {
+  border-top: 0;
+}
+
+.priest-sheet__body {
+  padding: 4px 16px 16px;
+}
+
+.hm-sheet-section.priest-reading {
+  background-color: var(--hm-surface-reading);
+}
+
+.hm-sheet-section.priest-form {
+  padding: 24px;
+}
+
+.priest-facts li {
+  display: block;
+  line-height: 1.6;
+}
+
+.hm-split.priest-review {
+  grid-template-columns: minmax(0, 1fr) 400px;
+}
+
+/* Báo cáo: the lede figures beside the songs sung most. */
+.priest-lede {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.priest-lede .priest-sheet__body {
+  padding: 8px 24px 24px;
+}
+
+/* Trao đổi: the people on the reading surface, the open one marked by a burgundy edge and aria-current. */
+.notes-people {
+  width: 280px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 12px 0;
+  background-color: var(--hm-surface-reading);
+  border-right: 1px solid var(--hm-border-default);
+}
+
+.notes-people .hm-rubric {
+  padding: 0 16px;
+}
+
+.notes-person {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.notes-person:hover {
+  background: var(--hm-surface-soft);
+}
+
+.notes-person[aria-current='true'] {
+  border-left-color: var(--hm-action-primary);
+  background: var(--hm-surface-base);
+}
+
+.notes-person:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: -2px;
+}
+
+.notes-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--hm-area-attention-ink);
+}
+
+.notes-live::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.notes-live.is-live {
+  color: var(--hm-status-success-ink, var(--hm-text-body));
+}
+
+/*
+ * Admin pages (redesign-admin session, artifact AdminDashboard … ActivityLogPage): the roles sheet (Vai trò & Phân
+ * quyền) and the settings form with its group index (Cấu hình chung).
+ */
+.admin-roles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-surface-base);
+  overflow: hidden;
+}
+
+.admin-roles > li {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border-inline-start: 1px solid var(--hm-border-default);
+}
+
+.admin-roles > li:first-child {
+  border-inline-start: 0;
+}
+
+.admin-roles h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--hm-text-primary);
+}
+
+.admin-roles p {
+  flex: 1;
+  margin: 4px 0 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--hm-text-muted);
+}
+
+.admin-roles__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--hm-text-muted);
+}
+
+.admin-settings {
+  display: grid;
+  grid-template-columns: minmax(0, 720px) 280px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* An index link lands the group below the running head, not under it. */
+.admin-settings__group {
+  scroll-margin-top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+}
+
+.admin-settings__aside {
+  position: sticky;
+  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-settings__index {
+  margin: 0;
+  padding: 0 0 8px;
+  list-style: none;
+}
+
+.admin-settings__index a {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--hm-text-body);
+  transition: background-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.admin-settings__index a:hover {
+  background: var(--hm-surface-soft);
+  color: var(--hm-action-primary);
+}
+
+.admin-settings__index span {
+  color: var(--hm-text-muted);
+}
+
+/* Shared pages (redesign-trang-chung: sign-in, password, join, profile, 404/403/error; artifact AuthPages,
+   ProfilePage, StatusPages). */
+
+/* Sign-in frame (artifact AuthPages): the landing hero held still, its arched window of light opened to hold the
+   form. The name sits behind the window's crown; a long form lengthens the window and the page scrolls. */
+.hm-auth {
+  --name: 220px;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 480px minmax(0, 1fr);
+  grid-template-rows: calc(40px + var(--name) * 0.56) max-content;
+  min-height: 100vh;
+  padding-inline: 40px;
+  column-gap: 40px;
+  background: var(--hm-surface-media);
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth__scene {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+.hm-auth__brand.on-media-link {
+  position: absolute;
+  top: 24px;
+  left: 40px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth__name {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: var(--name);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--hm-text-on-media);
+  pointer-events: none;
+}
+
+.hm-auth__verse {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: end;
+  position: sticky;
+  bottom: 0;
+  margin: 0;
+  padding-bottom: 40px;
+}
+
+.hm-auth__verse blockquote {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.15;
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth__verse figcaption {
+  margin-top: 8px;
+  color: var(--hm-text-on-media-muted);
+}
+
+/* The window: a 240px crown on a 1px gilt edge, dark from the crown down so the form reads on it. */
+.hm-auth__window {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: safe flex-end;
+  min-height: calc(100vh - 40px - var(--name) * 0.56);
+  border: 1px solid var(--hm-gilt);
+  border-bottom: 0;
+  border-radius: 240px 240px 0 0;
+  background: linear-gradient(180deg, rgb(28 12 17 / 0.35) 0%, rgb(28 12 17 / 0.86) 26%, rgb(28 12 17 / 0.94) 100%);
+}
+
+.hm-auth__body {
+  padding: 112px 32px 40px;
+}
+
+.hm-auth__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  border: 1px solid var(--hm-gilt);
+  border-radius: 50%;
+  color: var(--hm-text-on-media);
+  font-size: 24px;
+}
+
+h1.ant-typography.hm-auth__title {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1.08;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--hm-text-on-media);
+}
+
+.ant-typography.hm-auth__lead {
+  margin: 8px 0 0;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--hm-text-on-media-muted);
+}
+
+.hm-auth__content {
+  margin-top: 32px;
+}
+
+.hm-auth__foot {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid rgb(255 255 255 / 0.18);
+  font-size: 13px;
+  text-align: center;
+  color: var(--hm-text-on-media-muted);
+}
+
+/* Form parts on the dark window: white labels and links, white fields, a white primary with burgundy text. */
+.hm-auth__window .ant-form-item-label > label,
+.hm-auth__window .ant-radio-wrapper,
+.hm-auth__window .ant-divider-inner-text,
+.hm-auth__window .ant-input-data-count {
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth__window .ant-form-item-label > label .ant-form-item-optional,
+.hm-auth__window .ant-form-item-extra {
+  color: var(--hm-text-on-media-muted);
+}
+
+.hm-auth__window .ant-form-item-explain-error {
+  color: #ffb3bd;
+}
+
+.hm-auth__window .ant-divider-horizontal.ant-divider-with-text::before,
+.hm-auth__window .ant-divider-horizontal.ant-divider-with-text::after {
+  border-block-start-color: rgb(255 255 255 / 0.18);
+}
+
+.hm-auth__window a,
+.hm-auth__window a.ant-typography.ant-typography-link,
+.hm-auth__window .ant-btn-link {
+  color: var(--hm-text-on-media);
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 0.4);
+  text-underline-offset: 3px;
+}
+
+.hm-auth__window a:hover,
+.hm-auth__window a.ant-typography.ant-typography-link:hover,
+.hm-auth__window .ant-btn-link:not(:disabled):hover {
+  color: var(--hm-text-on-media);
+  text-decoration-color: currentColor;
+}
+
+.hm-auth__window .ant-alert a {
+  color: inherit;
+}
+
+.hm-auth__window .ant-btn-primary.ant-btn-primary {
+  background: var(--hm-surface-base);
+  color: var(--hm-action-primary);
+  box-shadow: none;
+}
+
+.hm-auth__window .ant-btn-primary.ant-btn-primary:not(:disabled):hover {
+  background: var(--hm-surface-soft);
+  color: var(--hm-action-primary-hover);
+}
+
+.hm-auth__window .ant-btn-default.ant-btn-default {
+  background: transparent;
+  border-color: rgb(255 255 255 / 0.4);
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth__window .ant-btn-default.ant-btn-default:not(:disabled):hover {
+  border-color: var(--hm-text-on-media);
+  color: var(--hm-text-on-media);
+}
+
+.hm-auth :focus-visible {
+  outline: 2px solid var(--hm-text-on-media);
+  outline-offset: 2px;
+}
+
+.hm-auth ::selection {
+  background: var(--hm-action-primary);
+  color: var(--hm-text-on-media);
+}
+
+/* Two short fields side by side (join form). */
+.hm-auth__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+
+/*
+ * Landing and sign-in are one scene (owner 2026-11-15: "liền mạch"). Moving between them, the browser morphs the
+ * mark, the name and the arched window (React Router viewTransition): signing in, the window rises and grows to hold
+ * the form while the name settles smaller above it; going home, it closes back. Width is shared (480px), so the
+ * window's picture is pinned to its top instead of being stretched.
+ */
+.landing-hero__name,
+.hm-auth__name {
+  view-transition-name: hm-name;
+}
+
+.landing-hero__window,
+.hm-auth__window {
+  view-transition-name: hm-window;
+}
+
+::view-transition-group(hm-window),
+::view-transition-group(hm-name),
+::view-transition-group(hm-brand) {
+  animation-duration: var(--hm-dur-entrance);
+  animation-timing-function: var(--hm-ease);
+}
+
+::view-transition-group(hm-window) {
+  overflow: clip;
+}
+
+::view-transition-old(hm-window),
+::view-transition-new(hm-window) {
+  height: 100%;
+  object-fit: none;
+  object-position: top center;
+}
+
+::view-transition-old(hm-window) {
+  animation: hm-vt-out var(--hm-dur-fast) var(--hm-ease) both;
+}
+
+::view-transition-new(hm-window) {
+  animation: hm-vt-in var(--hm-dur-panel) var(--hm-ease) var(--hm-dur-fast) both;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--hm-dur-panel);
+}
+
+@keyframes hm-vt-out {
+  to { opacity: 0; }
+}
+
+@keyframes hm-vt-in {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The named selectors match the rules above, so coming later wins without !important. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(hm-window),
+  ::view-transition-group(hm-name),
+  ::view-transition-group(hm-brand),
+  ::view-transition-old(hm-window),
+  ::view-transition-new(hm-window),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* Status pages (404, 403, render error): the brand top left, one reading leaf in the middle. */
+.hm-status {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 96px 32px;
+  background: var(--hm-surface-page);
+}
+
+.hm-status__brand {
+  position: absolute;
+  top: 32px;
+  left: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--hm-text-primary);
+}
+
+.hm-status__brand:hover {
+  color: var(--hm-action-primary);
+}
+
+.hm-status__leaf {
+  width: 560px;
+  max-width: 100%;
+  padding: 48px;
+  text-align: center;
+  background-color: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-hairline);
+  border-top: 1px solid var(--hm-gilt);
+  border-radius: var(--hm-radius-lg);
+  animation: hm-rise-small var(--hm-dur-base) var(--hm-ease) both;
+}
+
+.hm-status__code {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-area-liturgy-ink);
+}
+
+h1.ant-typography.hm-status__title {
+  margin: 4px 0 0;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1.1;
+}
+
+.ant-typography.hm-status__lead {
+  max-width: 420px;
+  margin: 16px auto 0;
+  color: var(--hm-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-status__leaf {
+    animation: none;
+  }
+}
+
+/* Profile: identity card on a reading surface beside the details sheet. */
+.hm-profile {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 720px);
+  gap: 16px;
+  align-items: start;
+}
+
+.hm-profile-id {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 24px;
+  text-align: center;
+  background-color: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-hairline);
+  border-top: 1px solid var(--hm-gilt);
+  border-radius: var(--hm-radius-lg);
+}
+
+.hm-profile-id__name {
+  margin: 16px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--hm-text-primary);
+}
+
+.hm-profile-id__mail {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--hm-text-muted);
+}
+
+.hm-profile-id__actions {
+  width: 100%;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.ant-typography.hm-profile-id__hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.hm-profile-head {
+  padding: 16px 24px 8px;
+}
+
+.hm-profile-list {
+  margin: 0;
+  padding: 0 24px 8px;
+}
+
+.hm-profile-list > div {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px;
+  align-items: center;
+  min-height: 48px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.hm-profile-list dt {
+  font-size: 13px;
+  color: var(--hm-text-muted);
+}
+
+.hm-profile-list dd {
+  margin: 0;
+  font-weight: 500;
+  color: var(--hm-text-primary);
+}
+
+.hm-profile-list dd.is-empty {
+  font-weight: 400;
+  color: var(--hm-text-muted);
+}
+
+.hm-profile-form {
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.hm-profile-form__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+}
+
+.ant-typography.hm-profile-form__note {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--hm-text-muted);
+}
+
+/* Landing close (redesign-trang-chung): the page ends as it opens, the nave under the same arched window, which now
+   holds the ways in, over a footer bar with the credits. */
+.landing-close {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  min-height: 760px;
+  padding-top: 96px;
+  background: var(--hm-surface-media);
+  color: var(--hm-text-on-media);
+}
+
+.landing-close__nave {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.landing-close__window {
+  box-sizing: border-box;
+  align-self: end;
+  width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 160px 32px 56px;
+  text-align: center;
+  border: 1px solid var(--hm-gilt);
+  border-bottom: 0;
+  border-radius: 240px 240px 0 0;
+  background: linear-gradient(180deg, rgb(28 12 17 / 0.2) 0%, rgb(28 12 17 / 0.8) 40%, rgb(28 12 17 / 0.92) 100%);
+}
+
+h2.ant-typography.landing-close__title {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1.08;
+  text-wrap: balance;
+  color: var(--hm-text-on-media);
+}
+
+.ant-typography.landing-close__lead {
+  margin: 16px 0 32px;
+  text-wrap: balance;
+  color: var(--hm-text-on-media-muted);
+}
+
+.landing-close .ant-btn.landing-hero-sign-in.landing-hero-sign-in {
+  width: 100%;
+  border: 0;
+  background: var(--hm-surface-base);
+  color: var(--hm-action-primary);
+}
+
+.landing-close .ant-btn.landing-hero-sign-in.landing-hero-sign-in:not(:disabled):hover {
+  background: var(--hm-surface-soft);
+  color: var(--hm-action-primary-hover);
+}
+
+.landing-close .ant-btn.ant-btn-background-ghost.ant-btn-background-ghost {
+  width: 100%;
+  border-color: var(--hm-text-on-media-muted);
+  color: var(--hm-text-on-media);
+}
+
+.landing-close .ant-btn.ant-btn-background-ghost.ant-btn-background-ghost:not(:disabled):hover {
+  border-color: var(--hm-text-on-media);
+  background: transparent;
+  color: var(--hm-text-on-media);
+}
+
+.landing-close__mail.on-media-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 4px 8px;
+  border-radius: var(--hm-radius-md);
+  color: var(--hm-text-on-media);
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 0.4);
+  text-underline-offset: 3px;
+}
+
+.landing-close__foot {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 40px;
+  border-top: 1px solid var(--hm-gilt);
+  background: rgb(28 12 17 / 0.92);
+  font-size: 13px;
+  color: var(--hm-text-on-media-muted);
+}
+
+.landing-close__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.landing-close :focus-visible {
+  outline: 2px solid var(--hm-text-on-media);
+  outline-offset: 2px;
+}
+
+/* From the close, its window is the door into the sign-in (LandingPage sets html[data-door]). */
+html[data-door='close'] .landing-hero__window,
+html[data-door='close'] .landing-hero__name {
+  view-transition-name: none;
+}
+
+html[data-door='close'] .landing-close__window {
+  view-transition-name: hm-window;
+}
+
+/*
+ * Ca trưởng detail pages (artifact DirectorProgramDetailPage, SongListProposalPage, SongDetailPage,
+ * RehearsalPracticeRoomPage, ChoirsPage): main column beside a side panel, fact lists, choir sheets.
+ */
+.ct-main,
+.ct-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Several panels in one column can outgrow the window, so they scroll with the page instead of sticking. */
+.ct-aside > .hm-preview {
+  position: static;
+}
+
+.hm-sheet-section.ct-reading {
+  background-color: var(--hm-surface-reading);
+}
+
+.ct-reading__body,
+.ct-sheet-body {
+  padding: 8px 16px 16px;
+}
+
+.ct-sheet-head {
+  padding-bottom: 12px;
+}
+
+.ct-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.ct-facts .is-wide {
+  grid-column: 1 / -1;
+}
+
+.ct-facts dt {
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.ct-facts dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  color: var(--hm-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.ct-facts .ct-facts__text {
+  font-weight: 400;
+  white-space: pre-line;
+}
+
+.ct-facts__none {
+  font-weight: 400;
+  color: var(--hm-text-muted);
+}
+
+.ct-choirs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-choir {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  background: var(--hm-surface-base);
+  border: 1px solid var(--hm-border-hairline);
+  border-radius: var(--hm-radius-lg);
+}
+
+.ct-choir__name {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--hm-text-primary);
+}
+
+/* Duyệt kỹ năng: the queue's size in the attention colours; it leaves at zero (artifact SkillApprovalPage). */
+.ct-waiting {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 8px 16px;
+  border: 1px solid var(--hm-area-attention-border);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-area-attention-tint);
+  color: var(--hm-area-attention-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ct-waiting b {
+  font-family: var(--hm-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }

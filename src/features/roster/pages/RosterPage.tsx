@@ -36,7 +36,7 @@ export function RosterPage() {
     const skillsOf = new Map((members.data ?? []).map((member) => [member.id, member.skills]))
     return (participation.data ?? [])
       .filter((request) => request.response === 'confirmed' || request.response === 'unsure')
-      .map(({ memberId, fullName }) => ({ memberId, fullName, skills: skillsOf.get(memberId) ?? [] }))
+      .map(({ memberId, fullName, hasTimeConflict }) => ({ memberId, fullName, hasTimeConflict, skills: skillsOf.get(memberId) ?? [] }))
   }, [participation.data, members.data])
 
   const loading = songList.isPending || participation.isPending || skills.isPending || members.isPending

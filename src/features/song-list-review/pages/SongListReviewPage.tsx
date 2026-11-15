@@ -7,7 +7,7 @@ import {
   FileSearchOutlined,
   FolderOpenOutlined,
 } from '@ant-design/icons'
-import { App, Button, Card, ConfigProvider, Flex, Typography } from 'antd'
+import { App, Button, ConfigProvider, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState, type ReactNode } from 'react'
 import { generatePath, useNavigate, useParams } from 'react-router'
@@ -24,8 +24,8 @@ import {
   type ProgramItem,
 } from '@/features/liturgical-programs'
 import { parseUtc } from '@/lib/api/dates'
-import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
-import { cardSurface, colors, sections, spacing } from '@/styles/tokens'
+import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
+import { colors, sections, spacing } from '@/styles/tokens'
 import { ReviewForm } from '../components/ReviewForm'
 import { SongMaterialsDrawer } from '../components/SongMaterialsDrawer'
 import { useLatestSongList, useReviewSongList, useSongListVersions } from '../hooks/useSongListReview'
@@ -152,12 +152,17 @@ function EarlierVersions({ list }: Readonly<{ list: SongList }>) {
 function ReviewHistory({ list }: Readonly<{ list: SongList }>) {
   const earlier = Boolean(list.previousVersionId)
   return (
-    <Card style={cardSurface} title={<CardTitle>Lịch sử duyệt</CardTitle>}>
-      <Flex vertical gap={spacing.md}>
+    <section className="hm-sheet-section" aria-labelledby="review-history-heading">
+      <header className="hm-sheet-section__head">
+        <h2 id="review-history-heading" className="hm-rubric">
+          Lịch sử duyệt
+        </h2>
+      </header>
+      <Flex vertical gap={spacing.md} className="priest-sheet__body">
         <VersionDecisions list={list} headed={earlier} />
         {earlier && <EarlierVersions list={list} />}
       </Flex>
-    </Card>
+    </section>
   )
 }
 
@@ -258,15 +263,14 @@ export function SongListReviewPage() {
         <EmptyState title="Chưa có danh sách bài hát" description="Ca trưởng chưa gửi danh sách bài hát cho sự kiện này." />
       )}
       {!failed && event.data && list && (
-        <Flex vertical gap={spacing.lg}>
-          <Card style={cardSurface} title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>
-            <ReviewSteps eventId={programId} date={event.data.date} list={list} />
-          </Card>
+        // The list on the reading surface, the decision beside it (artifact PriestSongListReview).
+        <div className="hm-split priest-review">
           <ConfigProvider theme={readingTheme}>
-            <Card
-              style={{ border: cardSurface.border, boxShadow: 'none' }}
-              title={<CardTitle>{`Duyệt danh sách bài hát (${list.items.length} bài)`}</CardTitle>}
-            >
+            <section className="hm-sheet-section priest-reading" aria-labelledby="review-list-heading">
+              <header className="hm-sheet-section__head">
+                <h2 id="review-list-heading" className="hm-rubric">{`Duyệt danh sách bài hát (${list.items.length} bài)`}</h2>
+              </header>
+              <div className="priest-sheet__body">
               <div style={{ marginBottom: spacing.md }}>
                 <ListState list={list} />
               </div>
@@ -282,12 +286,25 @@ export function SongListReviewPage() {
                   </Button>
                 )}
               />
-            </Card>
+              </div>
+            </section>
           </ConfigProvider>
-          {list.status === 'submitted' && <ReviewForm saving={review.isPending} onSubmit={handleReview} />}
-          <ReviewHistory list={list} />
+          <aside className="dash-aside dash-main" aria-label="Quyết định và tình hình chuẩn bị">
+            {list.status === 'submitted' && <ReviewForm saving={review.isPending} onSubmit={handleReview} />}
+            <section className="hm-sheet-section priest-queue hm-paper" aria-labelledby="review-prep-heading">
+              <header className="hm-sheet-section__head">
+                <h2 id="review-prep-heading" className="hm-rubric">
+                  Tình hình chuẩn bị
+                </h2>
+              </header>
+              <div className="priest-sheet__body">
+                <ReviewSteps eventId={programId} date={event.data.date} list={list} />
+              </div>
+            </section>
+            <ReviewHistory list={list} />
+          </aside>
           <SongMaterialsDrawer item={viewing} onClose={() => setViewing(undefined)} />
-        </Flex>
+        </div>
       )}
     </>
   )

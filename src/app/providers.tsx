@@ -1,10 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { App as AntApp, ConfigProvider } from 'antd'
 import viVN from 'antd/locale/vi_VN'
 import dayjs from 'dayjs'
 import 'dayjs/locale/vi'
 import { useState, type ReactNode } from 'react'
 import { ApiError } from '@/lib/api/errors'
+import { highlightSavedRow, savedId } from '@/shared/motion/savedRow'
 import { BackgroundTaskProvider } from '@/shared/tasks/BackgroundTasks'
 import { NeumeSpinner } from '@/shared/ui'
 import { theme } from './theme'
@@ -16,6 +17,8 @@ export function AppProviders({ children }: Readonly<{ children: ReactNode }>) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
+        // Every successful save washes the row it touched once (shared/motion/savedRow).
+        mutationCache: new MutationCache({ onSuccess: (data, variables) => highlightSavedRow(savedId(data, variables)) }),
         // A 4xx answer (validation, permission, not found) would fail the same way again; retry only the rest.
         defaultOptions: {
           queries: {

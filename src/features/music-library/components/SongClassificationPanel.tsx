@@ -38,7 +38,7 @@ export interface SongClassificationPanelProps {
 
 /**
  * The FE-29 dimensions of one song, each with any number of values (GET /api/songs/{id}/classification). The
- * "Phân loại" tab of the song page.
+ * side panel of the song page, one dimension per row.
  */
 export function SongClassificationPanel({ classification, loading, failed, error, hasData, onRetry, onEdit }: Readonly<SongClassificationPanelProps>) {
   return (
@@ -54,7 +54,7 @@ export function SongClassificationPanel({ classification, loading, failed, error
         <Descriptions
           layout="vertical"
           colon={false}
-          column={{ xs: 1, sm: 2, lg: 3 }}
+          column={1}
           items={[
             { key: 'season', label: 'Mùa phụng vụ', children: tags(names(classification.liturgicalSeasons)) },
             { key: 'massType', label: 'Loại Thánh lễ', children: tags(names(classification.massTypes)) },
