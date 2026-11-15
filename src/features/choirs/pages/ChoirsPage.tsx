@@ -1,10 +1,10 @@
 import { EditOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons'
 import { App, Button, Card, Flex, Table, Typography, type TableColumnsType } from 'antd'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { accountName, useActiveDirectors } from '@/features/users'
 import { ApiError } from '@/lib/api/errors'
 import { EmptyState, ErrorState, PageHeader, SectionSkeleton, StatusTag } from '@/shared/ui'
-import { colors } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { ChoirFormDrawer } from '../components/ChoirFormDrawer'
 import { ChoirMembersDrawer } from '../components/ChoirMembersDrawer'
@@ -158,7 +158,28 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
         />
       )}
       {admin && choirs.isSuccess && choirs.data.length > 0 && <UnplacedMembersNotice choirs={choirs.data} />}
-      {choirs.isSuccess && choirs.data.length > 0 && (
+      {/* A Director leads one to a few choirs: each is a sheet with its name in the serif (artifact ChoirsPage). */}
+      {!admin && choirs.isSuccess && choirs.data.length > 0 && (
+        <ul className="ct-choirs hm-stagger" aria-label="Ca đoàn bạn phụ trách">
+          {choirs.data.map((choir, index) => (
+            <li key={choir.id} className="ct-choir hm-lift" style={{ '--i': index } as CSSProperties}>
+              <Flex align="flex-start" justify="space-between" gap={spacing.sm}>
+                <h2 className="ct-choir__name">{choir.name}</h2>
+                <StatusTag color={choir.isActive ? 'green' : 'default'} mark={choir.isActive ? undefined : 'draft'} style={{ marginInlineEnd: 0 }}>
+                  {choir.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                </StatusTag>
+              </Flex>
+              <Typography.Paragraph style={{ ...(choir.description ? {} : muted), margin: 0, flex: 1 }}>
+                {choir.description ?? 'Chưa có mô tả'}
+              </Typography.Paragraph>
+              <Button icon={<TeamOutlined />} onClick={() => setMembersOf(choir)} aria-label={`Ca viên của ${choir.name}`} style={{ alignSelf: 'flex-start' }}>
+                Ca viên
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {admin && choirs.isSuccess && choirs.data.length > 0 && (
         <Card styles={{ body: { padding: 0 } }}>
           <Table<Choir> rowKey="id" pagination={false} dataSource={choirs.data} scroll={{ x: 'max-content' }} columns={columns} />
         </Card>

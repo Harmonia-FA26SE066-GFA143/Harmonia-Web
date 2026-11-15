@@ -1,7 +1,6 @@
-import { App, Card, Typography } from 'antd'
+import { App } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { AllDone, EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
 import { PendingSkillTable } from '../components/PendingSkillTable'
 import { RejectSkillModal } from '../components/RejectSkillModal'
 import { useApproveSkill, usePendingSkills, useRejectSkill } from '../hooks/usePendingSkills'
@@ -95,6 +94,7 @@ export function SkillApprovalPage() {
     <>
       <PageHeader
         title="Duyệt kỹ năng"
+        description="Ca viên khai báo kỹ năng trên ứng dụng; duyệt hoặc từ chối kèm lý do. Ca viên sẽ nhận được thông báo."
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Duyệt kỹ năng' }]}
       />
 
@@ -115,10 +115,14 @@ export function SkillApprovalPage() {
         )}
         {pending.data !== undefined && total > 0 && (
           <>
-            <Typography.Text aria-live="polite" style={{ display: 'block', marginBottom: spacing.sm, color: colors.textMuted }}>
-              {total} kỹ năng chờ duyệt
-            </Typography.Text>
-            <Card styles={{ body: { padding: 0 } }}>
+            {/* The queue's size as a waiting band; it leaves with the last declaration (artifact SkillApprovalPage). */}
+            <p className="ct-waiting hm-attention-once" aria-live="polite">
+              <b>{total}</b> kỹ năng chờ duyệt
+            </p>
+            <div className="hm-sheet-section">
+              <div className="hm-sheet-section__head ct-sheet-head">
+                <h2 className="hm-rubric">Chờ duyệt</h2>
+              </div>
               <PendingSkillTable
                 skills={pending.data.items}
                 page={page}
@@ -130,7 +134,7 @@ export function SkillApprovalPage() {
                 onApprove={handleApprove}
                 onReject={setRejecting}
               />
-            </Card>
+            </div>
           </>
         )}
       </section>

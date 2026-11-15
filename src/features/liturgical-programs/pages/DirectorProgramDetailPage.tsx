@@ -1,12 +1,12 @@
 import { ArrowLeftOutlined, FileSearchOutlined } from '@ant-design/icons'
-import { Button, Card, ConfigProvider, Flex, Typography } from 'antd'
+import { Button, ConfigProvider, Flex, Typography } from 'antd'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
 import { EventChoirsCard, LeadChoirNotice } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
-import { CardTitle, EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
-import { cardSurface, colors, spacing } from '@/styles/tokens'
+import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
+import { colors, spacing } from '@/styles/tokens'
 import { DirectorPreparationHub } from '../components/DirectorPreparationHub'
 import { PreparationOverview } from '../components/PreparationOverview'
 import { DirectorAdjacentNav } from '../components/AdjacentProgramNav'
@@ -25,7 +25,10 @@ function songListAction(status?: SongListStatus): string {
   return canEditSongList(status) ? 'Chỉnh sửa danh sách bài hát' : 'Xem danh sách đề xuất'
 }
 
-/** Independent preparation items from the status the Choir Director may read (#246). */
+/**
+ * Independent preparation items from the status the Choir Director may read (#246), on the reading surface of the
+ * side panel (artifact DirectorProgramDetailPage): one item per row, in their fixed reading order.
+ */
 function DirectorSteps({ program }: Readonly<{ program: LiturgicalProgramDetail }>) {
   const prep = usePreparationStatus(program.id)
   const items = preparationItems({
@@ -36,24 +39,25 @@ function DirectorSteps({ program }: Readonly<{ program: LiturgicalProgramDetail 
     viewer: 'director',
   })
   return (
-    <Card style={cardSurface} title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>
-      {prep.isPending ? <SectionSkeleton rows={2} label="Đang tải tình hình chuẩn bị" /> : <PreparationOverview items={items} />}
+    <section className="hm-preview hm-paper" aria-labelledby="program-prep">
+      <h2 id="program-prep" className="hm-rubric">Tình hình chuẩn bị</h2>
+      {prep.isPending ? <SectionSkeleton rows={2} label="Đang tải tình hình chuẩn bị" /> : <PreparationOverview items={items} columns={1} />}
       {prep.isError && (
-        <Flex align="center" gap={spacing.sm} wrap style={{ marginTop: spacing.md }}>
+        <Flex align="center" gap={spacing.sm} wrap>
           <Typography.Text type="danger">Không thể tải tình hình chuẩn bị.</Typography.Text>
           <Button size="small" onClick={() => prep.refetch()} loading={prep.isFetching}>
             Thử lại
           </Button>
         </Flex>
       )}
-    </Card>
+    </section>
   )
 }
 
 /**
- * Choir Director: one program read like a missal page (redesign brief 2026-10-31): the celebration in the display
- * serif, the six preparation steps, the songs in order, then the preparation hub that links rehearsals, attendance,
- * participation, roster and practice, and the serving choirs.
+ * Choir Director: one program read like a missal page (artifact DirectorProgramDetailPage): the celebration in the
+ * display serif; the songs in order on the reading surface and the preparation hub that links rehearsals, attendance,
+ * participation, roster and practice; beside them the independent preparation signals and the serving choirs.
  */
 export function DirectorProgramDetailPage() {
   const navigate = useNavigate()
@@ -114,47 +118,47 @@ export function DirectorProgramDetailPage() {
       {program.isError && (
         <ErrorState title="Không thể cập nhật chương trình" error={program.error} hasData onRetry={() => program.refetch()} retrying={program.isFetching} />
       )}
-      <Flex vertical gap={spacing.lg}>
-        <LeadChoirNotice eventId={data.id} />
-        <DirectorSteps program={data} />
-
-        <ConfigProvider theme={readingTheme}>
-          {/* The ivory of readingTheme, so only the border comes from cardSurface. */}
-          <Card
-            style={{ border: cardSurface.border, boxShadow: 'none' }}
-            title={
-              <Flex align="center" gap={spacing.sm} wrap>
-                <CardTitle>Chương trình</CardTitle> <SongListStatusTag status={data.songListStatus} />
-              </Flex>
-            }
-            extra={
-              <Button type="primary" onClick={openProposal}>
-                {songListAction(data.songListStatus)}
-              </Button>
-            }
-          >
-            {data.songs.length > 0 ? (
-              <ProgramItemList
-                items={data.songs.map(({ id, songId, liturgicalPart, title, note }) => ({ id, songId, slotName: liturgicalPart, title, note }))}
-                renderAction={(item) =>
-                  item.songId && (
-                    <Link to={generatePath(paths.director.songDetail, { songId: item.songId })} aria-label={`Xem bài ${item.title}`} style={{ fontWeight: 500 }}>
-                      Xem bài
-                    </Link>
-                  )
-                }
-              />
-            ) : (
-              <Typography.Text style={{ color: colors.textMuted }}>
-                Chưa có danh sách bài hát. Chọn bài từ kho và gửi Cha xứ duyệt.
-              </Typography.Text>
-            )}
-          </Card>
-        </ConfigProvider>
-
-        <DirectorPreparationHub program={data} onOpenSongList={openProposal} />
-        <EventChoirsCard eventId={data.id} locked={data.date < vietnamToday()} />
-      </Flex>
+      <LeadChoirNotice eventId={data.id} />
+      <div className="hm-split ct-detail">
+        <div className="ct-main">
+          <ConfigProvider theme={readingTheme}>
+            <section className="hm-sheet-section ct-reading" aria-labelledby="program-songs">
+              <div className="hm-sheet-section__head">
+                <Flex align="center" gap={spacing.sm} wrap>
+                  <h2 id="program-songs" className="hm-rubric">Chương trình</h2>
+                  <SongListStatusTag status={data.songListStatus} />
+                </Flex>
+                <Button type="primary" onClick={openProposal}>
+                  {songListAction(data.songListStatus)}
+                </Button>
+              </div>
+              <div className="ct-reading__body">
+                {data.songs.length > 0 ? (
+                  <ProgramItemList
+                    items={data.songs.map(({ id, songId, liturgicalPart, title, note }) => ({ id, songId, slotName: liturgicalPart, title, note }))}
+                    renderAction={(item) =>
+                      item.songId && (
+                        <Link to={generatePath(paths.director.songDetail, { songId: item.songId })} aria-label={`Xem bài ${item.title}`} style={{ fontWeight: 500 }}>
+                          Xem bài
+                        </Link>
+                      )
+                    }
+                  />
+                ) : (
+                  <Typography.Text style={{ color: colors.textMuted }}>
+                    Chưa có danh sách bài hát. Chọn bài từ kho và gửi Cha xứ duyệt.
+                  </Typography.Text>
+                )}
+              </div>
+            </section>
+          </ConfigProvider>
+          <DirectorPreparationHub program={data} onOpenSongList={openProposal} />
+        </div>
+        <aside className="ct-aside" aria-label="Chuẩn bị và ca đoàn phục vụ">
+          <DirectorSteps program={data} />
+          <EventChoirsCard eventId={data.id} locked={data.date < vietnamToday()} />
+        </aside>
+      </div>
     </>
   )
 }

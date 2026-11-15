@@ -6,7 +6,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { isMidiFile, isPlayableAudio, supportsTimedLyrics, useSongMaterials } from '@/features/music-library'
 import { ApiError } from '@/lib/api/errors'
-import { ErrorState, PageHeader } from '@/shared/ui'
+import { EmptySongbook, EmptyState, ErrorState, PageHeader } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { RecordingPanel } from '../components/RecordingPanel'
 import { MidiPracticePlayer } from '../components/MidiPracticePlayer'
@@ -162,25 +162,39 @@ export function RehearsalPracticeRoomPage() {
       />
 
       {room.songs.length === 0 ? (
-        <Card><Typography.Title level={4}>Buổi tập chưa có bài hát</Typography.Title></Card>
+        <EmptyState
+          icon={<EmptySongbook />}
+          title="Buổi tập chưa có bài hát"
+          description={room.note ? `Ghi chú buổi tập: ${room.note}` : 'Thêm bài hát cho buổi tập ở trang Lịch tập.'}
+          action={<Button onClick={() => navigate(paths.director.rehearsals)}>Quay lại lịch tập</Button>}
+        />
       ) : (
+        // The running order and the note on the left, the song being practised on the right (artifact RehearsalPracticeRoomPage).
         <div className="practice-room-layout">
-          <Card title="Bài hát" className="practice-song-list" styles={{ body: { padding: 0 } }}>
-            <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+          <aside className="hm-preview hm-paper practice-song-list" aria-labelledby="practice-order">
+            <h2 id="practice-order" className="hm-rubric">Bài tập</h2>
+            <ol>
               {room.songs.map((item, index) => (
                 <li key={item.id}>
                   <button type="button" aria-current={index === current ? 'true' : undefined} onClick={() => setSelectedIndex(index)} className="practice-song-item">
                     <span aria-hidden className="practice-song-item__number">{index + 1}</span>
                     <span style={{ minWidth: 0 }}>
                       <span className="practice-song-item__title">{item.title}</span>
+                      {item.note && <span className="practice-song-item__meta">{item.note}</span>}
                     </span>
                   </button>
                 </li>
               ))}
             </ol>
-          </Card>
+            {room.note && (
+              <>
+                <h2 className="hm-rubric">Ghi chú buổi tập</h2>
+                <Typography.Paragraph style={{ margin: 0, whiteSpace: 'pre-line' }}>{room.note}</Typography.Paragraph>
+              </>
+            )}
+          </aside>
 
-          <Card className="practice-room-player" styles={{ body: { padding: spacing.lg } }}>
+          <section className="hm-sheet-section practice-room-player" aria-label={`Đang tập: ${song.title}`}>
             <Typography.Title level={2} style={{ margin: 0, fontFamily: typography.displayFontFamily, fontSize: 32, fontWeight: 600, lineHeight: 1.2, fontVariantNumeric: 'lining-nums' }}>{song.title}</Typography.Title>
             {song.note && <Typography.Paragraph type="secondary" style={{ margin: `${spacing.xs}px 0 0` }}>Cần tập: {song.note}</Typography.Paragraph>}
             <Flex wrap justify="space-between" align="center" gap={spacing.sm} style={{ marginTop: spacing.md }}>
@@ -203,11 +217,9 @@ export function RehearsalPracticeRoomPage() {
             )}
 
             <RecordingPanel rehearsalId={room.rehearsalId} songId={song.id} songTitle={song.title} />
-          </Card>
+          </section>
         </div>
       )}
-
-      {room.note && <Card title="Ghi chú buổi tập" style={{ marginTop: spacing.md }}><Typography.Paragraph style={{ marginBottom: 0 }}>{room.note}</Typography.Paragraph></Card>}
     </div>
   )
 }

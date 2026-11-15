@@ -1,15 +1,14 @@
 import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, FileSearchOutlined } from '@ant-design/icons'
-import { App, Button, Card, Tabs, Typography } from 'antd'
+import { App, Button, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
 import { ApiError, requestFailureMessage } from '@/lib/api/errors'
-import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { useBackgroundTasks } from '@/shared/tasks/BackgroundTasks'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors } from '@/styles/tokens'
 import { LearningProgressDrawer } from '../components/LearningProgressDrawer'
 import { SongClassificationPanel } from '../components/SongClassificationPanel'
 import { SongClassificationDrawer } from '../components/SongClassificationDrawer'
@@ -52,7 +51,6 @@ import {
   type SongValues,
 } from '../types'
 
-const tabs = ['info', 'classification', 'materials'] as const
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { title: 'Chi tiết bài hát' }]
 
@@ -60,7 +58,8 @@ const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { tit
  * Choir Director: one song with its fields, FE-29 classification and FE-08/FE-28 materials, their learning progress
  * (FE-09) and deletion of the song. The backend refuses to delete a song any song list, rehearsal or practice
  * assignment uses (409 SONG_IN_USE, BE 718696c), as "only if never selected for a Mass" (song-approval.md, 5a.5) asks.
- * The three parts are tabs kept in `?tab=`, each with its own loading, empty and error states.
+ * Materials fill the main column; the song's facts and classification sit beside them, each with its own loading, empty
+ * and error states. Old `?tab=` links still land here.
  */
 
 export function SongDetailPage() {
@@ -68,7 +67,6 @@ export function SongDetailPage() {
   const location = useLocation()
   const { message, modal } = App.useApp()
   const { songId = '' } = useParams()
-  const [tab, setTab] = useUrlTab(tabs, 'info')
   const song = useSong(songId)
   const classification = useSongClassification(songId)
   const materials = useSongMaterials(songId)
@@ -163,7 +161,7 @@ export function SongDetailPage() {
   }
 
   const { data } = song
-  // Key metadata in place of a description sentence; the Thông tin tab has every field.
+  // Key metadata in place of a description sentence; the side panel has every field.
   const metadata = [data.musicalKey && `Giọng ${data.musicalKey}`, data.composer && `Nhạc: ${data.composer}`, data.lyricist && `Lời: ${data.lyricist}`]
     .filter(Boolean)
     .join(' · ')
@@ -331,67 +329,63 @@ export function SongDetailPage() {
       {song.isError && (
         <ErrorState title="Không thể cập nhật bài hát" error={song.error} hasData onRetry={() => song.refetch()} retrying={song.isFetching} />
       )}
-      <Card styles={{ body: { paddingTop: 0 } }}>
-        <Tabs
-          destroyOnHidden
-          activeKey={tab}
-          onChange={setTab}
-          items={[
-            { key: 'info', label: 'Thông tin', children: (
-              <>
-                <Typography.Title level={2} style={{ margin: `0 0 ${spacing.md}px`, fontSize: typography.cardHeading.fontSize }}>Thông tin bài hát</Typography.Title>
-                <SongInfoPanel song={data} />
-              </>
-            ) },
-            {
-              key: 'classification',
-              label: 'Phân loại',
-              children: (
-                <SongClassificationPanel
-                  classification={classification.data}
-                  loading={classification.isPending}
-                  failed={classification.isError}
-                  error={classification.error}
-                  hasData={classification.data !== undefined}
-                  onRetry={() => classification.refetch()}
-                  onEdit={() => setClassifying(true)}
-                />
-              ),
-            },
-            {
-              key: 'materials',
-              label: materials.data ? `Tài liệu (${materials.data.length})` : 'Tài liệu',
-              children: (
-                <>
-                  <Typography.Paragraph style={{ color: colors.textMuted, marginBottom: spacing.lg }}>
-                    Xem bản nhạc, đọc lời ca và nghe audio. Tài liệu được sắp theo từng nhóm bên dưới.
-                  </Typography.Paragraph>
-                  {materials.isPending && <SectionSkeleton rows={3} label="Đang tải tài liệu" />}
-                  {materials.isError && (
-                    <ErrorState headingLevel={2} title="Không thể tải tài liệu" error={materials.error} hasData={materials.data !== undefined} onRetry={() => materials.refetch()} retrying={materials.isFetching} />
-                  )}
-                  {materials.data !== undefined && (
-                    <SongMaterialsPanel
-                      readingLayout
-                      materials={materials.data}
-                      uploadingKind={upload.isPending && picked?.file ? picked.kind : undefined}
-                      onPick={handlePick}
-                      onTypeLyrics={() => setPicked({ kind: 'lyrics', title: lyricsTitle })}
-                      onExtractLyrics={handleExtractLyrics}
-                      extractingIds={extractingIds}
-                      onDelete={handleDelete}
-                      onEdit={setEditingMaterial}
-                      onReplace={setReplacing}
-                      onProgress={setProgressOf}
-                      onTimedLyrics={setTiming}
-                    />
-                  )}
-                </>
-              ),
-            },
-          ]}
-        />
-      </Card>
+      {/* Materials to read, hear and manage on the left; the song's facts and classification beside them (artifact SongDetailPage). */}
+      <div className="hm-split">
+        <section className="hm-sheet-section" aria-labelledby="song-materials">
+          <div className="hm-sheet-section__head">
+            <h2 id="song-materials" className="hm-rubric">{materials.data ? `Tài liệu (${materials.data.length})` : 'Tài liệu'}</h2>
+          </div>
+          <div className="ct-sheet-body">
+            <Typography.Paragraph style={{ color: colors.textMuted }}>
+              Xem bản nhạc, đọc lời ca và nghe audio. Tài liệu được sắp theo từng nhóm bên dưới.
+            </Typography.Paragraph>
+            {materials.isPending && <SectionSkeleton rows={3} label="Đang tải tài liệu" />}
+            {materials.isError && (
+              <ErrorState headingLevel={3} title="Không thể tải tài liệu" error={materials.error} hasData={materials.data !== undefined} onRetry={() => materials.refetch()} retrying={materials.isFetching} />
+            )}
+            {materials.data !== undefined && (
+              <SongMaterialsPanel
+                readingLayout
+                materials={materials.data}
+                uploadingKind={upload.isPending && picked?.file ? picked.kind : undefined}
+                onPick={handlePick}
+                onTypeLyrics={() => setPicked({ kind: 'lyrics', title: lyricsTitle })}
+                onExtractLyrics={handleExtractLyrics}
+                extractingIds={extractingIds}
+                onDelete={handleDelete}
+                onEdit={setEditingMaterial}
+                onReplace={setReplacing}
+                onProgress={setProgressOf}
+                onTimedLyrics={setTiming}
+              />
+            )}
+          </div>
+        </section>
+        <aside className="ct-aside" aria-label="Thông tin và phân loại">
+          <section className="hm-preview hm-paper" aria-labelledby="song-info">
+            <h2 id="song-info" className="hm-rubric">Thông tin bài hát</h2>
+            <SongInfoPanel song={data} />
+          </section>
+          <section className="hm-sheet-section" aria-labelledby="song-classification">
+            <div className="hm-sheet-section__head">
+              <h2 id="song-classification" className="hm-rubric">Phân loại</h2>
+              <Button type="link" icon={<EditOutlined />} disabled={!classification.data} onClick={() => setClassifying(true)}>
+                Sửa phân loại
+              </Button>
+            </div>
+            <div className="ct-sheet-body">
+              <SongClassificationPanel
+                classification={classification.data}
+                loading={classification.isPending}
+                failed={classification.isError}
+                error={classification.error}
+                hasData={classification.data !== undefined}
+                onRetry={() => classification.refetch()}
+              />
+            </div>
+          </section>
+        </aside>
+      </div>
 
       <SongFormDrawer
         open={editing}

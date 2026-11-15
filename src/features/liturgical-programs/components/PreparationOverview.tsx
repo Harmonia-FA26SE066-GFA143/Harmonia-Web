@@ -6,6 +6,8 @@ import type { PreparationItem, PreparationState } from '../preparationOverview'
 
 export interface PreparationOverviewProps {
   items: PreparationItem[]
+  /** Items per row; a narrow side panel takes one. */
+  columns?: number
 }
 
 const appearance: Record<PreparationState, { icon: ReactNode; tone: string; background: string; border: string }> = {
@@ -19,7 +21,7 @@ const appearance: Record<PreparationState, { icon: ReactNode; tone: string; back
  * Preparation is shown as independent items, without numbering, connectors or a "current step". This keeps the UI
  * truthful when, for example, the celebration date has passed but participation or roster work is still incomplete.
  */
-export function PreparationOverview({ items }: Readonly<PreparationOverviewProps>) {
+export function PreparationOverview({ items, columns = 3 }: Readonly<PreparationOverviewProps>) {
   const done = items.filter((item) => item.state === 'done').length
 
   return (
@@ -31,7 +33,7 @@ export function PreparationOverview({ items }: Readonly<PreparationOverviewProps
         aria-label="Tình trạng các mục chuẩn bị"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
           gap: spacing.sm,
           margin: 0,
           padding: 0,
