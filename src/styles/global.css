@@ -1950,6 +1950,19 @@ textarea {
   .ant-drawer-open .ant-drawer-body > * {
     animation: hm-rise-small var(--hm-dur-panel) var(--hm-ease) 60ms both;
   }
+
+  /* A dialog opens from 0.97, not antd's zoom from 0.2 (DS "Motion": modals, hm-pop-in); closing keeps antd's zoom. */
+  .ant-modal-root .ant-modal.ant-zoom-enter,
+  .ant-modal-root .ant-modal.ant-zoom-appear {
+    animation-name: hm-pop-in;
+  }
+}
+
+@keyframes hm-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
 }
 
 /*

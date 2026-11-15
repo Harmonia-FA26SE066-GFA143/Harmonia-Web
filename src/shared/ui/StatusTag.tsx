@@ -1,6 +1,6 @@
 import { Tag, theme, type TagProps } from 'antd'
 import { useState, type ReactNode } from 'react'
-import { colors } from '@/styles/tokens'
+import { colors, semantic } from '@/styles/tokens'
 
 /** The Ant Design preset names the status maps already use; `processing` reads as blue. */
 export type StatusTagColor = 'default' | 'green' | 'gold' | 'red' | 'orange' | 'blue' | 'processing'
@@ -16,9 +16,9 @@ export interface StatusTagProps extends Omit<TagProps, 'color' | 'children'> {
 }
 
 /**
- * Status label with a text color dark enough to read (4.5:1 or more on its light background). The Ant Design preset
- * tags put the -7 shade on the -1 background: green 3.4:1 and gold 2.8:1 fall short, so those use the -8 / -9 shade.
- * The label, not the color, still carries the meaning.
+ * Status label as the Design System StatusTag draws it: the status tint as ground with its ink as text and edge (each
+ * ink 5:1 or more on its tint), a dashed control edge for a draft, struck-through muted text on the soft surface for a
+ * cancelled state. The label, not the color, still carries the meaning.
  */
 export function StatusTag({ color = 'default', mark, style, className, children, ...props }: Readonly<StatusTagProps>) {
   const { token } = theme.useToken()
@@ -26,16 +26,21 @@ export function StatusTag({ color = 'default', mark, style, className, children,
   const state = `${color}|${mark ?? ''}|${typeof children === 'string' ? children : ''}`
   const [firstState] = useState(state)
   const changed = state !== firstState
-  // [text, background, border]
+  // [text, background, border]: the Design System StatusTag, a tint ground with its ink as text and edge.
+  const { status } = semantic
   const tones = {
     default: [colors.textBody, colors.softSurface, colors.border],
-    green: [token.green8, token.green1, token.green3],
-    gold: [token.gold9, token.gold1, token.gold3],
-    red: [token.red8, token.red1, token.red3],
-    orange: [token.orange8, token.orange1, token.orange3],
-    blue: [token.blue7, token.blue1, token.blue3],
+    green: [status.success, status.successTint, status.success],
+    gold: [status.warning, status.warningTint, status.warning],
+    red: [status.error, status.errorTint, status.error],
+    orange: [token.orange8, token.orange1, token.orange8],
+    blue: [status.info, status.infoTint, status.info],
   } as const
-  const [text, background, border] = tones[color === 'processing' ? 'blue' : color]
+  const [toneText, toneBackground, toneBorder] = tones[color === 'processing' ? 'blue' : color]
+  // Draft: a dashed control edge and no fill. Cancelled: struck through, muted, on the soft surface.
+  const text = mark === 'struck' ? colors.textMuted : mark === 'draft' ? colors.textBody : toneText
+  const background = mark === 'draft' ? 'transparent' : mark === 'struck' ? colors.softSurface : toneBackground
+  const border = mark ? colors.controlBorder : toneBorder
 
   return (
     <Tag
@@ -49,8 +54,8 @@ export function StatusTag({ color = 'default', mark, style, className, children,
         lineHeight: '18px',
         letterSpacing: '0.01em',
         color: text,
-        background: mark === 'draft' ? 'transparent' : background,
-        borderColor: mark === 'draft' ? colors.mutedBorder : border,
+        background,
+        borderColor: border,
         borderStyle: mark === 'draft' ? 'dashed' : 'solid',
         textDecoration: mark === 'struck' ? 'line-through' : undefined,
         ...style,

@@ -1,9 +1,9 @@
 import { AlignLeftOutlined, ArrowRightOutlined, CustomerServiceOutlined } from '@ant-design/icons'
-import { Flex, Pagination, Spin, Tag } from 'antd'
+import { Flex, Pagination, Spin } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { generatePath, Link, useLocation } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { SheetMusicOutlined } from '@/shared/ui'
+import { SheetMusicOutlined, StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { songListState } from '../songFilters'
 import { materialKindLabels, type MaterialKind, type Song } from '../types'
@@ -99,9 +99,9 @@ export function SongIndexList({
                       {song.title}
                     </Link>
                     {song.isClassified === false && (
-                      <Tag color="warning" style={{ marginInlineEnd: 0 }}>
+                      <StatusTag color="gold">
                         Chưa phân loại
-                      </Tag>
+                      </StatusTag>
                     )}
                   </Flex>
                   <div className="song-index__details">{details.join(' · ')}</div>
