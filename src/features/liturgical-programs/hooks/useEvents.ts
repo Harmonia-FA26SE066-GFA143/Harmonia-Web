@@ -81,19 +81,16 @@ export const useCancelEvent = () => useEventMutation((id: string) => cancelEvent
 export const usePublishEvents = () =>
   useEventMutation(async (events: LiturgicalEvent[]) => {
     const refused: { event: LiturgicalEvent; error: Error }[] = []
-    let notInvited = 0
-    let nobody = 0
+    const outcomes: Record<InviteOutcome, number> = { sent: 0, nobody: 0, failed: 0 }
     for (const event of events) {
       try {
         await publishEvent(event.id)
-        const outcome = await inviteServingMembers(event.id)
-        if (outcome === 'failed') notInvited += 1
-        if (outcome === 'nobody') nobody += 1
+        outcomes[await inviteServingMembers(event.id)] += 1
       } catch (error) {
         refused.push({ event, error: error instanceof Error ? error : new Error(String(error)) })
       }
     }
-    return { published: events.length - refused.length, notInvited, nobody, refused }
+    return { published: events.length - refused.length, notInvited: outcomes.failed, nobody: outcomes.nobody, refused }
   })
 
 /**

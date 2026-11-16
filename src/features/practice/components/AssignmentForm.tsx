@@ -44,7 +44,8 @@ function recipientCount(scope: AssignmentScope | undefined, choirSize?: number, 
 function recipientText(scope: AssignmentScope | undefined, count: number | undefined, skillNames: string[]) {
   if (scope === 'skillGroup') {
     if (skillNames.length === 0) return 'Chưa chọn kỹ năng'
-    return `${count === undefined ? 'Ca viên' : `${count} ca viên`} có kỹ năng ${skillNames.join(', ')}`
+    const who = count === undefined ? 'Ca viên' : `${count} ca viên`
+    return `${who} có kỹ năng ${skillNames.join(', ')}`
   }
   if (count === undefined) return '—'
   return scope === 'all' ? `${count} ca viên (cả ca đoàn)` : `${count} ca viên`

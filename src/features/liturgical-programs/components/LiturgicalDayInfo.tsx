@@ -8,6 +8,7 @@ import { SeasonChip } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { calendarErrorMessage } from '../calendarErrors'
 import { useSyncLiturgicalDays } from '../hooks/useLiturgicalDays'
+import type { SyncAffectedEvent } from '../api/liturgicalDaysApi'
 import type { LiturgicalDay } from '../types'
 
 const muted = { color: colors.textMuted }
@@ -53,6 +54,34 @@ export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
   const sync = useSyncLiturgicalDays()
   const navigate = useNavigate()
 
+  /**
+   * Upcoming events on a day that now has another celebration: the priest checks their readings and songs. The dialog
+   * is drawn outside the router's tree, so a title closes it and navigates.
+   */
+  const showAffected = (events: SyncAffectedEvent[]) => {
+    const open = (eventId: string) => {
+      dialog.destroy()
+      navigate(generatePath(paths.priest.programDetail, { programId: eventId }))
+    }
+    const dialog = modal.info({
+      title: `${events.length} chương trình sắp tới đổi ngày lễ`,
+      content: (
+        <ul style={{ paddingInlineStart: spacing.md, margin: 0 }}>
+          {events.map((event) => (
+            <li key={event.eventId}>
+              <Button type="link" style={{ padding: 0, height: 'auto', fontWeight: 600 }} onClick={() => open(event.eventId)}>
+                {event.title || 'Chương trình'}
+              </Button>{' '}
+              {dayjs(event.eventDate).format('DD/MM/YYYY')} {event.time.slice(0, 5)}:{' '}
+              {event.previousCelebrationName ?? 'chưa có tên lễ'} → {event.celebrationName ?? 'chưa có tên lễ'}
+            </li>
+          ))}
+        </ul>
+      ),
+      okText: 'Đã hiểu',
+    })
+  }
+
   const confirm = () =>
     modal.confirm({
       title: `Đồng bộ lịch phụng vụ năm ${year}?`,
@@ -65,32 +94,7 @@ export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
           .then(({ syncedCount, affectedEvents }) => {
             message.success(`Đã đồng bộ ${syncedCount} ngày phụng vụ năm ${year}.`)
             if (!affectedEvents.length) return
-            // Upcoming events on a day that now has another celebration: the priest checks their readings and songs.
-            // The dialog is drawn outside the router's tree, so it closes itself and navigates.
-            const dialog = modal.info({
-              title: `${affectedEvents.length} chương trình sắp tới đổi ngày lễ`,
-              content: (
-                <ul style={{ paddingInlineStart: spacing.md, margin: 0 }}>
-                  {affectedEvents.map((event) => (
-                    <li key={event.eventId}>
-                      <Button
-                        type="link"
-                        style={{ padding: 0, height: 'auto', fontWeight: 600 }}
-                        onClick={() => {
-                          dialog.destroy()
-                          navigate(generatePath(paths.priest.programDetail, { programId: event.eventId }))
-                        }}
-                      >
-                        {event.title || 'Chương trình'}
-                      </Button>{' '}
-                      {dayjs(event.eventDate).format('DD/MM/YYYY')} {event.time.slice(0, 5)}:{' '}
-                      {event.previousCelebrationName ?? 'chưa có tên lễ'} → {event.celebrationName ?? 'chưa có tên lễ'}
-                    </li>
-                  ))}
-                </ul>
-              ),
-              okText: 'Đã hiểu',
-            })
+            showAffected(affectedEvents)
           })
           .catch((error: Error) => message.error(calendarErrorMessage(error, 'Không thể đồng bộ lịch phụng vụ. Vui lòng thử lại.'))),
     })
