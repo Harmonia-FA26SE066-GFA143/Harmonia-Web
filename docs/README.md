@@ -2,7 +2,7 @@
 
 Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì với BE, đọc trực tiếp sau khi `git pull` repo Harmonia-Web. Nội dung các file viết bằng tiếng Anh để giữ nguyên tên API, mã lỗi và trích dẫn code; file này là bản tóm tắt tiếng Việt.
 
-- Cập nhật lần cuối: 2026-11-13, đối chiếu với Harmonia-BE `main@088f30a`. Thay đổi hợp đồng phía BE ghi ở `docs/api-changelog.md` của repo BE.
+- Cập nhật lần cuối: 2026-11-16, đối chiếu với Harmonia-BE `main@69c9d47`. Thay đổi hợp đồng phía BE ghi ở `docs/api-changelog.md` của repo BE.
 - Cách đọc trích dẫn: `File.cs:12-20` là đường dẫn và số dòng trong code BE ở commit trên; `src/...` là code Web.
 - Web làm theo BE ở mọi chỗ BE đã quy định (trường, trạng thái, ai được làm gì, mã lỗi). Chỗ BE chưa có thì ghi là cần BE bổ sung, kèm quyết định tạm của owner.
 
@@ -28,13 +28,22 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
 | Mục | Việc cần BE làm | Ghi chú |
 |---|---|---|
 | B49 | Ca trưởng đọc được setting `Rehearsal.AttendanceStartCheckEnabled` | Khi Admin tắt kiểm tra, điểm danh được bất cứ lúc nào, nhưng Web không biết nên vẫn khoá bảng điểm danh trước giờ tập. Đề xuất: đặt setting là public hoặc trả kèm buổi tập |
-| B52 | Ca trưởng thấy câu trả lời xác nhận tham gia của ca viên ngay khi có | Hub hiện chỉ đẩy thông báo và ghi chú; ca viên trả lời thì không ai được báo. Web đang đọc lại khi quay về cửa sổ hoặc bấm làm mới. Đề xuất: một message qua hub hoặc thông báo cho ca trưởng |
+| B52 | Ca trưởng thấy câu trả lời xác nhận tham gia của ca viên ngay khi có | Làm một phần ở `69c9d47`: ca viên đã nhận lời mà rút lui thì ca trưởng phụ trách được báo; các câu trả lời khác vẫn chưa. Hub hiện chỉ đẩy thông báo và ghi chú. Web đang đọc lại khi quay về cửa sổ hoặc bấm làm mới. Đề xuất: một message qua hub hoặc thông báo cho ca trưởng |
 | B53 | Ca trưởng phụ trách liệt kê được ca viên có thể mời, gồm cả ca đoàn phục vụ khác | Ca trưởng chỉ đọc được ca viên của ca đoàn mình quản lý, nên Web mời các ca đoàn khác theo cả nhóm (không gửi `memberIds`). Đề xuất: `GET api/event-participations/candidates?eventId=` |
 | B54 | Biết ca viên nào chưa thuộc ca đoàn nào | Tài khoản Ca viên mới tạo chưa có ca đoàn nên không được mời hay giao bài; `MemberProfileSummaryDto` không có ca đoàn. Web đang tự tính cho Admin từ danh sách từng ca đoàn. Đề xuất: thêm `choirs` vào summary hoặc bộ lọc `hasChoir=false` |
 | B55 | Chọn ca đoàn ngay khi tạo sự kiện từ giờ lễ cố định | Sự kiện tạo hàng loạt chưa có ca đoàn nên chưa công bố được. Web đang gọi `PUT …/choirs` cho từng bản nháp và công bố từng sự kiện một. Đề xuất: `choirIds`, `leadChoirId` trong request tạo hàng loạt, hoặc ca đoàn mặc định trên giờ lễ cố định |
+| B56 | Trạng thái của ca viên trên từng dòng điểm danh | Ca viên đã ngừng sinh hoạt vẫn nằm trong bảng nếu từng được ghi; lưu kèm họ thì cả lần lưu bị từ chối `MEMBER_NOT_ACTIVE`, mà Web không biết ai để loại ra |
+| B57 | Mã dòng phân công làm hỏng việc chốt, dưới dạng một trường | Hiện mã dòng chỉ nằm trong câu thông báo tiếng Anh; Web phải tách ra từ câu đó để nêu tên ca viên |
+| B58 | Sửa phân công sau khi đã chốt | Chốt toàn bộ rồi thì không thay người, không mở lại được; ca viên rút lui sau đó thì vị trí bị bỏ trống |
+| B59 | Sửa hoặc thu hồi bài tập đã giao, và biết bao nhiêu ca viên nhận | Bài giao cho ca đoàn chưa có ca viên, hoặc cho kỹ năng không ai có, vẫn được tạo và nằm lại mãi. Web đang tự đếm người nhận và chặn khi bằng 0 |
+| B60 | Thông báo buổi tập đúng với thay đổi | Sửa buổi tập luôn báo cả ca đoàn dù không đổi gì; tạo buổi tập thì không báo ai. Web đã thôi gửi phần chi tiết khi không đổi |
+| B61 | Cha xứ đọc được tình hình xác nhận tham gia | Cha xứ gửi lời mời và lời nhắc được nhưng không đọc được danh sách, nên nút nhắc ở Web luôn hiện |
+| B62 | Biết người gọi có được sửa buổi tập không | Buổi tập chung hiện với mọi ca trưởng của ca đoàn phục vụ nhưng chỉ ca trưởng phụ trách sửa và điểm danh được; Web phải gọi thêm API ca đoàn của sự kiện cho từng buổi |
+| B63 | Mã của từng kỹ năng đã duyệt của ca viên, để thu hồi | BE đã có thu hồi kỹ năng nhưng cần mã của dòng kỹ năng; các danh sách Ca trưởng đọc được chỉ trả mã danh mục kỹ năng, nên Web chưa làm được nút thu hồi |
 
 Các việc BE cần xem (không phải mục backlog, chi tiết ở cuối `tbd-backlog.md`):
 
+- Danh sách bài hát: tạo, gửi duyệt và duyệt không kiểm tra sự kiện đã qua; duyệt cũng không kiểm tra sự kiện đã huỷ (`SongListService.cs`), trong khi sự kiện giờ đã chặn ngày đã qua.
 - `POST api/event-participations/confirm-all` không kiểm tra sự kiện đã qua (có chủ ý, để demo); ngoài demo, Ca trưởng có thể xác nhận hộ cả sự kiện đã diễn ra.
 - Trên API đã deploy (2026-11-07), mọi bài tập hiện có đều chưa gắn bản mẫu MIDI nên chấm tự động trả `PRACTICE_REFERENCE_MISSING`; cần một bài tập có MIDI để thử điểm thật.
 - Trên API đã deploy, ngày phụng vụ nào cũng còn `color = null`; cần Cha xứ đồng bộ lại năm 2026 thì Web mới hiện màu theo ngày.
