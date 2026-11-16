@@ -25,6 +25,8 @@ export function highlightSavedRow(id: string | undefined) {
   const selector = `[data-row-key="${CSS.escape(id)}"]`
   const started = Date.now()
   const look = () => {
+    // The page (or a test's document) may be gone by the time a retry fires.
+    if (typeof document === 'undefined') return
     const row = document.querySelector<HTMLElement>(selector)
     if (row) {
       row.removeAttribute(attribute)

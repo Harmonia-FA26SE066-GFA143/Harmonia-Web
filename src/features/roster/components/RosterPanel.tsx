@@ -98,8 +98,15 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
     const id = typeof detail === 'string' ? /Assignment ([0-9a-f-]{36})/i.exec(detail)?.[1] : undefined
     const line = id ? lines.find((item) => item.id === id) : undefined
     const song = line?.songListItemId ? songs.find((item) => item.id === line.songListItemId)?.title : undefined
-    const where = line && `${line.memberName} · ${line.skillName}${song ? ` · ${song}` : line.songListItemId ? '' : ' · cả buổi lễ'}`
-    message.error({ duration: 8, content: where ? `${rosterErrorMessage(error, fallback)} Dòng cần sửa: ${where}.` : rosterErrorMessage(error, fallback) })
+    const text = rosterErrorMessage(error, fallback)
+    if (!line) {
+      message.error(text)
+      return
+    }
+    // A whole-service line has no song; a song line whose song is no longer listed names the member and skill only.
+    const place = line.songListItemId ? song : 'cả buổi lễ'
+    const where = [line.memberName, line.skillName, place].filter(Boolean).join(' · ')
+    message.error({ duration: 8, content: `${text} Dòng cần sửa: ${where}.` })
   }
 
   const runSuggestion = () =>
