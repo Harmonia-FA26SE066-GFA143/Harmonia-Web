@@ -13,6 +13,7 @@ import {
   useShortages,
   useSuggestRoster,
 } from '../hooks/useRoster'
+import { ApiError } from '@/lib/api/errors'
 import { rosterErrorMessage } from '../rosterErrors'
 import { rosterStatusLabels, type EligibleMember, type RosterAssignment } from '../types'
 import { NotifyDrawer } from './NotifyDrawer'
@@ -90,6 +91,16 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
   // Before the full finalization only the whole-service lines may be announced.
   const announceable = uniqueMembers(locked ? lines : wholeServiceLines)
   const failed = (fallback: string) => (error: Error) => message.error(rosterErrorMessage(error, fallback))
+  // The backend stops at the first line that is no longer valid and names it in the message only:
+  // "Assignment {id} is no longer valid." (RosterService.FinalizeAsync). Say who and where.
+  const finalizeFailed = (fallback: string) => (error: Error) => {
+    const detail = error instanceof ApiError ? (error.body as { message?: unknown } | null)?.message : undefined
+    const id = typeof detail === 'string' ? /Assignment ([0-9a-f-]{36})/i.exec(detail)?.[1] : undefined
+    const line = id ? lines.find((item) => item.id === id) : undefined
+    const song = line?.songListItemId ? songs.find((item) => item.id === line.songListItemId)?.title : undefined
+    const where = line && `${line.memberName} · ${line.skillName}${song ? ` · ${song}` : line.songListItemId ? '' : ' · cả buổi lễ'}`
+    message.error({ duration: 8, content: where ? `${rosterErrorMessage(error, fallback)} Dòng cần sửa: ${where}.` : rosterErrorMessage(error, fallback) })
+  }
 
   const runSuggestion = () =>
     suggest.mutate(undefined, {
@@ -121,7 +132,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
         finalize
           .mutateAsync(current.id)
           .then(() => message.success('Đã chốt phân công.'))
-          .catch(failed('Không thể chốt phân công. Vui lòng thử lại.')),
+          .catch(finalizeFailed('Không thể chốt phân công. Vui lòng thử lại.')),
     })
   }
 
@@ -137,7 +148,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
         finalizeWholeService
           .mutateAsync(current.id)
           .then(() => message.success('Đã chốt nhạc công.'))
-          .catch(failed('Không thể chốt nhạc công. Vui lòng thử lại.')),
+          .catch(finalizeFailed('Không thể chốt nhạc công. Vui lòng thử lại.')),
     })
   }
 

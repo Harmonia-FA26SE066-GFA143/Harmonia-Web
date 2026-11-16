@@ -2,6 +2,8 @@ import { errorMessage } from '@/lib/api/errors'
 
 /** PUT /api/rehearsals/{id}/attendances refusals (Harmonia-BE RehearsalAttendanceService). */
 const messages: Record<string, string> = {
+  // A joint rehearsal: only the lead choir's director reads and records it (BE 69c9d47).
+  CHOIR_NOT_LEAD: 'Buổi tập chung do ca trưởng của ca đoàn phụ trách chương trình điểm danh.',
   REHEARSAL_NOT_FOUND: 'Buổi tập không còn tồn tại. Vui lòng tải lại trang.',
   REHEARSAL_NOT_STARTED: 'Chưa tới giờ mở điểm danh của buổi tập này. Các đánh dấu vẫn giữ trên trang, vui lòng lưu lại khi tới giờ.',
   MEMBER_NOT_FOUND: 'Có ca viên không còn tồn tại. Vui lòng tải lại trang.',

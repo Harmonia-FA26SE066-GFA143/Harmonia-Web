@@ -1,4 +1,4 @@
-import { ApiError, errorMessage, requestFailureMessage } from '@/lib/api/errors'
+import { ApiError, errorCodes, errorMessage, requestFailureMessage } from '@/lib/api/errors'
 import { fileExtension, materialExtensions, materialKindLabels, maxMaterialBytes, type MaterialKind } from './types'
 
 /** POST/PUT /api/songs answer 409 SONG_TITLE_DUPLICATE when an active song has the same title and composer. */
@@ -61,7 +61,8 @@ export const timedLyricsErrorMessage = (error: Error) =>
 
 /** POST /api/music-materials (Harmonia-BE doc/api.md, Music materials). */
 export function uploadErrorMessage(error: Error): string {
-  const code = error instanceof ApiError ? error.code : undefined
+  const codes = errorCodes(error)
+  const code = codes.find((item) => item !== 'VALIDATION_FAILED') ?? codes[0]
   if (code && midiMessages[code]) return midiMessages[code]
   switch (code) {
     case 'MATERIAL_FILE_TYPE_NOT_ALLOWED':

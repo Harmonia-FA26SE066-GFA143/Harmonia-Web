@@ -130,7 +130,7 @@ describe('PriestProgramDetailPage', () => {
   it('publishes a draft after confirmation, then invites the members of its choirs', async () => {
     vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
     const publish = vi.spyOn(eventsApi, 'publishEvent').mockResolvedValue()
-    const invite = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue()
+    const invite = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue(3)
     renderDetail()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Công bố' }))
@@ -141,10 +141,23 @@ describe('PriestProgramDetailPage', () => {
     expect(invite.mock.calls).toEqual([['e1']])
   })
 
+  it('says nobody was invited when the serving choirs have no member to ask', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
+    vi.spyOn(eventsApi, 'publishEvent').mockResolvedValue()
+    vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue(0)
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Công bố' }))
+    fireEvent.click(within(await confirmDialog('Công bố sự kiện?')).getByRole('button', { name: 'Công bố' }))
+
+    expect(await screen.findByText(/Đã công bố sự kiện, nhưng chưa mời được ai/)).toBeInTheDocument()
+    expect(screen.queryByText('Đã công bố sự kiện và mời ca viên xác nhận tham gia.')).toBeNull()
+  })
+
   it('keeps the publish and offers to send the invitations again when they fail', async () => {
     vi.spyOn(eventsApi, 'getEvent').mockResolvedValue(draft)
     vi.spyOn(eventsApi, 'publishEvent').mockResolvedValue()
-    const invite = vi.spyOn(participationApi, 'sendParticipationRequests').mockRejectedValueOnce(new ApiError(500, undefined)).mockResolvedValue()
+    const invite = vi.spyOn(participationApi, 'sendParticipationRequests').mockRejectedValueOnce(new ApiError(500, undefined)).mockResolvedValue(3)
     renderDetail()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Công bố' }))

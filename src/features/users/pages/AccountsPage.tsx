@@ -95,7 +95,7 @@ export function AccountsPage() {
       okButtonProps: { danger: !active },
       cancelText: 'Hủy',
       // Enter on the deactivation must not run it.
-      autoFocusButton: active ? 'ok' : 'cancel',
+      focusable: { autoFocusButton: active ? 'ok' : 'cancel' },
       onOk: () =>
         setActive
           .mutateAsync({ id: account.id, active })

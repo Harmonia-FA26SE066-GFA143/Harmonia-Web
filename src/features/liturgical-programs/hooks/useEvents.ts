@@ -41,26 +41,30 @@ function useEventMutation<TVariables, TResult>(mutationFn: (variables: TVariable
 
 /**
  * Creates a draft, or a published event (BE 69c9d47), then for a published one invites the members of its serving
- * choirs, like a publish from the detail page. A failed invitation leaves `invited` false.
+ * choirs, like a publish from the detail page. `invited` says what the invitation did.
  */
 export const useCreateEvent = () =>
   useEventMutation(async (values: EventFormValues) => {
     const event = await createEvent(values)
-    return { event, invited: values.isPublished ? await inviteServingMembers(event.id) : true }
+    return { event, invited: values.isPublished ? await inviteServingMembers(event.id) : undefined }
   })
 
 export const useUpdateEvent = () =>
   useEventMutation(({ id, values }: { id: string; values: EventFormValues }) => updateEvent(id, values))
 
-/** Asks every member of the event's serving choirs who has not been asked yet; false when the request failed. */
-export const inviteServingMembers = (id: string) => sendParticipationRequests(id).then(
-  () => true,
-  () => false,
-)
+/** What an invitation did: members were asked, there was nobody left to ask, or the request failed. */
+export type InviteOutcome = 'sent' | 'nobody' | 'failed'
+
+/** Asks every member of the event's serving choirs who has not been asked yet. */
+export const inviteServingMembers = (id: string): Promise<InviteOutcome> =>
+  sendParticipationRequests(id).then(
+    (count) => (count > 0 ? 'sent' : 'nobody'),
+    () => 'failed',
+  )
 
 /**
  * Publishes, then invites the members of the serving choirs (the Parish Priest may since BE 088f30a; calling again
- * is safe). A failed invitation does not undo the publish: `invited` is false and the caller offers to send again.
+ * is safe). A failed invitation does not undo the publish: `invited` is 'failed' and the caller offers to send again.
  */
 export const usePublishEvent = () =>
   useEventMutation(async (id: string) => {
@@ -78,15 +82,18 @@ export const usePublishEvents = () =>
   useEventMutation(async (events: LiturgicalEvent[]) => {
     const refused: { event: LiturgicalEvent; error: Error }[] = []
     let notInvited = 0
+    let nobody = 0
     for (const event of events) {
       try {
         await publishEvent(event.id)
-        if (!(await inviteServingMembers(event.id))) notInvited += 1
+        const outcome = await inviteServingMembers(event.id)
+        if (outcome === 'failed') notInvited += 1
+        if (outcome === 'nobody') nobody += 1
       } catch (error) {
         refused.push({ event, error: error instanceof Error ? error : new Error(String(error)) })
       }
     }
-    return { published: events.length - refused.length, notInvited, refused }
+    return { published: events.length - refused.length, notInvited, nobody, refused }
   })
 
 /**

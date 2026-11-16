@@ -7,7 +7,7 @@ import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical
 import { StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
-import { isRehearsalDay, isUpcoming, type Rehearsal } from '../types'
+import { canTakeAttendance, isRehearsalDay, isUpcoming, type Rehearsal } from '../types'
 import { JointChip, PlannerOnly } from './JointRehearsal'
 
 export interface RehearsalWeekProps {
@@ -164,10 +164,10 @@ export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendan
           <Button type="primary" onClick={() => onOpenRoom(rehearsal)}>
             Vào phòng tập
           </Button>
-          <Button icon={<CheckSquareOutlined />} onClick={() => onTakeAttendance(rehearsal)} aria-label={`${isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${label}`}>
-            {isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
-          </Button>
           <PlannerOnly rehearsal={rehearsal}>
+          <Button icon={<CheckSquareOutlined />} onClick={() => onTakeAttendance(rehearsal)} aria-label={`${canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${label}`}>
+            {canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
+          </Button>
           {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
           {isUpcoming(rehearsal) && (
             <Button icon={<EditOutlined />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${label}`}>

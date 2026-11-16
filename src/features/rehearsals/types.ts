@@ -47,6 +47,13 @@ export const isUpcoming = (rehearsal: Pick<Rehearsal, 'endAt'>, now = Date.now()
 export const isRehearsalDay = (rehearsal: Pick<Rehearsal, 'startAt'>, now = new Date()) =>
   new Date(rehearsal.startAt).toDateString() === now.toDateString()
 
+/**
+ * Attendance can be recorded: the session is today or already held. The backend accepts a record any time after the
+ * sheet opens (RehearsalAttendanceService), also days later; before that day the sheet is only read.
+ */
+export const canTakeAttendance = (rehearsal: Pick<Rehearsal, 'startAt'>, now = new Date()) =>
+  isRehearsalDay(rehearsal, now) || Date.parse(rehearsal.startAt) <= now.getTime()
+
 /** A take recorded in the practice room (`RehearsalRecordingDto`, BE 90af733, B43); members of the choir listen on mobile. */
 export interface RehearsalRecording {
   id: string
