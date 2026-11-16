@@ -1,6 +1,6 @@
 # Service Roster
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@43dfe31`, 2026-10-27 at `main@d1ca63e`, 2026-10-31 at `main@d394db4` and 2026-11-01 at `main@90af733`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@43dfe31`, 2026-10-27 at `main@d1ca63e`, 2026-10-31 at `main@d394db4` , 2026-11-01 at `main@90af733` and 2026-11-16 at `main@69c9d47`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 §2, FE-35–FE-40
 
@@ -40,3 +40,9 @@ The "Finalize Program" action with a required reason when positions are short, l
 Limits on how many positions one member can hold; what happens to an assignment when the member changes the answer or loses the skill before finalization; roster changes while the event is cancelled or past; timing of assignment notifications.
 
 Decided 2026-10-27 (`open-business-decisions.md`): vocal-part counts and warnings (Report 1 FE-35 / FE-37) are set as whole-service requirements; a member assigned to two events at overlapping times is refused by the BE (tbd-backlog B40, done in `c8ba80f`, see the BE contract above).
+
+## Re-checked at BE `main@69c9d47` (2026-11-16)
+
+- A finalization stops at the first line whose member left the serving choirs, is no longer active, lost the skill or withdrew, and names the line in the message only (`RosterService.cs:178-181, 206-209, 226-243`; backlog B57). The Web names the member, skill and song from it.
+- After full finalization nothing changes: add, remove, note and replacement all answer `ROSTER_ALREADY_FINALIZED` (`RosterService.cs:349, 395, 455-462`); only a whole-service line locked early can still be replaced. No endpoint reopens a roster (backlog B58).
+- A line now says when the member's choir rehearses at the time of the event (`RosterAssignmentDto.HasRehearsalConflict`), and an eligible member serving another event near that time is flagged; the Web shows both and disables the latter in the picker.

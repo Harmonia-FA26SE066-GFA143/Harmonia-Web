@@ -1,6 +1,6 @@
 # Practice Assignments and Submissions
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@43dfe31` and 2026-11-07 at `main@d550665`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e`, 2026-10-26 at `main@43dfe31` , 2026-11-07 at `main@d550665` and 2026-11-16 at `main@69c9d47` (creation only). Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 FE-08–FE-13, FE-41–FE-44, LI-03, LI-05
 
@@ -28,3 +28,7 @@ Evaluation is manual (LI-03, LI-05); advanced AI performance analysis is exclude
 ## Open questions (the BE decides where it covers them; the rest belong in [`tbd-backlog.md`](../tbd-backlog.md))
 
 Whether a submission made before the deadline but not reviewed by then is Overdue; whether the Director may change a result after the deadline; whether the audience follows later confirmation changes; deadline limits (future only, before the Mass); editing or deleting assignments; reminders to members who have not submitted.
+
+## Re-checked at BE `main@69c9d47` (2026-11-16, creating an assignment)
+
+- Recipients stay inside the chosen choir: the whole choir, its members holding one of the chosen skills, or chosen members of it (`PracticeAssignmentService.cs:57-131`). An assignment that matches nobody is still created and notifies nobody, and no endpoint edits or withdraws an assignment (`PracticeAssignmentsController.cs:17-81`; backlog B59). The Web counts the recipients before sending and refuses to send to nobody.
