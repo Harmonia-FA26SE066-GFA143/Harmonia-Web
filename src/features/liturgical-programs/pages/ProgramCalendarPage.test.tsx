@@ -19,6 +19,12 @@ afterEach(() => {
 })
 
 describe('ProgramCalendarPage', () => {
+  const openToday = (container: HTMLElement) => {
+    const cell = container.querySelector('.ant-picker-cell-today') as HTMLElement
+    expect(cell).not.toBeNull()
+    fireEvent.click(cell)
+  }
+
   it('shows a recoverable error when the events cannot be loaded', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<ProgramCalendarPage />, '/priest/calendar')
@@ -43,8 +49,10 @@ describe('ProgramCalendarPage', () => {
         },
       ],
     })
-    renderPage(<ProgramCalendarPage />, '/priest/calendar')
+    const { container } = renderPage(<ProgramCalendarPage />, '/priest/calendar')
 
+    await screen.findByRole('group', { name: 'Lịch sự kiện phụng vụ' })
+    openToday(container)
     expect(await screen.findByRole('button', { name: 'Xem chi tiết Thánh lễ hôm nay lúc 18:00' })).toBeInTheDocument()
     expect(screen.getByText('Đã công bố')).toBeInTheDocument()
     await waitFor(() =>
@@ -57,9 +65,10 @@ describe('ProgramCalendarPage', () => {
 
   it('creates an event for the selected day', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(empty)
-    renderPage(<ProgramCalendarPage />, '/priest/calendar')
+    const { container } = renderPage(<ProgramCalendarPage />, '/priest/calendar')
 
-    expect(await screen.findByText('Chưa có sự kiện nào trong tháng này.')).toBeInTheDocument()
+    expect(await screen.findByText('Chưa có chương trình nào trong tháng này.')).toBeInTheDocument()
+    openToday(container)
     fireEvent.click(screen.getByRole('button', { name: /Tạo chương trình cho ngày này/ }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/new')
   })
@@ -84,7 +93,10 @@ describe('ProgramCalendarPage', () => {
           ]
         : [],
     )
-    renderPage(<ProgramCalendarPage />, '/priest/calendar')
+    const { container } = renderPage(<ProgramCalendarPage />, '/priest/calendar')
+
+    await screen.findByRole('group', { name: 'Lịch sự kiện phụng vụ' })
+    openToday(container)
 
     // Named in its calendar cell on wide screens and in the day panel.
     expect((await screen.findAllByText('Chúa nhật XXIX Thường niên')).length).toBeGreaterThan(0)
@@ -108,7 +120,8 @@ describe('ProgramCalendarPage', () => {
     renderPage(<ProgramCalendarPage />, '/priest/calendar', '/priest/calendar?date=2027-03-10')
 
     expect(await screen.findByText(/Đồng bộ lịch phụng vụ của năm để hiển thị/)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /Đồng bộ lịch phụng vụ 2027/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Thao tác khác' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Đồng bộ lịch phụng vụ 2027/ }))
     // Ant Design renders a confirm title twice; the first one sits in the visible dialog.
     const dialog = (await screen.findAllByText('Đồng bộ lịch phụng vụ năm 2027?'))[0].closest('.ant-modal') as HTMLElement
     expect(within(dialog).getByText(/ghi đè các ngày phụng vụ đã có của năm này/)).toBeInTheDocument()
@@ -126,6 +139,7 @@ describe('ProgramCalendarPage', () => {
     vi.spyOn(daysApi, 'syncLiturgicalDays').mockRejectedValue(new ApiError(502, { code: 'EXTERNAL_CALENDAR_FAILED' }))
     renderPage(<ProgramCalendarPage />, '/priest/calendar')
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Thao tác khác' }))
     fireEvent.click(await screen.findByRole('button', { name: /Đồng bộ lịch phụng vụ/ }))
     const dialog = (await screen.findAllByText(/Đồng bộ lịch phụng vụ năm \d{4}\?/))[0].closest('.ant-modal') as HTMLElement
     fireEvent.click(within(dialog).getByRole('button', { name: 'Đồng bộ' }))

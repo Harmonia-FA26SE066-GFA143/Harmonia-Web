@@ -9,7 +9,7 @@ import type { PracticeSubmission } from '../types'
 export interface InlinePlayerProps {
   submission: PracticeSubmission
   /** The playing position in seconds, so a comment can name the moment it is about. */
-  onTime: (seconds: number) => void
+  onTime?: (seconds: number) => void
 }
 
 /**
@@ -64,7 +64,7 @@ export function InlinePlayer({ submission, onTime }: Readonly<InlinePlayerProps>
         onPause={() => setState('paused')}
         onTimeUpdate={(event) => {
           setTime(event.currentTarget.currentTime)
-          onTime(event.currentTarget.currentTime)
+          onTime?.(event.currentTarget.currentTime)
         }}
       />
     </Flex>

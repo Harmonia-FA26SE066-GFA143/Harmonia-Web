@@ -87,9 +87,10 @@ export function RehearsalTable({
     {
       key: 'actions',
       title: 'Thao tác',
-      align: 'right',
+      align: 'center',
+      width: 260,
       render: (_, rehearsal) => (
-        <Flex justify="flex-end" gap={4}>
+        <Flex justify="center" gap={4}>
           <PlannerOnly rehearsal={rehearsal}>
           <Button
             type="link"

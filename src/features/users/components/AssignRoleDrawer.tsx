@@ -64,6 +64,7 @@ export function AssignRoleDrawer({ account, saving = false, onSubmit, onCancel }
     >
       {account && (
         <Descriptions
+          className="hm-key-value"
           size="small"
           column={1}
           style={{ marginBottom: spacing.md }}

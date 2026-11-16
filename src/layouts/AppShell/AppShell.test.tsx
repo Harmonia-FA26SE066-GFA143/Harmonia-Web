@@ -71,10 +71,31 @@ describe('AppShell', () => {
     const list = vi.spyOn(registrationsApi, 'listRegistrations').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 1, totalCount: 3, totalPages: 3 })
     renderShellAt('/admin/accounts')
 
-    const pages = await screen.findByRole('navigation', { name: 'Các trang của Quản trị hệ thống' })
+    const areas = await screen.findByRole('navigation', { name: 'Điều hướng chính' })
+    expect(await within(areas).findByRole('link', { name: 'Người dùng có việc đang chờ' })).toHaveAttribute('aria-current', 'true')
+    const pages = await screen.findByRole('navigation', { name: 'Các trang của Người dùng' })
     expect(await within(pages).findByRole('link', { name: 'Đăng ký gia nhập 3 đang chờ' })).toBeInTheDocument()
     expect(list).toHaveBeenCalledWith('', 1, 1)
     expect(within(pages).getByRole('link', { name: 'Tài khoản' })).toBeInTheDocument()
+    expect(within(pages).queryByRole('link', { name: 'Cấu hình chung' })).toBeNull()
+  })
+
+  it('does not fade the last tab when a two-page area fits', async () => {
+    setViewportWidth(1440)
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('hm-tabs') ? 620 : 0
+    })
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      if (this.classList.contains('hm-tabs')) return 680 // includes the absolutely positioned marker in old browsers
+      if (this.classList.contains('hm-tabs__list')) return 600
+      return 0
+    })
+    renderShellAt('/director/library')
+
+    const pages = await screen.findByRole('navigation', { name: 'Các trang của Phụng vụ & âm nhạc' })
+    const strip = pages.querySelector('.hm-tabs')
+    expect(strip).not.toBeNull()
+    await waitFor(() => expect(strip).not.toHaveClass('has-more-end'))
   })
 
   it('marks an area with something waiting, and shows today’s season and the next Mass in the ivory band', async () => {

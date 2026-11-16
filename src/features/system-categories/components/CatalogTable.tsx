@@ -65,6 +65,7 @@ export function CatalogTable<T extends CatalogEntry>({
     () => (items ?? []).filter((item) => matchesSearch(search, item.name, item.description ?? undefined)),
     [items, search],
   )
+  const hasSearch = search.trim().length > 0
 
   if (loading) return <SectionSkeleton rows={5} label={`Đang tải danh mục ${labels.noun}`} />
   if (error) return <ErrorState title={labels.errorTitle} onRetry={onRetry} retrying={retrying} />
@@ -104,7 +105,7 @@ export function CatalogTable<T extends CatalogEntry>({
     {
       key: 'actions',
       title: 'Thao tác',
-      align: 'right',
+      align: 'center',
       width: 140,
       fixed: 'right',
       render: (_, item) => (
@@ -129,7 +130,7 @@ export function CatalogTable<T extends CatalogEntry>({
         />
         <Flex align="center" gap={spacing.md} wrap>
           <Typography.Text aria-live="polite" style={{ color: colors.textMuted }}>
-            {visible.length}/{items.length} {labels.noun}
+            {hasSearch ? `${visible.length} kết quả trong ${items.length} ${labels.noun}` : `${items.length} ${labels.noun}`}
           </Typography.Text>
           <Button type="primary" icon={<PlusOutlined />} onClick={onAdd}>
             {labels.addLabel}

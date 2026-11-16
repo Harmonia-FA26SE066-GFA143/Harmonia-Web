@@ -1,6 +1,6 @@
-import { ArrowLeftOutlined } from '@ant-design/icons'
-import { Button, Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
+import { Alert, Button, Card, Drawer, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useMemo, useState } from 'react'
+import { useLocation } from 'react-router'
 import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { useAssignments, useUpcomingEvents } from '../hooks/usePractice'
@@ -16,17 +16,12 @@ const targetText = ({ scope, skillIds, memberIds }: PracticeAssignment) =>
   ({ all: 'Cả ca đoàn', skillGroup: `${skillIds.length} kỹ năng`, individual: `${memberIds.length} ca viên` })[scope]
 
 /** The submissions of one assignment, reviewed like the queue. */
-function AssignmentSubmissions({ assignment, onBack }: Readonly<{ assignment: PracticeAssignment; onBack: () => void }>) {
+function AssignmentSubmissions({ assignment }: Readonly<{ assignment: PracticeAssignment }>) {
   return (
     <Flex vertical gap={spacing.md}>
-      <Flex wrap gap={spacing.sm} align="center">
-        <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
-          Về danh sách bài đã giao
-        </Button>
-        <Flex vertical>
-          <Typography.Text strong>{assignment.title}</Typography.Text>
-          <Typography.Text style={muted}>Hạn nộp {formatDateTime(assignment.dueDate)} · {targetText(assignment)}</Typography.Text>
-        </Flex>
+      <Flex vertical>
+        <Typography.Text strong>{assignment.title}</Typography.Text>
+        <Typography.Text style={muted}>Hạn nộp {formatDateTime(assignment.dueDate)} · {targetText(assignment)}</Typography.Text>
       </Flex>
       <SubmissionList assignmentId={assignment.id} defaultStatus="all" />
     </Flex>
@@ -35,6 +30,8 @@ function AssignmentSubmissions({ assignment, onBack }: Readonly<{ assignment: Pr
 
 /** Assignments the Choir Director gave (FE-41, B21), latest due date first, with their submissions. */
 export function AssignmentsTab() {
+  const location = useLocation()
+  const createdTitle = (location.state as { createdTitle?: string } | null)?.createdTitle
   const [eventId, setEventId] = useState<string>()
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState<PracticeAssignment>()
@@ -42,8 +39,6 @@ export function AssignmentsTab() {
   const events = useUpcomingEvents()
   const eventsById = useMemo(() => new Map((events.data ?? []).map((event) => [event.id, event])), [events.data])
   const total = assignments.data?.totalCount ?? 0
-
-  if (open) return <AssignmentSubmissions assignment={open} onBack={() => setOpen(undefined)} />
 
   const columns: TableColumnsType<PracticeAssignment> = [
     {
@@ -83,10 +78,11 @@ export function AssignmentsTab() {
     {
       key: 'actions',
       title: 'Thao tác',
-      align: 'right',
+      align: 'center',
+      width: 128,
       render: (_, assignment) => (
-        <Button onClick={() => setOpen(assignment)} aria-label={`Xem bản thu của ${assignment.title}`}>
-          Xem bản thu
+        <Button onClick={() => setOpen(assignment)} aria-label={`Xem chi tiết ${assignment.title}`}>
+          Xem chi tiết
         </Button>
       ),
     },
@@ -94,6 +90,14 @@ export function AssignmentsTab() {
 
   return (
     <Flex vertical gap={spacing.md}>
+      {createdTitle && (
+        <Alert
+          type="success"
+          showIcon
+          title={`Đã giao bài tập “${createdTitle}”`}
+          description="Bài tập mới được làm nổi bật trong danh sách; ca viên đã nhận được thông báo."
+        />
+      )}
       <Flex vertical gap={4} style={{ maxWidth: 420 }}>
       <label htmlFor="assignment-filter-event" style={muted}>
         Chương trình
@@ -121,7 +125,7 @@ export function AssignmentsTab() {
         (eventId ? (
           <NoFilterResults onClearFilters={() => setEventId(undefined)} />
         ) : (
-          <EmptyState title="Chưa giao bài tập nào" description="Giao bài ở tab “Giao bài”; bài đã giao sẽ xuất hiện tại đây." />
+          <EmptyState title="Chưa giao bài tập nào" description="Dùng nút “Giao bài tập”; bài đã giao sẽ xuất hiện tại đây." />
         ))}
       {assignments.data !== undefined && total > 0 && (
         <Card styles={{ body: { padding: 0 } }}>
@@ -132,9 +136,19 @@ export function AssignmentsTab() {
             loading={assignments.isPlaceholderData}
             pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
             scroll={{ x: 820 }}
+            rowClassName={(assignment) => (createdTitle && assignment.title === createdTitle ? 'is-picked' : '')}
           />
         </Card>
       )}
+      <Drawer
+        open={Boolean(open)}
+        title="Chi tiết bài tập"
+        size="large"
+        onClose={() => setOpen(undefined)}
+        destroyOnHidden
+      >
+        {open && <AssignmentSubmissions assignment={open} />}
+      </Drawer>
     </Flex>
   )
 }

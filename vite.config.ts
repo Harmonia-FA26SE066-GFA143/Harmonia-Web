@@ -28,7 +28,8 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
-      exclude: [...configDefaults.exclude, 'tests/e2e/**'],
+      // Session worktrees under .claude/ carry their own node_modules; their copies of the tests would load a second React.
+      exclude: [...configDefaults.exclude, 'tests/e2e/**', '.claude/**'],
       css: false,
       // The default (all logical CPUs - 1) starves each jsdom + Ant Design worker on hyper-threaded laptops: a 1 s
       // test took 4 s+ and crossed the 5 s timeout at random. Half the logical CPUs keeps the slowest test near 2 s.

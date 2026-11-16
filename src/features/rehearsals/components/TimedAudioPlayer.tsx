@@ -11,8 +11,9 @@ export function TimedAudioPlayer({
   material,
   title,
   untimedLyrics,
+  showLyrics = true,
   onStale,
-}: Readonly<{ material: SongMaterial; title: string; untimedLyrics: ReactNode; onStale: () => void }>) {
+}: Readonly<{ material: SongMaterial; title: string; untimedLyrics: ReactNode; showLyrics?: boolean; onStale: () => void }>) {
   // The list is read again on window focus and every answer signs a new link: keep the one playing until it fails.
   const [src, setSrc] = useState(material.url ?? undefined)
   const clock = usePlaybackClock(src)
@@ -21,7 +22,7 @@ export function TimedAudioPlayer({
   // The fieldset names the player as a group; its buttons say only the verb ("Phát …"), not "Phát Nghe …".
   return (
     <fieldset className="hm-plain-group" aria-label={`Nghe ${title}`}>
-      {supportsTimedLyrics(material) ? <TimedLyricsView material={material} clock={clock} onStale={onStale} untimed={untimed} /> : untimed}
+      {showLyrics && (supportsTimedLyrics(material) ? <TimedLyricsView material={material} clock={clock} onStale={onStale} untimed={untimed} /> : untimed)}
       <PlaybackControls clock={clock} title={title} />
       {/* The signed link may have expired while the page stayed open; a new list brings a new one. */}
       {clock.error && (

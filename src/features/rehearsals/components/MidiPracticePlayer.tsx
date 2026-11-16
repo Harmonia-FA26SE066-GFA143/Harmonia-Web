@@ -190,12 +190,13 @@ function playbackDescription(error: Error) {
   return undefined
 }
 
-function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMaterial, onStale }: Readonly<{
+function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMaterial, showLyrics, onStale }: Readonly<{
   title: string
   score: MidiPlaybackNotes
   audioUrl: string
   durationSeconds: number
   timedMaterial?: SongMaterial
+  showLyrics: boolean
   onStale?: () => void
 }>) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -270,7 +271,7 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMate
           style={{ display: 'block', width: '100%', height: canvasHeight }}
         />
       </figure>
-      {timedMaterial && <TimedLyricsView material={timedMaterial} clock={playbackClock} onStale={onStale} />}
+      {showLyrics && timedMaterial && <TimedLyricsView material={timedMaterial} clock={playbackClock} onStale={onStale} />}
       {error && (
         <Typography.Paragraph role="alert" style={{ color: colors.primaryHover, margin: `${spacing.sm}px 0 0` }}>
           {midiPlaybackError}
@@ -303,11 +304,12 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMate
   )
 }
 
-export function MidiPracticePlayer({ materialId, title, timedMaterial, onStale }: Readonly<{
+export function MidiPracticePlayer({ materialId, title, timedMaterial, showLyrics = true, onStale }: Readonly<{
   materialId: string
   title: string
   /** Set when the material can hold timed lyrics. */
   timedMaterial?: SongMaterial
+  showLyrics?: boolean
   onStale?: () => void
 }>) {
   const playback = useMaterialPlayback(materialId)
@@ -343,6 +345,7 @@ export function MidiPracticePlayer({ materialId, title, timedMaterial, onStale }
         audioUrl={playback.data.playback.audioUrl}
         durationSeconds={playback.data.playback.durationSeconds}
         timedMaterial={timedMaterial}
+        showLyrics={showLyrics}
         onStale={onStale}
       />
     </div>

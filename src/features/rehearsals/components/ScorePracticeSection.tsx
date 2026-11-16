@@ -134,6 +134,7 @@ function ScorePlayer({
   fallback,
   onRetry,
   material,
+  showLyrics,
   onStale,
 }: Readonly<{
   source: ScorePackageSource
@@ -141,6 +142,7 @@ function ScorePlayer({
   fallback: ReactNode
   onRetry: () => void
   material?: SongMaterial
+  showLyrics: boolean
   onStale?: () => void
 }>) {
   const [state, setState] = useState<PlayerState>({ status: 'loading' })
@@ -323,15 +325,17 @@ function ScorePlayer({
           </div>
           {warning && <Alert type="warning" showIcon title={warning} style={{ marginTop: spacing.md }} />}
           {ready && <PlaybackControls clock={clock} title={title} />}
-          <LyricSelector
-            parts={lyricChoice.parts}
-            verses={lyricChoice.verses}
-            selection={lyricChoice.selection}
-            onPart={lyricChoice.choosePart}
-            onVerse={lyricChoice.chooseVerse}
-          />
+          {showLyrics && (
+            <LyricSelector
+              parts={lyricChoice.parts}
+              verses={lyricChoice.verses}
+              selection={lyricChoice.selection}
+              onPart={lyricChoice.choosePart}
+              onVerse={lyricChoice.chooseVerse}
+            />
+          )}
           {/* The two lyric sources never show together: a score with its own lyrics lights them note by note. */}
-          {ready && !ready.lyrics && material && <TimedLyricsView material={material} clock={clock} onStale={onStale} />}
+          {showLyrics && ready && !ready.lyrics && material && <TimedLyricsView material={material} clock={clock} onStale={onStale} />}
           {ready && <ScoreCredit />}
         </dialog>
       </ConfigProvider>
@@ -350,8 +354,9 @@ export function ScorePracticeSection({
   title,
   fallback,
   material,
+  showLyrics = true,
   onStale,
-}: Readonly<{ title: string; fallback: ReactNode; material?: SongMaterial; onStale?: () => void }>) {
+}: Readonly<{ title: string; fallback: ReactNode; material?: SongMaterial; showLyrics?: boolean; onStale?: () => void }>) {
   const [picked, setPicked] = useState<ScorePackageSource>()
   const [attempt, setAttempt] = useState(0)
   const nextAttempt = () => setAttempt((value) => value + 1)
@@ -363,12 +368,15 @@ export function ScorePracticeSection({
   return (
     <>
       {import.meta.env.DEV && !env.useDevFixtures && !material && (
-        <LocalScoreFilePicker
-          onPick={(next) => {
-            setPicked(next)
-            nextAttempt()
-          }}
-        />
+        <details className="hm-dev-score-source">
+          <summary>Thử với tệp trên máy</summary>
+          <LocalScoreFilePicker
+            onPick={(next) => {
+              setPicked(next)
+              nextAttempt()
+            }}
+          />
+        </details>
       )}
       {source ? (
         <ScorePlayer
@@ -379,6 +387,7 @@ export function ScorePracticeSection({
           fallback={fallback}
           onRetry={nextAttempt}
           material={material}
+          showLyrics={showLyrics}
           onStale={onStale}
         />
       ) : (

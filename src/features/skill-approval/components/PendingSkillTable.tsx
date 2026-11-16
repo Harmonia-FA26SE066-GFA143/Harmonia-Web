@@ -89,9 +89,10 @@ export function PendingSkillTable({
     {
       key: 'actions',
       title: 'Thao tác',
-      align: 'right',
+      align: 'center',
+      width: 184,
       render: (_, skill) => (
-        <Flex gap={spacing.xs} justify="flex-end">
+        <Flex gap={spacing.xs} justify="center">
           <Button
             type="primary"
             data-action="approve"

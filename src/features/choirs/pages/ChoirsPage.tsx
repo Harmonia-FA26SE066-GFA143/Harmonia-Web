@@ -110,10 +110,11 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
     {
       key: 'actions',
       title: 'Thao tác',
-      align: 'right',
+      align: 'center',
+      width: admin ? 184 : 120,
       fixed: 'right',
       render: (_, choir) => (
-        <Flex justify="flex-end" gap={4}>
+        <Flex justify="center" gap={4}>
           <Button icon={<TeamOutlined />} onClick={() => setMembersOf(choir)} aria-label={`Ca viên của ${choir.name}`}>
             Ca viên
           </Button>

@@ -19,9 +19,11 @@ test('opens and controls a PDF score without page-level overflow', async ({ page
     await page.goto(rehearsalUrl!)
   }
 
-  await page.getByRole('button', { name: scoreSong! }).click()
+  await page.getByRole('combobox', { name: 'Bài hát đang tập' }).click()
+  await page.getByTitle(new RegExp(scoreSong!)).click()
+  await page.getByRole('button', { name: 'Tài liệu' }).click()
 
-  const viewer = page.locator('.practice-score-viewer')
+  const viewer = page.locator('.ant-drawer').filter({ hasText: `Tài liệu · ${scoreSong}` }).locator('.practice-score-viewer')
   const stage = viewer.locator('.practice-score-document-stage')
   await expect(viewer.getByRole('heading', { name: 'Bản nhạc' })).toBeVisible()
   // The score is fetched through a short-lived Cloudinary URL and PDF.js renders it in a worker.

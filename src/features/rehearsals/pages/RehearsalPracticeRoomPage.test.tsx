@@ -118,6 +118,10 @@ const audioOf = (url: string) => FakeAudio.instances.filter((audio) => audio.src
 /** The audio is given its source by an effect, which may run after the DOM the caller waited for. */
 const waitForAudio = (url = '/sample.wav') => waitFor(() => expect(audioOf(url)).toHaveLength(1))
 const playing = () => FakeAudio.instances.filter((audio) => !audio.paused && audio.src !== '')
+const chooseSong = async (title: string) => {
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bài hát đang tập' }))
+  fireEvent.click(await screen.findByTitle(new RegExp(title)))
+}
 const expectAllFreed = () => {
   for (const pack of packages) expect(pack.dispose).toHaveBeenCalled()
   for (const engine of engines) expect(engine.dispose).toHaveBeenCalled()
@@ -256,10 +260,7 @@ describe('RehearsalPracticeRoomPage with the score player, changing and leaving'
     await waitFor(() => expect(playing()).toHaveLength(1))
   }
 
-  it.each([
-    ['the next button', () => fireEvent.click(screen.getByRole('button', { name: 'Bài sau' }))],
-    ['the song list', () => fireEvent.click(screen.getByRole('button', { name: new RegExp(SONG_B) }))],
-  ])('another song by %s frees the first score and starts clean', async (_name, change) => {
+  it('choosing another song frees the first score and starts clean', async () => {
     const { container } = renderRoom()
     await startPlaying()
     const first = lastAudio()
@@ -267,7 +268,7 @@ describe('RehearsalPracticeRoomPage with the score player, changing and leaving'
     const firstEngines = [...engines]
     await waitFor(() => expect(container.querySelector(`.${ACTIVE_NOTE_CLASS}`)).not.toBeNull())
 
-    change()
+    await chooseSong(SONG_B)
 
     await screen.findByRole('heading', { name: SONG_B, level: 2 })
     await screen.findByRole('button', { name: `Phát ${SONG_B}` })
@@ -287,7 +288,7 @@ describe('RehearsalPracticeRoomPage with the score player, changing and leaving'
     fireEvent.change(screen.getByLabelText(/Tệp bản nhạc/), { target: { files: [new File(['xml'], 'bai.musicxml')] } })
     fireEvent.change(screen.getByLabelText(/Tệp âm thanh/), { target: { files: [new File(['wav'], 'bai.wav')] } })
     await findSheet()
-    fireEvent.click(screen.getByRole('button', { name: 'Bài sau' }))
+    await chooseSong(SONG_B)
     expect(await findFallback(SONG_B)).toBeInTheDocument()
     const created = vi.mocked(URL.createObjectURL).mock.results.map((result) => result.value as string)
     expect(created.length).toBeGreaterThan(0)

@@ -385,6 +385,7 @@ describe('RehearsalPracticeRoomPage', () => {
     try {
       renderPage(<RehearsalPracticeRoomPage />, '/director/rehearsals/:rehearsalId', '/director/rehearsals/r2')
 
+      fireEvent.click(await screen.findByRole('button', { name: 'Ghi âm' }))
       fireEvent.click(await screen.findByRole('button', { name: /Thu âm$/ }))
       fireEvent.click(await screen.findByRole('button', { name: /Dừng và lưu/ }))
       expect(await screen.findByText(/Bản thu “Con Bước Lên Bàn Thờ” .* chưa lưu được\./)).toBeInTheDocument()
@@ -413,6 +414,7 @@ describe('RehearsalPracticeRoomPage', () => {
 
     expect(await screen.findByText('Cần tập: Điệp khúc 2')).toBeInTheDocument()
     // Only the takes of the selected song; jsdom has no microphone, so recording says why it is off.
+    fireEvent.click(screen.getByRole('button', { name: 'Ghi âm' }))
     expect(await screen.findByLabelText('Nghe bản thu 1 của Con Bước Lên Bàn Thờ')).toBeInTheDocument()
     expect(screen.queryByLabelText(/bản thu 2/)).toBeNull()
     expect(screen.getByRole('button', { name: /Thu âm$/ })).toBeDisabled()
@@ -488,6 +490,9 @@ describe('RehearsalPracticeRoomPage', () => {
 
     renderRoom()
 
+    const documents = await screen.findByRole('button', { name: 'Tài liệu' })
+    await waitFor(() => expect(documents).toBeEnabled())
+    fireEvent.click(documents)
     expect(await findHeading('Bản nhạc')).toBeInTheDocument()
     expect(screen.getByText(/Mở\/Tải xuống/).closest('a')).toHaveAttribute('href', 'https://files.example/emmanuel.pdf')
     expect(await screen.findByText('Trang 1 / 3')).toBeInTheDocument()

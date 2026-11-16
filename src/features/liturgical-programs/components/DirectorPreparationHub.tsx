@@ -372,7 +372,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                 </Button>
                 <Button
                   style={{ flex: 1 }}
-                  onClick={() => navigate(`${paths.director.practice}?programId=${program.id}&tab=assign`)}
+                  onClick={() => navigate(`${paths.director.practiceNew}?programId=${program.id}`)}
                 >
                   Giao bài tập
                 </Button>

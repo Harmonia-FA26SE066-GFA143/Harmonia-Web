@@ -157,7 +157,8 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
             {
               key: 'actions',
               title: 'Thao tác',
-              align: 'right',
+              align: 'center',
+              width: 80,
               render: (_, member) => (
                 <Button
                   type="text"

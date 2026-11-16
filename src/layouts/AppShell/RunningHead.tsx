@@ -4,6 +4,8 @@ import { useReducedMotion } from '@/shared/ui'
 import { motion } from '@/styles/tokens'
 import type { NavSection } from './navigation'
 
+const tabOverflowTolerance = 8
+
 /**
  * Keeps a marker (the area pill with its active bar, the page underline) on the current item of `box`, gliding from where it was. Only
  * `transform` is animated: the width is set at once and the old width played back as a scale, which ends at scale 1.
@@ -83,17 +85,26 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
   const { box: areasBox, marker: pill } = useGlidingMarker('[aria-current="true"]', 320, 0, areaIndex)
   const { box: tabsBox, marker: underline } = useGlidingMarker('[aria-current="page"]', 280, 60, selectedPath)
 
-  // An area with many pages (Admin has eleven) is wider than the band: the strip has no scrollbar, so the current
-  // tab is brought into view, the cut edge fades, and the wheel scrolls it sideways.
+  // A page strip may still be wider than the band when contextual controls take space. Measure the list itself:
+  // the absolutely positioned underline and sub-pixel font settling must not create a false faded edge.
   useEffect(() => {
     const box = tabsBox.current
     if (!box) return
+    const list = box.querySelector<HTMLElement>('.hm-tabs__list')
+    if (!list) return
     const mark = () => {
-      box.classList.toggle('has-more-start', box.scrollLeft > 1)
-      box.classList.toggle('has-more-end', box.scrollLeft + box.clientWidth < box.scrollWidth - 1)
+      const listWidth = list.scrollWidth
+      box.classList.toggle('has-more-start', box.scrollLeft > tabOverflowTolerance)
+      box.classList.toggle(
+        'has-more-end',
+        box.scrollLeft + box.clientWidth < listWidth - tabOverflowTolerance,
+      )
     }
     const wheel = (event: WheelEvent) => {
-      if (box.scrollWidth <= box.clientWidth || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+      if (
+        list.scrollWidth <= box.clientWidth + tabOverflowTolerance ||
+        Math.abs(event.deltaY) <= Math.abs(event.deltaX)
+      ) return
       event.preventDefault()
       box.scrollLeft += event.deltaY
     }
@@ -107,8 +118,13 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
     box.addEventListener('wheel', wheel, { passive: false })
     const observer = new ResizeObserver(settle)
     observer.observe(box)
-    if (box.lastElementChild) observer.observe(box.lastElementChild)
+    observer.observe(list)
+    let cancelled = false
+    void document.fonts?.ready.then(() => {
+      if (!cancelled) settle()
+    })
     return () => {
+      cancelled = true
       box.removeEventListener('scroll', mark)
       box.removeEventListener('wheel', wheel)
       observer.disconnect()

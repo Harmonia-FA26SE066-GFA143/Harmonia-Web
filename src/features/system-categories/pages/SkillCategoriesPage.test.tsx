@@ -56,9 +56,10 @@ describe('SkillCategoriesPage', () => {
     expect(within(alto).getByText('Bè giọng')).toBeInTheDocument()
     expect(within(alto).getByText('Ngừng dùng')).toBeInTheDocument()
 
-    expect(screen.getByText('3/3 kỹ năng')).toHaveAttribute('aria-live', 'polite')
+    expect(screen.getByText('3 kỹ năng')).toHaveAttribute('aria-live', 'polite')
     const search = screen.getByRole('textbox', { name: 'Tìm kiếm kỹ năng' })
     fireEvent.change(search, { target: { value: 'dan' } })
+    expect(screen.getByText('1 kết quả trong 3 kỹ năng')).toHaveAttribute('aria-live', 'polite')
     expect(screen.getByText('Organ')).toBeInTheDocument()
     expect(screen.queryByText('Soprano')).toBeNull()
 

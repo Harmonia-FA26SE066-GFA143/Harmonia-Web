@@ -40,7 +40,8 @@ export function ReportTable({ columns, rows, pagination, loading, onOpenProgram 
           {
             key: 'program-link',
             title: 'Thao tác',
-            align: 'right' as const,
+            align: 'center' as const,
+            width: 112,
             render: (_: unknown, { programId, cells }: ReportRow) =>
               programId && (
                 // Every row has this button, so the event is part of its name.

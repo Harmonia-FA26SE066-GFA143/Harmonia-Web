@@ -1,9 +1,7 @@
-import { CheckOutlined } from '@ant-design/icons'
 import { Button, Flex, Table, Typography, type TableColumnsType } from 'antd'
-import { useRef } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
 import { colors, spacing, typography } from '@/styles/tokens'
-import { practiceStatusLabels, type PracticeSubmission } from '../types'
+import type { PracticeSubmission } from '../types'
 import { InlinePlayer } from './InlinePlayer'
 import { PracticeStatusTag } from './PracticeStatusTag'
 
@@ -16,14 +14,7 @@ export interface SubmissionTableProps {
   pageSize: number
   total: number
   loading?: boolean
-  /** The submission being marked "Đạt" from its row. */
-  passingId?: string
-  /** Submissions just marked "Đạt" from their rows: they show a ✓ until the queue reloads. */
-  passedIds?: ReadonlySet<string>
   onPageChange: (page: number) => void
-  onPass: (submission: PracticeSubmission) => void
-  /** "Cần chỉnh sửa" opens the review with the moment being heard, in seconds, when the recording was played. */
-  onNeedsRevision: (submission: PracticeSubmission, atSeconds?: number) => void
   onOpen: (submission: PracticeSubmission) => void
 }
 
@@ -39,16 +30,10 @@ export function SubmissionTable({
   pageSize,
   total,
   loading,
-  passingId,
-  passedIds,
   onPageChange,
-  onPass,
-  onNeedsRevision,
   onOpen,
   selectedId,
 }: Readonly<SubmissionTableProps>) {
-  const times = useRef(new Map<string, number>())
-
   const columns: TableColumnsType<PracticeSubmission> = [
     {
       key: 'member',
@@ -67,7 +52,7 @@ export function SubmissionTable({
       title: 'Bản thu',
       render: (_, submission) => (
         <Flex vertical gap={spacing.xs}>
-          <InlinePlayer submission={submission} onTime={(seconds) => times.current.set(submission.id, seconds)} />
+          <InlinePlayer submission={submission} />
           <Typography.Text style={muted}>
             Lần {submission.attemptNo} · nộp {formatDateTime(submission.submittedAt)}
           </Typography.Text>
@@ -82,40 +67,14 @@ export function SubmissionTable({
     },
     {
       key: 'actions',
-      title: 'Chấm',
-      align: 'right',
-      render: (_, submission) =>
-        passedIds?.has(submission.id) ? (
-          // The button becomes its result (brief §12.9), announced to screen readers.
-          <Flex justify="flex-end">
-            <Typography.Text role="status" className="hm-pop" style={{ fontWeight: 600, color: colors.textPrimary, whiteSpace: 'nowrap' }}>
-              <CheckOutlined aria-hidden style={{ color: colors.primary, marginInlineEnd: spacing.xs }} />
-              Đã chấm {practiceStatusLabels.passed}
-            </Typography.Text>
-          </Flex>
-        ) : submission.feedbacks.length === 0 ? (
-          <Flex justify="flex-end" gap={spacing.sm}>
-            <Button
-              loading={passingId === submission.id}
-              disabled={Boolean(passingId)}
-              onClick={() => onPass(submission)}
-              aria-label={`Chấm ${practiceStatusLabels.passed.toLowerCase()} bản thu của ${submission.memberName}`}
-            >
-              {practiceStatusLabels.passed}
-            </Button>
-            <Button
-              disabled={Boolean(passingId)}
-              onClick={() => onNeedsRevision(submission, times.current.get(submission.id))}
-              aria-label={`${practiceStatusLabels.needsRevision} bản thu của ${submission.memberName}`}
-            >
-              {practiceStatusLabels.needsRevision}
-            </Button>
-          </Flex>
-        ) : (
-          <Button onClick={() => onOpen(submission)} aria-label={`Xem và nhận xét bản thu của ${submission.memberName}`}>
-            Xem & nhận xét
-          </Button>
-        ),
+      title: 'Thao tác',
+      align: 'center',
+      width: 132,
+      render: (_, submission) => (
+        <Button onClick={() => onOpen(submission)} aria-label={`${submission.feedbacks.length ? 'Xem nhận xét' : 'Chấm bài'} của ${submission.memberName}`}>
+          {submission.feedbacks.length ? 'Xem nhận xét' : 'Chấm bài'}
+        </Button>
+      ),
     },
   ]
 

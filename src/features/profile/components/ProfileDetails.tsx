@@ -55,7 +55,10 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
         // The buttons are submit buttons inside the form, so Enter in a field saves too.
         <Form<ProfileUpdateValues>
           form={form}
-          layout="vertical"
+          layout="horizontal"
+          labelAlign="left"
+          labelCol={{ flex: '160px' }}
+          wrapperCol={{ flex: '1 1 0' }}
           initialValues={{ fullName: profile.fullName, phone: profile.phone, saintName: profile.saintName, gender: profile.gender }}
           onFinish={onSave}
           className="hm-profile-form"

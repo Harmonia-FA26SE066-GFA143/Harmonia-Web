@@ -17,6 +17,9 @@ import { registrationsKey } from '../hooks/useWaitingRegistrations'
 const pageSize = 20
 const key = registrationsKey
 const when = (value: string) => dayjs(parseUtc(value)).format('DD/MM/YYYY HH:mm')
+const emptyValue = (label: 'Chưa có' | 'Không có') => (
+  <Typography.Text style={{ color: colors.textMuted }}>{label}</Typography.Text>
+)
 
 const failure = (error: Error, fallback: string) =>
   errorMessage(
@@ -119,15 +122,16 @@ export function MemberRegistrationsPage() {
         </Flex>
       ),
     },
-    { key: 'phone', title: 'Điện thoại', render: (_, item) => item.phone ?? 'Chưa có' },
-    { key: 'note', title: 'Lời nhắn', ellipsis: true, render: (_, item) => item.note ?? 'Không có' },
+    { key: 'phone', title: 'Điện thoại', render: (_, item) => item.phone ?? emptyValue('Chưa có') },
+    { key: 'note', title: 'Lời nhắn', ellipsis: true, render: (_, item) => item.note ?? emptyValue('Không có') },
     { key: 'createdAt', title: 'Gửi lúc', render: (_, item) => when(item.createdAt) },
     {
       key: 'actions',
       title: 'Thao tác',
-      align: 'right',
+      align: 'center',
+      width: 300,
       render: (_, item) => (
-        <Flex justify="flex-end" gap={spacing.xs}>
+        <Flex justify="center" gap={spacing.xs}>
           <Button onClick={() => setViewing(item)} aria-label={`Xem yêu cầu của ${item.fullName}`}>Xem</Button>
           <Button type="primary" onClick={() => handleAccept(item)} aria-label={`Chấp nhận yêu cầu của ${item.fullName}`}>Chấp nhận</Button>
           <Button type="text" danger onClick={() => handleDelete(item)} aria-label={`Từ chối yêu cầu của ${item.fullName}`}>Từ chối</Button>
@@ -204,15 +208,16 @@ export function MemberRegistrationsPage() {
       >
         {viewing && (
           <Descriptions
+            className="hm-key-value"
             column={1}
             items={[
               { key: 'status', label: 'Trạng thái', children: 'Đang chờ xử lý' },
-              { key: 'saint', label: 'Tên thánh', children: viewing.saintName ?? 'Chưa có' },
+              { key: 'saint', label: 'Tên thánh', children: viewing.saintName ?? emptyValue('Chưa có') },
               { key: 'name', label: 'Họ tên', children: viewing.fullName },
-              { key: 'gender', label: 'Giới tính', children: genderLabel(viewing.gender) ?? 'Chưa có' },
+              { key: 'gender', label: 'Giới tính', children: genderLabel(viewing.gender) ?? emptyValue('Chưa có') },
               { key: 'email', label: 'Email', children: viewing.email },
-              { key: 'phone', label: 'Điện thoại', children: viewing.phone ?? 'Chưa có' },
-              { key: 'note', label: 'Lời nhắn', children: <span style={{ whiteSpace: 'pre-line' }}>{viewing.note ?? 'Không có'}</span> },
+              { key: 'phone', label: 'Điện thoại', children: viewing.phone ?? emptyValue('Chưa có') },
+              { key: 'note', label: 'Lời nhắn', children: viewing.note ? <span style={{ whiteSpace: 'pre-line' }}>{viewing.note}</span> : emptyValue('Không có') },
               { key: 'at', label: 'Gửi lúc', children: when(viewing.createdAt) },
             ]}
           />

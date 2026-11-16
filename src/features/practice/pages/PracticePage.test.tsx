@@ -1,5 +1,8 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { StrictMode } from 'react'
+import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { AppProviders } from '@/app/providers'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import * as membersApi from '@/features/members/api/membersApi'
@@ -7,12 +10,27 @@ import * as songsApi from '@/features/music-library/api/songsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
 import { programPage } from '@/test/programs'
-import { renderPage } from '@/test/renderPage'
 import * as practiceApi from '../api/practiceApi'
 import type { PracticeSubmission } from '../types'
 import { PracticePage } from './PracticePage'
+import { AssignmentCreatePage } from './AssignmentCreatePage'
 
-const renderPractice = () => renderPage(<PracticePage />, '/director/practice')
+const renderPractice = (initialEntry = '/director/practice') => {
+  const router = createMemoryRouter(
+    [
+      { path: '/director/practice', element: <PracticePage /> },
+      { path: '/director/practice/new', element: <AssignmentCreatePage /> },
+    ],
+    { initialEntries: [initialEntry] },
+  )
+  return render(
+    <StrictMode>
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>
+    </StrictMode>,
+  )
+}
 
 const submission = (fields: Partial<PracticeSubmission> = {}): PracticeSubmission => ({
   id: 'sub-1',
@@ -77,15 +95,17 @@ describe('PracticePage', () => {
     expect(document.querySelector('audio')?.src).toBe('https://files.example/fresh.mp3')
   })
 
-  it('marks a recording "Đạt" from its row in one click', async () => {
+  it('opens one clear review action and records an "Đạt" decision', async () => {
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission()]))
+    vi.spyOn(practiceApi, 'getSubmission').mockResolvedValue(submission())
     const review = vi.spyOn(practiceApi, 'reviewSubmission').mockResolvedValue()
     renderPractice()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Chấm đạt bản thu của Giuse Vũ Đình Khôi' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Chấm bài của Giuse Vũ Đình Khôi' }))
+    const panel = await screen.findByRole('complementary', { name: 'Chấm bài của Giuse Vũ Đình Khôi' })
+    fireEvent.click(await within(panel).findByRole('button', { name: 'Đạt' }))
     await waitFor(() => expect(review).toHaveBeenCalledWith('sub-1', { result: 'passed' }))
-    // The button becomes its result in the row; no dialog.
-    expect(await screen.findByText('Đã chấm Đạt')).toHaveAttribute('role', 'status')
+    expect(await screen.findByRole('status')).toHaveTextContent('Đã chấm: Đạt')
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
@@ -95,7 +115,7 @@ describe('PracticePage', () => {
     const review = vi.spyOn(practiceApi, 'reviewSubmission').mockResolvedValue()
     renderPractice()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Chấm bài của Giuse Vũ Đình Khôi' }))
     const dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     expect(await within(dialog).findByLabelText('Bản thu của Giuse Vũ Đình Khôi')).toBeInTheDocument()
     // "Cần chỉnh sửa" without a comment is refused in place.
@@ -118,7 +138,7 @@ describe('PracticePage', () => {
       .mockResolvedValue({ score: 82, pitchScore: 85, rhythmScore: 75, coveragePercent: 90, trackName: 'Tenor' })
     renderPractice()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Chấm bài của Giuse Vũ Đình Khôi' }))
     const dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     // Nothing is scored until asked: the server analyses the audio each time.
     expect(score).not.toHaveBeenCalled()
@@ -140,7 +160,7 @@ describe('PracticePage', () => {
       .mockResolvedValueOnce({ score: 64, pitchScore: 60, rhythmScore: 73, coveragePercent: 70, trackName: 'Bass' })
     renderPractice()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Chấm bài của Giuse Vũ Đình Khôi' }))
     const dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     const scoreButton = await within(dialog).findByRole('button', { name: 'Chấm tự động' })
 
@@ -174,11 +194,11 @@ describe('PracticePage', () => {
     })
     renderPractice()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Chấm bài của Giuse Vũ Đình Khôi' }))
     let dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     fireEvent.click(await within(dialog).findByRole('button', { name: 'Chấm tự động' }))
     expect(await within(dialog).findByText('82/100')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Cần chỉnh sửa bản thu của Anna Đặng Thị Mai' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Chấm bài của Anna Đặng Thị Mai' }))
     dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     expect(await within(dialog).findByLabelText('Bản thu của Anna Đặng Thị Mai')).toBeInTheDocument()
     expect(within(dialog).getByRole('button', { name: 'Chấm tự động' })).toBeInTheDocument()
@@ -206,7 +226,7 @@ describe('PracticePage', () => {
     const review = vi.spyOn(practiceApi, 'reviewSubmission').mockResolvedValue()
     renderPractice()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Cần chỉnh sửa bản thu của Giuse Vũ Đình Khôi' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Chấm bài của Giuse Vũ Đình Khôi' }))
     const dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     // What the row fills in when the recording was paused at 0:12.
     fireEvent.change(await within(dialog).findByRole('textbox', { name: 'Nhận xét' }), { target: { value: '[0:12] ' } })
@@ -227,7 +247,7 @@ describe('PracticePage', () => {
     const comment = vi.spyOn(practiceApi, 'commentSubmission').mockResolvedValue()
     renderPractice()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Xem và nhận xét bản thu của Giuse Vũ Đình Khôi' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Xem nhận xét của Giuse Vũ Đình Khôi' }))
     const dialog = await screen.findByRole('complementary', { name: /^Chấm bài của / })
     expect(await within(dialog).findByText('Lên cao hơn ở điệp khúc.')).toBeInTheDocument()
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Nhận xét' }), { target: { value: 'Nghe thêm bản mẫu.' } })
@@ -291,7 +311,7 @@ describe('PracticePage', () => {
     expect(choir).toHaveAttribute('role', 'combobox')
     expect(await screen.findByTitle('Ca đoàn Cecilia')).toBeInTheDocument()
     // Reset keeps a default that arrived after Ant Design Form read its initialValues.
-    fireEvent.click(screen.getByRole('button', { name: 'Hủy' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Xóa nội dung' }))
     expect(screen.getByTitle('Ca đoàn Cecilia')).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Tiêu đề'), { target: { value: 'Tập bài nhập lễ' } })
     const song = screen.getByLabelText('Bài hát (không bắt buộc)')
@@ -404,14 +424,14 @@ describe('PracticePage', () => {
     const submissions = vi.spyOn(practiceApi, 'listAssignmentSubmissions').mockResolvedValue(page([submission()]))
     renderPractice()
 
-    fireEvent.click(await screen.findByRole('tab', { name: 'Bài đã giao' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Bài tập' }))
     expect(await screen.findByText('Tập bè Tenor')).toBeInTheDocument()
     expect(assignments).toHaveBeenCalledWith(undefined, { pageNumber: 1, pageSize: 20 })
     expect(screen.getByText('1 kỹ năng')).toBeInTheDocument()
     expect(await screen.findByText(/Lễ Bổn mạng · 25\/10\/2026/)).toBeInTheDocument()
     expect(screen.getByText('Chương trình đã qua')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Xem bản thu của Tập bè Tenor' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Tập bè Tenor' }))
     expect(await screen.findByText('Giuse Vũ Đình Khôi')).toBeInTheDocument()
     expect(submissions).toHaveBeenCalledWith('as-1', undefined, { pageNumber: 1, pageSize: 20 })
     // The status filter comes before the status tags of the rows.

@@ -195,8 +195,6 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
       {libraryLayout ? (
         <div className="song-console">
           {searchField}
-          {selects.filter((select) => select.key === 'seasonId' || select.key === 'slotId').map(selectField)}
-          {themeField}
           {filterToggle}
         </div>
       ) : (
@@ -220,13 +218,9 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
           borderRadius: radius.md,
         }}
       >
-        {libraryLayout ? selects.filter((select) => select.key !== 'seasonId' && select.key !== 'slotId').map(selectField) : (
-          <>
-            {selects.slice(0, 3).map(selectField)}
-            {themeField}
-            {selects.slice(3).map(selectField)}
-          </>
-        )}
+        {selects.slice(0, 3).map(selectField)}
+        {themeField}
+        {selects.slice(3).map(selectField)}
       </div>
 
       {(chips.length > 0 || value.search.trim()) && (

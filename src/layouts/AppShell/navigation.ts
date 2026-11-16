@@ -111,20 +111,39 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
     basePath: paths.admin.dashboard,
     sections: [
       {
-        label: 'Quản trị hệ thống',
+        label: 'Tổng quan',
+        items: [{ path: paths.admin.dashboard, label: 'Tổng quan', icon: AppstoreOutlined }],
+      },
+      {
+        label: 'Người dùng',
         items: [
-          { path: paths.admin.dashboard, label: 'Tổng quan', icon: AppstoreOutlined },
           { path: paths.admin.accounts, label: 'Tài khoản', icon: TeamOutlined },
           { path: paths.admin.memberRegistrations, label: 'Đăng ký gia nhập', icon: UsergroupAddOutlined, useCount: useWaitingRegistrationCount },
-          { path: paths.admin.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined },
           { path: paths.admin.roles, label: 'Vai trò & Phân quyền', icon: UserSwitchOutlined },
-          { path: paths.admin.skillCategories, label: 'Danh mục kỹ năng', icon: TagsOutlined },
-          { path: paths.admin.liturgicalCategories, label: 'Danh mục phụng vụ', icon: FileTextOutlined },
-          { path: paths.admin.choirs, label: 'Ca đoàn', icon: ApartmentOutlined },
+          { path: paths.admin.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined },
+        ],
+      },
+      {
+        label: 'Tổ chức',
+        items: [{ path: paths.admin.choirs, label: 'Ca đoàn', icon: ApartmentOutlined }],
+      },
+      {
+        label: 'Danh mục',
+        items: [
+          { path: paths.admin.skillCategories, label: 'Kỹ năng', icon: TagsOutlined },
+          { path: paths.admin.liturgicalCategories, label: 'Phụng vụ', icon: FileTextOutlined },
+        ],
+      },
+      {
+        label: 'Hệ thống',
+        items: [
           { path: paths.admin.settings, label: 'Cấu hình chung', icon: SettingOutlined },
-          { path: paths.admin.reports, label: 'Báo cáo', icon: BarChartOutlined },
           { path: paths.admin.activityLog, label: 'Lịch sử hoạt động', icon: HistoryOutlined },
         ],
+      },
+      {
+        label: 'Báo cáo',
+        items: [{ path: paths.admin.reports, label: 'Báo cáo', icon: BarChartOutlined }],
       },
     ],
   },

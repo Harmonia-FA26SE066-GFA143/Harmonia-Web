@@ -58,6 +58,7 @@ export const paths = {
     participation: '/director/participation',
     roster: '/director/roster',
     practice: '/director/practice',
+    practiceNew: '/director/practice/new',
     reports: '/director/reports',
     notes: '/director/notes',
   },
