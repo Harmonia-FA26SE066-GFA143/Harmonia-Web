@@ -2918,29 +2918,6 @@ a.song-next__item:hover {
   }
 }
 
-/* Chapter I: a few staves of a real chant page (artifact Imagery, NGA antiphonal leaf), kept as it is. */
-.landing-leaf {
-  margin: 24px 0 0;
-  max-width: 420px;
-}
-
-.landing-leaf img {
-  display: block;
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  object-position: 50% 32%;
-  border: 1px solid var(--hm-border-default);
-  border-radius: var(--hm-radius-sm);
-}
-
-.landing-leaf figcaption {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--hm-text-muted);
-  text-wrap: balance;
-}
-
 /* The choir switcher at the start of the ivory band (artifact Spine), set off from the page tabs by a rule. */
 .hm-choir {
   display: flex;
