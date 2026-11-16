@@ -24,3 +24,21 @@ describe('findSelectedPath', () => {
     expect(findSelectedPath(surfaces.priest.sections, '/priest/programs/42/song-review')).toBe('/priest/programs')
   })
 })
+
+describe('Admin navigation', () => {
+  it('groups pages into focused areas instead of one overflowing strip', () => {
+    expect(
+      surfaces.admin.sections.map((section) => ({
+        label: section.label,
+        pages: section.items.map((item) => item.label),
+      })),
+    ).toEqual([
+      { label: 'Tổng quan', pages: ['Tổng quan'] },
+      { label: 'Người dùng', pages: ['Tài khoản', 'Đăng ký gia nhập', 'Vai trò & Phân quyền', 'Đề cử Ca trưởng'] },
+      { label: 'Tổ chức', pages: ['Ca đoàn'] },
+      { label: 'Danh mục', pages: ['Kỹ năng', 'Phụng vụ'] },
+      { label: 'Hệ thống', pages: ['Cấu hình chung', 'Lịch sử hoạt động'] },
+      { label: 'Báo cáo', pages: ['Báo cáo'] },
+    ])
+  })
+})
