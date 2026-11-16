@@ -93,7 +93,7 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
     {
       key: 'actions',
       title: <span className="hm-visually-hidden">Thao tác</span>,
-      align: 'right',
+      align: 'center',
       width: 120,
       render: (_, program) => {
         // The Choir Director's detail reads published events only (GET /api/schedule/events/{id}).

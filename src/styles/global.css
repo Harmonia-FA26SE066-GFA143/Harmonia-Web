@@ -430,93 +430,27 @@ textarea {
 }
 
 .practice-room-layout {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
-/* The running order on the reading surface stays in reach while the sheet is read (artifact RehearsalPracticeRoomPage). */
-.practice-room-layout .practice-song-list {
-  position: sticky;
-  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
-  padding: 16px;
-  gap: 8px;
-}
-
-.practice-song-list ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  min-width: 0;
 }
 
 .practice-room-layout .practice-room-player {
   padding: 24px;
 }
 
-.practice-room-layout .practice-song-list,
 .practice-room-layout .practice-room-player {
   min-width: 0;
 }
 
-.practice-song-item {
-  width: 100%;
+.practice-room-controls {
+  margin-top: 16px;
+  padding: 16px 0;
+  border-block: 1px solid var(--hm-border-default);
+}
+
+.practice-room-field {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  align-items: baseline;
   gap: 8px;
-  padding: 8px;
-  border: 0;
-  border-radius: var(--hm-radius-md);
-  box-shadow: inset 2px 0 0 transparent;
-  background: transparent;
-  color: var(--hm-text-primary);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--hm-dur-fast) var(--hm-ease), box-shadow var(--hm-dur-fast) var(--hm-ease);
-}
-
-.practice-song-item:hover {
-  background: var(--hm-surface-base);
-}
-
-.practice-song-item:focus-visible {
-  outline: 2px solid var(--hm-action-focus);
-  outline-offset: -2px;
-}
-
-.practice-song-item__number {
-  font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 1;
-  text-align: right;
-  font-variant-numeric: lining-nums;
-  color: var(--hm-text-muted);
-}
-
-.practice-song-item__title {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.practice-song-item__meta {
-  display: block;
-  font-size: 12px;
-  color: var(--hm-text-muted);
-}
-
-/* The current song: a white sheet with a burgundy edge, and its number in burgundy. */
-.practice-song-item[aria-current='true'] {
-  background: var(--hm-surface-base);
-  box-shadow: inset 2px 0 0 var(--hm-action-primary);
-}
-
-.practice-song-item[aria-current='true'] .practice-song-item__number {
-  color: var(--hm-action-primary);
+  min-width: min(360px, 100%);
 }
 
 .karaoke-lyrics {
@@ -526,6 +460,17 @@ textarea {
   justify-items: center;
   text-align: center;
   padding: 32px 16px;
+}
+
+.hm-dev-score-source {
+  margin-top: 16px;
+  color: var(--hm-text-muted);
+  font-size: 12px;
+}
+
+.hm-dev-score-source > summary {
+  width: fit-content;
+  cursor: pointer;
 }
 
 .practice-score-viewer {
@@ -570,24 +515,10 @@ textarea {
   border: 1px solid var(--score-muted-border);
 }
 
-@media (max-width: 1100px) {
-  .practice-room-layout {
-    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-  }
-}
-
 @media (max-width: 800px) {
-  .practice-room-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .practice-room-player {
-    grid-row: 1;
-  }
-
-  .practice-room-layout .practice-song-list {
-    position: static;
-    grid-row: 2;
+  .practice-room-field {
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -1536,14 +1467,14 @@ textarea {
 /* Song library: one console of filters, then the contents page of a hymnal. */
 .song-console {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   gap: 12px;
 }
 
 @media (max-width: 1199px) {
   .song-console {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 }
 
@@ -1565,12 +1496,8 @@ textarea {
   transition: background-color var(--hm-dur-fast) var(--hm-ease);
 }
 
-.song-index:not(.is-compact) .song-index__row {
+.song-index .song-index__row {
   grid-template-columns: 44px 44px minmax(0, 1fr) auto 16px;
-}
-
-.song-index.is-compact .song-index__row {
-  padding-block: 4px;
 }
 
 .song-index__thumb {
@@ -1617,10 +1544,6 @@ textarea {
   overflow-wrap: anywhere;
   color: var(--hm-text-primary);
   transition: color var(--hm-dur-fast) var(--hm-ease);
-}
-
-.song-index.is-compact .song-index__title {
-  font-size: 19px;
 }
 
 /* The title's link covers the whole line. */
@@ -2534,24 +2457,12 @@ textarea {
   font-weight: 600;
 }
 
-/* Kho bài hát (artifact SongLibraryPage): quick filters, the grid of score pages, and the quick look. */
-.song-layout {
-  display: grid;
-  grid-template-columns: 196px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-  margin-top: 16px;
-}
-
-.song-layout.has-peek {
-  grid-template-columns: 196px minmax(0, 1fr) 340px;
-}
-
 .song-layout__main {
   display: flex;
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  margin-top: 16px;
 }
 
 .song-layout__sheet {
@@ -2561,361 +2472,10 @@ textarea {
   overflow: hidden;
 }
 
-.song-rail {
-  position: sticky;
-  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
-}
-
-.song-rail__list {
-  margin: 0;
-  padding: 0;
-  list-style-type: '';
-}
-
-.song-rail__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  min-height: 32px;
-  padding: 4px 12px;
-  border: 0;
-  border-radius: var(--hm-radius-sm);
-  background: transparent;
-  font: inherit;
-  font-size: 13px;
-  text-align: start;
-  color: var(--hm-text-body);
-  cursor: pointer;
-  transition: background var(--hm-dur-fast) var(--hm-ease), color var(--hm-dur-fast) var(--hm-ease);
-}
-
-.song-rail__item:hover {
-  background: var(--hm-surface-soft);
-  color: var(--hm-text-primary);
-}
-
-.song-rail__item[aria-pressed='true'] {
-  background: var(--hm-surface-base);
-  color: var(--hm-text-primary);
-  font-weight: 600;
-  box-shadow: inset 0 0 0 1px var(--hm-border-default);
-}
-
-.song-rail__item:focus-visible,
-.song-card:focus-visible {
-  outline: 2px solid var(--hm-action-focus);
-  outline-offset: 2px;
-}
-
-.song-rail__count {
-  min-width: 22px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--hm-surface-band);
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  color: var(--hm-text-body);
-}
-
-.song-next {
-  background: var(--hm-surface-reading);
-  border: 1px solid var(--hm-border-hairline);
-  border-top: 1px solid var(--hm-gilt);
-  border-radius: var(--hm-radius-lg);
-  padding: 16px 24px;
-}
-
-.song-next__head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 8px;
-}
-
-.song-next__open {
-  margin-inline-start: auto;
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.song-next__row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style-type: '';
-}
-
-.song-next__item {
-  display: flex;
-  flex-direction: column;
-  padding: 8px 12px;
-  border: 1px solid var(--hm-border-default);
-  border-radius: var(--hm-radius-sm);
-  background: var(--hm-surface-base);
-  color: var(--hm-text-primary);
-  transition: border-color var(--hm-dur-fast) var(--hm-ease);
-}
-
-a.song-next__item:hover {
-  border-color: var(--hm-action-primary);
-  color: var(--hm-text-primary);
-}
-
-.song-next__item b {
-  overflow: hidden;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.song-next__item.is-gap {
-  border-style: dashed;
-  border-color: var(--hm-area-roster-cloth);
-}
-
-.song-next__item.is-gap b {
-  font-weight: 500;
-  color: var(--hm-area-roster-ink);
-}
-
-.song-next__part {
-  font-size: 12px;
-  line-height: 1.3;
-  color: var(--hm-text-muted);
-}
-
-.song-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-  list-style-type: '';
-}
-
-.song-cards > li {
-  display: flex;
-}
-
-.song-cards__pager {
-  display: flex;
-  justify-content: flex-end;
-  padding: 16px 0 0;
-}
-
-.song-card {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--hm-border-hairline);
-  border-radius: var(--hm-radius-lg);
-  background: var(--hm-surface-base);
-  font: inherit;
-  text-align: start;
-  color: inherit;
-  cursor: pointer;
-}
-
-.song-card[aria-pressed='true'] {
-  border-color: var(--hm-action-primary);
-  box-shadow: 0 0 0 1px var(--hm-action-primary), var(--hm-shadow-sm);
-}
-
-.song-card__thumb {
-  position: relative;
-  display: block;
-  height: 118px;
-  padding: 8px 16px 0;
-  overflow: hidden;
-  background: var(--hm-surface-band);
-  border-bottom: 1px solid var(--hm-border-default);
-}
-
-.song-card__page {
-  display: block;
-  width: 100%;
-  height: auto;
-  background: #fff;
-  box-shadow: var(--hm-shadow-sm);
-  transition: transform 600ms var(--hm-ease);
-}
-
-.song-card:hover .song-card__page,
-.song-card:focus-visible .song-card__page {
-  transform: translateY(-28px);
-}
-
-.song-card__no {
-  position: absolute;
-  left: 8px;
-  bottom: 6px;
-  padding: 2px 8px 0;
-  border-radius: var(--hm-radius-sm);
-  background: var(--hm-surface-reading);
-  font-family: var(--hm-font-display);
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--hm-action-primary);
-}
-
-.song-card__body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px;
-}
-
-.song-card__part {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--hm-area-liturgy-ink);
-}
-
-.song-card__title {
-  min-height: 38px;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35;
-  color: var(--hm-text-primary);
-}
-
-.song-card__meta {
-  font-size: 12px;
-  color: var(--hm-text-muted);
-}
-
-.song-card__mats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  /* 8px with the body's 2px gap. */
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--hm-outcome-good);
-}
-
-.song-card__mats .is-miss {
-  color: var(--hm-text-muted);
-}
-
-.song-card__used {
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid var(--hm-border-default);
-  font-size: 12px;
-  color: var(--hm-text-muted);
-}
-
-.song-peek {
-  position: sticky;
-  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
-  overflow: hidden;
-  background: var(--hm-surface-base);
-  border: 1px solid var(--hm-border-hairline);
-  border-radius: var(--hm-radius-lg);
-}
-
-.song-peek__in {
-  animation: hm-rise var(--hm-dur-base) var(--hm-ease) both;
-}
-
-.song-peek__page {
-  display: grid;
-  place-items: start center;
-  height: 190px;
-  padding-top: 16px;
-  overflow: hidden;
-  background: var(--hm-surface-band);
-  border-bottom: 1px solid var(--hm-border-default);
-}
-
-.song-peek__sheet {
-  width: 200px;
-  height: auto;
-  background: #fff;
-  box-shadow: var(--hm-shadow-md);
-}
-
-.song-peek__body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px;
-}
-
-.song-peek__title {
-  margin: 0;
-  font-family: var(--hm-font-display);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--hm-text-primary);
-}
-
-.song-peek__audio {
-  width: 100%;
-  height: 36px;
-}
-
-.song-peek__files {
-  margin: 0;
-  padding: 0;
-  list-style-type: '';
-}
-
-.song-peek__files li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  border-top: 1px solid var(--hm-border-default);
-  font-size: 13px;
-  color: var(--hm-text-primary);
-}
-
-.song-peek__files li > span:not(.anticon) {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  line-height: 1.3;
-}
-
-.song-peek__files small {
-  font-size: 12px;
-  color: var(--hm-text-muted);
-}
-
-.song-peek__files .anticon,
-.song-peek__files li.is-miss {
-  color: var(--hm-text-muted);
-}
-
 /* Staff divider (artifact Patterns): two short staves round a small rose; at most one per reading page. */
 .hm-staff-divider {
   display: block;
   margin: 8px auto;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .song-card:hover .song-card__page,
-  .song-card:focus-visible .song-card__page {
-    transform: none;
-  }
-
-  .song-peek__in {
-    animation: none;
-  }
 }
 
 /* The choir switcher at the start of the ivory band (artifact Spine), set off from the page tabs by a rule. */
@@ -3720,9 +3280,37 @@ h1.ant-typography.hm-status__title {
 }
 
 .hm-profile-form__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 24px;
+  max-width: 720px;
+}
+
+/* Shared key/value rhythm for detail drawers and read-only identity panels. */
+.hm-key-value .ant-descriptions-item-label {
+  width: 160px;
+  color: var(--hm-text-muted);
+}
+
+.hm-key-value .ant-descriptions-item-content {
+  color: var(--hm-text-primary);
+}
+
+/* Ant's description icon otherwise centres against the whole title + body block. */
+.ant-alert-with-description .ant-alert-icon {
+  align-self: flex-start;
+  margin-top: 3px;
+}
+
+.ant-alert-with-description .ant-alert-content {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .hm-key-value .ant-descriptions-item-label {
+    width: 120px;
+  }
+
+  .hm-profile-form .ant-form-item-row {
+    display: block;
+  }
 }
 
 .ant-typography.hm-profile-form__note {

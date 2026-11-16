@@ -173,7 +173,8 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
           {
             key: 'remove',
             title: 'Thao tác',
-            align: 'right' as const,
+            align: 'center' as const,
+            width: 72,
             render: (_: unknown, item: DraftItem) => (
               <Button
                 type="text"

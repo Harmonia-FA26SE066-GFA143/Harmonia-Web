@@ -60,8 +60,8 @@ describe('router', () => {
     // 31 screen-map pages, the target of the emailed reset link (/reset-password), /change-password and the Choir
     // Director's members (FE-24), skill approval (FE-25) and choirs (D7), the Admin's choirs (D8), and the two sides of
     // the Parish Priest's notes (FE-23), the public request to join with its Admin list, and director nominations for
-    // the three roles.
-    expect(pages).toHaveLength(45)
+    // the three roles, plus the focused assignment-creation route.
+    expect(pages).toHaveLength(46)
     expect(new Set(pages.map((page) => page.path)).size).toBe(pages.length)
   })
 

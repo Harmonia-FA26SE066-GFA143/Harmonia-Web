@@ -1,5 +1,5 @@
-import { EditOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
-import { Alert, Badge, Button, Calendar, Flex, Grid, Radio, Segmented, Select, Spin, Typography } from 'antd'
+import { EditOutlined, EllipsisOutlined, FilterOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
+import { Alert, Badge, Button, Calendar, Drawer, Flex, Grid, Popover, Segmented, Select, Spin, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useId, useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
@@ -63,7 +63,7 @@ export function ProgramCalendarPage() {
   const dateParam = searchParams.get('date')
   const selected = useMemo(() => (dateParam && isoDate.test(dateParam) && dayjs(dateParam).isValid() ? dayjs(dateParam) : dayjs()), [dateParam])
   const setSelected = (date: Dayjs) => setSearchParams(date.isSame(dayjs(), 'day') ? {} : { date: date.format('YYYY-MM-DD') }, { replace: true })
-  const [mode, setMode] = useState<'month' | 'year'>('month')
+  const [detailsOpen, setDetailsOpen] = useState(Boolean(dateParam))
   // Filters only the loaded month on screen; the backend query stays the whole month.
   const [statusFilter, setStatusFilter] = useState<EventStatus | 'all'>('all')
   const hintId = useId()
@@ -90,9 +90,17 @@ export function ProgramCalendarPage() {
   const moveByKey = (event: KeyboardEvent<HTMLDivElement>) => {
     const step = keySteps[event.key]
     // Only the day grid itself: the selects and the view switch keep their own keys.
-    if (!step || mode !== 'month' || !(event.target as HTMLElement).classList.contains('ant-picker-panel')) return
+    if (!step || !(event.target as HTMLElement).classList.contains('ant-picker-panel')) return
     event.preventDefault()
     setSelected(selected.add(step[0], step[1]))
+  }
+  const pickDate = (date: Dayjs) => {
+    setSelected(date)
+    setDetailsOpen(true)
+  }
+  const changeMonth = (date: Dayjs) => {
+    setSelected(date)
+    setDetailsOpen(false)
   }
   const createForDate = () => navigate(`${paths.priest.programCreate}?date=${selectedKey}`)
 
@@ -146,8 +154,18 @@ export function ProgramCalendarPage() {
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Lịch phụng vụ' }]}
         extra={
           <Flex wrap gap={spacing.sm}>
-            <SyncCalendarButton year={selected.year()} />
-            <GenerateEventsButton />
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              content={
+                <Flex vertical gap={spacing.sm} style={{ minWidth: 240 }}>
+                  <SyncCalendarButton year={selected.year()} />
+                  <GenerateEventsButton />
+                </Flex>
+              }
+            >
+              <Button icon={<EllipsisOutlined aria-hidden />}>Thao tác khác</Button>
+            </Popover>
             <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
               Tạo chương trình
             </Button>
@@ -164,49 +182,53 @@ export function ProgramCalendarPage() {
             <Typography.Title level={2} className="priest-calendar__month">
               {selected.format('[Tháng] M, YYYY')}
             </Typography.Title>
-            <Segmented<EventStatus | 'all'>
-              aria-label="Lọc theo trạng thái"
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={statusFilters.map((status) => ({
-                value: status,
-                label: `${status === 'all' ? 'Tất cả' : eventStatusLabels[status]} (${countOf(status)})`,
-              }))}
-            />
-            {/* Year, month, today and the view on the same line as the month (artifact PriestCalendar). */}
+            <Popover
+              trigger="click"
+              placement="bottom"
+              content={
+                <Flex vertical gap={spacing.sm}>
+                  <Typography.Text strong>Trạng thái chương trình</Typography.Text>
+                  <Segmented<EventStatus | 'all'>
+                    aria-label="Lọc theo trạng thái"
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    options={statusFilters.map((status) => ({
+                      value: status,
+                      label: `${status === 'all' ? 'Tất cả' : eventStatusLabels[status]} (${countOf(status)})`,
+                    }))}
+                  />
+                </Flex>
+              }
+            >
+              <Button icon={<FilterOutlined aria-hidden />}>Bộ lọc</Button>
+            </Popover>
             <Flex wrap gap={spacing.sm} style={{ marginInlineStart: 'auto' }}>
               <Select
                 aria-label="Năm"
                 value={selected.year()}
-                onChange={(year: number) => setSelected(selected.year(year))}
+                onChange={(year: number) => changeMonth(selected.year(year))}
                 options={Array.from({ length: 21 }, (_, index) => ({ value: selected.year() - 10 + index, label: selected.year() - 10 + index }))}
                 style={{ minWidth: 84 }}
               />
-              {mode === 'month' && (
-                <Select
-                  aria-label="Tháng"
-                  value={selected.month()}
-                  onChange={(monthIndex: number) => setSelected(selected.month(monthIndex))}
-                  options={monthOptions}
-                  style={{ minWidth: 112 }}
-                />
-              )}
-              <Button onClick={() => setSelected(dayjs())}>Hôm nay</Button>
-              <Radio.Group
-                optionType="button"
-                aria-label="Chế độ xem lịch"
-                value={mode}
-                onChange={(event) => setMode(event.target.value)}
-                options={[
-                  { value: 'month', label: 'Tháng' },
-                  { value: 'year', label: 'Năm' },
-                ]}
+              <Select
+                aria-label="Tháng"
+                value={selected.month()}
+                onChange={(monthIndex: number) => changeMonth(selected.month(monthIndex))}
+                options={monthOptions}
+                style={{ minWidth: 112 }}
               />
+              <Button onClick={() => changeMonth(dayjs())}>Hôm nay</Button>
             </Flex>
           </Flex>
-          {/* The day panel sits beside the calendar, so picking a day shows its events without scrolling. */}
-          <div className="hm-split">
-            <section className="hm-sheet-section priest-calendar__grid" aria-label="Lịch tháng">
+          {!events.isPlaceholderData && events.data.totalCount === 0 && (
+            <Alert
+              type="info"
+              showIcon
+              title="Chưa có chương trình nào trong tháng này."
+              description="Chọn một ngày trên lịch để xem ngày phụng vụ hoặc tạo chương trình."
+            />
+          )}
+          <section className="hm-sheet-section priest-calendar__grid" aria-label="Lịch tháng">
               {/* The previous month stays on screen while the next one loads (keepPreviousData), so it is dimmed. */}
               <Spin spinning={events.isPlaceholderData} description="Đang tải tháng…">
                 <div role="group" aria-label="Lịch sự kiện phụng vụ" aria-describedby={hintId} onKeyDown={moveByKey}>
@@ -216,16 +238,16 @@ export function ProgramCalendarPage() {
                   <Calendar
                     fullscreen={Boolean(screens.md)}
                     value={selected}
-                    mode={mode}
-                    onSelect={setSelected}
-                    onPanelChange={(_, next) => setMode(next)}
+                    mode="month"
+                    onSelect={pickDate}
+                    onPanelChange={changeMonth}
                     headerRender={() => null}
                     cellRender={(date, info) => (info.type === 'date' ? renderDate(date) : info.originNode)}
                   />
                 </div>
               </Spin>
               {/* The key under the grid, each drawn the way the cells draw it. */}
-              {mode === 'month' && screens.md && (
+              {screens.md && (
                 <Flex component="ul" aria-label="Chú thích lịch" align="center" wrap gap={spacing.md} className="priest-calendar__key">
                   <li style={eventChip('published')}>Sự kiện do cha xứ tạo</li>
                   <li style={eventChip('draft')}>
@@ -237,30 +259,31 @@ export function ProgramCalendarPage() {
                   <li>Ngày phụng vụ đồng bộ từ lịch trực tuyến</li>
                 </Flex>
               )}
-            </section>
-            {/* The picked day, read on the reading surface (artifact PriestCalendar). */}
-            <aside className="hm-preview hm-paper" aria-label={dayTitle(selected)}>
+          </section>
+          <Drawer
+            open={detailsOpen}
+            title={dayTitle(selected)}
+            size={520}
+            onClose={() => setDetailsOpen(false)}
+            footer={
+              <Flex justify="flex-end">
+                <Button type="primary" icon={<PlusOutlined />} onClick={createForDate}>
+                  Tạo chương trình cho ngày này
+                </Button>
+              </Flex>
+            }
+          >
+            <div aria-label={dayTitle(selected)}>
               <span role="status" style={visuallyHidden}>
                 {events.isPlaceholderData ? '' : `Ngày ${selected.format('DD/MM/YYYY')}: ${selectedEvents.length} sự kiện`}
               </span>
-              <Typography.Text style={{ color: gold.ink, fontSize: typography.label.fontSize, fontWeight: 600 }}>{dayTitle(selected)}</Typography.Text>
+              <Typography.Text style={{ color: gold.ink, fontSize: typography.label.fontSize, fontWeight: 600 }}>Ngày phụng vụ</Typography.Text>
               <LiturgicalDayInfo date={selectedKey} days={days} />
-              <Button icon={<PlusOutlined />} onClick={createForDate}>
-                Tạo chương trình cho ngày này
-              </Button>
-              {!events.isPlaceholderData && events.data.totalCount === 0 && (
-                <Alert
-                  type="info"
-                  showIcon
-                  title="Chưa có sự kiện nào trong tháng này."
-                  description="Chọn một ngày trên lịch rồi bấm “Tạo chương trình cho ngày này”."
-                />
-              )}
               <div>
-                <p className="hm-rubric">Sự kiện trong ngày</p>
-                {events.isPlaceholderData && <Typography.Text style={{ color: colors.textMuted }}>Đang tải sự kiện…</Typography.Text>}
+                <p className="hm-rubric">Chương trình trong ngày</p>
+                {events.isPlaceholderData && <Typography.Text style={{ color: colors.textMuted }}>Đang tải chương trình…</Typography.Text>}
                 {!events.isPlaceholderData && selectedEvents.length === 0 && (
-                  <Typography.Text style={{ color: colors.textMuted }}>Chưa có sự kiện nào trong ngày này.</Typography.Text>
+                  <Typography.Text style={{ color: colors.textMuted }}>Chưa có chương trình nào trong ngày này.</Typography.Text>
                 )}
                 {!events.isPlaceholderData && selectedEvents.length > 0 && (
                   <ul className="priest-day-events">
@@ -282,8 +305,8 @@ export function ProgramCalendarPage() {
                   </ul>
                 )}
               </div>
-            </aside>
-          </div>
+            </div>
+          </Drawer>
         </Flex>
       )}
     </div>

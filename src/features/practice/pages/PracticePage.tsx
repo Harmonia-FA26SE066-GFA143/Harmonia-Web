@@ -1,12 +1,11 @@
 import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons'
 import { Alert, Button, Flex, Tabs, Typography } from 'antd'
-import { generatePath, useNavigate, useSearchParams } from 'react-router'
+import { generatePath, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate } from '@/features/liturgical-programs'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { PageHeader } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
-import { AssignmentForm } from '../components/AssignmentForm'
 import { AssignmentsTab } from '../components/AssignmentsTab'
 import { ProgressTab } from '../components/ProgressTab'
 import { SubmissionList } from '../components/SubmissionList'
@@ -20,6 +19,7 @@ import { useSubmissions, useUpcomingEvents } from '../hooks/usePractice'
  */
 export function PracticePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [params, setParams] = useSearchParams()
   const programId = params.get('programId') ?? params.get('eventId')
   const defaultTab = programId ? 'progress' : 'review'
@@ -38,23 +38,14 @@ export function PracticePage() {
     setParams(next, { replace: true })
   }
 
-  // Giao bài tập is its own page (artifact AssignPracticePage), kept on `?tab=assign` so existing links still land on it.
+  const assignmentParams = new URLSearchParams(params)
+  assignmentParams.delete('tab')
+  const assignmentSearch = assignmentParams.toString()
+  const assignmentUrl = `${paths.director.practiceNew}${assignmentSearch ? `?${assignmentSearch}` : ''}`
+
+  // Keep old links working while making "Giao bài tập" one focused route instead of a tab that becomes another page.
   if (tab === 'assign') {
-    return (
-      <>
-        <PageHeader
-          title="Giao bài tập"
-          breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Luyện tập' }, { title: 'Giao bài tập' }]}
-          description="Ca viên sẽ nhận được thông báo khi bạn giao bài."
-          extra={
-            <Button icon={<ArrowLeftOutlined />} onClick={() => setTab('assignments')}>
-              Về Luyện tập
-            </Button>
-          }
-        />
-        <AssignmentForm />
-      </>
-    )
+    return <Navigate replace to={assignmentUrl} state={{ from: paths.director.practice }} />
   }
 
   return (
@@ -62,6 +53,7 @@ export function PracticePage() {
       <PageHeader
         title="Luyện tập"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Luyện tập' }]}
+        description="Chấm bản thu đang chờ, xem bài tập đã giao và theo dõi tiến độ chuẩn bị."
         extra={
           <>
             {activeEvent && (
@@ -72,7 +64,11 @@ export function PracticePage() {
                 Về chi tiết chương trình
               </Button>
             )}
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setTab('assign')}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => navigate(assignmentUrl, { state: { from: `${location.pathname}${location.search}` } })}
+            >
               Giao bài tập
             </Button>
           </>
@@ -105,12 +101,12 @@ export function PracticePage() {
             key: 'review',
             label: (
               <span>
-                Chấm bài{waitingCount ? <span className="ctb-tab-count">{waitingCount}</span> : null}
+                Cần chấm{waitingCount ? <span className="ctb-tab-count">{waitingCount}</span> : null}
               </span>
             ),
             children: <SubmissionList defaultStatus="submitted" />,
           },
-          { key: 'assignments', label: 'Bài đã giao', children: <AssignmentsTab /> },
+          { key: 'assignments', label: 'Bài tập', children: <AssignmentsTab /> },
           { key: 'progress', label: 'Tiến độ', children: <ProgressTab /> },
         ]}
       />

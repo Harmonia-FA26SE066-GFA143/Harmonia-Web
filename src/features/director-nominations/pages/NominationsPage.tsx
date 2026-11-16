@@ -47,7 +47,7 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
     { key: 'choir', title: 'Ca đoàn đề xuất', render: (_, item) => item.proposedChoirName ?? <Typography.Text style={{ color: colors.textMuted }}>Chưa đề xuất</Typography.Text> },
     { key: 'status', title: 'Trạng thái', render: (_, item) => <StatusTag color={statusColors[item.status]} mark={item.status === 'Cancelled' ? 'struck' : undefined}>{statusLabels[item.status]}</StatusTag> },
     { key: 'at', title: 'Ngày đề cử', render: (_, item) => dayjs(parseUtc(item.createdAt)).format('DD/MM/YYYY') },
-    { key: 'open', title: <span className="hm-visually-hidden">Thao tác</span>, align: 'right', render: (_, item) => <Button type="link" onClick={() => setOpenId(item.id)} aria-label={`Xem đề cử ${item.memberFullName}`}>Xem</Button> },
+    { key: 'open', title: <span className="hm-visually-hidden">Thao tác</span>, align: 'center', width: 112, render: (_, item) => <Button type="link" onClick={() => setOpenId(item.id)} aria-label={`Xem đề cử ${item.memberFullName}`}>Xem</Button> },
   ]
 
   return (

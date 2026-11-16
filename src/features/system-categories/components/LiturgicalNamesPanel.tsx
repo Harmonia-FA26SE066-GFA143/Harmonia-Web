@@ -252,10 +252,11 @@ export function LiturgicalNamesPanel() {
               {
                 key: 'actions',
                 title: 'Thao tác',
-                align: 'right',
+                align: 'center',
+                width: 96,
                 fixed: 'right',
                 render: (_, item) => (
-                  <Flex justify="flex-end" gap={4}>
+                  <Flex justify="center" gap={4}>
                     <Button type="text" icon={<EditOutlined />} onClick={() => setForm({ open: true, translation: item })} aria-label={`Sửa bản dịch ${item.englishName}`} />
                     <Button type="text" danger icon={<DeleteOutlined />} onClick={() => confirmDelete(item)} aria-label={`Xoá bản dịch ${item.englishName}`} />
                   </Flex>

@@ -7,7 +7,6 @@ import { SheetMusicOutlined, StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { songListState } from '../songFilters'
 import { materialKindLabels, type MaterialKind, type Song } from '../types'
-import type { DensityMode } from './viewStorage'
 
 export interface SongIndexListProps {
   songs: Song[]
@@ -16,7 +15,6 @@ export interface SongIndexListProps {
   pageSize: number
   total: number
   loading?: boolean
-  density?: DensityMode
   onPageChange: (page: number) => void
 }
 
@@ -69,7 +67,6 @@ export function SongIndexList({
   pageSize,
   total,
   loading,
-  density = 'comfortable',
   onPageChange,
 }: Readonly<SongIndexListProps>) {
   const { search } = useLocation()
@@ -77,7 +74,7 @@ export function SongIndexList({
   return (
     <div role="region" aria-label="Mục lục bài hát">
       <Spin spinning={loading}>
-        <ul className={`hm-stagger song-index${density === 'compact' ? ' is-compact' : ''}`}>
+        <ul className="hm-stagger song-index">
           {songs.map((song, index) => {
             const credits = [song.composer, song.lyricist && song.lyricist !== song.composer && song.lyricist].filter(Boolean)
             const details = [
@@ -92,7 +89,7 @@ export function SongIndexList({
                 <span aria-hidden className="song-index__number">
                   {(page - 1) * pageSize + index + 1}
                 </span>
-                {density !== 'compact' && <SongThumbnail url={song.sheetMusicThumbnailUrl} />}
+                <SongThumbnail url={song.sheetMusicThumbnailUrl} />
                 <div style={{ minWidth: 0 }}>
                   <Flex align="center" gap={spacing.sm} wrap>
                     <Link to={generatePath(paths.director.songDetail, { songId: song.id })} state={songListState(search)} className="song-index__title">

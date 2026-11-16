@@ -51,7 +51,7 @@ export function EventTable({ events, onOpen, pagination = false, loading, select
     {
       key: 'actions',
       title: <span style={visuallyHidden}>Thao tác</span>,
-      align: 'right',
+      align: 'center',
       width: 120,
       render: (_, event) => (
         <Button

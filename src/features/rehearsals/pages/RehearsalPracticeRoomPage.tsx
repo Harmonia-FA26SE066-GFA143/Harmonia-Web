@@ -1,5 +1,5 @@
-import { AudioOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { Button, Card, Flex, Segmented, Skeleton, Typography } from 'antd'
+import { AudioOutlined, FileTextOutlined, SoundOutlined } from '@ant-design/icons'
+import { Button, Card, Drawer, Flex, Segmented, Select, Skeleton, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { lazy, Suspense, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
@@ -30,6 +30,9 @@ export function RehearsalPracticeRoomPage() {
   const room = usePracticeRoom(fetched.data ?? rehearsal)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [part, setPart] = useState('Tất cả')
+  const [showLyrics, setShowLyrics] = useState(false)
+  const [documentsOpen, setDocumentsOpen] = useState(false)
+  const [recordingOpen, setRecordingOpen] = useState(false)
   // Sample audio per voice part and typed lyrics come from the song's materials (GET /api/music-materials).
   // A list read again may be shorter than the one the selection was made in.
   const current = Math.min(selectedIndex, Math.max(0, (room?.songs.length ?? 0) - 1))
@@ -81,8 +84,15 @@ export function RehearsalPracticeRoomPage() {
 
   // Undefined while the rehearsal has no songs; the page then shows "Buổi tập chưa có bài hát" instead of the player.
   const song = room.songs[current]
-  const previous = () => setSelectedIndex(Math.max(0, current - 1))
-  const next = () => setSelectedIndex(Math.min(room.songs.length - 1, current + 1))
+  const chooseSong = (songId: string) => {
+    const index = room.songs.findIndex((item) => item.id === songId)
+    if (index < 0) return
+    setSelectedIndex(index)
+    setPart('Tất cả')
+    setShowLyrics(false)
+    setDocumentsOpen(false)
+    setRecordingOpen(false)
+  }
   // Stable across renders, so a player can ask for it from an effect.
   const refreshMaterials = materials.refetch
   let materialContent: ReactNode = null
@@ -96,13 +106,14 @@ export function RehearsalPracticeRoomPage() {
 
     const legacyContent = (
       <>
-        {!partAudio && <div className="karaoke-lyrics" aria-live="off">{lyricsContent}</div>}
+        {showLyrics && !partAudio && <div className="karaoke-lyrics" aria-live="off">{lyricsContent}</div>}
         {partAudio ? (
           <TimedAudioPlayer
             key={`${partAudio.id}:${partAudio.fileRevision}`}
             material={partAudio}
             title={audioLabel}
             untimedLyrics={lyricsContent}
+            showLyrics={showLyrics}
             onStale={refreshMaterials}
           />
         ) : (
@@ -137,6 +148,7 @@ export function RehearsalPracticeRoomPage() {
             materialId={partMidi.id}
             title={song.title}
             timedMaterial={supportsTimedLyrics(partMidi) ? partMidi : undefined}
+            showLyrics={showLyrics}
             onStale={refreshMaterials}
           />
         </div>
@@ -169,41 +181,39 @@ export function RehearsalPracticeRoomPage() {
           action={<Button onClick={() => navigate(paths.director.rehearsals)}>Quay lại lịch tập</Button>}
         />
       ) : (
-        // The running order and the note on the left, the song being practised on the right (artifact RehearsalPracticeRoomPage).
         <div className="practice-room-layout">
-          <aside className="hm-preview hm-paper practice-song-list" aria-labelledby="practice-order">
-            <h2 id="practice-order" className="hm-rubric">Bài tập</h2>
-            <ol>
-              {room.songs.map((item, index) => (
-                <li key={item.id}>
-                  <button type="button" aria-current={index === current ? 'true' : undefined} onClick={() => setSelectedIndex(index)} className="practice-song-item">
-                    <span aria-hidden className="practice-song-item__number">{index + 1}</span>
-                    <span style={{ minWidth: 0 }}>
-                      <span className="practice-song-item__title">{item.title}</span>
-                      {item.note && <span className="practice-song-item__meta">{item.note}</span>}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-            {room.note && (
-              <>
-                <h2 className="hm-rubric">Ghi chú buổi tập</h2>
-                <Typography.Paragraph style={{ margin: 0, whiteSpace: 'pre-line' }}>{room.note}</Typography.Paragraph>
-              </>
-            )}
-          </aside>
-
           <section className="hm-sheet-section practice-room-player" aria-label={`Đang tập: ${song.title}`}>
             <Typography.Title level={2} style={{ margin: 0, fontFamily: typography.displayFontFamily, fontSize: 32, fontWeight: 600, lineHeight: 1.2, fontVariantNumeric: 'lining-nums' }}>{song.title}</Typography.Title>
             {song.note && <Typography.Paragraph type="secondary" style={{ margin: `${spacing.xs}px 0 0` }}>Cần tập: {song.note}</Typography.Paragraph>}
-            <Flex wrap justify="space-between" align="center" gap={spacing.sm} style={{ marginTop: spacing.md }}>
-              <Segmented value={shownPart} onChange={(value) => setPart(String(value))} options={parts} aria-label="Bản tập theo bè" />
-              <Flex gap={4}><Button icon={<LeftOutlined />} aria-label="Bài trước" disabled={current === 0} onClick={previous} /><Button icon={<RightOutlined />} aria-label="Bài sau" disabled={current === room.songs.length - 1} onClick={next} /></Flex>
+            <Flex wrap justify="space-between" align="end" gap={spacing.md} className="practice-room-controls">
+              <Flex wrap align="end" gap={spacing.md} style={{ flex: 1, minWidth: 0 }}>
+                <label className="practice-room-field">
+                  <Typography.Text type="secondary">Bài hát</Typography.Text>
+                  <Select
+                    aria-label="Bài hát đang tập"
+                    value={song.id}
+                    onChange={chooseSong}
+                    options={room.songs.map((item, index) => ({ value: item.id, label: `${index + 1}. ${item.title}` }))}
+                  />
+                </label>
+                <label className="practice-room-field">
+                  <Typography.Text type="secondary">Bè</Typography.Text>
+                  <Segmented value={shownPart} onChange={(value) => setPart(String(value))} options={parts} aria-label="Bản tập theo bè" />
+                </label>
+              </Flex>
+              <Flex wrap gap={spacing.sm}>
+                <Button onClick={() => setShowLyrics((value) => !value)} aria-pressed={showLyrics}>
+                  {showLyrics ? 'Ẩn lời' : 'Hiện lời'}
+                </Button>
+                <Button icon={<FileTextOutlined aria-hidden />} onClick={() => setDocumentsOpen(true)} disabled={!partScore}>Tài liệu</Button>
+                <Button icon={<SoundOutlined aria-hidden />} onClick={() => setRecordingOpen(true)}>Ghi âm</Button>
+              </Flex>
             </Flex>
 
-            <ScorePracticeSection key={song.id} title={song.title} fallback={materialContent} material={partInteractiveScore} onStale={refreshMaterials} />
+            <ScorePracticeSection key={song.id} title={song.title} fallback={materialContent} material={partInteractiveScore} showLyrics={showLyrics} onStale={refreshMaterials} />
+          </section>
 
+          <Drawer title={`Tài liệu · ${song.title}`} open={documentsOpen} onClose={() => setDocumentsOpen(false)} size="large" destroyOnHidden>
             {partScore && (
               <Suspense fallback={<Skeleton active title={false} paragraph={{ rows: 6 }} />}>
                 <PracticeScoreViewer
@@ -215,9 +225,11 @@ export function RehearsalPracticeRoomPage() {
                 />
               </Suspense>
             )}
+          </Drawer>
 
+          <Drawer title={`Ghi âm · ${song.title}`} open={recordingOpen} onClose={() => setRecordingOpen(false)} size="large" destroyOnHidden>
             <RecordingPanel rehearsalId={room.rehearsalId} songId={song.id} songTitle={song.title} />
-          </section>
+          </Drawer>
         </div>
       )}
     </div>

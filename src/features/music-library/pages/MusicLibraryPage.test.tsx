@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import type { PagedList } from '@/lib/api/paging'
@@ -34,9 +34,6 @@ afterEach(() => {
 })
 
 describe('MusicLibraryPage', () => {
-  // These cases read the contents-page view; the score-page cards (the default) have their own case below.
-  beforeEach(() => localStorage.setItem('harmonia:music-library:view', 'index'))
-
   it('shows a recoverable error when the library cannot be loaded', async () => {
     vi.spyOn(songsApi, 'listSongs').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<MusicLibraryPage />, '/director/library')
@@ -133,12 +130,7 @@ describe('MusicLibraryPage', () => {
     expect(index.getByText('Chưa có lời bài hát')).toBeInTheDocument()
     expect(request).toHaveBeenCalledWith('/api/songs?isClassified=false&missingMaterialType=SampleAudio&pageNumber=1&pageSize=24')
 
-    // Switch to table view and verify table row cells
-    fireEvent.click(screen.getByRole('radio', { name: /Bảng/ }))
-    const cells = (await screen.findByRole('row', { name: /Kinh Hoà Bình/ })).querySelectorAll('td')
-    // Times used, then materials, as right-aligned figures.
-    expect(cells[4]).toHaveTextContent('3')
-    expect(cells[5]).toHaveTextContent('1')
+    expect(screen.queryByRole('radio', { name: /Bảng/ })).toBeNull()
   })
 
   it('restores the filters and the page from the address, as after Back from a song', async () => {
@@ -159,11 +151,12 @@ describe('MusicLibraryPage', () => {
 
     expect(await screen.findByRole('button', { name: /Bộ lọc \(1\)$/ })).toHaveAttribute('aria-expanded', 'false')
     for (const name of ['Mùa phụng vụ', 'Phần phụng vụ', 'Chủ đề']) {
+      expect(screen.queryByRole('combobox', { name })).not.toBeInTheDocument()
+    }
+    fireEvent.click(screen.getByRole('button', { name: /Bộ lọc \(1\)$/ }))
+    for (const name of ['Mùa phụng vụ', 'Phần phụng vụ', 'Chủ đề', 'Phân loại']) {
       expect(screen.getByRole('combobox', { name })).toBeVisible()
     }
-    expect(screen.queryByRole('combobox', { name: 'Phân loại' })).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /Bộ lọc \(1\)$/ }))
-    expect(screen.getByRole('combobox', { name: 'Phân loại' })).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: /Bộ lọc \(1\)$/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Bỏ lọc Phân loại: Chưa phân loại' }))
 
@@ -212,31 +205,12 @@ describe('MusicLibraryPage', () => {
     expect(within(dialog).getByRole('textbox', { name: 'Tên bài hát' })).toHaveValue('Xin Vâng')
   })
 
-  it('switches between index list and table view with density control and stores selection in localStorage', async () => {
+  it('uses one consistent contents list without view or density controls', async () => {
     vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page(songs))
     renderPage(<MusicLibraryPage />, '/director/library')
 
-    // The stored index view
     expect(await screen.findByRole('region', { name: 'Mục lục bài hát' })).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: /Mục lục/ })).toBeChecked()
-
-    // Switch to table view
-    fireEvent.click(screen.getByRole('radio', { name: /Bảng/ }))
-    expect(screen.getByRole('table')).toBeInTheDocument()
-    expect(localStorage.getItem('harmonia:music-library:view')).toBe('table')
-
-    // Switch density to compact
-    fireEvent.click(screen.getByRole('radio', { name: 'Gọn' }))
-    expect(localStorage.getItem('harmonia:music-library:density')).toBe('compact')
-
-    // Switch density back to comfortable
-    fireEvent.click(screen.getByRole('radio', { name: 'Thoải mái' }))
-    expect(localStorage.getItem('harmonia:music-library:density')).toBe('comfortable')
-
-    // Switch back to index view
-    fireEvent.click(screen.getByRole('radio', { name: /Mục lục/ }))
-    expect(screen.getByRole('region', { name: 'Mục lục bài hát' })).toBeInTheDocument()
-    expect(localStorage.getItem('harmonia:music-library:view')).toBe('index')
+    expect(screen.queryByRole('radio', { name: /Mục lục|Bảng|Lưới|Gọn|Thoải mái/ })).toBeNull()
   })
 
   it('handles edge cases: long title, missing author, and without audio in index view', async () => {
@@ -259,7 +233,7 @@ describe('MusicLibraryPage', () => {
     expect(within(index).getByText('Chưa có audio mẫu')).toBeInTheDocument()
   })
 
-  it('shows the score-page cards by default and the picked song in the quick look', async () => {
+  it('keeps materials behind the song detail instead of a fixed quick look or filter rail', async () => {
     localStorage.clear()
     const withMaterials: Song = {
       ...song('s1', 'Con Bước Lên Bàn Thờ', 'Lm. Kim Long'),
@@ -271,16 +245,9 @@ describe('MusicLibraryPage', () => {
     vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([])
     renderPage(<MusicLibraryPage />, '/director/library')
 
-    const card = await screen.findByRole('button', { name: /Con Bước Lên Bàn Thờ/ })
-    expect(card).toHaveTextContent('Dùng 3 lần · gần nhất 08/11/2026')
-    expect(card).toHaveTextContent('Chưa có Lời')
-    const peek = screen.getByRole('complementary', { name: 'Xem nhanh bài hát' })
-    expect(within(peek).getByRole('heading', { name: 'Con Bước Lên Bàn Thờ' })).toBeInTheDocument()
-    expect(within(peek).getByText('2 tệp')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: /Xin Vâng/ }))
-    expect(screen.getByRole('button', { name: /Xin Vâng/ })).toHaveAttribute('aria-pressed', 'true')
-    expect(within(peek).getByRole('heading', { name: 'Xin Vâng' })).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Lọc nhanh' })).toBeInTheDocument()
+    const index = await screen.findByRole('region', { name: 'Mục lục bài hát' })
+    expect(within(index).getByRole('link', { name: 'Con Bước Lên Bàn Thờ' })).toHaveAttribute('href', '/director/library/s1')
+    expect(screen.queryByRole('complementary', { name: 'Xem nhanh bài hát' })).toBeNull()
+    expect(screen.queryByRole('navigation', { name: 'Lọc nhanh' })).toBeNull()
   })
 })

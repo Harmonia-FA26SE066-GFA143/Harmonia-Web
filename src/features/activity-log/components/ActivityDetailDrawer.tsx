@@ -49,6 +49,7 @@ export function ActivityDetailDrawer({ record, onClose }: Readonly<ActivityDetai
       {record && (
         <>
           <Descriptions
+            className="hm-key-value"
             column={1}
             size="small"
             items={[

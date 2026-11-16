@@ -92,6 +92,11 @@ export const directorRoutes: RouteObject[] = [
     async () => (await import('@/features/practice')).PracticePage,
   ),
   pageRoute(
+    paths.director.practiceNew,
+    { title: 'Giao bài tập', breadcrumb: [area, 'Luyện tập', 'Giao bài tập'] },
+    async () => (await import('@/features/practice')).AssignmentCreatePage,
+  ),
+  pageRoute(
     paths.director.notes,
     { title: 'Trao đổi với Cha xứ', breadcrumb: [area, 'Trao đổi'] },
     async () => (await import('@/features/notes')).DirectorNotesPage,

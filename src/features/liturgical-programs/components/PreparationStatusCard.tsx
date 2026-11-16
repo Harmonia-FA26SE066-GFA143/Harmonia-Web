@@ -79,6 +79,7 @@ export function PreparationStatusCard({ eventId }: Readonly<{ eventId: string }>
       )}
       {status.data !== undefined && (
         <Descriptions
+          className="hm-key-value"
           column={1}
           items={[
             {

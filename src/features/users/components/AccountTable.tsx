@@ -62,8 +62,9 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
     {
       key: 'actions',
       title: 'Thao tác',
-      align: 'right',
-      render: (_, account) => renderActions(account),
+      align: 'center',
+      width: 184,
+      render: (_, account) => <Flex justify="center">{renderActions(account)}</Flex>,
     },
   ]
 

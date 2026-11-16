@@ -125,7 +125,8 @@ export function MassSchedulesPanel() {
             {
               key: 'actions',
               title: 'Thao tác',
-              align: 'right',
+              align: 'center',
+              width: 128,
               fixed: 'right',
               render: (_, schedule) => (
                 <Button

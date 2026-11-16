@@ -1,11 +1,9 @@
-import { App, Card, Flex, Segmented } from 'antd'
+import { Card, Flex, Segmented } from 'antd'
 import { useState } from 'react'
 import { EmptyState, ErrorState, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
-import { usePassSubmission, useSubmissions } from '../hooks/usePractice'
-import { practiceErrorMessage } from '../practiceErrors'
-import { formatDuration } from '../practiceFormat'
-import { practiceStatusLabels, practiceStatuses, type PracticeStatus, type ReviewResult } from '../types'
+import { useSubmissions } from '../hooks/usePractice'
+import { practiceStatusLabels, practiceStatuses, type PracticeStatus } from '../types'
 import { ReviewPanel } from './ReviewPanel'
 import { SubmissionTable } from './SubmissionTable'
 
@@ -19,10 +17,9 @@ export interface SubmissionListProps {
 
 /** Each member's newest attempt, filtered by status and paged on the server, reviewed in the review drawer (FE-42). */
 export function SubmissionList({ assignmentId, defaultStatus }: Readonly<SubmissionListProps>) {
-  const { message } = App.useApp()
   const [status, setStatus] = useState(defaultStatus)
   const [page, setPage] = useState(1)
-  const [open, setOpen] = useState<{ id: string; result?: ReviewResult; comment?: string }>()
+  const [open, setOpen] = useState<{ id: string }>()
   // A new key per opening resets the form; closing keeps it, so the drawer closes with its transition.
   const [opening, setOpening] = useState(0)
   const openReview = (next: typeof open) => {
@@ -30,9 +27,6 @@ export function SubmissionList({ assignmentId, defaultStatus }: Readonly<Submiss
     setOpening((count) => count + 1)
   }
   const submissions = useSubmissions(status === 'all' ? undefined : status, { pageNumber: page, pageSize }, assignmentId)
-  const pass = usePassSubmission()
-  // Rows marked "Đạt" here: they show their ✓ until the queue reloads without them.
-  const [passed, setPassed] = useState<ReadonlySet<string>>(new Set())
   const total = submissions.data?.totalCount ?? 0
   const items = submissions.data?.items ?? []
   // The panel shows the picked submission, else the first of the queue.
@@ -79,29 +73,13 @@ export function SubmissionList({ assignmentId, defaultStatus }: Readonly<Submiss
               pageSize={pageSize}
               total={total}
               loading={submissions.isPlaceholderData}
-              passingId={pass.isPending ? pass.variables : undefined}
-              passedIds={passed}
               onPageChange={setPage}
-              // The row's ✓ is the acknowledgement; only a refusal needs a message.
-              onPass={(submission) =>
-                !pass.isPending &&
-                pass.mutate(submission.id, {
-                  onSuccess: () => setPassed((ids) => new Set(ids).add(submission.id)),
-                  onError: (error) => message.error(practiceErrorMessage(error, 'Không thể lưu đánh giá. Vui lòng thử lại.')),
-                })
-              }
-              // The comment starts at the moment being heard, so the member finds the passage.
-              onNeedsRevision={(submission, atSeconds) =>
-                openReview({ id: submission.id, result: 'needsRevision', comment: atSeconds ? `[${formatDuration(Math.floor(atSeconds))}] ` : undefined })
-              }
               onOpen={(submission) => openReview({ id: submission.id })}
             />
           </Card>
           <ReviewPanel
             key={`${shown?.id ?? 'none'}:${opening}`}
             submissionId={shown?.id}
-            initialResult={shown?.result}
-            initialComment={shown?.comment}
             onDone={pickNext}
           />
         </div>

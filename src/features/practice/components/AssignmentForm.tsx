@@ -22,6 +22,11 @@ interface FormValues extends Omit<AssignmentValues, 'dueDate'> {
   dueDate?: Dayjs
 }
 
+export interface AssignmentFormProps {
+  onCancel: () => void
+  onCreated: (title: string) => void
+}
+
 const muted = { color: colors.textMuted }
 
 const scopeOptions: { value: AssignmentScope; label: string }[] = [
@@ -68,7 +73,7 @@ const submitLabel = (count?: number) => (count ? `Giao bài cho ${count} ca viê
  * choir, its members with chosen skills or chosen members of it. The backend notifies them; the assignment then
  * appears under "Bài đã giao".
  */
-export function AssignmentForm() {
+export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormProps>) {
   const { message } = App.useApp()
   const [params] = useSearchParams()
   const urlProgramId = params.get('programId') ?? params.get('eventId') ?? undefined
@@ -156,7 +161,7 @@ export function AssignmentForm() {
       {
         onSuccess: () => {
           message.success('Đã giao bài tập. Ca viên sẽ nhận được thông báo.')
-          resetForm()
+          onCreated(values.title.trim())
         },
         onError: (error) => message.error(practiceErrorMessage(error, 'Không thể giao bài tập. Vui lòng thử lại.')),
       },
@@ -164,8 +169,7 @@ export function AssignmentForm() {
   }
 
   return (
-    <div className="hm-split hm-split--assign">
-      <Card>
+    <Card style={{ maxWidth: 960 }}>
         <Form<FormValues>
           form={form}
           layout="vertical"
@@ -173,7 +177,7 @@ export function AssignmentForm() {
           onFinish={handleFinish}
         >
           <section className="hm-form-section">
-            <p className="hm-rubric">Nội dung</p>
+            <p className="hm-rubric">1. Ngữ cảnh</p>
             <Form.Item
               label="Ca đoàn"
               name="choirId"
@@ -191,6 +195,22 @@ export function AssignmentForm() {
                 options={activeChoirs.map((choir) => ({ value: choir.id, label: choir.name }))}
               />
             </Form.Item>
+            <Form.Item label="Chương trình (không bắt buộc)" name="eventId" extra="Các chương trình sắp tới đã công bố.">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Không gắn với chương trình"
+                loading={events.isPending}
+                options={(events.data ?? []).map((item) => ({
+                  value: item.id,
+                  label: formatEventOption(item),
+                }))}
+              />
+            </Form.Item>
+          </section>
+          <section className="hm-form-section">
+            <p className="hm-rubric">2. Nội dung luyện tập</p>
             <Form.Item
               label="Tiêu đề"
               name="title"
@@ -204,9 +224,6 @@ export function AssignmentForm() {
             <Form.Item label="Hướng dẫn (không bắt buộc)" name="instruction" rules={[{ max: 1000, message: 'Tối đa 1000 ký tự.' }]}>
               <Input.TextArea rows={3} showCount maxLength={1000} />
             </Form.Item>
-          </section>
-          <section className="hm-form-section">
-            <p className="hm-rubric">Bài hát và tài liệu</p>
             <Form.Item label="Bài hát (không bắt buộc)" name="songId">
               <Select
                 allowClear
@@ -239,7 +256,7 @@ export function AssignmentForm() {
             )}
           </section>
           <section className="hm-form-section">
-            <p className="hm-rubric">Người nhận</p>
+            <p className="hm-rubric">3. Người nhận</p>
             <Form.Item label="Giao cho" name="scope">
               <Radio.Group optionType="button" buttonStyle="solid" options={scopeOptions} />
             </Form.Item>
@@ -263,7 +280,7 @@ export function AssignmentForm() {
             )}
           </section>
           <section className="hm-form-section">
-            <p className="hm-rubric">Hạn nộp và Thánh lễ</p>
+            <p className="hm-rubric">4. Hạn nộp</p>
             <Form.Item
               label="Hạn nộp"
               name="dueDate"
@@ -283,23 +300,30 @@ export function AssignmentForm() {
                 style={{ width: '100%', maxWidth: 260 }}
               />
             </Form.Item>
-            <Form.Item label="Sự kiện (không bắt buộc)" name="eventId" extra="Các sự kiện sắp tới đã công bố.">
-              <Select
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                placeholder="Không gắn với sự kiện"
-                loading={events.isPending}
-                options={(events.data ?? []).map((event) => ({
-                  value: event.id,
-                  label: formatEventOption(event),
-                }))}
-              />
-            </Form.Item>
+          </section>
+          <section className="hm-form-section" aria-label="Kiểm tra trước khi giao">
+            <p className="hm-rubric">5. Kiểm tra và giao</p>
+            <dl className="hm-facts hm-assignment-review">
+              <dt>Ca đoàn</dt>
+              <dd>{choirName ?? 'Chưa chọn'}</dd>
+              <dt>Người nhận</dt>
+              <dd>{recipientText(scope, recipients, skillNames)}</dd>
+              <dt>Bài hát</dt>
+              <dd>{songTitle ?? 'Không gắn bài hát'}</dd>
+              <dt>Tài liệu</dt>
+              <dd>{materialIds?.length ? `${materialIds.length} tài liệu gửi kèm` : 'Không gửi kèm'}</dd>
+              <dt>Hạn nộp</dt>
+              <dd>{dueSummary(dueDate)}</dd>
+              <dt>Chương trình</dt>
+              <dd>{event ? formatEventOption(event) : 'Không gắn chương trình'}</dd>
+            </dl>
+            <Typography.Text style={muted}>Ca viên nhận được thông báo ngay sau khi bài được giao.</Typography.Text>
           </section>
           <Flex align="center" justify="flex-end" gap={spacing.md} wrap>
-            <Typography.Text style={muted}>Bài tập đã giao xem lại ở thẻ “Bài đã giao”.</Typography.Text>
             <Button onClick={resetForm} disabled={create.isPending}>
+              Xóa nội dung
+            </Button>
+            <Button onClick={onCancel} disabled={create.isPending}>
               Hủy
             </Button>
             <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={create.isPending}>
@@ -307,25 +331,6 @@ export function AssignmentForm() {
             </Button>
           </Flex>
         </Form>
-      </Card>
-      <aside className="hm-preview hm-paper" aria-label="Tóm tắt bài tập">
-        <p className="hm-rubric">Tóm tắt</p>
-        <dl className="hm-facts">
-          <dt>Ca đoàn</dt>
-          <dd>{choirName ?? '—'}</dd>
-          <dt>Người nhận</dt>
-          <dd>{recipientText(scope, recipients, skillNames)}</dd>
-          <dt>Bài hát</dt>
-          <dd>{songTitle ?? 'Không gắn bài hát'}</dd>
-          <dt>Tài liệu</dt>
-          <dd>{materialIds?.length ? `${materialIds.length} tài liệu gửi kèm` : 'Không gửi kèm'}</dd>
-          <dt>Hạn nộp</dt>
-          <dd>{dueSummary(dueDate)}</dd>
-          <dt>Thánh lễ</dt>
-          <dd>{event ? formatEventOption(event) : 'Không gắn Thánh lễ'}</dd>
-        </dl>
-        <Typography.Text style={muted}>Ca viên nhận được thông báo khi bài được giao.</Typography.Text>
-      </aside>
-    </div>
+    </Card>
   )
 }
