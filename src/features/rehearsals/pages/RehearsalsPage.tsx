@@ -104,7 +104,7 @@ export function RehearsalsPage() {
   const handleSave = (values: RehearsalValues) => {
     if (save.isPending) return
     save.mutate(
-      { id: editing?.id, values },
+      { id: editing?.id, values, previous: editing ?? undefined },
       {
         onSuccess: (conflicts) => {
           message.success(editing ? 'Đã lưu thay đổi buổi tập.' : 'Đã tạo buổi tập.')
@@ -131,7 +131,7 @@ export function RehearsalsPage() {
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
       // Enter on a destructive dialog must not run it.
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
         remove
           .mutateAsync(rehearsal.id)

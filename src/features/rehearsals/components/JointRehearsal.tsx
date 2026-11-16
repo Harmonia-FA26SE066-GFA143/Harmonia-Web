@@ -14,8 +14,9 @@ function LeadOnly({ eventId, children }: Readonly<{ eventId: string; children: R
 }
 
 /**
- * The actions that change a session. Every director of a serving choir sees a joint rehearsal, but only the lead
- * choir's director changes it (ChoirScopeServiceExtensions.CheckCanManageRehearsalAsync), so the others get none.
+ * The actions that change a session or take its attendance. Every director of a serving choir sees a joint
+ * rehearsal, but only the lead choir's director changes it or reads and records its attendance
+ * (ChoirScopeServiceExtensions.CheckCanManageRehearsalAsync, RehearsalAttendanceService), so the others get none.
  */
 export function PlannerOnly({ rehearsal, children }: Readonly<{ rehearsal: Pick<Rehearsal, 'isJoint' | 'eventId'>; children: ReactNode }>) {
   if (!rehearsal.isJoint || !rehearsal.eventId) return children

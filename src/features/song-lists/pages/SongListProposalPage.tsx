@@ -167,11 +167,12 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
 
       {picking && (
         <SongPickerDrawer
-          excludedSongIds={items.map((item) => item.songId)}
+          listedSongIds={items.map((item) => item.songId)}
           suggestedFilters={suggestedFilters}
           onCancel={() => setPicking(false)}
           onAdd={(songs) => {
-            change([...items, ...songs.map((song) => ({ key: `new-${song.id}`, songId: song.id, songTitle: song.title }))])
+            // The same song may be added again for another part, so the row key cannot be the song alone.
+            change([...items, ...songs.map((song, index) => ({ key: `new-${song.id}-${items.length + index}`, songId: song.id, songTitle: song.title }))])
             setPicking(false)
           }}
         />

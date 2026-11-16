@@ -5,7 +5,7 @@ import { paths } from '@/app/router/paths'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { colors, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
-import { isRehearsalDay, isUpcoming, type Rehearsal } from '../types'
+import { canTakeAttendance, isUpcoming, type Rehearsal } from '../types'
 import { JointChip, PlannerOnly } from './JointRehearsal'
 
 export interface RehearsalTableProps {
@@ -90,15 +90,15 @@ export function RehearsalTable({
       align: 'right',
       render: (_, rehearsal) => (
         <Flex justify="flex-end" gap={4}>
+          <PlannerOnly rehearsal={rehearsal}>
           <Button
             type="link"
             icon={<CheckSquareOutlined />}
             onClick={() => onTakeAttendance(rehearsal)}
-            aria-label={`${isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${rehearsalLabel(rehearsal)}`}
+            aria-label={`${canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${rehearsalLabel(rehearsal)}`}
           >
-            {isRehearsalDay(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
+            {canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
           </Button>
-          <PlannerOnly rehearsal={rehearsal}>
           {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
           {isUpcoming(rehearsal) && (
             <Tooltip title="Sửa buổi tập" trigger={['hover', 'focus']}>

@@ -34,8 +34,16 @@ export function requestFailureMessage(error: Error, fallback: string): string {
   return fallback
 }
 
+/**
+ * Every code a refusal carries: its own, then the field codes. A validator failure answers
+ * `400 { code: "VALIDATION_FAILED", errors: { field: [codes] } }` (Harmonia-BE ValidationFilter), so the code that
+ * says what is wrong is in `errors`, not at the top.
+ */
+export const errorCodes = (error: Error): string[] =>
+  error instanceof ApiError ? [error.code, ...Object.values(error.errors ?? {}).flat()].filter((code): code is string => Boolean(code)) : []
+
 /** The feature's message for a known backend code; otherwise a network/server-aware fallback. */
-export const errorMessage = (error: Error, messages: Record<string, string>, fallback: string): string => {
-  const knownMessage = error instanceof ApiError && error.code !== undefined ? messages[error.code] : undefined
-  return knownMessage ?? requestFailureMessage(error, fallback)
-}
+export const errorMessage = (error: Error, messages: Record<string, string>, fallback: string): string =>
+  errorCodes(error)
+    .map((code) => messages[code])
+    .find(Boolean) ?? requestFailureMessage(error, fallback)

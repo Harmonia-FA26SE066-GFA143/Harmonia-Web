@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getSession, setSession, type Session } from '@/lib/auth/session'
 import { apiDownload, apiRequest, freshAccessToken } from './client'
-import { ApiError } from './errors'
+import { ApiError, errorMessage } from './errors'
 
 const session = (token: string): Session => ({
   accessToken: `access-${token}`,
@@ -165,5 +165,19 @@ describe('apiDownload', () => {
     expect(await file.text()).toBe('a,b;1,2')
     expect(authorization(0)).toBe('Bearer access-1')
     await expect(apiDownload('/api/reports/export')).rejects.toMatchObject({ status: 404, code: 'REPORT_NO_DATA' })
+  })
+})
+
+describe('errorMessage', () => {
+  const messages = { PRACTICE_DUE_DATE_IN_PAST: 'Hạn nộp phải sau thời điểm hiện tại.', CHOIR_NOT_LEAD: 'Chỉ ca trưởng phụ trách.' }
+
+  it('finds the code of a validator refusal among the field errors of a 400 VALIDATION_FAILED', () => {
+    const refusal = new ApiError(400, { code: 'VALIDATION_FAILED', errors: { dueDate: ['PRACTICE_DUE_DATE_IN_PAST'] } })
+    expect(errorMessage(refusal, messages, 'Không thể giao bài tập.')).toBe('Hạn nộp phải sau thời điểm hiện tại.')
+  })
+
+  it('still reads the top-level code, and falls back when no code is known', () => {
+    expect(errorMessage(new ApiError(403, { code: 'CHOIR_NOT_LEAD' }), messages, 'Lỗi.')).toBe('Chỉ ca trưởng phụ trách.')
+    expect(errorMessage(new ApiError(400, { code: 'VALIDATION_FAILED', errors: { title: ['VALIDATION_FAILED'] } }), messages, 'Lỗi.')).toBe('Lỗi.')
   })
 })

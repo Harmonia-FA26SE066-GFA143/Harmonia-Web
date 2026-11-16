@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api/errors'
+import { errorMessage } from '@/lib/api/errors'
 
 /** Refusals of saving and submitting a song list (Harmonia-BE SongListService, Create/UpdateSongListItemsRequestValidator). */
 const messages: Record<string, string> = {
@@ -23,7 +23,5 @@ const messages: Record<string, string> = {
 
 /** The message of the error code, or of the first field error code (400 VALIDATION_FAILED), else `fallback`. */
 export function songListErrorMessage(error: Error, fallback: string): string {
-  if (!(error instanceof ApiError)) return fallback
-  const codes = [error.code, ...Object.values(error.errors ?? {}).flat()]
-  return codes.map((code) => code && messages[code]).find(Boolean) || fallback
+  return errorMessage(error, messages, fallback)
 }

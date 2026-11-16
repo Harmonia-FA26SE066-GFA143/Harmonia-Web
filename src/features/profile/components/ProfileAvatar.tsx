@@ -49,7 +49,7 @@ export function ProfileAvatar({ profile }: Readonly<{ profile: Profile }>) {
       okText: 'Xoá ảnh',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
         remove
           .mutateAsync()

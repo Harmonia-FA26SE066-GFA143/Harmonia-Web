@@ -12,7 +12,7 @@ import {
   saveRehearsal,
   type RehearsalPage,
 } from '../api/rehearsalsApi'
-import type { RecordingValues, RehearsalFilters, RehearsalValues } from '../types'
+import type { RecordingValues, Rehearsal, RehearsalFilters, RehearsalValues } from '../types'
 
 const rehearsalsKey = ['rehearsals'] as const
 
@@ -70,7 +70,7 @@ function useRehearsalMutation<TVariables, TData = void>(mutationFn: (variables: 
 }
 
 export const useSaveRehearsal = () =>
-  useRehearsalMutation((input: { id?: string; values: RehearsalValues }) => saveRehearsal(input))
+  useRehearsalMutation((input: { id?: string; values: RehearsalValues; previous?: Rehearsal }) => saveRehearsal(input))
 
 export const useDeleteRehearsal = () => useRehearsalMutation((id: string) => deleteRehearsal(id))
 

@@ -62,7 +62,7 @@ describe('ParticipationPage', () => {
 
   it('sends the first request to the selected members of the next program', async () => {
     const get = vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([])
-    const send = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue()
+    const send = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue(3)
     renderParticipation()
 
     expect(await screen.findByRole('heading', { name: 'Chưa gửi yêu cầu xác nhận' })).toBeInTheDocument()
@@ -78,7 +78,7 @@ describe('ParticipationPage', () => {
 
   it('offers only members of the serving choirs, and asks another director’s choir as a whole', async () => {
     vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([])
-    const send = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue()
+    const send = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue(3)
     vi.mocked(choirsApi.listEventChoirs).mockResolvedValue([
       { choirId: 'c1', name: 'Ca đoàn Cécilia', isActive: true, isLead: true },
       { choirId: 'c2', name: 'Ca đoàn Têrêsa', isActive: true, isLead: false },
@@ -158,7 +158,7 @@ describe('ParticipationPage', () => {
       asked('m1', 'Maria Nguyễn Thu Hướng', { response: 'confirmed', respondedAt: requestedAt }),
       asked('m2', 'Simon Phan Văn Đức', { response: 'unsure', respondedAt: requestedAt, note: 'Có thể về muộn' }),
     ])
-    const send = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue()
+    const send = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue(3)
     renderParticipation('/director/participation?programId=p2')
 
     expect(await screen.findByText('Maria Nguyễn Thu Hướng')).toBeInTheDocument()

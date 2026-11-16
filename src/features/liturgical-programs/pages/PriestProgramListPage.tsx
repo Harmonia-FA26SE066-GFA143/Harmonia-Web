@@ -40,9 +40,9 @@ export function PriestProgramListPage() {
       okText: 'Công bố',
       cancelText: 'Hủy',
       onOk: async () => {
-        const { published, notInvited, refused } = await publish.mutateAsync(selected)
+        const { published, notInvited, nobody, refused } = await publish.mutateAsync(selected)
         setSelectedIds(refused.map(({ event }) => event.id))
-        if (refused.length === 0 && notInvited === 0) {
+        if (refused.length === 0 && notInvited === 0 && nobody === 0) {
           message.success(`Đã công bố ${published} sự kiện.`)
           return
         }
@@ -51,6 +51,7 @@ export function PriestProgramListPage() {
           content: (
             <>
               {notInvited > 0 && `${notInvited} sự kiện chưa gửi được lời mời cho ca viên; ca trưởng có thể gửi ở trang Xác nhận tham gia.`}
+              {nobody > 0 && ` ${nobody} sự kiện chưa mời được ai vì các ca đoàn phục vụ chưa có ca viên.`}
               {refused.length > 0 && (
                 <ul style={{ paddingInlineStart: spacing.lg }}>
                   {refused.map(({ event, error }) => (

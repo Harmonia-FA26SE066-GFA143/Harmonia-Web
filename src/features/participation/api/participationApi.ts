@@ -62,6 +62,8 @@ export function remindParticipation(eventId: string): Promise<{ remindedCount: n
  * all of whom belong to a choir serving it (MEMBER_NOT_FOUND). Without ids the backend asks every active member of the
  * serving choirs who has not been asked yet (EventParticipationService.ResolveInviteesAsync).
  */
-export async function sendParticipationRequests(eventId: string, memberIds?: string[]): Promise<void> {
-  await apiRequest<unknown>('/api/event-participations', { method: 'POST', body: JSON.stringify({ eventId, memberIds }) })
+export async function sendParticipationRequests(eventId: string, memberIds?: string[]): Promise<number> {
+  // 200 with an empty list when there is nobody left to ask (EventParticipationService.cs:63-67): the count says so.
+  const sent = await apiRequest<unknown[]>('/api/event-participations', { method: 'POST', body: JSON.stringify({ eventId, memberIds }) })
+  return sent?.length ?? 0
 }

@@ -29,6 +29,8 @@ const messages: Record<string, string> = {
   // People a liturgical slot needs (LookupService.UpdateLiturgicalSlotRequirementsAsync).
   SKILL_INACTIVE: 'Kỹ năng đã chọn đã ngừng dùng. Vui lòng chọn kỹ năng khác.',
   PERSONNEL_REQUIREMENT_DUPLICATE: 'Mỗi kỹ năng chỉ khai một lần.',
+  // SaveLiturgicalSeasonRequestValidator: the end date is after the start date, not the same day.
+  LITURGICAL_SEASON_DATE_INVALID: 'Ngày kết thúc mùa phụng vụ phải sau ngày bắt đầu.',
   PERSONNEL_REQUIRED_COUNT_INVALID: 'Số người cần từ 1 đến 50.',
 }
 

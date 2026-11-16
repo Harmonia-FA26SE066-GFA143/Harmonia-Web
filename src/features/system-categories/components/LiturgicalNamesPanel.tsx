@@ -174,7 +174,7 @@ export function LiturgicalNamesPanel() {
       okText: 'Xoá bản dịch',
       okButtonProps: { danger: true },
       // Enter on a destructive dialog must not run it.
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       cancelText: 'Hủy',
       onOk: () =>
         remove

@@ -126,7 +126,7 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
       okText: 'Xoá bản thu',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
         remove
           .mutateAsync(id)

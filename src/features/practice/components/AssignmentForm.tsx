@@ -4,6 +4,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useChoirs, useCurrentChoir, useMembersOfChoir } from '@/features/choirs'
+import { useChoirMembers } from '@/features/members'
 import { useSong, useSongMaterials, useSongs } from '@/features/music-library'
 import { useSongList } from '@/features/song-lists'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
@@ -30,18 +31,21 @@ const scopeOptions: { value: AssignmentScope; label: string }[] = [
 ]
 
 /**
- * How many will be notified, when it can be known: the choir's members, or the ones picked. Members of a skill are
- * matched by the backend, so that scope has no number.
+ * How many will be notified, when it can be known: the choir's members, the ones picked, or the choir's members
+ * holding one of the chosen skills (the backend matches them; `withSkill` is the same count worked out here).
  */
-function recipientCount(scope: AssignmentScope | undefined, choirSize?: number, picked?: string[]) {
+function recipientCount(scope: AssignmentScope | undefined, choirSize?: number, picked?: string[], withSkill?: number) {
   if (scope === 'all') return choirSize
   if (scope === 'individual') return picked?.length
-  return undefined
+  return withSkill
 }
 
 /** The recipients in words, for the summary. */
 function recipientText(scope: AssignmentScope | undefined, count: number | undefined, skillNames: string[]) {
-  if (scope === 'skillGroup') return skillNames.length > 0 ? `Ca viên có kỹ năng ${skillNames.join(', ')}` : 'Chưa chọn kỹ năng'
+  if (scope === 'skillGroup') {
+    if (skillNames.length === 0) return 'Chưa chọn kỹ năng'
+    return `${count === undefined ? 'Ca viên' : `${count} ca viên`} có kỹ năng ${skillNames.join(', ')}`
+  }
   if (count === undefined) return '—'
   return scope === 'all' ? `${count} ca viên (cả ca đoàn)` : `${count} ca viên`
 }
@@ -97,7 +101,15 @@ export function AssignmentForm() {
   const materialIds = Form.useWatch('materialIds', form)
   const skillIds = Form.useWatch('skillIds', form)
   const memberIds = Form.useWatch('memberIds', form)
-  const recipients = recipientCount(scope, members.data?.length, memberIds)
+  const skillNames = (skills ?? []).filter((skill) => skillIds?.includes(String(skill.value))).map((skill) => skill.label)
+  // ponytail: approved skills come from the first 100 active profiles; a larger parish leaves the count unknown-low.
+  const profiles = useChoirMembers()
+  const skillsOf = new Map((profiles.data ?? []).map((member) => [member.id, member.skills]))
+  const withSkill =
+    members.data && profiles.data && skillNames.length > 0
+      ? members.data.filter((member) => skillsOf.get(member.memberId)?.some((name) => skillNames.includes(name))).length
+      : undefined
+  const recipients = recipientCount(scope, members.data?.length, memberIds, withSkill)
   const choirName = activeChoirs.find((choir) => choir.id === choirId)?.name
   // The songs of the chosen event's list come first: they are what the choir prepares for it.
   const eventSongList = useSongList(eventId ?? '', { enabled: Boolean(eventId) })
@@ -115,7 +127,6 @@ export function AssignmentForm() {
   const songOptions: SelectProps['options'] = shownEventSongs.length > 0 ? [{ label: 'Trong danh sách của sự kiện', options: shownEventSongs }, { label: 'Kho bài hát', options: otherSongs }] : otherSongs
   const songTitle = chosenSong?.label
   const event = events.data?.find((item) => item.id === eventId)
-  const skillNames = (skills ?? []).filter((skill) => skillIds?.includes(String(skill.value))).map((skill) => skill.label)
 
   const resetForm = () => {
     form.resetFields()
@@ -125,6 +136,15 @@ export function AssignmentForm() {
 
   const handleFinish = ({ dueDate, ...values }: FormValues) => {
     if (!dueDate || create.isPending) return
+    // The backend would save it and notify nobody, and an assignment cannot be withdrawn afterwards.
+    if (recipients === 0) {
+      message.warning(
+        values.scope === 'all'
+          ? 'Ca đoàn này chưa có ca viên nào, nên chưa giao bài được.'
+          : 'Không ca viên nào của ca đoàn này có kỹ năng đã chọn. Chọn kỹ năng khác hoặc giao cho từng ca viên.',
+      )
+      return
+    }
     create.mutate(
       {
         ...values,

@@ -73,7 +73,16 @@ export async function listRehearsals(filters: RehearsalFilters, page: RehearsalP
  * the whole programme). Members are notified of a change. Answers the members who serve a program at that time
  * (BE 69c9d47): the save is not refused, the Director is told.
  */
-export async function saveRehearsal({ id, values }: { id?: string; values: RehearsalValues }): Promise<RehearsalMemberConflict[]> {
+export async function saveRehearsal({
+  id,
+  values,
+  previous,
+}: {
+  id?: string
+  values: RehearsalValues
+  /** The session as it was loaded, when editing: unchanged details are not sent again. */
+  previous?: Rehearsal
+}): Promise<RehearsalMemberConflict[]> {
   const details = {
     eventId: values.eventId,
     locationId: values.locationId,
@@ -95,7 +104,18 @@ export async function saveRehearsal({ id, values }: { id?: string; values: Rehea
     })
     return created?.memberConflicts ?? []
   }
-  const updated = await apiRequest<RehearsalDto>(`/api/rehearsals/${id}`, { method: 'PUT', body: JSON.stringify(details) })
+  // PUT {id} tells every member "Buổi tập đã thay đổi" (RehearsalService.UpdateAsync) whatever changed, so it is
+  // skipped when only the songs did; PUT {id}/songs notifies nobody.
+  const sameDetails =
+    previous !== undefined &&
+    (previous.eventId ?? null) === (details.eventId ?? null) &&
+    (previous.locationId ?? null) === (details.locationId ?? null) &&
+    Date.parse(previous.startAt) === Date.parse(details.startTime) &&
+    Date.parse(previous.endAt) === Date.parse(details.endTime) &&
+    (previous.note ?? '') === (details.note ?? '')
+  const updated = sameDetails
+    ? undefined
+    : await apiRequest<RehearsalDto>(`/api/rehearsals/${id}`, { method: 'PUT', body: JSON.stringify(details) })
   await apiRequest<unknown>(`/api/rehearsals/${id}/songs`, {
     method: 'PUT',
     body: JSON.stringify({ items: toSongItems(values.songs) }),

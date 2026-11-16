@@ -275,7 +275,7 @@ export function SongDetailPage() {
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
       // Enter on a destructive dialog must not delete.
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
         deleteSong
           .mutateAsync(data.id)
@@ -300,7 +300,7 @@ export function SongDetailPage() {
       okText: 'Xoá tài liệu',
       okButtonProps: { danger: true },
       cancelText: 'Hủy',
-      autoFocusButton: 'cancel',
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
         remove
           .mutateAsync(material.id)

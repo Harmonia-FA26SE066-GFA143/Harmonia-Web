@@ -147,7 +147,7 @@ describe('PriestProgramListPage', () => {
       .mockImplementation(async (id) => {
         if (id === 'e3') throw new ApiError(409, { code: 'LITURGICAL_EVENT_CHOIR_REQUIRED' })
       })
-    const invite = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue()
+    const invite = vi.spyOn(participationApi, 'sendParticipationRequests').mockResolvedValue(3)
     renderPage(<PriestProgramListPage />, '/priest/programs')
 
     // A published event and a past draft cannot be chosen.

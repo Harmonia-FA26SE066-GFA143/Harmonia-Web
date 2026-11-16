@@ -17,7 +17,7 @@ import { ProgramHeader } from '../components/ProgramHeader'
 import { ProgramItemList } from '../components/ProgramItemList'
 import { SongListStatusTag } from '../components/SongListStatusTag'
 import { eventErrorMessage } from '../eventErrors'
-import { inviteServingMembers, useCancelEvent, useEvent, usePreparationStatus, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
+import { inviteServingMembers, type InviteOutcome, useCancelEvent, useEvent, usePreparationStatus, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
 import { useEventNames } from '../hooks/useEventNames'
 import { useProgram } from '../hooks/usePrograms'
 import { formatDateTime, vietnamToday } from '@/lib/api/dates'
@@ -182,9 +182,7 @@ export function PriestProgramDetailPage() {
             size="small"
             onClick={() => {
               message.destroy('invite-failed')
-              void inviteServingMembers(data.id).then((invited) =>
-                invited ? message.success('Đã gửi lời mời xác nhận tham gia cho ca viên.') : inviteFailed(),
-              )
+              void inviteServingMembers(data.id).then((invited) => invitedMessage(invited, 'Đã gửi lời mời xác nhận tham gia cho ca viên.'))
             }}
           >
             Gửi lại
@@ -209,6 +207,13 @@ export function PriestProgramDetailPage() {
       onError: (error) => message.error(participationErrorMessage(error, 'Không thể gửi lời nhắc. Vui lòng thử lại.')),
     })
 
+  /** Says what the invitation did: sent, nobody in the serving choirs to ask, or failed (with a way to send again). */
+  const invitedMessage = (invited: InviteOutcome, sent: string) => {
+    if (invited === 'failed') return inviteFailed()
+    if (invited === 'sent') return message.success(sent)
+    return message.warning({ duration: 8, content: 'Đã công bố sự kiện, nhưng chưa mời được ai: các ca đoàn phục vụ chưa có ca viên nào để mời. Quản trị viên thêm ca viên vào ca đoàn ở trang Ca đoàn.' })
+  }
+
   const confirmPublish = () =>
     modal.confirm({
       title: 'Công bố sự kiện?',
@@ -218,7 +223,7 @@ export function PriestProgramDetailPage() {
       onOk: () =>
         publish
           .mutateAsync(data.id)
-          .then(({ invited }) => (invited ? message.success('Đã công bố sự kiện và mời ca viên xác nhận tham gia.') : inviteFailed()))
+          .then(({ invited }) => invitedMessage(invited, 'Đã công bố sự kiện và mời ca viên xác nhận tham gia.'))
           .catch((error: Error) => message.error(eventErrorMessage(error, 'Không thể công bố sự kiện. Vui lòng thử lại.'))),
     })
 

@@ -9,8 +9,8 @@ import { colors, radius, spacing, typography } from '@/styles/tokens'
 const pickerPage = { pageNumber: 1, pageSize: 100 }
 
 export interface SongPickerDrawerProps {
-  /** Songs already in the list; they are not offered again. */
-  excludedSongIds: string[]
+  /** Songs already in the list: marked, and still offered, since another part of the Mass may take the same song. */
+  listedSongIds: string[]
   /** The event's own classification, applied when the picker opens; the Choir Director may clear it. */
   suggestedFilters: SongFilters
   onAdd: (songs: Song[]) => void
@@ -21,7 +21,7 @@ export interface SongPickerDrawerProps {
  * Choose songs from the music library (FE-27) to add to a program's proposed list (FE-30), searched and filtered by the
  * FE-29 classification. Mounted only while open, so each opening starts from the event's suggestion with nothing picked.
  */
-export function SongPickerDrawer({ excludedSongIds, suggestedFilters, onAdd, onCancel }: Readonly<SongPickerDrawerProps>) {
+export function SongPickerDrawer({ listedSongIds, suggestedFilters, onAdd, onCancel }: Readonly<SongPickerDrawerProps>) {
   const [filters, setFilters] = useState(suggestedFilters)
   const keyword = useDebouncedValue(filters.search)
   const songs = useSongs({ ...filters, search: keyword }, pickerPage)
@@ -29,7 +29,7 @@ export function SongPickerDrawer({ excludedSongIds, suggestedFilters, onAdd, onC
   const [picked, setPicked] = useState<Song[]>([])
 
   const listed = useMemo(() => songs.data?.items ?? [], [songs.data])
-  const available = useMemo(() => listed.filter((song) => !excludedSongIds.includes(song.id)), [listed, excludedSongIds])
+  const available = listed
   const more = (songs.data?.totalCount ?? 0) - listed.length
   const clearFilters = () => setFilters({ search: '' })
 
@@ -82,7 +82,12 @@ export function SongPickerDrawer({ excludedSongIds, suggestedFilters, onAdd, onC
                 style={{ padding: spacing.sm, border: `1px solid ${colors.border}`, borderRadius: radius.md, marginInlineStart: 0 }}
               >
                 <Flex vertical>
-                  <Typography.Text strong>{song.title}</Typography.Text>
+                  <Typography.Text strong>
+                    {song.title}
+                    {listedSongIds.includes(song.id) && (
+                      <Typography.Text style={{ color: colors.textMuted, fontWeight: 400, fontSize: typography.metadata.fontSize }}> · đã có trong danh sách</Typography.Text>
+                    )}
+                  </Typography.Text>
                   {song.composer && (
                     <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
                       {song.composer}

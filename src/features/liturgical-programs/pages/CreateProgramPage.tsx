@@ -39,7 +39,8 @@ export function CreateProgramPage() {
         const created = values.isPublished ? 'Đã tạo và công bố sự kiện' : 'Đã tạo bản nháp sự kiện'
         message.success(filled ? `${created}, mùa phụng vụ được điền là ${filled.label}.` : `${created}.`)
         // Published at once: the members were invited like a publish from the detail page, which offers to resend.
-        if (!invited) message.warning('Chưa gửi được lời mời cho ca viên. Mở chương trình để gửi lại.')
+        if (invited === 'failed') message.warning('Chưa gửi được lời mời cho ca viên. Mở chương trình để gửi lại.')
+        if (invited === 'nobody') message.warning({ duration: 8, content: 'Chưa mời được ai: các ca đoàn phục vụ chưa có ca viên nào để mời. Quản trị viên thêm ca viên vào ca đoàn ở trang Ca đoàn.' })
         saved.current = true
         navigate(generatePath(paths.priest.programDetail, { programId: event.id }))
       },

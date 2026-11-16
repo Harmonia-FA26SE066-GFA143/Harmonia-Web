@@ -7,6 +7,7 @@ import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import type { MaterialPlaybackBundle, SongMaterial } from '@/features/music-library'
 import * as songsApi from '@/features/music-library/api/songsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
+import * as apiClient from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import { programPage } from '@/test/programs'
@@ -173,8 +174,21 @@ describe('RehearsalsPage', () => {
           songs: [{ songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ' }],
           note: undefined,
         },
+        previous: rehearsals[1],
       }),
     )
+  })
+
+  it('sends the details of an edited session only when they changed, since each such save notifies the choir', async () => {
+    const request = vi.spyOn(apiClient, 'apiRequest').mockResolvedValue(undefined)
+    const { id, ...values } = rehearsals[1]
+
+    await rehearsalsApi.saveRehearsal({ id, values, previous: rehearsals[1] })
+    expect(request.mock.calls.map(([path]) => path)).toEqual(['/api/rehearsals/r2/songs'])
+
+    request.mockClear()
+    await rehearsalsApi.saveRehearsal({ id, values: { ...values, note: 'Tập thêm bè Bass' }, previous: rehearsals[1] })
+    expect(request.mock.calls.map(([path]) => path)).toEqual(['/api/rehearsals/r2', '/api/rehearsals/r2/songs'])
   })
 
   it('fills the songs from the approved list of the chosen program', async () => {
@@ -213,16 +227,16 @@ describe('RehearsalsPage', () => {
     expect(save).not.toHaveBeenCalled()
   })
 
-  it('marks a joint rehearsal and leaves its edit and delete to the lead choir director', async () => {
+  it('marks a joint rehearsal and leaves its attendance, edit and delete to the lead choir director', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(page([{ ...rehearsals[0], isJoint: true }, rehearsals[1]]))
     vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([{ choirId: 'c9', name: 'Ca đoàn Cecilia', isActive: true, isLead: true, directorId: 'someone-else', substituteDirectorId: 'another' }])
     renderRehearsals()
 
     expect(await screen.findByText('Buổi tập chung')).toBeInTheDocument()
-    // Both sessions are upcoming; only the director's own keeps its actions.
+    // Both sessions are upcoming; only the director's own keeps its actions (the backend answers CHOIR_NOT_LEAD for the other).
     await waitFor(() => expect(screen.queryAllByRole('button', { name: /^Sửa buổi tập/ })).toHaveLength(1))
     expect(screen.queryAllByRole('button', { name: /^Xoá buổi tập/ })).toHaveLength(1)
-    expect(screen.getAllByRole('button', { name: /điểm danh buổi tập/i })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: /điểm danh buổi tập/i })).toHaveLength(1)
   })
 
   it('explains why a session with attendance cannot be deleted', async () => {

@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useUpcomingPrograms } from '@/features/liturgical-programs'
 import { isRehearsalDay, useRecentRehearsals, type Rehearsal } from '@/features/rehearsals'
+import { ApiError } from '@/lib/api/errors'
 import { EmptyState, EmptyWeek, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AttendanceSheet } from '../components/AttendanceSheet'
@@ -111,7 +112,11 @@ export function AttendancePage() {
         <Flex vertical gap={spacing.lg}>
           {!showSheet && <div className="ctb-filters">{picker}</div>}
           {attendance.isPending && <SectionSkeleton rows={8} label="Đang tải danh sách điểm danh" />}
-          {attendance.isError && (
+          {/* The session is listed for every director of a serving choir; its sheet is the lead director's. */}
+          {attendance.isError && attendance.error instanceof ApiError && attendance.error.code === 'CHOIR_NOT_LEAD' && (
+            <Alert type="info" showIcon title="Buổi tập chung do ca trưởng của ca đoàn phụ trách chương trình điểm danh" description="Chọn một buổi tập khác của ca đoàn bạn ở ô phía trên." />
+          )}
+          {attendance.isError && !(attendance.error instanceof ApiError && attendance.error.code === 'CHOIR_NOT_LEAD') && (
             <ErrorState
               title="Không thể tải danh sách điểm danh"
               error={attendance.error} hasData={attendance.data !== undefined} onRetry={() => attendance.refetch()}
