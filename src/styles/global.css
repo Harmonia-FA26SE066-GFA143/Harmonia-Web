@@ -72,6 +72,12 @@ body {
   outline: none;
 }
 
+/* The page content, a stacking context under the sticky running head (z 10). */
+.hm-main {
+  position: relative;
+  z-index: 1;
+}
+
 /* The day grid takes the keyboard focus (arrow keys change the day), so it needs a visible ring. */
 .ant-picker-calendar .ant-picker-panel:focus-visible {
   outline: 2px solid var(--hm-action-focus);

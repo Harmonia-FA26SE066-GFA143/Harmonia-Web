@@ -51,10 +51,10 @@
   animation: hm-score-focus-in var(--hm-dur-slow) var(--hm-ease);
 }
 
-/* The app's <main> is a stacking context (inline z-index 1, AppShell) under the sticky head (z 10): while the mode is on
-   it is lifted over the head, or the head covers the mode's toolbar. !important beats the inline style. */
-#main-content:has(.hm-score-section--focus) {
-  z-index: 20 !important;
+/* The app's <main> is a stacking context (z-index 1, global.css .hm-main) under the sticky head (z 10): while the mode is
+   on it is lifted over the head, or the head covers the mode's toolbar. */
+.hm-main:has(.hm-score-section--focus) {
+  z-index: 20;
 }
 
 /* A comfortable measure for music, centred; wider screens get margin, not a wider (slower to redraw) sheet. */

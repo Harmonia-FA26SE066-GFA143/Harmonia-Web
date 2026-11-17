@@ -118,9 +118,10 @@ export function AppShell() {
       <Content
         id="main-content"
         tabIndex={-1}
+        // Its stacking (position, z-index 1 under the sticky head) is in global.css, so the practice room's focus mode
+        // can lift it over the head without !important.
+        className="hm-main"
         style={{
-          position: 'relative',
-          zIndex: 1,
           padding: isCompact
             ? `${spacing.lg}px ${layout.contentPaddingXMobile}px`
             : `${spacing.lg}px ${layout.contentPaddingX}px ${spacing.xl}px`,
