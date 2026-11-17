@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
@@ -7,6 +8,9 @@ import { renderPage } from '@/test/renderPage'
 import * as eventsApi from '../api/eventsApi'
 import type { LiturgicalEvent } from '../types'
 import { CreateProgramPage } from './CreateProgramPage'
+
+// A day ahead of the clock: the form, like the backend, refuses a date already passed (LITURGICAL_EVENT_ALREADY_PASSED).
+const future = dayjs().add(30, 'day').format('YYYY-MM-DD')
 
 const route = '/priest/programs/new'
 
@@ -19,7 +23,7 @@ const FILL_FORM_TIMEOUT_MS = 15_000
 
 const created: LiturgicalEvent = {
   id: 'new-1',
-  date: '2026-10-04',
+  date: future,
   time: '18:30',
   locationId: 'loc-1',
   locationName: 'Nhà thờ chính',
@@ -95,9 +99,9 @@ describe('CreateProgramPage', () => {
 
   it('creates a draft with the date preselected from the calendar and opens it', async () => {
     const create = vi.spyOn(eventsApi, 'createEvent').mockResolvedValue(created)
-    renderPage(<CreateProgramPage />, route, `${route}?date=2026-10-04`)
+    renderPage(<CreateProgramPage />, route, `${route}?date=${future}`)
 
-    expect(screen.getByDisplayValue('04/10/2026')).toBeInTheDocument()
+    expect(screen.getByDisplayValue(dayjs(future).format('DD/MM/YYYY'))).toBeInTheDocument()
     enterTime('18:30')
     await choose('Nơi cử hành', 'Nhà thờ chính')
     await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
@@ -110,7 +114,7 @@ describe('CreateProgramPage', () => {
 
     await waitFor(() =>
       expect(create.mock.calls[0]?.[0]).toEqual({
-        date: '2026-10-04',
+        date: future,
         time: '18:30',
         locationId: 'loc-1',
         massTypeId: 'mass-1',
@@ -129,7 +133,7 @@ describe('CreateProgramPage', () => {
 
   it('tells which season the backend filled in when none was chosen', async () => {
     vi.spyOn(eventsApi, 'createEvent').mockResolvedValue({ ...created, seasonId: 's-ot' })
-    renderPage(<CreateProgramPage />, route, `${route}?date=2026-10-04`)
+    renderPage(<CreateProgramPage />, route, `${route}?date=${future}`)
 
     expect(screen.getByText(/Để trống thì hệ thống điền mùa/)).toBeInTheDocument()
     enterTime('18:30')
@@ -142,7 +146,7 @@ describe('CreateProgramPage', () => {
 
   it('explains a taken slot and keeps the entered values', async () => {
     vi.spyOn(eventsApi, 'createEvent').mockRejectedValue(new ApiError(409, { code: 'LITURGICAL_EVENT_SLOT_TAKEN' }))
-    renderPage(<CreateProgramPage />, route, `${route}?date=2026-10-04`)
+    renderPage(<CreateProgramPage />, route, `${route}?date=${future}`)
 
     enterTime('18:30')
     await choose('Nơi cử hành', 'Nhà thờ chính')
@@ -150,7 +154,7 @@ describe('CreateProgramPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
     expect(await screen.findByText('Đã có sự kiện khác cùng ngày, giờ và nơi cử hành.')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('04/10/2026')).toBeInTheDocument()
+    expect(screen.getByDisplayValue(dayjs(future).format('DD/MM/YYYY'))).toBeInTheDocument()
   }, FILL_FORM_TIMEOUT_MS)
 
   it('asks before leaving with unsaved input', async () => {

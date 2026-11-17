@@ -154,6 +154,8 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
         id="song-filter-search"
         aria-keyshortcuts={libraryLayout ? '/' : undefined}
         allowClear
+        // GET /api/songs refuses a longer keyword (Harmonia-BE SearchSongsRequestValidator.cs:10, MaximumLength(100)).
+        maxLength={100}
         prefix={<SearchOutlined aria-hidden />}
         placeholder="Tên bài hát, nhạc sĩ, người viết lời"
         value={search}
@@ -174,6 +176,10 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
     </Flex>
   )
 
+  // The library shows season, Mass part and theme on its console (artifact SongLibraryPage); the panel keeps the rest.
+  const onConsole = (key: FilterKey) => libraryLayout && (key === 'seasonId' || key === 'slotId' || key === 'themeId')
+  const panelCount = chips.filter((chip) => !onConsole(chip.key)).length
+
   const filterToggle = (
     <Button
       ref={filterButton}
@@ -182,7 +188,7 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
       aria-controls="song-filter-panel"
       onClick={() => setOpen(!open)}
     >
-      {chips.length > 0 ? `Bộ lọc (${chips.length})` : 'Bộ lọc'}
+      {(libraryLayout ? 'Bộ lọc khác' : 'Bộ lọc') + (panelCount > 0 ? ` (${panelCount})` : '')}
     </Button>
   )
 
@@ -195,6 +201,8 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
       {libraryLayout ? (
         <div className="song-console">
           {searchField}
+          {selects.filter((select) => onConsole(select.key)).map(selectField)}
+          {themeField}
           {filterToggle}
         </div>
       ) : (
@@ -218,9 +226,13 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
           borderRadius: radius.md,
         }}
       >
-        {selects.slice(0, 3).map(selectField)}
-        {themeField}
-        {selects.slice(3).map(selectField)}
+        {libraryLayout ? selects.filter((select) => !onConsole(select.key)).map(selectField) : (
+          <>
+            {selects.slice(0, 3).map(selectField)}
+            {themeField}
+            {selects.slice(3).map(selectField)}
+          </>
+        )}
       </div>
 
       {(chips.length > 0 || value.search.trim()) && (

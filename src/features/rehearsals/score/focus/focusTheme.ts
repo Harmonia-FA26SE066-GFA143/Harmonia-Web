@@ -43,6 +43,8 @@ export const focusTheme: ThemeConfig = {
   components: {
     // Pale fill, ink on it: the play button keeps its weight on the dark ground.
     Button: { primaryColor: INK_ON_ACCENT, colorPrimaryHover: HOVER, colorPrimaryActive: PRESSED, colorPrimaryTextHover: INK_ON_ACCENT },
+    // The track would keep the app's light layout ground, under pale text (1.2:1): the dark container instead.
+    Segmented: { trackBg: spine.background, itemColor: spine.text, itemHoverColor: HOVER, itemSelectedBg: ACCENT, itemSelectedColor: INK_ON_ACCENT },
     Slider: { trackBg: ACCENT, trackHoverBg: HOVER, handleColor: ACCENT, handleActiveColor: HOVER, railBg: RAIL, railHoverBg: RAIL },
   },
 }

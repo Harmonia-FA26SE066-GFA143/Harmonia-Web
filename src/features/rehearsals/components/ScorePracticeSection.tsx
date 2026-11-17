@@ -1,5 +1,5 @@
-import { Alert, ConfigProvider } from 'antd'
-import { useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react'
+import { Alert, ConfigProvider, Segmented, Typography } from 'antd'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from 'react'
 import { env } from '@/config/env'
 import type { SongMaterial } from '@/features/music-library'
 import { spacing } from '@/styles/tokens'
@@ -88,6 +88,16 @@ function misalignmentNote(audioSeconds: number, timelineSeconds: number): string
 }
 
 /**
+ * How large the notation is drawn, for a sheet shown on a projector or a big screen. The page handed to Verovio is the
+ * sheet width divided by this, so a larger size holds fewer bars per system with bigger notes and lyrics.
+ */
+const SCORE_ZOOMS = [
+  { value: 1, label: 'Vừa' },
+  { value: 1.4, label: 'Lớn' },
+  { value: 1.8, label: 'Rất lớn' },
+] as const
+
+/**
  * Above the sheet, not over it: showing "Theo dõi" or the mode button moves nothing and covers no staff. In focus mode
  * it also names the song and the way out, since the page's own title is hidden.
  */
@@ -96,6 +106,8 @@ function ScoreToolbar({
   active,
   ready,
   following,
+  zoom,
+  onZoom,
   onResume,
   onToggle,
   buttonRef,
@@ -104,6 +116,8 @@ function ScoreToolbar({
   active: boolean
   ready: boolean
   following: boolean
+  zoom: number
+  onZoom: (zoom: number) => void
   onResume: () => void
   onToggle: () => void
   buttonRef: Ref<HTMLButtonElement>
@@ -113,6 +127,12 @@ function ScoreToolbar({
       {active && <span className="hm-score-focus-title">{title}</span>}
       {active && <span className="hm-score-focus-hint">Esc để thoát</span>}
       {ready && !following && <FollowButton onClick={onResume} />}
+      {ready && (
+        <>
+          <Typography.Text type="secondary" aria-hidden>Cỡ nốt</Typography.Text>
+          <Segmented name="hm-score-zoom" aria-label="Cỡ bản nhạc" value={zoom} onChange={(value) => onZoom(Number(value))} options={[...SCORE_ZOOMS]} />
+        </>
+      )}
       {(ready || active) && <FocusModeButton active={active} onToggle={onToggle} buttonRef={buttonRef} />}
     </div>
   )
@@ -161,6 +181,9 @@ function ScorePlayer({
   /** The last width the sheet reported (NaN until it does), and the staves of the loaded score (1 until it is known). */
   const sheetWidth = useRef(Number.NaN)
   const staves = useRef(1)
+  /** The chosen notation size (SCORE_ZOOMS); a ref as well, for the load that reads it after an await. */
+  const [zoom, setZoom] = useState(1)
+  const zoomRef = useRef(1)
   const drawnByMultiStaffRule = (drawnWidth: number) => staves.current >= 2 && drawnWidth >= MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH
   const ready = state.status === 'ready' ? state : undefined
   const clock = usePlaybackClock(ready?.audioUrl)
@@ -209,7 +232,7 @@ function ScorePlayer({
         // The sheet may have reported its real width while the engine was busy, and a score of several staves has a wider
         // floor (known only now, from the MEI): draw at the page they give before showing it, so at most one redraw.
         staves.current = countStaves(loaded.mei)
-        const wanted = toEnginePageWidth(sheetWidth.current, staves.current)
+        const wanted = toEnginePageWidth(sheetWidth.current / zoomRef.current, staves.current)
         const relaid = wanted === loadWidth ? loaded.svgPages : tryRelayout(engine, wanted)
         pageWidth.current = relaid ? wanted : loadWidth
         const svgPages = relaid ?? loaded.svgPages
@@ -238,9 +261,10 @@ function ScorePlayer({
     }
   }, [source])
 
-  const onWidthChange = (width: number) => {
+  const layout = (width: number, nextZoom: number) => {
     sheetWidth.current = width
-    const next = toEnginePageWidth(width, staves.current)
+    zoomRef.current = nextZoom
+    const next = toEnginePageWidth(width / nextZoom, staves.current)
     if (next === pageWidth.current) return
     const engine = engineRef.current
     // No engine yet: nothing is drawn, the load uses this width or compares it when it ends.
@@ -253,6 +277,11 @@ function ScorePlayer({
     if (!svgPages) return
     pageWidth.current = next
     setState({ ...state, svgPages, multiStaff: drawnByMultiStaffRule(next) })
+  }
+  const onWidthChange = (width: number) => layout(width, zoomRef.current)
+  const changeZoom = (nextZoom: number) => {
+    setZoom(nextZoom)
+    layout(sheetWidth.current, nextZoom)
   }
 
   if (state.status === 'rejected') {
@@ -302,7 +331,7 @@ function ScorePlayer({
           open
           ref={setSectionRoot}
           className={active ? 'hm-score-section hm-score-section--focus' : 'hm-score-section'}
-          style={active ? focusVars : { marginTop: spacing.lg }}
+          style={{ ...(active ? focusVars : { marginTop: spacing.lg }), '--hm-score-zoom': zoom } as CSSProperties}
           role={active ? undefined : 'presentation'}
           aria-modal={active ? true : undefined}
           aria-label={active ? `Chế độ tập trung: ${title}` : undefined}
@@ -315,6 +344,8 @@ function ScorePlayer({
               active={active}
               ready={ready !== undefined}
               following={following}
+              zoom={zoom}
+              onZoom={changeZoom}
               onResume={resume}
               onToggle={focus.toggle}
               buttonRef={focusButton}

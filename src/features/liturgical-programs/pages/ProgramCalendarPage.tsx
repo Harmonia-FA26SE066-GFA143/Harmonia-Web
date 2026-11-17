@@ -1,11 +1,11 @@
 import { EditOutlined, EllipsisOutlined, FilterOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
-import { Alert, Badge, Button, Calendar, Drawer, Flex, Grid, Popover, Segmented, Select, Spin, Typography } from 'antd'
+import { Alert, Badge, Button, Calendar, Flex, Grid, Popover, Segmented, Select, Spin, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useId, useMemo, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { useId, useMemo, useState, type KeyboardEvent } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { ErrorState, PageHeader, SeasonChip, SectionSkeleton, visuallyHidden } from '@/shared/ui'
-import { colors, gold, priestEvent, radius, spacing, typography } from '@/styles/tokens'
+import { colors, gold, spacing, typography } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
 import { LiturgicalDayInfo, SyncCalendarButton } from '../components/LiturgicalDayInfo'
@@ -35,16 +35,11 @@ const keySteps: Record<string, [number, 'day' | 'month']> = {
   PageDown: [1, 'month'],
 }
 /**
- * The Priest's own events are chips: filled once published, a dashed outline while a draft, and no chip once
- * cancelled (struck through). The liturgical day above them stays plain grey text.
+ * The Priest's own events are chips coloured by status, as `EventStatusTag` colours them: green once published, ochre
+ * with a dashed outline while a draft, red and struck through once cancelled (global.css `.priest-event`). The
+ * liturgical day from the API above them is bold ink.
  */
-const eventChip = (status: LiturgicalEvent['status']): CSSProperties => ({
-  padding: '0 3px',
-  borderRadius: radius.sm,
-  border: status === 'cancelled' ? '1px solid transparent' : `1px ${status === 'draft' ? 'dashed' : 'solid'} ${priestEvent.border}`,
-  background: status === 'published' ? priestEvent.background : 'transparent',
-  color: status === 'published' ? priestEvent.text : colors.textBody,
-})
+const eventChip = (status: LiturgicalEvent['status']) => `priest-event priest-event--${status}`
 
 // ponytail: one page of 100 events per month (the backend maximum); a busier month would need a second page.
 const monthPage = { pageNumber: 1, pageSize: 100 }
@@ -63,7 +58,6 @@ export function ProgramCalendarPage() {
   const dateParam = searchParams.get('date')
   const selected = useMemo(() => (dateParam && isoDate.test(dateParam) && dayjs(dateParam).isValid() ? dayjs(dateParam) : dayjs()), [dateParam])
   const setSelected = (date: Dayjs) => setSearchParams(date.isSame(dayjs(), 'day') ? {} : { date: date.format('YYYY-MM-DD') }, { replace: true })
-  const [detailsOpen, setDetailsOpen] = useState(Boolean(dateParam))
   // Filters only the loaded month on screen; the backend query stays the whole month.
   const [statusFilter, setStatusFilter] = useState<EventStatus | 'all'>('all')
   const hintId = useId()
@@ -94,14 +88,8 @@ export function ProgramCalendarPage() {
     event.preventDefault()
     setSelected(selected.add(step[0], step[1]))
   }
-  const pickDate = (date: Dayjs) => {
-    setSelected(date)
-    setDetailsOpen(true)
-  }
-  const changeMonth = (date: Dayjs) => {
-    setSelected(date)
-    setDetailsOpen(false)
-  }
+  const pickDate = setSelected
+  const changeMonth = setSelected
   const createForDate = () => navigate(`${paths.priest.programCreate}?date=${selectedKey}`)
 
   const renderDate = (date: Dayjs) => {
@@ -118,7 +106,7 @@ export function ProgramCalendarPage() {
       <Flex vertical gap={2}>
         {showSeason && day?.seasonName && <SeasonChip size="small" seasonKey={day.seasonKey} seasonName={day.seasonName} />}
         {celebration && (
-          <Typography.Text ellipsis={{ tooltip: true }} style={{ fontSize: typography.metadata.fontSize, color: colors.textBody }}>
+          <Typography.Text ellipsis={{ tooltip: true }} style={{ fontSize: typography.metadata.fontSize, color: colors.textPrimary, fontWeight: 600 }}>
             {celebration}
           </Typography.Text>
         )}
@@ -128,7 +116,8 @@ export function ProgramCalendarPage() {
             key={event.id}
             ellipsis={{ rows: 2, tooltip: true }}
             delete={event.status === 'cancelled'}
-            style={{ ...eventChip(event.status), margin: 0, fontSize: typography.metadata.fontSize, lineHeight: 1.35 }}
+            className={eventChip(event.status)}
+            style={{ margin: 0, fontSize: typography.metadata.fontSize, lineHeight: 1.35 }}
           >
             {/* Published is the usual state; the others carry a named icon, so the status does not rest on color alone
                 and the event's name keeps the cell's two lines. */}
@@ -228,6 +217,7 @@ export function ProgramCalendarPage() {
               description="Chọn một ngày trên lịch để xem ngày phụng vụ hoặc tạo chương trình."
             />
           )}
+          <div className="hm-split priest-calendar__split">
           <section className="hm-sheet-section priest-calendar__grid" aria-label="Lịch tháng">
               {/* The previous month stays on screen while the next one loads (keepPreviousData), so it is dimmed. */}
               <Spin spinning={events.isPlaceholderData} description="Đang tải tháng…">
@@ -249,64 +239,62 @@ export function ProgramCalendarPage() {
               {/* The key under the grid, each drawn the way the cells draw it. */}
               {screens.md && (
                 <Flex component="ul" aria-label="Chú thích lịch" align="center" wrap gap={spacing.md} className="priest-calendar__key">
-                  <li style={eventChip('published')}>Sự kiện do cha xứ tạo</li>
-                  <li style={eventChip('draft')}>
+                  <li className={eventChip('published')}>{eventStatusLabels.published}</li>
+                  <li className={eventChip('draft')}>
                     <EditOutlined aria-hidden /> {eventStatusLabels.draft}
                   </li>
-                  <li style={eventChip('cancelled')}>
+                  <li className={eventChip('cancelled')}>
                     <StopOutlined aria-hidden /> <s>{eventStatusLabels.cancelled}</s>
                   </li>
-                  <li>Ngày phụng vụ đồng bộ từ lịch trực tuyến</li>
+                  <li>
+                    <strong style={{ color: colors.textPrimary }}>Chữ đậm</strong>: ngày phụng vụ đồng bộ từ lịch trực tuyến
+                  </li>
                 </Flex>
               )}
           </section>
-          <Drawer
-            open={detailsOpen}
-            title={dayTitle(selected)}
-            size={520}
-            onClose={() => setDetailsOpen(false)}
-            footer={
-              <Flex justify="flex-end">
-                <Button type="primary" icon={<PlusOutlined />} onClick={createForDate}>
-                  Tạo chương trình cho ngày này
-                </Button>
-              </Flex>
-            }
-          >
-            <div aria-label={dayTitle(selected)}>
-              <span role="status" style={visuallyHidden}>
-                {events.isPlaceholderData ? '' : `Ngày ${selected.format('DD/MM/YYYY')}: ${selectedEvents.length} sự kiện`}
-              </span>
-              <Typography.Text style={{ color: gold.ink, fontSize: typography.label.fontSize, fontWeight: 600 }}>Ngày phụng vụ</Typography.Text>
-              <LiturgicalDayInfo date={selectedKey} days={days} />
-              <div>
-                <p className="hm-rubric">Chương trình trong ngày</p>
-                {events.isPlaceholderData && <Typography.Text style={{ color: colors.textMuted }}>Đang tải chương trình…</Typography.Text>}
-                {!events.isPlaceholderData && selectedEvents.length === 0 && (
-                  <Typography.Text style={{ color: colors.textMuted }}>Chưa có chương trình nào trong ngày này.</Typography.Text>
-                )}
-                {!events.isPlaceholderData && selectedEvents.length > 0 && (
-                  <ul className="priest-day-events">
-                    {selectedEvents.map((event) => (
-                      <li key={event.id}>
-                        <Flex vertical gap={2} style={{ minWidth: 0 }}>
-                          <Typography.Text strong>
-                            {event.time} · {eventName(event)}
-                          </Typography.Text>
-                          <Flex align="center" gap={spacing.xs} wrap style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
-                            {event.locationName} <EventStatusTag status={event.status} />
-                          </Flex>
+          {/* The picked day beside the month (owner 2026-11-17: no drawer): its liturgical day, its events, one action. */}
+          <aside className="hm-preview" aria-label={dayTitle(selected)}>
+            <span role="status" style={visuallyHidden}>
+              {events.isPlaceholderData ? '' : `Ngày ${selected.format('DD/MM/YYYY')}: ${selectedEvents.length} sự kiện`}
+            </span>
+            <Typography.Text style={{ color: gold.ink, fontSize: typography.label.fontSize, fontWeight: 600 }}>{dayTitle(selected)}</Typography.Text>
+            <LiturgicalDayInfo date={selectedKey} days={days} />
+            <div>
+              <p className="hm-rubric">Chương trình trong ngày</p>
+              {events.isPlaceholderData && <Typography.Text style={{ color: colors.textMuted }}>Đang tải chương trình…</Typography.Text>}
+              {!events.isPlaceholderData && selectedEvents.length === 0 && (
+                <Typography.Text style={{ color: colors.textMuted }}>Chưa có chương trình nào.</Typography.Text>
+              )}
+              {!events.isPlaceholderData && selectedEvents.length > 0 && (
+                <ul className="priest-day-events">
+                  {selectedEvents.map((event) => (
+                    <li key={event.id}>
+                      <Flex vertical gap={2} style={{ minWidth: 0 }}>
+                        <Typography.Text strong delete={event.status === 'cancelled'}>
+                          {event.time} · {eventName(event)}
+                        </Typography.Text>
+                        <Flex align="center" gap={spacing.xs} wrap style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
+                          <EventStatusTag status={event.status} /> {event.locationName}
                         </Flex>
-                        <Button onClick={() => openEvent(event)} aria-label={`Xem chi tiết ${eventName(event)} lúc ${event.time}`}>
-                          Xem
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                      </Flex>
+                      <Button onClick={() => openEvent(event)} aria-label={`Xem chi tiết ${eventName(event)} lúc ${event.time}`}>
+                        Xem
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          </Drawer>
+            {/* A day already gone takes no new program: BE refuses it (LITURGICAL_EVENT_ALREADY_PASSED). */}
+            {selected.isBefore(dayjs(), 'day') ? (
+              <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>Ngày đã qua, không tạo thêm chương trình.</Typography.Text>
+            ) : (
+              <Button icon={<PlusOutlined />} onClick={createForDate}>
+                Tạo chương trình cho ngày này
+              </Button>
+            )}
+          </aside>
+          </div>
         </Flex>
       )}
     </div>

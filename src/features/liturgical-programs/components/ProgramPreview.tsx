@@ -1,6 +1,6 @@
 import { Button, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { SeasonChip, SectionSkeleton } from '@/shared/ui'
+import { SectionSkeleton } from '@/shared/ui'
 import { colors, gold, spacing, typography } from '@/styles/tokens'
 import { useProgram } from '../hooks/usePrograms'
 import { massTimeLabels, massTimeOf } from '../massTime'
@@ -25,6 +25,7 @@ export function ProgramPreview({
   const due = dueText(program, today)
   const propose = canEditSongList(program.songListStatus) && program.date >= today
   const songs = detail.data?.songs ?? []
+  const type = program.massTypeName ?? program.ceremonyTypeName
 
   return (
     <aside className="hm-preview hm-paper" aria-label={`Xem trước: ${program.eventName}`}>
@@ -32,12 +33,8 @@ export function ProgramPreview({
         {[hour && massTimeLabels[hour], program.time, dayjs(program.date).format('dddd, DD/MM/YYYY')].filter(Boolean).join(' · ')}
       </Typography.Text>
       <h2 className="hm-preview__title">{program.eventName}</h2>
-      <Flex wrap gap={spacing.xs} align="center">
-        {program.seasonName && <SeasonChip seasonName={program.seasonName} size="small" />}
-        {(program.massTypeName ?? program.ceremonyTypeName) && <span className="hm-chip">{program.massTypeName ?? program.ceremonyTypeName}</span>}
-        {program.songListStatus && <SongListStatusTag status={program.songListStatus} />}
-      </Flex>
-      <Typography.Text style={muted}>{program.locationName}</Typography.Text>
+      {/* One quiet line, no chips (owner 2026-11-17: the panel read as cluttered); the type only when it is not the name. */}
+      <Typography.Text style={muted}>{[type !== program.eventName && type, program.seasonName, program.locationName].filter(Boolean).join(' · ')}</Typography.Text>
       {program.specialRequirements && (
         <div>
           <p className="hm-rubric">Yêu cầu đặc biệt</p>
@@ -45,7 +42,10 @@ export function ProgramPreview({
         </div>
       )}
       <div>
-        <p className="hm-rubric">Danh sách bài hát</p>
+        <Flex align="center" justify="space-between" gap={spacing.sm}>
+          <p className="hm-rubric" style={{ margin: 0 }}>Danh sách bài hát</p>
+          {program.songListStatus && <SongListStatusTag status={program.songListStatus} />}
+        </Flex>
         {detail.isPending && <SectionSkeleton rows={3} label="Đang tải danh sách bài hát" />}
         {detail.isError && <Typography.Text style={muted}>Không tải được danh sách bài hát.</Typography.Text>}
         {detail.data && songs.length === 0 && <Typography.Text style={muted}>Chưa chọn bài hát nào.</Typography.Text>}

@@ -276,6 +276,19 @@ describe('ScorePracticeSection, a loaded package', () => {
     expect(engines[0].relayout.mock.calls[0]).toEqual([toEnginePageWidth(width)])
   })
 
+  it('a larger notation size redraws on a narrower page, so notes and lyrics come out bigger', async () => {
+    renderSection()
+    pickBoth()
+    await findSheet()
+    const width = 900
+    act(() => FakeResizeObserver.instances[0].resize(width + 2 * (spacing.xl + 1)))
+    await waitFor(() => expect(engines[0].relayout).toHaveBeenCalledTimes(1), { timeout: 1000 })
+    fireEvent.click(screen.getByText('Rất lớn'))
+    await waitFor(() => expect(engines[0].relayout).toHaveBeenCalledTimes(2), { timeout: 1000 })
+    expect(engines[0].relayout.mock.calls[1]).toEqual([toEnginePageWidth(width / 1.8)])
+    expect(engines[0].load).toHaveBeenCalledTimes(1)
+  })
+
   it('a width that maps to the page already drawn does not redraw', async () => {
     renderSection()
     pickBoth()

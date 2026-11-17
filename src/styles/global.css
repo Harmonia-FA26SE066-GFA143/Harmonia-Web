@@ -1170,22 +1170,133 @@ textarea {
 }
 
 .next-mass__head {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 24px;
+  padding: 24px 24px 20px;
   background: var(--hm-surface-chrome);
   border-bottom: 1px solid var(--hm-gilt);
 }
 
-.next-mass__day {
-  font-family: var(--hm-font-display);
-  font-size: 44px;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  font-variant-numeric: lining-nums;
-  color: var(--hm-gilt-soft);
+/* The arch (MassTimeMark) and the text, top-aligned; the arch's feet reach down onto the staff's first line. */
+.next-mass__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+/* Its feet on the staff's first line, whichever of the arch or the text is the taller. */
+.next-mass__top .hm-mass-mark {
+  position: relative;
+  top: 3px;
+  margin-bottom: -3px;
+}
+
+/* A four-line staff ruled across the head, the incipit (ChantStaff, its lines at 4.5/11.5/18.5/25.5) at its end. */
+.next-mass__staff {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  opacity: 0.6;
+}
+
+.next-mass__staff-run {
+  flex: 1;
+  --hm-staff-line: linear-gradient(color-mix(in srgb, var(--hm-gilt-soft) 35%, transparent), color-mix(in srgb, var(--hm-gilt-soft) 35%, transparent));
+  background:
+    var(--hm-staff-line) 0 4px / 100% 1px no-repeat,
+    var(--hm-staff-line) 0 11px / 100% 1px no-repeat,
+    var(--hm-staff-line) 0 18px / 100% 1px no-repeat,
+    var(--hm-staff-line) 0 25px / 100% 1px no-repeat;
+}
+
+/* Hovered, a light passes along the staff left to right, as if the phrase were sung. Transform only. */
+.next-mass__staff::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 48px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--hm-gilt-soft) 70%, transparent), transparent);
+  transform: translateX(-48px);
+}
+
+.hm-mass-host:hover .next-mass__staff::after {
+  transform: translateX(380px);
+  transition: transform 1.4s var(--hm-ease);
+}
+
+/*
+ * The hour of the Mass moves while its card or page head is hovered (MassTimeMark, `hm-mass-host`): the morning sun
+ * rises, the afternoon sun sinks as its rays shimmer, the evening flame flickers under twinkling stars. Transform and
+ * opacity only; the reduced-motion rule above stills it.
+ */
+.hm-mass-mark :is(.hm-mass-sun, .hm-mass-rays, .hm-mass-flame, .hm-mass-halo, .hm-mass-stars path) {
+  transform-box: fill-box;
+  transition:
+    transform var(--hm-dur-slow) var(--hm-ease),
+    opacity var(--hm-dur-slow) var(--hm-ease);
+}
+
+.hm-mass-mark .hm-mass-flame {
+  transform-origin: 50% 100%;
+}
+
+.hm-mass-host:hover .hm-mass-mark--morning .hm-mass-sun {
+  transform: translateY(-5px);
+}
+
+.hm-mass-host:hover .hm-mass-mark--afternoon .hm-mass-sun {
+  transform: translateY(3px);
+}
+
+.hm-mass-host:hover .hm-mass-mark--afternoon .hm-mass-rays {
+  animation: hm-mass-shimmer 1.6s var(--hm-ease) infinite alternate;
+}
+
+.hm-mass-host:hover .hm-mass-mark--evening .hm-mass-flame {
+  animation: hm-mass-flicker 0.9s ease-in-out infinite alternate;
+}
+
+.hm-mass-host:hover .hm-mass-mark--evening .hm-mass-halo {
+  transform-origin: 50% 50%;
+  transform: scale(1.15);
+  opacity: 0.6;
+}
+
+.hm-mass-host:hover .hm-mass-mark--evening .hm-mass-stars path {
+  animation: hm-mass-twinkle 1.2s ease-in-out infinite alternate;
+}
+
+.hm-mass-host:hover .hm-mass-mark--evening .hm-mass-stars path:nth-child(2) {
+  animation-delay: 0.4s;
+}
+
+.hm-mass-host:hover .hm-mass-mark--evening .hm-mass-stars path:nth-child(3) {
+  animation-delay: 0.8s;
+}
+
+@keyframes hm-mass-shimmer {
+  to {
+    opacity: 0.45;
+  }
+}
+
+@keyframes hm-mass-flicker {
+  0% {
+    transform: scale(1, 1) rotate(0deg);
+  }
+
+  50% {
+    transform: scale(0.92, 1.12) rotate(-3deg);
+  }
+
+  100% {
+    transform: scale(1.04, 0.95) rotate(2deg);
+  }
+}
+
+@keyframes hm-mass-twinkle {
+  to {
+    opacity: 0.3;
+  }
 }
 
 .next-mass__when,
@@ -1467,14 +1578,14 @@ textarea {
 /* Song library: one console of filters, then the contents page of a hymnal. */
 .song-console {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) auto;
   align-items: end;
   gap: 12px;
 }
 
 @media (max-width: 1199px) {
   .song-console {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -2457,12 +2568,24 @@ textarea {
   font-weight: 600;
 }
 
+/* Kho bài hát (artifact SongLibraryPage): quick filters, the grid of score pages, and the quick look. */
+.song-layout {
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.song-layout.has-peek {
+  grid-template-columns: 196px minmax(0, 1fr) 340px;
+}
+
 .song-layout__main {
   display: flex;
   flex-direction: column;
   gap: 12px;
   min-width: 0;
-  margin-top: 16px;
 }
 
 .song-layout__sheet {
@@ -2472,10 +2595,361 @@ textarea {
   overflow: hidden;
 }
 
+.song-rail {
+  position: sticky;
+  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+}
+
+.song-rail__list {
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.song-rail__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: var(--hm-radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  text-align: start;
+  color: var(--hm-text-body);
+  cursor: pointer;
+  transition: background var(--hm-dur-fast) var(--hm-ease), color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.song-rail__item:hover {
+  background: var(--hm-surface-soft);
+  color: var(--hm-text-primary);
+}
+
+.song-rail__item[aria-pressed='true'] {
+  background: var(--hm-surface-base);
+  color: var(--hm-text-primary);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--hm-border-default);
+}
+
+.song-rail__item:focus-visible,
+.song-card:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
+}
+
+.song-rail__count {
+  min-width: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--hm-surface-band);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--hm-text-body);
+}
+
+.song-next {
+  background: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-hairline);
+  border-top: 1px solid var(--hm-gilt);
+  border-radius: var(--hm-radius-lg);
+  padding: 16px 24px;
+}
+
+.song-next__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.song-next__open {
+  margin-inline-start: auto;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.song-next__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.song-next__item {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-sm);
+  background: var(--hm-surface-base);
+  color: var(--hm-text-primary);
+  transition: border-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+a.song-next__item:hover {
+  border-color: var(--hm-action-primary);
+  color: var(--hm-text-primary);
+}
+
+.song-next__item b {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.song-next__item.is-gap {
+  border-style: dashed;
+  border-color: var(--hm-area-roster-cloth);
+}
+
+.song-next__item.is-gap b {
+  font-weight: 500;
+  color: var(--hm-area-roster-ink);
+}
+
+.song-next__part {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--hm-text-muted);
+}
+
+.song-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.song-cards > li {
+  display: flex;
+}
+
+.song-cards__pager {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0 0;
+}
+
+.song-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--hm-border-hairline);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-surface-base);
+  font: inherit;
+  text-align: start;
+  color: inherit;
+  cursor: pointer;
+}
+
+.song-card[aria-pressed='true'] {
+  border-color: var(--hm-action-primary);
+  box-shadow: 0 0 0 1px var(--hm-action-primary), var(--hm-shadow-sm);
+}
+
+.song-card__thumb {
+  position: relative;
+  display: block;
+  height: 118px;
+  padding: 8px 16px 0;
+  overflow: hidden;
+  background: var(--hm-surface-band);
+  border-bottom: 1px solid var(--hm-border-default);
+}
+
+.song-card__page {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  box-shadow: var(--hm-shadow-sm);
+  transition: transform 600ms var(--hm-ease);
+}
+
+.song-card:hover .song-card__page,
+.song-card:focus-visible .song-card__page {
+  transform: translateY(-28px);
+}
+
+.song-card__no {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  padding: 2px 8px 0;
+  border-radius: var(--hm-radius-sm);
+  background: var(--hm-surface-reading);
+  font-family: var(--hm-font-display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--hm-action-primary);
+}
+
+.song-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+}
+
+.song-card__part {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--hm-area-liturgy-ink);
+}
+
+.song-card__title {
+  min-height: 38px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--hm-text-primary);
+}
+
+.song-card__meta {
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.song-card__mats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  /* 8px with the body's 2px gap. */
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--hm-outcome-good);
+}
+
+.song-card__mats .is-miss {
+  color: var(--hm-text-muted);
+}
+
+.song-card__used {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--hm-border-default);
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.song-peek {
+  position: sticky;
+  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+  overflow: hidden;
+  background: var(--hm-surface-base);
+  border: 1px solid var(--hm-border-hairline);
+  border-radius: var(--hm-radius-lg);
+}
+
+.song-peek__in {
+  animation: hm-rise var(--hm-dur-base) var(--hm-ease) both;
+}
+
+.song-peek__page {
+  display: grid;
+  place-items: start center;
+  height: 190px;
+  padding-top: 16px;
+  overflow: hidden;
+  background: var(--hm-surface-band);
+  border-bottom: 1px solid var(--hm-border-default);
+}
+
+.song-peek__sheet {
+  width: 200px;
+  height: auto;
+  background: #fff;
+  box-shadow: var(--hm-shadow-md);
+}
+
+.song-peek__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.song-peek__title {
+  margin: 0;
+  font-family: var(--hm-font-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--hm-text-primary);
+}
+
+.song-peek__audio {
+  width: 100%;
+  height: 36px;
+}
+
+.song-peek__files {
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.song-peek__files li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--hm-border-default);
+  font-size: 13px;
+  color: var(--hm-text-primary);
+}
+
+.song-peek__files li > span:not(.anticon) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.song-peek__files small {
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.song-peek__files .anticon,
+.song-peek__files li.is-miss {
+  color: var(--hm-text-muted);
+}
+
 /* Staff divider (artifact Patterns): two short staves round a small rose; at most one per reading page. */
 .hm-staff-divider {
   display: block;
   margin: 8px auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .song-card:hover .song-card__page,
+  .song-card:focus-visible .song-card__page {
+    transform: none;
+  }
+
+  .song-peek__in {
+    animation: none;
+  }
 }
 
 /* The choir switcher at the start of the ivory band (artifact Spine), set off from the page tabs by a rule. */
@@ -3769,6 +4243,36 @@ html[data-door='close'] .landing-close__window {
   border-top: 1px solid var(--hm-border-default);
   font-size: 13px;
   color: var(--hm-text-muted);
+}
+
+/* The month beside the picked day: a narrower panel than the list pages, so the seven columns keep their names. */
+.hm-split.priest-calendar__split {
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+/* An event chip, coloured by status as EventStatusTag colours it; draft and cancelled also carry an icon. */
+.priest-event {
+  padding: 0 3px;
+  border: 1px solid transparent;
+  border-radius: var(--hm-radius-sm);
+}
+
+.priest-event--published {
+  background: var(--hm-success-tint);
+  border-color: color-mix(in srgb, var(--hm-success) 35%, transparent);
+  color: var(--hm-success);
+}
+
+.priest-event--draft {
+  background: var(--hm-warning-tint);
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--hm-warning) 45%, transparent);
+  color: var(--hm-warning);
+}
+
+.priest-event--cancelled {
+  background: var(--hm-error-tint);
+  color: var(--hm-error);
 }
 
 .priest-calendar__key {

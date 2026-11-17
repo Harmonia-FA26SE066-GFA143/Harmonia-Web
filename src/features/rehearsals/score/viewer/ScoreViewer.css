@@ -52,6 +52,8 @@
 /* Verovio sizes its SVG for the page width it was given; never let it push past the sheet. */
 .hm-score-page svg {
   display: block;
+  /* Fills the sheet: a larger notation size (--hm-score-zoom) hands Verovio a page narrower than the sheet. */
+  width: 100%;
   max-width: 100%;
   height: auto;
   margin-inline: auto;
@@ -74,7 +76,7 @@
    phone rule above does. On a wider sheet the page is wider than this and shrinks to the sheet as usual. The frame
    (ScorePracticeSection) carries the class once the staff count is known. */
 .hm-score-frame--multi-staff .hm-score-page svg {
-  min-width: calc(var(--hm-multi-staff-page-units) / var(--hm-layout-scale) * 1px);
+  min-width: calc(var(--hm-multi-staff-page-units) / var(--hm-layout-scale) * var(--hm-score-zoom, 1) * 1px);
 }
 
 .hm-score-skeleton {
