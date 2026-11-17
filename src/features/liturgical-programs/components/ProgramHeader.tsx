@@ -33,21 +33,7 @@ export function ProgramHeader({ title, date, time, place, seasonName, status, de
   const day = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${formatProgramDate(date)}`
 
   return (
-    <header style={{ position: 'relative', marginBottom: spacing.lg, paddingBottom: spacing.md }}>
-      {/*
-        The head of a chant page (owner 2026-11-03): an arch holding the hour of the Mass (sunrise, low sun, or a candle
-        under stars) beside a four-line staff with neumes. Hidden from readers; the text carries everything.
-      */}
-      {hour && (
-        <MassTimeMark
-          time={hour}
-          color={hour === 'evening' ? colors.primary : gold.line}
-          style={{ position: 'absolute', right: 248, bottom: 0, opacity: hour === 'evening' ? 0.55 : 0.8 }}
-        />
-      )}
-      <div style={{ position: 'absolute', right: spacing.lg, bottom: 0 }}>
-        <ChantStaff />
-      </div>
+    <header className="hm-mass-host" style={{ marginBottom: spacing.lg, paddingBottom: spacing.md }}>
       {breadcrumb && <Breadcrumb items={breadcrumb} style={{ marginBottom: spacing.sm, fontSize: typography.metadata.fontSize, fontWeight: 500 }} />}
       <Flex wrap align="flex-start" justify="space-between" gap={spacing.md} style={{ position: 'relative' }}>
         <Flex vertical gap={spacing.xs} style={{ minWidth: 0, flex: '1 1 480px' }}>
@@ -71,11 +57,22 @@ export function ProgramHeader({ title, date, time, place, seasonName, status, de
           </Typography.Text>
           {details && <Typography.Text style={{ color: colors.textMuted, maxWidth: '72ch' }}>{details}</Typography.Text>}
         </Flex>
-        {actions && (
-          <Flex wrap align="center" gap={spacing.sm} style={{ flexShrink: 0 }}>
-            {actions}
+        {/*
+          The head of a chant page (owner 2026-11-03): an arch holding the hour of the Mass (sunrise, low sun, or a candle
+          under stars) beside a four-line staff with neumes, under the actions and in the flow (placed absolutely they
+          ran over the buttons). Hidden from readers; the text carries everything.
+        */}
+        <Flex vertical align="flex-end" gap={spacing.sm} style={{ flexShrink: 0 }}>
+          {actions && (
+            <Flex wrap align="center" gap={spacing.sm}>
+              {actions}
+            </Flex>
+          )}
+          <Flex align="flex-end" gap={spacing.xl} aria-hidden>
+            {hour && <MassTimeMark time={hour} color={hour === 'evening' ? colors.primary : gold.line} style={{ opacity: hour === 'evening' ? 0.55 : 0.8 }} />}
+            <ChantStaff />
           </Flex>
-        )}
+        </Flex>
       </Flex>
     </header>
   )

@@ -48,6 +48,18 @@ const toFields = (event: LiturgicalEvent): FormFields => ({
   specialRequirements: event.specialRequirements,
 })
 
+const startOf = (date: Dayjs, time: Dayjs) => date.hour(time.hour()).minute(time.minute()).second(0)
+
+/** On today, the hours and minutes already gone; any other day keeps every time (an earlier day cannot be picked). */
+const pastTimes = (date?: Dayjs) => {
+  const now = dayjs()
+  if (!date?.isSame(now, 'day')) return {}
+  return {
+    disabledHours: () => Array.from({ length: now.hour() }, (_, hour) => hour),
+    disabledMinutes: (hour: number) => (hour === now.hour() ? Array.from({ length: now.minute() + 1 }, (_, minute) => minute) : []),
+  }
+}
+
 // Only the Admin edits the catalogs; an empty list says where they are kept instead of antd's bare "no data".
 const emptyCatalog = 'Chưa có mục nào. Quản trị viên thêm ở Danh mục phụng vụ.'
 
@@ -115,10 +127,27 @@ export function EventForm({ event, initialDate, saving = false, submitText, publ
           rules={[{ required: true, message: 'Vui lòng chọn ngày cử hành.' }]}
           style={{ flex: '1 1 200px' }}
         >
-          <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
+          <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" disabledDate={(day) => day.isBefore(dayjs(), 'day')} style={{ width: '100%' }} />
         </Form.Item>
-        <Form.Item label="Giờ" name="time" rules={[{ required: true, message: 'Vui lòng chọn giờ.' }]} style={{ flex: '1 1 140px' }}>
-          <TimePicker format="HH:mm" minuteStep={5} placeholder="Chọn giờ" style={{ width: '100%' }} />
+        <Form.Item
+          label="Giờ"
+          name="time"
+          dependencies={['date']}
+          rules={[
+            { required: true, message: 'Vui lòng chọn giờ.' },
+            // BE refuses a date and time already passed (LiturgicalEventService.cs:64, 151, 335: LITURGICAL_EVENT_ALREADY_PASSED).
+            ({ getFieldValue }) => ({
+              validator: (_, time?: Dayjs) => {
+                const date = getFieldValue('date') as Dayjs | undefined
+                return !date || !time || startOf(date, time).isAfter(dayjs())
+                  ? Promise.resolve()
+                  : Promise.reject(new Error('Ngày giờ cử hành đã qua. Vui lòng chọn thời điểm sắp tới.'))
+              },
+            }),
+          ]}
+          style={{ flex: '1 1 140px' }}
+        >
+          <TimePicker format="HH:mm" minuteStep={5} placeholder="Chọn giờ" disabledTime={() => pastTimes(form.getFieldValue('date'))} style={{ width: '100%' }} />
         </Form.Item>
         <Form.Item
           label="Nơi cử hành"

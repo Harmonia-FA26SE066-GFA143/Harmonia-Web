@@ -234,3 +234,11 @@ Notes for the BE owner (no backlog entry):
 - Song lists: creating, submitting and reviewing do not check that the event has passed (`SongListService.cs:89-126, 221-256, 287-300`), and a review does not check that the event is cancelled, while events themselves now refuse past dates.
 - Sign-in has no attempt limit or lockout (`AuthService.cs:25-42`); the only rate limit is the anonymous join form, 5 per IP per 10 minutes (`RateLimitingExtensions.cs`).
 - `POST api/event-participations` answers 200 with an empty list when the serving choirs have no active member left to ask (`EventParticipationService.cs:63-67`); the Web now tells the Priest that nobody was invited.
+
+## Liturgical season source at BE `main@69c9d47` (2026-11-17)
+
+Found while the Web showed the season on the Priest's calendar and on program pages: the same date reads "Mùa Thường Niên" on the calendar and "Mùa Thường niên 2026" on the event, because the BE keeps two unrelated seasons.
+
+| ID | Capability Web needs | Why (evidence) | Status |
+|---|---|---|---|
+| B64 | Take an event's season from the synced liturgical calendar instead of the Admin's season catalog (or link the two) | Two sources: the Admin's catalog `LiturgicalSeason` (name, `StartDate`, `EndDate`, `ColorHex`; `LiturgicalSeason.cs:7-13`) and the season of each synced day (`LiturgicalDay.cs:15`, `LiturgicalDayDto.cs:14, 24`: `OrdinaryTime`, "Mùa Thường Niên"). An event takes its season from the catalog only: the chosen `liturgicalSeasonId`, else the active catalog season whose range holds the date (`LiturgicalEventService.cs:70`, `LookupService.cs:284-286`), and publishing needs one (`LiturgicalEventService.cs:331`, `LITURGICAL_EVENT_SEASON_REQUIRED`). Nothing links a catalog season to a calendar season, so the names differ and a range entered a day off gives the event a season the calendar does not (B29 was one such case). Request: fill the event's season from the synced day (and return its season key and Vietnamese name on `LiturgicalEventDto`), or give each catalog season the calendar season key it stands for. The Admin then no longer enters season ranges by hand, and the Web drops the season select from the event form and shows one season name everywhere | Open (owner 2026-11-17) |

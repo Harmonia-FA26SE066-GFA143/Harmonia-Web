@@ -51,12 +51,19 @@
   animation: hm-score-focus-in var(--hm-dur-slow) var(--hm-ease);
 }
 
+/* The app's <main> is a stacking context (z-index 1, global.css .hm-main) under the sticky head (z 10): while the mode is
+   on it is lifted over the head, or the head covers the mode's toolbar. */
+.hm-main:has(.hm-score-section--focus) {
+  z-index: 20;
+}
+
 /* A comfortable measure for music, centred; wider screens get margin, not a wider (slower to redraw) sheet. */
 .hm-score-section--focus > * {
   box-sizing: border-box;
   flex: none;
   width: 100%;
-  max-width: 1120px;
+  /* A larger notation size (ScorePracticeSection) widens the measure with it, so a projector keeps about as many bars per system. */
+  max-width: calc(1120px * var(--hm-score-zoom, 1));
   margin-inline: auto;
 }
 

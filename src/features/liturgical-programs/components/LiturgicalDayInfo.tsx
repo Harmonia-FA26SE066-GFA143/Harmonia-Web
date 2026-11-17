@@ -1,6 +1,6 @@
 import { SyncOutlined } from '@ant-design/icons'
 import type { UseQueryResult } from '@tanstack/react-query'
-import { App, Button, Flex, Tag, Typography } from 'antd'
+import { App, Button, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -35,11 +35,16 @@ export function LiturgicalDayInfo({ date, days }: Readonly<{ date: string; days:
   }
 
   const { celebrationName, rank, seasonKey, color, seasonName } = day
+  // The day's celebration is the panel's title; its rank and season sit on one quiet line under it.
   return (
-    <Flex align="center" gap={spacing.xs} wrap>
-      <Typography.Text strong>{celebrationName}</Typography.Text>
-      {rank && <Tag style={{ marginInlineEnd: 0 }}>{rank}</Tag>}
-      {seasonName && <SeasonChip seasonKey={seasonKey} color={color} seasonName={seasonName} />}
+    <Flex vertical gap={spacing.xs}>
+      <h2 className="hm-preview__title" style={{ fontSize: 24 }}>
+        {celebrationName}
+      </h2>
+      <Flex align="center" gap={spacing.xs} wrap>
+        {seasonName && <SeasonChip size="small" seasonKey={seasonKey} color={color} seasonName={seasonName} />}
+        {rank && <Typography.Text style={muted}>{rank}</Typography.Text>}
+      </Flex>
     </Flex>
   )
 }

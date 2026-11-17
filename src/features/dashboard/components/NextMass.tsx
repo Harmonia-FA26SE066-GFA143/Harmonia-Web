@@ -6,13 +6,15 @@ import { paths } from '@/app/router/paths'
 import {
   massTimeLabels,
   massTimeOf,
+  MassTimeMark,
   preparationItems,
   SongListStatusTag,
   usePreparationStatus,
   type LiturgicalProgram,
   type PreparationItem,
 } from '@/features/liturgical-programs'
-import { SectionSkeleton } from '@/shared/ui'
+import { ChantStaff, SectionSkeleton } from '@/shared/ui'
+import { gold } from '@/styles/tokens'
 
 const capitalize = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`
 
@@ -62,19 +64,26 @@ export function NextMassPanel({ program }: Readonly<{ program: LiturgicalProgram
 
   return (
     <section className="next-mass" aria-labelledby="next-mass-heading">
-      <div className="next-mass__head mass-time-dark">
-        <span className="next-mass__day" aria-hidden>
-          {date.format('DD')}
-        </span>
-        <div style={{ minWidth: 0 }}>
-          <span className="next-mass__when">
-            {hour ? `${massTimeLabels[hour]} · ` : ''}
-            {capitalize(date.format('dddd DD/MM/YYYY'))} · {program.time}
-          </span>
-          <h2 id="next-mass-heading" className="next-mass__name">
-            {program.eventName}
-          </h2>
-          <span className="next-mass__where">{program.locationName}</span>
+      <div className="next-mass__head mass-time-dark hm-mass-host">
+        {/* The hour of the Mass in its arch (Figma "Sáng – Chiều – Tối"), in place of the day number the line beside repeats. */}
+        <div className="next-mass__top">
+          {hour && <MassTimeMark time={hour} color={gold.soft} style={{ flexShrink: 0 }} />}
+          <div style={{ minWidth: 0 }}>
+            <span className="next-mass__when">
+              {hour ? `${massTimeLabels[hour]} · ` : ''}
+              {capitalize(date.format('dddd DD/MM/YYYY'))} · {program.time}
+            </span>
+            <h2 id="next-mass-heading" className="next-mass__name">
+              {program.eventName}
+            </h2>
+            <span className="next-mass__where">{program.locationName}</span>
+          </div>
+        </div>
+        {/* The arch stands on a chant staff ruled the width of the head, the phrase at its end (as on the program page's
+            head). Decoration, hidden from readers. */}
+        <div className="next-mass__staff" aria-hidden>
+          <span className="next-mass__staff-run" />
+          <ChantStaff color={gold.soft} />
         </div>
       </div>
       <div className="next-mass__body">

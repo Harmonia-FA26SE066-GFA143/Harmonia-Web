@@ -54,7 +54,8 @@ describe('ProgramCalendarPage', () => {
     await screen.findByRole('group', { name: 'Lịch sự kiện phụng vụ' })
     openToday(container)
     expect(await screen.findByRole('button', { name: 'Xem chi tiết Thánh lễ hôm nay lúc 18:00' })).toBeInTheDocument()
-    expect(screen.getByText('Đã công bố')).toBeInTheDocument()
+    // In the day panel beside the month (the key under the grid names the status too).
+    expect(within(container.querySelector('aside.hm-preview') as HTMLElement).getByText('Đã công bố')).toBeInTheDocument()
     await waitFor(() =>
       expect(list).toHaveBeenCalledWith(
         { fromDate: dayjs().startOf('month').format('YYYY-MM-DD'), toDate: dayjs().endOf('month').format('YYYY-MM-DD') },

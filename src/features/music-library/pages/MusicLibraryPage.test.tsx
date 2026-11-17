@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as client from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import type { PagedList } from '@/lib/api/paging'
@@ -34,6 +34,9 @@ afterEach(() => {
 })
 
 describe('MusicLibraryPage', () => {
+  // These cases read the contents-page view; the score-page cards (the default) have their own case below.
+  beforeEach(() => localStorage.setItem('harmonia:music-library:view', 'index'))
+
   it('shows a recoverable error when the library cannot be loaded', async () => {
     vi.spyOn(songsApi, 'listSongs').mockRejectedValue(new ApiError(403, undefined))
     renderPage(<MusicLibraryPage />, '/director/library')
@@ -130,7 +133,6 @@ describe('MusicLibraryPage', () => {
     expect(index.getByText('Chưa có lời bài hát')).toBeInTheDocument()
     expect(request).toHaveBeenCalledWith('/api/songs?isClassified=false&missingMaterialType=SampleAudio&pageNumber=1&pageSize=24')
 
-    expect(screen.queryByRole('radio', { name: /Bảng/ })).toBeNull()
   })
 
   it('restores the filters and the page from the address, as after Back from a song', async () => {
@@ -149,21 +151,20 @@ describe('MusicLibraryPage', () => {
     const list = vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page(songs))
     renderPage(<MusicLibraryPage />, '/director/library', '/director/library?classified=no')
 
-    expect(await screen.findByRole('button', { name: /Bộ lọc \(1\)$/ })).toHaveAttribute('aria-expanded', 'false')
+    expect(await screen.findByRole('button', { name: /Bộ lọc khác \(1\)$/ })).toHaveAttribute('aria-expanded', 'false')
     for (const name of ['Mùa phụng vụ', 'Phần phụng vụ', 'Chủ đề']) {
-      expect(screen.queryByRole('combobox', { name })).not.toBeInTheDocument()
-    }
-    fireEvent.click(screen.getByRole('button', { name: /Bộ lọc \(1\)$/ }))
-    for (const name of ['Mùa phụng vụ', 'Phần phụng vụ', 'Chủ đề', 'Phân loại']) {
       expect(screen.getByRole('combobox', { name })).toBeVisible()
     }
-    fireEvent.click(screen.getByRole('button', { name: /Bộ lọc \(1\)$/ }))
+    expect(screen.queryByRole('combobox', { name: 'Phân loại' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Bộ lọc khác \(1\)$/ }))
+    expect(screen.getByRole('combobox', { name: 'Phân loại' })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: /Bộ lọc khác \(1\)$/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Bỏ lọc Phân loại: Chưa phân loại' }))
 
     expect(list).toHaveBeenCalledWith(expect.objectContaining({ classified: 'no' }), expect.anything())
     await waitFor(() => expect(list.mock.lastCall?.[0].classified).toBeUndefined())
     // The removed chip's focus lands on the filter button, not the page start.
-    expect(screen.getByRole('button', { name: /Bộ lọc$/ })).toHaveFocus()
+    expect(screen.getByRole('button', { name: /Bộ lọc khác$/ })).toHaveFocus()
   })
 
   it('links each title to its song page', async () => {
@@ -205,12 +206,15 @@ describe('MusicLibraryPage', () => {
     expect(within(dialog).getByRole('textbox', { name: 'Tên bài hát' })).toHaveValue('Xin Vâng')
   })
 
-  it('uses one consistent contents list without view or density controls', async () => {
+  it('switches between the score cards and the contents list, and remembers the choice', async () => {
     vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page(songs))
     renderPage(<MusicLibraryPage />, '/director/library')
 
     expect(await screen.findByRole('region', { name: 'Mục lục bài hát' })).toBeInTheDocument()
-    expect(screen.queryByRole('radio', { name: /Mục lục|Bảng|Lưới|Gọn|Thoải mái/ })).toBeNull()
+    fireEvent.click(screen.getByText('Thẻ'))
+    expect(await screen.findByRole('complementary', { name: 'Xem nhanh bài hát' })).toBeInTheDocument()
+    expect(localStorage.getItem('harmonia:music-library:view')).toBe('grid')
+    expect(screen.queryByText('Bảng')).toBeNull()
   })
 
   it('handles edge cases: long title, missing author, and without audio in index view', async () => {
@@ -233,7 +237,7 @@ describe('MusicLibraryPage', () => {
     expect(within(index).getByText('Chưa có audio mẫu')).toBeInTheDocument()
   })
 
-  it('keeps materials behind the song detail instead of a fixed quick look or filter rail', async () => {
+  it('shows the score-page cards by default and the picked song in the quick look', async () => {
     localStorage.clear()
     const withMaterials: Song = {
       ...song('s1', 'Con Bước Lên Bàn Thờ', 'Lm. Kim Long'),
@@ -245,9 +249,16 @@ describe('MusicLibraryPage', () => {
     vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([])
     renderPage(<MusicLibraryPage />, '/director/library')
 
-    const index = await screen.findByRole('region', { name: 'Mục lục bài hát' })
-    expect(within(index).getByRole('link', { name: 'Con Bước Lên Bàn Thờ' })).toHaveAttribute('href', '/director/library/s1')
-    expect(screen.queryByRole('complementary', { name: 'Xem nhanh bài hát' })).toBeNull()
-    expect(screen.queryByRole('navigation', { name: 'Lọc nhanh' })).toBeNull()
+    const card = await screen.findByRole('button', { name: /Con Bước Lên Bàn Thờ/ })
+    expect(card).toHaveTextContent('Dùng 3 lần · gần nhất 08/11/2026')
+    expect(card).toHaveTextContent('Chưa có Lời')
+    const peek = screen.getByRole('complementary', { name: 'Xem nhanh bài hát' })
+    expect(within(peek).getByRole('heading', { name: 'Con Bước Lên Bàn Thờ' })).toBeInTheDocument()
+    expect(within(peek).getByText('2 tệp')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Xin Vâng/ }))
+    expect(screen.getByRole('button', { name: /Xin Vâng/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(peek).getByRole('heading', { name: 'Xin Vâng' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Lọc nhanh' })).toBeInTheDocument()
   })
 })

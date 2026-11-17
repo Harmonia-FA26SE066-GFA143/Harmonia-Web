@@ -100,7 +100,7 @@ describe('toEnginePageWidth by staff count (P10-A)', () => {
     const css = readFileSync(join(process.cwd(), 'src/features/rehearsals/score/viewer/ScoreViewer.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
     expect(Number(css.match(/--hm-multi-staff-page-units\s*:\s*([\d.]+)/)![1])).toBe(MULTI_STAFF_MIN_ENGINE_PAGE_WIDTH)
     expect(css).toMatch(
-      /\.hm-score-frame--multi-staff \.hm-score-page svg\s*\{[^}]*min-width\s*:\s*calc\(var\(--hm-multi-staff-page-units\)\s*\/\s*var\(--hm-layout-scale\)\s*\*\s*1px\)/,
+      /\.hm-score-frame--multi-staff \.hm-score-page svg\s*\{[^}]*min-width\s*:\s*calc\(var\(--hm-multi-staff-page-units\)\s*\/\s*var\(--hm-layout-scale\)\s*\*\s*var\(--hm-score-zoom,\s*1\)\s*\*\s*1px\)/,
     )
   })
 })

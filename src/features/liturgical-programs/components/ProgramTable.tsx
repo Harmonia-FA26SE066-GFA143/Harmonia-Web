@@ -37,6 +37,9 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
     {
       key: 'name',
       title: 'Chương trình',
+      // Floors, not widths: fixed widths on every other column left this one to the auto layout's leftovers, a letter per
+      // line beside the detail panel at 1440. Tags keep one line; the name, type and due text may take two.
+      minWidth: 200,
       render: (_, program) => (
         <Flex align="center" gap={12}>
           <span className="hm-date" aria-hidden>
@@ -55,31 +58,31 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
     {
       key: 'season',
       title: 'Mùa',
-      width: 150,
+      minWidth: 150,
       render: (_, program) => (program.seasonName ? <SeasonChip seasonName={program.seasonName} size="small" /> : <Typography.Text style={secondary}>—</Typography.Text>),
     },
     {
       key: 'type',
       title: 'Loại lễ',
-      width: 140,
+      minWidth: 110,
       render: (_, program) => program.massTypeName ?? program.ceremonyTypeName ?? <Typography.Text style={secondary}>—</Typography.Text>,
     },
     {
       key: 'status',
       title: 'Trạng thái lễ',
-      width: 130,
+      minWidth: 100,
       render: (_, program) => <EventStatusTag status={program.status} />,
     },
     {
       key: 'songList',
       title: 'Danh sách bài hát',
-      width: 170,
+      minWidth: 110,
       render: (_, program) => program.songListStatus ? <SongListStatusTag status={program.songListStatus} /> : <StatusTag mark="draft" style={{ marginInlineEnd: 0 }}>Chưa đề xuất</StatusTag>,
     },
     {
       key: 'due',
       title: 'Hạn đề xuất',
-      width: 150,
+      minWidth: 110,
       render: (_, program) => {
         const due = dueText(program, today)
         if (!due) return <Typography.Text style={secondary}>—</Typography.Text>
@@ -94,7 +97,7 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
       key: 'actions',
       title: <span className="hm-visually-hidden">Thao tác</span>,
       align: 'center',
-      width: 120,
+      minWidth: 90,
       render: (_, program) => {
         // The Choir Director's detail reads published events only (GET /api/schedule/events/{id}).
         if (program.status === 'cancelled') return null
