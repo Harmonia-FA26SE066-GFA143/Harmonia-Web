@@ -50,6 +50,7 @@ beforeEach(() => {
   vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(eventPage([]))
   vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([])
   vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
+  vi.spyOn(choirsApi, 'listDirectorCandidates').mockResolvedValue([])
   vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue(preparation)
   vi.spyOn(categoriesApi, 'listLookup').mockImplementation(async (kind) =>
     kind === 'seasons'

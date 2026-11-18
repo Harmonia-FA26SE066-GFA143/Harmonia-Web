@@ -48,7 +48,13 @@ export function usePersonnelRequirements(programId: string, songListItemId?: str
 
 function useRosterChange<TVariables, TResult>(programId: string, mutationFn: (variables: TVariables) => Promise<TResult>) {
   const queryClient = useQueryClient()
-  return useMutation({ mutationFn, onSuccess: () => queryClient.invalidateQueries({ queryKey: rosterKey(programId) }) })
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: rosterKey(programId) })
+      queryClient.invalidateQueries({ queryKey: ['liturgical-events', 'preparation', programId] })
+    },
+  })
 }
 
 export const useSavePersonnelRequirements = (programId: string, songListItemId?: string) =>

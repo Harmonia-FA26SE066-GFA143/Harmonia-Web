@@ -24,6 +24,7 @@ export function useSaveSongList(programId: string, current: SongList | null) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: songListKey(programId) })
       queryClient.invalidateQueries({ queryKey: ['liturgical-programs'] })
+      queryClient.invalidateQueries({ queryKey: ['liturgical-events', 'preparation', programId] })
     },
   })
 }

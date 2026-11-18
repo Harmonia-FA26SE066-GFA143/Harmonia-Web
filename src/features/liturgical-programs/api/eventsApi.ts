@@ -126,6 +126,8 @@ export const songListStatusByApi: Record<ApiSongListStatus, SongListStatus> = {
 
 interface EventPreparationStatusDto {
   songListStatus: ApiSongListStatus | null
+  songListDueDate?: string
+  isSongListOverdue?: boolean
   participationInvited: number
   participationConfirmed: number
   participationDeclined: number
@@ -147,6 +149,8 @@ export async function getPreparationStatus(id: string): Promise<PreparationStatu
   const dto = await apiRequest<EventPreparationStatusDto>(`/api/liturgical-events/${id}/preparation-status`)
   return {
     songListStatus: dto.songListStatus ? songListStatusByApi[dto.songListStatus] : undefined,
+    songListDueDate: dto.songListDueDate,
+    isSongListOverdue: dto.isSongListOverdue,
     participation: {
       invited: dto.participationInvited,
       confirmed: dto.participationConfirmed,

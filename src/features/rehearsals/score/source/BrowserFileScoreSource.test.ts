@@ -65,6 +65,7 @@ describe('BrowserFileScoreSource', () => {
 
     expect(pkg.score).toEqual({ data: XML, format: 'musicxml', fileName: 'Bai.MusicXML' })
     expect(pkg.audioUrl).toBe('blob:test/0')
+    expect(pkg.estimatedBytes).toBe(XML.length + 3)
   })
 
   it('reads .mxl as bytes', async () => {

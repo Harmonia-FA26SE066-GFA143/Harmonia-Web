@@ -22,6 +22,9 @@ const messages: Record<string, string> = {
   LOOKUP_INACTIVE: 'Có mục đã chọn (mùa, loại lễ, danh mục hoặc nơi cử hành) đã ngừng dùng. Vui lòng chọn mục khác.',
   LITURGICAL_EVENT_GENERATION_RANGE_INVALID: 'Khoảng ngày phải bắt đầu từ hôm nay và dài tối đa 62 ngày.',
   LOOKUP_NOT_FOUND: 'Có mục đã chọn không còn tồn tại. Vui lòng tải lại trang.',
+  // Rescheduling a published event rechecks every assigned member's schedule (LiturgicalEventService.cs:174-178).
+  ROSTER_MEMBER_TIME_CONFLICT:
+    'Có ca viên đã được phân công ở sự kiện này bị trùng giờ hoặc thiếu thời gian di chuyển với sự kiện khác tại thời điểm hoặc nơi cử hành mới.',
 }
 
 export function eventErrorMessage(error: Error, fallback: string): string {

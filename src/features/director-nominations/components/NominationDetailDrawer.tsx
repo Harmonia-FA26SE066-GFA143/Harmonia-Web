@@ -114,6 +114,14 @@ function DecisionDialog({ dialog, item, onClose }: Readonly<{ dialog: Dialog; it
         case 'result': return recordTrainingResult(item.id, dialog.training.id, { result: values.result as 'Passed' | 'Failed', note: note || undefined })
       }
     },
+    onSuccess: () => {
+      if (dialog.kind === 'appoint') {
+        queryClient.invalidateQueries({ queryKey: ['choirs'] })
+        queryClient.invalidateQueries({ queryKey: ['users', 'accounts'] })
+        queryClient.invalidateQueries({ queryKey: ['choir-members'] })
+        queryClient.invalidateQueries({ queryKey: ['member-profiles'] })
+      }
+    },
     onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
   })
 

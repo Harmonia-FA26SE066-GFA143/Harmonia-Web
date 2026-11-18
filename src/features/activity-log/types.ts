@@ -50,6 +50,9 @@ export const entityTypeLabels: Record<string, string> = {
   LiturgicalSlot: 'Phần phụng vụ',
   LiturgicalSlotRequirement: 'Người cần cho phần phụng vụ',
   WorshipLocation: 'Nơi cử hành',
+  DirectorNomination: 'Đề cử ca trưởng',
+  DirectorTraining: 'Đào tạo ca trưởng',
+  LiturgicalEventChoir: 'Ca đoàn phục vụ sự kiện',
 }
 
 export type ActivityPeriod = 'today' | 'last7Days' | 'last30Days'

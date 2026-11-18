@@ -1,4 +1,4 @@
-import { ApiError, errorCodes, errorMessage, requestFailureMessage } from '@/lib/api/errors'
+import { ApiError, errorMessage } from '@/lib/api/errors'
 import { fileExtension, materialExtensions, materialKindLabels, maxMaterialBytes, type MaterialKind } from './types'
 
 /** POST/PUT /api/songs answer 409 SONG_TITLE_DUPLICATE when an active song has the same title and composer. */
@@ -12,12 +12,7 @@ export const duplicateTitleMessage = 'Kho đã có bài hát cùng tên và cùn
  * wrong list cannot be chosen in the form; a skill moved to the other category meanwhile answers 400
  * SONG_SKILL_REQUIREMENT_CATEGORY_INVALID.
  */
-const staleChoiceCodes = new Set([
-  'SONG_CLASSIFICATION_TARGET_INVALID',
-  'SKILL_INACTIVE',
-  'SKILL_NOT_FOUND',
-  'SONG_SKILL_REQUIREMENT_CATEGORY_INVALID',
-])
+const staleChoiceMessage = 'Một số mục vừa chọn đã bị tắt hoặc không còn tồn tại. Vui lòng tải lại trang rồi chọn lại.'
 
 /** Checked before uploading, with the backend's rules, so a wrong file is refused without sending 20 MiB. */
 export function materialFileProblem(kind: MaterialKind, file: File): string | undefined {
@@ -60,67 +55,59 @@ export const timedLyricsErrorMessage = (error: Error) =>
   )
 
 /** POST /api/music-materials (Harmonia-BE doc/api.md, Music materials). */
-export function uploadErrorMessage(error: Error): string {
-  const codes = errorCodes(error)
-  const code = codes.find((item) => item !== 'VALIDATION_FAILED') ?? codes[0]
-  if (code && midiMessages[code]) return midiMessages[code]
-  switch (code) {
-    case 'MATERIAL_FILE_TYPE_NOT_ALLOWED':
-      return 'Định dạng tệp không được hỗ trợ cho loại tài liệu này. Vui lòng chọn tệp đúng định dạng.'
-    case 'MATERIAL_FILE_TOO_LARGE':
-      return 'Tệp vượt quá 20 MB. Vui lòng chọn tệp nhỏ hơn.'
-    case 'MATERIAL_FILE_REQUIRED':
-      return 'Tệp rỗng, vui lòng chọn tệp khác.'
-    // The length of a recorded .mp3 / .m4a / .wav could not be read (MusicMaterialService.ReadAudioDuration).
-    case 'MATERIAL_AUDIO_INVALID':
-      return 'Không đọc được tệp audio này, có thể tệp bị hỏng. Vui lòng xuất lại tệp hoặc chọn tệp khác.'
-    case 'SKILL_INACTIVE':
-    case 'SKILL_NOT_FOUND':
-      return 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại. Vui lòng chọn kỹ năng khác.'
-    case 'EXTERNAL_STORAGE_FAILED':
-      return 'Không thể lưu tệp lúc này. Vui lòng thử lại sau.'
-    case 'MATERIAL_LYRICS_SOURCE_INVALID':
-      return 'Lời bài hát cần đúng một trong hai: tệp Word (.docx) hoặc lời gõ trực tiếp.'
-    default:
-      return requestFailureMessage(error, 'Không thể tải lên tài liệu. Vui lòng thử lại.')
-  }
-}
+export const uploadErrorMessage = (error: Error): string =>
+  errorMessage(
+    error,
+    {
+      ...midiMessages,
+      MATERIAL_FILE_TYPE_NOT_ALLOWED: 'Định dạng tệp không được hỗ trợ cho loại tài liệu này. Vui lòng chọn tệp đúng định dạng.',
+      MATERIAL_FILE_TOO_LARGE: 'Tệp vượt quá 20 MB. Vui lòng chọn tệp nhỏ hơn.',
+      MATERIAL_FILE_REQUIRED: 'Tệp rỗng, vui lòng chọn tệp khác.',
+      // The length of a recorded .mp3 / .m4a / .wav could not be read (MusicMaterialService.ReadAudioDuration).
+      MATERIAL_AUDIO_INVALID: 'Không đọc được tệp audio này, có thể tệp bị hỏng. Vui lòng xuất lại tệp hoặc chọn tệp khác.',
+      SKILL_INACTIVE: 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại. Vui lòng chọn kỹ năng khác.',
+      SKILL_NOT_FOUND: 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại. Vui lòng chọn kỹ năng khác.',
+      EXTERNAL_STORAGE_FAILED: 'Không thể lưu tệp lúc này. Vui lòng thử lại sau.',
+      MATERIAL_LYRICS_SOURCE_INVALID: 'Lời bài hát cần đúng một trong hai: tệp Word (.docx) hoặc lời gõ trực tiếp.',
+    },
+    'Không thể tải lên tài liệu. Vui lòng thử lại.',
+  )
 
-export function classificationErrorMessage(error: Error): string {
-  return error instanceof ApiError && error.code !== undefined && staleChoiceCodes.has(error.code)
-    ? 'Một số mục vừa chọn đã bị tắt hoặc không còn tồn tại. Vui lòng tải lại trang rồi chọn lại.'
-    : requestFailureMessage(error, 'Không thể lưu phân loại. Vui lòng thử lại.')
-}
+export const classificationErrorMessage = (error: Error): string =>
+  errorMessage(
+    error,
+    {
+      SONG_CLASSIFICATION_TARGET_INVALID: staleChoiceMessage,
+      SKILL_INACTIVE: staleChoiceMessage,
+      SKILL_NOT_FOUND: staleChoiceMessage,
+      SONG_SKILL_REQUIREMENT_CATEGORY_INVALID: staleChoiceMessage,
+    },
+    'Không thể lưu phân loại. Vui lòng thử lại.',
+  )
 
 /** PUT /api/music-materials/{id} (Harmonia-BE MusicMaterialService.UpdateAsync). */
-export function materialUpdateErrorMessage(error: Error): string {
-  switch (error instanceof ApiError ? error.code : undefined) {
-    case 'MATERIAL_NOT_FOUND':
-      return 'Tài liệu không còn tồn tại. Vui lòng tải lại trang.'
-    case 'SKILL_INACTIVE':
-    case 'SKILL_NOT_FOUND':
-      return 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại. Vui lòng chọn kỹ năng khác.'
-    case 'MATERIAL_LYRICS_SOURCE_INVALID':
-      return 'Lời bài hát gõ trực tiếp không được để trống.'
-    default:
-      return requestFailureMessage(error, 'Không thể lưu tài liệu. Vui lòng thử lại.')
-  }
-}
+export const materialUpdateErrorMessage = (error: Error): string =>
+  errorMessage(
+    error,
+    {
+      MATERIAL_NOT_FOUND: 'Tài liệu không còn tồn tại. Vui lòng tải lại trang.',
+      SKILL_INACTIVE: 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại. Vui lòng chọn kỹ năng khác.',
+      SKILL_NOT_FOUND: 'Kỹ năng đã chọn đã bị tắt hoặc không còn tồn tại. Vui lòng chọn kỹ năng khác.',
+      MATERIAL_LYRICS_SOURCE_INVALID: 'Lời bài hát gõ trực tiếp không được để trống.',
+    },
+    'Không thể lưu tài liệu. Vui lòng thử lại.',
+  )
 
 /** A lyrics extraction job, on start or as its `errorCode` (Harmonia-BE 6c10d65, docs/error-codes.md). */
-export function extractLyricsErrorMessage(error: Error): string {
-  switch (error instanceof ApiError ? error.code : undefined) {
-    case 'MATERIAL_NOT_FOUND':
-      return 'Bản nhạc không còn tồn tại. Vui lòng tải lại trang.'
-    case 'MATERIAL_NOT_SHEET_MUSIC':
-      return 'Chỉ trích được lời từ bản nhạc dạng PDF hoặc ảnh.'
-    case 'EXTERNAL_AI_FAILED':
-      return 'Không đọc được lời từ bản nhạc lúc này. Vui lòng thử lại sau hoặc gõ lời trực tiếp.'
-    case 'LYRICS_EXTRACTION_INTERRUPTED':
-      return 'Máy chủ khởi động lại khi đang trích lời. Vui lòng thử lại.'
-    case 'LYRICS_EXTRACTION_NOT_FOUND':
-      return 'Kết quả trích lời đã hết hạn. Vui lòng trích lại.'
-    default:
-      return requestFailureMessage(error, 'Không thể trích lời bài hát. Vui lòng thử lại.')
-  }
-}
+export const extractLyricsErrorMessage = (error: Error): string =>
+  errorMessage(
+    error,
+    {
+      MATERIAL_NOT_FOUND: 'Bản nhạc không còn tồn tại. Vui lòng tải lại trang.',
+      MATERIAL_NOT_SHEET_MUSIC: 'Chỉ trích được lời từ bản nhạc dạng PDF hoặc ảnh.',
+      EXTERNAL_AI_FAILED: 'Không đọc được lời từ bản nhạc lúc này. Vui lòng thử lại sau hoặc gõ lời trực tiếp.',
+      LYRICS_EXTRACTION_INTERRUPTED: 'Máy chủ khởi động lại khi đang trích lời. Vui lòng thử lại.',
+      LYRICS_EXTRACTION_NOT_FOUND: 'Kết quả trích lời đã hết hạn. Vui lòng trích lại.',
+    },
+    'Không thể trích lời bài hát. Vui lòng thử lại.',
+  )

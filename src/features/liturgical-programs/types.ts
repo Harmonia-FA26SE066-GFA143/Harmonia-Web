@@ -47,6 +47,8 @@ export interface LiturgicalProgram {
    * Only on lists of events (`GET /api/liturgical-events`).
    */
   songListDueDate?: string
+  /** True when `songListDueDate` has passed and no list is Submitted or Approved (`LiturgicalEventListItemDto.IsSongListOverdue`). */
+  isSongListOverdue?: boolean
 }
 
 export interface ProgramSong {
@@ -147,6 +149,10 @@ export interface StaffingShortage {
 export interface PreparationStatus {
   /** Newest song-list version; absent when none was proposed. */
   songListStatus?: SongListStatus
+  /** YYYY-MM-DD: celebration date minus `SongList.LeadDays` (`EventPreparationStatusDto.SongListDueDate`, BE 90af733). */
+  songListDueDate?: string
+  /** True when `songListDueDate` has passed and no list is Submitted or Approved (`EventPreparationStatusDto.IsSongListOverdue`). */
+  isSongListOverdue?: boolean
   participation: { invited: number; confirmed: number; declined: number; unsure: number }
   /** Absent while the event has no roster. */
   rosterFinalized?: boolean

@@ -260,24 +260,76 @@ describe('RehearsalPracticeRoomPage with the score player, changing and leaving'
     await waitFor(() => expect(playing()).toHaveLength(1))
   }
 
-  it('choosing another song frees the first score and starts clean', async () => {
-    const { container } = renderRoom()
+  it('choosing another song stops the first, then reuses its cached score when returning', async () => {
+    const view = renderRoom()
+    const { container } = view
     await startPlaying()
     const first = lastAudio()
-    const firstPackages = [...packages]
-    const firstEngines = [...engines]
+    const firstPackage = packages.at(-1)!
+    const firstEngine = engines.at(-1)!
     await waitFor(() => expect(container.querySelector(`.${ACTIVE_NOTE_CLASS}`)).not.toBeNull())
 
     await chooseSong(SONG_B)
 
-    await screen.findByRole('heading', { name: SONG_B, level: 2 })
+    await screen.findByRole('heading', { name: SONG_B, level: 1 })
     await screen.findByRole('button', { name: `Phát ${SONG_B}` })
     expect(first.src).toBe('')
-    for (const pack of firstPackages) expect(pack.dispose).toHaveBeenCalled()
-    for (const engine of firstEngines) expect(engine.dispose).toHaveBeenCalled()
+    expect(firstPackage.dispose).not.toHaveBeenCalled()
+    expect(firstEngine.dispose).not.toHaveBeenCalled()
     expect(playing()).toHaveLength(0)
     // The new sheet lights its own first note at time 0; the old sheet and its lit note are gone with it.
     await waitFor(() => expect(container.querySelectorAll(`.${ACTIVE_NOTE_CLASS}`)).toHaveLength(1))
+
+    const loadsBeforeReturn = load.mock.calls.length
+    const enginesBeforeReturn = engines.length
+    await chooseSong(SONG_A)
+    await screen.findByRole('heading', { name: SONG_A, level: 1 })
+    await screen.findByRole('button', { name: `Phát ${SONG_A}` })
+    expect(load.mock.calls.length).toBe(loadsBeforeReturn)
+    expect(engines).toHaveLength(enginesBeforeReturn)
+
+    view.unmount()
+    expectAllFreed()
+  })
+
+  it('keeps at most three idle scores cached across songs and evicts the oldest one', async () => {
+    const fiveSongs = [
+      { songId: 's1', songTitle: SONG_A },
+      { songId: 's2', songTitle: SONG_B },
+      { songId: 's3', songTitle: 'Ca Nhập Lễ' },
+      { songId: 's4', songTitle: 'Đáp Ca' },
+      { songId: 's5', songTitle: 'Kết Lễ' },
+    ]
+    vi.mocked(rehearsalsApi.getRehearsal).mockResolvedValue({ ...rehearsal, songs: fiveSongs })
+    const view = renderRoom()
+    await findSheet()
+    await screen.findByRole('button', { name: `Phát ${SONG_A}` })
+    fireEvent.click(screen.getByText('Lớn'))
+
+    const songPackages: ScorePackage[] = [packages.at(-1)!]
+    for (const next of fiveSongs.slice(1, 4)) {
+      await chooseSong(next.songTitle)
+      await screen.findByRole('button', { name: `Phát ${next.songTitle}` })
+      songPackages.push(packages.at(-1)!)
+    }
+    // Songs 1, 2, 3 are idle in cache (3 idle + Song 4 active): Song 1 is not disposed yet.
+    expect(engines[0].dispose).not.toHaveBeenCalled()
+    expect(songPackages[0].dispose).not.toHaveBeenCalled()
+
+    // Returning to Song 1 reuses its cached engine and keeps its chosen notation size.
+    await chooseSong(SONG_A)
+    await screen.findByRole('button', { name: `Phát ${SONG_A}` })
+    expect(screen.getByRole('radio', { name: 'Lớn' })).toBeChecked()
+    expect(engines).toHaveLength(4)
+
+    // Visiting Song 5 now puts Song 1 into the cache (idle: 2, 3, 1); Song 2 is oldest when Song 4 is left out.
+    await chooseSong('Kết Lễ')
+    await screen.findByRole('button', { name: 'Phát Kết Lễ' })
+    expect(engines[1].dispose).toHaveBeenCalledTimes(1)
+    expect(songPackages[1].dispose).toHaveBeenCalledTimes(1)
+
+    view.unmount()
+    expectAllFreed()
   })
 
   it('another song forgets a picked pair and revokes its object URL', async () => {
