@@ -448,9 +448,13 @@ textarea {
 }
 
 .practice-room-controls {
-  margin-top: 16px;
+  margin-top: 8px;
   padding: 16px 0;
   border-block: 1px solid var(--hm-border-default);
+}
+
+.ant-typography.practice-room-note {
+  margin: 0;
 }
 
 .practice-room-field {
@@ -2572,6 +2576,23 @@ textarea {
 .hm-head-day__hour {
   color: var(--hm-gilt-ink);
   font-weight: 600;
+}
+
+/* Between the desktop and drawer breakpoints, keep every page tab whole. The contextual day stays useful but gives
+   its label and wide event name up before the navigation is masked through the middle of its last word. */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .hm-head-day {
+    gap: 8px;
+    padding-left: 8px;
+  }
+
+  .hm-head-day__label {
+    display: none;
+  }
+
+  .hm-head-day__name {
+    max-width: 168px;
+  }
 }
 
 /* Kho bài hát (artifact SongLibraryPage): quick filters, the grid of score pages, and the quick look. */

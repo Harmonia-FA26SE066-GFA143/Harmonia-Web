@@ -83,7 +83,7 @@ function songListTask(program: LiturgicalProgram, open: () => void): Task | unde
     ),
     when: formatProgramDate(program.date),
     due: program.songListDueDate
-      ? { date: formatProgramDate(program.songListDueDate), overdue: program.songListDueDate < vietnamToday() }
+      ? { date: formatProgramDate(program.songListDueDate), overdue: program.isSongListOverdue ?? program.songListDueDate < vietnamToday() }
       : undefined,
     detail: sentBack ? (
       <PriestNote programId={program.id} />

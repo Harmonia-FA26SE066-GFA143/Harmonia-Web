@@ -26,6 +26,6 @@ export class DevFixtureScoreSource implements ScorePackageSource {
     const data = new Uint8Array(await untilAborted(read, signal))
 
     // Vite asset URLs, not object URLs: nothing to revoke.
-    return { score: { data, format: 'mxl', fileName: 'sample.mxl' }, audioUrl, dispose() {} }
+    return { score: { data, format: 'mxl', fileName: 'sample.mxl' }, audioUrl, estimatedBytes: data.byteLength, dispose() {} }
   }
 }

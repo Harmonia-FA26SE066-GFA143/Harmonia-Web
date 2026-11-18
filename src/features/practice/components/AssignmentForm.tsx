@@ -156,6 +156,8 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
         ...values,
         title: values.title.trim(),
         instruction: values.instruction?.trim() || undefined,
+        skillIds: values.scope === 'skillGroup' ? values.skillIds : undefined,
+        memberIds: values.scope === 'individual' ? values.memberIds : undefined,
         dueDate: dueDate.toISOString(),
       },
       {
@@ -261,12 +263,12 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
               <Radio.Group optionType="button" buttonStyle="solid" options={scopeOptions} />
             </Form.Item>
             {scope === 'skillGroup' && (
-              <Form.Item label="Kỹ năng" name="skillIds" rules={[{ required: true, message: 'Chọn ít nhất một kỹ năng.' }]}>
+              <Form.Item label="Kỹ năng" name="skillIds" preserve={false} rules={[{ required: true, message: 'Chọn ít nhất một kỹ năng.' }]}>
                 <Select mode="multiple" showSearch optionFilterProp="label" placeholder="Chọn kỹ năng" options={skills} />
               </Form.Item>
             )}
             {scope === 'individual' && (
-              <Form.Item label="Ca viên" name="memberIds" rules={[{ required: true, message: 'Chọn ít nhất một ca viên.' }]}>
+              <Form.Item label="Ca viên" name="memberIds" preserve={false} rules={[{ required: true, message: 'Chọn ít nhất một ca viên.' }]}>
                 <Select
                   mode="multiple"
                   showSearch

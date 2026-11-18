@@ -1,4 +1,4 @@
-import { ApiError, requestFailureMessage } from '@/lib/api/errors'
+import { errorMessage } from '@/lib/api/errors'
 
 /** Refusals of `/api/choirs` and `/api/liturgical-events/{id}/choirs` (Harmonia-BE ChoirService). */
 const messages: Record<string, string> = {
@@ -19,7 +19,5 @@ const messages: Record<string, string> = {
 
 /** The message of the error code, or of the first field error code (400 VALIDATION_FAILED), else `fallback`. */
 export function choirErrorMessage(error: Error, fallback: string): string {
-  if (!(error instanceof ApiError)) return requestFailureMessage(error, fallback)
-  const codes = [error.code, ...Object.values(error.errors ?? {}).flat()]
-  return codes.map((code) => code && messages[code]).find(Boolean) || requestFailureMessage(error, fallback)
+  return errorMessage(error, messages, fallback)
 }

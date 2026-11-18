@@ -5,6 +5,8 @@ export interface ScorePackage {
   audioUrl: string
   /** Where the last note ends in the audio, when the source knows it: a server WAV rings on past the score for a short tail. */
   notesEndSeconds?: number
+  /** Downloaded bytes held by this package, used only to keep the room's in-memory score cache bounded. */
+  estimatedBytes?: number
   /** Revokes every object URL this package created. Safe to call more than once. */
   dispose(): void
 }

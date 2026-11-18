@@ -46,7 +46,7 @@ interface FormValues {
 const withTime = (date: Dayjs, time: Dayjs) => date.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
 
 /** A new session belongs to the chosen choir; a joint one has none. */
-const newSessionChoir = (values: FormValues) => (values.isJoint ? undefined : values.choirId)
+const newSessionChoir = (values: FormValues) => (values.isJoint && values.eventId ? undefined : values.choirId)
 
 /** Songs of the music library, searched on the server; the program's approved list can fill the field. */
 function SongsField() {
@@ -112,7 +112,8 @@ function SongsField() {
 /** The choir of a new session; a joint one has none (it gathers every choir serving the program). */
 function ChoirField({ activeChoirs, loading, noChoir }: Readonly<{ activeChoirs: { id: string; name: string }[]; loading: boolean; noChoir: boolean }>) {
   const isJoint: boolean | undefined = Form.useWatch('isJoint')
-  if (isJoint) return null
+  const eventId: string | undefined = Form.useWatch('eventId')
+  if (isJoint && eventId) return null
   return (
     <Form.Item
       label="Ca đoàn"
@@ -142,7 +143,7 @@ function JointOption({ eventId }: Readonly<{ eventId: string }>) {
   const choirs = useEventChoirs(eventId)
   if (choirs.data && !isPlanningDirector(choirs.data)) return null
   return (
-    <Form.Item name="isJoint" valuePropName="checked" extra="Mọi ca đoàn phục vụ chương trình cùng tập; chỉ ca trưởng ca đoàn phụ trách lên lịch được.">
+    <Form.Item name="isJoint" valuePropName="checked" preserve={false} extra="Mọi ca đoàn phục vụ chương trình cùng tập; chỉ ca trưởng ca đoàn phụ trách lên lịch được.">
       <Checkbox>Buổi tập chung các ca đoàn phục vụ chương trình</Checkbox>
     </Form.Item>
   )

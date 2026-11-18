@@ -66,7 +66,13 @@ export function useRecentRehearsals() {
 /** Every attempt reloads the schedule: a refusal may mean the session changed or gained attendance. */
 function useRehearsalMutation<TVariables, TData = void>(mutationFn: (variables: TVariables) => Promise<TData>) {
   const queryClient = useQueryClient()
-  return useMutation({ mutationFn, onSettled: () => queryClient.invalidateQueries({ queryKey: rehearsalsKey }) })
+  return useMutation({
+    mutationFn,
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: rehearsalsKey })
+      queryClient.invalidateQueries({ queryKey: ['liturgical-events', 'preparation'] })
+    },
+  })
 }
 
 export const useSaveRehearsal = () =>

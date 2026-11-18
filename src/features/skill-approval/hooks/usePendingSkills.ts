@@ -24,6 +24,7 @@ function useReview<TVariables>(mutationFn: (variables: TVariables) => Promise<vo
       Promise.all([
         queryClient.invalidateQueries({ queryKey: pendingKey }),
         queryClient.invalidateQueries({ queryKey: ['choir-members'] }),
+        queryClient.invalidateQueries({ queryKey: ['member-profiles'] }),
       ]),
   })
 }
