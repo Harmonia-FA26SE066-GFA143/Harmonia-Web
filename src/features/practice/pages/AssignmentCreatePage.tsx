@@ -2,7 +2,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { useLocation, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { PageHeader } from '@/shared/ui'
+import { CREATE_ASSIGNMENT_LABEL, PageHeader, PRACTICE_AREA_LABEL } from '@/shared/ui'
 import { AssignmentForm } from '../components/AssignmentForm'
 
 interface AssignmentLocationState {
@@ -19,8 +19,8 @@ export function AssignmentCreatePage() {
   return (
     <>
       <PageHeader
-        title="Giao bài tập"
-        breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Luyện tập' }, { title: 'Giao bài tập' }]}
+        title={CREATE_ASSIGNMENT_LABEL}
+        breadcrumb={[{ title: 'Ca trưởng' }, { title: PRACTICE_AREA_LABEL }, { title: CREATE_ASSIGNMENT_LABEL }]}
         description="Chọn ngữ cảnh, nội dung và người nhận; kiểm tra lại trước khi giao."
         extra={
           <Button icon={<ArrowLeftOutlined />} onClick={leave}>

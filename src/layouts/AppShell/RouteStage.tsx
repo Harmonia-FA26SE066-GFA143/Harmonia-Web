@@ -23,7 +23,7 @@ export function RouteStage({ children }: Readonly<{ children: ReactNode }>) {
     const opening = first.current
     first.current = false
     if (reduced || !stage.current?.animate) return
-    stage.current.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], {
+    stage.current.animate([{ transform: opening ? 'translateY(10px)' : 'translateY(6px)' }, { transform: 'none' }], {
       duration: opening ? motion.reveal : motion.base,
       easing: motion.ease,
     })

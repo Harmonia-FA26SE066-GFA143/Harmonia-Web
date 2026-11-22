@@ -24,6 +24,8 @@ const draft: LiturgicalEvent = {
 
 const preparation: PreparationStatus = {
   songListStatus: 'approved',
+  songListDueDate: '2099-01-01',
+  isSongListOverdue: false,
   participation: { invited: 2, confirmed: 5, declined: 1, unsure: 0 },
   rosterFinalized: false,
   rosterActiveAssignments: 4,
@@ -50,6 +52,7 @@ beforeEach(() => {
   vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(eventPage([]))
   vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([])
   vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
+  vi.spyOn(choirsApi, 'listDirectorCandidates').mockResolvedValue([])
   vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue(preparation)
   vi.spyOn(categoriesApi, 'listLookup').mockImplementation(async (kind) =>
     kind === 'seasons'

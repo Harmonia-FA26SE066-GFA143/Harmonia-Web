@@ -1,7 +1,13 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react'
+import { useQueryClient } from '@tanstack/react-query'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { useState } from 'react'
+import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
+import { AppProviders } from '@/app/providers'
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
+import * as choirsApi from '@/features/choirs/api/choirsApi'
 import type { SongMaterial } from '@/features/music-library'
 import * as songsApi from '@/features/music-library/api/songsApi'
+import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as rehearsalsApi from '../api/rehearsalsApi'
 import type { LoadedScore } from '../score/engine'
@@ -25,6 +31,10 @@ vi.mock('@/config/env', async (importOriginal) => {
     },
   }
 })
+// The PDF viewer loads pdf.js, which jsdom cannot run; the drawer around it is what these tests check.
+vi.mock('../components/PracticeScoreViewer', () => ({
+  PracticeScoreViewer: ({ songTitle }: { songTitle: string }) => <p>Trình xem bản nhạc {songTitle}</p>,
+}))
 vi.mock('../score/engine', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../score/engine')>()),
   createVerovioEngine: mocks.createVerovioEngine,
@@ -260,24 +270,76 @@ describe('RehearsalPracticeRoomPage with the score player, changing and leaving'
     await waitFor(() => expect(playing()).toHaveLength(1))
   }
 
-  it('choosing another song frees the first score and starts clean', async () => {
-    const { container } = renderRoom()
+  it('choosing another song stops the first, then reuses its cached score when returning', async () => {
+    const view = renderRoom()
+    const { container } = view
     await startPlaying()
     const first = lastAudio()
-    const firstPackages = [...packages]
-    const firstEngines = [...engines]
+    const firstPackage = packages.at(-1)!
+    const firstEngine = engines.at(-1)!
     await waitFor(() => expect(container.querySelector(`.${ACTIVE_NOTE_CLASS}`)).not.toBeNull())
 
     await chooseSong(SONG_B)
 
-    await screen.findByRole('heading', { name: SONG_B, level: 2 })
+    await screen.findByRole('heading', { name: SONG_B, level: 1 })
     await screen.findByRole('button', { name: `Phát ${SONG_B}` })
     expect(first.src).toBe('')
-    for (const pack of firstPackages) expect(pack.dispose).toHaveBeenCalled()
-    for (const engine of firstEngines) expect(engine.dispose).toHaveBeenCalled()
+    expect(firstPackage.dispose).not.toHaveBeenCalled()
+    expect(firstEngine.dispose).not.toHaveBeenCalled()
     expect(playing()).toHaveLength(0)
     // The new sheet lights its own first note at time 0; the old sheet and its lit note are gone with it.
     await waitFor(() => expect(container.querySelectorAll(`.${ACTIVE_NOTE_CLASS}`)).toHaveLength(1))
+
+    const loadsBeforeReturn = load.mock.calls.length
+    const enginesBeforeReturn = engines.length
+    await chooseSong(SONG_A)
+    await screen.findByRole('heading', { name: SONG_A, level: 1 })
+    await screen.findByRole('button', { name: `Phát ${SONG_A}` })
+    expect(load.mock.calls.length).toBe(loadsBeforeReturn)
+    expect(engines).toHaveLength(enginesBeforeReturn)
+
+    view.unmount()
+    expectAllFreed()
+  })
+
+  it('keeps at most three idle scores cached across songs and evicts the oldest one', async () => {
+    const fiveSongs = [
+      { songId: 's1', songTitle: SONG_A },
+      { songId: 's2', songTitle: SONG_B },
+      { songId: 's3', songTitle: 'Ca Nhập Lễ' },
+      { songId: 's4', songTitle: 'Đáp Ca' },
+      { songId: 's5', songTitle: 'Kết Lễ' },
+    ]
+    vi.mocked(rehearsalsApi.getRehearsal).mockResolvedValue({ ...rehearsal, songs: fiveSongs })
+    const view = renderRoom()
+    await findSheet()
+    await screen.findByRole('button', { name: `Phát ${SONG_A}` })
+    fireEvent.click(screen.getByText('Lớn'))
+
+    const songPackages: ScorePackage[] = [packages.at(-1)!]
+    for (const next of fiveSongs.slice(1, 4)) {
+      await chooseSong(next.songTitle)
+      await screen.findByRole('button', { name: `Phát ${next.songTitle}` })
+      songPackages.push(packages.at(-1)!)
+    }
+    // Songs 1, 2, 3 are idle in cache (3 idle + Song 4 active): Song 1 is not disposed yet.
+    expect(engines[0].dispose).not.toHaveBeenCalled()
+    expect(songPackages[0].dispose).not.toHaveBeenCalled()
+
+    // Returning to Song 1 reuses its cached engine and keeps its chosen notation size.
+    await chooseSong(SONG_A)
+    await screen.findByRole('button', { name: `Phát ${SONG_A}` })
+    expect(screen.getByRole('radio', { name: 'Lớn' })).toBeChecked()
+    expect(engines).toHaveLength(4)
+
+    // Visiting Song 5 now puts Song 1 into the cache (idle: 2, 3, 1); Song 2 is oldest when Song 4 is left out.
+    await chooseSong('Kết Lễ')
+    await screen.findByRole('button', { name: 'Phát Kết Lễ' })
+    expect(engines[1].dispose).toHaveBeenCalledTimes(1)
+    expect(songPackages[1].dispose).toHaveBeenCalledTimes(1)
+
+    view.unmount()
+    expectAllFreed()
   })
 
   it('another song forgets a picked pair and revokes its object URL', async () => {
@@ -324,6 +386,12 @@ describe('RehearsalPracticeRoomPage with the score player, changing and leaving'
     await waitFor(expectAllFreed)
   })
 
+  it('the transport says it is playing in words, not by the icon alone', async () => {
+    renderRoom()
+    await startPlaying()
+    expect(await screen.findByText('Đang phát')).toBeInTheDocument()
+  })
+
   it('leaving in focus mode while playing gives the page back and frees everything', async () => {
     const view = renderRoom()
     await startPlaying()
@@ -341,5 +409,263 @@ describe('RehearsalPracticeRoomPage with the score player, changing and leaving'
       expect(remove.mock.calls.some(([type]) => type === 'keydown')).toBe(true)
       expectAllFreed()
     })
+  })
+})
+
+const never = <T,>() => new Promise<T>(() => {})
+/** The room with no score source: the fallback player (or its loading and empty states) is what shows. */
+const renderPlainRoom = () => {
+  mocks.flags.useDevFixtures = false
+  return renderRoom()
+}
+
+describe('RehearsalPracticeRoomPage page states', () => {
+  it('while the rehearsal loads, shows the page skeleton', async () => {
+    vi.mocked(rehearsalsApi.getRehearsal).mockReturnValue(never())
+    renderRoom()
+    expect(await screen.findByRole('status', { name: 'Đang tải trang' })).toBeInTheDocument()
+  })
+
+  it('a rehearsal that does not exist (404) says so under the room title and leads back to the schedule', async () => {
+    vi.mocked(rehearsalsApi.getRehearsal).mockRejectedValue(new ApiError(404, { code: 'REHEARSAL_NOT_FOUND' }))
+    renderRoom()
+    expect(await screen.findByRole('heading', { name: 'Không tìm thấy buổi tập' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Phòng luyện tập', level: 1 })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Quay lại lịch tập' }))
+    expect(await screen.findByTestId('location')).toHaveTextContent('/director/rehearsals')
+  })
+
+  it('another failure offers a retry, and the retry opens the room', async () => {
+    vi.mocked(rehearsalsApi.getRehearsal).mockRejectedValueOnce(new ApiError(403, { code: 'FORBIDDEN' }))
+    renderPlainRoom()
+    expect(await screen.findByRole('heading', { name: 'Không thể tải buổi tập' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Phòng luyện tập', level: 1 })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Thử lại/ }))
+    expect(await screen.findByRole('heading', { name: SONG_A, level: 1 })).toBeInTheDocument()
+  })
+
+  it('a rehearsal without songs says so instead of a player', async () => {
+    vi.mocked(rehearsalsApi.getRehearsal).mockResolvedValue({ ...rehearsal, songs: [] })
+    renderRoom()
+    expect(await screen.findByRole('heading', { name: 'Buổi tập chưa có bài hát' })).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Bài hát đang tập' })).toBeNull()
+  })
+
+  it('while the materials load, shows a section skeleton', async () => {
+    vi.mocked(songsApi.listMaterials).mockReturnValue(never())
+    renderPlainRoom()
+    expect(await screen.findByRole('status', { name: 'Đang tải tài liệu tập' })).toBeInTheDocument()
+  })
+
+  it('a song with no audio or MIDI says so and links to its song page', async () => {
+    vi.mocked(songsApi.listMaterials).mockResolvedValue([])
+    renderPlainRoom()
+    expect(await screen.findByRole('heading', { name: 'Chưa có audio mẫu hoặc MIDI', level: 3 })).toBeInTheDocument()
+    expect(screen.getByText('Chưa có audio mẫu')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Mở chi tiết bài hát' }))
+    expect(await screen.findByTestId('location')).toHaveTextContent('/director/library/s1')
+  })
+})
+
+describe('RehearsalPracticeRoomPage console', () => {
+  it('steps through the songs, disabled at both ends', async () => {
+    renderPlainRoom()
+    await findFallback(SONG_A)
+    const previous = screen.getByRole('button', { name: 'Bài hát trước' })
+    const next = screen.getByRole('button', { name: 'Bài hát sau' })
+    expect(previous).toBeDisabled()
+    fireEvent.click(next)
+    expect(await screen.findByRole('heading', { name: SONG_B, level: 1 })).toBeInTheDocument()
+    expect(next).toBeDisabled()
+    fireEvent.click(previous)
+    expect(await screen.findByRole('heading', { name: SONG_A, level: 1 })).toBeInTheDocument()
+  })
+
+  it('opens the song list beside its field, not at the end of the page', async () => {
+    renderPlainRoom()
+    await findFallback(SONG_A)
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bài hát đang tập' }))
+    expect((await screen.findByTitle(new RegExp(SONG_B))).closest('.hm-sheet-section')).not.toBeNull()
+  })
+
+  it('reads out what plays and for which part', async () => {
+    renderPlainRoom()
+    await findFallback(SONG_A)
+    expect(screen.getByText('Audio mẫu')).toBeInTheDocument()
+    expect(screen.getByText('Bè: Tất cả')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Soprano'))
+    expect(await screen.findByText('Bè: Soprano')).toBeInTheDocument()
+  })
+
+  it('"Tài liệu" is off while the song has no score', async () => {
+    renderPlainRoom()
+    await findFallback(SONG_A)
+    expect(screen.getByRole('button', { name: 'Tài liệu' })).toBeDisabled()
+  })
+
+  it('"Tài liệu" opens a drawer of the same name with the song', async () => {
+    vi.mocked(songsApi.listMaterials).mockResolvedValue([material('all', 'sampleAudio', 'all.wav'), material('pdf', 'sheetMusic', 'score.pdf')])
+    renderPlainRoom()
+    await findFallback(SONG_A)
+    fireEvent.click(screen.getByRole('button', { name: 'Tài liệu' }))
+    const drawer = await screen.findByRole('dialog')
+    expect(within(drawer).getByText('Tài liệu')).toBeInTheDocument()
+    expect(await within(drawer).findByText(`Trình xem bản nhạc ${SONG_A}`)).toBeInTheDocument()
+  })
+
+  it('"Ghi âm" opens a drawer of the same name, and loads the takes before saying there are none', async () => {
+    let answer: (value: Awaited<ReturnType<typeof rehearsalsApi.listRecordings>>) => void = () => {}
+    vi.mocked(rehearsalsApi.listRecordings).mockReturnValue(new Promise((resolve) => (answer = resolve)))
+    renderPlainRoom()
+    await findFallback(SONG_A)
+    fireEvent.click(screen.getByRole('button', { name: 'Ghi âm' }))
+    const drawer = await screen.findByRole('dialog')
+    expect(within(drawer).getByText('Ghi âm')).toBeInTheDocument()
+    expect(within(drawer).getByText(SONG_A)).toBeInTheDocument()
+    expect(await within(drawer).findByRole('status', { name: 'Đang tải bản thu' })).toBeInTheDocument()
+    expect(within(drawer).queryByText('Chưa có bản thu nào cho bài hát này')).toBeNull()
+
+    await act(async () => answer([]))
+    expect(await within(drawer).findByRole('heading', { name: 'Chưa có bản thu nào cho bài hát này', level: 3 })).toBeInTheDocument()
+    expect(within(drawer).getByText(/nghe lại các bản thu này trên ứng dụng di động/)).toBeInTheDocument()
+    expect(within(drawer).queryByRole('status', { name: 'Đang tải bản thu' })).toBeNull()
+  })
+})
+
+describe('RehearsalPracticeRoomPage cross-links', () => {
+  const renderFromSchedule = (eventId?: string) => {
+    mocks.flags.useDevFixtures = false
+    // The schedule list (RehearsalDto) knows the program; the detail endpoint the room reads again does not.
+    return renderPage(<RehearsalPracticeRoomPage />, '/director/rehearsals/:rehearsalId', {
+      pathname: '/director/rehearsals/r1',
+      state: { rehearsal: { ...rehearsal, eventId } },
+    })
+  }
+
+  it('links the active song to its song page', async () => {
+    renderFromSchedule()
+    await findFallback(SONG_A)
+    expect(screen.getByRole('link', { name: 'Chi tiết bài hát' })).toHaveAttribute('href', '/director/library/s1')
+  })
+
+  it('links the program the rehearsal prepares, kept from the schedule after the detail answers', async () => {
+    renderFromSchedule('e1')
+    await findFallback(SONG_A)
+    await waitFor(() => expect(rehearsalsApi.getRehearsal).toHaveBeenCalledWith('r1'))
+    expect(screen.getByRole('link', { name: 'Xem chương trình' })).toHaveAttribute('href', '/director/programs/e1')
+  })
+
+  it('shows no program link when the rehearsal prepares none', async () => {
+    renderFromSchedule()
+    await findFallback(SONG_A)
+    expect(screen.queryByRole('link', { name: 'Xem chương trình' })).toBeNull()
+  })
+
+  it('"Điểm danh" opens the attendance page', async () => {
+    renderFromSchedule('e1')
+    await findFallback(SONG_A)
+    fireEvent.click(screen.getByRole('button', { name: 'Điểm danh' }))
+    expect(await screen.findByTestId('location')).toHaveTextContent('/director/attendance')
+  })
+
+  it('opened without router state, finds the program in a schedule list already loaded, without asking for one', async () => {
+    mocks.flags.useDevFixtures = false
+    const list = vi.spyOn(rehearsalsApi, 'listRehearsals')
+    // Stands for the schedule page the director came from: its list is in the cache, the room asks nothing more.
+    function SeededRoom() {
+      const queryClient = useQueryClient()
+      useState(() =>
+        queryClient.setQueryData(['rehearsals', 'list', {}, { pageNumber: 1, pageSize: 20 }], {
+          items: [{ ...rehearsal, eventId: 'e1' }],
+          pageNumber: 1,
+          pageSize: 20,
+          totalCount: 1,
+          totalPages: 1,
+        }),
+      )
+      return <RehearsalPracticeRoomPage />
+    }
+    renderPage(<SeededRoom />, '/director/rehearsals/:rehearsalId', '/director/rehearsals/r1')
+    await findFallback(SONG_A)
+    await waitFor(() => expect(rehearsalsApi.getRehearsal).toHaveBeenCalledWith('r1'))
+    expect(screen.getByRole('link', { name: 'Xem chương trình' })).toHaveAttribute('href', '/director/programs/e1')
+    expect(list).not.toHaveBeenCalled()
+  })
+})
+
+describe('RehearsalPracticeRoomPage joint rehearsal', () => {
+  const renderJoint = () => {
+    mocks.flags.useDevFixtures = false
+    vi.mocked(rehearsalsApi.getRehearsal).mockResolvedValue({ ...rehearsal, isJoint: true })
+    return renderPage(<RehearsalPracticeRoomPage />, '/director/rehearsals/:rehearsalId', {
+      pathname: '/director/rehearsals/r1',
+      state: { rehearsal: { ...rehearsal, isJoint: true, eventId: 'e1' } },
+    })
+  }
+
+  const oneTake = () =>
+    vi.mocked(rehearsalsApi.listRecordings).mockResolvedValue([
+      { id: 't1', songId: 's1', fileSizeBytes: 1000, audioUrl: 'https://files.example/t1.webm', createdAt: '2026-11-20T10:00:00Z' },
+    ])
+
+  it('leaves attendance, recording and deleting to the lead choir director, and lets the others listen', async () => {
+    const choirs = vi
+      .spyOn(choirsApi, 'listEventChoirs')
+      .mockResolvedValue([{ choirId: 'c9', name: 'Ca đoàn Cecilia', isActive: true, isLead: true, directorId: 'someone-else', substituteDirectorId: 'another' }])
+    oneTake()
+    renderJoint()
+    await findFallback(SONG_A)
+    await waitFor(() => expect(choirs).toHaveBeenCalledWith('e1'))
+    // Attendance and recording go through CheckCanManageRehearsalAsync; listening through CanViewAsync (every serving choir).
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Điểm danh' })).toBeNull())
+    expect(screen.getByRole('button', { name: 'Hiện lời' })).toBeInTheDocument()
+    expect(screen.getByText('Buổi tập chung')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ghi âm' }))
+    const drawer = await screen.findByRole('dialog')
+    expect(await within(drawer).findByLabelText(`Nghe bản thu 1 của ${SONG_A}`)).toBeInTheDocument()
+    expect(within(drawer).queryByRole('button', { name: 'Thu âm' })).toBeNull()
+    expect(within(drawer).queryByRole('button', { name: /^Xoá bản thu/ })).toBeNull()
+  })
+
+  it('keeps attendance, recording and deleting for the director who plans it', async () => {
+    const choirs = vi.spyOn(choirsApi, 'listEventChoirs').mockResolvedValue([])
+    oneTake()
+    renderJoint()
+    await findFallback(SONG_A)
+    await waitFor(() => expect(choirs).toHaveBeenCalledWith('e1'))
+    await act(async () => {})
+    expect(screen.getByRole('button', { name: 'Điểm danh' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ghi âm' }))
+    const drawer = await screen.findByRole('dialog')
+    expect(await within(drawer).findByRole('button', { name: `Xoá bản thu 1 của ${SONG_A}` })).toBeInTheDocument()
+    expect(within(drawer).getByRole('button', { name: 'Thu âm' })).toBeInTheDocument()
+  })
+})
+
+describe('RehearsalPracticeRoomPage attendance link', () => {
+  it('"Điểm danh" opens the attendance sheet of this rehearsal and its program', async () => {
+    mocks.flags.useDevFixtures = false
+    // renderPage's probe shows the path only; this router keeps the query string the attendance page reads.
+    function AttendanceProbe() {
+      const { pathname, search } = useLocation()
+      return <p data-testid="attendance-url">{`${pathname}${search}`}</p>
+    }
+    const router = createMemoryRouter(
+      [
+        { path: '/director/rehearsals/:rehearsalId', element: <RehearsalPracticeRoomPage /> },
+        { path: '/director/attendance', element: <AttendanceProbe /> },
+      ],
+      { initialEntries: [{ pathname: '/director/rehearsals/r1', state: { rehearsal: { ...rehearsal, eventId: 'e1' } } }] },
+    )
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    )
+    await findFallback(SONG_A)
+    fireEvent.click(screen.getByRole('button', { name: 'Điểm danh' }))
+    expect(await screen.findByTestId('attendance-url')).toHaveTextContent('/director/attendance?rehearsalId=r1&programId=e1')
   })
 })

@@ -1,6 +1,6 @@
-import { FullscreenExitOutlined, FullscreenOutlined } from '@ant-design/icons'
 import { Button, Tooltip } from 'antd'
 import type { Ref } from 'react'
+import { Icon } from '@/shared/ui'
 
 /**
  * Turns focus mode on and off. One toggle button with one name: the pressed state says which way it goes, and the icon
@@ -16,7 +16,7 @@ export function FocusModeButton({
       <Button
         ref={buttonRef}
         className="hm-lift"
-        icon={active ? <FullscreenExitOutlined aria-hidden /> : <FullscreenOutlined aria-hidden />}
+        icon={active ? <Icon name="fullscreen-exit" /> : <Icon name="fullscreen" />}
         aria-pressed={active}
         aria-keyshortcuts="F"
         onClick={onToggle}

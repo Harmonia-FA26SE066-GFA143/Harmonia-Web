@@ -1,5 +1,5 @@
-import { FolderOpenOutlined } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
+import { Icon } from '@/shared/ui'
 import { useId, useRef, useState, type ChangeEvent } from 'react'
 import { BrowserFileScoreSource } from '../score/source/BrowserFileScoreSource'
 import type { ScorePackageSource } from '../score/source/types'
@@ -48,7 +48,7 @@ export function LocalScoreFilePicker({ onPick }: Readonly<{ onPick: (source: Sco
             </Typography.Text>
             <Flex align="center" gap={spacing.sm}>
               <Button
-                icon={<FolderOpenOutlined aria-hidden />}
+                icon={<Icon name="folder-open" />}
                 aria-describedby={`${id}-${kind}-label ${id}-${kind}-name`}
                 onClick={() => inputs.current[kind]?.click()}
               >

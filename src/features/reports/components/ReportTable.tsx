@@ -27,7 +27,7 @@ export function ReportTable({ columns, rows, pagination, loading, onOpenProgram 
           const value = row.cells[column.key]
           if (value === undefined || value === '') return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
           return numeric ? (
-            <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{value}</Typography.Text>
+            <Typography.Text style={{ whiteSpace: 'nowrap' }}>{value}</Typography.Text>
           ) : (
             // Long text wraps, but never so narrow that a name breaks into single words; short values keep their width.
             <span style={{ display: 'inline-block', minWidth: String(value).length > 12 ? 100 : undefined }}>{value}</span>

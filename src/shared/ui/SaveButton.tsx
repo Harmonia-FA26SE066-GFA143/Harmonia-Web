@@ -1,5 +1,5 @@
-import { CheckOutlined } from '@ant-design/icons'
 import { Button, type ButtonProps } from 'antd'
+import { Icon } from './icons'
 
 /**
  * A save button that answers in its own place: "Đã lưu" for a moment after `saved` (see `useJustSaved`). Both labels
@@ -12,7 +12,7 @@ export function SaveButton({ saved, children, ...props }: Readonly<ButtonProps &
         <span className={saved ? 'is-hidden' : undefined} aria-hidden={saved}>{children}</span>
         {saved && (
           <span className="hm-pop">
-            <CheckOutlined aria-hidden /> Đã lưu
+            <Icon name="check" /> Đã lưu
           </span>
         )}
       </span>

@@ -1,16 +1,15 @@
-import { ArrowRightOutlined } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
 import { generatePath, Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { NoChoirNotice } from '@/features/choirs'
-import { formatProgramDate, useNextProgram, useUpcomingPrograms, type LiturgicalProgram } from '@/features/liturgical-programs'
+import { formatProgramDate, useNextProgram, useUpcomingPrograms, type LiturgicalProgram, type ProgramListItem } from '@/features/liturgical-programs'
 import { useSubmissions } from '@/features/practice'
 import { usePendingSkills } from '@/features/skill-approval'
 import { useSongList } from '@/features/song-lists'
-import { parseUtc, vietnamToday } from '@/lib/api/dates'
-import { AllDone, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { parseUtc } from '@/lib/api/dates'
+import { AllDone, EmptyState, ErrorState, Icon, PageHeader, PRACTICE_AREA_LABEL, PROGRAM_NOUN, PROGRAM_NOUN_SHORT, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { NextMassPanel, UpcomingStrip } from '../components/NextMass'
 import { TodaySeason } from '../components/TodaySeason'
@@ -38,8 +37,8 @@ function PriestNote({ programId }: Readonly<{ programId: string }>) {
 
 /** The area a task belongs to, as a chip in its area's cloth (artifact DirectorDashboard). */
 const areas = {
-  program: { label: 'Chương trình', tone: 'liturgy' },
-  practice: { label: 'Luyện tập', tone: 'practice' },
+  program: { label: PROGRAM_NOUN_SHORT, tone: 'liturgy' },
+  practice: { label: PRACTICE_AREA_LABEL, tone: 'practice' },
   skill: { label: 'Kỹ năng', tone: 'attention' },
 } as const
 
@@ -57,7 +56,7 @@ interface Task {
 }
 
 /** The song-list task of one upcoming program, if its list waits on the Choir Director. */
-function songListTask(program: LiturgicalProgram, open: () => void): Task | undefined {
+function songListTask(program: ProgramListItem, open: () => void): Task | undefined {
   const status = program.songListStatus
   const wording = !status
     ? { verb: 'Soạn danh sách bài hát', button: 'Soạn danh sách', aria: 'Đề xuất' }
@@ -82,9 +81,7 @@ function songListTask(program: LiturgicalProgram, open: () => void): Task | unde
       </>
     ),
     when: formatProgramDate(program.date),
-    due: program.songListDueDate
-      ? { date: formatProgramDate(program.songListDueDate), overdue: program.songListDueDate < vietnamToday() }
-      : undefined,
+    due: { date: formatProgramDate(program.songListDueDate), overdue: program.isSongListOverdue },
     detail: sentBack ? (
       <PriestNote programId={program.id} />
     ) : (
@@ -92,7 +89,7 @@ function songListTask(program: LiturgicalProgram, open: () => void): Task | unde
     ),
     action: (
       <Button type="link" style={{ paddingInline: 0, fontWeight: sentBack ? 600 : 500 }} aria-label={`${wording.aria} danh sách bài hát: ${program.eventName}`} onClick={open}>
-        {wording.button} <ArrowRightOutlined aria-hidden />
+        {wording.button} <Icon name="arrow-right" />
       </Button>
     ),
   }
@@ -125,7 +122,7 @@ function TaskList({ tasks, overflow }: Readonly<{ tasks: Task[]; overflow: numbe
       {overflow > 0 && (
         <li style={rowStyle(tasks.length)}>
           <Link to={paths.director.programs} style={{ fontWeight: 500 }}>
-            và {overflow} việc khác <ArrowRightOutlined aria-hidden />
+            và {overflow} việc khác <Icon name="arrow-right" />
           </Link>
         </li>
       )}
@@ -207,7 +204,7 @@ export function DirectorDashboardPage() {
       key: 'skills',
       area: 'skill',
       text: skills.isError ? <Typography.Text type="danger">Không thể tải số kỹ năng chờ duyệt.</Typography.Text> : `Duyệt ${skillCount} kỹ năng ca viên đã khai`,
-      action: <Link to={paths.director.skillApproval} aria-label="Duyệt kỹ năng" style={{ fontWeight: 500 }}>Duyệt <ArrowRightOutlined aria-hidden /></Link>,
+      action: <Link to={paths.director.skillApproval} aria-label="Duyệt kỹ năng" style={{ fontWeight: 500 }}>Duyệt <Icon name="arrow-right" /></Link>,
     })
   }
   if (submissions.isError || submissionCount > 0) {
@@ -215,7 +212,7 @@ export function DirectorDashboardPage() {
       key: 'submissions',
       area: 'practice',
       text: submissions.isError ? <Typography.Text type="danger">Không thể tải số bản thu chờ chấm.</Typography.Text> : `Chấm ${submissionCount} bản thu bài tập`,
-      action: <Link to={paths.director.practice} style={{ fontWeight: 500 }}>Chấm bài <ArrowRightOutlined aria-hidden /></Link>,
+      action: <Link to={paths.director.practice} style={{ fontWeight: 500 }}>Chấm bài <Icon name="arrow-right" /></Link>,
     })
   }
   // Skills and recordings first: what folds into "và N việc khác" is then song lists, which that link leads to.
@@ -243,7 +240,7 @@ export function DirectorDashboardPage() {
                   <Typography.Text>Bạn đã xử lý hết. Không còn việc nào đang chờ.</Typography.Text>
                 </Flex>
               )}
-              {programs.data !== undefined && waiting > 0 && <TaskList tasks={tasks.slice(0, taskLimit)} overflow={Math.max(0, waiting - taskLimit)} />}
+              {!programs.isPending && waiting > 0 && <TaskList tasks={tasks.slice(0, taskLimit)} overflow={Math.max(0, waiting - taskLimit)} />}
             </Section>
             <WeekRehearsals />
           </div>
@@ -252,7 +249,7 @@ export function DirectorDashboardPage() {
             title="Chương trình sắp tới"
             extra={
               <Link to={paths.director.programs} className="hm-sheet-section__link">
-                Tất cả chương trình <ArrowRightOutlined aria-hidden />
+                Tất cả chương trình <Icon name="arrow-right" />
               </Link>
             }
           >
@@ -273,10 +270,30 @@ export function DirectorDashboardPage() {
         </div>
         <aside className="dash-aside" aria-label="Thánh lễ kế tiếp">
           {programs.isPending && <SectionSkeleton rows={5} label="Đang tải Thánh lễ kế tiếp" />}
-          {next && <NextMassPanel program={next} />}
-          {programs.data !== undefined && !next && (
+          {programs.isError && !next && (
             <section className="hm-sheet-section">
-              <Typography.Paragraph className="hm-sheet-section__empty">Chưa có Thánh lễ nào được công bố sắp tới.</Typography.Paragraph>
+              <ErrorState headingLevel={3} title="Không thể tải Thánh lễ kế tiếp" error={programs.error} hasData={false} onRetry={() => programs.refetch()} retrying={programs.isFetching} />
+            </section>
+          )}
+          {next && <NextMassPanel program={next} reviewCount={submissions.data?.totalCount} />}
+          {programs.data !== undefined && !next && (
+            // Only the Parish Priest creates and publishes programs (LiturgicalEventsController.cs:38-39), so the
+            // Director's way forward is to read the programs or prepare songs, never to create one.
+            <section className="hm-sheet-section">
+              <EmptyState
+                title="Chưa có Thánh lễ nào được công bố sắp tới"
+                description={`Khi Cha xứ công bố ${PROGRAM_NOUN.toLowerCase()}, Thánh lễ gần nhất và tình hình chuẩn bị sẽ hiện ở đây.`}
+                action={
+                  <Flex gap={spacing.sm} wrap justify="center">
+                    <Button type="primary" href={paths.director.programs} onClick={(event) => { event.preventDefault(); navigate(paths.director.programs) }}>
+                      Xem {PROGRAM_NOUN.toLowerCase()}
+                    </Button>
+                    <Button href={paths.director.library} onClick={(event) => { event.preventDefault(); navigate(paths.director.library) }}>
+                      Mở kho bài hát
+                    </Button>
+                  </Flex>
+                }
+              />
             </section>
           )}
         </aside>

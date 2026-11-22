@@ -11,11 +11,16 @@ export const publicRoutes: RouteObject[] = [
   ),
 ]
 
-/** Pages inside the application shell that every web role uses (Stitch SHARED-05). */
+/** Pages inside the application shell that every web role uses (Stitch SHARED-05, R2.8). */
 export const sharedRoutes: RouteObject[] = [
   pageRoute(
     paths.profile,
     { title: 'Hồ sơ cá nhân' },
     async () => (await import('@/features/profile')).ProfilePage,
+  ),
+  pageRoute(
+    paths.changePassword,
+    { title: 'Đổi mật khẩu' },
+    async () => (await import('@/features/auth')).ChangePasswordPage,
   ),
 ]

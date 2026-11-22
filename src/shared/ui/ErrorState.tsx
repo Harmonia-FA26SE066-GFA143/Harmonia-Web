@@ -1,8 +1,8 @@
-import { ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button } from 'antd'
 import type { ReactNode } from 'react'
 import { sections } from '@/styles/tokens'
 import { BrokenStaff } from './ChantStaff'
+import { Icon } from './icons'
 import { StatePanel } from './StatePanel'
 
 const attention = sections.attention
@@ -48,7 +48,7 @@ export function ErrorState({
     onRetry || extra ? (
       <>
         {onRetry && (
-          <Button type="primary" icon={<ReloadOutlined />} loading={retrying} onClick={onRetry}>
+          <Button type="primary" icon={<Icon name="refresh" />} loading={retrying} onClick={onRetry}>
             Thử lại
           </Button>
         )}

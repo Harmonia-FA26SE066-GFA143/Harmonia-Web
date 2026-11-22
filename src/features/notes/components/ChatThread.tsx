@@ -34,7 +34,7 @@ function Bubble({ note, mine }: Readonly<{ note: DirectorNote; mine: boolean }>)
         )}
         {note.content}
       </div>
-      <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM, fontVariantNumeric: 'tabular-nums' }}>
+      <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
         {formatDateTime(note.sentAt)}
         {mine && ` · ${note.readAt ? 'Đã xem' : 'Đã gửi'}`}
       </Typography.Text>

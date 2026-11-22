@@ -1,9 +1,9 @@
-import { Checkbox, Flex, Typography } from 'antd'
+import { Button, Checkbox, Flex, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { hasActiveSongFilters, SongFilterBar, useSongs, type Song, type SongFilters } from '@/features/music-library'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { ErrorState, FormDrawer, NoFilterResults, SectionSkeleton } from '@/shared/ui'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { ErrorState, FormDrawer, Icon, NoFilterResults, SectionSkeleton } from '@/shared/ui'
+import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 
 // One page of the largest size the backend allows; a longer library is narrowed by searching and filtering.
 const pickerPage = { pageNumber: 1, pageSize: 100 }
@@ -11,7 +11,7 @@ const pickerPage = { pageNumber: 1, pageSize: 100 }
 export interface SongPickerDrawerProps {
   /** Songs already in the list: marked, and still offered, since another part of the Mass may take the same song. */
   listedSongIds: string[]
-  /** The event's own classification, applied when the picker opens; the Choir Director may clear it. */
+  /** The event's own classification, offered as a one-click filter; the picker opens on the whole library (G3-14). */
   suggestedFilters: SongFilters
   onAdd: (songs: Song[]) => void
   onCancel: () => void
@@ -19,10 +19,17 @@ export interface SongPickerDrawerProps {
 
 /**
  * Choose songs from the music library (FE-27) to add to a program's proposed list (FE-30), searched and filtered by the
- * FE-29 classification. Mounted only while open, so each opening starts from the event's suggestion with nothing picked.
+ * FE-29 classification. Mounted only while open, so each opening starts on the whole library with nothing picked: songs
+ * not yet classified would vanish under the event's filters, so those are applied only when the Director asks.
  */
 export function SongPickerDrawer({ listedSongIds, suggestedFilters, onAdd, onCancel }: Readonly<SongPickerDrawerProps>) {
-  const [filters, setFilters] = useState(suggestedFilters)
+  const [filters, setFilters] = useState<SongFilters>({ search: '' })
+  const canSuggest = hasActiveSongFilters(suggestedFilters)
+  const suggestionApplied =
+    canSuggest &&
+    filters.seasonId === suggestedFilters.seasonId &&
+    filters.massTypeId === suggestedFilters.massTypeId &&
+    filters.ceremonyTypeId === suggestedFilters.ceremonyTypeId
   const keyword = useDebouncedValue(filters.search)
   const songs = useSongs({ ...filters, search: keyword }, pickerPage)
   // Picked songs survive a new search, which replaces the listed page.
@@ -48,14 +55,26 @@ export function SongPickerDrawer({ listedSongIds, suggestedFilters, onAdd, onCan
       okButtonProps={{ disabled: picked.length === 0 }}
       onOk={() => onAdd(picked)}
       onCancel={onCancel}
-      size={760}
+      size={component.drawer.lg}
     >
-      {hasActiveSongFilters(suggestedFilters) && (
-        <Typography.Paragraph style={{ color: colors.textMuted, margin: 0 }}>
-          Bộ lọc được đặt sẵn theo mùa phụng vụ và loại lễ của sự kiện. Bấm “Xoá tất cả bộ lọc” để xem cả kho.
-        </Typography.Paragraph>
+      {canSuggest && (
+        <Flex wrap align="center" gap={spacing.sm}>
+          {suggestionApplied ? (
+            <Typography.Text style={{ color: colors.textMuted }}>Đang lọc theo mùa và loại lễ của chương trình.</Typography.Text>
+          ) : (
+            <Button icon={<Icon name="filter" />} onClick={() => setFilters({ ...filters, ...suggestedFilters, search: filters.search })}>
+              Áp dụng gợi ý mùa & loại lễ
+            </Button>
+          )}
+        </Flex>
       )}
-      <SongFilterBar value={filters} onChange={setFilters} onReset={clearFilters} resultCount={songs.data?.totalCount ?? 0} />
+      <SongFilterBar
+        value={filters}
+        onChange={setFilters}
+        onReset={clearFilters}
+        resultCount={songs.data?.totalCount}
+        error={songs.isError}
+      />
       {songs.isPending && <SectionSkeleton rows={4} label="Đang tải kho bài hát" />}
       {songs.isError && (
         <ErrorState title="Không thể tải kho bài hát" error={songs.error} hasData={songs.data !== undefined} onRetry={() => songs.refetch()} retrying={songs.isFetching} />

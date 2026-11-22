@@ -4,8 +4,8 @@ import type { Profile } from '../types'
 
 const profileKey = ['profile', 'me'] as const
 
-export function useMyProfile() {
-  return useQuery({ queryKey: profileKey, queryFn: getMyProfile })
+export function useMyProfile(options?: { enabled?: boolean }) {
+  return useQuery({ queryKey: profileKey, queryFn: getMyProfile, enabled: options?.enabled ?? true })
 }
 
 export function useUpdateMyProfile() {

@@ -1,12 +1,11 @@
-import { ArrowLeftOutlined, BulbOutlined, FileSearchOutlined, PlusOutlined, SaveOutlined, SendOutlined } from '@ant-design/icons'
-import { App, Button, Flex, Modal, Typography } from 'antd'
+import { Alert, App, Button, Flex, Modal, Typography } from 'antd'
 import { useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { canEditSongList, formatProgramDate, ProgramInfo, useProgram, type LiturgicalProgram } from '@/features/liturgical-programs'
 import type { SongFilters } from '@/features/music-library'
 import { useCatalogOptions, type CatalogOption } from '@/features/system-categories'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton, SaveButton, useJustSaved } from '@/shared/ui'
+import { EmptyState, ErrorState, Icon, LostLeaf, PageHeader, PageSkeleton, SaveButton, useJustSaved } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { ProposalTable, type DraftItem } from '../components/ProposalTable'
 import { SongListStatusAlert } from '../components/SongListStatusAlert'
@@ -93,12 +92,12 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
   }
 
   const addButton = (
-    <Button icon={<PlusOutlined />} onClick={() => setPicking(true)}>
+    <Button icon={<Icon name="add" />} onClick={() => setPicking(true)}>
       Thêm bài hát từ kho
     </Button>
   )
   const suggestButton = (
-    <Button icon={<BulbOutlined />} onClick={() => setSuggesting(true)}>
+    <Button icon={<Icon name="liturgy-tip" />} onClick={() => setSuggesting(true)}>
       Gợi ý bài theo phần
     </Button>
   )
@@ -138,21 +137,31 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
           )}
         </section>
         <aside className="hm-preview hm-paper" aria-label="Tình trạng và gửi duyệt">
-          {list ? <SongListStatusAlert list={list} /> : <p className="hm-rubric">Chưa có đề xuất</p>}
+          {list ? (
+            <SongListStatusAlert list={list} />
+          ) : (
+            // A quiet status, not a second rubric above ProgramInfo's "Thông tin chương trình" (G3-06).
+            <Alert
+              type="info"
+              showIcon
+              title="Chưa có đề xuất danh sách bài hát"
+              description="Thêm bài hát từ kho hoặc xem gợi ý theo phần phụng vụ rồi gửi Cha xứ duyệt."
+            />
+          )}
           <ProgramInfo program={program} />
           {editable && (
             <>
               <Flex wrap gap={spacing.sm}>
                 <SaveButton
                   saved={justSaved}
-                  icon={justSaved ? undefined : <SaveOutlined />}
+                  icon={justSaved ? undefined : <Icon name="save" />}
                   disabled={!dirty || items.length === 0}
                   loading={save.isPending && !confirming}
                   onClick={() => handleSave(false)}
                 >
                   Lưu nháp
                 </SaveButton>
-                <Button type="primary" icon={<SendOutlined />} disabled={items.length === 0} onClick={() => setConfirming(true)}>
+                <Button type="primary" icon={<Icon name="send" />} disabled={items.length === 0} onClick={() => setConfirming(true)}>
                   Gửi duyệt
                 </Button>
               </Flex>
@@ -234,7 +243,7 @@ export function SongListProposalPage() {
   const program = useProgram(programId)
   const list = useSongList(programId)
   const backButton = (
-    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(generatePath(paths.director.programDetail, { programId }))}>
+    <Button icon={<Icon name="arrow-left" />} onClick={() => navigate(generatePath(paths.director.programDetail, { programId }))}>
       Về chương trình
     </Button>
   )
@@ -261,7 +270,7 @@ export function SongListProposalPage() {
       )}
       {program.isSuccess && !program.data && (
         <EmptyState
-          icon={<FileSearchOutlined />}
+          icon={<LostLeaf />}
           title="Không tìm thấy chương trình phụng vụ"
           description="Chương trình không tồn tại, đã bị hủy hoặc đường dẫn không đúng."
         />

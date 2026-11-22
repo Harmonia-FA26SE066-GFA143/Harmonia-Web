@@ -42,6 +42,7 @@ describe('DevFixtureScoreSource', () => {
     expect(pkg.score.format).toBe('mxl')
     expect(pkg.score.fileName).toBe('sample.mxl')
     expect(Array.from(pkg.score.data as Uint8Array)).toEqual([0x50, 0x4b])
+    expect(pkg.estimatedBytes).toBe(2)
     expect(pkg.audioUrl).toMatch(/sample\.wav/)
     expect(fetch).toHaveBeenCalledWith(expect.stringMatching(/sample\.mxl/), expect.anything())
     expect(() => {

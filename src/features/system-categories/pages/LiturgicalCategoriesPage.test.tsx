@@ -180,7 +180,7 @@ describe('LiturgicalCategoriesPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Chỉnh sửa Kính Chúa' }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Chủ đề cha (không bắt buộc)' }))
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Chủ đề cha' }))
     const subThemeNode = (await screen.findAllByTitle('Thánh Thể')).find((node) => node.closest('.ant-select-tree-treenode'))
     expect(subThemeNode?.closest('.ant-select-tree-treenode')).toHaveClass('ant-select-tree-treenode-disabled')
     fireEvent.click((await screen.findAllByTitle('Đức Maria')).find((node) => node.closest('.ant-select-tree-treenode')) as HTMLElement)

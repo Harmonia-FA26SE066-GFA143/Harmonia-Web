@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { findSelectedPath, getSurface, surfaces } from './navigation'
+import { ICON_NAMES } from '@/shared/ui/icons'
+import { findSelectedPath, getSurface, surfaces, workspaceSections } from './navigation'
+
+describe('navigation icons', () => {
+  it('names only Harmonia icons', () => {
+    const icons = [...Object.values(surfaces).flatMap((s) => s.sections), ...workspaceSections].flatMap((section) =>
+      section.items.map((item) => item.icon),
+    )
+    expect(icons.filter((icon) => !ICON_NAMES.includes(icon))).toEqual([])
+  })
+})
 
 describe('getSurface', () => {
   it('derives the role workspace from the URL prefix', () => {
@@ -40,5 +50,13 @@ describe('Admin navigation', () => {
       { label: 'Hệ thống', pages: ['Cấu hình chung', 'Lịch sử hoạt động'] },
       { label: 'Báo cáo', pages: ['Báo cáo'] },
     ])
+  })
+})
+
+describe('Director navigation (G2-10)', () => {
+  it('uses "Quản lý ca đoàn" in the Ca viên area so it never duplicates ChoirSwitcher', () => {
+    const memberSection = surfaces.director.sections.find((section) => section.label === 'Ca viên')
+    expect(memberSection?.items.map((item) => item.label)).toContain('Quản lý ca đoàn')
+    expect(memberSection?.items.map((item) => item.label)).not.toContain('Ca đoàn')
   })
 })

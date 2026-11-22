@@ -17,9 +17,9 @@ const messages: Record<string, string> = {
   SKILL_NOT_FOUND: 'Kỹ năng này không còn tồn tại. Vui lòng tải lại trang.',
   SKILL_CATEGORY_NOT_FOUND: 'Nhóm kỹ năng đã chọn không còn tồn tại. Vui lòng tải lại trang.',
   LITURGICAL_SEASON_DATE_OVERLAP: 'Khoảng ngày này trùng với một mùa phụng vụ khác đang dùng.',
-  // A seeded skill category, or a skill someone is assigned to at an upcoming event (LookupService.cs:121, 151).
+  // A seeded skill category, a skill someone is assigned to at an upcoming event, or a season whose new dates leave out an upcoming event (LookupService.cs:121, 151, 370).
   LOOKUP_IN_USE:
-    'Mục này đang được dùng nên chưa ngừng dùng được: nhóm kỹ năng mặc định chỉ đổi được tên và mô tả; kỹ năng đang có người được phân công ở lễ sắp tới thì gỡ phân công trước.',
+    'Mục này đang được dùng ở sự kiện sắp tới nên chưa đổi hoặc ngừng dùng được: nhóm kỹ năng mặc định chỉ đổi được tên và mô tả; kỹ năng đang có người được phân công hoặc mùa phụng vụ đang có sự kiện nằm ngoài khoảng ngày mới thì cần cập nhật sự kiện trước.',
   LOOKUP_INACTIVE: 'Nhóm kỹ năng đã chọn đã ngừng dùng.',
   SKILL_IN_USE: 'Kỹ năng đang được bài hát dùng nên không chuyển được giữa nhóm Nhạc cụ và nhóm khác.',
   // Song themes (LookupService.SaveSongThemeAsync, BE d1ca63e).

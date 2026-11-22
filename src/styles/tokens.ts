@@ -248,16 +248,16 @@ export const radius = {
 
 export const sizes = {
   controlHeight: 40,
-  /** Filters, row actions and the running-head search in dense pages; form inputs and primary buttons stay 40. */
-  controlHeightCompact: 36,
   touchTarget: 44,
+  /** Icon sizes in px (`<Icon size="md" />`); without a size an icon follows its text at `1em`. `xxs` is a menu caret. */
+  icon: { xxs: 9, xs: 12, sm: 14, md: 16, lg: 20, xl: 24 },
 } as const
 
 export const layout = {
   /** Width of the page list in the small-screen drawer. */
   sidebarWidth: 256,
   /** Running head: the bookcloth band (areas, account), then the ivory band of the area's pages. */
-  headerHeight: 56,
+  headerHeight: 52,
   subnavHeight: 44,
   contentMaxWidth: 1360,
   contentPaddingX: 32,
@@ -278,9 +278,9 @@ export const component = {
     fontSize: 14,
   },
   card: { border: `1px solid ${semantic.border.hairline}`, background: semantic.surface.base, headHeight: 52, padding: 24 },
-  drawer: { sm: 480, md: 600, lg: 720 },
+  drawer: { sm: 480, md: 640, lg: 720 },
   skeleton: { from: semantic.surface.soft, to: semantic.surface.selected },
-  pageHeader: { title: { fontSize: 34, lineHeight: 1.1, fontWeight: 600 } },
+  pageHeader: { title: { fontSize: 34, lineHeight: 1.2, fontWeight: 600 } },
 } as const
 
 // ---------------------------------------------------------------- CSS variables (`--hm-*`)
@@ -351,7 +351,6 @@ const cssVars: Record<string, string> = {
   'radius-media': `${radius.media}px`,
   'header-height': `${layout.headerHeight}px`,
   'subnav-height': `${layout.subnavHeight}px`,
-  'control-compact': `${sizes.controlHeightCompact}px`,
 }
 for (const [key, value] of Object.entries(semantic.area)) {
   for (const [part, v] of Object.entries(value)) cssVars[`area-${key}-${part}`] = v

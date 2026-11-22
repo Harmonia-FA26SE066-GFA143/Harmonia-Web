@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { Form } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
-import { useChoirs, useSetSubstituteDirector } from '../hooks/useChoirs'
+import { useChoirs, useDirectorCandidates, useSetSubstituteDirector } from '../hooks/useChoirs'
 import type { EventChoir } from '../types'
 
 interface Fields {
@@ -26,13 +26,14 @@ export interface SubstituteDirectorModalProps {
 /**
  * Parish Priest: another Choir Director stands in for a serving choir's director at this event only, e.g. when the
  * director is suddenly absent (`PUT …/choirs/{choirId}/substitute-director`, BE ff72860). Both keep the director's
- * rights at this event. The candidates are the directors of the parish's choirs (`GET /api/choirs`): the Priest has no
- * list of every Choir Director account, so one without a choir cannot be picked.
+ * rights at this event. Candidates combine `GET /api/director-notes/recipients` (every active Choir Director, B48)
+ * and `GET /api/choirs`.
  */
 export function SubstituteDirectorModal({ eventId, choir, onClose }: Readonly<SubstituteDirectorModalProps>) {
   const { message } = App.useApp()
   const [form] = Form.useForm<Fields>()
   const parish = useChoirs(Boolean(choir))
+  const recipients = useDirectorCandidates(Boolean(choir))
   const save = useSetSubstituteDirector(eventId)
   // The form store outlives the dialog and wins over `initialValues`, so every opening sets the opened choir's own
   // values explicitly (resetting alone would bring back the previous choir's initial values).
@@ -45,6 +46,9 @@ export function SubstituteDirectorModal({ eventId, choir, onClose }: Readonly<Su
   const directors = new Map<string, string>()
   for (const { directorId, directorName } of parish.data ?? []) {
     if (directorId && directorName && directorId !== choir?.directorId) directors.set(directorId, directorName)
+  }
+  for (const { id, fullName } of recipients.data ?? []) {
+    if (id !== choir?.directorId) directors.set(id, fullName)
   }
   const options = [...directors].map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label, 'vi'))
 

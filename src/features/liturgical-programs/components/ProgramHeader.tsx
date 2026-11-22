@@ -1,7 +1,7 @@
 import { Breadcrumb, Flex, Typography, type BreadcrumbProps } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
-import { ChantStaff, SeasonChip } from '@/shared/ui'
+import { ChantStaff, SeasonChip, seasonTone } from '@/shared/ui'
 import { colors, gold, spacing, typography } from '@/styles/tokens'
 import { formatProgramDate } from '../programFilters'
 import { massTimeLabels, massTimeOf } from '../massTime'
@@ -15,6 +15,14 @@ export interface ProgramHeaderProps {
   place?: string
   /** The Admin's catalog name of the program's season; shown as a chip without colour. */
   seasonName?: string
+  /**
+   * The calendar's season code of the date (`LiturgicalDayDto.SeasonName`, Harmonia-BE LiturgicalDayDto.cs:14, mapped to
+   * `seasonKey` in liturgicalDaysApi.ts): gives the chip its swatch and the head a hairline ribbon. Never derived from the
+   * program's `seasonName` (the Admin's catalog name), which carries no colour (B64).
+   */
+  seasonKey?: string
+  /** The day's liturgical colour (`LiturgicalDayDto.Color`, LiturgicalDayDto.cs:17); wins over the season's. */
+  color?: string
   /** The event's status mark, for the Priest. */
   status?: ReactNode
   /** Mass or ceremony type and the special requirements, on one quiet line. */
@@ -27,19 +35,23 @@ export interface ProgramHeaderProps {
  * The head of a program page, set like the top of a missal page: season chip, the celebration's name in the display
  * serif, then its weekday, date, time and place. The page's single h1.
  */
-export function ProgramHeader({ title, date, time, place, seasonName, status, details, breadcrumb, actions }: Readonly<ProgramHeaderProps>) {
+export function ProgramHeader({ title, date, time, place, seasonName, seasonKey, color, status, details, breadcrumb, actions }: Readonly<ProgramHeaderProps>) {
   const weekday = dayjs(date).format('dddd')
   const hour = massTimeOf(time)
   const day = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${formatProgramDate(date)}`
+  const ribbon = seasonKey || color ? seasonTone(seasonKey, color).ribbon : undefined
 
   return (
-    <header className="hm-mass-host" style={{ marginBottom: spacing.lg, paddingBottom: spacing.md }}>
+    <header
+      className={ribbon ? 'hm-mass-host ct-season-ribbon' : 'hm-mass-host'}
+      style={{ marginBottom: spacing.lg, paddingBottom: spacing.md, ...(ribbon ? { ['--hm-season-ribbon' as string]: ribbon } : {}) }}
+    >
       {breadcrumb && <Breadcrumb items={breadcrumb} style={{ marginBottom: spacing.sm, fontSize: typography.metadata.fontSize, fontWeight: 500 }} />}
       <Flex wrap align="flex-start" justify="space-between" gap={spacing.md} style={{ position: 'relative' }}>
         <Flex vertical gap={spacing.xs} style={{ minWidth: 0, flex: '1 1 480px' }}>
           {(seasonName || status) && (
             <Flex wrap align="center" gap={spacing.sm}>
-              {seasonName && <SeasonChip seasonName={seasonName} />}
+              {seasonName && <SeasonChip seasonName={seasonName} seasonKey={seasonKey} color={color} />}
               {status}
             </Flex>
           )}

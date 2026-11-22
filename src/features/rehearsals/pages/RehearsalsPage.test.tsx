@@ -355,7 +355,7 @@ describe('RehearsalPracticeRoomPage', () => {
       state: { rehearsal: { ...rehearsals[1], songs: [{ songId: 's1', songTitle: 'Con Bước Lên Bàn Thờ' }] } },
     })
 
-    expect(await screen.findByRole('heading', { name: 'Lễ Vật Tâm Tình', level: 2 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Lễ Vật Tâm Tình', level: 1 })).toBeInTheDocument()
     expect(screen.queryByText('Con Bước Lên Bàn Thờ')).toBeNull()
     expect(get).toHaveBeenCalledWith('r2')
   })
@@ -430,7 +430,7 @@ describe('RehearsalPracticeRoomPage', () => {
 
     renderRoom()
 
-    expect(await screen.findByRole('heading', { name: 'Emmanuel', level: 2 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Emmanuel', level: 1 })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Bản nốt đồng bộ' })).toBeInTheDocument()
     expect(screen.getByText('3 nốt · 1 track')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Phát Emmanuel' })).toBeInTheDocument()

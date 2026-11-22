@@ -12,6 +12,7 @@ import { LyricSelector } from '../score/controls/LyricSelector'
 import { PlaybackControls } from '../score/controls/PlaybackControls'
 import { readLyrics, useLyricSelection, type ScoreLyrics } from '../score/controls/useLyricSelection'
 import { useScoreShortcuts } from '../score/controls/useScoreShortcuts'
+import { disposePrepared, estimatedPreparedBytes, type PracticeScoreCache, type PreparedScore } from '../score/cache/practiceScoreCache'
 import { countStaves, createVerovioEngine, MAX_SCORE_NOTES, ScoreEngineError, type ScoreEngine } from '../score/engine'
 import { ApiScoreSource } from '../score/source/ApiScoreSource'
 import { ScoreCredit } from '../score/license/ScoreCredit'
@@ -36,6 +37,9 @@ import '../score/focus/focusMode.css'
 const SHEET_FRAME_HEIGHT = 'clamp(320px, calc(100vh - 470px), 560px)'
 
 const devSource = new DevFixtureScoreSource()
+
+/** What the room plays: the interactive score, its loading sheet, or the room's own MIDI/audio `fallback`. */
+export type PracticePlayer = 'loading' | 'score' | 'fallback'
 
 /** Whether trying the same source again can help. `aborted` only comes from this component's own cleanup. */
 const RETRYABLE: Record<ScoreSourceErrorCode, boolean> = {
@@ -68,6 +72,21 @@ type PlayerState =
        */
       multiStaff: boolean
     }
+
+function readyState(prepared: PreparedScore): PlayerState {
+  return {
+    status: 'ready',
+    fileName: prepared.fileName,
+    svgPages: prepared.svgPages,
+    audioUrl: prepared.package.audioUrl,
+    cursor: createTimelineCursor(prepared.timeline),
+    onsets: prepared.timeline.onsets,
+    timelineSeconds: prepared.timeline.duration,
+    notesEndSeconds: prepared.notesEndSeconds,
+    lyrics: prepared.lyrics,
+    multiStaff: prepared.multiStaff,
+  }
+}
 
 const TOO_COMPLEX = `Bản nhạc quá dài để hiển thị trên web (hơn ${MAX_SCORE_NOTES.toLocaleString('vi-VN')} nốt và dấu lặng). Vui lòng dùng bản ngắn hơn hoặc tách bài thành nhiều phần.`
 
@@ -147,23 +166,31 @@ function tryRelayout(engine: ScoreEngine, pageWidth: number): string[] | undefin
   }
 }
 
-/** One attempt at one source: remounted (by key) for a retry or another source, so all it holds is freed on unmount. */
+/** One attempt at one source: failures are freed immediately; successful API scores may return to the room cache. */
 function ScorePlayer({
   source,
+  cache,
+  cacheKey,
+  cacheIdentity,
   title,
   fallback,
   onRetry,
   material,
   showLyrics,
   onStale,
+  onPlayerChange,
 }: Readonly<{
   source: ScorePackageSource
+  cache?: PracticeScoreCache
+  cacheKey?: string
+  cacheIdentity?: string
   title: string
   fallback: ReactNode
   onRetry: () => void
   material?: SongMaterial
   showLyrics: boolean
   onStale?: () => void
+  onPlayerChange?: (player: PracticePlayer) => void
 }>) {
   const [state, setState] = useState<PlayerState>({ status: 'loading' })
   const [viewerRoot, setViewerRoot] = useState<HTMLDivElement | null>(null)
@@ -171,7 +198,8 @@ function ScorePlayer({
   const [sectionRoot, setSectionRoot] = useState<HTMLDialogElement | null>(null)
   const focusButton = useRef<HTMLButtonElement>(null)
   const engineRef = useRef<ScoreEngine | null>(null)
-  /** Frees what this attempt holds: the effect's cleanup and a refusal from the viewer both call it. */
+  const preparedRef = useRef<PreparedScore | undefined>(undefined)
+  /** Permanently frees this attempt: a refusal from the viewer calls it; ordinary unmounts may cache it. */
   const releaseRef = useRef<() => void>(() => {})
   /**
    * The width of the page on screen (or, before the load, of the page the load will draw). It moves only when a page at
@@ -202,29 +230,63 @@ function ScorePlayer({
     const { signal } = controller
     let scorePackage: ScorePackage | undefined
     let engine: ScoreEngine | undefined
+    let cacheable = true
     // Each resource is freed once and forgotten, so calling this again (cleanup after a failure or a refusal) frees
     // nothing twice, while a package or engine that arrives later is still freed when it lands.
-    const release = () => {
+    const releasePending = () => {
       scorePackage?.dispose()
       scorePackage = undefined
       engine?.dispose()
       engine = undefined
+    }
+    const releasePrepared = () => {
+      const prepared = preparedRef.current
+      if (prepared) disposePrepared(prepared)
+      preparedRef.current = undefined
       engineRef.current = null
+    }
+    const release = () => {
+      cacheable = false
+      releasePending()
+      releasePrepared()
     }
     releaseRef.current = release
 
+    const restored = cacheKey ? cache?.take(cacheKey, cacheIdentity) : undefined
+    if (restored) {
+      preparedRef.current = restored
+      engineRef.current = restored.engine
+      pageWidth.current = restored.pageWidth
+      staves.current = restored.staves
+      zoomRef.current = restored.zoom
+    }
     void (async () => {
       try {
+        if (restored) {
+          await Promise.resolve()
+          if (signal.aborted) return
+          const wanted = toEnginePageWidth(sheetWidth.current / zoomRef.current, staves.current)
+          const relaid = wanted === pageWidth.current ? undefined : tryRelayout(restored.engine, wanted)
+          if (relaid) {
+            pageWidth.current = wanted
+            restored.svgPages = relaid
+            restored.pageWidth = wanted
+            restored.multiStaff = drawnByMultiStaffRule(wanted)
+          }
+          setZoom(restored.zoom)
+          setState(readyState(restored))
+          return
+        }
         scorePackage = await source.load(signal)
-        if (signal.aborted) return release()
+        if (signal.aborted) return releasePending()
         engine = await createVerovioEngine()
-        if (signal.aborted) return release()
+        if (signal.aborted) return releasePending()
         // Known limit (F2-I1): Verovio parses and draws every page synchronously inside this call and it cannot be
         // cancelled. The engine refuses a score over MAX_SCORE_NOTES (too-complex), which bounds it near 3.3 s (P10-A).
         const loadWidth = pageWidth.current
         const loaded = await engine.load(scorePackage.score, { pageWidth: loadWidth })
-        if (signal.aborted) return release()
-        const { score, audioUrl, notesEndSeconds } = scorePackage
+        if (signal.aborted) return releasePending()
+        const { score, notesEndSeconds } = scorePackage
         // The tie map only adds group info and finalOff (lyrics hold over tied notes); note on/off times and onsets stay as they were.
         const timeline = parseTimemap(loaded.timemap, loaded.aliases, parseTieMap(loaded.mei))
         // Verovio accepts broken XML and draws an empty page; a score with no note to follow is refused like a wrong file.
@@ -236,30 +298,42 @@ function ScorePlayer({
         const relaid = wanted === loadWidth ? loaded.svgPages : tryRelayout(engine, wanted)
         pageWidth.current = relaid ? wanted : loadWidth
         const svgPages = relaid ?? loaded.svgPages
-        engineRef.current = engine
-        setState({
-          status: 'ready',
+        const prepared: PreparedScore = {
+          package: scorePackage,
+          engine,
           fileName: score.fileName,
           svgPages,
-          audioUrl,
-          cursor: createTimelineCursor(timeline),
-          onsets: timeline.onsets,
-          timelineSeconds: timeline.duration,
+          timeline,
           notesEndSeconds,
           lyrics: readLyrics(loaded.mei, timeline),
+          staves: staves.current,
+          pageWidth: pageWidth.current,
+          zoom: zoomRef.current,
           multiStaff: drawnByMultiStaffRule(pageWidth.current),
-        })
+          estimatedBytes: estimatedPreparedBytes(scorePackage, svgPages, timeline),
+        }
+        preparedRef.current = prepared
+        engineRef.current = engine
+        scorePackage = undefined
+        engine = undefined
+        setState(readyState(prepared))
       } catch (error) {
-        release()
+        releasePending()
         if (!signal.aborted) setState(failureOf(error))
       }
     })()
 
     return () => {
       controller.abort()
-      release()
+      releasePending()
+      const prepared = preparedRef.current
+      preparedRef.current = undefined
+      engineRef.current = null
+      if (!prepared) return
+      if (cacheable && cache && cacheKey && cacheIdentity) cache.put(cacheKey, cacheIdentity, prepared)
+      else disposePrepared(prepared)
     }
-  }, [source])
+  }, [source, cache, cacheKey, cacheIdentity])
 
   const layout = (width: number, nextZoom: number) => {
     sheetWidth.current = width
@@ -276,13 +350,33 @@ function ScorePlayer({
     const svgPages = tryRelayout(engine, next)
     if (!svgPages) return
     pageWidth.current = next
-    setState({ ...state, svgPages, multiStaff: drawnByMultiStaffRule(next) })
+    const multiStaff = drawnByMultiStaffRule(next)
+    const prepared = preparedRef.current
+    if (prepared) {
+      prepared.svgPages = svgPages
+      prepared.pageWidth = next
+      prepared.zoom = nextZoom
+      prepared.multiStaff = multiStaff
+    }
+    setState({ ...state, svgPages, multiStaff })
   }
   const onWidthChange = (width: number) => layout(width, zoomRef.current)
   const changeZoom = (nextZoom: number) => {
     setZoom(nextZoom)
+    zoomRef.current = nextZoom
+    if (preparedRef.current) preparedRef.current.zoom = nextZoom
     layout(sheetWidth.current, nextZoom)
   }
+
+  // An audio that never loaded (a corrupt WAV) can never sound, so the room's own player may come back beside the sheet.
+  // A refused play() can still be retried, loaded or not: the fallback stays away then, or two players could sound at once.
+  const audioDead = ready !== undefined && clock.sourceFailed === true && clock.duration <= 0
+  const showsFallback = state.status === 'rejected' || failed || audioDead
+  let player: PracticePlayer = 'loading'
+  if (showsFallback) player = 'fallback'
+  else if (ready) player = 'score'
+  // Tells the room which player sounds now, so its status bar names the right one (nothing yet while the score loads).
+  useEffect(() => onPlayerChange?.(player), [onPlayerChange, player])
 
   if (state.status === 'rejected') {
     return (
@@ -295,9 +389,6 @@ function ScorePlayer({
 
   const { active } = focus
   const warning = ready && misalignmentNote(ready.notesEndSeconds ?? clock.duration, ready.timelineSeconds)
-  // An audio that never loaded (a corrupt WAV) can never sound, so the room's own player may come back beside the sheet.
-  // A refused play() can still be retried, loaded or not: the fallback stays away then, or two players could sound at once.
-  const audioDead = ready !== undefined && clock.sourceFailed === true && clock.duration <= 0
   // One ScoreViewer element for every state, so it is kept (not rebuilt) as the state moves from loading to ready to refused.
   let viewer: ReactNode
   if (failed) viewer = <ScoreViewer status="error" svgPages={[]} title={title} onRetry={onRetry} />
@@ -370,7 +461,7 @@ function ScorePlayer({
           {ready && <ScoreCredit />}
         </dialog>
       </ConfigProvider>
-      {(failed || audioDead) && fallback}
+      {showsFallback && fallback}
     </>
   )
 }
@@ -385,9 +476,22 @@ export function ScorePracticeSection({
   title,
   fallback,
   material,
+  cache,
+  cacheScope,
   showLyrics = true,
   onStale,
-}: Readonly<{ title: string; fallback: ReactNode; material?: SongMaterial; showLyrics?: boolean; onStale?: () => void }>) {
+  onPlayerChange,
+}: Readonly<{
+  title: string
+  fallback: ReactNode
+  material?: SongMaterial
+  cache?: PracticeScoreCache
+  cacheScope?: string
+  showLyrics?: boolean
+  onStale?: () => void
+  /** Which player the room shows now: `fallback` without a score source or when the score failed, `loading` meanwhile. */
+  onPlayerChange?: (player: PracticePlayer) => void
+}>) {
   const [picked, setPicked] = useState<ScorePackageSource>()
   const [attempt, setAttempt] = useState(0)
   const nextAttempt = () => setAttempt((value) => value + 1)
@@ -395,6 +499,16 @@ export function ScorePracticeSection({
   const revision = material?.fileRevision
   const apiSource = useMemo(() => (materialId ? new ApiScoreSource(materialId) : undefined), [materialId])
   const source = apiSource ?? (env.useDevFixtures ? devSource : picked)
+  // Local files are replaced through the picker and keep their existing eager cleanup. API and labelled dev sources
+  // have a stable identity that can safely survive a song switch inside this one room.
+  const cachedSource = Boolean(cache && cacheScope && (materialId || env.useDevFixtures))
+  const cacheIdentity = cachedSource ? `${cacheScope}:${materialId ?? 'dev-fixture'}` : undefined
+  const cacheKey = cacheIdentity ? `${cacheIdentity}:${revision ?? 0}` : undefined
+  const hasSource = Boolean(source)
+  // With a source, the player reports for itself.
+  useEffect(() => {
+    if (!hasSource) onPlayerChange?.('fallback')
+  }, [hasSource, onPlayerChange])
 
   return (
     <>
@@ -414,12 +528,16 @@ export function ScorePracticeSection({
           // A new revision remounts and loads again; a list read again with new links does not.
           key={`${materialId ?? 'local'}:${revision ?? 0}:${attempt}`}
           source={source}
+          cache={cache}
+          cacheKey={cacheKey}
+          cacheIdentity={cacheIdentity}
           title={title}
           fallback={fallback}
           onRetry={nextAttempt}
           material={material}
           showLyrics={showLyrics}
           onStale={onStale}
+          onPlayerChange={onPlayerChange}
         />
       ) : (
         fallback

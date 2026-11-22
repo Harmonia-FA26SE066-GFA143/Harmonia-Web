@@ -1,4 +1,4 @@
-import { Card, Flex, Segmented } from 'antd'
+import { Button, Card, Flex, Segmented } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
@@ -80,8 +80,11 @@ export function DirectorProgramListPage() {
       )}
       {programs.data !== undefined && total === 0 && !filtered && (
         <EmptyState
-          icon={<EmptyWeek />} title="Chưa có chương trình phụng vụ nào"
-          description="Chương trình Cha xứ công bố sẽ xuất hiện tại đây."
+          icon={<EmptyWeek />}
+          title="Chưa có chương trình phụng vụ nào"
+          description="Các chương trình phụng vụ do Cha xứ công bố sẽ xuất hiện tại đây để Ca trưởng đề xuất bài hát và chuẩn bị phụng vụ."
+          // Only the Parish Priest creates events (LiturgicalEventsController.cs:38-67), so the next step here is the library.
+          action={<Button onClick={() => navigate(paths.director.library)}>Mở kho bài hát</Button>}
         />
       )}
       {programs.data !== undefined && (total > 0 || filtered) && (
@@ -93,7 +96,8 @@ export function DirectorProgramListPage() {
           resultCount={total}
           unit="chương trình"
           statuses={['published', 'cancelled']}
-          style={{ padding: 0, marginBottom: spacing.lg }}
+          error={programs.isError}
+          style={{ marginBottom: spacing.lg }}
           leading={
             <Flex vertical gap={4}>
               <span style={{ fontSize: 12, color: 'var(--hm-text-muted)' }}>Thời gian</span>

@@ -113,6 +113,7 @@ export function MusicLibraryPage() {
         onChange={changeFilters}
         onReset={resetFilters}
         resultCount={songs.data?.totalCount}
+        error={songs.isError}
       />
       <div className={`song-layout${showPeek ? ' has-peek' : ''}`}>
         <LibraryRail value={filters} onChange={changeFilters} />

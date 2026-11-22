@@ -75,7 +75,7 @@ export function ServiceLede({ filters, scope }: Readonly<{ filters: ReportFilter
                 <span aria-hidden style={{ height: 10, borderRadius: 5, background: colors.softSurface, overflow: 'hidden' }}>
                   <span className="mg-fill" style={{ display: 'block', height: '100%', width: `${(song.times / most) * 100}%`, background: sections.liturgy.cloth, borderRadius: 5, '--i': index } as CSSProperties} />
                 </span>
-                <Typography.Text style={{ textAlign: 'end', color: colors.textMuted, fontVariantNumeric: 'tabular-nums' }}>{song.times} lần</Typography.Text>
+                <Typography.Text style={{ textAlign: 'end', color: colors.textMuted }}>{song.times} lần</Typography.Text>
               </li>
             ))}
           </ol>

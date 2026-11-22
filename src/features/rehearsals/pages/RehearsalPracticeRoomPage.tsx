@@ -1,38 +1,75 @@
-import { AudioOutlined, FileTextOutlined, SoundOutlined } from '@ant-design/icons'
-import { Button, Card, Drawer, Flex, Segmented, Select, Skeleton, Typography } from 'antd'
+import { Button, Flex, Segmented, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { lazy, Suspense, useState, type ReactNode } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { generatePath, Link, useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { isMidiFile, isPlayableAudio, supportsTimedLyrics, useSongMaterials } from '@/features/music-library'
 import { ApiError } from '@/lib/api/errors'
-import { EmptySongbook, EmptyState, ErrorState, PageHeader } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import {
+  EmptySongbook,
+  EmptyState,
+  ErrorState,
+  Icon,
+  LostLeaf,
+  PageHeader,
+  PageSkeleton,
+  PRACTICE_ROOM_TITLE,
+  SectionSkeleton,
+  SELECT_POPUP_PROPS,
+  ViewDrawer,
+  VoicePartIcon,
+} from '@/shared/ui'
+import { component, spacing } from '@/styles/tokens'
+import { JointChip, PlannerOnly } from '../components/JointRehearsal'
 import { RecordingPanel } from '../components/RecordingPanel'
 import { MidiPracticePlayer } from '../components/MidiPracticePlayer'
-import { ScorePracticeSection } from '../components/ScorePracticeSection'
+import { ScorePracticeSection, type PracticePlayer } from '../components/ScorePracticeSection'
 import { TimedAudioPlayer } from '../components/TimedAudioPlayer'
 import { usePracticeRoom } from '../hooks/usePracticeRoom'
+import { useCachedRehearsal, useRehearsal } from '../hooks/useRehearsals'
+import { createPracticeScoreCache } from '../score/cache/practiceScoreCache'
+import type { Rehearsal } from '../types'
 
 // The PDF library is large and only a song with a PDF score needs it; the rehearsal schedule shares this chunk.
 const PracticeScoreViewer = lazy(async () => ({ default: (await import('../components/PracticeScoreViewer')).PracticeScoreViewer }))
-import { useRehearsal } from '../hooks/useRehearsals'
-import type { Rehearsal } from '../types'
+
+const ALL_PARTS = 'Tất cả'
+
+const breadcrumb = [{ title: 'Ca trưởng' }, { title: <Link to={paths.director.rehearsals}>Lịch tập</Link> }, { title: PRACTICE_ROOM_TITLE }]
 
 export function RehearsalPracticeRoomPage() {
   const { rehearsalId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const rehearsal = (location.state as { rehearsal?: Rehearsal } | null)?.rehearsal
+  const cached = useCachedRehearsal(rehearsalId)
+  const known = (location.state as { rehearsal?: Rehearsal } | null)?.rehearsal ?? cached
   // Always read again by id: the router state survives a reload, so it only shows the session until the answer
   // arrives, and stays when the detail endpoint hides it (a rehearsal of a draft or cancelled event answers 404).
   const fetched = useRehearsal(rehearsalId)
-  const room = usePracticeRoom(fetched.data ?? rehearsal)
+  // GET /api/schedule/rehearsals/{id} (MemberRehearsalDetailDto) has no program or choir; the list the director came
+  // from (RehearsalDto) has them, so they are kept from it.
+  const knownEventId = known?.eventId
+  const knownChoirId = known?.choirId
+  const merged = useMemo<Rehearsal | undefined>(
+    () =>
+      fetched.data
+        ? { ...fetched.data, eventId: fetched.data.eventId ?? knownEventId, choirId: fetched.data.choirId ?? knownChoirId }
+        : undefined,
+    [fetched.data, knownEventId, knownChoirId],
+  )
+  const room = usePracticeRoom(merged ?? known)
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [part, setPart] = useState('Tất cả')
+  const [part, setPart] = useState(ALL_PARTS)
   const [showLyrics, setShowLyrics] = useState(false)
   const [documentsOpen, setDocumentsOpen] = useState(false)
   const [recordingOpen, setRecordingOpen] = useState(false)
+  const [player, setPlayer] = useState<PracticePlayer>('loading')
+  const [scoreCache] = useState(createPracticeScoreCache)
+  useEffect(() => {
+    // React StrictMode replays effects without recreating state: reopen after its simulated cleanup, close on real leave.
+    scoreCache.open()
+    return () => scoreCache.close()
+  }, [scoreCache])
   // Sample audio per voice part and typed lyrics come from the song's materials (GET /api/music-materials).
   // A list read again may be shorter than the one the selection was made in.
   const current = Math.min(selectedIndex, Math.max(0, (room?.songs.length ?? 0) - 1))
@@ -43,40 +80,45 @@ export function RehearsalPracticeRoomPage() {
   const scores = (materials.data ?? []).filter((material) => material.kind === 'sheetMusic' && material.url && material.fileName)
   const interactiveScores = (materials.data ?? []).filter((material) => material.kind === 'interactiveScore' && material.url)
   const practiceMaterials = [...midis, ...audios, ...scores, ...interactiveScores]
-  const parts = ['Tất cả', ...new Set(practiceMaterials.flatMap((material) => (material.targetSkillName ? [material.targetSkillName] : [])))]
-  const shownPart = parts.includes(part) ? part : 'Tất cả'
+  const parts = [ALL_PARTS, ...new Set(practiceMaterials.flatMap((material) => (material.targetSkillName ? [material.targetSkillName] : [])))]
+  const shownPart = parts.includes(part) ? part : ALL_PARTS
   const partAudio =
-    shownPart === 'Tất cả'
+    shownPart === ALL_PARTS
       ? (audios.find((material) => !material.targetSkillName) ?? audios[0])
       : audios.find((material) => material.targetSkillName === shownPart)
   const partMidi =
-    shownPart === 'Tất cả'
+    shownPart === ALL_PARTS
       ? (midis.find((material) => !material.targetSkillName) ?? midis[0])
       : (midis.find((material) => material.targetSkillName === shownPart) ??
         midis.find((material) => !material.targetSkillName))
   const partScore =
-    shownPart === 'Tất cả'
+    shownPart === ALL_PARTS
       ? (scores.find((material) => !material.targetSkillName) ?? scores[0])
       : (scores.find((material) => material.targetSkillName === shownPart) ??
         scores.find((material) => !material.targetSkillName))
   const partInteractiveScore =
-    shownPart === 'Tất cả'
+    shownPart === ALL_PARTS
       ? (interactiveScores.find((material) => !material.targetSkillName) ?? interactiveScores[0])
       : (interactiveScores.find((material) => material.targetSkillName === shownPart) ??
         interactiveScores.find((material) => !material.targetSkillName))
   const typedLyrics = materials.data?.find((material) => material.kind === 'lyrics' && material.lyricsText !== null)?.lyricsText
 
-  if (fetched.isLoading && !rehearsal) return <Skeleton active paragraph={{ rows: 12 }} />
+  if (fetched.isLoading && !known) return <PageSkeleton sections={2} rows={6} />
   if (!room) {
     // 404 REHEARSAL_NOT_FOUND: deleted, or not of the director's choirs. Anything else (network, 500) can be retried.
     const failed = fetched.isError && !(fetched.error instanceof ApiError && fetched.error.status === 404)
     return (
-      <div>
-        <Typography.Title level={1}>Chi tiết buổi tập</Typography.Title>
+      <div className="rehearsal-practice-room">
+        <PageHeader title={PRACTICE_ROOM_TITLE} breadcrumb={breadcrumb} />
         {failed ? (
           <ErrorState title="Không thể tải buổi tập" error={fetched.error} hasData={false} onRetry={() => fetched.refetch()} retrying={fetched.isFetching} />
         ) : (
-          <Card title="Không tìm thấy buổi tập"><Button onClick={() => navigate(paths.director.rehearsals)}>Quay lại lịch tập</Button></Card>
+          <EmptyState
+            icon={<LostLeaf />}
+            title="Không tìm thấy buổi tập"
+            description="Buổi tập có thể đã bị xoá, hoặc không thuộc ca đoàn bạn phụ trách."
+            action={<Button type="primary" onClick={() => navigate(paths.director.rehearsals)}>Quay lại lịch tập</Button>}
+          />
         )}
       </div>
     )
@@ -84,20 +126,21 @@ export function RehearsalPracticeRoomPage() {
 
   // Undefined while the rehearsal has no songs; the page then shows "Buổi tập chưa có bài hát" instead of the player.
   const song = room.songs[current]
-  const chooseSong = (songId: string) => {
-    const index = room.songs.findIndex((item) => item.id === songId)
-    if (index < 0) return
+  const chooseIndex = (index: number) => {
+    if (index < 0 || index >= room.songs.length) return
     setSelectedIndex(index)
-    setPart('Tất cả')
+    setPart(ALL_PARTS)
     setShowLyrics(false)
     setDocumentsOpen(false)
     setRecordingOpen(false)
   }
+  const chooseSong = (songId: string) => chooseIndex(room.songs.findIndex((item) => item.id === songId))
   // Stable across renders, so a player can ask for it from an effect.
   const refreshMaterials = materials.refetch
   let materialContent: ReactNode = null
+  let modeLabel = ''
   if (song) {
-    const audioLabel = shownPart === 'Tất cả' ? song.title : `${song.title}, bè ${shownPart}`
+    const audioLabel = shownPart === ALL_PARTS ? song.title : `${song.title}, bè ${shownPart}`
     const lyricsContent = typedLyrics ? (
       <Typography.Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>{typedLyrics}</Typography.Paragraph>
     ) : (
@@ -117,18 +160,27 @@ export function RehearsalPracticeRoomPage() {
             onStale={refreshMaterials}
           />
         ) : (
-          <Card size="small" style={{ background: colors.softSurface }}>
-            <Flex gap={spacing.sm} align="center">
-              <AudioOutlined />
-              <Typography.Text type="secondary">Chưa có audio mẫu hoặc MIDI cho bài hát này</Typography.Text>
-            </Flex>
-          </Card>
+          <div style={{ marginTop: spacing.lg }}>
+            <EmptyState
+              headingLevel={3}
+              icon={<Icon name="audio" size={32} />}
+              title="Chưa có audio mẫu hoặc MIDI"
+              description="Tải audio mẫu hoặc tệp MIDI cho bài hát này ở trang chi tiết bài hát để ca đoàn có bản nghe khi tập."
+              action={
+                <Button onClick={() => navigate(generatePath(paths.director.songDetail, { songId: song.id }))}>Mở chi tiết bài hát</Button>
+              }
+            />
+          </div>
         )}
       </>
     )
 
     if (selectedSongId && materials.isPending) {
-      materialContent = <Skeleton active paragraph={{ rows: 8 }} style={{ marginTop: spacing.lg }} />
+      materialContent = (
+        <div style={{ marginTop: spacing.lg }}>
+          <SectionSkeleton rows={6} label="Đang tải tài liệu tập" />
+        </div>
+      )
     } else if (selectedSongId && materials.isError) {
       materialContent = (
         <div style={{ marginTop: spacing.lg }}>
@@ -156,21 +208,52 @@ export function RehearsalPracticeRoomPage() {
     } else {
       materialContent = legacyContent
     }
+    // What the room plays now, as ScorePracticeSection reports it: the score, or the fallback when there is none or it failed.
+    if (player === 'loading') modeLabel = 'Đang mở bản nhạc'
+    else if (player === 'score') modeLabel = 'Bản nhạc tương tác'
+    else if (partMidi) modeLabel = 'Bản nốt MIDI'
+    else if (partAudio) modeLabel = 'Audio mẫu'
+    else if (!materials.isPending && !materials.isError) modeLabel = 'Chưa có audio mẫu'
   }
+
+  const attendanceQuery = `?rehearsalId=${room.rehearsalId}${room.eventId ? `&programId=${room.eventId}` : ''}`
+  const description = (
+    <span className="practice-room-meta">
+      {room.isJoint ? <JointChip rehearsal={room} /> : <span>Buổi tập</span>}
+      {[
+        `${dayjs(room.startAt).format('DD/MM')} · ${dayjs(room.startAt).format('HH:mm')}–${dayjs(room.endAt).format('HH:mm')}`,
+        room.locationName,
+        `${room.songs.length} bài hát`,
+      ]
+        .filter(Boolean)
+        .map((item) => (
+          <span key={item}>{item}</span>
+        ))}
+      {room.note && <span className="practice-room-meta-note">Ghi chú: {room.note}</span>}
+    </span>
+  )
 
   return (
     <div className="rehearsal-practice-room">
       <PageHeader
-        title={room.title}
-        breadcrumb={[{ title: 'Ca trưởng' }, { title: <Link to={paths.director.rehearsals}>Lịch tập</Link> }, { title: 'Phòng tập' }]}
-        description={[
-          `${dayjs(room.startAt).format('DD/MM')} · ${dayjs(room.startAt).format('HH:mm')}–${dayjs(room.endAt).format('HH:mm')}`,
-          room.locationName,
-          `${room.songs.length} bài hát`,
-        ]
-          .filter(Boolean)
-          .join(' · ')}
-        extra={<Button type="primary" onClick={() => navigate(`${paths.director.attendance}?rehearsalId=${room.rehearsalId}`)}>Điểm danh</Button>}
+        title={song?.title ?? room.title}
+        breadcrumb={breadcrumb}
+        description={description}
+        extra={
+          <Flex wrap align="center" gap={spacing.md}>
+            {room.eventId && (
+              <Link to={generatePath(paths.director.programDetail, { programId: room.eventId })} className="practice-room-song-link">
+                <Icon name="program" /> Xem chương trình
+              </Link>
+            )}
+            {/* A joint rehearsal's attendance belongs to the lead choir's director (CheckCanManageRehearsalAsync). */}
+            <PlannerOnly rehearsal={room}>
+              <Button type="primary" icon={<Icon name="attendance" />} onClick={() => navigate(`${paths.director.attendance}${attendanceQuery}`)}>
+                Điểm danh
+              </Button>
+            </PlannerOnly>
+          </Flex>
+        }
       />
 
       {room.songs.length === 0 ? (
@@ -183,39 +266,82 @@ export function RehearsalPracticeRoomPage() {
       ) : (
         <div className="practice-room-layout">
           <section className="hm-sheet-section practice-room-player" aria-label={`Đang tập: ${song.title}`}>
-            <Typography.Title level={2} style={{ margin: 0, fontFamily: typography.displayFontFamily, fontSize: 32, fontWeight: 600, lineHeight: 1.2, fontVariantNumeric: 'lining-nums' }}>{song.title}</Typography.Title>
-            {song.note && <Typography.Paragraph type="secondary" style={{ margin: `${spacing.xs}px 0 0` }}>Cần tập: {song.note}</Typography.Paragraph>}
             <Flex wrap justify="space-between" align="end" gap={spacing.md} className="practice-room-controls">
               <Flex wrap align="end" gap={spacing.md} style={{ flex: 1, minWidth: 0 }}>
-                <label className="practice-room-field">
+                <div className="practice-room-field">
                   <Typography.Text type="secondary">Bài hát</Typography.Text>
-                  <Select
-                    aria-label="Bài hát đang tập"
-                    value={song.id}
-                    onChange={chooseSong}
-                    options={room.songs.map((item, index) => ({ value: item.id, label: `${index + 1}. ${item.title}` }))}
-                  />
-                </label>
-                <label className="practice-room-field">
+                  <Flex align="center" gap={spacing.xs} style={{ minWidth: 0 }}>
+                    <Button icon={<Icon name="chevron-left" />} aria-label="Bài hát trước" disabled={current <= 0} onClick={() => chooseIndex(current - 1)} />
+                    <Select
+                      {...SELECT_POPUP_PROPS}
+                      aria-label="Bài hát đang tập"
+                      className="practice-room-song-select"
+                      value={song.id}
+                      onChange={chooseSong}
+                      options={room.songs.map((item, index) => ({ value: item.id, label: `${index + 1}. ${item.title}` }))}
+                    />
+                    <Button
+                      icon={<Icon name="chevron-right" />}
+                      aria-label="Bài hát sau"
+                      disabled={current >= room.songs.length - 1}
+                      onClick={() => chooseIndex(current + 1)}
+                    />
+                    <Link to={generatePath(paths.director.songDetail, { songId: song.id })} className="practice-room-song-link">
+                      <Icon name="song" /> Chi tiết bài hát
+                    </Link>
+                  </Flex>
+                </div>
+                <div className="practice-room-field">
                   <Typography.Text type="secondary">Bè</Typography.Text>
-                  <Segmented value={shownPart} onChange={(value) => setPart(String(value))} options={parts} aria-label="Bản tập theo bè" />
-                </label>
+                  <Segmented
+                    className="practice-room-parts"
+                    value={shownPart}
+                    onChange={(value) => setPart(String(value))}
+                    options={parts.map((name) => ({ value: name, label: name, icon: <VoicePartIcon name={name} /> }))}
+                    aria-label="Bản tập theo bè"
+                  />
+                </div>
               </Flex>
               <Flex wrap gap={spacing.sm}>
-                <Button onClick={() => setShowLyrics((value) => !value)} aria-pressed={showLyrics}>
+                <Button icon={<Icon name="lyrics" />} onClick={() => setShowLyrics((value) => !value)} aria-pressed={showLyrics}>
                   {showLyrics ? 'Ẩn lời' : 'Hiện lời'}
                 </Button>
-                <Button icon={<FileTextOutlined aria-hidden />} onClick={() => setDocumentsOpen(true)} disabled={!partScore}>Tài liệu</Button>
-                <Button icon={<SoundOutlined aria-hidden />} onClick={() => setRecordingOpen(true)}>Ghi âm</Button>
+                <Button icon={<Icon name="sheet-music" />} onClick={() => setDocumentsOpen(true)} disabled={!partScore}>
+                  Tài liệu
+                </Button>
+                {/* Every serving choir's director listens to the takes; RecordingPanel keeps recording and deleting
+                    to the lead choir's director on a joint rehearsal (RehearsalRecordingService.cs:42, :89, :104-109). */}
+                <Button icon={<Icon name="audio" />} onClick={() => setRecordingOpen(true)}>
+                  Ghi âm
+                </Button>
               </Flex>
             </Flex>
 
-            <ScorePracticeSection key={song.id} title={song.title} fallback={materialContent} material={partInteractiveScore} showLyrics={showLyrics} onStale={refreshMaterials} />
+            <div className="practice-room-status-bar">
+              {modeLabel && <span className="practice-room-status-item">{modeLabel}</span>}
+              <span className="practice-room-status-item">
+                <VoicePartIcon name={shownPart} /> Bè: {shownPart}
+              </span>
+              {song.note && <span className="practice-room-status-item">Cần tập: {song.note}</span>}
+            </div>
+
+            <ScorePracticeSection
+              key={song.id}
+              title={song.title}
+              fallback={materialContent}
+              material={partInteractiveScore}
+              cache={scoreCache}
+              cacheScope={song.id}
+              showLyrics={showLyrics}
+              onStale={refreshMaterials}
+              onPlayerChange={setPlayer}
+            />
           </section>
 
-          <Drawer title={`Tài liệu · ${song.title}`} open={documentsOpen} onClose={() => setDocumentsOpen(false)} size="large" destroyOnHidden>
+          <ViewDrawer title="Tài liệu" open={documentsOpen} onClose={() => setDocumentsOpen(false)} size={component.drawer.lg} destroyOnHidden>
+            <Typography.Text type="secondary" className="practice-room-drawer-context">{song.title}</Typography.Text>
             {partScore && (
-              <Suspense fallback={<Skeleton active title={false} paragraph={{ rows: 6 }} />}>
+              <Suspense fallback={<SectionSkeleton rows={6} label="Đang mở bản nhạc" />}>
                 <PracticeScoreViewer
                   key={partScore.id}
                   material={partScore}
@@ -225,11 +351,12 @@ export function RehearsalPracticeRoomPage() {
                 />
               </Suspense>
             )}
-          </Drawer>
+          </ViewDrawer>
 
-          <Drawer title={`Ghi âm · ${song.title}`} open={recordingOpen} onClose={() => setRecordingOpen(false)} size="large" destroyOnHidden>
-            <RecordingPanel rehearsalId={room.rehearsalId} songId={song.id} songTitle={song.title} />
-          </Drawer>
+          <ViewDrawer title="Ghi âm" open={recordingOpen} onClose={() => setRecordingOpen(false)} size={component.drawer.md} destroyOnHidden>
+            <Typography.Text type="secondary" className="practice-room-drawer-context">{song.title}</Typography.Text>
+            <RecordingPanel rehearsalId={room.rehearsalId} songId={song.id} songTitle={song.title} rehearsal={room} />
+          </ViewDrawer>
         </div>
       )}
     </div>

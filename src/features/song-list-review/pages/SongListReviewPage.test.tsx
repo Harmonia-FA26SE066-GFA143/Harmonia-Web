@@ -32,6 +32,8 @@ beforeEach(() => {
   vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([])
   vi.spyOn(programsApi, 'getSongCredits').mockResolvedValue({ composer: 'Kim Long', materials: 2 })
   vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue({
+    songListDueDate: '2099-01-01',
+    isSongListOverdue: false,
     participation: { invited: 0, confirmed: 0, declined: 0, unsure: 0 },
     rosterActiveAssignments: 0,
     rosterShortages: [],

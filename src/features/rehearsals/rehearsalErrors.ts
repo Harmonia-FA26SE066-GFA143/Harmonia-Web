@@ -17,8 +17,9 @@ const messages: Record<string, string> = {
   LITURGICAL_EVENT_CANCELLED: 'Chương trình đã chọn đã bị hủy.',
   SONG_NOT_FOUND: 'Có bài hát đã chọn không còn trong kho.',
   SONG_INACTIVE: 'Có bài hát đã chọn đã bị xoá khỏi kho.',
-  // Joint rehearsals (BE 69c9d47): only the lead choir's director plans one, and its program stays.
-  CHOIR_NOT_LEAD: 'Chỉ ca trưởng của ca đoàn phụ trách chương trình mới lên lịch buổi tập chung được.',
+  // Joint rehearsals (BE 69c9d47): only the lead choir's director plans, changes or records one
+  // (CheckCanManageRehearsalAsync), and its program stays. One sentence for scheduling and for the practice room.
+  CHOIR_NOT_LEAD: 'Với buổi tập chung, chỉ ca trưởng của ca đoàn phụ trách chương trình mới làm được việc này.',
   REHEARSAL_JOINT_EVENT_LOCKED: 'Buổi tập chung gắn với chương trình đã chọn, không đổi sang chương trình khác được.',
   // Practice-room takes (BE 90af733, B43).
   REHEARSAL_RECORDING_NOT_FOUND: 'Bản thu không còn tồn tại. Danh sách đã được tải lại.',

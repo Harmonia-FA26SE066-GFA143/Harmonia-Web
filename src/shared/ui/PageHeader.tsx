@@ -7,6 +7,8 @@ export interface PageHeaderProps {
   title: ReactNode
   description?: ReactNode
   breadcrumb?: BreadcrumbProps['items']
+  /** Force showing breadcrumb even when 2 items (e.g. voluntary `/change-password` under Hồ sơ cá nhân). */
+  showBreadcrumb?: boolean
   /** Short labels shown next to the title (e.g. a status Tag). */
   tags?: ReactNode
   /** Page-level actions, primary action last. */
@@ -14,22 +16,22 @@ export interface PageHeaderProps {
 }
 
 /**
- * The liturgical page head (Harmonia Design System): a short incipit over the title in the display serif, an optional
- * one-line description, actions on the right. The breadcrumb shows only on pages below a section (three levels or more);
- * on a section's own page the running head already says where you are. It enters once when the page opens.
+ * The liturgical page head (Harmonia Design System): optional flush-left breadcrumb on Row 1 (`x = 0`), display title
+ * with tags and inline incipit on Row 2, one-line description below, and actions on the right.
  */
-export function PageHeader({ title, description, breadcrumb, tags, extra }: Readonly<PageHeaderProps>) {
+export function PageHeader({ title, description, breadcrumb, showBreadcrumb, tags, extra }: Readonly<PageHeaderProps>) {
+  const hasBreadcrumb = Boolean(breadcrumb && (showBreadcrumb ?? breadcrumb.length > 2))
+
   return (
     <header className="hm-page-head" style={{ marginBottom: spacing.md }}>
       <Flex wrap align="flex-end" justify="space-between" gap={spacing.lg}>
         <div style={{ minWidth: 0, flex: '1 1 auto' }}>
-          <Flex align="center" gap={spacing.sm + 4}>
-            <Incipit />
-            {breadcrumb && breadcrumb.length > 2 && (
+          {hasBreadcrumb && (
+            <div style={{ marginBottom: 4 }}>
               <Breadcrumb items={breadcrumb} style={{ fontSize: typography.metadata.fontSize, fontWeight: 500 }} />
-            )}
-          </Flex>
-          <Flex align="center" wrap gap={spacing.sm} style={{ marginTop: 2 }}>
+            </div>
+          )}
+          <Flex align="center" wrap gap={spacing.sm} style={{ marginTop: hasBreadcrumb ? 2 : 0 }}>
             <Typography.Title
               level={1}
               style={{
@@ -42,6 +44,7 @@ export function PageHeader({ title, description, breadcrumb, tags, extra }: Read
               {title}
             </Typography.Title>
             {tags}
+            <Incipit />
           </Flex>
           {description && (
             <Typography.Paragraph

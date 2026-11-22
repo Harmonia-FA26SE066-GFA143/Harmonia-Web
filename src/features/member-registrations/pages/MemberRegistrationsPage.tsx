@@ -1,6 +1,6 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, App, Avatar, Button, Card, Descriptions, Drawer, Flex, Form, Input, Modal, Table, Typography, type TableColumnsType } from 'antd'
+import { Alert, App, Avatar, Button, Card, Descriptions, Drawer, Flex, Input, Modal, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -9,7 +9,7 @@ import { parseUtc } from '@/lib/api/dates'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { genderLabel, nameInitial, personName } from '@/shared/utils/personName'
-import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, StatusTag } from '@/shared/ui'
+import { EmptyChoir, EmptyState, ErrorState, Form, NoFilterResults, PageHeader, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, sizes, spacing, typography } from '@/styles/tokens'
 import { acceptRegistration, deleteRegistration, listRegistrations, type MemberRegistration } from '../api/memberRegistrationsApi'
 import { registrationsKey } from '../hooks/useWaitingRegistrations'
@@ -51,7 +51,15 @@ export function MemberRegistrationsPage() {
     placeholderData: keepPreviousData,
   })
   const refresh = () => queryClient.invalidateQueries({ queryKey: key })
-  const accept = useMutation({ mutationFn: acceptRegistration, onSettled: refresh })
+  const accept = useMutation({
+    mutationFn: acceptRegistration,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['choir-members'] })
+      queryClient.invalidateQueries({ queryKey: ['member-profiles'] })
+      queryClient.invalidateQueries({ queryKey: ['users', 'accounts'] })
+    },
+    onSettled: refresh,
+  })
   const remove = useMutation({ mutationFn: deleteRegistration, onSettled: refresh })
   const total = registrations.data?.totalCount ?? 0
 

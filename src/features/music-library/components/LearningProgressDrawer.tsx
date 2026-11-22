@@ -40,7 +40,7 @@ function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
       dataIndex: 'updatedAt',
       render: (updatedAt: string | null) =>
         updatedAt ? (
-          <Typography.Text style={{ fontVariantNumeric: 'tabular-nums' }}>
+          <Typography.Text>
             {formatDateTime(updatedAt)}
           </Typography.Text>
         ) : (

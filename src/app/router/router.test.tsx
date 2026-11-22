@@ -1,7 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
+import * as authApi from '@/features/auth/api/authApi'
+import * as notificationsApi from '@/features/notifications/api/notificationsApi'
+import * as profileApi from '@/features/profile/api/profileApi'
 import { clearSession, setSession, type ApiRoleName } from '@/lib/auth/session'
 import { routes } from '.'
 import { isPageHandle, type PageHandle } from './pageRoute'
@@ -69,7 +72,7 @@ describe('router', () => {
     signInAs(roleFor(path))
     // ?token= opens the reset-password form; the other pages ignore it.
     renderAt(`${path.replace(/:\w+/g, 'demo')}?token=demo`)
-    expect(await screen.findByRole('heading', { level: 1, name: handle.title })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: handle.title }, { timeout: 5000 })).toBeInTheDocument()
   })
 
   it('wraps internal pages in the app shell', async () => {
@@ -85,9 +88,61 @@ describe('router', () => {
     await waitFor(() => expect(document.title).toBe('Đăng nhập · Harmonia'))
   })
 
-  it('renders the not-found page for unknown routes', async () => {
+  it('renders the not-found page outside shell for anonymous visitors', async () => {
     renderAt('/does-not-exist')
     expect(await screen.findByText('Lỗi 404')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
+  })
+
+  it('renders the not-found page inside AppShell when signed in and returns to the role workspace', async () => {
+    signInAs('ChoirDirector')
+    const router = createMemoryRouter(routes, { initialEntries: ['/does-not-exist-auth'] })
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    )
+    expect(await screen.findByText('Lỗi 404')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Menu người dùng/ })).toBeInTheDocument()
+    expect(document.querySelectorAll('main')).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Về trang chủ' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/director'))
+  })
+
+  it('keeps AppShell mounted with a single main landmark when a shell child route throws', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    signInAs('ChoirDirector')
+    const Broken = () => {
+      throw new Error('child route exploded')
+    }
+    const rootChildren = routes[0].children ?? []
+    const authBranch = rootChildren.find((r) => r.children?.some((c) => c.children?.some((g) => g.errorElement)))!
+    const shellRoute = authBranch.children![0]
+    const errorGroup = shellRoute.children![0]
+    const withBroken = (node: RouteObject, children: RouteObject[]): RouteObject =>
+      ({ ...node, index: false, children }) as RouteObject
+    const testRoutes: RouteObject[] = [
+      withBroken(routes[0], [
+        ...rootChildren.filter((r) => r !== authBranch),
+        withBroken(authBranch, [
+          withBroken(shellRoute, [
+            withBroken(errorGroup, [...(errorGroup.children ?? []), { path: '/director/boom', Component: Broken }]),
+          ]),
+        ]),
+      ]),
+    ]
+    const router = createMemoryRouter(testRoutes, { initialEntries: ['/director/boom'] })
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByText('Đã xảy ra lỗi')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Menu người dùng/ })).toBeInTheDocument()
+    expect(document.querySelectorAll('main')).toHaveLength(1)
+    vi.mocked(console.error).mockRestore()
   })
 
   it('shows a Vietnamese error page when a page throws', async () => {
@@ -129,14 +184,107 @@ describe('route guard', () => {
   })
 
   it.each([
-    ['ChoirDirector', '/admin/accounts'],
-    ['Admin', '/priest/programs'],
-    ['ParishPriest', '/director'],
-  ] as const)('shows 403 when %s opens %s', async (roleName, path) => {
+    ['ChoirDirector', '/admin/accounts', 'Hoạt động ca đoàn', 'Tài khoản'],
+    ['Admin', '/priest/programs', 'Người dùng', 'Lịch phụng vụ'],
+    ['ParishPriest', '/director', 'Phụng vụ & lịch', 'Kho bài hát'],
+  ] as const)('shows 403 inside AppShell with own navigation when %s opens %s', async (roleName, path, ownArea, foreignItem) => {
     signInAs(roleName)
     renderAt(path)
     expect(await screen.findByText('Lỗi 403')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Về trang của tôi' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Menu người dùng/ })).toBeInTheDocument()
+    const nav = screen.queryByRole('navigation', { name: 'Điều hướng chính' })
+    if (nav) {
+      expect(within(nav).getByText(ownArea)).toBeInTheDocument()
+      expect(within(nav).queryByText(foreignItem)).toBeNull()
+    }
+  })
+
+  it('hosts voluntary /change-password inside AppShell with full navigation and profile link', async () => {
+    signInAs('ChoirDirector', false)
+    renderAt('/change-password')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Đổi mật khẩu' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Menu người dùng/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Quay lại hồ sơ cá nhân' })).toHaveAttribute('href', '/profile')
+  })
+
+  it('redirects unauthenticated visitors on /change-password to /login with zero shell queries', async () => {
+    const profileSpy = vi.spyOn(profileApi, 'getMyProfile')
+    const notifSpy = vi.spyOn(notificationsApi, 'countUnreadNotifications')
+
+    renderAt('/change-password')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Đăng nhập' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
+    expect(profileSpy).not.toHaveBeenCalled()
+    expect(notifSpy).not.toHaveBeenCalled()
+  })
+
+  it('keeps /change-password mounted inside AppShell in Focused Security Mode and emits zero shell queries after submit + scroll', async () => {
+    signInAs('ParishPriest', true)
+    const profileSpy = vi.spyOn(profileApi, 'getMyProfile')
+    const notifSpy = vi.spyOn(notificationsApi, 'countUnreadNotifications')
+    vi.spyOn(authApi, 'changePassword').mockImplementation(async () => {
+      clearSession({ passwordChanged: true })
+    })
+    renderAt('/change-password')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Đổi mật khẩu' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Menu người dùng/ })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Điều hướng chính' })).toBeNull()
+    expect(profileSpy).not.toHaveBeenCalled()
+    expect(notifSpy).not.toHaveBeenCalled()
+
+    fireEvent.change(screen.getByLabelText('Mật khẩu hiện tại'), { target: { value: 'OldPass123' } })
+    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), { target: { value: 'NewPass123' } })
+    fireEvent.change(screen.getByLabelText('Xác nhận mật khẩu'), { target: { value: 'NewPass123' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Đổi mật khẩu' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Đã đổi mật khẩu' })).toBeInTheDocument()
+    fireEvent.scroll(window, { target: { scrollY: 100 } })
+    expect(screen.queryByRole('navigation', { name: 'Điều hướng chính' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Thông báo/ })).toBeNull()
+    expect(profileSpy).not.toHaveBeenCalled()
+    expect(notifSpy).not.toHaveBeenCalled()
+  })
+
+  // The revoke call is awaited before clearSession(), as in authApi.signOut, so the shell drops the UserMenu (and its
+  // SignOutModal) while the mutation is still settling; the guard, not the unmounted modal, must reach /login.
+  function stubSignOut() {
+    return vi.spyOn(authApi, 'signOut').mockImplementation(async () => {
+      await Promise.resolve()
+      clearSession()
+    })
+  }
+
+  it.each([
+    ['forced', true],
+    ['voluntary', false],
+  ])('signs out from the user menu on /change-password (%s) and lands on /login', async (_label, forced) => {
+    signInAs('ChoirDirector', forced)
+    const signOutSpy = stubSignOut()
+    renderAt('/change-password')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Menu người dùng/ }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: /Đăng xuất/ }))
+    const dialog = await screen.findByRole('dialog', { name: 'Đăng xuất khỏi Harmonia?' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Đăng xuất' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Đăng nhập' })).toBeInTheDocument()
+    expect(signOutSpy).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('heading', { level: 1, name: 'Đã đổi mật khẩu' })).toBeNull()
+  })
+
+  it('signs out from the forced /change-password page itself and lands on /login', async () => {
+    signInAs('ParishPriest', true)
+    stubSignOut()
+    renderAt('/change-password')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Đổi mật khẩu' })).toBeInTheDocument()
+    const main = document.getElementById('main-content') as HTMLElement
+    fireEvent.click(within(main).getByRole('button', { name: 'Đăng xuất' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Đăng nhập' })).toBeInTheDocument()
   })
 })

@@ -96,6 +96,7 @@ export class ApiScoreSource implements ScorePackageSource {
       score: { format: score.scoreFormat, data: new Uint8Array(scoreBytes), fileName: score.fileName },
       audioUrl,
       notesEndSeconds,
+      estimatedBytes: scoreBytes.byteLength + audioBytes.byteLength + notesBytes.byteLength,
       dispose() {
         if (disposed) return
         disposed = true

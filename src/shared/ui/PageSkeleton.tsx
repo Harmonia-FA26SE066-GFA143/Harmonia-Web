@@ -7,8 +7,10 @@ import { StaffPlaceholder } from './ChantStaff'
 const stagger = (delay: number) => ({ '--hm-delay': `${Math.min(delay, 180)}ms` }) as CSSProperties
 
 export interface SectionSkeletonProps {
-  /** Number of placeholder rows (e.g. table rows). */
+  /** Number of placeholder rows (e.g. table rows) in list mode, or cards in grid mode. */
   rows?: number
+  /** Matches list/table views vs card-grid views (R2.5, G3-02). */
+  variant?: 'list' | 'grid'
   /** Accessible label announced to assistive technology. */
   label?: string
   /** Stagger in ms behind the block before it (PageSkeleton sets it). */
@@ -16,10 +18,42 @@ export interface SectionSkeletonProps {
 }
 
 /**
- * Loading placeholder for one section (table, card group, form) so the rest of the page stays usable. It arrives after
- * 100ms (`hm-skeleton-in` in global.css), so a quick answer never flashes it.
+ * Loading placeholder matching card-grid geometry (G3-02, R2.5). Zero `opacity: 0` traps.
  */
-export function SectionSkeleton({ rows = 5, label = 'Đang tải dữ liệu', delay = 0 }: Readonly<SectionSkeletonProps>) {
+export function CardGridSkeleton({ cards = 6, label = 'Đang tải danh sách thẻ' }: Readonly<{ cards?: number; label?: string }>) {
+  return (
+    <output
+      aria-busy="true"
+      aria-label={label}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+        gap: spacing.md,
+      }}
+    >
+      {Array.from({ length: cards }, (_, index) => (
+        <div
+          key={index}
+          style={{
+            padding: spacing.md,
+            background: colors.surface,
+            border: `1px solid ${colors.border}`,
+            borderRadius: radius.lg,
+          }}
+        >
+          <Skeleton active title={{ width: '75%' }} paragraph={{ rows: 2 }} />
+        </div>
+      ))}
+    </output>
+  )
+}
+
+/**
+ * Loading placeholder for one section (table, card group, form) so the rest of the page stays usable.
+ */
+export function SectionSkeleton({ rows = 5, variant = 'list', label = 'Đang tải dữ liệu', delay = 0 }: Readonly<SectionSkeletonProps>) {
+  if (variant === 'grid') return <CardGridSkeleton cards={rows} label={label} />
+
   return (
     <output
       aria-busy="true"
@@ -43,10 +77,11 @@ export interface PageSkeletonProps {
   /** Number of section placeholders below the page header. */
   sections?: number
   rows?: number
+  variant?: 'list' | 'grid'
 }
 
 /** Whole-page loading placeholder matching the PageHeader (serif title, incipit, description) + sections layout. */
-export function PageSkeleton({ sections = 2, rows = 4 }: Readonly<PageSkeletonProps>) {
+export function PageSkeleton({ sections = 2, rows = 4, variant = 'list' }: Readonly<PageSkeletonProps>) {
   return (
     <Flex vertical gap={spacing.lg} role="status" aria-busy="true" aria-label="Đang tải trang">
       <Flex vertical gap={spacing.sm} className="hm-skeleton-in">
@@ -55,7 +90,7 @@ export function PageSkeleton({ sections = 2, rows = 4 }: Readonly<PageSkeletonPr
         <Skeleton.Input active size="small" style={{ width: 380 }} />
       </Flex>
       {Array.from({ length: sections }, (_, index) => (
-        <SectionSkeleton key={index} rows={rows} delay={(index + 1) * 60} />
+        <SectionSkeleton key={index} rows={rows} variant={variant} delay={(index + 1) * 60} />
       ))}
     </Flex>
   )

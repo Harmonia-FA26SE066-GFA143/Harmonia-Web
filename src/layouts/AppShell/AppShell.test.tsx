@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
@@ -117,7 +117,11 @@ describe('AppShell', () => {
     const pages = screen.getByRole('navigation', { name: 'Các trang của Hoạt động ca đoàn' })
     expect(await within(pages).findByText('Mùa Thường Niên')).toBeInTheDocument()
     // The nearest one, not the first listed.
-    expect(await within(pages).findByRole('link', { name: /^Thánh lễ kế tiếp: Lễ Chúa Nhật/ })).toHaveAttribute('href', '/director/programs/p3')
+    const nextMass = await within(pages).findByRole('link', { name: /^Thánh lễ kế tiếp: Lễ Chúa Nhật/ })
+    expect(nextMass).toHaveAttribute('href', '/director/programs/p3')
+    // Keyboard focus opens the same detail popover as hover.
+    fireEvent.focus(nextMass)
+    expect(await screen.findByText('Lễ Chúa Nhật')).toBeInTheDocument()
   })
 
   it('lets the Choir Director pick the choir they work in, kept in this browser', async () => {
@@ -370,5 +374,111 @@ describe('AppShell', () => {
 
     expect(await screen.findByText('Tuần này tạm ngưng tập thứ Năm.')).toBeInTheDocument()
     expect(screen.getByText('Nội dung trang')).toBeInTheDocument()
+  })
+
+  it('prefixes ChoirSwitcher with "Ca đoàn:" and exposes full title when single choir truncates', async () => {
+    setViewportWidth(1440)
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Giáo xứ Đức Mẹ Hằng Cứu Giúp', isActive: true },
+    ])
+    renderShellAt('/director/rehearsals')
+
+    expect(await screen.findByText('Ca đoàn:')).toBeInTheDocument()
+    const nameEl = screen.getByText('Ca đoàn Giáo xứ Đức Mẹ Hằng Cứu Giúp')
+    expect(nameEl).toHaveAttribute('title', 'Ca đoàn Giáo xứ Đức Mẹ Hằng Cứu Giúp')
+  })
+
+  it('enters Focused Security Mode on /change-password when password change is required and fires zero forbidden queries', async () => {
+    setViewportWidth(1440)
+    setSession({
+      accessToken: 'access',
+      accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+      refreshToken: 'refresh',
+      user: { id: 'u1', email: 'director@giaoxu.org', roleName: 'ChoirDirector', isPasswordChangeRequired: true },
+    })
+    const choirsSpy = vi.spyOn(choirsApi, 'listChoirs')
+    const daysSpy = vi.spyOn(daysApi, 'listLiturgicalDays')
+    const programsSpy = vi.spyOn(programsApi, 'listPrograms')
+    const notifSpy = vi.spyOn(notificationsApi, 'countUnreadNotifications')
+    const skillsSpy = vi.spyOn(skillsApi, 'listPendingSkills')
+    const regSpy = vi.spyOn(registrationsApi, 'listRegistrations')
+    const profileSpy = vi.spyOn(profileApi, 'getMyProfile')
+
+    renderShellAt('/change-password')
+
+    const userMenu = await screen.findByRole('button', { name: /Menu người dùng/ })
+    expect(screen.queryByRole('navigation', { name: 'Điều hướng chính' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Thông báo/ })).toBeNull()
+    expect(screen.queryByRole('combobox', { name: 'Ca đoàn đang làm việc' })).toBeNull()
+
+    fireEvent.click(userMenu)
+    expect(await screen.findByText('Đăng xuất')).toBeInTheDocument()
+    expect(screen.queryByText('Hồ sơ cá nhân')).toBeNull()
+
+    expect(choirsSpy).not.toHaveBeenCalled()
+    expect(daysSpy).not.toHaveBeenCalled()
+    expect(programsSpy).not.toHaveBeenCalled()
+    expect(notifSpy).not.toHaveBeenCalled()
+    expect(skillsSpy).not.toHaveBeenCalled()
+    expect(regSpy).not.toHaveBeenCalled()
+    expect(profileSpy).not.toHaveBeenCalled()
+  })
+
+  it('remains in Focused Security Mode after clearSession() and scroll re-render on /change-password', async () => {
+    setViewportWidth(1440)
+    const daysSpy = vi.spyOn(daysApi, 'listLiturgicalDays')
+    const notifSpy = vi.spyOn(notificationsApi, 'countUnreadNotifications')
+    const profileSpy = vi.spyOn(profileApi, 'getMyProfile')
+
+    renderShellAt('/change-password')
+
+    expect(await screen.findByText('Nội dung trang')).toBeInTheDocument()
+    // No session left: no user menu with an unknown user and a sign-out that would call logout without a token.
+    expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
+    fireEvent.scroll(window, { target: { scrollY: 120 } })
+    expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
+
+    expect(screen.queryByRole('navigation', { name: 'Điều hướng chính' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Thông báo/ })).toBeNull()
+    expect(daysSpy).not.toHaveBeenCalled()
+    expect(notifSpy).not.toHaveBeenCalled()
+    expect(profileSpy).not.toHaveBeenCalled()
+  })
+
+  it('switches to Focused Security Mode as soon as clearSession() runs after a voluntary password change', async () => {
+    setViewportWidth(1440)
+    setSession({
+      accessToken: 'access',
+      accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+      refreshToken: 'refresh',
+      user: { id: 'u1', email: 'director@giaoxu.org', roleName: 'ChoirDirector', isPasswordChangeRequired: false },
+    })
+    const profileSpy = vi.spyOn(profileApi, 'getMyProfile').mockResolvedValue({
+      fullName: 'Ca trưởng',
+      email: 'director@giaoxu.org',
+      role: 'director',
+    })
+
+    renderShellAt('/change-password')
+    expect(await screen.findByRole('button', { name: /Menu người dùng/ })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toBeInTheDocument()
+    await waitFor(() => expect(profileSpy).toHaveBeenCalled())
+    profileSpy.mockClear()
+
+    // No rerender(), resize, scroll or navigation: the session store alone must update the shell.
+    act(() => clearSession())
+
+    expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
+    expect(screen.queryByRole('navigation', { name: 'Điều hướng chính' })).toBeNull()
+    expect(screen.queryByRole('navigation', { name: /^Các trang của / })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Mở danh sách tác vụ/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Thông báo/ })).toBeNull()
+    expect(screen.queryByRole('combobox', { name: 'Ca đoàn đang làm việc' })).toBeNull()
+    // The focused bar is the single 52px `.hm-top` row: no HeadDay, no sub-nav row of the 96px running head.
+    expect(document.querySelector('.hm-head-day')).toBeNull()
+    expect(document.querySelector('.hm-sub')).toBeNull()
+    expect(document.querySelectorAll('.hm-top')).toHaveLength(1)
+    expect(screen.getByText('Nội dung trang')).toBeInTheDocument()
+    expect(profileSpy).toHaveBeenCalledTimes(0)
   })
 })

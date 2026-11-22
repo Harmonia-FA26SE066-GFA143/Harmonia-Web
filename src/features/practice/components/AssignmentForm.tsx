@@ -16,7 +16,7 @@ import { practiceErrorMessage } from '../practiceErrors'
 import { formatEventOption } from '../practiceFormat'
 import { MaterialPicker } from './MaterialPicker'
 import type { AssignmentScope, AssignmentValues } from '../types'
-import { Form } from '@/shared/ui'
+import { CREATE_ASSIGNMENT_LABEL, Form } from '@/shared/ui'
 
 interface FormValues extends Omit<AssignmentValues, 'dueDate'> {
   dueDate?: Dayjs
@@ -65,7 +65,7 @@ function dueSummary(dueDate?: Dayjs) {
 }
 
 /** The send button names its effect when the number is known. */
-const submitLabel = (count?: number) => (count ? `Giao bài cho ${count} ca viên` : 'Giao bài tập')
+const submitLabel = (count?: number) => (count ? `Giao bài cho ${count} ca viên` : CREATE_ASSIGNMENT_LABEL)
 
 /**
  * Gives a practice assignment (FE-41; `CreatePracticeAssignmentRequestValidator`) to one of the director's choirs (D8,
@@ -156,6 +156,8 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
         ...values,
         title: values.title.trim(),
         instruction: values.instruction?.trim() || undefined,
+        skillIds: values.scope === 'skillGroup' ? values.skillIds : undefined,
+        memberIds: values.scope === 'individual' ? values.memberIds : undefined,
         dueDate: dueDate.toISOString(),
       },
       {
@@ -261,12 +263,12 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
               <Radio.Group optionType="button" buttonStyle="solid" options={scopeOptions} />
             </Form.Item>
             {scope === 'skillGroup' && (
-              <Form.Item label="Kỹ năng" name="skillIds" rules={[{ required: true, message: 'Chọn ít nhất một kỹ năng.' }]}>
+              <Form.Item label="Kỹ năng" name="skillIds" preserve={false} rules={[{ required: true, message: 'Chọn ít nhất một kỹ năng.' }]}>
                 <Select mode="multiple" showSearch optionFilterProp="label" placeholder="Chọn kỹ năng" options={skills} />
               </Form.Item>
             )}
             {scope === 'individual' && (
-              <Form.Item label="Ca viên" name="memberIds" rules={[{ required: true, message: 'Chọn ít nhất một ca viên.' }]}>
+              <Form.Item label="Ca viên" name="memberIds" preserve={false} rules={[{ required: true, message: 'Chọn ít nhất một ca viên.' }]}>
                 <Select
                   mode="multiple"
                   showSearch
@@ -321,7 +323,7 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
           </section>
           <Flex align="center" justify="flex-end" gap={spacing.md} wrap>
             <Button onClick={resetForm} disabled={create.isPending}>
-              Xóa nội dung
+              Xoá nội dung
             </Button>
             <Button onClick={onCancel} disabled={create.isPending}>
               Hủy

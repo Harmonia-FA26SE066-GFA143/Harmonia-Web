@@ -1,7 +1,8 @@
 import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, ConfigProvider, Flex, Input, Select, TreeSelect, Typography, type InputRef } from 'antd'
+import { Button, Flex, Input, Select, TreeSelect, Typography, type InputRef } from 'antd'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { themeTreeData, useCatalogOptions, useLookup, type CatalogOption } from '@/features/system-categories'
+import { FILTER_ALL_PREFIX, resultCountLabel, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { colors, gold, radius, sizes, spacing, typography } from '@/styles/tokens'
 import { materialKindLabels, materialKinds, type SongFilters } from '../types'
 
@@ -11,6 +12,8 @@ export interface SongFilterBarProps {
   onReset: () => void
   /** Songs matching the filters on the server, across all pages. */
   resultCount?: number
+  /** True when the backing songs query failed (`isError`), preventing a stuck "Đang tải…" status (R2.5). */
+  error?: boolean
   /** Additional controls placed on the right of the result count row (e.g. ViewSwitcher). */
   extra?: ReactNode
   /** Show primary filters directly on the library page; pickers keep all filters collapsed. */
@@ -41,7 +44,15 @@ const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textM
  * FE-29 classification filters of GET /api/songs (a theme also finds its sub-themes' songs) and the library checks:
  * songs not classified yet, songs missing a kind of material. Active filters show as chips, so the panel can stay shut.
  */
-export function SongFilterBar({ value, onChange, onReset, resultCount, extra, libraryLayout = false }: Readonly<SongFilterBarProps>) {
+export function SongFilterBar({
+  value,
+  onChange,
+  onReset,
+  resultCount,
+  error = false,
+  extra,
+  libraryLayout = false,
+}: Readonly<SongFilterBarProps>) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState(value.search)
   const composing = useRef(false)
@@ -119,11 +130,12 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
     select.key,
     select.label,
     <Select
+      {...SELECT_POPUP_PROPS}
       id={`song-filter-${select.key}`}
       allowClear
       showSearch
       optionFilterProp="label"
-      placeholder={select.placeholder ?? 'Tất cả'}
+      placeholder={select.placeholder ?? FILTER_ALL_PREFIX}
       value={value[select.key]}
       onChange={(selected?: string) => set(select.key, selected)}
       options={select.options}
@@ -132,12 +144,13 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
 
   const themeField = field('themeId', 'Chủ đề',
     <TreeSelect
+      {...SELECT_POPUP_PROPS}
       id="song-filter-themeId"
       allowClear
       showSearch
       treeNodeFilterProp="title"
       treeDefaultExpandAll
-      placeholder="Tất cả"
+      placeholder={FILTER_ALL_PREFIX}
       value={value.themeId}
       onChange={(themeId?: string) => set('themeId', themeId)}
       treeData={themes}
@@ -193,8 +206,6 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
   )
 
   return (
-    // The library's console is dense, like the filters of the other working pages.
-    <ConfigProvider theme={libraryLayout ? { token: { controlHeight: sizes.controlHeightCompact } } : undefined}>
     <Flex vertical gap={spacing.sm + 4} style={libraryLayout
       ? { padding: spacing.md, background: colors.ivory, border: `1px solid ${colors.border}`, borderTop: `1px solid ${gold.line}`, borderRadius: radius.lg }
       : { padding: spacing.md }}>
@@ -266,11 +277,10 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
 
       <Flex justify="space-between" align="center" wrap gap={spacing.sm}>
         <Typography.Text role="status" aria-atomic style={{ color: colors.textMuted }}>
-          {resultCount === undefined ? 'Chưa có kết quả' : `${resultCount} bài hát`}
+          {resultCountLabel(resultCount, 'bài hát', error)}
         </Typography.Text>
         {extra}
       </Flex>
     </Flex>
-    </ConfigProvider>
   )
 }

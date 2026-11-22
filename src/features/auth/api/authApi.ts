@@ -42,7 +42,7 @@ async function startSession(session: Session): Promise<SignInResult> {
  */
 export async function changePassword(values: ChangePasswordValues): Promise<void> {
   await apiRequest<void>('/api/auth/change-password', { method: 'POST', body: JSON.stringify(values) })
-  clearSession()
+  clearSession({ passwordChanged: true })
 }
 
 /** Always 204, whether or not the email has an account, so the screen cannot reveal which emails exist. */

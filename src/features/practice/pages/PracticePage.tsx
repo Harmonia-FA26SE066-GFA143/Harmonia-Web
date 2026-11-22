@@ -4,7 +4,7 @@ import { generatePath, Navigate, useLocation, useNavigate, useSearchParams } fro
 import { paths } from '@/app/router/paths'
 import { formatProgramDate } from '@/features/liturgical-programs'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
-import { PageHeader } from '@/shared/ui'
+import { CREATE_ASSIGNMENT_LABEL, PageHeader } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AssignmentsTab } from '../components/AssignmentsTab'
 import { ProgressTab } from '../components/ProgressTab'
@@ -69,7 +69,7 @@ export function PracticePage() {
               icon={<PlusOutlined />}
               onClick={() => navigate(assignmentUrl, { state: { from: `${location.pathname}${location.search}` } })}
             >
-              Giao bài tập
+              {CREATE_ASSIGNMENT_LABEL}
             </Button>
           </>
         }

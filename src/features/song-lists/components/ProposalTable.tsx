@@ -1,7 +1,7 @@
-import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import { App, Button, Divider, Flex, Input, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { nameConflictMessage, useLookup, useSaveSlot } from '@/features/system-categories'
+import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 
 /** A row of the list being composed; the slot is chosen after the song is picked. */
@@ -20,8 +20,6 @@ export interface ProposalTableProps {
   editable: boolean
   onChange: (items: DraftItem[]) => void
 }
-
-const muted = (text: string) => <Typography.Text style={{ color: colors.textMuted }}>{text}</Typography.Text>
 
 /**
  * Under the slot choices: the Choir Director adds a slot of their own (e.g. "Ca nguyện Đức Mẹ"), shared by every later
@@ -61,7 +59,7 @@ function NewSlot({ nextOrder, onCreated }: Readonly<{ nextOrder: number; onCreat
           if (event.key === 'Enter') add()
         }}
       />
-      <Button size="small" icon={<PlusOutlined />} loading={save.isPending} disabled={!name.trim()} onClick={add}>
+      <Button size="small" icon={<Icon name="add" />} loading={save.isPending} disabled={!name.trim()} onClick={add}>
         Thêm
       </Button>
     </Flex>
@@ -105,7 +103,7 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
       width: editable ? 120 : 72,
       render: (_, item, index) => (
         <Flex align="center" gap={4}>
-          <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', color: colors.textMuted, minWidth: 24 }}>
+          <Typography.Text style={{ color: colors.textMuted, minWidth: 24 }}>
             {index + 1}
           </Typography.Text>
           {editable && (
@@ -113,7 +111,7 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
               <Button
                 size="small"
                 type="text"
-                icon={<ArrowUpOutlined />}
+                icon={<Icon name="arrow-up" />}
                 disabled={index === 0}
                 onClick={() => move(index, -1)}
                 aria-label={`Chuyển ${item.songTitle} lên`}
@@ -121,7 +119,7 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
               <Button
                 size="small"
                 type="text"
-                icon={<ArrowDownOutlined />}
+                icon={<Icon name="arrow-down" />}
                 disabled={index === items.length - 1}
                 onClick={() => move(index, 1)}
                 aria-label={`Chuyển ${item.songTitle} xuống`}
@@ -138,6 +136,7 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
       render: (_, item) =>
         editable ? (
           <Select
+            {...SELECT_POPUP_PROPS}
             showSearch
             optionFilterProp="label"
             value={item.slotId}
@@ -150,7 +149,7 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
             style={{ minWidth: 180 }}
           />
         ) : (
-          item.slotName || muted('—')
+          item.slotName || <EmptyCell />
         ),
     },
     {
@@ -160,26 +159,27 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
         editable ? (
           <Input
             value={item.note}
-            placeholder="Ghi chú (không bắt buộc)"
+            placeholder="Ghi chú cho ca đoàn"
             aria-label={`Ghi chú cho ${item.songTitle}`}
             onChange={(event) => update(item.key, { note: event.target.value })}
           />
         ) : (
-          item.note || muted('—')
+          item.note || <EmptyCell />
         ),
     },
     ...(editable
       ? [
           {
             key: 'remove',
-            title: 'Thao tác',
+            title: ACTIONS_COLUMN_TITLE,
             align: 'center' as const,
-            width: 72,
+            // "Thao tác" on one line beside the 16px cell padding.
+            width: 96,
             render: (_: unknown, item: DraftItem) => (
               <Button
                 type="text"
                 danger
-                icon={<DeleteOutlined />}
+                icon={<Icon name="delete" />}
                 onClick={() => onChange(items.filter((entry) => entry.key !== item.key))}
                 aria-label={`Bỏ ${item.songTitle} khỏi danh sách`}
               />

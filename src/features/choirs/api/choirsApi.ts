@@ -113,3 +113,9 @@ export async function setSubstituteDirector(
     })
   ).map(toEventChoir)
 }
+
+/** Parish Priest: every active Choir Director, including one not assigned to a choir (`GET /api/director-notes/recipients`, B48). */
+export async function listDirectorCandidates(): Promise<{ id: string; fullName: string }[]> {
+  const users = await apiRequest<{ id: string; fullName: string }[]>('/api/director-notes/recipients')
+  return users.map(({ id, fullName }) => ({ id, fullName }))
+}

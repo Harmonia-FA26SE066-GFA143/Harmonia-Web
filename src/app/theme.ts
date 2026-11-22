@@ -18,6 +18,7 @@ export const theme: ThemeConfig = {
     colorLinkActive: semantic.action.linkHover,
     colorBgLayout: semantic.surface.page,
     colorBgContainer: semantic.surface.base,
+    colorBgElevated: semantic.surface.base,
     colorFillAlter: semantic.surface.soft,
     colorBorder: semantic.border.control,
     colorBorderSecondary: semantic.border.default,
@@ -138,12 +139,25 @@ export const theme: ThemeConfig = {
     Select: {
       activeOutlineColor: semantic.action.focusHalo,
     },
+    Form: {
+      labelColor: semantic.text.primary,
+      verticalLabelPadding: '0 0 6px',
+    },
+    Segmented: {
+      trackBg: semantic.surface.band,
+      trackPadding: 3,
+      itemColor: semantic.text.body,
+      itemHoverColor: semantic.text.primary,
+      itemSelectedBg: semantic.surface.base,
+      itemSelectedColor: semantic.text.primary,
+    },
     Tag: {
       defaultBg: semantic.surface.soft,
       defaultColor: semantic.text.body,
     },
     Drawer: {
-      footerPaddingBlock: spacing.md - 4,
+      footerPaddingBlock: 12,
+      paddingLG: spacing.lg,
     },
     Modal: {
       boxShadow: shadows.xl,

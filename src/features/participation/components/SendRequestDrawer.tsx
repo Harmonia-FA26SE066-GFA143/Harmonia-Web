@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useChoirs, useEventChoirs, useMembersOfChoirs } from '@/features/choirs'
 import { SkillTags, useChoirMembers } from '@/features/members'
 import { EmptyState, ErrorState, FormDrawer, SectionSkeleton } from '@/shared/ui'
-import { colors, radius, spacing } from '@/styles/tokens'
+import { colors, component, radius, spacing } from '@/styles/tokens'
 
 export interface SendRequestDrawerProps {
   open: boolean
@@ -65,7 +65,7 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
         setDeselected([])
         setEveryoneChoice(undefined)
       }}
-      size={600}
+      size={component.drawer.md}
       destroyOnHidden
     >
       {!failed && !loaded && <SectionSkeleton rows={5} label="Đang tải thành viên" />}

@@ -126,13 +126,15 @@ export const songListStatusByApi: Record<ApiSongListStatus, SongListStatus> = {
 
 interface EventPreparationStatusDto {
   songListStatus: ApiSongListStatus | null
+  songListDueDate: string
+  isSongListOverdue: boolean
   participationInvited: number
   participationConfirmed: number
   participationDeclined: number
   participationUnsure: number
   rosterStatus: 'Draft' | 'Suggested' | 'Finalized' | null
   rosterActiveAssignments: number
-  rosterShortages: { songTitle: string | null; skillName: string; requiredCount: number; assignedCount: number }[]
+  rosterShortages: { songListItemId: string | null; songTitle: string | null; skillName: string; requiredCount: number; assignedCount: number }[]
   rehearsalsTotal: number
   rehearsalsHeld: number
   attendanceExpected: number
@@ -147,6 +149,8 @@ export async function getPreparationStatus(id: string): Promise<PreparationStatu
   const dto = await apiRequest<EventPreparationStatusDto>(`/api/liturgical-events/${id}/preparation-status`)
   return {
     songListStatus: dto.songListStatus ? songListStatusByApi[dto.songListStatus] : undefined,
+    songListDueDate: dto.songListDueDate,
+    isSongListOverdue: dto.isSongListOverdue,
     participation: {
       invited: dto.participationInvited,
       confirmed: dto.participationConfirmed,
@@ -155,7 +159,8 @@ export async function getPreparationStatus(id: string): Promise<PreparationStatu
     },
     rosterFinalized: dto.rosterStatus ? dto.rosterStatus === 'Finalized' : undefined,
     rosterActiveAssignments: dto.rosterActiveAssignments,
-    rosterShortages: dto.rosterShortages.map(({ songTitle, skillName, requiredCount, assignedCount }) => ({
+    rosterShortages: dto.rosterShortages.map(({ songListItemId, songTitle, skillName, requiredCount, assignedCount }) => ({
+      songListItemId: songListItemId ?? undefined,
       songTitle: songTitle ?? undefined,
       skillName,
       requiredCount,

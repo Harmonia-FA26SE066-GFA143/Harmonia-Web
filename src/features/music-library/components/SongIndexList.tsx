@@ -3,7 +3,7 @@ import { Flex, Pagination, Spin } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { generatePath, Link, useLocation } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { SheetMusicOutlined, StatusTag } from '@/shared/ui'
+import { Icon, StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { songListState } from '../songFilters'
 import { materialKindLabels, type MaterialKind, type Song } from '../types'
@@ -20,7 +20,7 @@ export interface SongIndexListProps {
 
 // Rehearsal material stays in the table's count; the index names what a singer looks for first.
 const shownMaterials: { kind: MaterialKind; icon: ReactNode }[] = [
-  { kind: 'sheetMusic', icon: <SheetMusicOutlined /> },
+  { kind: 'sheetMusic', icon: <Icon name="sheet-music" /> },
   { kind: 'lyrics', icon: <AlignLeftOutlined /> },
   { kind: 'sampleAudio', icon: <CustomerServiceOutlined /> },
 ]
@@ -51,7 +51,7 @@ function SongThumbnail({ url }: Readonly<{ url?: string | null }>) {
   const [failed, setFailed] = useState(false)
   return (
     <span aria-hidden className="song-index__thumb">
-      {url && !failed ? <img src={url} alt="" loading="lazy" onError={() => setFailed(true)} /> : <SheetMusicOutlined />}
+      {url && !failed ? <img src={url} alt="" loading="lazy" onError={() => setFailed(true)} /> : <Icon name="sheet-music" />}
     </span>
   )
 }

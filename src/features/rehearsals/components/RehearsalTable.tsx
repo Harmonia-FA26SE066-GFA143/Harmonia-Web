@@ -60,7 +60,7 @@ export function RehearsalTable({
         return program ? (
           <Flex vertical gap={2}>
             <Link to={link}>{program.eventName}</Link>
-            <Typography.Text style={{ ...muted, fontVariantNumeric: 'tabular-nums' }}>{formatProgramDate(program.date)}</Typography.Text>
+            <Typography.Text style={muted}>{formatProgramDate(program.date)}</Typography.Text>
           </Flex>
         ) : (
           <Link to={link}>Xem chương trình</Link>

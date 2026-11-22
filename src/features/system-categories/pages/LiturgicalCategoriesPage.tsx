@@ -1,8 +1,8 @@
-import { ColorPicker, DatePicker, Flex, Form, Input, InputNumber, Tabs, Typography } from 'antd'
+import { ColorPicker, DatePicker, Flex, Input, InputNumber, Tabs, Typography } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
-import { PageHeader } from '@/shared/ui'
+import { Form, PageHeader } from '@/shared/ui'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { colors, radius, spacing } from '@/styles/tokens'
 import { CatalogManager } from '../components/CatalogManager'
@@ -59,7 +59,7 @@ const seasonFields = (
       </Form.Item>
     </Flex>
     <Form.Item
-      label="Màu phụng vụ (không bắt buộc)"
+      label="Màu phụng vụ"
       name="colorHex"
       getValueFromEvent={(color: { cleared: boolean; toHexString: () => string }) =>
         color.cleared ? null : color.toHexString()
@@ -157,7 +157,7 @@ function LocationsPanel() {
         },
       ]}
       fields={
-        <Form.Item label="Địa chỉ (không bắt buộc)" name="address" rules={[{ max: 300, message: 'Địa chỉ tối đa 300 ký tự.' }]}>
+        <Form.Item label="Địa chỉ" name="address" rules={[{ max: 300, message: 'Địa chỉ tối đa 300 ký tự.' }]}>
           <Input.TextArea rows={2} showCount maxLength={300} />
         </Form.Item>
       }

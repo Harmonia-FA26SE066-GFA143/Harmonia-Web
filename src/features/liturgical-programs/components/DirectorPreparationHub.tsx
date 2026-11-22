@@ -1,33 +1,24 @@
-import {
-  ArrowRightOutlined,
-  CalendarOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined,
-  ScheduleOutlined,
-  SoundOutlined,
-  TeamOutlined,
-  UsergroupAddOutlined,
-} from '@ant-design/icons'
 import { Alert, Button, Card, Col, Flex, Progress, Row, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
-import { generatePath, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useSongList } from '@/features/song-lists'
 import { parseUtc } from '@/lib/api/dates'
-import { CardTitle, ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
+import { CardTitle, CREATE_ASSIGNMENT_LABEL, ErrorState, Icon, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, radius, sections, spacing, typography } from '@/styles/tokens'
 import { usePreparationStatus } from '../hooks/useEvents'
 import type { LiturgicalProgramDetail } from '../types'
 
+/**
+ * The song-list action lives once, in the page's "Chương trình" section head (SYS-06); the review alerts here say
+ * where the list stands and what comes next without repeating that button.
+ */
 interface DirectorPreparationHubProps {
   program: LiturgicalProgramDetail
-  onOpenSongList: () => void
 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
-const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 /** One preparation step: its name and state, what stands, and the buttons that move it on, at the card's foot. */
 function StepCard({ icon, title, tag, actions, children }: Readonly<{ icon: ReactNode; title: string; tag: ReactNode; actions: ReactNode; children: ReactNode }>) {
@@ -57,7 +48,7 @@ function StepCard({ icon, title, tag, actions, children }: Readonly<{ icon: Reac
   )
 }
 
-export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<DirectorPreparationHubProps>) {
+export function DirectorPreparationHub({ program }: Readonly<DirectorPreparationHubProps>) {
   const navigate = useNavigate()
   const prepStatus = usePreparationStatus(program.id)
   const songList = useSongList(program.id)
@@ -103,7 +94,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
         <Alert
           type="warning"
           showIcon
-          icon={<ExclamationCircleOutlined />}
+          icon={<Icon name="warning" />}
           title={
             <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
               Cha xứ yêu cầu chỉnh sửa danh sách bài hát {decidedAt ? `(lúc ${decidedAt})` : ''}
@@ -123,11 +114,6 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               </Typography.Text>
             </Flex>
           }
-          action={
-            <Button type="primary" onClick={onOpenSongList}>
-              Cập nhật bài hát ngay
-            </Button>
-          }
           style={{ borderRadius: radius.md }}
         />
       )}
@@ -136,7 +122,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
         <Alert
           type="error"
           showIcon
-          icon={<ExclamationCircleOutlined />}
+          icon={<Icon name="warning" />}
           title={
             <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
               Danh sách bài hát đã bị từ chối {decidedAt ? `(lúc ${decidedAt})` : ''}
@@ -154,11 +140,6 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               </Typography.Text>
             </Flex>
           }
-          action={
-            <Button type="primary" danger onClick={onOpenSongList}>
-              Soạn lại danh sách
-            </Button>
-          }
           style={{ borderRadius: radius.md }}
         />
       )}
@@ -167,7 +148,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
         <Alert
           type="info"
           showIcon
-          icon={<ClockCircleOutlined />}
+          icon={<Icon name="history" />}
           title={
             <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
               Danh sách bài hát đang chờ Cha xứ phê duyệt
@@ -187,7 +168,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
         <Alert
           type="success"
           showIcon
-          icon={<CheckCircleOutlined />}
+          icon={<Icon name="check-circle" />}
           title={
             <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
               Danh sách bài hát đã được Cha xứ phê duyệt {decidedAt ? `(lúc ${decidedAt})` : ''}
@@ -212,11 +193,6 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
             </Typography.Text>
           }
           description="Bước đầu tiên để chuẩn bị phụng vụ: Chọn các bài hát phù hợp từ kho và gửi Cha xứ phê duyệt."
-          action={
-            <Button type="primary" onClick={onOpenSongList}>
-              Soạn & đề xuất bài hát
-            </Button>
-          }
           style={{ borderRadius: radius.md }}
         />
       )}
@@ -248,7 +224,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
         >
           {/* Step 1: Xác nhận tham gia */}
           <StepCard
-            icon={<UsergroupAddOutlined />}
+            icon={<Icon name="participation" />}
             title="Xác nhận tham gia"
             tag={
               totalInvited === 0 ? (
@@ -266,7 +242,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
             actions={
               <Button
                 block
-                icon={<ArrowRightOutlined />}
+                icon={<Icon name="arrow-right" />}
                 iconPlacement="end"
                 onClick={() => navigate(`${paths.director.participation}?programId=${program.id}`)}
               >
@@ -281,13 +257,13 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
             ) : (
               <Flex vertical gap={2}>
                 <Typography.Text>
-                  <strong style={numeric}>{confirmedCount}</strong> xác nhận ·{' '}
-                  <span style={numeric}>{prep?.participation.unsure ?? 0}</span> chưa chắc chắn ·{' '}
-                  <span style={numeric}>{prep?.participation.declined ?? 0}</span> từ chối
+                  <strong>{confirmedCount}</strong> xác nhận ·{' '}
+                  <span>{prep?.participation.unsure ?? 0}</span> chưa chắc chắn ·{' '}
+                  <span>{prep?.participation.declined ?? 0}</span> từ chối
                 </Typography.Text>
                 {(prep?.participation.invited ?? 0) > 0 && (
                   <Typography.Text style={muted}>
-                    Còn <span style={numeric}>{prep?.participation.invited}</span> ca viên chưa trả lời
+                    Còn <span>{prep?.participation.invited}</span> ca viên chưa trả lời
                   </Typography.Text>
                 )}
               </Flex>
@@ -296,7 +272,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
 
           {/* Step 2: Buổi tập và điểm danh */}
           <StepCard
-            icon={<ScheduleOutlined />}
+            icon={<Icon name="rehearsal" />}
             title="Buổi tập và điểm danh"
             tag={
               rehearsalsTotal === 0 ? (
@@ -311,7 +287,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               <Flex gap={spacing.xs}>
                 <Button
                   style={{ flex: 1 }}
-                  icon={<CalendarOutlined />}
+                  icon={<Icon name="calendar" />}
                   onClick={() => navigate(`${paths.director.rehearsals}?programId=${program.id}`)}
                 >
                   Lịch tập
@@ -332,11 +308,11 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
             ) : (
               <Flex vertical gap={2}>
                 <Typography.Text>
-                  Đã lên lịch <strong style={numeric}>{rehearsalsTotal}</strong> buổi tập
+                  Đã lên lịch <strong>{rehearsalsTotal}</strong> buổi tập
                 </Typography.Text>
                 {attendanceRate !== undefined && (
                   <Typography.Text style={muted}>
-                    Tỷ lệ có mặt: <span style={numeric}>{attendanceRate}%</span> ({prep?.attendancePresent}/{prep?.attendanceExpected} lượt)
+                    Tỷ lệ có mặt: <span>{attendanceRate}%</span> ({prep?.attendancePresent}/{prep?.attendanceExpected} lượt)
                   </Typography.Text>
                 )}
               </Flex>
@@ -345,7 +321,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
 
           {/* Step 3: Bài tập và luyện tập */}
           <StepCard
-            icon={<SoundOutlined />}
+            icon={<Icon name="practice" />}
             title="Bài tập và luyện tập"
             tag={
               practiceExpected === 0 ? (
@@ -364,7 +340,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               <Flex gap={spacing.xs}>
                 <Button
                   style={{ flex: 1 }}
-                  icon={<ArrowRightOutlined />}
+                  icon={<Icon name="arrow-right" />}
                   iconPlacement="end"
                   onClick={() => navigate(`${paths.director.practice}?programId=${program.id}&tab=progress`)}
                 >
@@ -374,7 +350,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
                   style={{ flex: 1 }}
                   onClick={() => navigate(`${paths.director.practiceNew}?programId=${program.id}`)}
                 >
-                  Giao bài tập
+                  {CREATE_ASSIGNMENT_LABEL}
                 </Button>
               </Flex>
             }
@@ -387,10 +363,10 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               <Flex vertical gap={4}>
                 <Flex align="center" justify="space-between">
                   <Typography.Text>
-                    Đạt <strong style={numeric}>{practicePassed}</strong> / {practiceExpected} lượt nộp
+                    Đạt <strong>{practicePassed}</strong> / {practiceExpected} lượt nộp
                   </Typography.Text>
                   {practiceRate !== undefined && (
-                    <Typography.Text style={{ ...muted, ...numeric }}>
+                    <Typography.Text style={muted}>
                       {practiceRate}%
                     </Typography.Text>
                   )}
@@ -409,7 +385,7 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
 
           {/* Step 4: Phân công phục vụ */}
           <StepCard
-            icon={<TeamOutlined />}
+            icon={<Icon name="roster" />}
             title="Phân công phục vụ"
             tag={
               !songListApproved ? (
@@ -428,9 +404,9 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               <Button
                 block
                 type={songListApproved ? 'primary' : 'default'}
-                icon={<ArrowRightOutlined />}
+                icon={<Icon name="arrow-right" />}
                 iconPlacement="end"
-                onClick={() => navigate(generatePath(paths.director.roster, {}) + `?programId=${program.id}`)}
+                onClick={() => navigate(`${paths.director.roster}?programId=${program.id}`)}
               >
                 {songListApproved ? 'Lập & điều chỉnh phân công' : 'Xem trang phân công'}
               </Button>
@@ -444,11 +420,11 @@ export function DirectorPreparationHub({ program, onOpenSongList }: Readonly<Dir
               <Flex vertical gap={2}>
                 <Typography.Text>
                   {rosterFinalized ? 'Đã chốt' : 'Đang phân công'} ·{' '}
-                  <strong style={numeric}>{activeAssignments}</strong> lượt ca viên
+                  <strong>{activeAssignments}</strong> lượt ca viên
                 </Typography.Text>
                 {shortages.length > 0 && (
                   <Typography.Text style={{ fontSize: 13 }}>
-                    Còn thiếu nhân sự cho <strong style={numeric}>{shortages.length}</strong> vị trí
+                    Còn thiếu nhân sự cho <strong>{shortages.length}</strong> vị trí
                   </Typography.Text>
                 )}
               </Flex>

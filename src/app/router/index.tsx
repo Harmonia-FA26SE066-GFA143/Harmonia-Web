@@ -1,12 +1,11 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import { ErrorPage } from '@/app/pages/ErrorPage'
-import { NotFoundPage } from '@/app/pages/NotFoundPage'
 import { AppShell } from '@/layouts/AppShell/AppShell'
 import { BlankLayout } from '@/layouts/BlankLayout/BlankLayout'
 import { RoseSpinner } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import { PageTitle } from './PageTitle'
-import { RoleGuard } from './RoleGuard'
+import { AuthGuard, MaybeAppShellNotFound, RoleGuard } from './RoleGuard'
 import { adminRoutes } from './routes/admin.routes'
 import { authRoutes } from './routes/auth.routes'
 import { directorRoutes } from './routes/director.routes'
@@ -30,12 +29,26 @@ export const routes: RouteObject[] = [
       ...publicRoutes,
       { element: <BlankLayout />, children: authRoutes },
       {
-        element: <RoleGuard />,
+        element: <AuthGuard />,
         children: [
-          { element: <AppShell />, children: [...sharedRoutes, ...priestRoutes, ...directorRoutes, ...adminRoutes] },
+          {
+            element: <AppShell />,
+            children: [
+              {
+                errorElement: <ErrorPage inShell />,
+                children: [
+                  ...sharedRoutes,
+                  {
+                    element: <RoleGuard />,
+                    children: [...priestRoutes, ...directorRoutes, ...adminRoutes],
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
-      { path: '*', element: <NotFoundPage /> },
+      { path: '*', element: <MaybeAppShellNotFound /> },
     ],
   },
 ]

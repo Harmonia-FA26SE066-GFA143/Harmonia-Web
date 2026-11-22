@@ -89,7 +89,7 @@ export function CatalogTable<T extends CatalogEntry>({
       title: 'STT',
       width: 72,
       render: (_, item) => (
-        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', color: colors.textMuted }}>
+        <Typography.Text style={{ color: colors.textMuted }}>
           {items.indexOf(item) + 1}
         </Typography.Text>
       ),

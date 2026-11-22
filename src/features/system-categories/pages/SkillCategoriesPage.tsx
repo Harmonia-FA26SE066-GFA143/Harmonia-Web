@@ -1,6 +1,6 @@
-import { Form, Select, Tabs, Typography } from 'antd'
+import { Select, Tabs, Typography } from 'antd'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
-import { PageHeader } from '@/shared/ui'
+import { Form, PageHeader } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import { CatalogManager } from '../components/CatalogManager'
 import { descriptionColumn, descriptionField } from '../components/description'

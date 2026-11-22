@@ -54,7 +54,7 @@ export function AttendanceWatch({ filters, style }: Readonly<{ filters: ReportFi
                   <Flex role="img" aria-label={`${row.cells.fullName}: ${words}`} className="mg-fill" style={{ '--i': index, height: 8, borderRadius: 4, overflow: 'hidden', background: colors.softSurface } as CSSProperties}>
                     {marks.map(({ key, color }) => (count(row.cells, key) ? <span key={key} style={{ flex: count(row.cells, key), background: color }} /> : null))}
                   </Flex>
-                  <Typography.Text style={{ textAlign: 'end', color: colors.textMuted, fontVariantNumeric: 'tabular-nums' }}>
+                  <Typography.Text style={{ textAlign: 'end', color: colors.textMuted }}>
                     {row.missed ? `${row.missed} vắng` : `${row.excused} có phép`}
                   </Typography.Text>
                 </li>

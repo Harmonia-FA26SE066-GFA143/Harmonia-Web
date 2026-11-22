@@ -8,7 +8,6 @@ import { formatEventOption } from '../practiceFormat'
 import { participationStatusLabels, type MemberProgress, type ParticipationStatus } from '../types'
 
 const muted = { color: colors.textMuted }
-const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 // Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
 const participationColors: Record<ParticipationStatus, StatusTagColor> = {
@@ -19,7 +18,7 @@ const participationColors: Record<ParticipationStatus, StatusTagColor> = {
 }
 
 const count = (part: number, whole: number) =>
-  whole === 0 ? <Typography.Text style={muted}>—</Typography.Text> : <span style={numeric}>{part}/{whole}</span>
+  whole === 0 ? <Typography.Text style={muted}>—</Typography.Text> : <span>{part}/{whole}</span>
 
 const columns: TableColumnsType<MemberProgress> = [
   {
@@ -49,11 +48,11 @@ const columns: TableColumnsType<MemberProgress> = [
     dataIndex: 'assignmentsOverdue',
     render: (overdue: number) =>
       overdue > 0 ? (
-        <Typography.Text type="danger" style={numeric}>
+        <Typography.Text type="danger">
           {overdue}
         </Typography.Text>
       ) : (
-        <span style={numeric}>0</span>
+        <span>0</span>
       ),
   },
 ]

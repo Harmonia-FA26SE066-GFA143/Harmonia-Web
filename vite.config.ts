@@ -34,6 +34,9 @@ export default defineConfig(({ mode }) => {
       // The default (all logical CPUs - 1) starves each jsdom + Ant Design worker on hyper-threaded laptops: a 1 s
       // test took 4 s+ and crossed the 5 s timeout at random. Half the logical CPUs keeps the slowest test near 2 s.
       maxWorkers: '50%',
+      // Under a loaded Windows machine the heaviest page tests (3.7 s alone) still crossed the default 5 s in full runs,
+      // a different test each time (M4 icon set, 2026-11-21). The limit only stops a hung test; assertions are unchanged.
+      testTimeout: 15000,
       // A local .env may point at a real backend; tests must never reach it.
       env: { VITE_API_BASE_URL: '' },
     },

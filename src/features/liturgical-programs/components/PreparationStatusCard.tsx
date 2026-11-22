@@ -8,11 +8,10 @@ import type { PreparationStatus } from '../types'
 import { SongListStatusTag } from './SongListStatusTag'
 
 const muted = { color: colors.textMuted }
-const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 /** "a/b" with the share in percent once there is something to count. */
 const ratio = (part: number, whole: number) => (
-  <span style={numeric}>
+  <span>
     {part}/{whole}
     {whole > 0 && ` (${Math.round((part / whole) * 100)}%)`}
   </span>
@@ -111,7 +110,7 @@ export function PreparationStatusCard({ eventId }: Readonly<{ eventId: string }>
                 ) : (
                   <Flex vertical>
                     <span>
-                      <span style={numeric}>
+                      <span>
                         {status.data.rehearsalsHeld}/{status.data.rehearsalsTotal}
                       </span>{' '}
                       buổi đã diễn ra
@@ -131,7 +130,7 @@ export function PreparationStatusCard({ eventId }: Readonly<{ eventId: string }>
                 ) : (
                   <span>
                     Đạt {ratio(status.data.practicePassed, status.data.practiceExpected)} · quá hạn{' '}
-                    <span style={numeric}>{status.data.practiceOverdue}</span>
+                    <span>{status.data.practiceOverdue}</span>
                   </span>
                 ),
             },

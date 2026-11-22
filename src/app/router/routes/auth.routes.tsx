@@ -21,10 +21,4 @@ export const authRoutes: RouteObject[] = [
     { title: 'Đặt lại mật khẩu' },
     async () => (await loadAuth()).ResetPasswordPage,
   ),
-  // Outside RoleGuard so that a user who must change the password can reach it; the page itself needs a session.
-  pageRoute(
-    paths.changePassword,
-    { title: 'Đổi mật khẩu' },
-    async () => (await loadAuth()).ChangePasswordPage,
-  ),
 ]

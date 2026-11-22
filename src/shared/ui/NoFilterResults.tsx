@@ -1,6 +1,6 @@
-import { ClearOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import type { ReactNode } from 'react'
+import { Icon } from './icons'
 import { NoResults } from './Illustrations'
 import { StatePanel } from './StatePanel'
 
@@ -23,7 +23,7 @@ export function NoFilterResults({
     onClearFilters || extra ? (
       <>
         {onClearFilters && (
-          <Button icon={<ClearOutlined />} onClick={onClearFilters}>
+          <Button icon={<Icon name="clear" />} onClick={onClearFilters}>
             Xoá bộ lọc
           </Button>
         )}

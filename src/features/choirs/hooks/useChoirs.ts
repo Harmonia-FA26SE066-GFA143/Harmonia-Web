@@ -2,6 +2,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import {
   addChoirMembers,
   listChoirs,
+  listDirectorCandidates,
   listEventChoirs,
   listMembersOfChoir,
   removeChoirMember,
@@ -16,6 +17,10 @@ const choirsKey = ['choirs'] as const
 /** Admin and Parish Priest: every choir; Choir Director: the choirs they direct. */
 export function useChoirs(enabled = true) {
   return useQuery({ queryKey: [...choirsKey, 'list'], queryFn: listChoirs, enabled })
+}
+
+export function useDirectorCandidates(enabled = true) {
+  return useQuery({ queryKey: ['director-notes', 'recipients'], queryFn: listDirectorCandidates, enabled })
 }
 
 export function useMembersOfChoir(choirId?: string) {
@@ -59,8 +64,16 @@ export const useAddChoirMembers = (choirId: string) =>
 export const useRemoveChoirMember = (choirId: string) =>
   useChoirMutation((memberId: string) => removeChoirMember(choirId, memberId))
 
-export const useUpdateEventChoirs = (eventId: string) =>
-  useChoirMutation((value: EventChoirsValues) => updateEventChoirs(eventId, value))
+export const useUpdateEventChoirs = (eventId: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (value: EventChoirsValues) => updateEventChoirs(eventId, value),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: choirsKey })
+      queryClient.invalidateQueries({ queryKey: ['liturgical-events', 'preparation', eventId] })
+    },
+  })
+}
 
 export const useSetSubstituteDirector = (eventId: string) =>
   useChoirMutation(({ choirId, ...value }: { choirId: string; directorId: string | null; reason?: string }) =>

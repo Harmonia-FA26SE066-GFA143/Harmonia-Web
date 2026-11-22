@@ -1,7 +1,7 @@
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { Button, Flex, Tooltip } from 'antd'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { Icon } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { useAdjacentDirectorPrograms, useAdjacentPriestEvents, type AdjacentProgram } from '../hooks/useAdjacentPrograms'
 import { formatProgramDate } from '../programFilters'
@@ -24,7 +24,7 @@ export function AdjacentProgramNav({ previous, next, detailPath }: Readonly<Adja
     <Flex gap={spacing.xs} role="group" aria-label="Chuyển chương trình">
       <Tooltip title={previous && describe(previous)} trigger={['hover', 'focus']}>
         <Button
-          icon={<LeftOutlined />}
+          icon={<Icon name="chevron-left" />}
           disabled={!previous}
           onClick={() => previous && open(previous)}
           aria-label={previous ? `Lễ trước: ${describe(previous)}` : 'Không có lễ trước'}
@@ -34,7 +34,7 @@ export function AdjacentProgramNav({ previous, next, detailPath }: Readonly<Adja
       </Tooltip>
       <Tooltip title={next && describe(next)} trigger={['hover', 'focus']}>
         <Button
-          icon={<RightOutlined />}
+          icon={<Icon name="chevron-right" />}
           iconPlacement="end"
           disabled={!next}
           onClick={() => next && open(next)}

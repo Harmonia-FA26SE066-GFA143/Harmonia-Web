@@ -41,7 +41,7 @@ export function StackedBars<K extends string>({
             : 'không có dữ liệu'
           return (
             <Flex key={bucket.title} vertical align="center" justify="flex-end" style={{ flex: '1 0 28px', height: '100%' }}>
-              <Typography.Text style={{ fontSize: 12, fontWeight: 600, color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
+              <Typography.Text style={{ fontSize: 12, fontWeight: 600, color: colors.textPrimary }}>
                 {total || ''}
               </Typography.Text>
               <Tooltip title={`${bucket.title}: ${description}`}>
@@ -69,7 +69,7 @@ export function StackedBars<K extends string>({
               <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, whiteSpace: 'nowrap' }}>
                 {bucket.label}
               </Typography.Text>
-              <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, minHeight: 18, fontVariantNumeric: 'tabular-nums' }}>
+              <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, minHeight: 18 }}>
                 {bucket.note}
               </Typography.Text>
             </Flex>

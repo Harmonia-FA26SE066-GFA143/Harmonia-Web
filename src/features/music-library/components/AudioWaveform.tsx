@@ -101,7 +101,7 @@ export function AudioWaveform({ url, title }: Readonly<{ url: string; title: str
         {/* wavesurfer draws here; clicking the wave seeks, the button covers keyboard use. */}
         <div ref={container} aria-hidden style={{ display: state === 'idle' ? 'none' : 'block', minHeight: 40 }} />
       </div>
-      <Typography.Text style={{ color: colors.textMuted, fontVariantNumeric: 'tabular-nums', fontSize: 12.5, flexShrink: 0 }}>
+      <Typography.Text style={{ color: colors.textMuted, fontSize: 12.5, flexShrink: 0 }}>
         {state === 'ready' ? `${clock(time)} / ${clock(duration)}` : '–:–'}
       </Typography.Text>
     </Flex>

@@ -81,7 +81,7 @@ export function PendingSkillTable({
       title: 'Ngày khai báo',
       dataIndex: 'declaredAt',
       render: (declaredAt: string) => (
-        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums' }}>
+        <Typography.Text>
           {formatDateTime(declaredAt)}
         </Typography.Text>
       ),

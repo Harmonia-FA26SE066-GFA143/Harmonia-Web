@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useReducedMotion } from '@/shared/ui'
 import { motion } from '@/styles/tokens'
@@ -38,9 +38,9 @@ function useGlidingMarker(selector: string, duration: number, delay: number, cha
           ],
           { duration, delay, easing: motion.ease, fill: 'backwards' },
         )
-        // The active bar draws out from its middle once the marker has landed.
+        // The active bar draws out from its middle once the marker has landed (transform-only, no opacity: 0).
         el.querySelector('.hm-pill__bar')?.animate?.(
-          [{ transform: 'scaleX(0)', opacity: 0 }, { transform: 'scaleX(1)', opacity: 1 }],
+          [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }],
           { duration: 240, delay: delay + duration * 0.6, easing: motion.ease, fill: 'backwards' },
         )
       }
@@ -77,10 +77,6 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
   const found = sections.findIndex((section) => section.items.some((item) => item.path === selectedPath))
   const areaIndex = Math.max(found, 0)
   const area = sections[areaIndex]
-
-  // The page tabs re-letter in from the side the user moved toward; not on first arrival.
-  const [seen, setSeen] = useState<{ area: number; from?: 'left' | 'right' }>({ area: areaIndex })
-  if (seen.area !== areaIndex) setSeen({ area: areaIndex, from: areaIndex > seen.area ? 'right' : 'left' })
 
   const { box: areasBox, marker: pill } = useGlidingMarker('[aria-current="true"]', 320, 0, areaIndex)
   const { box: tabsBox, marker: underline } = useGlidingMarker('[aria-current="page"]', 280, 60, selectedPath)
@@ -159,7 +155,7 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
         {choir}
         <div ref={tabsBox} className="hm-tabs">
           <span ref={underline} className="hm-underline" aria-hidden />
-          <div key={areaIndex} className={['hm-tabs__list', seen.from && `in-from-${seen.from}`].filter(Boolean).join(' ')}>
+          <div key={areaIndex} className="hm-tabs__list">
             {area.items.map((item, index) => (
               <Link
                 key={item.path}

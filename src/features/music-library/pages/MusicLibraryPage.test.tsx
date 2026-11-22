@@ -44,6 +44,18 @@ describe('MusicLibraryPage', () => {
     expect(await screen.findByRole('heading', { name: 'Không thể tải kho bài hát' })).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Tìm bài hát' })).toBeInTheDocument()
     expect(screen.queryByText('0 bài hát')).not.toBeInTheDocument()
+    // The count line says the count could not be read, never a stuck "Đang tải…" (R2.5).
+    expect(await screen.findByText('Không thể tải số liệu')).toBeInTheDocument()
+    expect(screen.queryByText('Đang tải…')).not.toBeInTheDocument()
+  })
+
+  it('says the count is loading, not zero songs, while the library loads', async () => {
+    vi.spyOn(songsApi, 'listSongs').mockReturnValue(new Promise(() => {}))
+    renderPage(<MusicLibraryPage />, '/director/library')
+
+    expect(await screen.findByText('Đang tải…')).toBeInTheDocument()
+    expect(screen.queryByText('0 bài hát')).not.toBeInTheDocument()
+    expect(screen.queryByText('Không thể tải số liệu')).not.toBeInTheDocument()
   })
 
   it('shows the empty state with an add action', async () => {

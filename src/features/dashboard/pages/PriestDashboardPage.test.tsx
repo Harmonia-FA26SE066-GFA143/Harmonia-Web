@@ -1,18 +1,10 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import dayjs from 'dayjs'
 import * as eventsApi from '@/features/liturgical-programs/api/eventsApi'
-import * as liturgicalDaysApi from '@/features/liturgical-programs/api/liturgicalDaysApi'
-import * as programsApi from '@/features/liturgical-programs/api/programsApi'
-import * as practiceApi from '@/features/practice/api/practiceApi'
-import * as memberSkillsApi from '@/features/skill-approval/api/memberSkillsApi'
-import * as songListsApi from '@/features/song-lists/api/songListsApi'
 import * as reviewApi from '@/features/song-list-review/api/songListReviewApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
 import { ApiError } from '@/lib/api/errors'
-import { programPage } from '@/test/programs'
 import { renderPage } from '@/test/renderPage'
-import { DirectorDashboardPage } from './DirectorDashboardPage'
 import { PriestDashboardPage } from './PriestDashboardPage'
 
 const emptyPage = { items: [], pageNumber: 1, pageSize: 5, totalCount: 0, totalPages: 0 }
@@ -83,97 +75,3 @@ describe('PriestDashboardPage', () => {
   })
 })
 
-describe('DirectorDashboardPage', () => {
-  const counts = (skills = 4, submissions = 7) => {
-    vi.spyOn(memberSkillsApi, 'listPendingSkills').mockResolvedValue({ ...emptyPage, totalCount: skills })
-    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue({ ...emptyPage, totalCount: submissions })
-  }
-
-  it('lists at most five tasks, each with its verb, deadline and button, and folds the rest', async () => {
-    counts()
-    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(
-      programPage(
-        { id: 'p1', eventName: 'Lễ Chúa Nhật XX', date: '2026-10-18', songListStatus: 'needsRevision' },
-        { id: 'p2', eventName: 'Lễ Bổn mạng', date: '2026-10-25', specialRequirements: 'Rước kiệu' },
-        { id: 'p3', eventName: 'Lễ Các Đẳng', date: '2026-11-02', songListStatus: 'approved' },
-        { id: 'p4', eventName: 'Lễ Chúa Kitô Vua', date: '2026-11-22' },
-        { id: 'p5', eventName: 'Chúa Nhật I Mùa Vọng', date: '2026-11-29', songListStatus: 'draft' },
-      ),
-    )
-    vi.spyOn(songListsApi, 'getSongList').mockResolvedValue({
-      id: 'l1',
-      eventId: 'p1',
-      version: 1,
-      status: 'needsRevision',
-      items: [],
-      reviews: [{ decision: 'requestRevision', notes: 'Đổi bài Hiệp lễ.', reviewedAt: '2026-10-15T02:00:00Z' }],
-    })
-    renderPage(<DirectorDashboardPage />, '/director')
-
-    const tasks = within(await screen.findByRole('region', { name: 'Cần bạn xử lý' }))
-    expect(await tasks.findByText('Cha xứ: “Đổi bài Hiệp lễ.”')).toBeInTheDocument()
-    expect(tasks.getByText('Yêu cầu: Rước kiệu')).toBeInTheDocument()
-    expect(tasks.getByText('Lễ cử hành 25/10/2026')).toBeInTheDocument()
-    expect(await tasks.findByText('Duyệt 4 kỹ năng ca viên đã khai')).toBeInTheDocument()
-    expect(tasks.getByRole('link', { name: 'Duyệt kỹ năng' })).toHaveAttribute('href', '/director/skill-approval')
-    expect(tasks.getByText('Chấm 7 bản thu bài tập')).toBeInTheDocument()
-    expect(tasks.getByRole('link', { name: 'Chấm bài' })).toHaveAttribute('href', '/director/practice')
-    // Skills and recordings come first, then three of the four song lists; the fourth folds into the last line.
-    expect(tasks.queryByRole('link', { name: 'Chúa Nhật I Mùa Vọng' })).toBeNull()
-    expect(tasks.getByRole('link', { name: /và 1 việc khác/ })).toBeInTheDocument()
-
-    fireEvent.click(tasks.getByRole('button', { name: 'Đề xuất danh sách bài hát: Lễ Bổn mạng' }))
-    expect(await screen.findByTestId('location')).toHaveTextContent('/director/programs/p2/song-list')
-  })
-
-  it('confirms when nothing waits, and shows the season, the next program and its missing parts', async () => {
-    counts(0, 0)
-    const today = dayjs().format('YYYY-MM-DD')
-    vi.spyOn(liturgicalDaysApi, 'listLiturgicalDays').mockResolvedValue([
-      { date: today, celebrationName: 'Chúa Nhật Thứ Ba Mùa Vọng', seasonKey: 'Advent', seasonName: 'Mùa Vọng' },
-    ])
-    vi.spyOn(programsApi, 'listPrograms').mockResolvedValueOnce(
-      programPage(
-        { id: 'p3', eventName: 'Lễ Các Đẳng', date: '2099-11-02', songListStatus: 'submitted' },
-        { id: 'p4', eventName: 'Lễ Thánh Giuse', date: '2099-11-09', songListStatus: 'approved' },
-      ),
-    )
-    // The Choir Director reads the event's preparation status (BE 90af733, B41).
-    vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue({
-      participation: { invited: 1, confirmed: 1, declined: 0, unsure: 0 },
-      rosterActiveAssignments: 0,
-      rosterShortages: [{ skillName: 'Bè Alto', requiredCount: 3, assignedCount: 1 }],
-      rehearsalsTotal: 2,
-      rehearsalsHeld: 1,
-      attendanceExpected: 2,
-      attendancePresent: 2,
-      practiceExpected: 0,
-      practicePassed: 0,
-      practiceOverdue: 0,
-    })
-    renderPage(<DirectorDashboardPage />, '/director')
-
-    expect(await screen.findByText('Bạn đã xử lý hết. Không còn việc nào đang chờ.')).toBeInTheDocument()
-    expect(await screen.findByRole('region', { name: 'Mùa phụng vụ hôm nay' })).toHaveTextContent('Mùa Vọng')
-    // The nearest Mass stands on the right with its preparation signals, each an independent fact in words.
-    const next = screen.getByRole('region', { name: 'Lễ Các Đẳng' })
-    const signals = await within(next).findByRole('list', { name: 'Các mục chuẩn bị' })
-    expect(within(signals).getByText('1/2 đã nhận lời')).toBeInTheDocument()
-    expect(within(signals).getByText('1/2 buổi đã tập')).toBeInTheDocument()
-    expect(within(signals).getByText('Chưa lập')).toBeInTheDocument()
-    // A missing place is a dashed mark per voice part.
-    expect(within(next).getByRole('list', { name: 'Vị trí còn thiếu' })).toHaveTextContent('Thiếu 2 Bè Alto')
-    expect(within(next).getByRole('link', { name: /Xem chương trình/ })).toHaveAttribute('href', '/director/programs/p3')
-    // The Masses after it sit in the strip.
-    expect(screen.getByRole('link', { name: /Lễ Thánh Giuse/ })).toHaveAttribute('href', '/director/programs/p4')
-    expect(screen.getByText('Không có bản thu nào chờ chấm.')).toBeInTheDocument()
-  })
-
-  it('shows a recoverable error when the programs cannot be loaded', async () => {
-    counts()
-    vi.spyOn(programsApi, 'listPrograms').mockRejectedValue(new ApiError(403, undefined))
-    renderPage(<DirectorDashboardPage />, '/director')
-
-    expect(await screen.findByRole('heading', { name: 'Không thể tải chương trình sắp tới' })).toBeInTheDocument()
-  })
-})

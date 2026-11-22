@@ -3,6 +3,47 @@
   "plugins": ["react", "typescript", "oxc"],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@ant-design/icons",
+            "message": "Import icons from '@/shared/ui/icons' instead of '@ant-design/icons'."
+          }
+        ],
+        "patterns": [
+          {
+            "group": ["@ant-design/icons/*"],
+            "message": "Import icons from '@/shared/ui/icons' instead of '@ant-design/icons'."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/features/**/*.ts", "src/features/**/*.tsx", "src/app/pages/LandingPage.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "warn",
+          {
+            "paths": [
+              {
+                "name": "@ant-design/icons",
+                "message": "Import icons from '@/shared/ui/icons' instead of '@ant-design/icons'."
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["@ant-design/icons/*"],
+                "message": "Import icons from '@/shared/ui/icons' instead of '@ant-design/icons'."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

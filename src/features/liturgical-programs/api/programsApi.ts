@@ -1,6 +1,6 @@
 import { apiRequest, orNullOn404 } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
-import type { EventFilters, LiturgicalProgram, LiturgicalProgramDetail, SongCredits } from '../types'
+import type { EventFilters, LiturgicalProgram, LiturgicalProgramDetail, ProgramListItem, SongCredits } from '../types'
 import {
   apiStatus,
   songListStatusByApi,
@@ -30,6 +30,7 @@ interface EventListItemDto extends ProgramFields {
   status: ApiEventStatus
   latestSongListStatus: ApiSongListStatus | null
   songListDueDate: string
+  isSongListOverdue: boolean
 }
 
 interface SongListDto {
@@ -52,7 +53,7 @@ const toProgram = (dto: ProgramFields, status: ApiEventStatus, songListStatus: A
 })
 
 /** Ordered by date then time on the server. */
-export async function listPrograms(filters: EventFilters, page: EventPage): Promise<PagedList<LiturgicalProgram>> {
+export async function listPrograms(filters: EventFilters, page: EventPage): Promise<PagedList<ProgramListItem>> {
   const result = await apiRequest<PagedList<EventListItemDto>>(
     `/api/liturgical-events${toQuery({
       fromDate: filters.fromDate,
@@ -66,6 +67,7 @@ export async function listPrograms(filters: EventFilters, page: EventPage): Prom
     items: result.items.map((dto) => ({
       ...toProgram(dto, dto.status, dto.latestSongListStatus),
       songListDueDate: dto.songListDueDate,
+      isSongListOverdue: dto.isSongListOverdue,
     })),
   }
 }
@@ -98,9 +100,18 @@ interface SongCreditsDto {
  */
 export async function getSongCredits(songId: string): Promise<SongCredits> {
   const dto = await apiRequest<SongCreditsDto>(`/api/songs/${songId}`)
+  // Keys are the MaterialType names (Harmonia-BE SongDto.cs:22, MaterialType.cs).
+  const count = (kind: string) => dto.materialCounts[kind] ?? 0
   return {
     composer: dto.composer ?? undefined,
     lyricist: dto.lyricist ?? undefined,
-    materials: Object.values(dto.materialCounts).reduce((total, count) => total + count, 0),
+    materials: Object.values(dto.materialCounts).reduce((total, value) => total + value, 0),
+    materialCounts: {
+      sheetMusic: count('SheetMusic'),
+      lyrics: count('Lyrics'),
+      sampleAudio: count('SampleAudio'),
+      rehearsalMaterial: count('RehearsalMaterial'),
+      interactiveScore: count('InteractiveScore'),
+    },
   }
 }

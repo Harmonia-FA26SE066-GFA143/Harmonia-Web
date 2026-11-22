@@ -18,7 +18,6 @@ interface FieldChange {
 }
 
 const muted = { color: colors.textMuted }
-const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 /** The fields of the old and new JSON objects, in words; a value that is not an object is shown under "Giá trị". */
 function changesOf({ oldValue, newValue }: ActivityRecord): FieldChange[] {
@@ -53,7 +52,7 @@ export function ActivityDetailDrawer({ record, onClose }: Readonly<ActivityDetai
             column={1}
             size="small"
             items={[
-              { key: 'time', label: 'Thời gian', children: <span style={numeric}>{formatDateTime(record.createdAt)}</span> },
+              { key: 'time', label: 'Thời gian', children: <span>{formatDateTime(record.createdAt)}</span> },
               {
                 key: 'actor',
                 label: 'Người thực hiện',
@@ -61,8 +60,8 @@ export function ActivityDetailDrawer({ record, onClose }: Readonly<ActivityDetai
               },
               { key: 'action', label: 'Thao tác', children: actionLabel(record.action) },
               { key: 'entity', label: 'Dữ liệu', children: entityLabel(record.entityType) },
-              ...(record.entityId ? [{ key: 'entityId', label: 'Mã bản ghi', children: <span style={numeric}>{record.entityId}</span> }] : []),
-              ...(record.ipAddress ? [{ key: 'ip', label: 'Địa chỉ IP', children: <span style={numeric}>{record.ipAddress}</span> }] : []),
+              ...(record.entityId ? [{ key: 'entityId', label: 'Mã bản ghi', children: <span>{record.entityId}</span> }] : []),
+              ...(record.ipAddress ? [{ key: 'ip', label: 'Địa chỉ IP', children: <span>{record.ipAddress}</span> }] : []),
             ]}
           />
           {changes.length > 0 ? (

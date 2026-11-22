@@ -11,7 +11,7 @@ import type { FilterOption } from './ReportFilterBar'
 
 const pageSize = 10
 const muted = { color: colors.textMuted }
-const numeric = { fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' as const }
+const numeric = { whiteSpace: 'nowrap' as const }
 const day = (date: string) => dayjs(date).format('DD/MM/YYYY')
 
 /** Files the Admins exported (`GET /api/reports/exports`), newest first; each link expires soon after loading. */
