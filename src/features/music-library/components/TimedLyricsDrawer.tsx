@@ -1,8 +1,7 @@
-import { CaretRightFilled, DeleteOutlined, FieldTimeOutlined, PlusOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Flex, Input, InputNumber, Select, Skeleton, Tooltip, Typography, type FormInstance } from 'antd'
+import { Alert, App, Button, Flex, Input, InputNumber, Select, Tooltip, Typography, type FormInstance } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { ErrorState, Form, FormDrawer } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { ErrorState, Form, FormDrawer, Icon, SectionSkeleton, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { colors, component, spacing, typography } from '@/styles/tokens'
 import { useDeleteTimedLyrics, useMaterialPlayback, useSaveTimedLyrics, useTimedLyrics } from '../hooks/useSongs'
 import { timedLyricsErrorMessage } from '../songErrors'
 import {
@@ -149,7 +148,11 @@ function TimedLyricsEditor({ material, lyricsMaterials, form, initialValues, has
           <PreviewLine audio={audio} form={form} />
         </section>
       ) : (
-        rendered && playback.isPending && <Skeleton.Input active block style={{ marginBottom: spacing.md }} />
+        rendered && playback.isPending && (
+          <div style={{ marginBottom: spacing.md }}>
+            <SectionSkeleton rows={1} label="Đang tải bản nghe thử" />
+          </div>
+        )
       )}
       {(audioFailed || playback.isError) && (
         <Alert
@@ -163,6 +166,7 @@ function TimedLyricsEditor({ material, lyricsMaterials, form, initialValues, has
 
       <Form.Item name="lyricsMaterialId" label="Tài liệu lời" rules={[{ required: true, message: 'Vui lòng chọn tài liệu lời của bài hát.' }]}>
         <Select
+          {...SELECT_POPUP_PROPS}
           placeholder="Chọn tài liệu lời"
           options={lyricsMaterials.map((lyrics) => ({ value: lyrics.id, label: lyrics.title }))}
           notFoundContent="Bài hát chưa có tài liệu lời"
@@ -193,7 +197,7 @@ function TimedLyricsEditor({ material, lyricsMaterials, form, initialValues, has
               const rows = (): TimedLineRow[] => form.getFieldValue('lines') ?? []
               return (
                 <div key={key} style={{ display: 'grid', gridTemplateColumns: rowColumns, gap: spacing.xs, alignItems: 'start', marginBottom: spacing.xs }}>
-                  <span style={{ lineHeight: '40px', color: colors.textMuted, textAlign: 'right' }}>{index + 1}</span>
+                  <span style={{ lineHeight: '40px', fontSize: 13, fontWeight: 600, color: colors.textBody, textAlign: 'right' }}>{index + 1}</span>
                   <Form.Item name={[name, 'text']} style={{ margin: 0 }} rules={[{ validator: () => check(lineTextProblem(rows()[name] ?? {})) }]}>
                     <Input aria-label={`Lời dòng ${index + 1}`} />
                   </Form.Item>
@@ -201,25 +205,25 @@ function TimedLyricsEditor({ material, lyricsMaterials, form, initialValues, has
                     <InputNumber aria-label={`Giây bắt đầu dòng ${index + 1}`} min={0} step={0.1} precision={2} style={{ width: '100%' }} />
                   </Form.Item>
                   <Tooltip title="Lấy thời điểm đang nghe" trigger={['hover', 'focus']}>
-                    <Button type="text" icon={<FieldTimeOutlined />} aria-label={`Đặt giây bắt đầu dòng ${index + 1} theo thời điểm đang nghe`} onClick={() => markNow(name, 'startSeconds')} />
+                    <Button type="text" icon={<Icon name="history" />} aria-label={`Đặt giây bắt đầu dòng ${index + 1} theo thời điểm đang nghe`} onClick={() => markNow(name, 'startSeconds')} />
                   </Tooltip>
                   <Form.Item name={[name, 'endSeconds']} style={{ margin: 0 }} rules={[{ validator: () => check(lineEndProblem(rows(), name, audioSeconds)) }]}>
                     <InputNumber aria-label={`Giây kết thúc dòng ${index + 1}`} min={0} step={0.1} precision={2} style={{ width: '100%' }} />
                   </Form.Item>
                   <Tooltip title="Lấy thời điểm đang nghe" trigger={['hover', 'focus']}>
-                    <Button type="text" icon={<FieldTimeOutlined />} aria-label={`Đặt giây kết thúc dòng ${index + 1} theo thời điểm đang nghe`} onClick={() => markNow(name, 'endSeconds')} />
+                    <Button type="text" icon={<Icon name="history" />} aria-label={`Đặt giây kết thúc dòng ${index + 1} theo thời điểm đang nghe`} onClick={() => markNow(name, 'endSeconds')} />
                   </Tooltip>
                   <Tooltip title="Nghe dòng này" trigger={['hover', 'focus']}>
-                    <Button type="text" icon={<CaretRightFilled />} aria-label={`Nghe dòng ${index + 1}`} onClick={() => playLine(name)} />
+                    <Button type="text" icon={<Icon name="play-solid" />} aria-label={`Nghe dòng ${index + 1}`} onClick={() => playLine(name)} />
                   </Tooltip>
                   <Tooltip title="Bỏ dòng" trigger={['hover', 'focus']}>
-                    <Button type="text" danger icon={<DeleteOutlined />} aria-label={`Bỏ dòng ${index + 1}`} onClick={() => remove(name)} />
+                    <Button type="text" danger icon={<Icon name="delete" />} aria-label={`Bỏ dòng ${index + 1}`} onClick={() => remove(name)} />
                   </Tooltip>
                 </div>
               )
             })}
             <Button
-              icon={<PlusOutlined />}
+              icon={<Icon name="add" />}
               onClick={() => {
                 const last = (form.getFieldValue('lines') as TimedLineRow[] | undefined)?.at(-1)
                 add({ startSeconds: last?.endSeconds ?? undefined })
@@ -236,7 +240,7 @@ function TimedLyricsEditor({ material, lyricsMaterials, form, initialValues, has
 
       {hasTiming && (
         <Flex justify="flex-start" style={{ marginTop: spacing.lg }}>
-          <Button danger loading={deleting} icon={<DeleteOutlined />} onClick={onDelete}>Xoá mốc thời gian</Button>
+          <Button danger loading={deleting} icon={<Icon name="delete" />} onClick={onDelete}>Xoá mốc thời gian</Button>
         </Flex>
       )}
     </Form>
@@ -332,7 +336,7 @@ function OpenDrawer({ material, materials, onClose }: Readonly<{ material: SongM
   return (
     <FormDrawer
       open
-      size={880}
+      size={component.drawer.lg}
       title={`Lời theo thời gian: ${material.title}`}
       okText="Lưu mốc thời gian"
       okButtonProps={{ loading: save.isPending }}
@@ -342,7 +346,7 @@ function OpenDrawer({ material, materials, onClose }: Readonly<{ material: SongM
       onCancel={handleClose}
       destroyOnHidden
     >
-      {timing.isPending && <Skeleton active paragraph={{ rows: 8 }} />}
+      {timing.isPending && <SectionSkeleton rows={8} label="Đang tải mốc thời gian" />}
       {timing.isError && <ErrorState headingLevel={3} title="Không thể tải mốc thời gian" error={timing.error} onRetry={() => timing.refetch()} retrying={timing.isFetching} />}
       {initialValues && (
         <TimedLyricsEditor

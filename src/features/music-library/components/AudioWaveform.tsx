@@ -1,7 +1,7 @@
-import { CaretRightFilled, PauseOutlined } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type WaveSurfer from 'wavesurfer.js'
+import { Icon } from '@/shared/ui'
 import { clock } from '@/shared/utils/media'
 import { colors, radius, spacing } from '@/styles/tokens'
 
@@ -91,7 +91,7 @@ export function AudioWaveform({ url, title }: Readonly<{ url: string; title: str
       <Button
         type="primary"
         shape="circle"
-        icon={playing ? <PauseOutlined /> : <CaretRightFilled />}
+        icon={playing ? <Icon name="pause" /> : <Icon name="play-solid" />}
         loading={state === 'loading'}
         onClick={toggle}
         aria-label={`${playing ? 'Tạm dừng' : 'Phát'} ${title}`}

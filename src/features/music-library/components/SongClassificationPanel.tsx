@@ -1,7 +1,6 @@
-import { EditOutlined } from '@ant-design/icons'
 import { Button, Descriptions, Flex, Tag, Typography } from 'antd'
 import type { ReactNode } from 'react'
-import { ErrorState, SectionSkeleton } from '@/shared/ui'
+import { ErrorState, Icon, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import type { NamedRef, SkillRequirement, SongClassification } from '../types'
 
@@ -23,6 +22,10 @@ function tags(labels: string[]): ReactNode {
 }
 
 const names = (refs: NamedRef[]) => refs.map((ref) => ref.name)
+const isEmpty = (c: SongClassification) =>
+  [c.liturgicalSeasons, c.massTypes, c.ceremonyTypes, c.songThemes, c.liturgicalSlots, c.vocalRequirements, c.instrumentRequirements].every(
+    (list) => list.length === 0,
+  )
 const requirements = (items: SkillRequirement[]) =>
   items.map((item) => `${item.skillName} ×${item.requiredCount}${item.isMandatory ? ' (bắt buộc)' : ''}`)
 
@@ -44,13 +47,15 @@ export function SongClassificationPanel({ classification, loading, failed, error
   return (
     <Flex vertical gap={spacing.md}>
       {onEdit && (
-        <Button icon={<EditOutlined />} onClick={onEdit} disabled={!classification} style={{ alignSelf: 'flex-end' }}>
-          Chỉnh sửa phân loại
+        <Button icon={<Icon name="edit" />} onClick={onEdit} disabled={!classification} style={{ alignSelf: 'flex-end' }}>
+          Sửa phân loại
         </Button>
       )}
       {loading && <SectionSkeleton rows={2} label="Đang tải phân loại" />}
       {failed && <ErrorState headingLevel={2} title="Không thể tải phân loại" error={error} hasData={hasData} onRetry={onRetry} />}
-      {classification && (
+      {/* Nothing classified yet: one honest line, never values guessed from the notes (G3-01). */}
+      {classification && isEmpty(classification) && unclassified}
+      {classification && !isEmpty(classification) && (
         <Descriptions
           layout="vertical"
           colon={false}

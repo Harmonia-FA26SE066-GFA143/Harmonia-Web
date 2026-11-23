@@ -1,6 +1,13 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { AppProviders } from '@/app/providers'
+import * as programsApi from '@/features/liturgical-programs/api/programsApi'
+import * as practiceApi from '@/features/practice/api/practiceApi'
+import * as rehearsalsApi from '@/features/rehearsals/api/rehearsalsApi'
+import * as songListsApi from '@/features/song-lists/api/songListsApi'
 import * as categoriesApi from '@/features/system-categories/api/categoriesApi'
+import * as client from '@/lib/api/client'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as songsApi from '../api/songsApi'
@@ -592,4 +599,200 @@ describe('SongDetailPage', () => {
       await screen.findByText('Bài hát đã được dùng trong danh sách bài hát, buổi tập hoặc bài tập nên không xoá được.'),
     ).toBeInTheDocument()
   })
+
+  it('opens the assignment form for this song, not the practice tab redirect', async () => {
+    withSong()
+    // A local probe that also shows the query, so the shared renderPage stays pathname-only.
+    function SearchProbe() {
+      const location = useLocation()
+      return <p data-testid="location">{`${location.pathname}${location.search}`}</p>
+    }
+    const router = createMemoryRouter(
+      [
+        { path: '/director/library/:songId', element: <SongDetailPage /> },
+        { path: '*', element: <SearchProbe /> },
+      ],
+      { initialEntries: ['/director/library/s1'] },
+    )
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: /Giao bài tập/ }))
+    expect(await screen.findByTestId('location')).toHaveTextContent(/^\/director\/practice\/new\?songId=s1$/)
+  })
+
+  it('shows raw note URLs as safe links in clean paragraphs, never a javascript: link (G3-01)', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'getSong').mockResolvedValue({
+      ...song,
+      notes: 'Nguồn: https://www.example.org/bai-hat.html).\n\n-----\n\n\n\njavascript:alert(1) và <b>đậm</b>',
+    })
+    renderDetail()
+
+    const link = await screen.findByRole('link', { name: 'Liên kết tham khảo (example.org)' })
+    expect(link).toHaveAttribute('href', 'https://www.example.org/bai-hat.html')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(document.querySelector('a[href^="javascript"]')).toBeNull()
+    expect(document.querySelector('.ct-facts b')).toBeNull()
+    expect(screen.getByText('javascript:alert(1) và <b>đậm</b>')).toBeInTheDocument()
+    expect(screen.queryByText('-----')).not.toBeInTheDocument()
+  })
+
+  it('shows where the song is used from Choir Director endpoints only, never the Priest usage report', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'getSong').mockResolvedValue({ ...song, timesUsed: 3, lastUsedDate: '2026-11-08' })
+    const request = vi.spyOn(client, 'apiRequest')
+    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue({
+      items: [{
+        id: 'e1', eventName: 'Chúa Nhật I Mùa Vọng', date: '2099-11-29', time: '08:00', locationName: 'Nhà thờ chính',
+        status: 'published', songListStatus: 'approved', songListDueDate: '2099-11-22', isSongListOverdue: false,
+      }],
+      pageNumber: 1, pageSize: 100, totalCount: 1, totalPages: 1,
+    })
+    vi.spyOn(songListsApi, 'getSongList').mockResolvedValue({
+      id: 'l1', eventId: 'e1', version: 1, status: 'approved', reviews: [],
+      items: [{ id: 'i1', songId: 's1', songTitle: song.title, slotId: 'slot-1', slotName: 'Ca nhập lễ', displayOrder: 1 }],
+    })
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue({
+      items: [
+        { id: 'r1', startAt: '2099-11-25T12:00:00Z', endAt: '2099-11-25T14:00:00Z', locationName: 'Phòng hát', songs: [{ songId: 's1', songTitle: song.title }] },
+        { id: 'r2', startAt: '2099-11-26T12:00:00Z', endAt: '2099-11-26T14:00:00Z', songs: [{ songId: 'other', songTitle: 'Bài khác' }] },
+      ],
+      pageNumber: 1, pageSize: 100, totalCount: 2, totalPages: 1,
+    })
+    vi.spyOn(practiceApi, 'listAssignments').mockResolvedValue({
+      items: [
+        { id: 'a1', songId: 's1', title: 'Tập điệp khúc', scope: 'all', dueDate: '2099-11-27T16:00:00Z', skillIds: [], memberIds: [] },
+        { id: 'a2', songId: 'other', title: 'Bài tập khác', scope: 'all', dueDate: '2099-11-27T16:00:00Z', skillIds: [], memberIds: [] },
+      ],
+      pageNumber: 1, pageSize: 100, totalCount: 2, totalPages: 1,
+    })
+    renderDetail()
+
+    const usage = (await screen.findByRole('heading', { name: 'Nơi bài hát được dùng' })).closest('section') as HTMLElement
+    expect(within(usage).getByText('Đã dùng 3 lần')).toBeInTheDocument()
+    expect(within(usage).getByText(/Gần nhất: 08\/11\/2026/)).toBeInTheDocument()
+    expect(await within(usage).findByRole('link', { name: /Chúa Nhật I Mùa Vọng/ })).toHaveAttribute('href', '/director/programs/e1')
+    expect(within(usage).getByText(/Ca nhập lễ/)).toBeInTheDocument()
+
+    const rehearsal = await within(usage).findByRole('link', { name: /Phòng hát/ })
+    expect(rehearsal).toHaveAttribute('href', '/director/rehearsals/r1')
+    expect(within(usage).queryByRole('link', { name: /r2/ })).toBeNull()
+    expect(within(usage).getAllByRole('link', { name: /Hạn/ })).toHaveLength(1)
+    expect(within(usage).getByText('Tập điệp khúc')).toBeInTheDocument()
+    expect(within(usage).queryByText('Bài tập khác')).not.toBeInTheDocument()
+    expect(within(usage).getByRole('link', { name: /Giao bài tập/ })).toHaveAttribute('href', '/director/practice/new?songId=s1')
+
+    expect(request.mock.calls.some(([path]) => path.includes('/api/reports/song-usage'))).toBe(false)
+  })
+
+  it('says a song never used and with no rehearsal or assignment honestly', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'getSong').mockResolvedValue({ ...song, timesUsed: 0 })
+    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 })
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 })
+    vi.spyOn(practiceApi, 'listAssignments').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 })
+    renderDetail()
+
+    expect(await screen.findByText('Chưa dùng trong Thánh lễ đã công bố nào')).toBeInTheDocument()
+    expect(await screen.findByText('Chưa có buổi tập nào chọn bài này')).toBeInTheDocument()
+    expect(await screen.findByText('Chưa có bài tập nào cho bài này')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Thánh lễ sắp tới' })).not.toBeInTheDocument()
+  })
+
+  it('finds an assignment of the song past the first 100, reading every page', async () => {
+    withSong()
+    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 })
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 })
+    const other = { songId: 'other', title: 'Bài tập khác', scope: 'all' as const, dueDate: '2099-11-27T16:00:00Z', skillIds: [], memberIds: [] }
+    const list = vi.spyOn(practiceApi, 'listAssignments').mockImplementation(async (_eventId, page) =>
+      page.pageNumber === 1
+        ? { items: Array.from({ length: 100 }, (_, index) => ({ ...other, id: `o${index}` })), pageNumber: 1, pageSize: 100, totalCount: 101, totalPages: 2 }
+        : { items: [{ ...other, id: 'a101', songId: 's1', title: 'Tập lại đoạn kết' }], pageNumber: 2, pageSize: 100, totalCount: 101, totalPages: 2 },
+    )
+    renderDetail()
+
+    expect(await screen.findByText('Tập lại đoạn kết')).toBeInTheDocument()
+    expect(list).toHaveBeenCalledWith(undefined, { pageNumber: 2, pageSize: 100 })
+    expect(screen.queryByText('Bài tập khác')).not.toBeInTheDocument()
+  })
+
+  it('shows a recoverable error for each usage group that cannot be loaded', async () => {
+    withSong()
+    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 })
+    // A 4xx is not retried, so both groups fail at once.
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockRejectedValue(new ApiError(403, undefined))
+    vi.spyOn(practiceApi, 'listAssignments').mockRejectedValue(new ApiError(403, undefined))
+    renderDetail()
+
+    expect(await screen.findByRole('heading', { name: 'Không thể tải buổi tập' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Không thể tải bài tập' })).toBeInTheDocument()
+    // The link to give an assignment stays usable.
+    expect(screen.getByRole('link', { name: /Giao bài tập/ })).toHaveAttribute('href', '/director/practice/new?songId=s1')
+  })
+
+  it('focuses the title when editing and offers placeholders for the optional fields (G3-13)', async () => {
+    withSong()
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Chỉnh sửa$/ }))
+    const dialog = await screen.findByRole('dialog')
+    await waitFor(() => expect(within(dialog).getByRole('textbox', { name: 'Tên bài hát' })).toHaveFocus())
+    expect(within(dialog).getByRole('textbox', { name: 'Người viết lời' })).toHaveAttribute('placeholder', 'Ví dụ: Xuân Tường')
+  })
+
+  it('names every classification select and keeps its list inside the drawer (G3-12)', async () => {
+    withSong()
+    // Nothing chosen yet, so every placeholder shows.
+    vi.spyOn(songsApi, 'getSongClassification').mockResolvedValue({ ...classification, liturgicalSeasons: [], liturgicalSlots: [] })
+    vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([{ id: 'season-5', name: 'Mùa Thường Niên' }])
+    renderDetail('classification')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Sửa phân loại/ }))
+    const dialog = await screen.findByRole('dialog')
+    for (const placeholder of ['Chọn mùa phụng vụ', 'Chọn loại Thánh lễ', 'Chọn loại nghi thức', 'Chọn phần phụng vụ', 'Chọn chủ đề']) {
+      expect(within(dialog).getByText(placeholder)).toBeInTheDocument()
+    }
+    // All fields are optional: no required asterisk.
+    expect(dialog.querySelector('.ant-form-item-required')).toBeNull()
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Mùa phụng vụ' }))
+    await waitFor(() => expect(dialog.querySelector('.ant-select-dropdown')).not.toBeNull())
+  })
+
+  it('shows learning progress in a "Tiến độ học" drawer with a muted placeholder for a missing date', async () => {
+    withSong()
+    vi.spyOn(songsApi, 'listLearningProgress').mockResolvedValue({
+      items: [{ memberId: 'u1', fullName: 'Maria Trần Thị Hoa', status: 'notStarted', updatedAt: null }],
+      pageNumber: 1, pageSize: 20, totalCount: 1, totalPages: 1,
+    })
+    renderDetail('materials')
+
+    const opener = await screen.findByRole('button', { name: 'Xem tiến độ học Bản nhạc SATB' })
+    expect(opener).toHaveTextContent('Tiến độ học')
+    expect(opener).not.toHaveTextContent('Xem tiến độ học')
+    fireEvent.click(opener)
+    const dialog = await screen.findByRole('dialog', { name: 'Tiến độ học' })
+    expect(within(dialog).getByRole('heading', { name: 'Bản nhạc SATB' })).toBeInTheDocument()
+    expect(await within(dialog).findByText('Maria Trần Thị Hoa')).toBeInTheDocument()
+    expect(within(dialog).queryByText('—')).not.toBeInTheDocument()
+  })
+
+  it('opens the timed lyrics editor at the 720px drawer tier, its select list inside the drawer', async () => {
+    const lyrics = material({ id: 'l1', kind: 'lyrics', title: 'Lời', fileName: null, url: null, lyricsText: 'Dòng một' })
+    withSong()
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([...materials, lyrics])
+    vi.spyOn(songsApi, 'getTimedLyrics').mockResolvedValue(null)
+    renderDetail('materials')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Soạn lời theo thời gian cho Audio mẫu bè Tenor' }))
+    const dialog = await screen.findByRole('dialog')
+    const select = await within(dialog).findByRole('combobox', { name: 'Tài liệu lời' })
+    expect((dialog.closest('.ant-drawer-content-wrapper') as HTMLElement).style.width).toBe('720px')
+    fireEvent.mouseDown(select)
+    await waitFor(() => expect(dialog.querySelector('.ant-select-dropdown')).not.toBeNull())
+  }, 30_000)
 })

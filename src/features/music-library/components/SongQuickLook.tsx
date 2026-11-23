@@ -1,18 +1,24 @@
-import { AudioOutlined, FileTextOutlined } from '@ant-design/icons'
 import { Button, Flex } from 'antd'
 import { useState } from 'react'
 import type { MouseEvent } from 'react'
 import { generatePath, Link, useLocation, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { CREATE_ASSIGNMENT_LABEL, Icon, MATERIAL_LABELS, type IconName } from '@/shared/ui'
 import { useSongMaterials } from '../hooks/useSongs'
 import { songListState } from '../songFilters'
-import { isPlayableAudio, materialKindLabels, type MaterialKind, type Song, type SongMaterial } from '../types'
+import { isPlayableAudio, type MaterialKind, type Song, type SongMaterial } from '../types'
 import { LearningProgressDrawer } from './LearningProgressDrawer'
-import { songMeta, usageText } from '../songCard'
+import { materialKinds, songMeta, usageText } from '../songCard'
 import { ScorePage } from './SongCardGrid'
 
-const kinds: MaterialKind[] = ['sheetMusic', 'lyrics', 'sampleAudio', 'interactiveScore']
 const audioKinds = new Set<MaterialKind>(['sampleAudio', 'interactiveScore'])
+const kindIcons: Record<MaterialKind, IconName> = {
+  sheetMusic: 'sheet-music',
+  lyrics: 'lyrics',
+  sampleAudio: 'audio',
+  rehearsalMaterial: 'folder-open',
+  interactiveScore: 'play',
+}
 
 /** What the material's link does: upload one when there is none, else listen to audio or open the rest. */
 function materialAction(kind: MaterialKind, count: number) {
@@ -39,7 +45,7 @@ export function SongQuickLook({ song, number, part }: Readonly<{ song: Song; num
   // Learning progress is per material; the sheet music is what a singer learns first.
   const learnable = materials.data?.find((material) => material.kind === 'sheetMusic') ?? materials.data?.[0]
   const detail = generatePath(paths.director.songDetail, { songId: song.id })
-  const assign = `${paths.director.practice}?tab=assign&songId=${song.id}`
+  const assign = `${paths.director.practiceNew}?songId=${song.id}`
   const credits = [song.composer && `Nhạc: ${song.composer}`, song.lyricist && song.lyricist !== song.composer && `Lời: ${song.lyricist}`]
 
   return (
@@ -61,16 +67,16 @@ export function SongQuickLook({ song, number, part }: Readonly<{ song: Song; num
             </audio>
           )}
           <ul className="song-peek__files">
-            {kinds.map((kind) => {
+            {materialKinds.map((kind) => {
               const count = song.materialCounts?.[kind] ?? 0
               return (
                 <li key={kind} className={count ? undefined : 'is-miss'}>
-                  {audioKinds.has(kind) ? <AudioOutlined aria-hidden /> : <FileTextOutlined aria-hidden />}
+                  <Icon name={kindIcons[kind]} />
                   <span>
-                    {materialKindLabels[kind]}
+                    {MATERIAL_LABELS[kind]}
                     <small>{count ? `${count} tệp` : 'Chưa có'}</small>
                   </span>
-                  <Link to={detail} state={songListState(search)} aria-label={`${materialAction(kind, count)} ${materialKindLabels[kind].toLowerCase()} của ${song.title}`}>
+                  <Link to={detail} state={songListState(search)} aria-label={`${materialAction(kind, count)} ${MATERIAL_LABELS[kind].toLowerCase()} của ${song.title}`}>
                     {materialAction(kind, count)}
                   </Link>
                 </li>
@@ -82,8 +88,8 @@ export function SongQuickLook({ song, number, part }: Readonly<{ song: Song; num
             <Button type="primary" href={detail} onClick={go(detail, songListState(search))}>
               Mở chi tiết
             </Button>
-            <Button href={assign} onClick={go(assign)}>
-              Giao bài luyện
+            <Button href={assign} icon={<Icon name="assignment" />} onClick={go(assign)}>
+              {CREATE_ASSIGNMENT_LABEL}
             </Button>
             <Button type="link" disabled={!learnable} onClick={() => setProgressOf(learnable)}>
               Tiến độ học

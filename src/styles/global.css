@@ -1932,13 +1932,13 @@ textarea {
 }
 
 .song-index__number {
-  font-family: var(--hm-font-display);
+  font-family: var(--hm-font-ui);
   font-weight: 600;
-  font-size: 22px;
+  font-size: 14px;
   line-height: 1;
   text-align: right;
   font-variant-numeric: lining-nums;
-  color: var(--hm-text-muted);
+  color: var(--hm-text-body);
   transition: color var(--hm-dur-fast) var(--hm-ease);
 }
 
@@ -3075,8 +3075,35 @@ a.song-next__item:hover {
   list-style-type: '';
 }
 
+/* Rail + quick look leave ~790px at 1366–1440: three even cards, not four narrow ones (G3-15). */
+.song-layout.has-peek .song-cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (min-width: 1680px) {
+  .song-layout.has-peek .song-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .song-cards > li {
   display: flex;
+}
+
+/* "Bộ lọc khác": equal columns (G3-10/16). :not([hidden]) so the closed panel stays hidden. */
+.song-filter-panel__grid:not([hidden]) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1099px) {
+  .song-filter-panel__grid:not([hidden]) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.song-filter-panel__grid .ant-select {
+  width: 100%;
 }
 
 .song-cards__pager {
@@ -3133,13 +3160,14 @@ a.song-next__item:hover {
   position: absolute;
   left: 8px;
   bottom: 6px;
-  padding: 2px 8px 0;
+  padding: 2px 8px;
+  border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-sm);
   background: var(--hm-surface-reading);
-  font-family: var(--hm-font-display);
-  font-size: 24px;
+  font-family: var(--hm-font-ui);
+  font-size: 13px;
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.4;
   color: var(--hm-action-primary);
 }
 
@@ -3274,6 +3302,109 @@ a.song-next__item:hover {
 .song-peek__files .anticon,
 .song-peek__files li.is-miss {
   color: var(--hm-text-muted);
+}
+
+/* The quick look's actions wrap inside 340px instead of clipping. */
+.song-peek__body .ant-btn {
+  max-width: 100%;
+  white-space: normal;
+  height: auto;
+  min-height: 32px;
+}
+
+/* Nơi bài hát được dùng: four groups, each from a Choir Director endpoint. */
+.song-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.song-usage__title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-text-primary);
+}
+
+.song-usage__line,
+.song-usage__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--hm-text-body);
+}
+
+.song-usage__empty {
+  color: var(--hm-text-muted);
+}
+
+.song-usage__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.song-usage__item,
+.song-usage__next {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-sm);
+  background: var(--hm-surface-base);
+  font-size: 13px;
+  color: var(--hm-text-primary);
+  transition: border-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.song-usage__item > span:not(.song-usage__arrow),
+.song-usage__item small,
+.song-usage__next > *:not(.song-usage__arrow) {
+  grid-column: 1;
+  overflow-wrap: anywhere;
+}
+
+.song-usage__item small,
+.song-usage__next > span:not(.song-usage__arrow) {
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.song-usage__item > .song-usage__arrow,
+.song-usage__next > .song-usage__arrow {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  align-self: center;
+  justify-self: end;
+  color: var(--hm-action-primary);
+}
+
+.song-usage__next {
+  background: var(--hm-surface-reading);
+  border-top-color: var(--hm-gilt);
+}
+
+.song-usage__next .ant-tag {
+  justify-self: start;
+}
+
+a.song-usage__item:hover,
+a.song-usage__next:hover {
+  border-color: var(--hm-action-primary);
+  color: var(--hm-text-primary);
+}
+
+.song-usage__assign {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* Staff divider (artifact Patterns): two short staves round a small rose; at most one per reading page. */
@@ -4394,6 +4525,14 @@ html[data-door='close'] .landing-close__window {
 .ct-facts .ct-facts__text {
   font-weight: 400;
   white-space: pre-line;
+}
+
+.ct-facts__para {
+  margin: 0;
+}
+
+.ct-facts__para + .ct-facts__para {
+  margin-top: 8px;
 }
 
 .ct-facts__none {

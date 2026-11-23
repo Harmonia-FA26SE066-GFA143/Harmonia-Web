@@ -1,4 +1,3 @@
-import { AlignLeftOutlined, ArrowRightOutlined, CustomerServiceOutlined } from '@ant-design/icons'
 import { Flex, Pagination, Spin } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { generatePath, Link, useLocation } from 'react-router'
@@ -21,8 +20,8 @@ export interface SongIndexListProps {
 // Rehearsal material stays in the table's count; the index names what a singer looks for first.
 const shownMaterials: { kind: MaterialKind; icon: ReactNode }[] = [
   { kind: 'sheetMusic', icon: <Icon name="sheet-music" /> },
-  { kind: 'lyrics', icon: <AlignLeftOutlined /> },
-  { kind: 'sampleAudio', icon: <CustomerServiceOutlined /> },
+  { kind: 'lyrics', icon: <Icon name="lyrics" /> },
+  { kind: 'sampleAudio', icon: <Icon name="audio" /> },
 ]
 
 /** A material in words, as the "Thiếu tài liệu" filter names it; a missing one is muted, never struck through. */
@@ -112,7 +111,7 @@ export function SongIndexList({
                 ) : (
                   <span />
                 )}
-                <ArrowRightOutlined aria-hidden className="song-index__arrow" />
+                <Icon name="arrow-right" className="song-index__arrow" />
               </li>
             )
           })}

@@ -1,8 +1,7 @@
-import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Flex, Input, Select, TreeSelect, Typography, type InputRef } from 'antd'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { themeTreeData, useCatalogOptions, useLookup, type CatalogOption } from '@/features/system-categories'
-import { FILTER_ALL_PREFIX, resultCountLabel, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { FILTER_ALL_PREFIX, FILTER_RESET_LABEL, filterAllPlaceholder, Icon, resultCountLabel, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { colors, gold, radius, sizes, spacing, typography } from '@/styles/tokens'
 import { materialKindLabels, materialKinds, type SongFilters } from '../types'
 
@@ -100,7 +99,7 @@ export function SongFilterBar({
     {
       key: 'missingMaterial',
       label: 'Thiếu tài liệu',
-      placeholder: 'Không lọc',
+      placeholder: filterAllPlaceholder('tài liệu thiếu'),
       options: materialKinds.map((kind) => ({ value: kind, label: `Chưa có ${materialKindLabels[kind].toLowerCase()}` })),
     },
   ]
@@ -169,7 +168,7 @@ export function SongFilterBar({
         allowClear
         // GET /api/songs refuses a longer keyword (Harmonia-BE SearchSongsRequestValidator.cs:10, MaximumLength(100)).
         maxLength={100}
-        prefix={<SearchOutlined aria-hidden />}
+        prefix={<Icon name="search" />}
         placeholder="Tên bài hát, nhạc sĩ, người viết lời"
         value={search}
         onCompositionStart={() => {
@@ -196,7 +195,7 @@ export function SongFilterBar({
   const filterToggle = (
     <Button
       ref={filterButton}
-      icon={<FilterOutlined />}
+      icon={<Icon name="filter" />}
       aria-expanded={open}
       aria-controls="song-filter-panel"
       onClick={() => setOpen(!open)}
@@ -226,10 +225,10 @@ export function SongFilterBar({
       {/* Kept in the page while shut (hidden), so aria-controls always points at it. */}
       <div
         id="song-filter-panel"
+        // Equal columns from global.css (G3-10/16); the grid only applies while open.
+        className="song-filter-panel__grid"
         hidden={!open}
         style={{
-          display: open ? 'grid' : undefined,
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: spacing.md,
           padding: spacing.md,
           background: colors.background,
@@ -252,7 +251,7 @@ export function SongFilterBar({
             <Button
               key={chip.key}
               style={{ minHeight: sizes.controlHeight, height: 'auto', whiteSpace: 'normal', textAlign: 'start' }}
-              icon={<CloseOutlined aria-hidden />}
+              icon={<Icon name="close" />}
               iconPlacement="end"
               aria-label={`Bỏ lọc ${chip.text}`}
               onClick={() => {
@@ -270,7 +269,7 @@ export function SongFilterBar({
               filterButton.current?.focus()
             }}
           >
-            Xoá tất cả bộ lọc
+            {FILTER_RESET_LABEL}
           </Button>
         </Flex>
       )}

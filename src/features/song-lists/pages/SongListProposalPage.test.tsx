@@ -136,7 +136,7 @@ describe('SongListProposalPage', () => {
     expect(within(picker).getByRole('combobox', { name: 'Mùa phụng vụ' })).toBeVisible()
     expect(within(picker).getByRole('combobox', { name: 'Chủ đề' })).toBeVisible()
 
-    fireEvent.click(within(picker).getByRole('button', { name: 'Xoá tất cả bộ lọc' }))
+    fireEvent.click(within(picker).getByRole('button', { name: 'Xoá bộ lọc' }))
     await waitFor(() => expect(list).toHaveBeenLastCalledWith({ search: '' }, expect.anything()))
     expect(await within(picker).findByRole('button', { name: /Áp dụng gợi ý mùa & loại lễ/ })).toBeInTheDocument()
   })

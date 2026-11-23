@@ -1,5 +1,6 @@
-import { Flex, Input } from 'antd'
-import { spacing } from '@/styles/tokens'
+import { Flex, Input, type InputRef } from 'antd'
+import { useRef } from 'react'
+import { component, spacing } from '@/styles/tokens'
 import type { Song, SongValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
@@ -21,16 +22,19 @@ const clean = (value?: string) => value?.trim() || undefined
  * validator. Classification is edited on the song page.
  */
 export function SongFormDrawer({ open, song, saving = false, titleError, onSubmit, onCancel }: Readonly<SongFormDrawerProps>) {
+  const titleRef = useRef<InputRef>(null)
   return (
     <FormDrawer
       open={open}
-      title={song ? 'Chỉnh sửa bài hát' : 'Thêm bài hát'}
+      // The opener's words (SYS-07): "Chỉnh sửa" on the song page, "Thêm bài hát" in the library.
+      title={song ? 'Chỉnh sửa' : 'Thêm bài hát'}
       okText={song ? 'Lưu thay đổi' : 'Lưu bài hát'}
       cancelText="Hủy"
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      size={640}
+      initialFocusRef={titleRef}
+      size={component.drawer.md}
       destroyOnHidden
       drawerRender={(dom) => (
         <Form<SongValues>
@@ -68,14 +72,14 @@ export function SongFormDrawer({ open, song, saving = false, titleError, onSubmi
           { max: 200, message: 'Tên bài hát tối đa 200 ký tự.' },
         ]}
       >
-        <Input placeholder="Ví dụ: Con Bước Lên Bàn Thờ" />
+        <Input ref={titleRef} placeholder="Ví dụ: Con Bước Lên Bàn Thờ" />
       </Form.Item>
       <Flex wrap gap={spacing.md}>
         <Form.Item label="Nhạc sĩ" name="composer" rules={[{ max: 150, message: 'Tối đa 150 ký tự.' }]} style={{ flex: '1 1 260px' }}>
           <Input placeholder="Ví dụ: Lm. Kim Long" />
         </Form.Item>
         <Form.Item label="Người viết lời" name="lyricist" rules={[{ max: 150, message: 'Tối đa 150 ký tự.' }]} style={{ flex: '1 1 260px' }}>
-          <Input />
+          <Input placeholder="Ví dụ: Xuân Tường" />
         </Form.Item>
       </Flex>
       <Flex wrap gap={spacing.md}>
@@ -87,7 +91,7 @@ export function SongFormDrawer({ open, song, saving = false, titleError, onSubmi
         </Form.Item>
       </Flex>
       <Form.Item label="Ghi chú" name="notes" rules={[{ max: 1000, message: 'Tối đa 1000 ký tự.' }]}>
-        <Input.TextArea rows={3} showCount maxLength={1000} />
+        <Input.TextArea rows={3} showCount maxLength={1000} placeholder="Ví dụ: Hát nhẹ nhàng phần điệp khúc, có thể phân bè S/A" />
       </Form.Item>
     </FormDrawer>
   )

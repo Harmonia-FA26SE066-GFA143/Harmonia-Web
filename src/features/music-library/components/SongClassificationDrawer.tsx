@@ -1,9 +1,8 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Flex, InputNumber, Select, TreeSelect } from 'antd'
 import { themeTreeData, useCatalogOptions, useLookup, useSkillOptions, type CatalogOption } from '@/features/system-categories'
-import { spacing } from '@/styles/tokens'
+import { component, spacing } from '@/styles/tokens'
 import type { SkillRequirementValue, SongClassification, SongClassificationValues } from '../types'
-import { Form, FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer, Icon, SELECT_POPUP_PROPS } from '@/shared/ui'
 
 export interface SongClassificationDrawerProps {
   open: boolean
@@ -54,6 +53,7 @@ function RequirementList({ name, label, addLabel, options }: Readonly<{
                   style={{ flex: 1, margin: 0 }}
                 >
                   <Select
+                    {...SELECT_POPUP_PROPS}
                     showSearch
                     optionFilterProp="label"
                     placeholder="Chọn kỹ năng"
@@ -77,13 +77,13 @@ function RequirementList({ name, label, addLabel, options }: Readonly<{
                 </Form.Item>
                 <Button
                   type="text"
-                  icon={<DeleteOutlined />}
+                  icon={<Icon name="delete" />}
                   aria-label={`Gỡ ${label.toLowerCase()} ${index + 1}`}
                   onClick={() => remove(field.name)}
                 />
               </Flex>
             ))}
-            <Button type="dashed" icon={<PlusOutlined />} onClick={() => add({ isMandatory: false, requiredCount: 1 })} style={{ alignSelf: 'flex-start' }}>
+            <Button type="dashed" icon={<Icon name="add" />} onClick={() => add({ isMandatory: false, requiredCount: 1 })} style={{ alignSelf: 'flex-start' }}>
               {addLabel}
             </Button>
           </Flex>
@@ -115,6 +115,8 @@ export function SongClassificationDrawer({ open, classification, saving = false,
     { name: 'ceremonyTypeIds', label: 'Loại nghi thức', options: ceremonyTypes },
     { name: 'liturgicalSlotIds', label: 'Phần phụng vụ', options: slots },
   ]
+  // "Chọn mùa phụng vụ", "Chọn loại Thánh lễ"…: the label with only its first letter lowered.
+  const placeholderOf = (label: string) => `Chọn ${label.charAt(0).toLowerCase()}${label.slice(1)}`
 
   const requirementValues = (items: SongClassification['vocalRequirements']) =>
     items.map(({ skillId, isMandatory, requiredCount }) => ({ skillId, isMandatory, requiredCount }))
@@ -122,17 +124,19 @@ export function SongClassificationDrawer({ open, classification, saving = false,
   return (
     <FormDrawer
       open={open}
-      title="Chỉnh sửa phân loại"
+      title="Sửa phân loại"
       okText="Lưu phân loại"
       cancelText="Hủy"
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      size={720}
+      size={component.drawer.lg}
       destroyOnHidden
       drawerRender={(dom) => (
         <Form<SongClassificationValues>
           layout="vertical"
+          // Every dimension is optional (SYS-05).
+          requiredMark={false}
           initialValues={{
             liturgicalSeasonIds: classification.liturgicalSeasons.map((ref) => ref.id),
             massTypeIds: classification.massTypes.map((ref) => ref.id),
@@ -162,6 +166,8 @@ export function SongClassificationDrawer({ open, classification, saving = false,
         {multiSelects.map((select) => (
           <Form.Item key={select.name} label={select.label} name={select.name}>
             <Select
+              {...SELECT_POPUP_PROPS}
+              placeholder={placeholderOf(select.label)}
               mode="multiple"
               allowClear
               optionFilterProp="label"
@@ -170,7 +176,7 @@ export function SongClassificationDrawer({ open, classification, saving = false,
           </Form.Item>
         ))}
         <Form.Item label="Chủ đề" name="songThemeIds" extra="Lọc theo một chủ đề cũng ra bài của các chủ đề con.">
-          <TreeSelect multiple allowClear showSearch treeNodeFilterProp="title" treeDefaultExpandAll treeData={themes} />
+          <TreeSelect {...SELECT_POPUP_PROPS} placeholder="Chọn chủ đề" multiple allowClear showSearch treeNodeFilterProp="title" treeDefaultExpandAll treeData={themes} />
         </Form.Item>
       </div>
       <RequirementList name="vocalRequirements" label="Yêu cầu bè giọng" addLabel="Thêm bè giọng" options={vocal} />

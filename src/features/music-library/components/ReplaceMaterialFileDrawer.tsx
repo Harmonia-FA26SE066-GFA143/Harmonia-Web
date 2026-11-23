@@ -1,7 +1,6 @@
-import { UploadOutlined } from '@ant-design/icons'
 import { Alert, Button, Checkbox, Flex, Select, Typography, Upload } from 'antd'
 import { useState } from 'react'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, component, spacing } from '@/styles/tokens'
 import { materialFileProblem } from '../songErrors'
 import {
   materialExtensions,
@@ -11,7 +10,7 @@ import {
   type PlaybackInstrument,
   type SongMaterial,
 } from '../types'
-import { FormDrawer } from '@/shared/ui'
+import { FormDrawer, Icon, SELECT_POPUP_PROPS } from '@/shared/ui'
 
 export interface ReplaceMaterialFileDrawerProps {
   /** The drawer is open while a material is set. */
@@ -60,6 +59,7 @@ export function ReplaceMaterialFileDrawer({ material, saving = false, onSubmit, 
         onCancel()
       }}
       afterClose={reset}
+      size={component.drawer.sm}
       destroyOnHidden
     >
       {material && (
@@ -77,7 +77,7 @@ export function ReplaceMaterialFileDrawer({ material, saving = false, onSubmit, 
               return false
             }}
           >
-            <Button icon={<UploadOutlined />}>{file ? 'Chọn file khác' : 'Chọn file mới'}</Button>
+            <Button icon={<Icon name="upload" />}>{file ? 'Chọn file khác' : 'Chọn file mới'}</Button>
           </Upload>
           {file && !problem && <Typography.Text>File mới: {file.name}</Typography.Text>}
           {problem && <Alert type="error" showIcon title={problem} />}
@@ -86,6 +86,7 @@ export function ReplaceMaterialFileDrawer({ material, saving = false, onSubmit, 
             <Flex vertical gap={spacing.xs}>
               <Typography.Text id="replace-instrument">Nhạc cụ phát trong phòng tập và ứng dụng di động</Typography.Text>
               <Select
+                {...SELECT_POPUP_PROPS}
                 aria-labelledby="replace-instrument"
                 value={instrument}
                 onChange={setInstrument}

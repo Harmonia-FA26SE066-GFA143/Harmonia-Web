@@ -1,4 +1,3 @@
-import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { App, Button, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useRef, useState } from 'react'
@@ -7,7 +6,7 @@ import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
 import { ApiError, requestFailureMessage } from '@/lib/api/errors'
 import { useBackgroundTasks } from '@/shared/tasks/BackgroundTasks'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
+import { CREATE_ASSIGNMENT_LABEL, EmptyState, ErrorState, Icon, LostLeaf, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import { LearningProgressDrawer } from '../components/LearningProgressDrawer'
 import { SongClassificationPanel } from '../components/SongClassificationPanel'
@@ -15,6 +14,7 @@ import { SongClassificationDrawer } from '../components/SongClassificationDrawer
 import { SongFormDrawer } from '../components/SongFormDrawer'
 import { SongInfoPanel } from '../components/SongInfoPanel'
 import { SongMaterialsPanel } from '../components/SongMaterialsPanel'
+import { SongUsagePanel } from '../components/SongUsagePanel'
 import { ReplaceMaterialFileDrawer } from '../components/ReplaceMaterialFileDrawer'
 import { TimedLyricsDrawer } from '../components/TimedLyricsDrawer'
 import { UploadMaterialDrawer, type MaterialFormValues, type PendingMaterial } from '../components/UploadMaterialDrawer'
@@ -136,7 +136,7 @@ export function SongDetailPage() {
 
   const backButton = (
     // The list's filters and page travel with the song (router state), so coming back shows the list as it was.
-    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`${paths.director.library}${listSearchOf(location.state)}`)}>
+    <Button icon={<Icon name="arrow-left" />} onClick={() => navigate(`${paths.director.library}${listSearchOf(location.state)}`)}>
       Về kho bài hát
     </Button>
   )
@@ -150,7 +150,7 @@ export function SongDetailPage() {
           <ErrorState title="Không thể tải bài hát" error={song.error} hasData={song.data !== undefined} onRetry={() => song.refetch()} retrying={song.isFetching} />
         ) : (
           <EmptyState
-            icon={<FileSearchOutlined />}
+            icon={<LostLeaf />}
             title="Không tìm thấy bài hát"
             description="Bài hát không tồn tại, đã bị xoá hoặc đường dẫn không đúng."
             action={backButton}
@@ -317,10 +317,14 @@ export function SongDetailPage() {
         extra={
           <>
             {backButton}
-            <Button danger icon={<DeleteOutlined />} onClick={handleDeleteSong}>
+            {/* Straight to the assignment form with the song picked; PracticePage's ?tab=assign only redirects there. */}
+            <Button icon={<Icon name="assignment" />} onClick={() => navigate(`${paths.director.practiceNew}?songId=${data.id}`)}>
+              {CREATE_ASSIGNMENT_LABEL}
+            </Button>
+            <Button danger icon={<Icon name="delete" />} onClick={handleDeleteSong}>
               Xoá bài hát
             </Button>
-            <Button type="primary" icon={<EditOutlined />} onClick={() => setEditing(true)}>
+            <Button type="primary" icon={<Icon name="edit" />} onClick={() => setEditing(true)}>
               Chỉnh sửa
             </Button>
           </>
@@ -361,15 +365,23 @@ export function SongDetailPage() {
             )}
           </div>
         </section>
-        <aside className="ct-aside" aria-label="Thông tin và phân loại">
+        <aside className="ct-aside" aria-label="Thông tin, nơi dùng và phân loại">
           <section className="hm-preview hm-paper" aria-labelledby="song-info">
             <h2 id="song-info" className="hm-rubric">Thông tin bài hát</h2>
             <SongInfoPanel song={data} />
           </section>
+          <section className="hm-sheet-section" aria-labelledby="song-usage">
+            <div className="hm-sheet-section__head">
+              <h2 id="song-usage" className="hm-rubric">Nơi bài hát được dùng</h2>
+            </div>
+            <div className="ct-sheet-body">
+              <SongUsagePanel song={data} />
+            </div>
+          </section>
           <section className="hm-sheet-section" aria-labelledby="song-classification">
             <div className="hm-sheet-section__head">
               <h2 id="song-classification" className="hm-rubric">Phân loại</h2>
-              <Button type="link" icon={<EditOutlined />} disabled={!classification.data} onClick={() => setClassifying(true)}>
+              <Button type="link" icon={<Icon name="edit" />} disabled={!classification.data} onClick={() => setClassifying(true)}>
                 Sửa phân loại
               </Button>
             </div>

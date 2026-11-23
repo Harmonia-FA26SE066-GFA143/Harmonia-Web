@@ -33,6 +33,8 @@ export type AssignmentScope = 'all' | 'skillGroup' | 'individual'
 export interface PracticeAssignment {
   id: string
   eventId?: string
+  /** The song to practise, when one was attached (`PracticeAssignmentDto.SongId`). */
+  songId?: string
   title: string
   instruction?: string
   scope: AssignmentScope

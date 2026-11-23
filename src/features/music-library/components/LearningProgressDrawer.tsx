@@ -1,8 +1,8 @@
-import { Drawer, Flex, Segmented, Table, Typography, type TableColumnsType } from 'antd'
+import { Flex, Segmented, Table, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
-import { EmptyState, ErrorState, StatusTag, type StatusTagColor } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { EmptyCell, EmptyState, ErrorState, StatusTag, ViewDrawer, type StatusTagColor } from '@/shared/ui'
+import { colors, component, spacing } from '@/styles/tokens'
 import { useLearningProgress } from '../hooks/useSongs'
 import { learningStatusLabels, learningStatuses, type LearningProgress, type LearningStatus, type SongMaterial } from '../types'
 
@@ -44,7 +44,7 @@ function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
             {formatDateTime(updatedAt)}
           </Typography.Text>
         ) : (
-          <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
+          <EmptyCell />
         ),
     },
   ]
@@ -53,6 +53,9 @@ function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
 
   return (
     <Flex vertical gap={spacing.md}>
+      <Typography.Title level={3} style={{ margin: 0, fontSize: 16 }}>
+        {material.title}
+      </Typography.Title>
       <Typography.Text style={{ color: colors.textMuted }}>
         {material.targetSkillName
           ? `Ca viên đang sinh hoạt có kỹ năng ${material.targetSkillName} đã được duyệt.`
@@ -100,8 +103,8 @@ function ProgressList({ material }: Readonly<{ material: SongMaterial }>) {
 /** Choir Director: who has learned a material, as members mark it in the mobile app (FE-09). */
 export function LearningProgressDrawer({ material, onClose }: Readonly<LearningProgressDrawerProps>) {
   return (
-    <Drawer open={Boolean(material)} title={material ? `Tiến độ học: ${material.title}` : undefined} onClose={onClose} size={640} destroyOnHidden>
+    <ViewDrawer open={Boolean(material)} title="Tiến độ học" onClose={onClose} size={component.drawer.md} destroyOnHidden>
       {material && <ProgressList material={material} />}
-    </Drawer>
+    </ViewDrawer>
   )
 }

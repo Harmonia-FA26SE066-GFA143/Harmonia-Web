@@ -1,24 +1,8 @@
-import {
-  BarChartOutlined,
-  BulbOutlined,
-  CustomerServiceOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  DownloadOutlined,
-  FieldTimeOutlined,
-  ExportOutlined,
-  FileTextOutlined,
-  FolderOpenOutlined,
-  FormOutlined,
-  PlayCircleOutlined,
-  ReadOutlined,
-  SwapOutlined,
-  UploadOutlined,
-} from '@ant-design/icons'
 import { Button, Divider, Flex, Image, Tag, Tooltip, Typography, Upload } from 'antd'
 import dayjs from 'dayjs'
-import { Fragment, type ComponentType } from 'react'
+import { Fragment } from 'react'
 import { parseUtc } from '@/lib/api/dates'
+import { Icon, type IconName } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import {
   fileExtension,
@@ -81,12 +65,12 @@ function details(material: SongMaterial) {
     .join(' · ')
 }
 
-const kindIcons:Record<MaterialKind, ComponentType> = {
-  sheetMusic: ReadOutlined,
-  lyrics: FileTextOutlined,
-  sampleAudio: CustomerServiceOutlined,
-  rehearsalMaterial: FolderOpenOutlined,
-  interactiveScore: PlayCircleOutlined,
+const kindIcons: Record<MaterialKind, IconName> = {
+  sheetMusic: 'sheet-music',
+  lyrics: 'lyrics',
+  sampleAudio: 'audio',
+  rehearsalMaterial: 'folder-open',
+  interactiveScore: 'play',
 }
 
 function UploadButton({ kind, loading, label, hintId, onPick }: Readonly<{
@@ -107,7 +91,7 @@ function UploadButton({ kind, loading, label, hintId, onPick }: Readonly<{
       }}
     >
       <Button
-        icon={<UploadOutlined />}
+        icon={<Icon name="upload" />}
         loading={loading}
         aria-label={`${label}: ${materialKindLabels[kind]}`}
         aria-describedby={hintId}
@@ -131,7 +115,6 @@ function MaterialRow({
   extractingIds,
   onTimedLyrics,
 }: Readonly<{ material: SongMaterial; readingLayout: boolean } & MaterialActions>) {
-  const Icon = kindIcons[material.kind]
   return (
     <Flex component="li" vertical gap={spacing.sm} style={{ padding: spacing.md, background: colors.background, borderRadius: radius.md }}>
       <Flex wrap align="center" gap={spacing.md}>
@@ -146,7 +129,7 @@ function MaterialRow({
           />
         ) : (
           <span aria-hidden style={{ color: colors.primary, fontSize: 20 }}>
-            <Icon />
+            <Icon name={kindIcons[material.kind]} />
           </span>
         )}
         <Flex vertical style={{ flex: readingLayout ? '1 1 calc(100% - 80px)' : '1 1 200px', minWidth: 0 }}>
@@ -167,13 +150,13 @@ function MaterialRow({
         {/* MIDI and MusicXML do not open in a browser tab; they are downloaded. */}
         {material.url &&
           (rendersPlayback(material.fileName) ? (
-            <Button type="link" icon={<DownloadOutlined />} href={material.url} aria-label={`Tải xuống ${material.title}`}>
+            <Button type="link" icon={<Icon name="download" />} href={material.url} aria-label={`Tải xuống ${material.title}`}>
               Tải xuống
             </Button>
           ) : (
             <Button
               type="link"
-              icon={<ExportOutlined />}
+              icon={<Icon name="export" />}
               href={material.url}
               target="_blank"
               rel="noopener noreferrer"
@@ -184,7 +167,7 @@ function MaterialRow({
           ))}
         {onExtractLyrics && material.kind === 'sheetMusic' && material.url && (
           <Button
-            icon={<BulbOutlined />}
+            icon={<Icon name="liturgy-tip" />}
             loading={extractingIds?.has(material.id)}
             onClick={() => onExtractLyrics(material)}
             aria-label={`Trích lời từ ${material.title}`}
@@ -193,25 +176,25 @@ function MaterialRow({
           </Button>
         )}
         {onTimedLyrics && supportsTimedLyrics(material) && (
-          <Button icon={<FieldTimeOutlined />} onClick={() => onTimedLyrics(material)} aria-label={`Soạn lời theo thời gian cho ${material.title}`}>
+          <Button icon={<Icon name="history" />} onClick={() => onTimedLyrics(material)} aria-label={`Soạn lời theo thời gian cho ${material.title}`}>
             Lời theo thời gian
           </Button>
         )}
         {onProgress && (
-          <Button icon={<BarChartOutlined />} onClick={() => onProgress(material)} aria-label={`Xem tiến độ học ${material.title}`}>
-            Xem tiến độ học
+          <Button icon={<Icon name="report" />} onClick={() => onProgress(material)} aria-label={`Xem tiến độ học ${material.title}`}>
+            Tiến độ học
           </Button>
         )}
         {/* Icon-only actions: the tooltip shows on hover and keyboard focus what the aria-label says. */}
         {/* Typed lyrics have no file to replace; they are edited as text. */}
         {onReplace && material.lyricsText === null && (
           <Tooltip title="Thay file" trigger={['hover', 'focus']}>
-            <Button type="text" icon={<SwapOutlined />} onClick={() => onReplace(material)} aria-label={`Thay file ${material.title}`} />
+            <Button type="text" icon={<Icon name="swap" />} onClick={() => onReplace(material)} aria-label={`Thay file ${material.title}`} />
           </Tooltip>
         )}
         {onEdit && (
           <Tooltip title="Sửa tài liệu" trigger={['hover', 'focus']}>
-            <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
+            <Button type="text" icon={<Icon name="edit" />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
           </Tooltip>
         )}
         {onDelete && (
@@ -219,7 +202,7 @@ function MaterialRow({
             <Button
               type="text"
               danger
-              icon={<DeleteOutlined />}
+              icon={<Icon name="delete" />}
               onClick={() => onDelete(material)}
               aria-label={`Xoá ${material.title}`}
             />
@@ -266,7 +249,7 @@ export function SongMaterialsPanel({ materials, readingLayout = false, uploading
                 </Typography.Title>
                 <Flex gap={spacing.xs}>
                   {kind === 'lyrics' && onTypeLyrics && (
-                    <Button icon={<FormOutlined />} onClick={onTypeLyrics}>
+                    <Button icon={<Icon name="edit" />} onClick={onTypeLyrics}>
                       Gõ lời
                     </Button>
                   )}

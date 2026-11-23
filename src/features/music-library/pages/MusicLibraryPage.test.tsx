@@ -88,7 +88,10 @@ describe('MusicLibraryPage', () => {
       expect.objectContaining({ search: 'không có' }),
       expect.objectContaining({ pageNumber: 1, pageSize: 24 }),
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Xoá tất cả bộ lọc' }))
+    // The filter bar and the no-results state share FILTER_RESET_LABEL (G3-17); either clears everything.
+    const resets = screen.getAllByRole('button', { name: 'Xoá bộ lọc' })
+    expect(resets).toHaveLength(2)
+    fireEvent.click(resets[0])
     expect(await screen.findByText('Con Bước Lên Bàn Thờ')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Tìm bài hát' })).toHaveValue('')
   })
@@ -272,5 +275,35 @@ describe('MusicLibraryPage', () => {
     expect(screen.getByRole('button', { name: /Xin Vâng/ })).toHaveAttribute('aria-pressed', 'true')
     expect(within(peek).getByRole('heading', { name: 'Xin Vâng' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Lọc nhanh' })).toBeInTheDocument()
+  })
+
+  it('shows score-card skeletons, not the empty state, while the grid loads (G3-02)', async () => {
+    localStorage.clear()
+    vi.spyOn(songsApi, 'listSongs').mockReturnValue(new Promise(() => {}))
+    renderPage(<MusicLibraryPage />, '/director/library')
+
+    const skeleton = await screen.findByLabelText('Đang tải kho bài hát')
+    expect(skeleton).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByRole('heading', { name: 'Chưa có bài hát nào' })).not.toBeInTheDocument()
+  })
+
+  it('names all five material kinds on the card and in the quick look, and assigns practice directly (G3-15)', async () => {
+    localStorage.clear()
+    const withRehearsal: Song = {
+      ...song('s1', 'Con Bước Lên Bàn Thờ'),
+      materialCounts: { sheetMusic: 1, lyrics: 1, sampleAudio: 0, rehearsalMaterial: 2, interactiveScore: 0 },
+    }
+    vi.spyOn(songsApi, 'listSongs').mockResolvedValue(page([withRehearsal]))
+    vi.spyOn(songsApi, 'listMaterials').mockResolvedValue([])
+    renderPage(<MusicLibraryPage />, '/director/library')
+
+    const card = await screen.findByRole('button', { name: /Con Bước Lên Bàn Thờ/ })
+    const peek = screen.getByRole('complementary', { name: 'Xem nhanh bài hát' })
+    for (const label of ['Bản nhạc', 'Lời bài hát', 'Audio mẫu', 'Tài liệu tập luyện', 'Bản nhạc tương tác']) {
+      expect(card).toHaveTextContent(label)
+      expect(within(peek).getByText(label)).toBeInTheDocument()
+    }
+    expect(within(peek).getByText('2 tệp')).toBeInTheDocument()
+    expect(within(peek).getByRole('link', { name: /Giao bài tập/ })).toHaveAttribute('href', '/director/practice/new?songId=s1')
   })
 })
