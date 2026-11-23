@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
@@ -8,6 +8,7 @@ import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import { programPage, testProgram } from '@/test/programs'
 import * as participationApi from '../api/participationApi'
+import { ProgramPicker } from '../components/ResponseSummary'
 import type { ParticipationRequest } from '../types'
 import { ParticipationPage } from './ParticipationPage'
 
@@ -151,8 +152,16 @@ describe('ParticipationPage', () => {
     expect(within(parts).getAllByText('Chưa mời ai')).toHaveLength(2)
     expect(within(parts).getByText(/ít xác nhận nhất: 0 trên 1 người được mời/)).toHaveTextContent('Bè Bass')
     expect(within(parts).getByRole('link', { name: /Mở phân công/ })).toHaveAttribute('href', '/director/roster?programId=p2')
-  })
+    // Each part pairs its glyph with the label (never colour alone).
+    expect(within(parts).getByText('Soprano').parentElement?.querySelector('.hm-icon')).not.toBeNull()
 
+    // Muted placeholders instead of bare dashes (G2-11): no voice part, no answer time, no note.
+    const organist = screen.getByRole('row', { name: /Maria Nguyễn Thu Hướng/ })
+    expect(within(organist).getByText('Chưa phân bè')).toBeInTheDocument()
+    const unanswered = screen.getByRole('row', { name: /Têrêsa Lê Thu/ })
+    expect(within(unanswered).getAllByText('Chưa cập nhật')).toHaveLength(2)
+    expect(screen.queryByText('—')).toBeNull()
+  })
   it('counts and filters the answers, shows notes, and sends more only to members not asked yet', async () => {
     vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([
       asked('m1', 'Maria Nguyễn Thu Hướng', { response: 'confirmed', respondedAt: requestedAt }),
@@ -262,6 +271,18 @@ describe('ParticipationPage', () => {
     fireEvent.click(retry)
     fireEvent.click(await screen.findByRole('button', { name: 'Xác nhận hộ' }))
     await waitFor(() => expect(confirmAll).toHaveBeenCalledTimes(2))
+  })
+
+  it('opens the program list next to its picker, not loose in the page (G4-16)', async () => {
+    const program = testProgram({ id: 'p2', eventName: 'Lễ Bổn mạng', date: '2026-12-01' })
+    render(
+      <div className="ant-card">
+        <ProgramPicker program={program} programs={[program]} today="2026-11-23" onPick={() => {}} />
+      </div>,
+    )
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Thánh lễ' }))
+    expect((await screen.findByRole('listbox')).closest('.ant-card')).not.toBeNull()
   })
 
   it('does not send more for a program that is already past', async () => {

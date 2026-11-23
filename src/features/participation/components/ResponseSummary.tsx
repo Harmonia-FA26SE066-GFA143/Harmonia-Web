@@ -1,6 +1,6 @@
 import { Select } from 'antd'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
-import { SummaryStrip } from '@/shared/ui'
+import { SELECT_POPUP_PROPS, SummaryStrip } from '@/shared/ui'
 import { participationResponseLabels, type ParticipationResponse } from '../types'
 
 export type ResponseCounts = Record<ParticipationResponse | 'none' | 'sent', number>
@@ -38,6 +38,7 @@ export interface ProgramPickerProps {
 export function ProgramPicker({ program, programs, today, onPick }: Readonly<ProgramPickerProps>) {
   return (
     <Select
+      {...SELECT_POPUP_PROPS}
       aria-label="Thánh lễ"
       showSearch
       optionFilterProp="label"

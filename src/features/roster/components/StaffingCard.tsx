@@ -1,8 +1,18 @@
-import { DeleteOutlined, DownOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
-import { App, Button, Card, Dropdown, Flex, Input, InputNumber, Select, Tag, Typography, type TableColumnsType } from 'antd'
+import { App, Button, Card, Dropdown, Flex, Input, InputNumber, Select, Tag, Typography, type InputRef, type TableColumnsType } from 'antd'
 import { useRef, useState, type ReactNode } from 'react'
-import { CardTitle, FormDrawer, SaveButton, SectionSkeleton, StatusTag, useJustSaved } from '@/shared/ui'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import {
+  ACTIONS_COLUMN_TITLE,
+  CANCEL_LABEL,
+  CardTitle,
+  FormDrawer,
+  Icon,
+  SaveButton,
+  SectionSkeleton,
+  SELECT_POPUP_PROPS,
+  StatusTag,
+  useJustSaved,
+} from '@/shared/ui'
+import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 import {
   useAddAssignment,
   usePersonnelRequirements,
@@ -85,6 +95,7 @@ export function StaffingCard({
   const chips = useRef(new Map<string, HTMLElement>())
   const [noting, setNoting] = useState<RosterAssignment>()
   const [note, setNote] = useState('')
+  const noteInputRef = useRef<InputRef>(null)
 
   const place = song ? `“${song.title}”` : 'cả buổi lễ'
   const editable = !locked && !linesLocked
@@ -125,7 +136,7 @@ export function StaffingCard({
       content: `${line.memberName} sẽ không còn phục vụ ${line.skillName} cho ${place}.`,
       okText: 'Gỡ khỏi vị trí',
       okButtonProps: { danger: true },
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       // Enter on a destructive dialog must not run it.
       focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
@@ -250,6 +261,7 @@ export function StaffingCard({
                 <span key={line.id} style={{ display: 'inline-grid' }}>
                   <Dropdown
                     trigger={['click']}
+                    getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer}
                     menu={{
                       // Once the whole-service lines are finalized early, a member can only be replaced.
                       items: [
@@ -283,11 +295,12 @@ export function StaffingCard({
                       {label}
                       {line.source === 'suggested' && <Typography.Text style={muted}>· gợi ý</Typography.Text>}
                       {line.hasRehearsalConflict && <Typography.Text style={muted}>· trùng buổi tập</Typography.Text>}
-                      <DownOutlined aria-hidden />
+                      <Icon name="chevron-down" />
                     </Button>
                   </Dropdown>
                   {inReplace && (
                     <Select
+                      {...SELECT_POPUP_PROPS}
                       autoFocus
                       defaultOpen
                       showSearch
@@ -328,6 +341,7 @@ export function StaffingCard({
                 {gap && <Typography.Text style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{gap}</Typography.Text>}
                 {editable && isSaved && (
                   <Select
+                    {...SELECT_POPUP_PROPS}
                     showSearch
                     optionFilterProp="label"
                     value={null}
@@ -361,14 +375,14 @@ export function StaffingCard({
       ? [
           {
             key: 'remove',
-            title: '',
+            title: ACTIONS_COLUMN_TITLE,
             width: 56,
             align: 'right' as const,
             render: (_: unknown, row: PersonnelRequirement) => (
               <Button
                 type="text"
                 danger
-                icon={<DeleteOutlined />}
+                icon={<Icon name="delete" />}
                 onClick={() => change(rows.filter((item) => item.skillId !== row.skillId))}
                 aria-label={`Bỏ yêu cầu ${row.skillName}`}
               />
@@ -395,13 +409,13 @@ export function StaffingCard({
           <Flex gap={spacing.xs}>
             {dirty && (
               <Button onClick={() => setDraft(undefined)} disabled={save.isPending}>
-                Hủy
+                {CANCEL_LABEL}
               </Button>
             )}
             <SaveButton
               saved={justSaved && !dirty}
               type="primary"
-              icon={justSaved && !dirty ? undefined : <SaveOutlined />}
+              icon={justSaved && !dirty ? undefined : <Icon name="save" />}
               onClick={handleSave}
               loading={save.isPending}
               disabled={!dirty}
@@ -441,6 +455,7 @@ export function StaffingCard({
           {editable && (
             <Flex wrap gap={spacing.sm}>
               <Select
+                {...SELECT_POPUP_PROPS}
                 allowClear
                 showSearch
                 optionFilterProp="label"
@@ -452,7 +467,7 @@ export function StaffingCard({
                 style={{ flex: '1 1 200px', maxWidth: 260, minWidth: 0 }}
               />
               <Button
-                icon={<PlusOutlined />}
+                icon={<Icon name="add" />}
                 disabled={!newSkillId}
                 onClick={() => {
                   const skill = skills.find((item) => item.id === newSkillId)
@@ -470,7 +485,8 @@ export function StaffingCard({
         open={Boolean(noting)}
         title="Ghi chú vai"
         okText="Lưu ghi chú"
-        cancelText="Hủy"
+        size={component.drawer.sm}
+        initialFocusRef={noteInputRef}
         okButtonProps={{ loading: updateNote.isPending }}
         cancelButtonProps={{ disabled: updateNote.isPending }}
         onOk={handleNote}
@@ -483,7 +499,7 @@ export function StaffingCard({
               {noting.memberName} · {noting.skillName} · {place}
             </Typography.Text>
             <Input
-              autoFocus
+              ref={noteInputRef}
               value={note}
               maxLength={200}
               showCount

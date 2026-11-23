@@ -1,4 +1,3 @@
-import { BellOutlined, CheckOutlined, ReloadOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { Alert, App, Avatar, Button, Card, Flex, Input, Popconfirm, Segmented, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
@@ -7,7 +6,23 @@ import { PickedProgramFeedback, usePickedProgram } from '@/features/liturgical-p
 import { NoChoirNotice } from '@/features/choirs'
 import { useChoirMembers } from '@/features/members'
 import { formatDateTime, vietnamToday } from '@/lib/api/dates'
-import { EmptyState, ErrorState, inVoicePart, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, voiceParts, type StatusTagColor } from '@/shared/ui'
+import {
+  CANCEL_LABEL,
+  EmptyCell,
+  EmptyChoir,
+  EmptyState,
+  EmptyWeek,
+  ErrorState,
+  Icon,
+  inVoicePart,
+  NoFilterResults,
+  PageHeader,
+  SectionSkeleton,
+  StatusTag,
+  UnassignedVoiceCell,
+  voiceParts,
+  type StatusTagColor,
+} from '@/shared/ui'
 import { nameInitial } from '@/shared/utils/personName'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
@@ -58,7 +73,7 @@ const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<Participa
   {
     key: 'part',
     title: 'Bè',
-    render: (_, request) => partsOf(skillsOf.get(request.memberId) ?? []) || <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>,
+    render: (_, request) => partsOf(skillsOf.get(request.memberId) ?? []) || <UnassignedVoiceCell />,
   },
   {
     key: 'response',
@@ -75,14 +90,13 @@ const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<Participa
   {
     key: 'respondedAt',
     title: 'Thời điểm',
-    render: (_, request) => (
-      <Typography.Text>{request.respondedAt ? formatDateTime(request.respondedAt) : '—'}</Typography.Text>
-    ),
+    render: (_, request) =>
+      request.respondedAt ? <Typography.Text>{formatDateTime(request.respondedAt)}</Typography.Text> : <EmptyCell />,
   },
   {
     key: 'note',
     title: 'Ghi chú',
-    render: (_, request) => request.note ?? <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>,
+    render: (_, request) => request.note ?? <EmptyCell />,
   },
 ]
 
@@ -157,7 +171,7 @@ export function ParticipationPage() {
     })
 
   const sendButton = (
-    <Button type="primary" icon={<SendOutlined />} onClick={() => setPicking(true)} disabled={participation.data === undefined}>
+    <Button type="primary" icon={<Icon name="send" />} onClick={() => setPicking(true)} disabled={participation.data === undefined}>
       Gửi yêu cầu xác nhận
     </Button>
   )
@@ -182,7 +196,7 @@ export function ParticipationPage() {
       {programs.data !== undefined && !program && !searchParams.get('programId') && (
         <>
           <NoChoirNotice />
-          <EmptyState title="Chưa có chương trình phụng vụ" description="Yêu cầu xác nhận tham gia được gửi theo từng chương trình." />
+          <EmptyState icon={<EmptyWeek />} title="Chưa có chương trình phụng vụ" description="Yêu cầu xác nhận tham gia được gửi theo từng chương trình." />
         </>
       )}
       {program && (
@@ -224,6 +238,7 @@ export function ParticipationPage() {
           )}
           {participation.data !== undefined && requests.length === 0 && (
             <EmptyState
+              icon={<EmptyChoir />}
               title="Chưa gửi yêu cầu xác nhận"
               description={
                 isPast
@@ -245,7 +260,7 @@ export function ParticipationPage() {
                       <Input
                         id="participation-search"
                         allowClear
-                        prefix={<SearchOutlined aria-hidden />}
+                        prefix={<Icon name="search" />}
                         placeholder="Họ tên hoặc kỹ năng…"
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
@@ -257,17 +272,17 @@ export function ParticipationPage() {
                         Cập nhật lúc {dayjs(participation.dataUpdatedAt).format('HH:mm')}
                       </Typography.Text>
                       <Button
-                        icon={<ReloadOutlined />}
+                        icon={<Icon name="refresh" />}
                         onClick={() => participation.refetch()}
                         loading={participation.isFetching && !send.isPending}
                       >
                         Làm mới
                       </Button>
-                      <Button icon={<SendOutlined />} onClick={() => setPicking(true)} disabled={isPast || send.isPending}>
+                      <Button icon={<Icon name="send" />} onClick={() => setPicking(true)} disabled={isPast || send.isPending}>
                         Gửi thêm cho thành viên chưa được mời
                       </Button>
                       {counts.none > 0 && !isPast && (
-                        <Button icon={<BellOutlined />} onClick={handleRemind} loading={remind.isPending}>
+                        <Button icon={<Icon name="notification" />} onClick={handleRemind} loading={remind.isPending}>
                           Nhắc người chưa phản hồi
                         </Button>
                       )}
@@ -276,10 +291,10 @@ export function ParticipationPage() {
                           title={`Xác nhận hộ ${counts.none} thành viên chưa phản hồi?`}
                           description="Phản hồi Không tham gia và Chưa chắc được giữ nguyên. Thành viên không nhận thông báo."
                           okText="Xác nhận hộ"
-                          cancelText="Hủy"
+                          cancelText={CANCEL_LABEL}
                           onConfirm={handleConfirmAll}
                         >
-                          <Button icon={<CheckOutlined />} loading={confirmAll.isPending}>
+                          <Button icon={<Icon name="check" />} loading={confirmAll.isPending}>
                             Xác nhận hộ người chưa phản hồi
                           </Button>
                         </Popconfirm>
