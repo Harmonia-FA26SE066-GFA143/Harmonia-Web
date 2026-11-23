@@ -1,5 +1,5 @@
 import { Button, Drawer, Flex, Grid, Layout, Menu, type MenuProps } from 'antd'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { BrandMark, Icon, OfflineNotice } from '@/shared/ui'
@@ -41,9 +41,18 @@ function Brand() {
   )
 }
 
+/** Below 1024px the two-band running head no longer fits an Admin's six areas; the page list moves into a drawer. */
+const belowDesktopQuery = '(max-width: 1023px)'
+const matchesBelowDesktop = () => window.matchMedia(belowDesktopQuery).matches
+const subscribeBelowDesktop = (onChange: () => void) => {
+  const query = window.matchMedia(belowDesktopQuery)
+  query.addEventListener('change', onChange)
+  return () => query.removeEventListener('change', onChange)
+}
+
 /**
  * Authenticated application frame: the running head (areas, the area's pages, notifications, account) over the page
- * content and the workspace ground. Below the lg breakpoint (992px) the page list moves into a drawer.
+ * content and the workspace ground. Below 1024px the page list moves into a drawer.
  *
  * On `/change-password`, enters Focused Security Mode when the user must replace their initial password
  * (`isPasswordChangeRequired`) or when there is no session (the confirmation after a completed change): renders only
@@ -54,7 +63,8 @@ export function AppShell({ children }: Readonly<{ children?: ReactNode }>) {
   const location = useLocation()
   const navigate = useNavigate()
   const screens = Grid.useBreakpoint()
-  const isCompact = screens.lg === false
+  const isBelowDesktop = useSyncExternalStore(subscribeBelowDesktop, matchesBelowDesktop)
+  const isCompact = screens.lg === false || isBelowDesktop
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 

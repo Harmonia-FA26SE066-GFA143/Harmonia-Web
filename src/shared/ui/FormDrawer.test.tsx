@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { Button, Input, type InputRef } from 'antd'
 import { useRef, useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+import { spacing } from '@/styles/tokens'
 import { FormDrawer } from './FormDrawer'
 
 describe('FormDrawer', () => {
@@ -42,6 +43,19 @@ describe('FormDrawer', () => {
 
     expect(screen.getByRole('button', { name: 'Hủy' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
+  })
+
+  it('clamps the 720 tier to the window and keeps the body clearance', () => {
+    render(
+      <FormDrawer open size={720} title="Sửa" okText="Lưu" onOk={() => {}} onCancel={() => {}}>
+        <p>Nội dung</p>
+      </FormDrawer>,
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Sửa' })
+    const wrapper = dialog.closest<HTMLElement>('.ant-drawer-content-wrapper')
+    expect(wrapper?.style.maxWidth).toBe('100vw')
+    expect(wrapper).toHaveStyle({ width: '720px' })
+    expect(dialog.querySelector('.ant-drawer-body')).toHaveStyle({ paddingBottom: `${spacing.lg}px` })
   })
 
   it('focuses initialFocusRef on initial open={true} mount and on false -> true transition (G3-13)', async () => {

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { spacing } from '@/styles/tokens'
 import { ViewDrawer } from './ViewDrawer'
 
 describe('ViewDrawer', () => {
@@ -18,6 +19,19 @@ describe('ViewDrawer', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Đóng' }))
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('clamps the 640 tier to the window and keeps the body clearance', () => {
+    render(
+      <ViewDrawer open title="Chi tiết" onClose={() => {}}>
+        <p>Nội dung</p>
+      </ViewDrawer>,
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Chi tiết' })
+    const wrapper = dialog.closest<HTMLElement>('.ant-drawer-content-wrapper')
+    expect(wrapper?.style.maxWidth).toBe('100vw')
+    expect(wrapper).toHaveStyle({ width: '640px' })
+    expect(dialog.querySelector('.ant-drawer-body')).toHaveStyle({ paddingBottom: `${spacing.lg}px` })
   })
 
   it('omits footer when footer={null}', () => {

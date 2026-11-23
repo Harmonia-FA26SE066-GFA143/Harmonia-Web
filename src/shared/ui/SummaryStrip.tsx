@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { UNKNOWN_METRIC_LABEL } from './glossary'
 
 export interface SummaryCell {
@@ -23,7 +23,8 @@ export function SummaryStrip({
   unknownLabel = UNKNOWN_METRIC_LABEL,
 }: Readonly<{ cells: SummaryCell[]; label: string; unknownLabel?: string }>) {
   return (
-    <dl className="hm-summary" aria-label={label} style={{ gridTemplateColumns: `repeat(${cells.length}, minmax(0, 1fr))` }}>
+    // The column count goes through a variable, so global.css can fold the strip to two columns and one on narrow screens.
+    <dl className="hm-summary" aria-label={label} style={{ '--hm-summary-cols': cells.length } as CSSProperties}>
       {cells.map((cell) => {
         const hasValue = cell.value !== undefined && Number.isFinite(cell.value)
         const waiting = cell.waiting !== undefined && hasValue && (cell.value as number) > 0

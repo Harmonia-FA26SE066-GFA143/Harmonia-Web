@@ -98,6 +98,40 @@ describe('AppShell', () => {
     await waitFor(() => expect(strip).not.toHaveClass('has-more-end'))
   })
 
+  it.each([
+    [622, false],
+    [623, true],
+  ])('fades the end of the five-page activity strip only past the 2px tolerance (list %ipx in a 620px strip)', async (listWidth, faded) => {
+    setViewportWidth(1280)
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('hm-tabs') ? 620 : 0
+    })
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('hm-tabs__list') ? listWidth : 0
+    })
+    renderShellAt('/director/rehearsals')
+
+    const pages = await screen.findByRole('navigation', { name: 'Các trang của Hoạt động ca đoàn' })
+    const strip = pages.querySelector('.hm-tabs')
+    expect(strip).not.toBeNull()
+    if (faded) await waitFor(() => expect(strip).toHaveClass('has-more-end'))
+    else await waitFor(() => expect(strip).not.toHaveClass('has-more-end'))
+  })
+
+  it('keeps the running head at 1024px', async () => {
+    setViewportWidth(1024)
+    renderShellAt('/director/rehearsals')
+    expect(await screen.findByRole('navigation', { name: 'Các trang của Hoạt động ca đoàn' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Mở menu điều hướng' })).toBeNull()
+  })
+
+  it('shows the compact drawer trigger instead of the running head at 768px', async () => {
+    setViewportWidth(768)
+    renderShellAt('/director/rehearsals')
+    expect(await screen.findByRole('button', { name: 'Mở menu điều hướng' })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Các trang của Hoạt động ca đoàn' })).toBeNull()
+  })
+
   it('marks an area with something waiting, and shows today’s season and the next Mass in the ivory band', async () => {
     setViewportWidth(1440)
     const today = dayjs().format('YYYY-MM-DD')

@@ -456,7 +456,6 @@ textarea.ant-input {
   color: var(--hm-text-muted);
 }
 
-/* The type scale stops at 600; `<strong>` (antd Typography `strong`) would otherwise take the browser's 700. */
 strong,
 b {
   font-weight: 600;
@@ -743,9 +742,10 @@ textarea {
 
 .hm-brand {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 24px;
+  font-weight: 700;
+  font-size: 20px;
   line-height: 1;
+  letter-spacing: -0.02em;
   color: var(--hm-text-on-brand);
   view-transition-name: hm-brand;
 }
@@ -894,7 +894,9 @@ textarea {
   mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
 }
 
+/* Measured at its true width (RunningHead `mark`): never shrinks below its tabs. */
 .hm-tabs__list {
+  flex: 0 0 auto;
   display: flex;
   align-items: stretch;
   gap: 16px;
@@ -1051,7 +1053,8 @@ textarea {
  * letters, so the name still reads above it. One staged scene: the name rises, then the window.
  */
 .landing-hero {
-  --name: min(25vw, 380px);
+  /* Be Vietnam Pro sets "Harmonia" about 4.7em wide (Cormorant was 3.9em): 18vw keeps it inside the viewport. */
+  --name: min(18vw, 280px);
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -1070,10 +1073,10 @@ textarea {
   text-align: center;
   white-space: nowrap;
   font-family: var(--hm-font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--name);
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   color: var(--hm-text-on-media);
   pointer-events: none;
   animation: landing-rise var(--hm-dur-reveal) var(--hm-ease) both;
@@ -1234,7 +1237,7 @@ textarea {
   color: var(--hm-text-muted);
 }
 
-/* A date as the songbook prints it: the day in the display serif over a small label. */
+/* A date as the songbook prints it: the day in the display weight over a small label. */
 .hm-date {
   display: flex;
   flex-direction: column;
@@ -1245,8 +1248,9 @@ textarea {
 
 .hm-date b {
   font-family: var(--hm-font-display);
-  font-size: 26px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
@@ -1499,9 +1503,10 @@ textarea {
 .next-mass__name {
   margin: 2px 0;
   font-family: var(--hm-font-display);
-  font-size: 26px;
-  font-weight: 600;
-  line-height: 1.15;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: -0.02em;
   color: var(--hm-text-on-brand);
 }
 
@@ -1761,9 +1766,10 @@ textarea {
 
 .ordo-day {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 36px;
-  line-height: 1;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-action-primary);
 }
@@ -1771,9 +1777,10 @@ textarea {
 .ordo-name {
   display: block;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 1.2;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   font-variant-numeric: lining-nums;
 }
 
@@ -1821,9 +1828,10 @@ textarea {
 .ordo-count {
   display: block;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 72px;
-  line-height: 0.95;
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-action-primary);
 }
@@ -1945,8 +1953,9 @@ textarea {
 .song-index__title {
   font-family: var(--hm-font-display);
   font-weight: 600;
-  font-size: 24px;
-  line-height: 1.2;
+  font-size: 18px;
+  line-height: 1.32;
+  letter-spacing: -0.01em;
   font-variant-numeric: lining-nums;
   overflow-wrap: anywhere;
   color: var(--hm-text-primary);
@@ -2017,9 +2026,10 @@ textarea {
 .ant-typography.landing-story__heading {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 56px;
-  line-height: 1.06;
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
@@ -2046,9 +2056,10 @@ textarea {
 
 .landing-chapter__numeral {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 44px;
-  line-height: 1;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   color: var(--hm-text-muted);
   transition: color var(--hm-dur-base) var(--hm-ease);
 }
@@ -2056,9 +2067,10 @@ textarea {
 .landing-chapter__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 44px;
-  line-height: 1.1;
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
   color: var(--hm-text-muted);
   transition: color var(--hm-dur-base) var(--hm-ease);
 }
@@ -2129,9 +2141,10 @@ textarea {
 .landing-sheet__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 30px;
-  line-height: 1.15;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-text-primary);
 }
 
@@ -2171,7 +2184,7 @@ textarea {
 .landing-sheet__song {
   font-family: var(--hm-font-display);
   font-weight: 600;
-  font-size: 20px;
+  font-size: 16px;
   color: var(--hm-text-primary);
   white-space: nowrap;
 }
@@ -2215,9 +2228,10 @@ textarea {
   min-height: 32px;
   margin: 24px 0 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 26px;
-  line-height: 1.2;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-action-primary);
 }
 
@@ -2258,12 +2272,13 @@ textarea {
   display: block;
 }
 
-/* Status pages: the code set in the display serif. */
+/* Status pages: the code set large in the display weight. */
 .ant-result .ant-result-title {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 56px;
-  line-height: 1.1;
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
 }
 
@@ -2407,9 +2422,10 @@ textarea {
 
 .hm-summary__figure {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 32px;
-  line-height: 1.1;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
@@ -2490,9 +2506,10 @@ textarea {
 .hm-preview__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 28px;
-  line-height: 1.15;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-text-primary);
 }
 
@@ -2568,8 +2585,9 @@ textarea {
 
 .hm-week__head b {
   font-family: var(--hm-font-display);
-  font-size: 24px;
-  line-height: 1;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
   color: var(--hm-text-primary);
   font-variant-numeric: lining-nums;
 }
@@ -2688,8 +2706,8 @@ textarea {
 
 .hm-roster-count {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 20px;
+  font-weight: 700;
+  font-size: 18px;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
@@ -2715,9 +2733,10 @@ textarea {
 .hm-review-panel__name {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 28px;
-  line-height: 1.15;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
 }
 
 .hm-review-panel__audio {
@@ -2890,23 +2909,6 @@ textarea {
 .hm-head-day__hour {
   color: var(--hm-gilt-ink);
   font-weight: 600;
-}
-
-/* Between the desktop and drawer breakpoints, keep every page tab whole. The contextual day stays useful but gives
-   its label and wide event name up before the navigation is masked through the middle of its last word. */
-@media (max-width: 1199px) and (min-width: 992px) {
-  .hm-head-day {
-    gap: 8px;
-    padding-left: 8px;
-  }
-
-  .hm-head-day__label {
-    display: none;
-  }
-
-  .hm-head-day__name {
-    max-width: 168px;
-  }
 }
 
 /* Kho bài hát (artifact SongLibraryPage): quick filters, the grid of score pages, and the quick look. */
@@ -3260,9 +3262,10 @@ a.song-next__item:hover {
 .song-peek__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-text-primary);
 }
 
@@ -3462,6 +3465,64 @@ a.song-usage__next:hover {
   color: var(--hm-text-primary);
 }
 
+/* Running head from 1024 to 1279px (below 1024 the page list is a drawer, AppShell): both bands tighten so a
+   Director's five tabs and an Admin's six areas stay whole. After the .hm-choir and .hm-head-day rules, so it wins. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .hm-top,
+  .hm-sub {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .hm-area {
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .hm-pill__bar {
+    left: 10px;
+    right: 10px;
+  }
+
+  .hm-tabs__list {
+    gap: 12px;
+  }
+
+  .hm-choir {
+    max-width: 184px;
+    padding-right: 12px;
+  }
+
+  .hm-head-day {
+    max-width: 220px;
+  }
+}
+
+/* The day gives up its label and long event name before any page tab is cut. */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .hm-head-day__label {
+    display: none;
+  }
+
+  .hm-head-day__name {
+    max-width: 168px;
+  }
+}
+
+/* The choir's name and its full-name tooltip stay; the "Ca đoàn:" prefix gives its room to the tabs. */
+@media (min-width: 1024px) and (max-width: 1120px) {
+  .hm-choir__label {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .hm-top {
+    padding: 0 16px;
+    gap: 12px;
+  }
+}
+
 /*
  * The 25% motion share (owner 2026-11-14, DESIGN "Motion"): save confirmed, tab content, waiting counts, chart bars.
  * Transform, opacity and colour only; each runs once when its element arrives or changes.
@@ -3570,8 +3631,10 @@ a.song-usage__next:hover {
 .ant-typography.priest-calendar__month {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
 }
 
@@ -3827,7 +3890,8 @@ a.song-usage__next:hover {
 /* Sign-in frame (artifact AuthPages): the landing hero held still, its arched window of light opened to hold the
    form. The name sits behind the window's crown; a long form lengthens the window and the page scrolls. */
 .hm-auth {
-  --name: 220px;
+  /* Be Vietnam Pro sets "Harmonia" about 4.7em wide: this keeps it inside a 1024px window. */
+  --name: min(180px, 16vw);
   position: fixed;
   inset: 0;
   overflow-y: auto;
@@ -3869,10 +3933,10 @@ a.song-usage__next:hover {
   text-align: center;
   white-space: nowrap;
   font-family: var(--hm-font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--name);
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   color: var(--hm-text-on-media);
   pointer-events: none;
 }
@@ -3891,8 +3955,9 @@ a.song-usage__next:hover {
   margin: 0;
   font-family: var(--hm-font-display);
   font-weight: 600;
-  font-size: 32px;
-  line-height: 1.15;
+  font-size: 24px;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
   color: var(--hm-text-on-media);
 }
 
@@ -3935,9 +4000,10 @@ a.song-usage__next:hover {
 h1.ant-typography.hm-auth__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 40px;
-  line-height: 1.08;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
   text-align: center;
   text-wrap: balance;
   color: var(--hm-text-on-media);
@@ -4169,9 +4235,10 @@ h1.ant-typography.hm-auth__title {
 h1.ant-typography.hm-status__title {
   margin: 4px 0 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 40px;
-  line-height: 1.1;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
 }
 
 .ant-typography.hm-status__lead {
@@ -4336,7 +4403,7 @@ h1.ant-typography.hm-status__title {
 .landing-close__window {
   box-sizing: border-box;
   align-self: end;
-  width: 480px;
+  width: min(480px, calc(100% - 32px));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4351,9 +4418,10 @@ h1.ant-typography.hm-status__title {
 h2.ant-typography.landing-close__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 40px;
-  line-height: 1.08;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
   text-wrap: balance;
   color: var(--hm-text-on-media);
 }
@@ -4562,9 +4630,10 @@ html[data-door='close'] .landing-close__window {
 .ct-choir__name {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-size: 26px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-text-primary);
 }
 
@@ -4585,9 +4654,10 @@ html[data-door='close'] .landing-close__window {
 
 .ct-waiting b {
   font-family: var(--hm-font-display);
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
@@ -4684,9 +4754,10 @@ html[data-door='close'] .landing-close__window {
 .ctb-detail__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.25;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-text-primary);
 }
 
@@ -4719,8 +4790,9 @@ html[data-door='close'] .landing-close__window {
 
 .ctb-songs li::marker {
   font-family: var(--hm-font-display);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--hm-text-muted);
+  color: var(--hm-text-body);
 }
 
 .ctb-songs b {
@@ -4736,7 +4808,9 @@ html[data-door='close'] .landing-close__window {
 
 /* Xác nhận tham gia: the answers' strip on the head's right. */
 .ctb-head-strip {
-  min-width: 480px;
+  min-width: min(480px, 100%);
+  width: 100%;
+  max-width: 560px;
 }
 
 /* Luyện tập: the review queue's size beside its tab label. */
@@ -4776,9 +4850,10 @@ html[data-door='close'] .landing-close__window {
 
 .ctb-figure b {
   font-family: var(--hm-font-display);
-  font-size: 44px;
-  font-weight: 600;
+  font-size: 36px;
+  font-weight: 700;
   line-height: 1.1;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
@@ -4903,4 +4978,294 @@ html[data-door='close'] .landing-close__window {
 .khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
   color: var(--hm-text-primary);
   font-weight: 600;
+}
+
+/*
+ * Responsive layout, 1920 down to 768px (M5-4b, owner 2026-11-23). Last in the file, so each rule bends the base rule
+ * it names without raising specificity. The page never scrolls sideways: a grid that cannot fit stacks, a table
+ * scrolls inside its own card, a drawer is never wider than the window. `clip` (not `hidden`) keeps sticky heads.
+ */
+html,
+body {
+  overflow-x: clip;
+}
+
+.ant-table-wrapper {
+  max-width: 100%;
+}
+
+.ant-table-wrapper .ant-table-content {
+  overflow-x: auto;
+}
+
+.ant-drawer .ant-drawer-content-wrapper {
+  max-width: 100vw;
+}
+
+/* A filter control may shrink to the bar's width, never push past it. */
+.hm-filter-bar > * {
+  max-width: 100%;
+}
+
+.hm-summary {
+  grid-template-columns: repeat(var(--hm-summary-cols, 4), minmax(0, 1fr));
+}
+
+/* Side columns narrow before they stack, so the list keeps its width. */
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .hm-split {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+
+  .hm-split.hm-split--review {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+
+  .hm-split.hm-split--assign {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+@media (max-width: 1279px) {
+  .song-layout.has-peek {
+    grid-template-columns: 180px minmax(0, 1fr) 300px;
+  }
+
+  .song-layout.has-peek .song-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1199px) {
+  .ct-choirs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Two roles a row; the second row takes a rule on top, the third role none on its start. */
+  .admin-roles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-roles > li:nth-child(odd) {
+    border-inline-start: 0;
+  }
+
+  .admin-roles > li:nth-child(n + 3) {
+    border-top: 1px solid var(--hm-border-default);
+  }
+}
+
+/* Below 1100px a side panel follows its list instead of sitting beside it. */
+@media (max-width: 1099px) {
+  .hm-split,
+  .hm-split.hm-split--review,
+  .hm-split.hm-split--assign,
+  .hm-split.priest-review,
+  .hm-split.priest-calendar__split,
+  .hm-split.priest-create {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hm-preview,
+  .hm-review-panel,
+  .ct-program-preview {
+    position: static;
+    max-height: none;
+  }
+
+  .ct-detail .ct-main {
+    padding-bottom: 0;
+  }
+
+  .song-layout,
+  .song-layout.has-peek {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .song-rail,
+  .song-peek {
+    position: static;
+  }
+
+  /* The quick filters become one wrapping strip of chips above the list. */
+  .song-rail__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .song-rail__item {
+    width: auto;
+    gap: 8px;
+  }
+
+  .song-index__materials {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .ctb-figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .upcoming-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .upcoming-strip > li:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .upcoming-strip > li:nth-child(n + 3) {
+    border-top: 1px solid var(--hm-border-default);
+  }
+
+  /* The week reads as two columns of day cards instead of seven cramped ones. */
+  .hm-week {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hm-week__day {
+    min-height: 132px;
+    border-bottom: 1px solid var(--hm-border-default);
+  }
+
+  .hm-week__day:nth-child(odd) {
+    border-inline-start: 0;
+  }
+
+  .hm-week__day:nth-child(even) {
+    border-inline-start: 1px solid var(--hm-border-default);
+  }
+
+  .hm-rehearsal-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ctb-detail > div + div {
+    padding-inline-start: 0;
+    padding-top: 24px;
+    border-inline-start: 0;
+    border-top: 1px solid var(--hm-border-default);
+  }
+
+  .ctb-head-strip {
+    min-width: 0;
+  }
+
+  .ctb-report-split,
+  .priest-lede,
+  .admin-settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-settings__aside {
+    position: static;
+  }
+
+  /* Trao đổi: the people above the conversation. */
+  .ant-card-body:has(> .notes-people) {
+    flex-direction: column;
+  }
+
+  .notes-people {
+    width: 100%;
+    max-height: 240px;
+    border-right: 0;
+    border-bottom: 1px solid var(--hm-border-default);
+  }
+
+  /* Sign-in: one column, the window full width; the verse gives its place to the form. */
+  .hm-auth {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 24px;
+  }
+
+  .hm-auth__window {
+    grid-column: 1;
+    width: min(480px, 100%);
+    justify-self: center;
+  }
+
+  .hm-auth__verse {
+    display: none;
+  }
+}
+
+@media (max-width: 991px) {
+  .hm-profile {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 959px) {
+  .hm-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hm-summary__cell:nth-child(odd) {
+    border-inline-start: 0;
+  }
+
+  .hm-summary__cell:nth-child(n + 3) {
+    border-top: 1px solid var(--hm-border-default);
+  }
+}
+
+@media (max-width: 767px) {
+  .ct-choirs,
+  .song-console,
+  .song-filter-panel__grid:not([hidden]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .song-layout.has-peek .song-cards {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  /* The materials move under the title, so a short line never crushes it. */
+  .song-index .song-index__row {
+    grid-template-columns: 44px 44px minmax(0, 1fr) 16px;
+    padding-inline: 16px;
+  }
+
+  .song-index__materials {
+    grid-column: 3 / 4;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+
+  .hm-profile-list > div {
+    grid-template-columns: 136px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .upcoming-strip,
+  .ctb-figures,
+  .admin-roles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .upcoming-strip > li + li,
+  .admin-roles > li + li {
+    border-inline-start: 0;
+    border-left: 0;
+    border-top: 1px solid var(--hm-border-default);
+  }
+}
+
+@media (max-width: 575px) {
+  .hm-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hm-summary__cell + .hm-summary__cell {
+    border-inline-start: 0;
+    border-top: 1px solid var(--hm-border-default);
+  }
 }

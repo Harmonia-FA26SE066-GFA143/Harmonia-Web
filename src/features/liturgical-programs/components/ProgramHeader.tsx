@@ -57,7 +57,7 @@ export function ProgramHeader({ title, date, time, place, seasonName, seasonKey,
           )}
           <Typography.Title
             level={1}
-            style={{ margin: 0, fontFamily: typography.displayFontFamily, fontSize: 36, fontWeight: 600, lineHeight: 1.25 }}
+            style={{ margin: 0, fontFamily: typography.displayFontFamily, ...typography.displayCelebration }}
           >
             {title}
           </Typography.Title>

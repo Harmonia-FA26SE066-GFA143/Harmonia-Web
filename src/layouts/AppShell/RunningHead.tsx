@@ -4,7 +4,8 @@ import { useReducedMotion } from '@/shared/ui'
 import { motion } from '@/styles/tokens'
 import type { NavSection } from './navigation'
 
-const tabOverflowTolerance = 8
+/** Sub-pixel font settling stays under this; a real overflow is at least one tab gap wider. */
+const tabOverflowTolerance = 2
 
 /**
  * Keeps a marker (the area pill with its active bar, the page underline) on the current item of `box`, gliding from where it was. Only
@@ -88,12 +89,13 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
     if (!box) return
     const list = box.querySelector<HTMLElement>('.hm-tabs__list')
     if (!list) return
+    // R2.7: an edge fades only when the tabs truly overflow the strip, never because the strip is still settling.
     const mark = () => {
-      const listWidth = list.scrollWidth
-      box.classList.toggle('has-more-start', box.scrollLeft > tabOverflowTolerance)
+      const hasOverflow = list.scrollWidth > box.clientWidth + tabOverflowTolerance
+      box.classList.toggle('has-more-start', hasOverflow && box.scrollLeft > tabOverflowTolerance)
       box.classList.toggle(
         'has-more-end',
-        box.scrollLeft + box.clientWidth < listWidth - tabOverflowTolerance,
+        hasOverflow && box.scrollLeft + box.clientWidth < list.scrollWidth - tabOverflowTolerance,
       )
     }
     const wheel = (event: WheelEvent) => {
@@ -115,6 +117,8 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
     const observer = new ResizeObserver(settle)
     observer.observe(box)
     observer.observe(list)
+    // The choir switcher and the day load after the head and take their width from the band.
+    if (box.parentElement) observer.observe(box.parentElement)
     let cancelled = false
     void document.fonts?.ready.then(() => {
       if (!cancelled) settle()

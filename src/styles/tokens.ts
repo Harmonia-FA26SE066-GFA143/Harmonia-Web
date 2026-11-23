@@ -205,26 +205,30 @@ export const motion = {
   easeInOut: 'cubic-bezier(0.65, 0, 0.35, 1)',
 } as const
 
+const uiFontFamily =
+  "'Be Vietnam Pro', Manrope, 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+
 /**
- * Be Vietnam Pro for everything you read or operate; Cormorant Garamond for display only (hero, feast titles, season
- * name, the date numeral). Page headings stay sans. Be Vietnam Pro has no `tnum`; figures line up by layout.
+ * One self-hosted family, Be Vietnam Pro (400/500/600/700), for everything (owner 2026-11-23: Vietnamese reads more
+ * easily; Cormorant Garamond retired). `displayFontFamily` stays as a name for the display roles (hero, feast titles,
+ * season name, the date numeral), which differ by weight 700 and -0.02em tracking only. Heading line heights of
+ * 1.28–1.35 keep stacked diacritics (Ế, Ộ, Ử) clear. Be Vietnam Pro has no `tnum`; figures line up by layout.
  */
 export const typography = {
-  fontFamily:
-    "'Be Vietnam Pro', Manrope, 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-  displayFontFamily: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
+  fontFamily: uiFontFamily,
+  displayFontFamily: uiFontFamily,
   fontSize: 14,
   /** Generous line height for stacked Vietnamese diacritics. */
   lineHeight: 1.6,
-  displayHero: { fontSize: 72, lineHeight: 0.98, fontWeight: 600 },
-  displayPublic: { fontSize: 48, lineHeight: 1.08, fontWeight: 600 },
-  displayCelebration: { fontSize: 36, lineHeight: 1.2, fontWeight: 600 },
-  displaySeason: { fontSize: 32, lineHeight: 1.2, fontWeight: 600 },
-  displayNumeral: { fontSize: 44, lineHeight: 1, fontWeight: 600 },
-  pageTitle: { fontSize: 28, lineHeight: 1.3, fontWeight: 600 },
-  panelTitle: { fontSize: 24, lineHeight: 1.3 },
-  sectionHeading: { fontSize: 20, lineHeight: 1.4 },
-  cardHeading: { fontSize: 16, lineHeight: 1.4 },
+  displayHero: { fontSize: 72, lineHeight: 1.08, fontWeight: 700, letterSpacing: '-0.02em' },
+  displayPublic: { fontSize: 48, lineHeight: 1.15, fontWeight: 700, letterSpacing: '-0.02em' },
+  displayCelebration: { fontSize: 36, lineHeight: 1.28, fontWeight: 700, letterSpacing: '-0.02em' },
+  displaySeason: { fontSize: 32, lineHeight: 1.28, fontWeight: 700, letterSpacing: '-0.02em' },
+  displayNumeral: { fontSize: 44, lineHeight: 1.1, fontWeight: 700, letterSpacing: '-0.02em' },
+  pageTitle: { fontSize: 28, lineHeight: 1.32, fontWeight: 700, letterSpacing: '-0.02em' },
+  panelTitle: { fontSize: 24, lineHeight: 1.32, fontWeight: 600, letterSpacing: '-0.015em' },
+  sectionHeading: { fontSize: 20, lineHeight: 1.35, fontWeight: 600, letterSpacing: '-0.01em' },
+  cardHeading: { fontSize: 16, lineHeight: 1.35, fontWeight: 600 },
   label: { fontSize: 13 },
   metadata: { fontSize: 12 },
 } as const
@@ -280,7 +284,7 @@ export const component = {
   card: { border: `1px solid ${semantic.border.hairline}`, background: semantic.surface.base, headHeight: 52, padding: 24 },
   drawer: { sm: 480, md: 640, lg: 720 },
   skeleton: { from: semantic.surface.soft, to: semantic.surface.selected },
-  pageHeader: { title: { fontSize: 34, lineHeight: 1.2, fontWeight: 600 } },
+  pageHeader: { title: { fontSize: 32, lineHeight: 1.28, fontWeight: 700, letterSpacing: '-0.02em' } },
 } as const
 
 // ---------------------------------------------------------------- CSS variables (`--hm-*`)
