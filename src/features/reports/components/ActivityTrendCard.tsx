@@ -47,8 +47,22 @@ function bucketOf(point: ActivityTrendPoint, groupBy: TrendPeriod, view: View): 
  * column per week, month or year, stacked by result. Rehearsals count in the period they start, assignments in the
  * period they are due.
  */
-export function ActivityTrendCard({ query, title, style }: Readonly<{ query: ActivityTrendQuery; title: string; style?: CSSProperties }>) {
-  const [view, setView] = useState<View>('attendance')
+export function ActivityTrendCard({
+  query,
+  title,
+  style,
+  view: lockedView,
+  compact = false,
+}: Readonly<{
+  query: ActivityTrendQuery
+  title: string
+  style?: CSSProperties
+  /** Locks the chart to one view and hides the toggle (Director: the page tab decides); omitted, the toggle shows. */
+  view?: View
+  compact?: boolean
+}>) {
+  const [ownView, setView] = useState<View>('attendance')
+  const view = lockedView ?? ownView
   const trend = useActivityTrend(query)
   const points = trend.data ?? []
   const series = view === 'attendance' ? attendanceSeries : practiceSeries
@@ -58,6 +72,7 @@ export function ActivityTrendCard({ query, title, style }: Readonly<{ query: Act
     <Card
       title={<CardTitle>{title}</CardTitle>}
       extra={
+        lockedView === undefined && (
         <Segmented<View>
           aria-label="Số liệu của biểu đồ"
           value={view}
@@ -67,8 +82,10 @@ export function ActivityTrendCard({ query, title, style }: Readonly<{ query: Act
             { value: 'practice', label: 'Bài tập' },
           ]}
         />
+        )
       }
       style={{ marginBottom: spacing.lg, ...style }}
+      aria-busy={trend.isFetching}
     >
       {trend.isPending && <SectionSkeleton rows={4} label="Đang tải biểu đồ" />}
       {trend.isError && (
@@ -86,6 +103,7 @@ export function ActivityTrendCard({ query, title, style }: Readonly<{ query: Act
                 buckets={points.map((point) => bucketOf(point, query.groupBy, view))}
                 values={points}
                 series={series}
+                compact={compact}
               />
               <Typography.Text style={{ color: colors.textMuted }}>
                 {view === 'attendance'

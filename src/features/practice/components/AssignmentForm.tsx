@@ -1,10 +1,9 @@
-import { SendOutlined } from '@ant-design/icons'
 import { App, Button, Card, DatePicker, Flex, Input, Radio, Select, Typography, type SelectProps } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useChoirs, useCurrentChoir, useMembersOfChoir } from '@/features/choirs'
-import { useChoirMembers } from '@/features/members'
+import { useAllChoirMembers } from '@/features/members'
 import { useSong, useSongMaterials, useSongs } from '@/features/music-library'
 import { useSongList } from '@/features/song-lists'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
@@ -16,7 +15,7 @@ import { practiceErrorMessage } from '../practiceErrors'
 import { formatEventOption } from '../practiceFormat'
 import { MaterialPicker } from './MaterialPicker'
 import type { AssignmentScope, AssignmentValues } from '../types'
-import { CREATE_ASSIGNMENT_LABEL, Form } from '@/shared/ui'
+import { CANCEL_LABEL, CREATE_ASSIGNMENT_LABEL, EmptyCell, Form, Icon, PROGRAM_NOUN_SHORT, SELECT_POPUP_PROPS } from '@/shared/ui'
 
 interface FormValues extends Omit<AssignmentValues, 'dueDate'> {
   dueDate?: Dayjs
@@ -52,13 +51,13 @@ function recipientText(scope: AssignmentScope | undefined, count: number | undef
     const who = count === undefined ? 'Ca viên' : `${count} ca viên`
     return `${who} có kỹ năng ${skillNames.join(', ')}`
   }
-  if (count === undefined) return '—'
+  if (count === undefined) return <EmptyCell text="Chưa chọn" />
   return scope === 'all' ? `${count} ca viên (cả ca đoàn)` : `${count} ca viên`
 }
 
 /** The due date, with the days left while it is ahead. */
 function dueSummary(dueDate?: Dayjs) {
-  if (!dueDate) return '—'
+  if (!dueDate) return <EmptyCell text="Chưa chọn" />
   const when = dueDate.format('HH:mm DD/MM/YYYY')
   const daysLeft = Math.ceil(dueDate.diff(dayjs(), 'day', true))
   return daysLeft >= 0 ? `${when} · còn ${daysLeft} ngày` : when
@@ -108,8 +107,8 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
   const skillIds = Form.useWatch('skillIds', form)
   const memberIds = Form.useWatch('memberIds', form)
   const skillNames = (skills ?? []).filter((skill) => skillIds?.includes(String(skill.value))).map((skill) => skill.label)
-  // ponytail: approved skills come from the first 100 active profiles; a larger parish leaves the count unknown-low.
-  const profiles = useChoirMembers()
+  // Every active profile (all pages), so the skill count holds beyond 100 members (B54).
+  const profiles = useAllChoirMembers()
   const skillsOf = new Map((profiles.data ?? []).map((member) => [member.id, member.skills]))
   const withSkill =
     members.data && profiles.data && skillNames.length > 0
@@ -130,7 +129,7 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
     ...(chosenSong && !inEvent.has(chosenSong.value) && !librarySongs.some((option) => option.value === chosenSong.value) ? [chosenSong] : []),
     ...librarySongs.filter((option) => !inEvent.has(option.value)),
   ]
-  const songOptions: SelectProps['options'] = shownEventSongs.length > 0 ? [{ label: 'Trong danh sách của sự kiện', options: shownEventSongs }, { label: 'Kho bài hát', options: otherSongs }] : otherSongs
+  const songOptions: SelectProps['options'] = shownEventSongs.length > 0 ? [{ label: 'Trong danh sách của chương trình', options: shownEventSongs }, { label: 'Kho bài hát', options: otherSongs }] : otherSongs
   const songTitle = chosenSong?.label
   const event = events.data?.find((item) => item.id === eventId)
 
@@ -171,15 +170,17 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
   }
 
   return (
-    <Card style={{ maxWidth: 960 }}>
-        <Form<FormValues>
-          form={form}
-          layout="vertical"
-          initialValues={{ scope: 'all', eventId: urlProgramId, songId: params.get('songId') ?? undefined, choirId: defaultChoirId }}
-          onFinish={handleFinish}
-        >
+    <Form<FormValues>
+      form={form}
+      layout="vertical"
+      initialValues={{ scope: 'all', eventId: urlProgramId, songId: params.get('songId') ?? undefined, choirId: defaultChoirId }}
+      onFinish={handleFinish}
+    >
+      <div className="hm-split hm-split--assign">
+        <Card>
           <section className="hm-form-section">
             <p className="hm-rubric">1. Ngữ cảnh</p>
+            <div className="hm-form-row-2">
             <Form.Item
               label="Ca đoàn"
               name="choirId"
@@ -187,18 +188,20 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
               extra={
                 choirs.isSuccess && activeChoirs.length === 0
                   ? 'Bạn chưa phụ trách ca đoàn nào đang hoạt động. Quản trị viên chọn ca trưởng cho ca đoàn.'
-                  : 'Bài tập chỉ giao cho ca viên của ca đoàn này; nếu gắn sự kiện, ca đoàn phải phục vụ sự kiện đó.'
+                  : 'Bài tập chỉ giao cho ca viên của ca đoàn này; nếu gắn chương trình, ca đoàn phải phục vụ chương trình đó.'
               }
             >
               <Select
+                {...SELECT_POPUP_PROPS}
                 placeholder="Chọn ca đoàn"
                 loading={choirs.isPending}
                 onChange={() => form.setFieldValue('memberIds', undefined)}
                 options={activeChoirs.map((choir) => ({ value: choir.id, label: choir.name }))}
               />
             </Form.Item>
-            <Form.Item label="Chương trình (không bắt buộc)" name="eventId" extra="Các chương trình sắp tới đã công bố.">
+            <Form.Item label={PROGRAM_NOUN_SHORT} name="eventId" extra="Các chương trình sắp tới đã công bố.">
               <Select
+                {...SELECT_POPUP_PROPS}
                 allowClear
                 showSearch
                 optionFilterProp="label"
@@ -210,6 +213,7 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
                 }))}
               />
             </Form.Item>
+            </div>
           </section>
           <section className="hm-form-section">
             <p className="hm-rubric">2. Nội dung luyện tập</p>
@@ -223,11 +227,12 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
             >
               <Input placeholder="Ví dụ: Tập bè Tenor bài Con Bước Lên Bàn Thờ" />
             </Form.Item>
-            <Form.Item label="Hướng dẫn (không bắt buộc)" name="instruction" rules={[{ max: 1000, message: 'Tối đa 1000 ký tự.' }]}>
+            <Form.Item label="Hướng dẫn" name="instruction" rules={[{ max: 1000, message: 'Tối đa 1000 ký tự.' }]}>
               <Input.TextArea rows={3} showCount maxLength={1000} />
             </Form.Item>
-            <Form.Item label="Bài hát (không bắt buộc)" name="songId">
+            <Form.Item label="Bài hát" name="songId">
               <Select
+                {...SELECT_POPUP_PROPS}
                 allowClear
                 showSearch
                 filterOption={false}
@@ -264,12 +269,13 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
             </Form.Item>
             {scope === 'skillGroup' && (
               <Form.Item label="Kỹ năng" name="skillIds" preserve={false} rules={[{ required: true, message: 'Chọn ít nhất một kỹ năng.' }]}>
-                <Select mode="multiple" showSearch optionFilterProp="label" placeholder="Chọn kỹ năng" options={skills} />
+                <Select {...SELECT_POPUP_PROPS} mode="multiple" showSearch optionFilterProp="label" placeholder="Chọn kỹ năng" options={skills} />
               </Form.Item>
             )}
             {scope === 'individual' && (
               <Form.Item label="Ca viên" name="memberIds" preserve={false} rules={[{ required: true, message: 'Chọn ít nhất một ca viên.' }]}>
                 <Select
+                  {...SELECT_POPUP_PROPS}
                   mode="multiple"
                   showSearch
                   optionFilterProp="label"
@@ -295,6 +301,8 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
               ]}
             >
               <DatePicker
+                getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer}
+                placement="bottomLeft"
                 showTime={{ format: 'HH:mm', minuteStep: 5 }}
                 format="DD/MM/YYYY HH:mm"
                 placeholder="Chọn ngày giờ"
@@ -303,7 +311,9 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
               />
             </Form.Item>
           </section>
-          <section className="hm-form-section" aria-label="Kiểm tra trước khi giao">
+        </Card>
+        <Card className="hm-assign-summary">
+          <section aria-label="Kiểm tra trước khi giao">
             <p className="hm-rubric">5. Kiểm tra và giao</p>
             <dl className="hm-facts hm-assignment-review">
               <dt>Ca đoàn</dt>
@@ -319,20 +329,25 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
               <dt>Chương trình</dt>
               <dd>{event ? formatEventOption(event) : 'Không gắn chương trình'}</dd>
             </dl>
-            <Typography.Text style={muted}>Ca viên nhận được thông báo ngay sau khi bài được giao.</Typography.Text>
+            <Typography.Paragraph style={{ ...muted, marginTop: spacing.md }}>
+              Ca viên nhận được thông báo ngay sau khi bài được giao.
+            </Typography.Paragraph>
           </section>
-          <Flex align="center" justify="flex-end" gap={spacing.md} wrap>
-            <Button onClick={resetForm} disabled={create.isPending}>
-              Xoá nội dung
-            </Button>
-            <Button onClick={onCancel} disabled={create.isPending}>
-              Hủy
-            </Button>
-            <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={create.isPending}>
+          <Flex vertical gap={spacing.sm}>
+            <Button type="primary" block htmlType="submit" icon={<Icon name="send" />} loading={create.isPending}>
               {submitLabel(recipients)}
             </Button>
+            <Flex gap={spacing.sm}>
+              <Button block onClick={resetForm} disabled={create.isPending}>
+                Xoá nội dung
+              </Button>
+              <Button block onClick={onCancel} disabled={create.isPending}>
+                {CANCEL_LABEL}
+              </Button>
+            </Flex>
           </Flex>
-        </Form>
-    </Card>
+        </Card>
+      </div>
+    </Form>
   )
 }

@@ -3,11 +3,12 @@ import { exportReport, getActivityTrend, getReport, getReportColumns, listExport
 import type { ActivityTrendQuery, AdminReportKind, ReportExportRequest, ReportFilters } from '../types'
 
 /** One page of a report; the previous page stays visible while the next one loads. */
-export function useReport(kind: AdminReportKind, filters: ReportFilters, page: ReportPage) {
+export function useReport(kind: AdminReportKind, filters: ReportFilters, page: ReportPage, enabled = true) {
   return useQuery({
     queryKey: ['reports', kind, filters, page],
     queryFn: () => getReport(kind, filters, page),
     placeholderData: keepPreviousData,
+    enabled,
   })
 }
 
@@ -34,6 +35,6 @@ export function useExportReport() {
 }
 
 /** Attendance and practice per period; the previous chart stays while the next one loads. */
-export function useActivityTrend(query: ActivityTrendQuery) {
-  return useQuery({ queryKey: ['reports', 'trend', query], queryFn: () => getActivityTrend(query), placeholderData: keepPreviousData })
+export function useActivityTrend(query: ActivityTrendQuery, enabled = true) {
+  return useQuery({ queryKey: ['reports', 'trend', query], queryFn: () => getActivityTrend(query), placeholderData: keepPreviousData, enabled })
 }

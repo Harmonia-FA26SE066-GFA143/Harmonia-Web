@@ -16,17 +16,17 @@ export interface BarSeries<K extends string> {
   color: string
 }
 
-const chartHeight = 160
-
 /**
  * Column chart of counts stacked by series, one column per bucket. Each column names its counts for screen readers;
- * the legend repeats the colors in words.
+ * the legend repeats the colors in words. `compact` (Director) is a little shorter so the band fits beside its watch card.
  */
 export function StackedBars<K extends string>({
   buckets,
   values,
   series,
-}: Readonly<{ buckets: Bucket[]; values: Record<K, number>[]; series: BarSeries<K>[] }>) {
+  compact = false,
+}: Readonly<{ buckets: Bucket[]; values: Record<K, number>[]; series: BarSeries<K>[]; compact?: boolean }>) {
+  const chartHeight = compact ? 136 : 160
   const totals = values.map((counts) => series.reduce((sum, { key }) => sum + counts[key], 0))
   const max = Math.max(1, ...totals)
 

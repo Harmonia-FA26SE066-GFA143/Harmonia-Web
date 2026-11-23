@@ -2540,6 +2540,11 @@ textarea {
   background: var(--hm-surface-selected);
 }
 
+/* The review queue opens a row by its action button only (a click on the player must not switch rows). */
+.hm-review-queue .ant-table-tbody > tr {
+  cursor: default;
+}
+
 /* G3-08: seven columns beside the 360px preview; 10px sides (not 16) leave each fixed-width column room for its text. */
 /* The Director's program list only (EventTable and SubmissionTable share .hm-table-pick); `.ant-table-wrapper` raises
    the selector above Ant Design's own runtime cell rule. */
@@ -2725,10 +2730,52 @@ textarea {
 .hm-review-panel {
   position: sticky;
   top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--hm-header-height) - var(--hm-subnav-height) - 32px);
+  padding: 18px 20px;
   background: var(--hm-surface-base);
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-lg);
+}
+
+/* Header and decision footer fixed, the body between them scrolls: the decision stays above the fold. */
+.hm-review-panel__form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.hm-review-panel__head {
+  flex: none;
+  margin-bottom: 12px;
+}
+
+.hm-review-panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hm-review-panel__foot {
+  flex: none;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hm-border-default);
+  background: var(--hm-surface-base);
+}
+
+/*
+ * Short screens (1366×768): unscrolled, the panel starts ~326px down (head, page header, tabs, filters), so it is held
+ * to 100vh − 340px for its decision footer to end above the fold (≤ 756px); the body scrolls inside.
+ */
+@media (min-width: 1100px) and (max-height: 820px) {
+  .hm-review-panel {
+    max-height: calc(100vh - 340px);
+    padding: 14px 18px;
+  }
 }
 
 .hm-review-panel__name {
@@ -2759,7 +2806,72 @@ textarea {
 
 /* Giao bài tập: form sections beside a sticky summary (artifact AssignPracticePage). */
 .hm-split--assign {
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+
+/* Practice: the program the page is narrowed to, in the liturgy area's colours (not an info alert). */
+.hm-context-banner {
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  background: var(--hm-surface-reading);
+  border: 1px solid var(--hm-area-liturgy-border);
+  border-radius: var(--hm-radius-md);
+}
+
+.hm-context-banner > .ant-typography::before {
+  content: '';
+  display: inline-block;
+  margin-inline-end: 8px;
+  vertical-align: middle;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hm-area-liturgy-ink);
+}
+
+/* Tiến độ chuẩn bị: three summary chips beside the program picker. */
+.hm-progress-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hm-progress-chips > span {
+  padding: 4px 12px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: 999px;
+  background: var(--hm-surface-base);
+  font-size: 13px;
+}
+
+.hm-progress-chips > span.is-warning {
+  border-color: var(--hm-area-attention-ink);
+  color: var(--hm-area-attention-ink);
+}
+
+/* Two fields side by side in a form section (DOM order = reading order). */
+.hm-form-row-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 16px;
+}
+
+@media (max-width: 767px) {
+  .hm-form-row-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* G4-18: the review and the send button stay in view while the form scrolls. */
+.hm-assign-summary {
+  position: sticky;
+  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+  align-self: start;
+}
+
+.ant-card.hm-assign-summary {
+  background-color: var(--hm-surface-reading);
+  border-top: 1px solid var(--hm-gilt);
 }
 
 .hm-form-section {
@@ -5103,6 +5215,7 @@ body {
 
   .hm-preview,
   .hm-review-panel,
+  .hm-assign-summary,
   .ct-program-preview {
     position: static;
     max-height: none;

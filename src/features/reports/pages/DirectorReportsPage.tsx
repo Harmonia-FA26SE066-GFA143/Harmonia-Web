@@ -1,14 +1,15 @@
-import { DownloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { App, Button, DatePicker, Dropdown, Flex, Segmented, Select } from 'antd'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router'
 import { setCurrentChoir, useChoirs, useCurrentChoir } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
-import { PageHeader } from '@/shared/ui'
+import { CHOIR_ALL_LABEL, Icon, PageHeader, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { ActivityTrendCard } from '../components/ActivityTrendCard'
 import { AttendanceWatch } from '../components/AttendanceWatch'
+import { ParticipationWatch } from '../components/ParticipationWatch'
+import { PracticeWatch } from '../components/PracticeWatch'
 import { ReportHeadlines } from '../components/ReportHeadlines'
 import { ReportPanel } from '../components/ReportPanel'
 import { granularityLabels, periodOf, type Granularity } from '../directorReport'
@@ -93,6 +94,7 @@ export function DirectorReportsPage() {
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Báo cáo' }]}
         extra={
           <Dropdown
+            getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer}
             trigger={['click']}
             disabled={exportReport.isPending}
             menu={{
@@ -100,7 +102,7 @@ export function DirectorReportsPage() {
               onClick: ({ key }) => handleExport(key as ReportFormat),
             }}
           >
-            <Button icon={<DownloadOutlined />} loading={exportReport.isPending}>
+            <Button icon={<Icon name="download" />} loading={exportReport.isPending}>
               Xuất báo cáo
             </Button>
           </Dropdown>
@@ -116,8 +118,10 @@ export function DirectorReportsPage() {
             options={directorReportKinds.map((kind) => ({ value: kind, label: reportDefinitions[kind].label }))}
           />
           <Flex align="center" gap={spacing.xs}>
-            <Button icon={<LeftOutlined />} aria-label={`${granularityLabels[granularity]} trước`} onClick={() => step(-1)} />
+            <Button icon={<Icon name="chevron-left" />} aria-label={`${granularityLabels[granularity]} trước`} onClick={() => step(-1)} />
             <DatePicker
+              getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer}
+              placement="bottomLeft"
               picker={granularity}
               value={anchor}
               allowClear={false}
@@ -125,14 +129,15 @@ export function DirectorReportsPage() {
               aria-label="Kỳ báo cáo"
               onChange={(date) => date && show({ date })}
             />
-            <Button icon={<RightOutlined />} aria-label={`${granularityLabels[granularity]} sau`} onClick={() => step(1)} />
+            <Button icon={<Icon name="chevron-right" />} aria-label={`${granularityLabels[granularity]} sau`} onClick={() => step(1)} />
           </Flex>
           <Select
+            {...SELECT_POPUP_PROPS}
             allowClear
             showSearch
             optionFilterProp="label"
             aria-label="Ca đoàn"
-            placeholder="Tất cả ca đoàn"
+            placeholder={CHOIR_ALL_LABEL}
             loading={choirs.isPending}
             value={choirId}
             onChange={(value?: string) => show({ choirId: value ?? null })}
@@ -153,9 +158,22 @@ export function DirectorReportsPage() {
           </span>
         </div>
         <ReportHeadlines kind={tab} query={{ groupBy: granularity, fromDate: period.from, toDate: period.to, choirId }} />
+        {/* The middle band follows the report tab; the chart is locked to it (no toggle on this page). */}
         <div className="ctb-report-split">
-          <ActivityTrendCard query={trend.query} title={trend.title} style={{ marginBottom: 0 }} />
-          <AttendanceWatch filters={filters} />
+          {tab === 'participation' ? (
+            <ParticipationWatch filters={filters} />
+          ) : (
+            <>
+              <ActivityTrendCard
+                query={trend.query}
+                title={trend.title}
+                view={tab === 'assignmentCompletion' ? 'practice' : 'attendance'}
+                compact
+                style={{ marginBottom: 0 }}
+              />
+              {tab === 'assignmentCompletion' ? <PracticeWatch filters={filters} /> : <AttendanceWatch filters={filters} />}
+            </>
+          )}
         </div>
         <ReportPanel
           key={`${tab}:${JSON.stringify(filters)}`}

@@ -15,6 +15,8 @@ import type { DirectorNoteValues } from '../types'
 
 const notesKey = ['director-notes'] as const
 const threadPageSize = 30
+/** Waits before each new attempt to connect the live hub; the last one repeats. */
+const retryDelaysMs = [2_000, 5_000, 10_000, 30_000]
 
 export function useConversations() {
   return useQuery({ queryKey: [...notesKey, 'conversations'], queryFn: listConversations })
@@ -66,7 +68,8 @@ export function useMarkConversationRead() {
 /**
  * Listens on the backend's SignalR hub (`/hubs/notifications`, Harmonia-BE NotificationHub) while the chat page is
  * open. A pushed message or read receipt only invalidates the cached lists, so the REST answers stay the single
- * source of truth and a missed push is repaired by the next refetch. Returns false while disconnected.
+ * source of truth and a missed push is repaired by the next refetch. Returns false while disconnected; it keeps trying
+ * to connect (2, 5, 10, then every 30 seconds) until the page closes.
  * ponytail: the connection lives with the page; a header-wide unread badge would need it hoisted into the shell.
  */
 export function useDirectorNotesLive(): boolean {
@@ -83,26 +86,47 @@ export function useDirectorNotesLive(): boolean {
     // Wire names are the INotificationClient method names, suffix included.
     connection.on('ReceiveDirectorNoteAsync', refresh)
     connection.on('ReceiveDirectorNotesReadAsync', refresh)
-    connection.onreconnecting(() => setConnected(false))
+    let stopped = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+    // `withAutomaticReconnect` covers a dropped connection only; a failed first start, or a reconnect that gave up
+    // (onclose), is retried here so "đang thử lại" stays true. The lists still refresh on focus and after every send.
+    const start = (attempt: number) => {
+      if (stopped) return
+      connection
+        .start()
+        .then(() => {
+          if (stopped) return
+          setConnected(connection.state === HubConnectionState.Connected)
+          // Pushes may have been missed while offline.
+          if (attempt > 0) refresh()
+        })
+        .catch(() => {
+          if (stopped) return
+          setConnected(false)
+          clearTimeout(retryTimer)
+          retryTimer = setTimeout(() => start(attempt + 1), retryDelaysMs[Math.min(attempt, retryDelaysMs.length - 1)])
+        })
+    }
+    connection.onreconnecting(() => {
+      if (!stopped) setConnected(false)
+    })
     connection.onreconnected(() => {
+      if (stopped) return
       setConnected(true)
       refresh()
     })
-    connection.onclose(() => setConnected(false))
+    connection.onclose(() => {
+      if (stopped) return
+      setConnected(false)
+      clearTimeout(retryTimer)
+      retryTimer = setTimeout(() => start(1), retryDelaysMs[0])
+    })
 
-    let stopped = false
-    connection
-      .start()
-      .then(() => {
-        if (!stopped) setConnected(connection.state === HubConnectionState.Connected)
-      })
-      .catch(() => {
-        // Left offline: the page says so and the lists still refresh on focus and after every send.
-        if (!stopped) setConnected(false)
-      })
+    start(0)
     return () => {
       stopped = true
-      void connection.stop()
+      clearTimeout(retryTimer)
+      void connection.stop().catch(() => undefined)
     }
   }, [queryClient])
 

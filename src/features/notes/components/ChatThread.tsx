@@ -1,10 +1,9 @@
-import { SendOutlined } from '@ant-design/icons'
 import { App, Button, Flex, Input, Typography, theme } from 'antd'
 import dayjs from 'dayjs'
-import { useEffect, useRef, useState } from 'react'
-import { formatDateTime } from '@/lib/api/dates'
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
+import { formatDateTime, parseUtc } from '@/lib/api/dates'
 import { colors } from '@/styles/tokens'
-import { ErrorState, SectionSkeleton } from '@/shared/ui'
+import { ChatDateDivider, ChatHeader, ErrorState, Icon, PROGRAM_NOUN, SectionSkeleton, visuallyHidden } from '@/shared/ui'
 import { useSendMessage, useThread } from '../hooks/useNotes'
 import { noteErrorMessage } from '../notesErrors'
 import type { DirectorNote } from '../types'
@@ -13,7 +12,7 @@ const maxLength = 2000 // SendDirectorNoteMessageRequestValidator
 
 function Bubble({ note, mine }: Readonly<{ note: DirectorNote; mine: boolean }>) {
   const { token } = theme.useToken()
-  const about = [note.noteDate && dayjs(note.noteDate).format('DD/MM/YYYY'), note.eventId && (note.eventTitle || 'Sự kiện phụng vụ')]
+  const about = [note.noteDate && dayjs(note.noteDate).format('DD/MM/YYYY'), note.eventId && (note.eventTitle || PROGRAM_NOUN)]
     .filter(Boolean)
     .join(' · ')
   return (
@@ -30,7 +29,18 @@ function Bubble({ note, mine }: Readonly<{ note: DirectorNote; mine: boolean }>)
         }}
       >
         {about && (
-          <div style={{ fontSize: token.fontSizeSM, opacity: 0.85, marginBottom: 4 }}>Ghi chú về {about}</div>
+          <div
+            style={{
+              fontSize: token.fontSizeSM,
+              fontWeight: 600,
+              opacity: 0.85,
+              borderBottom: '1px solid currentColor',
+              paddingBottom: 4,
+              marginBottom: 6,
+            }}
+          >
+            Ghi chú về {about}
+          </div>
         )}
         {note.content}
       </div>
@@ -42,8 +52,19 @@ function Bubble({ note, mine }: Readonly<{ note: DirectorNote; mine: boolean }>)
   )
 }
 
-/** Messages with one person (oldest at the top, newest at the bottom) and the composer. */
-export function ChatThread({ partnerId, partnerName, selfId }: Readonly<{ partnerId: string; partnerName: string; selfId: string }>) {
+const localDay = (sentAt: string) => dayjs(parseUtc(sentAt)).format('YYYY-MM-DD')
+
+export interface ChatThreadProps {
+  partnerId: string
+  partnerName: string
+  partnerSubtitle?: string
+  selfId: string
+  /** Connection indicator, shown in the opaque header (G4-03). */
+  liveStatus?: ReactNode
+}
+
+/** Messages with one person (oldest at the top, newest at the bottom, a divider per day) and the composer. */
+export function ChatThread({ partnerId, partnerName, partnerSubtitle, selfId, liveStatus }: Readonly<ChatThreadProps>) {
   const { message } = App.useApp()
   const thread = useThread(partnerId)
   const send = useSendMessage()
@@ -72,6 +93,7 @@ export function ChatThread({ partnerId, partnerName, selfId }: Readonly<{ partne
 
   return (
     <Flex vertical style={{ height: '100%', minHeight: 0 }}>
+      <ChatHeader partnerName={partnerName} subtitle={partnerSubtitle} liveStatus={liveStatus} />
       <Flex vertical gap={12} style={{ flex: 1, overflowY: 'auto', padding: 16 }} role="log" aria-label={`Tin nhắn với ${partnerName}`}>
         {thread.isPending && <SectionSkeleton rows={4} label="Đang tải tin nhắn" />}
         {thread.isError && (
@@ -87,14 +109,21 @@ export function ChatThread({ partnerId, partnerName, selfId }: Readonly<{ partne
             Chưa có tin nhắn nào với {partnerName}. Hãy bắt đầu cuộc trò chuyện.
           </Typography.Text>
         )}
-        {notes.map((note) => (
-          <Bubble key={note.id} note={note} mine={note.fromUserId === selfId} />
+        {notes.map((note, index) => (
+          <Fragment key={note.id}>
+            {(index === 0 || localDay(notes[index - 1].sentAt) !== localDay(note.sentAt)) && <ChatDateDivider date={note.sentAt} />}
+            <Bubble note={note} mine={note.fromUserId === selfId} />
+          </Fragment>
         ))}
         <div ref={bottom} />
       </Flex>
       <Flex gap={8} align="flex-end" style={{ padding: 12, borderTop: `1px solid ${colors.border}` }}>
+        <span id={`composer-hint-${partnerId}`} style={visuallyHidden}>
+          Enter để gửi, Shift+Enter để xuống dòng.
+        </span>
         <Input.TextArea
           aria-label={`Nhắn cho ${partnerName}`}
+          aria-describedby={`composer-hint-${partnerId}`}
           placeholder="Nhập tin nhắn. Enter để gửi, Shift+Enter để xuống dòng."
           value={draft}
           maxLength={maxLength}
@@ -106,7 +135,7 @@ export function ChatThread({ partnerId, partnerName, selfId }: Readonly<{ partne
             submit()
           }}
         />
-        <Button type="primary" icon={<SendOutlined />} loading={send.isPending} disabled={!draft.trim()} onClick={submit}>
+        <Button type="primary" icon={<Icon name="send" />} loading={send.isPending} disabled={!draft.trim()} onClick={submit}>
           Gửi
         </Button>
       </Flex>
