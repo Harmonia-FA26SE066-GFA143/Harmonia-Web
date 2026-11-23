@@ -153,6 +153,33 @@ describe('NominationsPage', () => {
     await waitFor(() => expect(create.mock.calls[0][0]).toMatchObject({ memberId: 'm1', reason: 'Bắt nhịp tốt' }))
     expect(await drawer.findByText(/đang có một đề cử chưa kết thúc/)).toBeInTheDocument()
   }, 30_000)
+  it('filters by status in the shared FilterBar and names the actions column', async () => {
+    withNomination(detail('Pending'))
+    renderPage(<NominationsPage area="Khu" />, '/x')
+
+    expect(await screen.findByRole('columnheader', { name: 'Thao tác' })).toBeInTheDocument()
+    expect(screen.getByText('Chưa đề xuất')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('1 đề cử')
+    expect(screen.getByRole('button', { name: 'Xoá bộ lọc' })).toBeDisabled()
+  })
+
+  it('closes the detail from the footer, next to the actions or alone (ViewDrawer)', async () => {
+    withNomination(detail('Pending'))
+    await open()
+    const footerButtons = within(screen.getByRole('dialog')).getAllByRole('button', { name: 'Đóng' })
+    expect(footerButtons.length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: 'Duyệt' })).toBeInTheDocument()
+  })
+
+  it('shows Admin only the default close button when no action is open', async () => {
+    asRole('Admin')
+    withNomination(detail('Approved'))
+    await open()
+    const footer = document.querySelector('.ant-drawer-footer') as HTMLElement
+    expect(within(footer).getByRole('button', { name: 'Đóng' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Bổ nhiệm' })).toBeNull()
+  })
+
   it('lets the Parish Priest search the whole parish to nominate', async () => {
     vi.spyOn(api, 'listNominations').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 })
     const search = vi.spyOn(membersApi, 'searchMembers').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 })

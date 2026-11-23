@@ -1,10 +1,9 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
-import { App, Button, Drawer, Flex, Select, Table, Typography } from 'antd'
+import { App, Button, Flex, Select, Table, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useChoirMembers } from '@/features/members'
-import { EmptyState, ErrorState, SectionSkeleton } from '@/shared/ui'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { ACTIONS_COLUMN_TITLE, CANCEL_LABEL, EmptyState, ErrorState, Icon, SectionSkeleton, SELECT_POPUP_PROPS, ViewDrawer } from '@/shared/ui'
+import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { useAddChoirMembers, useMembersOfChoir, useRemoveChoirMember } from '../hooks/useChoirs'
 import type { Choir, ChoirMembership } from '../types'
@@ -55,7 +54,7 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
       content: 'Ca viên vẫn thuộc các ca đoàn khác và có thể được thêm lại sau.',
       okText: 'Rút khỏi ca đoàn',
       okButtonProps: { danger: true },
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       // Enter on a destructive dialog must not run it.
       focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
@@ -66,13 +65,13 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
     })
 
   return (
-    <Drawer
+    <ViewDrawer
       open={Boolean(choir)}
       title={`Ca viên của ${choirName}`}
       onClose={onClose}
-      size="large"
+      size={component.drawer.lg}
       extra={
-        <Button type="primary" icon={<PlusOutlined />} disabled={!choir?.isActive || adding} onClick={() => setAdding(true)}>
+        <Button type="primary" icon={<Icon name="add" />} disabled={!choir?.isActive || adding} onClick={() => setAdding(true)}>
           Thêm ca viên
         </Button>
       }
@@ -91,6 +90,7 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
           <Typography.Text strong>Thêm ca viên vào {choirName}</Typography.Text>
           <Typography.Text style={muted}>Chỉ ca viên đang sinh hoạt; một ca viên có thể thuộc nhiều ca đoàn.</Typography.Text>
           <Select
+            {...SELECT_POPUP_PROPS}
             autoFocus
             mode="multiple"
             allowClear
@@ -106,7 +106,7 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
           />
           <Flex justify="flex-end" gap={spacing.sm}>
             <Button onClick={closeAdding} disabled={add.isPending}>
-              Hủy
+              {CANCEL_LABEL}
             </Button>
             <Button type="primary" onClick={handleAdd} disabled={picked.length === 0} loading={add.isPending}>
               {picked.length ? `Thêm ${picked.length} ca viên` : 'Thêm ca viên'}
@@ -156,14 +156,14 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
             },
             {
               key: 'actions',
-              title: 'Thao tác',
+              title: ACTIONS_COLUMN_TITLE,
               align: 'center',
               width: 80,
               render: (_, member) => (
                 <Button
                   type="text"
                   danger
-                  icon={<DeleteOutlined />}
+                  icon={<Icon name="delete" />}
                   onClick={() => handleRemove(member)}
                   aria-label={`Rút ${member.fullName} khỏi ca đoàn`}
                 />
@@ -172,6 +172,6 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
           ]}
         />
       )}
-    </Drawer>
+    </ViewDrawer>
   )
 }

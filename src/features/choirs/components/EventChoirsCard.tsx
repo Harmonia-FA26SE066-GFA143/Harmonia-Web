@@ -1,7 +1,6 @@
-import { EditOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Card, Flex, Input, Select, Tag, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { CardTitle, ErrorState, Form, SectionSkeleton } from '@/shared/ui'
+import { CANCEL_LABEL, CardTitle, ErrorState, Form, Icon, SectionSkeleton, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { useChoirs, useEventChoirs, useUpdateEventChoirs } from '../hooks/useChoirs'
@@ -99,7 +98,7 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false, publ
         !locked &&
         serving.data !== undefined &&
         !draft && (
-          <Button ref={editButton} icon={<EditOutlined />} onClick={() => setDraft({ choirIds: current.map((choir) => choir.choirId), leadChoirId: currentLead })}>
+          <Button ref={editButton} icon={<Icon name="edit" />} onClick={() => setDraft({ choirIds: current.map((choir) => choir.choirId), leadChoirId: currentLead })}>
             Sửa ca đoàn phục vụ
           </Button>
         )
@@ -155,6 +154,7 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false, publ
           <Form layout="vertical" component="div">
             <Form.Item label="Ca đoàn phục vụ" style={{ marginBottom: spacing.sm }}>
               <Select
+                {...SELECT_POPUP_PROPS}
                 autoFocus
                 mode="multiple"
                 optionFilterProp="label"
@@ -178,6 +178,7 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false, publ
                 style={{ marginBottom: spacing.sm }}
               >
                 <Select
+                  {...SELECT_POPUP_PROPS}
                   aria-label="Ca đoàn phụ trách"
                   placeholder="Chọn ca đoàn phụ trách"
                   value={draft.leadChoirId}
@@ -210,7 +211,7 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false, publ
           )}
           <Flex gap={spacing.sm} justify="flex-end">
             <Button onClick={() => setDraft(undefined)} disabled={update.isPending}>
-              Hủy
+              {CANCEL_LABEL}
             </Button>
             <Button type="primary" loading={update.isPending} disabled={blocked} onClick={save}>
               Lưu

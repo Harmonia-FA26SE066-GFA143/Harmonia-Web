@@ -2770,7 +2770,7 @@ textarea {
 
 .hm-facts {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: 118px minmax(0, 1fr);
   gap: 8px 12px;
   margin: 0;
 }

@@ -1,5 +1,5 @@
-import { CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 import { Flex, Typography } from 'antd'
+import { Icon } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import type { NominationStats } from '../types'
 
@@ -23,7 +23,7 @@ export function NominationStatsList({ stats }: Readonly<{ stats: NominationStats
     <Flex component="ul" vertical gap={spacing.xs} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
       {rows.map(({ label, value, met }) => (
         <Flex component="li" key={label} gap={spacing.sm} align="baseline">
-          <span aria-hidden style={{ color: met ? "var(--hm-success)" : "var(--hm-warning)" }}>{met ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}</span>
+          <span aria-hidden style={{ color: met ? "var(--hm-success)" : "var(--hm-warning)" }}>{met ? <Icon name="check-circle" /> : <Icon name="warning" />}</span>
           <Typography.Text>
             <strong>{label}:</strong> {value}. {met ? 'Đạt.' : 'Chưa đạt.'}
           </Typography.Text>

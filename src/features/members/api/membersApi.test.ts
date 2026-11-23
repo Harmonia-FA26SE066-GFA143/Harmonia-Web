@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { listChoirMembers, searchMembers } from './membersApi'
+import { listAllChoirMembers, listChoirMembers, searchMembers } from './membersApi'
 
 const fetchMock = vi.fn<typeof fetch>()
 
@@ -40,6 +40,33 @@ describe('listChoirMembers', () => {
     const url = new URL(String(fetchMock.mock.calls[0][0]), 'http://localhost')
     expect(url.pathname).toBe('/api/member-profiles')
     expect(Object.fromEntries(url.searchParams)).toEqual({ status: 'Active', pageNumber: '1', pageSize: '100' })
+  })
+})
+
+describe('listAllChoirMembers', () => {
+  it('reads every page of active members instead of stopping at 100 (G2-03, B54)', async () => {
+    const page = (pageNumber: number, ids: string[]) =>
+      new Response(
+        JSON.stringify({
+          items: ids.map((id) => ({ id, fullName: id, email: `${id}@x.org`, status: 'Active', approvedSkills: [{ skillId: 's', skillName: 'Alto' }] })),
+          pageNumber,
+          pageSize: 100,
+          totalCount: 201,
+          totalPages: 3,
+        }),
+        { status: 200 },
+      )
+    fetchMock.mockImplementation(async (input) => {
+      const pageNumber = Number(new URL(String(input), 'http://localhost').searchParams.get('pageNumber'))
+      return page(pageNumber, [`p${pageNumber}a`, `p${pageNumber}b`])
+    })
+
+    const members = await listAllChoirMembers()
+    expect(members.map((member) => member.id)).toEqual(['p1a', 'p1b', 'p2a', 'p2b', 'p3a', 'p3b'])
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    for (const [input] of fetchMock.mock.calls) {
+      expect(new URL(String(input), 'http://localhost').searchParams.get('status')).toBe('Active')
+    }
   })
 })
 

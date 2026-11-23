@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, App, Input, Select, Skeleton, Typography } from 'antd'
-import { useState } from 'react'
+import { Alert, App, Input, Select, Skeleton, Typography, type RefSelectProps } from 'antd'
+import { useRef, useState } from 'react'
 import { useChoirs } from '@/features/choirs'
 import { searchMembers } from '@/features/members'
 import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { Form, FormDrawer } from '@/shared/ui'
-import { spacing, typography } from '@/styles/tokens'
+import { CANCEL_LABEL, Form, FormDrawer, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { component, spacing, typography } from '@/styles/tokens'
 import { createNomination, getEligibility } from '../api/nominationsApi'
 import { nominationErrorMessage } from '../nominationErrors'
 import { NominationStatsList } from './NominationStatsList'
@@ -27,6 +27,7 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
   const queryClient = useQueryClient()
   const [form] = Form.useForm<Values>()
   const [problem, setProblem] = useState<string>()
+  const memberField = useRef<RefSelectProps>(null)
   const isPriest = getSession()?.user.roleName === 'ParishPriest'
   const [keyword, setKeyword] = useState('')
   const search = useDebouncedValue(keyword)
@@ -69,7 +70,10 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
     <FormDrawer
       open={open}
       title="Đề cử Ca trưởng"
+      size={component.drawer.sm}
       okText="Gửi đề cử"
+      cancelText={CANCEL_LABEL}
+      initialFocusRef={memberField}
       okButtonProps={{ loading: create.isPending }}
       onOk={() => form.submit()}
       onCancel={onClose}
@@ -81,9 +85,11 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
       }}
       forceRender
     >
-      <Form<Values> form={form} layout="vertical" requiredMark="optional" onFinish={submit} scrollToFirstError>
+      <Form<Values> form={form} layout="vertical" requiredMark onFinish={submit} scrollToFirstError>
         <Form.Item name="memberId" label="Ca viên" rules={[{ required: true, message: 'Vui lòng chọn ca viên.' }]}>
           <Select
+            {...SELECT_POPUP_PROPS}
+            ref={memberField}
             showSearch={{ filterOption: false, onSearch: setKeyword }}
             placeholder={isPriest ? 'Tìm ca viên trong giáo xứ theo họ tên hoặc email' : 'Tìm ca viên trong ca đoàn của bạn'}
             loading={members.isFetching && open}
@@ -111,7 +117,7 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
           <Input.TextArea rows={4} showCount maxLength={1000} />
         </Form.Item>
         <Form.Item name="proposedChoirId" label="Ca đoàn đề xuất" extra="Admin sẽ chọn ca đoàn khi bổ nhiệm.">
-          <Select allowClear placeholder="Chọn ca đoàn" loading={choirs.isPending && open} options={choirs.data?.map((choir) => ({ value: choir.id, label: choir.name }))} />
+          <Select {...SELECT_POPUP_PROPS} allowClear placeholder="Chọn ca đoàn" loading={choirs.isPending && open} options={choirs.data?.map((choir) => ({ value: choir.id, label: choir.name }))} />
         </Form.Item>
         {problem && <Alert type="error" showIcon title={problem} />}
       </Form>

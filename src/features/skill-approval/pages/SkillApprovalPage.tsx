@@ -1,6 +1,6 @@
 import { App } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { AllDone, EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { AllDone, CANCEL_LABEL, EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { PendingSkillTable } from '../components/PendingSkillTable'
 import { RejectSkillModal } from '../components/RejectSkillModal'
 import { useApproveSkill, usePendingSkills, useRejectSkill } from '../hooks/usePendingSkills'
@@ -54,7 +54,7 @@ export function SkillApprovalPage() {
       title: 'Duyệt kỹ năng?',
       content: `${skill.memberName} sẽ được ghi nhận kỹ năng ${skill.skillName}. Sau khi duyệt không thể đổi lại.`,
       okText: 'Duyệt',
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       afterClose: focusAfterDialog,
       onOk: () =>
         approve

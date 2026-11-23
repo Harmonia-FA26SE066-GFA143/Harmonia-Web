@@ -1,11 +1,13 @@
 import { roleLabels } from '@/shared/types/account'
-import { Avatar, Button, Flex, Table, Tag, Typography } from 'antd'
+import { Avatar, Button, Flex, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import { StatusTag, type StatusTagProps } from '@/shared/ui'
+import { ACTIONS_COLUMN_TITLE, EDIT_MEMBER_ACTION, EmptyCell, StatusTag, VIEW_MEMBER_ACTION, type StatusTagProps } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { memberStatusLabels, type MemberProfile, type MemberStatus } from '../types'
 import { personName } from '@/shared/utils/personName'
+import { VoicePartTags } from './SkillTags'
+import { initials } from '../utils/initials'
 
 export interface MemberTableProps {
   members: MemberProfile[]
@@ -15,6 +17,7 @@ export interface MemberTableProps {
   total: number
   loading?: boolean
   onPageChange: (page: number) => void
+  onView: (member: MemberProfile) => void
   onEdit: (member: MemberProfile) => void
 }
 
@@ -27,14 +30,19 @@ const statusMarks: Record<MemberStatus, Pick<StatusTagProps, 'color' | 'mark'>> 
   left: { mark: 'struck' },
 }
 
-/** Initials as the artifact draws them: first and last word, "Maria Nguyễn Thị Lan" → "ML". */
-const initials = (fullName: string) => {
-  const words = fullName.trim().split(/\s+/)
-  return ((words[0]?.charAt(0) ?? '') + (words.length > 1 ? words.at(-1)!.charAt(0) : '')).toUpperCase()
+/** The member's status, or the role a retained profile's account moved to (B46). */
+export function MemberStatusTag({ member }: Readonly<{ member: MemberProfile }>) {
+  return member.role === 'member' ? (
+    <StatusTag {...statusMarks[member.status]} style={{ marginInlineEnd: 0 }}>
+      {memberStatusLabels[member.status]}
+    </StatusTag>
+  ) : (
+    <StatusTag style={{ marginInlineEnd: 0 }}>Đã chuyển sang {roleLabels[member.role]}</StatusTag>
+  )
 }
 
 /** The choir as a dense table (artifact MembersPage): who, how to reach them, approved skills, since when, status. */
-export function MemberTable({ members, page, pageSize, total, loading, onPageChange, onEdit }: Readonly<MemberTableProps>) {
+export function MemberTable({ members, page, pageSize, total, loading, onPageChange, onView, onEdit }: Readonly<MemberTableProps>) {
   const columns: ColumnsType<MemberProfile> = [
     {
       title: 'Ca viên',
@@ -55,50 +63,39 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
       render: (_, member) => (
         <>
           {member.email}
-          <Typography.Text style={muted}>{member.phone || '—'}</Typography.Text>
+          <Typography.Text style={muted}>{member.phone || <EmptyCell />}</Typography.Text>
         </>
       ),
     },
     {
-      title: 'Kỹ năng',
+      title: 'Bè & Kỹ năng',
       key: 'skills',
-      render: (_, member) =>
-        member.skills.length > 0 ? (
-          <Flex wrap gap={4}>
-            {member.skills.map((skill) => (
-              <Tag key={skill} style={{ marginInlineEnd: 0 }}>
-                {skill}
-              </Tag>
-            ))}
-          </Flex>
-        ) : (
-          // Only a current Choir Member declares skills; on a retained profile the empty state says nothing (B46).
-          member.role === 'member' && <Typography.Text style={{ color: colors.textMuted }}>Chưa có kỹ năng được duyệt</Typography.Text>
-        ),
+      // Only a current Choir Member has a voice part to miss; a retained profile says nothing when empty (B46).
+      render: (_, member) => <VoicePartTags skills={member.skills} showUnassigned={member.role === 'member'} />,
     },
     { title: 'Tham gia từ', dataIndex: 'joinedDate', render: (date: string) => dayjs(date).format('MM/YYYY') },
     {
       title: 'Trạng thái',
       key: 'status',
-      render: (_, member) =>
-        member.role !== 'member' ? (
-          <StatusTag style={{ marginInlineEnd: 0 }}>Đã chuyển sang {roleLabels[member.role]}</StatusTag>
-        ) : (
-          <StatusTag {...statusMarks[member.status]} style={{ marginInlineEnd: 0 }}>
-            {memberStatusLabels[member.status]}
-          </StatusTag>
-        ),
+      render: (_, member) => <MemberStatusTag member={member} />,
     },
     {
       key: 'action',
+      title: ACTIONS_COLUMN_TITLE,
       align: 'right',
-      // A profile kept from an account that changed role is history only (BE 9b1f587: 409 MEMBER_NOT_ACTIVE).
-      render: (_, member) =>
-        member.role === 'member' && (
-          <Button type="link" onClick={() => onEdit(member)} aria-label={`Hồ sơ của ${member.fullName}`}>
-            Hồ sơ
+      render: (_, member) => (
+        <Flex justify="flex-end" gap={4}>
+          <Button type="link" onClick={() => onView(member)} aria-label={`${VIEW_MEMBER_ACTION} ${member.fullName}`}>
+            {VIEW_MEMBER_ACTION}
           </Button>
-        ),
+          {/* A profile kept from an account that changed role is history only (BE 9b1f587: 409 MEMBER_NOT_ACTIVE). */}
+          {member.role === 'member' && (
+            <Button type="link" onClick={() => onEdit(member)} aria-label={`${EDIT_MEMBER_ACTION} ${member.fullName}`}>
+              {EDIT_MEMBER_ACTION}
+            </Button>
+          )}
+        </Flex>
+      ),
     },
   ]
 

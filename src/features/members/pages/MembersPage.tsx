@@ -1,23 +1,38 @@
-import { App, Card } from 'antd'
+import { App, Card, Flex } from 'antd'
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
+import { paths } from '@/app/router/paths'
 import { usePendingSkills } from '@/features/skill-approval'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, SummaryStrip, inVoicePart, voiceParts } from '@/shared/ui'
+import {
+  countVoiceParts,
+  EmptyChoir,
+  EmptyState,
+  ErrorState,
+  NoFilterResults,
+  PageHeader,
+  SectionSkeleton,
+  SummaryStrip,
+  UNASSIGNED_VOICE_LABEL,
+  voiceParts,
+  type SummaryCell,
+} from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
+import { MemberDetailDrawer } from '../components/MemberDetailDrawer'
 import { MemberFilterBar } from '../components/MemberFilterBar'
 import { MemberFormDrawer } from '../components/MemberFormDrawer'
 import { MemberTable } from '../components/MemberTable'
-import { useChoirMembers } from '../hooks/useChoirMembers'
+import { useAllChoirMembers } from '../hooks/useChoirMembers'
 import { useMemberProfiles, useUpdateMemberProfile } from '../hooks/useMemberProfiles'
 import { emptyMemberFilters, hasActiveMemberFilters } from '../memberFilters'
 import { memberStatuses, type MemberFilters, type MemberProfile, type MemberProfileValues, type MemberStatus } from '../types'
 
 const pageSize = 20
 const onePage = { pageNumber: 1, pageSize: 1 }
-const onLeave = { search: '', status: 'inactive' as const }
-const allActive = { search: '', status: 'active' as const }
+const activeFilter = { search: '', status: 'active' as const }
+const onLeaveFilter = { search: '', status: 'inactive' as const }
+const leftFilter = { search: '', status: 'left' as const }
 
 /** Filters and page live in the URL (artifact MembersPage), so a filtered list can be shared or reopened. */
 function readState(params: URLSearchParams): { filters: MemberFilters; page: number } {
@@ -63,20 +78,26 @@ export function MembersPage() {
   const query = useMemo(() => ({ ...filters, search }), [filters, search])
   const members = useMemberProfiles(query, { pageNumber: page, pageSize })
   const update = useUpdateMemberProfile()
-  // Active members with their approved skills, for the counts above the list (the same request other pages share).
-  // ponytail: the voice-part cells count that one page of 100; past it they need a count from the backend.
-  const active = useChoirMembers()
-  const activeTotal = useMemberProfiles(allActive, onePage).data?.totalCount
-  const leave = useMemberProfiles(onLeave, onePage)
-  const activeCells = active.data && [
-    { label: 'Đang sinh hoạt', value: activeTotal ?? active.data.length },
-    ...voiceParts.map(({ label, pattern }) => ({ label, value: active.data.filter((member) => inVoicePart(member.skills, pattern)).length })),
-    ...(leave.data ? [{ label: 'Tạm nghỉ', value: leave.data.totalCount }] : []),
+  // Counts above the list: totals from one-row pages, voice parts from every active member (all pages, G2-03).
+  // Undefined while loading or failed, so a cell reads "Chưa có dữ liệu", never a false 0 (R2.6).
+  const allActive = useAllChoirMembers()
+  const activeTotal = useMemberProfiles(activeFilter, onePage).data?.totalCount
+  const onLeave = useMemberProfiles(onLeaveFilter, onePage).data?.totalCount
+  const left = useMemberProfiles(leftFilter, onePage).data?.totalCount
+  const pendingSkills = usePendingSkills(onePage).data?.totalCount
+  const voices = allActive.isSuccess ? countVoiceParts(allActive.data, (member) => member.skills) : undefined
+  const statusCells: SummaryCell[] = [
+    { label: 'Đang sinh hoạt', value: activeTotal },
+    { label: 'Tạm nghỉ', value: onLeave },
+    { label: 'Đã nghỉ', value: left },
+    { label: 'Chờ duyệt kỹ năng', value: pendingSkills, waiting: <Link to={paths.director.skillApproval}>Duyệt kỹ năng</Link> },
   ]
-  const pendingSkills = usePendingSkills(onePage).data?.totalCount ?? 0
-  const description = active.data
-    ? [`${activeTotal ?? active.data.length} ca viên đang sinh hoạt`, pendingSkills > 0 && `${pendingSkills} yêu cầu duyệt kỹ năng`].filter(Boolean).join(' · ')
-    : 'Tài khoản ca viên do Quản trị viên tạo.'
+  const voiceCells: SummaryCell[] = [
+    ...voiceParts.map(({ label }) => ({ label, value: voices?.[label] })),
+    { label: UNASSIGNED_VOICE_LABEL, value: voices?.unassigned },
+  ]
+  const description = activeTotal === undefined ? 'Tài khoản ca viên do Quản trị viên tạo.' : `${activeTotal} ca viên đang sinh hoạt`
+  const [viewing, setViewing] = useState<MemberProfile>()
   const [editing, setEditing] = useState<MemberProfile>()
 
   const total = members.data?.totalCount ?? 0
@@ -109,11 +130,10 @@ export function MembersPage() {
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Danh sách ca viên' }]}
         description={description}
       />
-      {activeCells && (
-        <div style={{ marginBottom: spacing.lg }}>
-          <SummaryStrip label="Ca viên đang sinh hoạt theo bè" cells={activeCells} />
-        </div>
-      )}
+      <Flex vertical gap={spacing.md} style={{ marginBottom: spacing.lg }}>
+        <SummaryStrip label="Tình trạng ca viên" cells={statusCells} />
+        <SummaryStrip label="Phân bố theo bè (ca viên đang sinh hoạt)" cells={voiceCells} />
+      </Flex>
 
       {members.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách ca viên" />}
       {members.isError && (
@@ -127,7 +147,7 @@ export function MembersPage() {
       )}
       {members.data !== undefined && (total > 0 || filtered) && (
         <>
-        <MemberFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
+        <MemberFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={members.data?.totalCount} error={members.isError} />
         <Card styles={{ body: { padding: 0 } }}>
           {total === 0 ? (
             <div style={{ padding: spacing.lg }}>
@@ -141,6 +161,7 @@ export function MembersPage() {
               total={total}
               loading={members.isPlaceholderData}
               onPageChange={setPage}
+              onView={setViewing}
               onEdit={setEditing}
             />
           )}
@@ -148,6 +169,14 @@ export function MembersPage() {
         </>
       )}
 
+      <MemberDetailDrawer
+        member={viewing}
+        onClose={() => setViewing(undefined)}
+        onEdit={(member) => {
+          setViewing(undefined)
+          setEditing(member)
+        }}
+      />
       <MemberFormDrawer
         member={editing}
         saving={update.isPending}

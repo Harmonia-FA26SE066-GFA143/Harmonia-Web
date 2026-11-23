@@ -67,4 +67,18 @@ describe('SkillApprovalPage', () => {
 
     expect(await screen.findByText(/đã được Ca trưởng khác xử lý/)).toBeInTheDocument()
   })
+
+  it('uses ACTIONS_COLUMN_TITLE and EmptyCell for missing level and evidence', async () => {
+    vi.spyOn(api, 'listPendingSkills').mockResolvedValue(page([{ ...tenor, level: undefined, evidence: undefined }]))
+    renderApproval()
+
+    const table = await screen.findByRole('table')
+    expect(within(table).getByRole('columnheader', { name: 'Thao tác' })).toBeInTheDocument()
+    expect(within(table).getByText('Không nêu')).toBeInTheDocument()
+    expect(within(table).getByText('Không gửi')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Từ chối Tenor của Giuse Vũ Đình Khôi' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('button', { name: 'Hủy' })).toBeInTheDocument()
+  })
 })
