@@ -115,6 +115,9 @@ describe('AttendancePage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Đánh dấu tất cả có mặt/ }))
     expect(screen.getByText('2 thay đổi chưa lưu')).toBeInTheDocument()
+    // Glossary terms: "Đi trễ" in the counts and the mark's title; a member without a voice-part skill is "Chưa phân bè".
+    expect(within(screen.getByLabelText(/^Điểm danh: /)).getByText('Đi trễ')).toBeInTheDocument()
+    expect(screen.getAllByText('Chưa phân bè')).toHaveLength(2)
   })
 
   it('corrects a past session, as the backend allows any time after the start', async () => {

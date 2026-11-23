@@ -1,10 +1,9 @@
-import { CalendarOutlined, CheckSquareOutlined, DeleteOutlined, EditOutlined, EnvironmentOutlined, ReadOutlined } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { generatePath, Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
-import { StatusTag } from '@/shared/ui'
+import { Icon, PRACTICE_ROOM_ACTION, StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
 import { canTakeAttendance, isRehearsalDay, isUpcoming, type Rehearsal } from '../types'
@@ -119,17 +118,17 @@ export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendan
         </Flex>
         <ul className="ctb-facts">
           <li>
-            <CalendarOutlined aria-hidden />
+            <Icon name="calendar" />
             {formatRehearsalTime(rehearsal)}
           </li>
           {rehearsal.locationName && (
             <li>
-              <EnvironmentOutlined aria-hidden />
+              <Icon name="venue" />
               {rehearsal.locationName}
             </li>
           )}
           <li>
-            <ReadOutlined aria-hidden />
+            <Icon name="program" />
             {rehearsal.eventId ? (
               <Link to={generatePath(paths.director.programDetail, { programId: rehearsal.eventId })}>
                 Cho Thánh lễ: {program ? `${program.eventName} · ${formatProgramDate(program.date)}` : 'xem chương trình'}
@@ -141,15 +140,30 @@ export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendan
         </ul>
       </div>
       <div>
-        <p className="hm-rubric">Bài tập · {rehearsal.songs.length}</p>
+        <Flex justify="space-between" align="center" gap={spacing.sm} className="ctb-detail__head">
+          <p className="hm-rubric">Bài tập · {rehearsal.songs.length}</p>
+          {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
+          {isUpcoming(rehearsal) && (
+            <PlannerOnly rehearsal={rehearsal}>
+              <Button size="small" type="text" icon={<Icon name="edit" />} onClick={() => onEdit(rehearsal)} aria-label={`Chọn bài tập cho buổi ${label}`}>
+                {rehearsal.songs.length === 0 ? 'Chọn bài tập' : 'Sửa bài tập'}
+              </Button>
+            </PlannerOnly>
+          )}
+        </Flex>
         {rehearsal.songs.length === 0 ? (
           <Typography.Text style={muted}>Chưa chọn bài tập.</Typography.Text>
         ) : (
           <ol className="ctb-songs">
-            {rehearsal.songs.map((song) => (
+            {rehearsal.songs.map((song, index) => (
               <li key={song.songId}>
-                <b>{song.songTitle}</b>
-                {song.note && <span>{song.note}</span>}
+                <span className="ctb-songs__index" aria-hidden>{index + 1}.</span>
+                <div>
+                  <Link className="ctb-songs__title" to={generatePath(paths.director.songDetail, { songId: song.songId })}>
+                    {song.songTitle}
+                  </Link>
+                  {song.note && <span className="ctb-songs__note">{song.note}</span>}
+                </div>
               </li>
             ))}
           </ol>
@@ -162,19 +176,19 @@ export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendan
         </Typography.Paragraph>
         <Flex wrap gap={spacing.sm}>
           <Button type="primary" onClick={() => onOpenRoom(rehearsal)}>
-            Vào phòng tập
+            {PRACTICE_ROOM_ACTION}
           </Button>
           <PlannerOnly rehearsal={rehearsal}>
-          <Button icon={<CheckSquareOutlined />} onClick={() => onTakeAttendance(rehearsal)} aria-label={`${canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${label}`}>
+          <Button icon={<Icon name="check-square" />} onClick={() => onTakeAttendance(rehearsal)} aria-label={`${canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${label}`}>
             {canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
           </Button>
           {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
           {isUpcoming(rehearsal) && (
-            <Button icon={<EditOutlined />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${label}`}>
+            <Button icon={<Icon name="edit" />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${label}`}>
               Sửa
             </Button>
           )}
-          <Button danger icon={<DeleteOutlined />} onClick={() => onDelete(rehearsal)} aria-label={`Xoá buổi tập ${label}`}>
+          <Button danger icon={<Icon name="delete" />} onClick={() => onDelete(rehearsal)} aria-label={`Xoá buổi tập ${label}`}>
             Xoá
           </Button>
           </PlannerOnly>

@@ -2578,13 +2578,14 @@ textarea {
   padding: 8px 12px;
   background: var(--hm-surface-band);
   border-bottom: 1px solid var(--hm-border-default);
-  color: var(--hm-text-muted);
-  font-size: 12px;
+  color: var(--hm-text-body);
+  font-size: 13px;
   font-weight: 600;
 }
 
+/* Be Vietnam Pro, not the display serif: Cormorant's old-style numerals read thin and uneven at this size. */
 .hm-week__head b {
-  font-family: var(--hm-font-display);
+  font-family: var(--hm-font-ui);
   font-size: 18px;
   font-weight: 700;
   line-height: 1.2;
@@ -4780,30 +4781,64 @@ html[data-door='close'] .landing-close__window {
   color: var(--hm-text-muted);
 }
 
+/* Numbered song rows: an aligned Be Vietnam Pro index instead of the browser's serif ::marker. */
 .ctb-songs {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin: 0;
-  padding-inline-start: 20px;
+  padding: 0;
+  list-style: none;
 }
 
-.ctb-songs li::marker {
-  font-family: var(--hm-font-display);
+.ctb-songs li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: baseline;
+}
+
+.ctb-songs__index {
+  min-width: 24px;
+  font-family: var(--hm-font-ui);
   font-size: 14px;
   font-weight: 600;
-  color: var(--hm-text-body);
+  font-variant-numeric: lining-nums;
+  color: var(--hm-text-primary);
 }
 
-.ctb-songs b {
+.ctb-songs__title {
   display: block;
   font-weight: 600;
 }
 
-.ctb-songs span {
+.ctb-songs__note {
   display: block;
-  color: var(--hm-text-muted);
+  margin-top: 4px;
+  padding-inline-start: 8px;
+  border-inline-start: 2px solid var(--hm-area-rehearsal-border);
+  color: var(--hm-text-body);
   font-size: 13px;
+}
+
+.ctb-songs--compact {
+  gap: 4px;
+}
+
+.ctb-songs--compact .ctb-songs__index {
+  font-size: 13px;
+}
+
+.ctb-detail__head {
+  margin-bottom: 8px;
+}
+
+.ctb-detail__head .hm-rubric {
+  margin: 0;
+}
+
+.ctb-songs-field__label {
+  color: var(--hm-text-primary);
 }
 
 /* Xác nhận tham gia: the answers' strip on the head's right. */

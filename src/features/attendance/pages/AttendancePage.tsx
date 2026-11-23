@@ -1,4 +1,3 @@
-import { CalendarOutlined } from '@ant-design/icons'
 import { Alert, Button, Flex } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo } from 'react'
@@ -7,7 +6,7 @@ import { paths } from '@/app/router/paths'
 import { useUpcomingPrograms } from '@/features/liturgical-programs'
 import { isRehearsalDay, useRecentRehearsals, type Rehearsal } from '@/features/rehearsals'
 import { ApiError } from '@/lib/api/errors'
-import { EmptyState, EmptyWeek, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, EmptyWeek, ErrorState, Icon, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AttendanceSheet } from '../components/AttendanceSheet'
 import { SessionPicker, SessionSummary } from '../components/SessionPicker'
@@ -59,7 +58,7 @@ export function AttendancePage() {
   const showSheet = attendance.data !== undefined && attendance.data.length > 0
 
   const scheduleButton = (
-    <Button icon={<CalendarOutlined />} onClick={() => navigate(paths.director.rehearsals)}>
+    <Button icon={<Icon name="calendar" />} onClick={() => navigate(paths.director.rehearsals)}>
       Đến lịch tập
     </Button>
   )

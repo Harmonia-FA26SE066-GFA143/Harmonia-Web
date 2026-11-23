@@ -1,16 +1,18 @@
-import { App, Button, Checkbox, DatePicker, Flex, Input, Select, TimePicker } from 'antd'
+import { App, Button, Checkbox, DatePicker, Flex, Input, Select, TimePicker, type RefSelectProps } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useState } from 'react'
+import { useRef, useState, type Ref } from 'react'
 import { isPlanningDirector, useChoirs, useCurrentChoir, useEventChoirs } from '@/features/choirs'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { useSongs } from '@/features/music-library'
 import { useCatalogOptions } from '@/features/system-categories'
 import { requestFailureMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { spacing } from '@/styles/tokens'
+import { component, spacing } from '@/styles/tokens'
 import { useDefaultSongs } from '../hooks/useRehearsals'
 import type { Rehearsal, RehearsalValues } from '../types'
-import { Form, FormDrawer } from '@/shared/ui'
+import { CANCEL_LABEL, CREATE_REHEARSAL_LABEL, Form, FormDrawer, Icon, SELECT_POPUP_PROPS } from '@/shared/ui'
+
+const PICKER_POPUP_PROPS = { getPopupContainer: SELECT_POPUP_PROPS.getPopupContainer, placement: 'bottomLeft' as const }
 
 export interface RehearsalFormDrawerProps {
   open: boolean
@@ -73,10 +75,20 @@ function SongsField() {
     })
 
   return (
-    <Form.Item label="Bài hát tập (không bắt buộc)">
-      <Flex vertical gap={spacing.xs}>
+    <Form.Item>
+      <Flex vertical gap={spacing.sm}>
+        {/* The helper has its own row above the field (G4-17): a button cannot sit inside the field's <label>. */}
+        <Flex justify="space-between" align="center" wrap gap={spacing.sm}>
+          <span id="rehearsal-songs-label" className="ctb-songs-field__label">
+            Bài hát tập
+          </span>
+          <Button size="small" icon={<Icon name="program" />} disabled={!eventId} loading={defaults.isPending} onClick={fillFromProgram}>
+            Lấy bài hát từ danh sách đã duyệt của chương trình
+          </Button>
+        </Flex>
         <Form.Item name="songs" noStyle>
           <Select
+            {...SELECT_POPUP_PROPS}
             mode="multiple"
             labelInValue
             allowClear
@@ -89,18 +101,13 @@ function SongsField() {
             options={options}
           />
         </Form.Item>
-        <div>
-          <Button size="small" disabled={!eventId} loading={defaults.isPending} onClick={fillFromProgram}>
-            Lấy bài hát từ danh sách đã duyệt của chương trình
-          </Button>
-        </div>
         {/* Removing a song keeps its note in the form, but only the notes of chosen songs are sent. */}
         {chosen?.map((song) => (
           <Form.Item key={song.value} name={['songNotes', song.value]} noStyle>
             <Input
               maxLength={500}
               aria-label={`Ghi chú cho bài ${song.label}`}
-              placeholder={`${song.label}: cần tập phần nào (không bắt buộc)`}
+              placeholder={`${song.label}: cần tập phần nào`}
             />
           </Form.Item>
         ))}
@@ -110,7 +117,12 @@ function SongsField() {
 }
 
 /** The choir of a new session; a joint one has none (it gathers every choir serving the program). */
-function ChoirField({ activeChoirs, loading, noChoir }: Readonly<{ activeChoirs: { id: string; name: string }[]; loading: boolean; noChoir: boolean }>) {
+function ChoirField({
+  activeChoirs,
+  loading,
+  noChoir,
+  selectRef,
+}: Readonly<{ activeChoirs: { id: string; name: string }[]; loading: boolean; noChoir: boolean; selectRef: Ref<RefSelectProps> }>) {
   const isJoint: boolean | undefined = Form.useWatch('isJoint')
   const eventId: string | undefined = Form.useWatch('eventId')
   if (isJoint && eventId) return null
@@ -125,7 +137,7 @@ function ChoirField({ activeChoirs, loading, noChoir }: Readonly<{ activeChoirs:
           : 'Danh sách điểm danh và thông báo chỉ gồm ca viên của ca đoàn này.'
       }
     >
-      <Select placeholder="Chọn ca đoàn" loading={loading} options={activeChoirs.map((choir) => ({ value: choir.id, label: choir.name }))} />
+      <Select {...SELECT_POPUP_PROPS} ref={selectRef} placeholder="Chọn ca đoàn" loading={loading} options={activeChoirs.map((choir) => ({ value: choir.id, label: choir.name }))} />
     </Form.Item>
   )
 }
@@ -167,6 +179,9 @@ export function RehearsalFormDrawer({
   const choirs = useChoirs()
   const activeChoirs = (choirs.data ?? []).filter((choir) => choir.isActive)
   const currentChoir = useCurrentChoir()
+  // The first field on open: the choir when creating, the program when editing.
+  const choirRef = useRef<RefSelectProps>(null)
+  const programRef = useRef<RefSelectProps>(null)
   // A session keeps a location switched off since, and a program no longer upcoming; both stay selectable.
   const locationOptions =
     rehearsal?.locationId && !locations.some((option) => option.value === rehearsal.locationId)
@@ -183,13 +198,14 @@ export function RehearsalFormDrawer({
   return (
     <FormDrawer
       open={open}
-      title={rehearsal ? 'Sửa buổi tập' : 'Thêm buổi tập'}
+      title={rehearsal ? 'Sửa buổi tập' : CREATE_REHEARSAL_LABEL}
       okText={rehearsal ? 'Lưu thay đổi' : 'Lên lịch buổi tập'}
-      cancelText="Hủy"
+      cancelText={CANCEL_LABEL}
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      size={640}
+      initialFocusRef={rehearsal ? programRef : choirRef}
+      size={component.drawer.md}
       destroyOnHidden
       drawerRender={(dom) => (
         <Form<FormValues>
@@ -225,19 +241,21 @@ export function RehearsalFormDrawer({
         </Form>
       )}
     >
-      {!rehearsal && <ChoirField activeChoirs={activeChoirs} loading={choirs.isPending} noChoir={choirs.isSuccess && activeChoirs.length === 0} />}
+      {!rehearsal && (
+        <ChoirField selectRef={choirRef} activeChoirs={activeChoirs} loading={choirs.isPending} noChoir={choirs.isSuccess && activeChoirs.length === 0} />
+      )}
       <Form.Item
-        label={rehearsal?.isJoint ? 'Chương trình phụng vụ' : 'Chương trình phụng vụ (không bắt buộc)'}
+        label="Chương trình phụng vụ"
         name="eventId"
         // BE 69c9d47: a joint rehearsal keeps its program (REHEARSAL_JOINT_EVENT_LOCKED).
         extra={rehearsal?.isJoint ? 'Buổi tập chung gắn với chương trình này, không đổi được.' : undefined}
       >
-        <Select allowClear={!rehearsal?.isJoint} disabled={rehearsal?.isJoint} showSearch optionFilterProp="label" placeholder="Chọn chương trình" options={programOptions} />
+        <Select {...SELECT_POPUP_PROPS} ref={programRef} allowClear={!rehearsal?.isJoint} disabled={rehearsal?.isJoint} showSearch optionFilterProp="label" placeholder="Chọn chương trình" options={programOptions} />
       </Form.Item>
       {!rehearsal && <JointField />}
       <Flex wrap gap={spacing.md}>
         <Form.Item label="Ngày tập" name="date" rules={[{ required: true, message: 'Vui lòng chọn ngày tập.' }]} style={{ flex: '1 1 200px' }}>
-          <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
+          <DatePicker {...PICKER_POPUP_PROPS} format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
         </Form.Item>
         <Form.Item
           label="Thời gian"
@@ -253,14 +271,14 @@ export function RehearsalFormDrawer({
           ]}
           style={{ flex: '1 1 240px' }}
         >
-          <TimePicker.RangePicker format="HH:mm" minuteStep={5} placeholder={['Bắt đầu', 'Kết thúc']} style={{ width: '100%' }} />
+          <TimePicker.RangePicker {...PICKER_POPUP_PROPS} format="HH:mm" minuteStep={5} placeholder={['Bắt đầu', 'Kết thúc']} style={{ width: '100%' }} />
         </Form.Item>
       </Flex>
-      <Form.Item label="Địa điểm (không bắt buộc)" name="locationId">
-        <Select allowClear showSearch optionFilterProp="label" placeholder="Chọn nơi tập" options={locationOptions} />
+      <Form.Item label="Địa điểm" name="locationId">
+        <Select {...SELECT_POPUP_PROPS} allowClear showSearch optionFilterProp="label" placeholder="Chọn nơi tập" options={locationOptions} />
       </Form.Item>
       <SongsField />
-      <Form.Item label="Ghi chú (không bắt buộc)" name="note">
+      <Form.Item label="Ghi chú" name="note">
         <Input.TextArea rows={3} maxLength={500} showCount placeholder="Nội dung chính của buổi tập" />
       </Form.Item>
     </FormDrawer>

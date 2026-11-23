@@ -1,4 +1,3 @@
-import { LeftOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Card, Flex, Segmented, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
@@ -7,7 +6,20 @@ import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { useCurrentChoir } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
-import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import {
+  CANCEL_LABEL,
+  CREATE_REHEARSAL_LABEL,
+  EmptyState,
+  ErrorState,
+  FilterBar,
+  filterAllPlaceholder,
+  Icon,
+  NoFilterResults,
+  PageHeader,
+  PRACTICE_ROOM_ACTION,
+  SectionSkeleton,
+  SELECT_POPUP_PROPS,
+} from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { RehearsalFormDrawer } from '../components/RehearsalFormDrawer'
 import { RehearsalTable } from '../components/RehearsalTable'
@@ -129,7 +141,7 @@ export function RehearsalsPage() {
       content: `Buổi tập sẽ bị xoá khỏi lịch tập. Buổi tập đã có điểm danh thì không xoá được.`,
       okText: 'Xoá buổi tập',
       okButtonProps: { danger: true },
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       // Enter on a destructive dialog must not run it.
       focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
@@ -140,8 +152,8 @@ export function RehearsalsPage() {
     })
 
   const createButton = (
-    <Button type="primary" icon={<PlusOutlined />} onClick={() => setEditing(null)}>
-      Thêm buổi tập
+    <Button type="primary" icon={<Icon name="add" />} onClick={() => setEditing(null)}>
+      {CREATE_REHEARSAL_LABEL}
     </Button>
   )
   const weekEnd = dayjs(weekStart).add(6, 'day')
@@ -190,9 +202,9 @@ export function RehearsalsPage() {
           <>
             {view === 'week' && (
               <Flex gap={4} align="center">
-                <Button icon={<LeftOutlined />} aria-label="Tuần trước" onClick={() => changeWeek(-7)} />
+                <Button icon={<Icon name="chevron-left" />} aria-label="Tuần trước" onClick={() => changeWeek(-7)} />
                 <Button onClick={goToday}>Hôm nay</Button>
-                <Button icon={<RightOutlined />} aria-label="Tuần sau" onClick={() => changeWeek(7)} />
+                <Button icon={<Icon name="chevron-right" />} aria-label="Tuần sau" onClick={() => changeWeek(7)} />
               </Flex>
             )}
             <Segmented
@@ -238,13 +250,20 @@ export function RehearsalsPage() {
         />
       )}
       <Flex vertical gap={spacing.lg}>
-          <Flex wrap gap={spacing.sm} align="center" className="ctb-filters">
+          <FilterBar
+            resultCount={view === 'list' ? rehearsals.data?.totalCount : weekRehearsals.data ? weekItems.length : undefined}
+            error={view === 'list' ? rehearsals.isError : weekRehearsals.isError}
+            resultNoun="buổi tập"
+            hasActiveFilters={filtered}
+            onReset={() => changeFilters({})}
+          >
               <Select
+                {...SELECT_POPUP_PROPS}
                 allowClear
                 showSearch
                 optionFilterProp="label"
                 aria-label="Lọc theo chương trình phụng vụ"
-                placeholder="Tất cả chương trình"
+                placeholder={filterAllPlaceholder('chương trình')}
                 value={filters.eventId}
                 onChange={(eventId?: string) => changeFilters({ ...filters, eventId })}
                 options={(programs.data ?? []).map((program) => ({
@@ -253,8 +272,7 @@ export function RehearsalsPage() {
                 }))}
                 style={{ width: 360, maxWidth: '100%' }}
               />
-              {filtered && view === 'week' && <Button onClick={() => changeFilters({})}>Đặt lại bộ lọc</Button>}
-          </Flex>
+          </FilterBar>
           {view === 'week' && weekRehearsals.isPending && <SectionSkeleton rows={4} label="Đang tải lịch tuần" />}
           {view === 'week' && weekRehearsals.isError && <ErrorState title="Không thể tải lịch tập" error={weekRehearsals.error} onRetry={() => weekRehearsals.refetch()} retrying={weekRehearsals.isFetching} />}
           {view === 'week' ? (
@@ -270,8 +288,8 @@ export function RehearsalsPage() {
                         <Typography.Text style={{ display: 'block', fontWeight: 600 }}>Tuần này chưa có buổi tập nào.</Typography.Text>
                         <Typography.Text style={{ color: colors.textMuted }}>Lên lịch để ca đoàn kịp tập các bài của lễ sắp tới.</Typography.Text>
                       </div>
-                      <Button icon={<PlusOutlined />} onClick={() => setEditing(null)}>
-                        Thêm buổi tập
+                      <Button icon={<Icon name="add" />} onClick={() => setEditing(null)}>
+                        {CREATE_REHEARSAL_LABEL}
                       </Button>
                     </Flex>
                   )}
@@ -285,7 +303,7 @@ export function RehearsalsPage() {
                         {[todays.locationName, todays.songs.length > 0 ? `${todays.songs.length} bài` : 'Chưa chọn bài'].filter(Boolean).join(' · ')}
                       </span>
                       <Button type="primary" onClick={() => openPracticeRoom(todays)}>
-                        Vào phòng tập
+                        {PRACTICE_ROOM_ACTION}
                       </Button>
                     </div>
                   )}
