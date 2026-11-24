@@ -2,7 +2,7 @@
 
 Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì với BE, đọc trực tiếp sau khi `git pull` repo Harmonia-Web. Nội dung các file viết bằng tiếng Anh để giữ nguyên tên API, mã lỗi và trích dẫn code; file này là bản tóm tắt tiếng Việt.
 
-- Cập nhật lần cuối: 2026-11-16, đối chiếu với Harmonia-BE `main@69c9d47`. Thay đổi hợp đồng phía BE ghi ở `docs/api-changelog.md` của repo BE.
+- Cập nhật lần cuối: 2026-11-24, đối chiếu với Harmonia-BE `main@8b1de6f`. Thay đổi hợp đồng phía BE ghi ở `docs/api-changelog.md` của repo BE.
 - Cách đọc trích dẫn: `File.cs:12-20` là đường dẫn và số dòng trong code BE ở commit trên; `src/...` là code Web.
 - Web làm theo BE ở mọi chỗ BE đã quy định (trường, trạng thái, ai được làm gì, mã lỗi). Chỗ BE chưa có thì ghi là cần BE bổ sung, kèm quyết định tạm của owner.
 
@@ -21,35 +21,31 @@ Thư mục này giúp nhóm BE biết Web đang làm gì và cần bàn gì vớ
    - [`actors.md`](business/actors.md), [`domain.md`](business/domain.md): tổng quan theo Report 1.
 4. [`api-conventions.md`](api-conventions.md): các giả định của Web khi gọi API (dạng lỗi, enum, ngày giờ UTC, phân trang, tải file, token). Khi BE đổi một quy ước, Web cần biết.
 5. [`stitch-screen-map.md`](stitch-screen-map.md): các màn hình Web theo vai trò và route.
-6. [`practice-score-player.md`](practice-score-player.md): phòng luyện tập bản nhạc MusicXML chạy theo âm thanh: kiến trúc, nguồn bản nhạc (Web chưa nối `GET api/music-materials/{id}/score`), giới hạn đã biết, việc còn lại.
+6. [`practice-score-player.md`](practice-score-player.md): phòng luyện tập bản nhạc MusicXML chạy theo âm thanh: kiến trúc, nguồn bản nhạc (`ApiScoreSource` đã nối `GET api/music-materials/{id}/score`), giới hạn đã biết, việc còn lại.
 
-## Cần bàn với BE (các mục còn mở trong backlog)
+## Cần bàn với BE (các mục còn mở hoặc đang nối phía Web)
 
 | Mục | Việc cần BE làm | Ghi chú |
 |---|---|---|
-| B49 | Ca trưởng đọc được setting `Rehearsal.AttendanceStartCheckEnabled` | Khi Admin tắt kiểm tra, điểm danh được bất cứ lúc nào, nhưng Web không biết nên vẫn khoá bảng điểm danh trước giờ tập. Đề xuất: đặt setting là public hoặc trả kèm buổi tập |
-| B52 | Ca trưởng thấy câu trả lời xác nhận tham gia của ca viên ngay khi có | Làm một phần ở `69c9d47`: ca viên đã nhận lời mà rút lui thì ca trưởng phụ trách được báo; các câu trả lời khác vẫn chưa. Hub hiện chỉ đẩy thông báo và ghi chú. Web đang đọc lại khi quay về cửa sổ hoặc bấm làm mới. Đề xuất: một message qua hub hoặc thông báo cho ca trưởng |
-| B53 | Ca trưởng phụ trách liệt kê được ca viên có thể mời, gồm cả ca đoàn phục vụ khác | Ca trưởng chỉ đọc được ca viên của ca đoàn mình quản lý, nên Web mời các ca đoàn khác theo cả nhóm (không gửi `memberIds`). Đề xuất: `GET api/event-participations/candidates?eventId=` |
-| B54 | Biết ca viên nào chưa thuộc ca đoàn nào | Tài khoản Ca viên mới tạo chưa có ca đoàn nên không được mời hay giao bài; `MemberProfileSummaryDto` không có ca đoàn. Web đang tự tính cho Admin từ danh sách từng ca đoàn. Đề xuất: thêm `choirs` vào summary hoặc bộ lọc `hasChoir=false` |
-| B55 | Chọn ca đoàn ngay khi tạo sự kiện từ giờ lễ cố định | Sự kiện tạo hàng loạt chưa có ca đoàn nên chưa công bố được. Web đang gọi `PUT …/choirs` cho từng bản nháp và công bố từng sự kiện một. Đề xuất: `choirIds`, `leadChoirId` trong request tạo hàng loạt, hoặc ca đoàn mặc định trên giờ lễ cố định |
-| B56 | Trạng thái của ca viên trên từng dòng điểm danh | Ca viên đã ngừng sinh hoạt vẫn nằm trong bảng nếu từng được ghi; lưu kèm họ thì cả lần lưu bị từ chối `MEMBER_NOT_ACTIVE`, mà Web không biết ai để loại ra |
+| B53 | Ca trưởng phụ trách liệt kê được ca viên có thể mời, gồm cả ca đoàn phục vụ khác | BE `042e2ac` đã thêm bộ lọc `eventId` trên `GET api/member-profiles`; Web chưa nối bộ lọc này vào drawer gửi lời mời |
 | B57 | Mã dòng phân công làm hỏng việc chốt, dưới dạng một trường | Hiện mã dòng chỉ nằm trong câu thông báo tiếng Anh; Web phải tách ra từ câu đó để nêu tên ca viên |
 | B58 | Sửa phân công sau khi đã chốt | Chốt toàn bộ rồi thì không thay người, không mở lại được; ca viên rút lui sau đó thì vị trí bị bỏ trống |
-| B59 | Sửa hoặc thu hồi bài tập đã giao, và biết bao nhiêu ca viên nhận | Bài giao cho ca đoàn chưa có ca viên, hoặc cho kỹ năng không ai có, vẫn được tạo và nằm lại mãi. Web đang tự đếm người nhận và chặn khi bằng 0 |
 | B60 | Thông báo buổi tập đúng với thay đổi | Sửa buổi tập luôn báo cả ca đoàn dù không đổi gì; tạo buổi tập thì không báo ai. Web đã thôi gửi phần chi tiết khi không đổi |
-| B61 | Cha xứ đọc được tình hình xác nhận tham gia | Cha xứ gửi lời mời và lời nhắc được nhưng không đọc được danh sách, nên nút nhắc ở Web luôn hiện |
-| B62 | Biết người gọi có được sửa buổi tập không | Buổi tập chung hiện với mọi ca trưởng của ca đoàn phục vụ nhưng chỉ ca trưởng phụ trách sửa và điểm danh được; Web phải gọi thêm API ca đoàn của sự kiện cho từng buổi |
-| B63 | Mã của từng kỹ năng đã duyệt của ca viên, để thu hồi | BE đã có thu hồi kỹ năng nhưng cần mã của dòng kỹ năng; các danh sách Ca trưởng đọc được chỉ trả mã danh mục kỹ năng, nên Web chưa làm được nút thu hồi |
+| B62 | Biết người gọi có được sửa buổi tập không (trên cả `GET /api/rehearsals/{id}`) | BE `8b1de6f` đã có `canManage` và `isPassed` trên danh sách buổi tập, nhưng `GET /api/rehearsals/{id}` chưa gán `canManage` (mặc định `false`); Web vẫn đang kiểm qua danh sách ca đoàn của sự kiện |
 
 Các việc BE cần xem (không phải mục backlog, chi tiết ở cuối `tbd-backlog.md`):
 
-- Danh sách bài hát: tạo, gửi duyệt và duyệt không kiểm tra sự kiện đã qua; duyệt cũng không kiểm tra sự kiện đã huỷ (`SongListService.cs`), trong khi sự kiện giờ đã chặn ngày đã qua.
 - `POST api/event-participations/confirm-all` không kiểm tra sự kiện đã qua (có chủ ý, để demo); ngoài demo, Ca trưởng có thể xác nhận hộ cả sự kiện đã diễn ra.
+- Changelog BE (`docs/api-changelog.md`) còn thiếu các thay đổi ngày 2026-11-18 (bỏ `level` kỹ năng, thêm `gender` kỹ năng, yêu cầu vào ca đoàn, duyệt nhiều/gán kỹ năng, `preferredChoirId`, `isPassed`, `PRACTICE_ASSIGNMENT_NO_RECIPIENTS`).
 - Trên API đã deploy (2026-11-07), mọi bài tập hiện có đều chưa gắn bản mẫu MIDI nên chấm tự động trả `PRACTICE_REFERENCE_MISSING`; cần một bài tập có MIDI để thử điểm thật.
 - Trên API đã deploy, ngày phụng vụ nào cũng còn `color = null`; cần Cha xứ đồng bộ lại năm 2026 thì Web mới hiện màu theo ngày.
 - Trích lời bằng AI: BE đã tăng thời gian chờ và ghi lỗi Gemini vào log (`e6cf8dd`); Web chưa thử lại trên API đã deploy.
 
 Owner đã chốt ngày 2026-10-27 (ghi ở `open-business-decisions.md`): giữ thứ tự gợi ý bài như BE; giữ cho khai bè S/A/T/B ở vai cả buổi lễ; đề nghị BE chặn phân công trùng giờ (B40, BE đã làm).
+
+- Đã xong ở `8b1de6f` (2026-11-18 đến 21):
+  - **Web đã nối xong:** B49 (`14dabd3`, 2 setting mở điểm danh là public), B55 (sinh sự kiện gắn `choirIds`/`leadChoirId`), B56 (`463279d`, dòng điểm danh có `isActive`), B61 (Cha xứ đọc `GET api/event-participations`), B64 (`a395ce0`, mùa phụng vụ gắn `calendarKey`), khoá danh sách bài hát khi lễ đã qua hoặc huỷ (`61b3aa6`), kỹ năng có `gender` (`1e2f8f8`) và bỏ `level` (`d497b1d`), chặn tạo buổi tập trong quá khứ (`ac4a7bb`), giới hạn 429 cho đăng nhập/quên/đặt lại mật khẩu (`14dabd3`), mã lỗi `PRACTICE_ASSIGNMENT_NO_RECIPIENTS` (`a3b6b30`).
+  - **BE đã xong, Web sẽ nối ở đợt sau:** B52 (SignalR `ReceiveParticipationChangedAsync`), B54 (`hasChoir`/`eventId`/`choirNames` ở `042e2ac`/`404a111`), B59 (`PUT`/`DELETE` bài luyện tập), B63 (`id` trên `MemberSkillSummaryDto` để thu hồi kỹ năng), yêu cầu/lời mời vào ca đoàn (`api/choir-join-requests`), duyệt nhiều/gán kỹ năng, `preferredChoirId`.
 
 - Đã xong ở `088f30a` (2026-11-13): Cha xứ gọi được `POST api/event-participations`; ca trưởng nhận thông báo vai trò ca đoàn lúc công bố, không còn lúc sự kiện là bản nháp. Web đã nối: công bố xong là mời ca viên của các ca đoàn phục vụ.
 - Đã xong ở `e18e49b` và `6c10d65` (2026-11-11 đến 12): B50 (Cha xứ tìm ca viên toàn giáo xứ), B51 (job trích lời bằng AI được lưu), `saintName` trên tài khoản, hồ sơ và đăng ký gia nhập.
