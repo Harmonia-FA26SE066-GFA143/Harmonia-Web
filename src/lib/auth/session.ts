@@ -33,11 +33,6 @@ export function getSession(): Session | undefined {
 
 let passwordChangeCompleted = false
 
-/** Records that `changePassword` just completed in this tab so `/change-password` can render its confirmation inside AppShell. */
-export function markPasswordChangeCompleted() {
-  passwordChangeCompleted = true
-}
-
 export function clearPasswordChangeCompleted() {
   passwordChangeCompleted = false
 }

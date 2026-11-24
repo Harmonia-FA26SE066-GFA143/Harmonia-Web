@@ -1,8 +1,8 @@
-import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { ApiError } from '@/lib/api/errors'
+import { Icon } from '@/shared/ui'
 import { AuthCard } from '../components/AuthCard'
 import { passwordRuleMessage, ResetPasswordForm } from '../components/ResetPasswordForm'
 import { useResetPassword } from '../hooks/useAuthMutations'
@@ -25,7 +25,7 @@ export function ResetPasswordPage() {
   if (!token || (code !== undefined && unusableLinkCodes.has(code))) {
     return (
       <AuthCard
-        icon={<CloseCircleOutlined />}
+        icon={<Icon name="close-circle" />}
         title="Liên kết không còn hiệu lực"
         description="Liên kết đặt lại mật khẩu không hợp lệ, đã hết hạn hoặc đã được sử dụng. Mỗi liên kết chỉ dùng được một lần trong vòng 1 giờ."
         footer={<Link to={paths.login}>Quay lại đăng nhập</Link>}
@@ -40,7 +40,7 @@ export function ResetPasswordPage() {
   if (reset.isSuccess) {
     return (
       <AuthCard
-        icon={<CheckCircleOutlined />}
+        icon={<Icon name="check-circle" />}
         title="Đã đặt lại mật khẩu"
         description="Hãy đăng nhập bằng mật khẩu mới. Các phiên đăng nhập trước đó trên mọi thiết bị đã kết thúc."
       >

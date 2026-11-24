@@ -10,6 +10,8 @@ export interface AuthCardProps {
   children?: ReactNode
   /** Secondary links below the form (e.g. "Quay lại đăng nhập"). */
   footer?: ReactNode
+  /** Tighter spacing for a long form (join), so its submit button stays above a 768px fold. */
+  compact?: boolean
 }
 
 /**
@@ -17,9 +19,9 @@ export interface AuthCardProps {
  * window of light, opened to hold the form, over the still nave and the giant name. It covers the blank layout's
  * padding so the scene reaches the edges; a long form lengthens the window and the page scrolls.
  */
-export function AuthCard({ title, description, icon, children, footer }: Readonly<AuthCardProps>) {
+export function AuthCard({ title, description, icon, children, footer, compact = false }: Readonly<AuthCardProps>) {
   return (
-    <div className="hm-auth">
+    <div className={compact ? 'hm-auth hm-auth--compact' : 'hm-auth'}>
       <SignInImage />
       <section className="hm-auth__window">
         <div className="hm-auth__body">

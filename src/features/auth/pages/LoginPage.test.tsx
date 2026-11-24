@@ -126,4 +126,39 @@ describe('LoginPage', () => {
 
     expect(await screen.findByText('Tài khoản Google này chưa được cấp quyền vào Harmonia.')).toBeInTheDocument()
   })
+
+  it('redraws the Google button once per width change, capped at 400 and left out under 200', async () => {
+    Object.assign(env, { googleClientId: 'web-client-id' })
+    let width = 360
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({ width }) as DOMRect)
+    let resize = () => {}
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          resize = callback
+        }
+        observe() {}
+        disconnect() {}
+      },
+    )
+    const google = fakeGoogle()
+    renderPage(<LoginPage />, '/login')
+
+    expect(await screen.findByRole('button', { name: 'Đăng nhập bằng Google' })).toBeInTheDocument()
+    expect(google.renderButton).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ width: 360 }))
+
+    width = 414
+    act(() => resize())
+    expect(google.renderButton).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ width: 400 }))
+    act(() => resize())
+    expect(google.renderButton).toHaveBeenCalledTimes(2)
+    expect(screen.getAllByRole('button', { name: 'Đăng nhập bằng Google' })).toHaveLength(1)
+
+    width = 180
+    act(() => resize())
+    expect(google.renderButton).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole('button', { name: 'Đăng nhập bằng Google' })).toBeNull()
+    vi.unstubAllGlobals()
+  })
 })

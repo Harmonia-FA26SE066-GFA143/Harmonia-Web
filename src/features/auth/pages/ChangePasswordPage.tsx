@@ -1,10 +1,10 @@
-import { CheckCircleOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Flex, Typography } from 'antd'
+import { useEffect } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { ApiError } from '@/lib/api/errors'
-import { getSession } from '@/lib/auth/session'
-import { PageHeader } from '@/shared/ui'
+import { clearPasswordChangeCompleted, getSession } from '@/lib/auth/session'
+import { Icon, PageHeader } from '@/shared/ui'
 import { colors, component, spacing, typography } from '@/styles/tokens'
 import { passwordRuleMessage, ResetPasswordForm } from '../components/ResetPasswordForm'
 import { useChangePassword, useSignOut } from '../hooks/useAuthMutations'
@@ -28,13 +28,15 @@ export function ChangePasswordPage() {
   // A weak password fails validation: 400 VALIDATION_FAILED with the code under `errors.newPassword`.
   const passwordRejected = Boolean(error?.errors?.newPassword)
   const currentRejected = error?.code === 'AUTH_CURRENT_PASSWORD_INVALID'
+  // Leaving the page drops the "just changed" flag, also towards public /login where AuthGuard no longer runs.
+  useEffect(() => () => clearPasswordChangeCompleted(), [])
 
   // The backend revoked every session, so the stored one is gone too.
   if (change.isSuccess) {
     return (
       <Card style={{ ...cardStyle, margin: `${spacing.xl}px auto` }}>
         <Flex vertical align="center" gap={spacing.md} style={{ textAlign: 'center' }}>
-          <CheckCircleOutlined style={{ fontSize: 32, color: 'var(--hm-success)' }} />
+          <Icon name="check-circle" size={32} style={{ color: 'var(--hm-success)' }} />
           <Typography.Title
             level={1}
             style={{
@@ -57,6 +59,8 @@ export function ChangePasswordPage() {
     )
   }
 
+  // Checked after change.isSuccess on purpose: changePassword() revokes and clears the stored session, while
+  // change.isSuccess keeps the confirmation above inside AppShell instead of redirecting to /login.
   const session = getSession()
   if (!session) return <Navigate to={paths.login} replace />
   const forced = Boolean(session.user.isPasswordChangeRequired)

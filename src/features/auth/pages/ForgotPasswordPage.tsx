@@ -1,7 +1,7 @@
-import { MailOutlined } from '@ant-design/icons'
 import { Button, Flex } from 'antd'
 import { Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { Icon } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AuthCard } from '../components/AuthCard'
 import { ForgotPasswordForm } from '../components/ForgotPasswordForm'
@@ -16,7 +16,7 @@ export function ForgotPasswordPage() {
   if (resetRequest.isSuccess) {
     return (
       <AuthCard
-        icon={<MailOutlined />}
+        icon={<Icon name="mail" />}
         title="Yêu cầu đã được gửi"
         description="Nếu email đã được đăng ký, bạn sẽ nhận được liên kết đặt lại mật khẩu, có hiệu lực trong 1 giờ. Vui lòng kiểm tra cả thư mục thư rác."
       >

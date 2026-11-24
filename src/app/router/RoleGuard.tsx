@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { ForbiddenPage } from '@/app/pages/ForbiddenPage'
 import { NotFoundPage } from '@/app/pages/NotFoundPage'
@@ -21,6 +22,10 @@ export function AuthGuard() {
   // this re-renders, so /change-password keeps its confirmation.
   const user = useSession()?.user
   const surface = user && surfaceByRole[user.roleName]
+  // Out of render: any other guarded route ends the "just changed" confirmation.
+  useEffect(() => {
+    if (pathname !== paths.changePassword) clearPasswordChangeCompleted()
+  }, [pathname])
 
   if (pathname === paths.changePassword) {
     if (!user) return isPasswordChangeCompleted() ? <Outlet /> : <Navigate to={paths.login} replace />
@@ -28,7 +33,6 @@ export function AuthGuard() {
     return <Outlet />
   }
 
-  clearPasswordChangeCompleted()
   if (!surface) return <Navigate to={paths.login} replace />
   if (user.isPasswordChangeRequired) return <Navigate to={paths.changePassword} replace />
   return <Outlet />

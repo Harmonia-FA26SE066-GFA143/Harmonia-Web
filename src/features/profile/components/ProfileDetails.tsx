@@ -1,10 +1,9 @@
-import { EditOutlined } from '@ant-design/icons'
 import { Button, Flex, Input, Radio, Typography } from 'antd'
 import { useEffect, useRef } from 'react'
 import { roleLabels } from '@/shared/types/account'
 import { spacing } from '@/styles/tokens'
 import type { Profile, ProfileUpdateValues } from '../types'
-import { Form } from '@/shared/ui'
+import { CANCEL_LABEL, Form, Icon } from '@/shared/ui'
 import { genderLabel, genderOptions, saintNameRules } from '@/shared/utils/personName'
 
 export interface ProfileDetailsProps {
@@ -44,7 +43,7 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
           Thông tin cá nhân
         </h2>
         {!editing && (
-          <Button ref={editButton} icon={<EditOutlined />} onClick={onEdit}>
+          <Button ref={editButton} icon={<Icon name="edit" />} onClick={onEdit}>
             Chỉnh sửa
           </Button>
         )}
@@ -55,32 +54,32 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
         // The buttons are submit buttons inside the form, so Enter in a field saves too.
         <Form<ProfileUpdateValues>
           form={form}
-          layout="horizontal"
-          labelAlign="left"
-          labelCol={{ flex: '160px' }}
-          wrapperCol={{ flex: '1 1 0' }}
+          layout="vertical"
+          // Every field here is optional (Harmonia-BE UpdateMyUserRequestValidator), so no marks at all.
+          requiredMark={false}
           initialValues={{ fullName: profile.fullName, phone: profile.phone, saintName: profile.saintName, gender: profile.gender }}
           onFinish={onSave}
           className="hm-profile-form"
         >
           <div className="hm-profile-form__grid">
-            <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
-              <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
+            <Form.Item label="Tên thánh" name="saintName" rules={saintNameRules}>
+              {/* The first field in the DOM, so Tab goes on through every field from here. */}
+              <Input autoComplete="off" placeholder="Ví dụ: Giuse" autoFocus />
             </Form.Item>
-            <Form.Item label="Họ và tên (không bắt buộc)" name="fullName" rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}>
-              <Input autoComplete="name" autoFocus />
+            <Form.Item label="Họ và tên" name="fullName" rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}>
+              <Input autoComplete="name" />
             </Form.Item>
             <Form.Item label="Giới tính" name="gender">
               <Radio.Group options={genderOptions} />
             </Form.Item>
-            <Form.Item label="Số điện thoại (không bắt buộc)" name="phone" rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}>
-              <Input type="tel" autoComplete="tel" />
+            <Form.Item label="Số điện thoại" name="phone" rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}>
+              <Input type="tel" autoComplete="tel" placeholder="Ví dụ: 0901 234 567" />
             </Form.Item>
           </div>
           <Typography.Paragraph className="hm-profile-form__note">Email và vai trò không chỉnh sửa tại đây.</Typography.Paragraph>
           <Flex justify="flex-end" gap={spacing.sm}>
             <Button onClick={onCancel} disabled={saving}>
-              Hủy
+              {CANCEL_LABEL}
             </Button>
             <Button type="primary" htmlType="submit" loading={saving}>
               Lưu thay đổi

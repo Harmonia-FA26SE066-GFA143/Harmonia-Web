@@ -1,11 +1,10 @@
-import { CheckCircleOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
 import { Alert, Button, Input, Radio } from 'antd'
 import { Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { AuthCard } from '@/features/auth'
 import { ApiError, errorMessage } from '@/lib/api/errors'
-import { Form } from '@/shared/ui'
+import { Form, Icon } from '@/shared/ui'
 import { genderOptions, saintNameRules } from '@/shared/utils/personName'
 import { spacing } from '@/styles/tokens'
 import { submitRegistration, type RegistrationValues } from '../api/memberRegistrationsApi'
@@ -44,7 +43,7 @@ export function JoinChoirPage() {
   if (submit.isSuccess) {
     return (
       <AuthCard
-        icon={<CheckCircleOutlined />}
+        icon={<Icon name="check-circle" />}
         title="Đã nhận yêu cầu tham gia"
         description="Đây là yêu cầu tham gia, chưa phải tài khoản đăng nhập. Quản trị viên sẽ xem xét. Nếu được chấp nhận, bạn sẽ nhận email có mật khẩu đầu tiên."
       >
@@ -64,6 +63,7 @@ export function JoinChoirPage() {
 
   return (
     <AuthCard
+      compact
       title="Đăng ký tham gia ca đoàn"
       description="Gửi thông tin để Quản trị viên xem xét. Yêu cầu này chưa tạo tài khoản đăng nhập."
       footer={<Link to={paths.login}>Đã có tài khoản? Đăng nhập</Link>}
@@ -71,7 +71,7 @@ export function JoinChoirPage() {
       <Form<RegistrationValues>
         form={form}
         layout="vertical"
-        requiredMark="optional"
+        requiredMark={true}
         scrollToFirstError
         onFinish={(values) => {
           if (!submit.isPending) submit.mutate(trimmed(values))
@@ -90,7 +90,7 @@ export function JoinChoirPage() {
             <Radio.Group options={genderOptions} />
           </Form.Item>
           <Form.Item name="phone" label="Số điện thoại" rules={[{ max: 20, message: 'Vui lòng nhập tối đa 20 ký tự.' }]}>
-            <Input type="tel" autoComplete="tel" />
+            <Input type="tel" autoComplete="tel" placeholder="Ví dụ: 0901 234 567" />
           </Form.Item>
         </div>
         <Form.Item
@@ -102,7 +102,7 @@ export function JoinChoirPage() {
           <Input type="email" autoComplete="email" />
         </Form.Item>
         <Form.Item name="note" label="Lời nhắn" extra="Ví dụ ca đoàn bạn muốn tham gia." rules={[{ max: 500, message: 'Vui lòng nhập tối đa 500 ký tự.' }]}>
-          <Input.TextArea rows={3} showCount maxLength={500} />
+          <Input.TextArea rows={2} showCount maxLength={500} placeholder="Ví dụ: Em muốn tham gia ca đoàn Cecilia, hát giọng Alto." />
         </Form.Item>
         {submit.isError && (
           <Alert

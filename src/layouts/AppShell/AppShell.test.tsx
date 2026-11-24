@@ -12,6 +12,8 @@ import * as profileApi from '@/features/profile/api/profileApi'
 import * as settingsApi from '@/features/settings/api/settingsApi'
 import * as skillsApi from '@/features/skill-approval/api/memberSkillsApi'
 import { clearSession, setSession } from '@/lib/auth/session'
+import { useBackgroundTasks, type TaskOutcome } from '@/shared/tasks/BackgroundTasks'
+import type { ReactNode } from 'react'
 import { AppShell } from './AppShell'
 import { programPage } from '@/test/programs'
 
@@ -34,9 +36,27 @@ function setViewportWidth(width: number) {
   })
 }
 
-function renderShellAt(path: string) {
+/** Page content that can start a background task, so the TaskCenter button appears in the running head. */
+function TaskStarter() {
+  const { start } = useBackgroundTasks()
+  return (
+    <>
+      <p>Nội dung trang</p>
+      <button
+        type="button"
+        onClick={() =>
+          start({ type: 'extract-lyrics', key: 'extract-lyrics:m1', title: 'Trích lời', sourcePath: '/a', run: () => new Promise<TaskOutcome>(() => {}), errorMessage: (error) => error.message })
+        }
+      >
+        Bắt đầu tác vụ
+      </button>
+    </>
+  )
+}
+
+function renderShellAt(path: string, content: ReactNode = <p>Nội dung trang</p>) {
   const router = createMemoryRouter(
-    [{ element: <AppShell />, children: [{ path: '*', element: <p>Nội dung trang</p> }] }],
+    [{ element: <AppShell />, children: [{ path: '*', element: content }] }],
     { initialEntries: [path] },
   )
   render(
@@ -492,12 +512,25 @@ describe('AppShell', () => {
       email: 'director@giaoxu.org',
       role: 'director',
     })
+    // Two active choirs, so the switcher is the combobox checked before the transition.
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
+      { id: 'c2', name: 'Ca đoàn Thiếu nhi', isActive: true },
+    ])
 
-    renderShellAt('/change-password')
+    renderShellAt('/change-password', <TaskStarter />)
     expect(await screen.findByRole('button', { name: /Menu người dùng/ })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toBeInTheDocument()
     await waitFor(() => expect(profileSpy).toHaveBeenCalled())
     profileSpy.mockClear()
+    // A running task, so TaskCenter has its button in the running head.
+    fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu tác vụ' }))
+    // The full running head is there first, so the absence checks below prove a transition.
+    expect(await screen.findByRole('button', { name: /Mở danh sách tác vụ/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Thông báo/ })).toBeInTheDocument()
+    expect(await screen.findByRole('combobox', { name: 'Ca đoàn đang làm việc' })).toBeInTheDocument()
+    expect(document.querySelector('.hm-head-day')).not.toBeNull()
+    expect(document.querySelector('.hm-sub')).not.toBeNull()
 
     // No rerender(), resize, scroll or navigation: the session store alone must update the shell.
     act(() => clearSession())

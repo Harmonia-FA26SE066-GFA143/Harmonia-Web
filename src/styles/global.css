@@ -4223,6 +4223,53 @@ h1.ant-typography.hm-auth__title {
   gap: 0 16px;
 }
 
+@media (max-width: 575px) {
+  .hm-auth__pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The required mark on the dark window. */
+.hm-auth__window .ant-form-item-required::before {
+  color: var(--hm-gilt) !important;
+}
+
+/* Compact window (join form): same 480px column, less air, so the submit button ends above a 768px fold. */
+.hm-auth--compact {
+  /* A smaller name and a shorter first row lift the crown (~157px → ~105px top at 1366×768). */
+  --name: min(140px, 13vw);
+  grid-template-rows: calc(20px + var(--name) * 0.48) max-content;
+  padding-block: 16px;
+}
+
+.hm-auth--compact .hm-auth__name {
+  top: 18px;
+}
+
+.hm-auth--compact .hm-auth__window {
+  /* Also minus the 2 × 16px padding-block: the window bottom-aligns its content (safe flex-end), so a taller window
+     would push the submit button past the fold and the frame past 100vh. */
+  min-height: calc(100vh - 32px - 20px - var(--name) * 0.48);
+}
+
+.hm-auth--compact .hm-auth__body {
+  /* Still clears the 240px crown. */
+  padding: 72px 32px 20px;
+}
+
+.hm-auth--compact h1.ant-typography.hm-auth__title {
+  font-size: 28px;
+  text-wrap: balance;
+}
+
+.hm-auth--compact .hm-auth__content {
+  margin-top: 16px;
+}
+
+.hm-auth--compact .ant-form-item {
+  margin-bottom: 10px;
+}
+
 /*
  * Landing and sign-in are one scene (owner 2026-11-15: "liền mạch"). Moving between them, the browser morphs the
  * mark, the name and the arched window (React Router viewTransition): signing in, the window rises and grows to hold
@@ -4297,6 +4344,7 @@ h1.ant-typography.hm-auth__title {
 /* Status pages (404, 403, render error): the brand top left, one reading leaf in the middle. */
 .hm-status {
   position: relative;
+  box-sizing: border-box;
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -4308,6 +4356,12 @@ h1.ant-typography.hm-auth__title {
   min-height: auto;
   padding: 48px 16px;
   background: transparent;
+}
+
+@media (max-height: 820px) {
+  .hm-status:not(.hm-status--in-shell) {
+    padding-block: 48px;
+  }
 }
 
 .hm-status__brand {
@@ -4369,9 +4423,9 @@ h1.ant-typography.hm-status__title {
 /* Profile: identity card on a reading surface beside the details sheet. */
 .hm-profile {
   display: grid;
-  grid-template-columns: 320px minmax(0, 720px);
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
 }
 
 .hm-profile-id {
@@ -4453,7 +4507,16 @@ h1.ant-typography.hm-status__title {
 }
 
 .hm-profile-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
   max-width: 720px;
+}
+
+@media (max-width: 767px) {
+  .hm-profile-form__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Shared key/value rhythm for detail drawers and read-only identity panels. */
@@ -4599,6 +4662,11 @@ h2.ant-typography.landing-close__title {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+/* BrandMark renders a <div>, not an <svg>: keep the mark full size while the words wrap. */
+.landing-close__brand > :first-child {
+  flex-shrink: 0;
 }
 
 .landing-close :focus-visible {
