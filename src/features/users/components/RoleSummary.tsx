@@ -1,4 +1,5 @@
 import { roleLabels, type SystemRole } from '@/shared/types/account'
+import { UNKNOWN_METRIC_LABEL } from '@/shared/ui'
 import { assignableRoles, roleDescriptions } from '../roles'
 
 export interface RoleSummaryProps {
@@ -20,7 +21,8 @@ export function RoleSummary({ counts }: Readonly<RoleSummaryProps>) {
           <p>{roleDescriptions[role]}</p>
           <span className="admin-roles__label">Đang gán</span>
           <span className="hm-summary__figure">{counts?.[role] ?? '–'}</span>
-          <span className="hm-visually-hidden"> tài khoản</span>
+          {/* The dash alone reads as nothing to a screen reader: name the missing figure (R2.6). */}
+          <span className="hm-visually-hidden">{counts?.[role] === undefined ? ` (${UNKNOWN_METRIC_LABEL})` : ' tài khoản'}</span>
         </li>
       ))}
     </ul>

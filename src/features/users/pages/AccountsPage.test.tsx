@@ -64,7 +64,18 @@ describe('AccountsPage', () => {
     renderAccounts([])
 
     expect(await screen.findByRole('heading', { name: 'Chưa có tài khoản nào' })).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /Tạo tài khoản/ }).length).toBeGreaterThan(0)
+    // SYS-06: the empty state carries the only primary action; the header does not repeat it.
+    expect(screen.getAllByRole('button', { name: /Tạo tài khoản/ })).toHaveLength(1)
+  })
+
+  it('filters in the shared FilterBar above the table', async () => {
+    renderAccounts()
+
+    expect(await screen.findByText('4 tài khoản')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Xoá bộ lọc' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /Đặt lại bộ lọc/ })).toBeNull()
+    expect(screen.getByRole('textbox', { name: 'Tìm tài khoản theo email' })).toHaveAttribute('maxlength', '100')
+    expect(document.querySelector('.ant-card .hm-filter-bar')).toBeNull()
   })
 
   it('lists accounts with role, phone, status and the total count', async () => {
@@ -109,8 +120,9 @@ describe('AccountsPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Tạo tài khoản/ }))
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).queryByLabelText(/Mật khẩu/)).toBeNull()
+    expect(within(dialog).queryByText(/không bắt buộc/)).toBeNull()
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Email' }), { target: { value: 'mai@giaoxu.org' } })
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Họ và tên (không bắt buộc)' }), {
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Họ và tên' }), {
       target: { value: ' Anna Mai ' },
     })
     fireEvent.mouseDown(within(dialog).getByRole('combobox'))
@@ -146,7 +158,7 @@ describe('AccountsPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Tạo tài khoản/ }))
     const dialog = await screen.findByRole('dialog')
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Email' }), { target: { value: 'sai-email' } })
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Số điện thoại (không bắt buộc)' }), {
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Số điện thoại' }), {
       target: { value: '0'.repeat(21) },
     })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo tài khoản' }))
@@ -178,6 +190,10 @@ describe('AccountsPage', () => {
       }),
     )
     expect(await within(dialog).findByText('Email này đã được dùng cho tài khoản khác.')).toBeInTheDocument()
+
+    // Editing the email drops the backend error that no longer applies.
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Email' }), { target: { value: 'tam3@giaoxu.org' } })
+    await waitFor(() => expect(within(dialog).queryByText('Email này đã được dùng cho tài khoản khác.')).toBeNull())
   })
 
   it('deactivates and reactivates accounts after confirmation', async () => {

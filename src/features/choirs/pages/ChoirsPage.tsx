@@ -183,7 +183,8 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
             ? 'Ca đoàn của giáo xứ và ca trưởng phụ trách. Một ca viên có thể thuộc nhiều ca đoàn.'
             : 'Ca đoàn bạn phụ trách. Một ca viên có thể thuộc nhiều ca đoàn.'
         }
-        extra={addButton}
+        // The Admin's empty state carries the only "Thêm ca đoàn" (SYS-06).
+        extra={admin && choirs.isSuccess && choirs.data.length === 0 ? undefined : addButton}
       />
       {choirs.isPending && <SectionSkeleton rows={4} label="Đang tải ca đoàn" />}
       {choirs.isError && (

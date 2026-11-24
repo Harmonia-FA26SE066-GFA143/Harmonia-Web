@@ -77,7 +77,7 @@ describe('ChoirsPage', () => {
   it('preserves AdminChoirsPage table, EmptyCell, ACTIONS_COLUMN_TITLE and form drawer', async () => {
     vi.spyOn(api, 'listChoirs').mockResolvedValue([choir({ directorId: undefined, directorName: undefined })])
     vi.spyOn(api, 'listMembersOfChoir').mockResolvedValue([])
-    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([])
+    vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([])
     vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 })
 
     renderPage(<AdminChoirsPage />, '/admin/choirs')
@@ -88,7 +88,43 @@ describe('ChoirsPage', () => {
     expect(within(table).getByText('Chưa có')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Thêm ca đoàn' }))
-    expect(await screen.findByRole('dialog', { name: 'Thêm ca đoàn' })).toBeInTheDocument()
+    const dialog = await screen.findByRole('dialog', { name: 'Thêm ca đoàn' })
+    expect(within(dialog).getByLabelText('Mô tả')).toBeInTheDocument()
+    expect(within(dialog).queryByText(/không bắt buộc/)).toBeNull()
+  })
+
+  it('shows one "Thêm ca đoàn" when the Admin has no choir, and none to a Director (SYS-06)', async () => {
+    vi.spyOn(api, 'listChoirs').mockResolvedValue([])
+    const all = vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([])
+    const { unmount } = renderPage(<AdminChoirsPage />, '/admin/choirs')
+
+    expect(await screen.findByRole('heading', { name: 'Chưa có ca đoàn nào' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Thêm ca đoàn' })).toHaveLength(1)
+    unmount()
+
+    renderPage(<DirectorChoirsPage />, '/director/choirs')
+    expect(await screen.findByRole('heading', { name: 'Bạn chưa phụ trách ca đoàn nào' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Thêm ca đoàn' })).toBeNull()
+    expect(all).not.toHaveBeenCalled()
+  })
+
+  it('lists unplaced members from every profile page and says so when the check fails (B54)', async () => {
+    vi.spyOn(api, 'listChoirs').mockResolvedValue([choir()])
+    vi.spyOn(api, 'listMembersOfChoir').mockResolvedValue([membership('m1', 'Maria Lan')])
+    vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 100, totalCount: 0, totalPages: 0 })
+    const all = vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([
+      { id: 'm1', fullName: 'Maria Lan', skills: [] },
+      { id: 'm2', fullName: 'Phêrô Dũng', skills: [] },
+    ])
+    const { unmount } = renderPage(<AdminChoirsPage />, '/admin/choirs')
+
+    expect(await screen.findByText('1 ca viên chưa thuộc ca đoàn nào')).toBeInTheDocument()
+    expect(screen.getByText(/Phêrô Dũng/)).toBeInTheDocument()
+    unmount()
+
+    all.mockRejectedValue(new ApiError(403, undefined))
+    renderPage(<AdminChoirsPage />, '/admin/choirs')
+    expect(await screen.findByText('Không thể kiểm tra danh sách ca viên chưa thuộc ca đoàn.')).toBeInTheDocument()
   })
 
   it('preserves Parish Priest canEdit flow in EventChoirsCard', async () => {

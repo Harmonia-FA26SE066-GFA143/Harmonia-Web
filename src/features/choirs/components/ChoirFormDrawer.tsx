@@ -1,6 +1,8 @@
-import { Input, Select, Switch } from 'antd'
+import { Input, Select, Switch, type InputRef } from 'antd'
+import { useRef } from 'react'
 import type { Choir, ChoirValues } from '../types'
-import { Form, FormDrawer } from '@/shared/ui'
+import { CANCEL_LABEL, Form, FormDrawer, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { component } from '@/styles/tokens'
 
 export interface ChoirFormDrawerProps {
   open: boolean
@@ -31,6 +33,7 @@ export function ChoirFormDrawer({
   onSubmit,
   onCancel,
 }: Readonly<ChoirFormDrawerProps>) {
+  const nameRef = useRef<InputRef>(null)
   const current = choir?.directorId
   const directorOptions =
     current && !directors.some(({ value }) => value === current)
@@ -42,7 +45,9 @@ export function ChoirFormDrawer({
       open={open}
       title={choir ? 'Chỉnh sửa ca đoàn' : 'Thêm ca đoàn'}
       okText={choir ? 'Lưu thay đổi' : 'Thêm'}
-      cancelText="Hủy"
+      size={component.drawer.sm}
+      cancelText={CANCEL_LABEL}
+      initialFocusRef={nameRef}
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
@@ -67,7 +72,7 @@ export function ChoirFormDrawer({
           { max: 100, message: 'Tên ca đoàn tối đa 100 ký tự.' },
         ]}
       >
-        <Input autoFocus />
+        <Input ref={nameRef} />
       </Form.Item>
       <Form.Item
         label="Ca trưởng phụ trách"
@@ -75,6 +80,7 @@ export function ChoirFormDrawer({
         extra="Ca trưởng chỉ thấy và quản lý ca đoàn mình phụ trách. Để trống nếu chưa có."
       >
         <Select
+          {...SELECT_POPUP_PROPS}
           allowClear
           showSearch
           optionFilterProp="label"
@@ -83,8 +89,8 @@ export function ChoirFormDrawer({
           options={directorOptions}
         />
       </Form.Item>
-      <Form.Item label="Mô tả (không bắt buộc)" name="description" rules={[{ max: 500, message: 'Mô tả tối đa 500 ký tự.' }]}>
-        <Input.TextArea rows={3} showCount maxLength={500} />
+      <Form.Item label="Mô tả" name="description" rules={[{ max: 500, message: 'Mô tả tối đa 500 ký tự.' }]}>
+        <Input.TextArea rows={3} showCount maxLength={500} placeholder="Ví dụ: Phục vụ các Thánh lễ Chúa Nhật của giáo xứ" />
       </Form.Item>
       {choir && (
         <Form.Item

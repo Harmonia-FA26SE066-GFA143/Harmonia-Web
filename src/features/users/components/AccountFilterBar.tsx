@@ -1,7 +1,7 @@
-import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Flex, Input, Select, Typography } from 'antd'
+import { Flex, Input, Select } from 'antd'
 import { roleLabels } from '@/shared/types/account'
-import { colors, sizes, spacing, typography } from '@/styles/tokens'
+import { FilterBar, filterAllPlaceholder, Icon, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { colors, typography } from '@/styles/tokens'
 import { hasActiveFilters } from '../accountFilters'
 import { assignableRoles } from '../roles'
 import { accountStatusLabels, type AccountFilters } from '../types'
@@ -10,14 +10,22 @@ export interface AccountFilterBarProps {
   value: AccountFilters
   onChange: (value: AccountFilters) => void
   onReset: () => void
-  /** Number of accounts matching the filters. */
-  resultCount: number
+  /** Number of accounts matching the filters; undefined while unknown. */
+  resultCount?: number
+  /** The accounts query failed, so the count is not shown as loading forever. */
+  error?: boolean
 }
 
-export function AccountFilterBar({ value, onChange, onReset, resultCount }: Readonly<AccountFilterBarProps>) {
+export function AccountFilterBar({ value, onChange, onReset, resultCount, error = false }: Readonly<AccountFilterBarProps>) {
   const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textMuted }
   return (
-    <Flex wrap align="end" gap={spacing.sm} style={{ padding: spacing.md }}>
+    <FilterBar
+      resultCount={error ? undefined : resultCount}
+      error={error}
+      resultNoun="tài khoản"
+      hasActiveFilters={hasActiveFilters(value)}
+      onReset={onReset}
+    >
       {/* Visible labels: once a value is typed or chosen the placeholder is gone and the fields would look alike. */}
       <Flex vertical gap={4} style={{ flex: '1 1 260px', maxWidth: 360 }}>
         <label htmlFor="account-filter-search" style={labelStyle}>
@@ -26,7 +34,9 @@ export function AccountFilterBar({ value, onChange, onReset, resultCount }: Read
         <Input
           id="account-filter-search"
           allowClear
-          prefix={<SearchOutlined aria-hidden />}
+          // SearchUsersRequestValidator: search ≤ 100.
+          maxLength={100}
+          prefix={<Icon name="search" />}
           placeholder="ten@giaoxu.org"
           value={value.search}
           onChange={(event) => onChange({ ...value, search: event.target.value })}
@@ -37,9 +47,10 @@ export function AccountFilterBar({ value, onChange, onReset, resultCount }: Read
           Vai trò
         </label>
         <Select
+          {...SELECT_POPUP_PROPS}
           id="account-filter-role"
           allowClear
-          placeholder="Tất cả vai trò"
+          placeholder={filterAllPlaceholder('vai trò')}
           value={value.role}
           onChange={(role) => onChange({ ...value, role })}
           options={assignableRoles.map((role) => ({ value: role, label: roleLabels[role] }))}
@@ -50,9 +61,10 @@ export function AccountFilterBar({ value, onChange, onReset, resultCount }: Read
           Trạng thái
         </label>
         <Select
+          {...SELECT_POPUP_PROPS}
           id="account-filter-status"
           allowClear
-          placeholder="Tất cả trạng thái"
+          placeholder={filterAllPlaceholder('trạng thái')}
           value={value.isActive}
           onChange={(isActive) => onChange({ ...value, isActive })}
           options={[
@@ -61,12 +73,6 @@ export function AccountFilterBar({ value, onChange, onReset, resultCount }: Read
           ]}
         />
       </Flex>
-      <Button icon={<ReloadOutlined />} onClick={onReset} disabled={!hasActiveFilters(value)}>
-        Đặt lại bộ lọc
-      </Button>
-      <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
-        {resultCount} tài khoản
-      </Typography.Text>
-    </Flex>
+    </FilterBar>
   )
 }

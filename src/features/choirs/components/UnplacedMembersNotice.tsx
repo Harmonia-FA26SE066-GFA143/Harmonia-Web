@@ -1,5 +1,5 @@
 import { Alert, Typography } from 'antd'
-import { useChoirMembers } from '@/features/members'
+import { useAllChoirMembers } from '@/features/members'
 import { spacing } from '@/styles/tokens'
 import { useMembersOfChoirs } from '../hooks/useChoirs'
 import type { Choir } from '../types'
@@ -10,11 +10,14 @@ const named = 8
  * Admin: the active Choir Members who are in no choir. A new account, created by the Admin or from a join request,
  * starts in none, and only members of a serving choir can be asked to serve or given practice (ChoirScopeService).
  * The member profile carries no choir (tbd-backlog B54), so the list is worked out here from every choir's members.
- * ponytail: `useChoirMembers` reads the first 100 active profiles; a larger parish needs the BE filter of B54.
+ * ponytail: reads every page of active profiles plus one request per choir; the BE filter of B54 would replace both.
  */
 export function UnplacedMembersNotice({ choirs }: Readonly<{ choirs: Choir[] }>) {
-  const profiles = useChoirMembers()
+  const profiles = useAllChoirMembers()
   const placed = useMembersOfChoirs(choirs.map((choir) => choir.id))
+  // A failed read must not look like "everyone is placed".
+  if (profiles.isError || placed.isError)
+    return <Alert type="warning" showIcon style={{ marginBottom: spacing.md }} title="Không thể kiểm tra danh sách ca viên chưa thuộc ca đoàn." />
   if (!profiles.data || !placed.data) return null
 
   const inAChoir = new Set(placed.data.map((member) => member.memberId))

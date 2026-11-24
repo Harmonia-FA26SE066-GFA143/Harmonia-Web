@@ -1,9 +1,11 @@
-import { Input, Radio, Select } from 'antd'
+import { Input, Radio, Select, type InputRef } from 'antd'
+import { useRef } from 'react'
 import { roleLabels } from '@/shared/types/account'
 import { assignableRoles } from '../roles'
 import type { Account, CreateAccountValues, UpdateAccountValues } from '../types'
 import { genderOptions, saintNameRules, type Gender } from '@/shared/utils/personName'
-import { Form, FormDrawer } from '@/shared/ui'
+import { CANCEL_LABEL, Form, FormDrawer, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { component } from '@/styles/tokens'
 
 export interface AccountFormDrawerProps {
   open: boolean
@@ -12,6 +14,8 @@ export interface AccountFormDrawerProps {
   saving?: boolean
   /** Shown under the email, e.g. when the backend reports it is taken. */
   emailError?: string
+  /** The email was edited, so a backend error shown under it no longer applies. */
+  onEmailChange?: () => void
   /** Receives `CreateAccountValues` when creating, `UpdateAccountValues` when editing. */
   onSubmit: (values: CreateAccountValues | UpdateAccountValues) => void
   onCancel: () => void
@@ -24,13 +28,16 @@ type FormValues = { fullName?: string; email: string; phone?: string; saintName?
  * phone (Harmonia-BE CreateUserRequestValidator / UpdateUserRequestValidator). The backend generates the first
  * password and emails it. The role is changed on the Roles page.
  */
-export function AccountFormDrawer({ open, account, saving = false, emailError, onSubmit, onCancel }: Readonly<AccountFormDrawerProps>) {
+export function AccountFormDrawer({ open, account, saving = false, emailError, onEmailChange, onSubmit, onCancel }: Readonly<AccountFormDrawerProps>) {
+  const emailRef = useRef<InputRef>(null)
   return (
     <FormDrawer
       open={open}
       title={account ? 'Sửa tài khoản' : 'Tạo tài khoản'}
       okText={account ? 'Lưu thay đổi' : 'Tạo tài khoản'}
-      cancelText="Hủy"
+      size={component.drawer.sm}
+      cancelText={CANCEL_LABEL}
+      initialFocusRef={emailRef}
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
@@ -38,6 +45,9 @@ export function AccountFormDrawer({ open, account, saving = false, emailError, o
       drawerRender={(dom) => (
         <Form<FormValues>
           layout="vertical"
+          onValuesChange={(changed) => {
+            if ('email' in changed) onEmailChange?.()
+          }}
           initialValues={account && { fullName: account.fullName, email: account.email, phone: account.phone ?? undefined, saintName: account.saintName ?? undefined, gender: account.gender ?? undefined }}
           onFinish={({ fullName, email, phone, saintName, gender, role }) =>
             onSubmit({
@@ -66,13 +76,13 @@ export function AccountFormDrawer({ open, account, saving = false, emailError, o
           { type: 'email', message: 'Email không hợp lệ.' },
         ]}
       >
-        <Input autoFocus inputMode="email" autoComplete="off" placeholder="ten@giaoxu.org" />
+        <Input ref={emailRef} inputMode="email" autoComplete="off" placeholder="ten@giaoxu.org" />
       </Form.Item>
-      <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
+      <Form.Item label="Tên thánh" name="saintName" rules={saintNameRules}>
         <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
       </Form.Item>
       <Form.Item
-        label="Họ và tên (không bắt buộc)"
+        label="Họ và tên"
         name="fullName"
         rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}
       >
@@ -83,15 +93,16 @@ export function AccountFormDrawer({ open, account, saving = false, emailError, o
         <Radio.Group options={genderOptions} />
       </Form.Item>
       <Form.Item
-        label="Số điện thoại (không bắt buộc)"
+        label="Số điện thoại"
         name="phone"
         rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}
       >
-        <Input type="tel" autoComplete="off" />
+        <Input type="tel" autoComplete="off" placeholder="Ví dụ: 0901 234 567" />
       </Form.Item>
       {!account && (
         <Form.Item label="Vai trò" name="role" rules={[{ required: true, message: 'Vui lòng chọn vai trò.' }]}>
           <Select
+            {...SELECT_POPUP_PROPS}
             placeholder="Chọn vai trò"
             options={assignableRoles.map((role) => ({ value: role, label: roleLabels[role] }))}
           />

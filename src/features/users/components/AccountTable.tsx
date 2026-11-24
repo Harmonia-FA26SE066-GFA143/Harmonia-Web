@@ -1,6 +1,7 @@
 import { Avatar, Flex, Table, Typography, type TableColumnsType } from 'antd'
 import type { ReactNode } from 'react'
 import { roleLabels } from '@/shared/types/account'
+import { ACTIONS_COLUMN_TITLE, EmptyCell } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import type { Account } from '../types'
 import { nameInitial, personName } from '@/shared/utils/personName'
@@ -34,7 +35,7 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
           {account.fullName ? (
             <Typography.Text strong>{personName(account.fullName, account.saintName)}</Typography.Text>
           ) : (
-            <Typography.Text style={{ color: colors.textMuted }}>Chưa có họ tên</Typography.Text>
+            <EmptyCell text="Chưa có họ tên" />
           )}
           <Typography.Text style={muted}>{account.email}</Typography.Text>
           {account.phone && <Typography.Text style={muted}>{account.phone}</Typography.Text>}
@@ -61,7 +62,7 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
     },
     {
       key: 'actions',
-      title: 'Thao tác',
+      title: ACTIONS_COLUMN_TITLE,
       align: 'center',
       width: 184,
       render: (_, account) => <Flex justify="center">{renderActions(account)}</Flex>,

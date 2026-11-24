@@ -1,9 +1,10 @@
-import { Button, Descriptions, Drawer, Flex, Radio, Tag, Typography } from 'antd'
+import { Alert, Descriptions, Flex, Radio, Tag, Typography } from 'antd'
+import { useEffect } from 'react'
 import { roleLabels, type SystemRole } from '@/shared/types/account'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { CANCEL_LABEL, Form, FormDrawer } from '@/shared/ui'
+import { colors, component, spacing, typography } from '@/styles/tokens'
 import { assignableRoles, roleDescriptions } from '../roles'
 import type { Account } from '../types'
-import { Form } from '@/shared/ui'
 
 export interface AssignRoleDrawerProps {
   /** Account whose role is changed; the drawer is open while set. */
@@ -13,51 +14,34 @@ export interface AssignRoleDrawerProps {
   onCancel: () => void
 }
 
-interface FooterProps {
-  current?: SystemRole
-  saving: boolean
-  onCancel: () => void
-}
-
-/** Rendered inside the drawer's Form (see drawerRender), so it can watch the selected role. */
-function AssignRoleFooter({ current, saving, onCancel }: Readonly<FooterProps>) {
-  const selected = Form.useWatch<SystemRole | undefined>('role', Form.useFormInstance())
-  return (
-    <Flex justify="flex-end" gap={spacing.sm}>
-      <Button onClick={onCancel} disabled={saving}>
-        Hủy
-      </Button>
-      <Button type="primary" htmlType="submit" loading={saving} disabled={!selected || selected === current}>
-        Lưu thay đổi
-      </Button>
-    </Flex>
-  )
-}
-
 /**
  * Picks one FE-48 role (`PUT /api/users/{id}/role`: one role per account). Saving is blocked until a different role
  * is chosen. The backend refuses the Admin's own account and removing the last active Admin.
  */
 export function AssignRoleDrawer({ account, saving = false, onSubmit, onCancel }: Readonly<AssignRoleDrawerProps>) {
   const current = account?.role
+  const [form] = Form.useForm<{ role: SystemRole }>()
+  const selected = Form.useWatch('role', form)
+
+  // The drawer may reopen for another account before its closing motion has destroyed the form: never keep A's choice for B.
+  useEffect(() => {
+    if (account) form.setFieldsValue({ role: account.role })
+    else form.resetFields()
+  }, [account, form])
 
   return (
-    <Drawer
+    <FormDrawer
       open={Boolean(account)}
       title="Thay đổi vai trò"
-      size={480}
-      footer={<AssignRoleFooter current={current} saving={saving} onCancel={onCancel} />}
-      onClose={onCancel}
-      closable={!saving}
-      keyboard={!saving}
-      mask={{ closable: !saving }}
+      size={component.drawer.sm}
+      okText="Lưu thay đổi"
+      cancelText={CANCEL_LABEL}
+      okButtonProps={{ htmlType: 'submit', loading: saving, disabled: !selected || selected === current }}
+      cancelButtonProps={{ disabled: saving }}
+      onCancel={onCancel}
       destroyOnHidden
       drawerRender={(dom) => (
-        <Form<{ role: SystemRole }>
-          layout="vertical"
-          initialValues={{ role: current }}
-          onFinish={(values) => onSubmit(values.role)}
-        >
+        <Form<{ role: SystemRole }> form={form} layout="vertical" initialValues={{ role: current }} onFinish={(values) => onSubmit(values.role)}>
           {dom}
         </Form>
       )}
@@ -96,6 +80,15 @@ export function AssignRoleDrawer({ account, saving = false, onSubmit, onCancel }
           ))}
         </Radio.Group>
       </Form.Item>
-    </Drawer>
+      {/* UserService.AssignRoleAsync: a Choir Member leaving the role leaves every choir, and coming back restores none. */}
+      {current === 'member' && selected && selected !== 'member' && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginTop: spacing.sm }}
+          title="Đổi vai trò sẽ rút tài khoản này khỏi các ca đoàn hiện tại và không tự khôi phục nếu đổi lại làm Ca viên."
+        />
+      )}
+    </FormDrawer>
   )
 }
