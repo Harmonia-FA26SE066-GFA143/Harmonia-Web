@@ -465,6 +465,21 @@ describe('RehearsalPracticeRoomPage page states', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Mở chi tiết bài hát' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/director/library/s1')
   })
+
+  it('a voice part without its own audio keeps the general audio, named as the song', async () => {
+    vi.mocked(songsApi.listMaterials).mockResolvedValue([
+      material('all', 'sampleAudio', 'all.wav'),
+      material('ten', 'sheetMusic', 'tenor.pdf', 'Tenor'),
+    ])
+    renderPlainRoom()
+    await findFallback(SONG_A)
+    fireEvent.click(await screen.findByText('Tenor'))
+    expect(await screen.findByText('Bè: Tenor')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Chưa có audio mẫu hoặc MIDI' })).toBeNull()
+    expect(fallbackAudio(SONG_A)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/bè Tenor/)).toBeNull()
+    expect(screen.getByText('Audio mẫu')).toBeInTheDocument()
+  })
 })
 
 describe('RehearsalPracticeRoomPage console', () => {

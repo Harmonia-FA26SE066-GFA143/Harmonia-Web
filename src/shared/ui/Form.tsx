@@ -48,7 +48,7 @@ function clearEditedErrors(form: FormInstance, changed: object) {
  * Single Harmonia `Form` wrapper (R4.2, SYS-05, G1-01):
  * - Enforces `layout="vertical"` (prevents horizontal label clipping) and `colon={false}` (no stray `:`).
  * - Checks a field on blur (`validateTrigger="onBlur"`) and clears its error as soon as it is edited.
- * - `requiredMark` policy: keeps Ant Design's `*` marker (`true`, default) when a form mixes required & optional fields
+ * - `requiredMark` policy: keeps Ant Design's `*` marker (`true`, default; drawn after the label by global.css) when a form mixes required & optional fields
  *   without `(không bắt buộc)` label suffixes; pass `requiredMark={false}` when every field is optional (filters,
  *   classification) or for single-intent auth forms.
  * - Zero direct `import { Form } from 'antd'` outside this module.

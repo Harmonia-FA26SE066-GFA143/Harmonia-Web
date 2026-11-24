@@ -408,6 +408,23 @@ body {
   height: 100%;
 }
 
+/* Required-field mark after the label, in every form (owner 2026-11-24). Ant Design draws it in ::before; it moves to
+   ::after, which `colon={false}` leaves empty. Labels with `requiredMark={false}` or "optional" keep no mark. */
+.ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional, .ant-form-item-required-mark-hidden)::before {
+  display: none;
+}
+
+.ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional, .ant-form-item-required-mark-hidden)::after {
+  content: '*';
+  display: inline-block;
+  visibility: visible;
+  position: static;
+  margin-inline: 4px 0;
+  color: var(--hm-error);
+  font-family: inherit;
+  line-height: 1;
+}
+
 /* SYS-07 & G4-17: Flush-right drawer close button, left title, sticky opaque footer, and 24px body bottom clearance. */
 .ant-drawer-header-title {
   flex-direction: row-reverse;
@@ -4226,7 +4243,7 @@ h1.ant-typography.hm-auth__title {
 }
 
 /* The required mark on the dark window. */
-.hm-auth__window .ant-form-item-required::before {
+.hm-auth__window .ant-form-item-required::after {
   color: var(--hm-gilt) !important;
 }
 

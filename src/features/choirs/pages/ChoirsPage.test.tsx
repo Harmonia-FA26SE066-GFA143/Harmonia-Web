@@ -101,10 +101,24 @@ describe('ChoirsPage', () => {
     expect(await screen.findByRole('heading', { name: 'Chưa có ca đoàn nào' })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Thêm ca đoàn' })).toHaveLength(1)
     unmount()
+    all.mockClear()
 
     renderPage(<DirectorChoirsPage />, '/director/choirs')
     expect(await screen.findByRole('heading', { name: 'Bạn chưa phụ trách ca đoàn nào' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Thêm ca đoàn' })).toBeNull()
+    expect(all).not.toHaveBeenCalled()
+  })
+
+  it('never asks a Director with a choir for every member profile (Admin-only unplaced check)', async () => {
+    vi.spyOn(api, 'listChoirs').mockResolvedValue([choir()])
+    vi.spyOn(api, 'listMembersOfChoir').mockResolvedValue([membership('m1', 'Maria Lan')])
+    const all = vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([])
+    renderPage(<DirectorChoirsPage />, '/director/choirs')
+
+    // With a choir listed, the only caller (UnplacedMembersNotice) is reachable if the role gate breaks.
+    const card = (await screen.findByText('Ca đoàn Cecilia')).closest('li') as HTMLElement
+    await waitFor(() => expect(within(card).getByText('1 ca viên')).toBeInTheDocument())
+    expect(screen.queryByText(/chưa thuộc ca đoàn nào/)).toBeNull()
     expect(all).not.toHaveBeenCalled()
   })
 

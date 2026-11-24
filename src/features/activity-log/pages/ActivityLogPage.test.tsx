@@ -108,6 +108,32 @@ describe('ActivityLogPage', () => {
     expect(within(dialog).queryByText('ScoreSha256')).toBeNull()
   })
 
+  it('names the playback, lyrics and file fields of a material and its instrument in Vietnamese', async () => {
+    vi.spyOn(activityLogApi, 'listActivityLog').mockResolvedValue(
+      page([
+        {
+          id: 'l4',
+          createdAt: '2026-10-12T03:00:00Z',
+          action: 'Updated',
+          entityType: 'MusicMaterial',
+          entityId: 'mm-2',
+          oldValue: '{"FileRevision":1,"PlaybackInstrument":"Piano"}',
+          newValue: '{"FileRevision":2,"PlaybackInstrument":"StringEnsemble","LyricsText":"Lạy Chúa","PlaybackDurationSeconds":95.5}',
+        },
+      ]),
+    )
+    renderLog()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Xem chi tiết/ }))
+    const dialog = await screen.findByRole('dialog')
+    for (const label of ['Phiên bản tệp', 'Nhạc cụ phát', 'Lời bài hát', 'Thời lượng bản phát (giây)', 'Piano', 'Dàn dây']) {
+      expect(within(dialog).getByText(label)).toBeInTheDocument()
+    }
+    for (const raw of ['FileRevision', 'PlaybackInstrument', 'LyricsText', 'PlaybackDurationSeconds', 'StringEnsemble']) {
+      expect(within(dialog).queryByText(raw)).toBeNull()
+    }
+  })
+
   it('labels the change type and action columns once each, and resets filters from the filter bar', async () => {
     const list = vi.spyOn(activityLogApi, 'listActivityLog').mockResolvedValue(page(records))
     renderLog()

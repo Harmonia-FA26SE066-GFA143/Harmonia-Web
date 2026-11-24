@@ -85,7 +85,8 @@ export function RehearsalPracticeRoomPage() {
   const partAudio =
     shownPart === ALL_PARTS
       ? (audios.find((material) => !material.targetSkillName) ?? audios[0])
-      : audios.find((material) => material.targetSkillName === shownPart)
+      : (audios.find((material) => material.targetSkillName === shownPart) ??
+        audios.find((material) => !material.targetSkillName))
   const partMidi =
     shownPart === ALL_PARTS
       ? (midis.find((material) => !material.targetSkillName) ?? midis[0])
@@ -140,7 +141,8 @@ export function RehearsalPracticeRoomPage() {
   let materialContent: ReactNode = null
   let modeLabel = ''
   if (song) {
-    const audioLabel = shownPart === ALL_PARTS ? song.title : `${song.title}, bè ${shownPart}`
+    // A part without its own audio plays the general one, named as the song only.
+    const audioLabel = shownPart !== ALL_PARTS && partAudio?.targetSkillName === shownPart ? `${song.title}, bè ${shownPart}` : song.title
     const lyricsContent = typedLyrics ? (
       <Typography.Paragraph style={{ whiteSpace: 'pre-line', marginBottom: 0 }}>{typedLyrics}</Typography.Paragraph>
     ) : (

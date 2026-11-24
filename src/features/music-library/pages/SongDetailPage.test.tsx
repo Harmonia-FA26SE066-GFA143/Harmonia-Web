@@ -681,7 +681,8 @@ describe('SongDetailPage', () => {
 
     const rehearsal = await within(usage).findByRole('link', { name: /Phòng hát/ })
     expect(rehearsal).toHaveAttribute('href', '/director/rehearsals/r1')
-    expect(within(usage).queryByRole('link', { name: /r2/ })).toBeNull()
+    // A rehearsal link is named by its date and time; r2 (26/11, another song) must not be listed.
+    expect(within(usage).queryByRole('link', { name: /26\/11\/2099/ })).toBeNull()
     expect(within(usage).getAllByRole('link', { name: /Hạn/ })).toHaveLength(1)
     expect(within(usage).getByText('Tập điệp khúc')).toBeInTheDocument()
     expect(within(usage).queryByText('Bài tập khác')).not.toBeInTheDocument()
