@@ -47,16 +47,16 @@ Ngoài ra có trang giới thiệu công khai, đăng nhập (kể cả Google) 
 
 ## Thiết kế
 
-Giao diện theo **Harmonia Design System**: đỏ rượu giáo xứ `#8E3B4B`, nền giấy ngà, vàng chỉ để trang trí, màu mùa phụng vụ trên dải mùa. Chữ Be Vietnam Pro, tiêu đề lễ bằng Cormorant Garamond. Bản sắc Công giáo ở mức tiết chế: khuông nhạc thánh ca và hình vòm, không thập giá trên nút, không gradient vàng.
+Giao diện theo **Harmonia Design System**: đỏ rượu giáo xứ `#8E3B4B`, nền giấy ngà, vàng chỉ để trang trí, màu mùa phụng vụ trên dải mùa. Dùng một phông chữ tự phục vụ duy nhất là **Be Vietnam Pro** (tối ưu đầy đủ dấu tiếng Việt) và bộ **85 icon SVG nội bộ** (`src/shared/ui/icons/`). Bản sắc Công giáo ở mức tiết chế: khuông nhạc thánh ca và hình vòm, không thập giá trên nút, không gradient vàng.
 
-Trạng thái không bao giờ chỉ dựa vào màu; mọi trạng thái đều có chữ. Chuyển động tôn trọng thiết lập *giảm chuyển động* của hệ điều hành. Bố cục được kiểm tra ở màn hình máy tính 1440px.
+Trạng thái không bao giờ chỉ dựa vào màu; mọi trạng thái đều có chữ. Chuyển động tôn trọng thiết lập *giảm chuyển động* của hệ điều hành. Bố cục desktop được kiểm tra ở `1366×768`, `1440×900` và `1920×1080`.
 
 ## Công nghệ
 
 | Lớp | Dùng |
 | --- | --- |
 | Khung | React 19, TypeScript, Vite |
-| Giao diện | Ant Design 6 (component và form), `@ant-design/icons` |
+| Giao diện | Ant Design 6 (component và form), bộ icon SVG nội bộ (`src/shared/ui/icons/`) |
 | Dữ liệu | TanStack Query 5, React Router 8 |
 | Âm nhạc | Verovio (bản nhạc), wavesurfer.js (sóng âm), react-pdf (bản nhạc PDF) |
 | Thời gian thực | `@microsoft/signalr` |
