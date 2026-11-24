@@ -49,6 +49,7 @@ describe('createPracticeScoreCache', () => {
     const items = Array.from({ length: MAX_IDLE_SCORES + 1 }, () => fakePrepared())
 
     items.forEach((item, index) => cache.put(`s${index}:m:1`, `s${index}:m`, item))
+    // After the deferred trim (put queues it as a microtask).
     await Promise.resolve()
 
     expect(items[0].engine.dispose).toHaveBeenCalledTimes(1)
@@ -85,13 +86,25 @@ describe('createPracticeScoreCache', () => {
     expect(rev1.engine.dispose).toHaveBeenCalledTimes(1)
     expect(rev1.package.dispose).toHaveBeenCalledTimes(1)
 
-    const rev2Again = fakePrepared()
     const rev3 = fakePrepared()
     cache.put('s1:m1:2', 's1:m1', rev2)
     cache.put('s1:m1:3', 's1:m1', rev3)
+    // Replacement frees the older revision at once; the newer one stays live.
     expect(rev2.engine.dispose).toHaveBeenCalledTimes(1)
+    expect(rev2.package.dispose).toHaveBeenCalledTimes(1)
+    expect(rev3.engine.dispose).not.toHaveBeenCalled()
+    expect(rev3.package.dispose).not.toHaveBeenCalled()
     expect(cache.take('s1:m1:3', 's1:m1')).toBe(rev3)
-    expect(rev2Again.engine.dispose).not.toHaveBeenCalled()
+  })
+
+  it('defers the idle ceiling, so a take in the same task still claims the oldest entry', () => {
+    const cache = createPracticeScoreCache()
+    const items = Array.from({ length: MAX_IDLE_SCORES + 1 }, () => fakePrepared())
+
+    // An unmount put and a mount take of the same React commit run before the deferred trim.
+    items.forEach((item, index) => cache.put(`s${index}:m:1`, `s${index}:m`, item))
+    expect(items[0].engine.dispose).not.toHaveBeenCalled()
+    expect(cache.take('s0:m:1', 's0:m')).toBe(items[0])
   })
 
   it('disposes all entries on close, disposes late puts while closed, and caches again after open', () => {

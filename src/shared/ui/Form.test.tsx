@@ -38,8 +38,26 @@ describe('Form', () => {
         </Form.Item>
       </Form>,
     )
-    expect(container.querySelector('.ant-form-item-required-mark-optional')).toBeNull()
-    expect(container.querySelector('label.ant-form-item-required')?.textContent).toBe('Email')
+    // global.css draws the mark after the label unless Ant Design marks the label hidden or optional; jsdom loads no
+    // stylesheet and cannot read ::after, so the classes those selectors key on are what is checked here.
+    const label = container.querySelector('label.ant-form-item-required')
+    expect(label).toHaveClass('ant-form-item-required-mark-hidden')
+    expect(label).not.toHaveClass('ant-form-item-required-mark-optional')
+    expect(label?.textContent).toBe('Email')
+  })
+
+  it('keeps the required mark by default: the label has none of the classes that hide it, and no "*" in its text', () => {
+    const { container } = render(
+      <Form>
+        <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Bắt buộc' }]}>
+          <Input />
+        </Form.Item>
+      </Form>,
+    )
+    const label = container.querySelector('label.ant-form-item-required')
+    expect(label).not.toHaveClass('ant-form-item-required-mark-hidden')
+    expect(label).not.toHaveClass('ant-form-item-required-mark-optional')
+    expect(label?.textContent).toBe('Email')
   })
 
   it('clears only the edited nested field error and preserves sibling errors', async () => {
