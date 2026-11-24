@@ -18,6 +18,7 @@ import {
   SELECT_POPUP_PROPS,
   ViewDrawer,
   VoicePartIcon,
+  voicePartName,
 } from '@/shared/ui'
 import { component, spacing } from '@/styles/tokens'
 import { JointChip, PlannerOnly } from '../components/JointRehearsal'
@@ -301,7 +302,7 @@ export function RehearsalPracticeRoomPage() {
                     className="practice-room-parts"
                     value={shownPart}
                     onChange={(value) => setPart(String(value))}
-                    options={parts.map((name) => ({ value: name, label: name, icon: <VoicePartIcon name={name} /> }))}
+                    options={parts.map((name) => ({ value: name, label: voicePartName(name), icon: <VoicePartIcon name={name} /> }))}
                     aria-label="Bản tập theo bè"
                   />
                 </div>
@@ -324,7 +325,7 @@ export function RehearsalPracticeRoomPage() {
             <div className="practice-room-status-bar">
               {modeLabel && <span className="practice-room-status-item">{modeLabel}</span>}
               <span className="practice-room-status-item">
-                <VoicePartIcon name={shownPart} /> Bè: {shownPart}
+                <VoicePartIcon name={shownPart} /> Bè: {voicePartName(shownPart)}
               </span>
               {song.note && <span className="practice-room-status-item">Cần tập: {song.note}</span>}
             </div>

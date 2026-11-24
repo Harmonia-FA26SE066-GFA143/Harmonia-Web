@@ -1,41 +1,19 @@
 import { Pagination, Spin } from 'antd'
 import { useState } from 'react'
-import { MATERIAL_LABELS, visuallyHidden } from '@/shared/ui'
+import { Icon, MATERIAL_LABELS, visuallyHidden } from '@/shared/ui'
 import { materialKinds, songMeta, usageText } from '../songCard'
 import type { Song } from '../types'
 
-const blankStaves = [44, 74, 104, 134, 164, 194]
-
 /**
- * A sheet with nothing written yet, in the empty-state motif (artifact Motifs, staff-empty): four-line staves with a
- * C clef at the head and a custos at the end, a dashed edge, and the words. Drawn, so it never fails to load.
+ * A plain sheet where the score's first page would be: parchment, one hairline, a small sheet-music mark and the words
+ * (owner 2026-11-24: the dashed edge and empty staves on every card read as noise). Drawn, so it never fails to load.
  */
 function BlankScorePage({ className }: Readonly<{ className: string }>) {
   return (
-    <svg aria-hidden className={`${className} is-blank`} viewBox="0 0 160 220" width={160} height={220}>
-      <rect x={0.5} y={0.5} width={159} height={219} fill="var(--hm-surface-base)" stroke="var(--hm-border-control)" strokeDasharray="4 3" />
-      {blankStaves.map((top) => (
-        <g key={top}>
-          <g stroke="var(--hm-action-primary)" strokeOpacity={0.3}>
-            {[0, 6, 12, 18].map((dy) => (
-              <line key={dy} x1={12} x2={148} y1={top + dy + 0.5} y2={top + dy + 0.5} />
-            ))}
-          </g>
-          <g fill="var(--hm-action-primary)" fillOpacity={0.45}>
-            <rect x={15} y={top + 3} width={4} height={3} />
-            <rect x={15} y={top + 9} width={4} height={3} />
-            <rect x={14} y={top + 3} width={1} height={9} />
-            <rect x={141} y={top + 9} width={3} height={4} />
-            <rect x={143} y={top + 2} width={0.8} height={8} />
-          </g>
-        </g>
-      ))}
-      {/* 12.5 in a 160-wide viewBox drawn ~155px wide renders at 12px, the floor for text. */}
-      <rect x={20} y={15} width={120} height={24} rx={3} fill="var(--hm-surface-reading)" stroke="var(--hm-border-control)" strokeDasharray="3 2" />
-      <text x={80} y={31.5} textAnchor="middle" fontSize={12.5} fill="var(--hm-text-muted)" style={{ fontFamily: 'var(--hm-font-ui)' }}>
-        Chưa có bản nhạc
-      </text>
-    </svg>
+    <span className={`${className} is-blank`} aria-hidden>
+      <Icon name="sheet-music" size="lg" />
+      <span>Chưa có bản nhạc</span>
+    </span>
   )
 }
 

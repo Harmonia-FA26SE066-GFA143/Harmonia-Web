@@ -72,14 +72,22 @@ function AdminChoirForm({ form, onClose }: Readonly<{ form: FormState; onClose: 
 }
 
 /** `ChoirDto` carries no member count: each card reads its own `GET /api/choirs/{id}/members` (G2-10, R2.6). */
-function MemberCount({ choirId }: Readonly<{ choirId: string }>) {
+const countStyle = { color: colors.textBody, fontSize: 13, fontWeight: 600 }
+
+/** The count the choir list already carries (ChoirDto.MemberCount); a choir read without it asks for its members. */
+function MemberCount({ choir }: Readonly<{ choir: Choir }>) {
+  if (choir.memberCount !== undefined) return <Typography.Text style={countStyle}>{choir.memberCount} ca viên</Typography.Text>
+  return <FetchedMemberCount choirId={choir.id} />
+}
+
+function FetchedMemberCount({ choirId }: Readonly<{ choirId: string }>) {
   const members = useMembersOfChoir(choirId)
   let text: string
   if (members.isPending) text = 'Đang tải số ca viên…'
   else if (members.isError) text = UNKNOWN_METRIC_LABEL
   else text = `${members.data.length} ca viên`
   return (
-    <Typography.Text style={{ color: members.isSuccess ? colors.textBody : colors.textMuted, fontSize: 13, fontWeight: members.isSuccess ? 600 : 400 }}>
+    <Typography.Text style={members.isSuccess ? countStyle : { color: colors.textMuted, fontSize: 13 }}>
       {text}
     </Typography.Text>
   )
@@ -95,7 +103,7 @@ function DirectorChoirCard({ choir, index, onOpenMembers }: Readonly<{ choir: Ch
           {choir.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
         </StatusTag>
       </Flex>
-      <MemberCount choirId={choir.id} />
+      <MemberCount choir={choir} />
       <Typography.Paragraph style={{ ...(choir.description ? {} : muted), margin: 0, flex: 1 }}>
         {choir.description ?? 'Chưa có mô tả'}
       </Typography.Paragraph>
@@ -140,6 +148,11 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
             key: 'director',
             title: 'Ca trưởng phụ trách',
             render: (_: unknown, choir: Choir) => choir.directorName ?? <EmptyCell text="Chưa có" />,
+          },
+          {
+            key: 'members',
+            title: 'Ca viên',
+            render: (_: unknown, choir: Choir) => <MemberCount choir={choir} />,
           },
         ]
       : []),

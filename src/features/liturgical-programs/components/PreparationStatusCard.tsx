@@ -4,7 +4,7 @@ import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { participationResponseLabels, useParticipation, type ParticipationRequest } from '@/features/participation'
 import { formatDateTime } from '@/lib/api/dates'
-import { CardTitle, EmptyCell, EmptyState, ErrorState, SectionSkeleton, StatusTag, ViewDrawer, type StatusTagColor } from '@/shared/ui'
+import { CardTitle, EmptyCell, EmptyState, ErrorState, SectionSkeleton, StatusTag, ViewDrawer, voicePartName, type StatusTagColor } from '@/shared/ui'
 import { colors, component, spacing } from '@/styles/tokens'
 import { usePreparationStatus } from '../hooks/useEvents'
 import type { PreparationStatus } from '../types'
@@ -95,7 +95,7 @@ function shortageLines(shortages: PreparationStatus['rosterShortages']) {
   return shortages.map((shortage) => (
     // A shortage is said in words, not in red (brief §12.7).
     <Typography.Text key={`${shortage.songTitle ?? 'whole-service'}-${shortage.skillName}`}>
-      Thiếu {shortage.skillName} cho {shortage.songTitle ?? 'cả buổi lễ'}: {shortage.assignedCount}/{shortage.requiredCount} người
+      Thiếu {voicePartName(shortage.skillName)} cho {shortage.songTitle ?? 'cả buổi lễ'}: {shortage.assignedCount}/{shortage.requiredCount} người
     </Typography.Text>
   ))
 }

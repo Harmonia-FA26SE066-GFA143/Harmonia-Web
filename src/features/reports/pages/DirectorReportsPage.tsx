@@ -1,7 +1,7 @@
 import { App, Button, DatePicker, Dropdown, Flex, Segmented, Select } from 'antd'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router'
-import { setCurrentChoir, useChoirs, useCurrentChoir } from '@/features/choirs'
+import { useChoirs } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { CHOIR_ALL_LABEL, Icon, PageHeader, SELECT_POPUP_PROPS } from '@/shared/ui'
@@ -39,9 +39,8 @@ export function DirectorReportsPage() {
   const dateParam = params.get('date')
   const anchor = dateParam && dayjs(dateParam).isValid() ? dayjs(dateParam) : dayjs(vietnamToday())
   const period = periodOf(granularity, anchor)
-  // A shared link's choir wins; otherwise the choir picked in the running head.
-  const currentChoir = useCurrentChoir()
-  const choirId = params.get('choirId') ?? currentChoir
+  // The page's own choir picker, kept in the URL so a shared link opens the same report.
+  const choirId = params.get('choirId') ?? undefined
   const filters: ReportFilters = { fromDate: period.from, toDate: period.to, choirId }
   // A year by month, a month by week; a single week is shown with the seven before it.
   const trends: Record<Granularity, { query: ActivityTrendQuery; title: string }> = {
@@ -64,11 +63,8 @@ export function DirectorReportsPage() {
     const query = new URLSearchParams(params)
     query.set('by', next.by ?? granularity)
     query.set('date', (next.date ?? anchor).format('YYYY-MM-DD'))
-    // Picking a choir here is picking it for the whole workspace, so the running head follows.
-    if (next.choirId !== undefined) {
-      setCurrentChoir(next.choirId ?? undefined)
-      query.delete('choirId')
-    }
+    if (next.choirId) query.set('choirId', next.choirId)
+    else if (next.choirId === null) query.delete('choirId')
     setParams(query, { replace: true })
   }
   const step = (direction: 1 | -1) => show({ date: anchor.add(direction, granularity) })

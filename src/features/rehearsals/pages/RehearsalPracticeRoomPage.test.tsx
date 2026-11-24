@@ -361,15 +361,15 @@ describe('RehearsalPracticeRoomPage with the score player, changing and leaving'
   it('another voice part changes the room audio only: the score is not loaded again and keeps playing', async () => {
     const { container } = renderRoom()
     await startPlaying()
-    await screen.findByText('Soprano')
+    await screen.findByText('Nữ cao')
     const sheet = container.querySelector('.hm-score-scroll')
     const callsBefore = load.mock.calls.length
     const enginesBefore = engines.length
     const audio = playing()[0]
 
-    fireEvent.click(screen.getByText('Soprano'))
+    fireEvent.click(screen.getByText('Nữ cao'))
 
-    await waitFor(() => expect(screen.getByRole('radio', { name: 'Soprano' })).toBeChecked())
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Nữ cao' })).toBeChecked())
     expect(load.mock.calls.length).toBe(callsBefore)
     expect(engines.length).toBe(enginesBefore)
     expect(container.querySelector('.hm-score-scroll')).toBe(sheet)
@@ -473,8 +473,8 @@ describe('RehearsalPracticeRoomPage page states', () => {
     ])
     renderPlainRoom()
     await findFallback(SONG_A)
-    fireEvent.click(await screen.findByText('Tenor'))
-    expect(await screen.findByText('Bè: Tenor')).toBeInTheDocument()
+    fireEvent.click(await screen.findByText('Nam cao'))
+    expect(await screen.findByText('Bè: Nam cao')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Chưa có audio mẫu hoặc MIDI' })).toBeNull()
     expect(fallbackAudio(SONG_A)).toBeInTheDocument()
     expect(screen.queryByLabelText(/bè Tenor/)).toBeNull()
@@ -508,8 +508,8 @@ describe('RehearsalPracticeRoomPage console', () => {
     await findFallback(SONG_A)
     expect(screen.getByText('Audio mẫu')).toBeInTheDocument()
     expect(screen.getByText('Bè: Tất cả')).toBeInTheDocument()
-    fireEvent.click(screen.getByText('Soprano'))
-    expect(await screen.findByText('Bè: Soprano')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Nữ cao'))
+    expect(await screen.findByText('Bè: Nữ cao')).toBeInTheDocument()
   })
 
   it('"Tài liệu" is off while the song has no score', async () => {

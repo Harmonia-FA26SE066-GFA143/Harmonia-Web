@@ -1,6 +1,7 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import { listLookup } from '../api/categoriesApi'
 import { instrumentSkillCategoryId, type LookupItem, type LookupKind } from '../types'
+import { voicePartName } from '@/shared/ui'
 
 /** Select option built from a catalog entry. */
 export interface CatalogOption {
@@ -18,7 +19,8 @@ export function useLookup(kind: LookupKind) {
   return useQuery(lookupQuery(kind))
 }
 
-const toOption = (item: LookupItem): CatalogOption => ({ value: item.id, label: item.name })
+// A voice-part skill reads in Vietnamese ("Soprano" → "Nữ cao", owner 2026-11-24); every other name as the catalog has it.
+const toOption = (item: LookupItem): CatalogOption => ({ value: item.id, label: voicePartName(item.name) })
 
 /**
  * Options for filters and forms from a backend lookup. While it is loading or unavailable the list is empty, so

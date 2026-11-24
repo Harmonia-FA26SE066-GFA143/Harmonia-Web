@@ -178,26 +178,6 @@ describe('AppShell', () => {
     expect(await screen.findByText('Lễ Chúa Nhật')).toBeInTheDocument()
   })
 
-  it('lets the Choir Director pick the choir they work in, kept in this browser', async () => {
-    setViewportWidth(1440)
-    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
-      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
-      { id: 'c2', name: 'Ca đoàn Thiếu nhi', isActive: true },
-      { id: 'c3', name: 'Ca đoàn cũ', isActive: false },
-    ])
-    renderShellAt('/director/rehearsals')
-
-    const picker = await screen.findByRole('combobox', { name: 'Ca đoàn đang làm việc' })
-    expect(screen.getByText('Tất cả ca đoàn')).toBeInTheDocument()
-    fireEvent.mouseDown(picker)
-    // Only the choirs still active are offered.
-    expect(await screen.findByRole('option', { name: 'Ca đoàn Thiếu nhi' })).toBeInTheDocument()
-    expect(screen.queryByRole('option', { name: 'Ca đoàn cũ' })).toBeNull()
-    fireEvent.click(screen.getByRole('option', { name: 'Ca đoàn Thiếu nhi' }))
-    expect(localStorage.getItem('harmonia:current-choir')).toBe('c2')
-    localStorage.removeItem('harmonia:current-choir')
-  })
-
   it('offers the role workspaces on role-neutral pages', async () => {
     setViewportWidth(1280)
     renderShellAt('/profile')
@@ -430,16 +410,12 @@ describe('AppShell', () => {
     expect(screen.getByText('Nội dung trang')).toBeInTheDocument()
   })
 
-  it('prefixes ChoirSwitcher with "Ca đoàn:" and exposes full title when single choir truncates', async () => {
+  it('has no workspace-wide choir switcher: pages filter by choir where it narrows their data (owner 2026-11-24)', async () => {
     setViewportWidth(1440)
-    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
-      { id: 'c1', name: 'Ca đoàn Giáo xứ Đức Mẹ Hằng Cứu Giúp', isActive: true },
-    ])
     renderShellAt('/director/rehearsals')
 
-    expect(await screen.findByText('Ca đoàn:')).toBeInTheDocument()
-    const nameEl = screen.getByText('Ca đoàn Giáo xứ Đức Mẹ Hằng Cứu Giúp')
-    expect(nameEl).toHaveAttribute('title', 'Ca đoàn Giáo xứ Đức Mẹ Hằng Cứu Giúp')
+    expect(await screen.findByText('Nội dung trang')).toBeInTheDocument()
+    expect(screen.queryByText('Ca đoàn:')).toBeNull()
   })
 
   it('enters Focused Security Mode on /change-password when password change is required and fires zero forbidden queries', async () => {
@@ -512,11 +488,6 @@ describe('AppShell', () => {
       email: 'director@giaoxu.org',
       role: 'director',
     })
-    // Two active choirs, so the switcher is the combobox checked before the transition.
-    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
-      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
-      { id: 'c2', name: 'Ca đoàn Thiếu nhi', isActive: true },
-    ])
 
     renderShellAt('/change-password', <TaskStarter />)
     expect(await screen.findByRole('button', { name: /Menu người dùng/ })).toBeInTheDocument()
@@ -528,7 +499,6 @@ describe('AppShell', () => {
     // The full running head is there first, so the absence checks below prove a transition.
     expect(await screen.findByRole('button', { name: /Mở danh sách tác vụ/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Thông báo/ })).toBeInTheDocument()
-    expect(await screen.findByRole('combobox', { name: 'Ca đoàn đang làm việc' })).toBeInTheDocument()
     expect(document.querySelector('.hm-head-day')).not.toBeNull()
     expect(document.querySelector('.hm-sub')).not.toBeNull()
 

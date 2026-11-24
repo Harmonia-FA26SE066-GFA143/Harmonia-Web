@@ -2,7 +2,7 @@ import { Button, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { generatePath, Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { useAllRehearsals } from '@/features/rehearsals'
+import { RehearsalChoirs, useAllRehearsals } from '@/features/rehearsals'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
 import { ErrorState, Icon, PRACTICE_ROOM_ACTION, SectionSkeleton } from '@/shared/ui'
 
@@ -50,6 +50,10 @@ export function WeekRehearsals() {
                   <Link to={room} className="week-list__time">
                     {isToday ? 'Hôm nay' : capitalize(start.format('dddd'))} · {start.format('HH:mm')}–{dayjs(parseUtc(rehearsal.endAt)).format('HH:mm')}
                   </Link>
+                  <span className="week-list__meta week-list__choirs">
+                    {rehearsal.isJoint && 'Tập chung: '}
+                    <RehearsalChoirs rehearsal={rehearsal} />
+                  </span>
                   <span className="week-list__meta">{[rehearsal.locationName, songs].filter(Boolean).join(' · ') || 'Chưa có bài tập'}</span>
                 </span>
                 {isToday && (

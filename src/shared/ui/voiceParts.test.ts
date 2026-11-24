@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { countVoiceParts, hasVoicePart, inVoicePart, voiceParts } from './voiceParts'
+import { countVoiceParts, hasVoicePart, inVoicePart, voicePartName, voiceParts } from './voiceParts'
 
 describe('voiceParts', () => {
   it('detects Latin and Vietnamese voice-part skill names accurately', () => {
@@ -37,5 +37,15 @@ describe('voiceParts', () => {
       unassigned: 2,
       total: 5,
     })
+  })
+})
+
+describe('voicePartName', () => {
+  it('shows a voice part in Vietnamese and leaves other text alone', () => {
+    expect(voicePartName('Soprano')).toBe('Nữ cao')
+    expect(voicePartName('S2 Alto')).toBe('Nữ trầm')
+    expect(voicePartName('Nam cao')).toBe('Nam cao')
+    expect(voicePartName('Bass guitar')).toBe('Bass guitar')
+    expect(voicePartName('Chỉ huy hợp xướng')).toBe('Chỉ huy hợp xướng')
   })
 })

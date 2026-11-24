@@ -384,7 +384,7 @@ describe('PriestProgramDetailPage', () => {
     expect(eventsApi.getPreparationStatus).toHaveBeenCalledWith('e1')
     expect(screen.getByRole('button', { name: 'Xem danh sách' })).toBeInTheDocument()
     expect(screen.getByText('Đang phân công · 4 lượt phân công')).toBeInTheDocument()
-    expect(screen.getByText('Thiếu Tenor cho Con Bước Lên Bàn Thờ: 1/2 người')).toBeInTheDocument()
+    expect(screen.getByText('Thiếu Nam cao cho Con Bước Lên Bàn Thờ: 1/2 người')).toBeInTheDocument()
     expect(screen.getByText((_, element) => element?.textContent === '2/3 buổi đã diễn ra')).toBeInTheDocument()
     // G3-07: the aside is narrow, so the preparation items stack in one column.
     expect(screen.getByRole('list', { name: 'Tình trạng các mục chuẩn bị' }).style.gridTemplateColumns).toBe('repeat(1, minmax(0, 1fr))')

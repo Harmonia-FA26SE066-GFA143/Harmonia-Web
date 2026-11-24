@@ -7,7 +7,6 @@ import { layout, sizes, spacing } from '@/styles/tokens'
 import { useSession } from '@/lib/auth/session'
 import { roleByApiName } from '@/shared/types/account'
 import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection, type Surface } from './navigation'
-import { ChoirSwitcher } from '@/features/choirs'
 import { NotificationBell } from '@/features/notifications'
 import { SystemAnnouncement } from '@/features/settings'
 import { HeadDay } from './HeadDay'
@@ -106,7 +105,6 @@ export function AppShell({ children }: Readonly<{ children?: ReactNode }>) {
       selectedPath={selectedPath}
       brand={<Brand />}
       controls={controls}
-      choir={surface === 'director' ? <ChoirSwitcher /> : undefined}
       day={<HeadDay surface={surface} />}
       scrolled={scrolled}
     />

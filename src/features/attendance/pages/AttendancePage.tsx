@@ -82,7 +82,6 @@ export function AttendancePage() {
             <SessionSummary session={selected} program={program && selected.eventId === program.id ? program : undefined} />
           ) : undefined
         }
-        extra={scheduleButton}
       />
       {programId && !sessions.some((r) => r.eventId === programId) && (
         <Alert

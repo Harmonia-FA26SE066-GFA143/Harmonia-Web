@@ -1,7 +1,6 @@
 import { Breadcrumb, Flex, Typography, type BreadcrumbProps } from 'antd'
 import type { ReactNode } from 'react'
 import { colors, component, spacing, typography } from '@/styles/tokens'
-import { Incipit } from './ChantStaff'
 
 export interface PageHeaderProps {
   title: ReactNode
@@ -16,8 +15,8 @@ export interface PageHeaderProps {
 }
 
 /**
- * The liturgical page head (Harmonia Design System): optional flush-left breadcrumb on Row 1 (`x = 0`), display title
- * with tags and inline incipit on Row 2, one-line description below, and actions on the right.
+ * The page head: optional flush-left breadcrumb on Row 1 (`x = 0`), display title with tags on Row 2 (the incipit
+ * ornament was dropped, owner 2026-11-24: it read as noise), one-line description below, and actions on the right.
  */
 export function PageHeader({ title, description, breadcrumb, showBreadcrumb, tags, extra }: Readonly<PageHeaderProps>) {
   const hasBreadcrumb = Boolean(breadcrumb && (showBreadcrumb ?? breadcrumb.length > 2))
@@ -44,7 +43,6 @@ export function PageHeader({ title, description, breadcrumb, showBreadcrumb, tag
               {title}
             </Typography.Title>
             {tags}
-            <Incipit />
           </Flex>
           {description && (
             <Typography.Paragraph

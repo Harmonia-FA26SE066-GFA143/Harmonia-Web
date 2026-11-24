@@ -5,7 +5,7 @@ import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
 import { EventChoirsCard, LeadChoirNotice } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
-import { EmptyState, ErrorState, Icon, LostLeaf, PageHeader, PageSkeleton, SectionSkeleton, StatusTag } from '@/shared/ui'
+import { EmptyState, ErrorState, Icon, LostLeaf, PageHeader, PageSkeleton, SectionSkeleton, StatusTag, voicePartName } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { DirectorPreparationHub } from '../components/DirectorPreparationHub'
 import { PreparationOverview } from '../components/PreparationOverview'
@@ -80,7 +80,7 @@ function StaffingMark({ program, item }: Readonly<{ program: LiturgicalProgramDe
     <Flex wrap align="center" gap={spacing.xs}>
       {shortages.map((shortage) => (
         <StatusTag key={shortage.skillName} color="gold" style={{ marginInlineEnd: 0 }}>
-          {`Thiếu ${shortage.skillName} (${shortage.assignedCount}/${shortage.requiredCount})`}
+          {`Thiếu ${voicePartName(shortage.skillName)} (${shortage.assignedCount}/${shortage.requiredCount})`}
         </StatusTag>
       ))}
       <Link to={`${paths.director.roster}?programId=${program.id}`} style={{ fontSize: 13 }}>

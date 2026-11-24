@@ -23,6 +23,11 @@ export interface Rehearsal {
   note?: string
   /** Songs to practise, in order. */
   songs: RehearsalSong[]
+  /**
+   * The caller may change it and record its attendance (RehearsalDto.cs `CanManage`): false on a joint rehearsal whose
+   * program another choir leads. Absent on a session the Web built itself.
+   */
+  canManage?: boolean
 }
 
 export interface RehearsalSong {

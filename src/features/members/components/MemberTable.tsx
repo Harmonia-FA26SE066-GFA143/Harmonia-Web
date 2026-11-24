@@ -82,9 +82,9 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
     {
       key: 'action',
       title: ACTIONS_COLUMN_TITLE,
-      align: 'right',
+      align: 'center',
       render: (_, member) => (
-        <Flex justify="flex-end" gap={4}>
+        <Flex justify="center" gap={4}>
           <Button type="link" onClick={() => onView(member)} aria-label={`${VIEW_MEMBER_ACTION} ${member.fullName}`}>
             {VIEW_MEMBER_ACTION}
           </Button>

@@ -153,7 +153,7 @@ describe('SongDetailPage', () => {
     expect(await screen.findByText('Mùa Thường Niên')).toBeInTheDocument()
     expect(screen.getByText('Mùa Chay')).toBeInTheDocument()
     expect(screen.getByText('Đáp ca')).toBeInTheDocument()
-    expect(screen.getByText('Soprano ×1 (bắt buộc)')).toBeInTheDocument()
+    expect(screen.getByText('Nữ cao ×1 (bắt buộc)')).toBeInTheDocument()
     expect(screen.getAllByText('Chưa phân loại')).toHaveLength(4)
 
     for (const kind of ['Bản nhạc', 'Lời bài hát', 'Audio mẫu', 'Tài liệu tập luyện']) {

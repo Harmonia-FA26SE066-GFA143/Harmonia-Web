@@ -2,7 +2,7 @@ import { App, Button, Card, DatePicker, Flex, Input, Radio, Select, Typography, 
 import dayjs, { type Dayjs } from 'dayjs'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { useChoirs, useCurrentChoir, useMembersOfChoir } from '@/features/choirs'
+import { useChoirs, useMembersOfChoir } from '@/features/choirs'
 import { useAllChoirMembers } from '@/features/members'
 import { useSong, useSongMaterials, useSongs } from '@/features/music-library'
 import { useSongList } from '@/features/song-lists'
@@ -93,10 +93,9 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
   const skills = useCatalogOptions('skills')
   const choirs = useChoirs()
   const activeChoirs = (choirs.data ?? []).filter((choir) => choir.isActive)
-  const currentChoir = useCurrentChoir()
-  // The choir of the running head, else the only one the director leads. The form reads `initialValues` once, usually
+  // The only choir the director leads; with several, the director picks one. The form reads `initialValues` once, usually
   // before the choirs have loaded, so the field is filled when they arrive, unless the director already chose.
-  const defaultChoirId = currentChoir ?? (activeChoirs.length === 1 ? activeChoirs[0].id : undefined)
+  const defaultChoirId = activeChoirs.length === 1 ? activeChoirs[0].id : undefined
   useEffect(() => {
     if (defaultChoirId && !form.getFieldValue('choirId')) form.setFieldValue('choirId', defaultChoirId)
   }, [defaultChoirId, form])

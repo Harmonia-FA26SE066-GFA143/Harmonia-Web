@@ -274,7 +274,8 @@ describe('MusicLibraryPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Xin Vâng/ }))
     expect(screen.getByRole('button', { name: /Xin Vâng/ })).toHaveAttribute('aria-pressed', 'true')
     expect(within(peek).getByRole('heading', { name: 'Xin Vâng' })).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Lọc nhanh' })).toBeInTheDocument()
+    // One filter console only (owner 2026-11-24, Codex review): no second rail of the same filters.
+    expect(screen.queryByRole('navigation', { name: 'Lọc nhanh' })).toBeNull()
   })
 
   it('shows score-card skeletons, not the empty state, while the grid loads (G3-02)', async () => {

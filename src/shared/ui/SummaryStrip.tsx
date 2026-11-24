@@ -21,10 +21,17 @@ export function SummaryStrip({
   cells,
   label,
   unknownLabel = UNKNOWN_METRIC_LABEL,
-}: Readonly<{ cells: SummaryCell[]; label: string; unknownLabel?: string }>) {
+  compact,
+}: Readonly<{
+  cells: SummaryCell[]
+  label: string
+  unknownLabel?: string
+  /** One quiet line of label–figure pairs instead of a ruled card: a breakdown that sits under a main strip. */
+  compact?: boolean
+}>) {
   return (
     // The column count goes through a variable, so global.css can fold the strip to two columns and one on narrow screens.
-    <dl className="hm-summary" aria-label={label} style={{ '--hm-summary-cols': cells.length } as CSSProperties}>
+    <dl className={compact ? 'hm-summary hm-summary--compact' : 'hm-summary'} aria-label={label} style={{ '--hm-summary-cols': cells.length } as CSSProperties}>
       {cells.map((cell) => {
         const hasValue = cell.value !== undefined && Number.isFinite(cell.value)
         const waiting = cell.waiting !== undefined && hasValue && (cell.value as number) > 0
