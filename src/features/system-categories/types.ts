@@ -1,3 +1,4 @@
+import type { Gender } from '@/shared/utils/personName'
 /**
  * Admin catalogs (Report 1 FE-49, FE-50) as `/api/lookups` returns them to the Admin (Harmonia-BE LookupsController).
  * Entries are never deleted: other records reference them, so `isActive = false` switches one off and hides it from
@@ -21,6 +22,8 @@ export type CatalogItemValues = Omit<CatalogItem, 'id'>
 /** A skill belongs to one skill category; its name is unique within the category (`SaveSkillRequest`). */
 export interface Skill extends CatalogItem {
   categoryId: string
+  /** Only members of this gender may declare it; null for everyone (`SkillDto.Gender`, BE 1e2f8f8). */
+  gender: Gender | null
 }
 
 export type SkillValues = Omit<Skill, 'id'>
@@ -37,13 +40,26 @@ export interface SongTheme extends CatalogItem {
 
 export type SongThemeValues = Omit<SongTheme, 'id'>
 
+/** Season codes of the synced calendar (Harmonia-BE LiturgicalCalendarSeasons.cs), in liturgical-year order. */
+export const calendarSeasonLabels = {
+  Advent: 'Mùa Vọng',
+  Christmas: 'Mùa Giáng Sinh',
+  Lent: 'Mùa Chay',
+  Easter: 'Mùa Phục Sinh',
+  OrdinaryTime: 'Mùa Thường Niên',
+} as const
+
+export type CalendarSeasonKey = keyof typeof calendarSeasonLabels
+
 /**
- * A liturgical season (`SaveLiturgicalSeasonRequest`): dates (`DateOnly`, YYYY-MM-DD) and a colour instead of a
- * description. Names repeat every year; the dates must not overlap another active season.
+ * A liturgical season (`SaveLiturgicalSeasonRequest`, BE a395ce0): either tied to a season of the synced calendar
+ * (`calendarKey`, every year, dates optional) or described by dates (`DateOnly`, YYYY-MM-DD), with a colour instead of
+ * a description. One active season per key; dated seasons must not overlap another active dated season.
  */
 export interface LiturgicalSeason extends CatalogEntry {
-  startDate: string
-  endDate: string
+  calendarKey: CalendarSeasonKey | null
+  startDate: string | null
+  endDate: string | null
   /** `#RRGGBB`. */
   colorHex: string | null
 }

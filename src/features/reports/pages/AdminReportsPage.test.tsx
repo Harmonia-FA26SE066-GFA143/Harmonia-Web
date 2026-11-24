@@ -63,6 +63,26 @@ describe('AdminReportsPage', () => {
     expect(getColumns).toHaveBeenCalledWith('participation')
   })
 
+  it('shows "Chưa có dữ liệu" in a report cell the backend left empty', async () => {
+    vi.spyOn(reportsApi, 'getReport').mockImplementation(async (kind: AdminReportKind) =>
+      kind === 'participation'
+        ? { ...empty, totalCount: 1, items: [{ id: 'm1', cells: { fullName: 'Simon Đức', confirmedCount: 3, declinedCount: '' } }] }
+        : empty,
+    )
+    vi.spyOn(reportsApi, 'getReportColumns').mockResolvedValue([
+      { key: 'fullName', title: 'Họ tên' },
+      { key: 'confirmedCount', title: 'Xác nhận' },
+      { key: 'declinedCount', title: 'Từ chối' },
+    ])
+    renderPage(<AdminReportsPage />, '/admin/reports')
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Xác nhận tham gia' }))
+    const row = (await screen.findByText('Simon Đức')).closest('tr') as HTMLElement
+    expect(within(row).getByText('Chưa có dữ liệu')).toBeInTheDocument()
+    expect(within(row).queryByText('—')).toBeNull()
+    expect(within(row).queryByText('Chưa cập nhật')).toBeNull()
+  })
+
   it('exports by liturgical season in the chosen format and saves the file', async () => {
     vi.spyOn(reportsApi, 'getReport').mockResolvedValue(empty)
     const exportReport = vi.spyOn(reportsApi, 'exportReport').mockResolvedValue(new Blob(['x']))

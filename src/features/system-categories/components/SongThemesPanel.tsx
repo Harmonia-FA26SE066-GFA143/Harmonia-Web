@@ -1,5 +1,5 @@
 import { TreeSelect, Typography } from 'antd'
-import { Form } from '@/shared/ui'
+import { Form, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import { useSaveSongTheme, useSongThemes } from '../hooks/useCatalogs'
 import { themePath, themeTreeData, themeWithDescendants } from '../songThemeTree'
@@ -27,7 +27,7 @@ function ParentField({ themes }: Readonly<{ themes: SongTheme[] }>) {
       name="parentId"
       extra="Để trống nếu là chủ đề gốc. Lọc bài theo một chủ đề cũng ra bài của các chủ đề con."
     >
-      <TreeSelect allowClear showSearch treeNodeFilterProp="title" treeDefaultExpandAll placeholder="Chủ đề gốc" treeData={treeData} />
+      <TreeSelect {...SELECT_POPUP_PROPS} allowClear showSearch treeNodeFilterProp="title" treeDefaultExpandAll placeholder="Chủ đề gốc" treeData={treeData} />
     </Form.Item>
   )
 }

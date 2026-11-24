@@ -2,7 +2,7 @@ import { Card, Table, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { formatDateTime, parseUtc } from '@/lib/api/dates'
-import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, EmptyCell, ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import { useReportExports } from '../hooks/useReports'
 import { reportDefinitions } from '../reportDefinitions'
@@ -48,8 +48,8 @@ export function ExportHistory({ seasons }: Readonly<{ seasons: FilterOption[] }>
               title: 'Thời điểm xuất',
               render: (_, item) => <span style={numeric}>{formatDateTime(item.exportedAt)}</span>,
             },
-            { key: 'kind', title: 'Loại báo cáo', render: (_, item) => (item.kind ? reportDefinitions[item.kind].label : '—') },
-            { key: 'format', title: 'Định dạng', render: (_, item) => (item.format ? reportFormatLabels[item.format] : '—') },
+            { key: 'kind', title: 'Loại báo cáo', render: (_, item) => (item.kind ? reportDefinitions[item.kind].label : <EmptyCell />) },
+            { key: 'format', title: 'Định dạng', render: (_, item) => (item.format ? reportFormatLabels[item.format] : <EmptyCell />) },
             { key: 'scope', title: 'Phạm vi', render: (_, item) => scope(item) },
             { key: 'by', title: 'Người xuất', dataIndex: 'exportedByName' },
             {

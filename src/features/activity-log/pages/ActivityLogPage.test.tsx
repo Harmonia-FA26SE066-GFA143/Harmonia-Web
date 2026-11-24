@@ -108,6 +108,42 @@ describe('ActivityLogPage', () => {
     expect(within(dialog).queryByText('ScoreSha256')).toBeNull()
   })
 
+  it('labels the change type and action columns once each, and resets filters from the filter bar', async () => {
+    const list = vi.spyOn(activityLogApi, 'listActivityLog').mockResolvedValue(page(records))
+    renderLog()
+
+    expect(await screen.findAllByRole('columnheader', { name: 'Loại thay đổi' })).toHaveLength(1)
+    expect(screen.getAllByRole('columnheader', { name: 'Thao tác' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: /Xem chi tiết/ })[0]).toHaveTextContent('Xem')
+    expect(screen.getByRole('combobox', { name: 'Loại thay đổi' })).toBeInTheDocument()
+
+    const reset = screen.getByRole('button', { name: 'Xoá bộ lọc' })
+    expect(reset).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Chỉ xem hoạt động của Lm. Gioan' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Xoá bộ lọc' })).toBeEnabled())
+    fireEvent.click(screen.getByRole('button', { name: 'Xoá bộ lọc' }))
+    await waitFor(() => expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ userId: undefined }), expect.anything()))
+    expect(screen.queryByText('Người thực hiện: Lm. Gioan')).toBeNull()
+  })
+
+  it('shows "Không có" for a missing before value and closes the detail with "Đóng"', async () => {
+    vi.spyOn(activityLogApi, 'listActivityLog').mockResolvedValue(
+      page([{ id: 'l5', createdAt: '2026-10-14T02:00:00Z', action: 'Created', entityType: 'SongList', entityId: 'sl-2', newValue: '{"Status":"Draft"}' }]),
+    )
+    renderLog()
+
+    fireEvent.click(await screen.findByRole('button', { name: /Xem chi tiết/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Loại thay đổi')).toBeInTheDocument()
+    expect(within(dialog).getByText('Không có')).toBeInTheDocument()
+    expect(within(dialog).queryByText('—')).toBeNull()
+
+    // The header × is also named "Đóng"; the ViewDrawer footer button is the one with visible text.
+    const footerClose = within(dialog).getAllByRole('button', { name: 'Đóng' }).find((button) => button.textContent === 'Đóng')
+    fireEvent.click(footerClose!)
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  })
+
   it('names director nominations, training and event choirs and their audited fields in Vietnamese', async () => {
     vi.spyOn(activityLogApi, 'listActivityLog').mockResolvedValue(
       page([

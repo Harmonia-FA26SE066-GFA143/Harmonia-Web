@@ -1,4 +1,3 @@
-import { DeleteOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons'
 import { App, Button, Flex, InputNumber, Select, Tag, Typography } from 'antd'
 import { useState } from 'react'
 import { colors, spacing } from '@/styles/tokens'
@@ -6,7 +5,7 @@ import { catalogErrorMessage } from '../catalogErrors'
 import { useCatalogOptions } from '../hooks/useCatalogOptions'
 import { useSaveSlotRequirements, useSlotRequirements } from '../hooks/useCatalogs'
 import type { LiturgicalSlot, SlotRequirement, SlotRequirementValue } from '../types'
-import { Form, FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer, Icon, SELECT_POPUP_PROPS } from '@/shared/ui'
 
 const muted = { color: colors.textMuted }
 
@@ -33,7 +32,6 @@ function SlotRequirementsDrawer({
       open
       title={`Người cần cho ${slot.name}`}
       okText="Lưu"
-      cancelText="Hủy"
       okButtonProps={{ htmlType: 'submit', loading: save.isPending }}
       cancelButtonProps={{ disabled: save.isPending }}
       onCancel={onClose}
@@ -73,6 +71,7 @@ function SlotRequirementsDrawer({
                   style={{ flex: 1, margin: 0 }}
                 >
                   <Select
+                    {...SELECT_POPUP_PROPS}
                     showSearch
                     optionFilterProp="label"
                     placeholder="Chọn kỹ năng"
@@ -91,10 +90,10 @@ function SlotRequirementsDrawer({
                 >
                   <InputNumber min={1} max={50} precision={0} addonAfter="người" aria-label={`Số người ${index + 1}`} style={{ width: 130 }} />
                 </Form.Item>
-                <Button type="text" icon={<DeleteOutlined />} aria-label={`Gỡ kỹ năng ${index + 1}`} onClick={() => remove(field.name)} />
+                <Button type="text" icon={<Icon name="delete" />} aria-label={`Gỡ kỹ năng ${index + 1}`} onClick={() => remove(field.name)} />
               </Flex>
             ))}
-            <Button type="dashed" icon={<PlusOutlined />} onClick={() => add({ requiredCount: 1 })} style={{ alignSelf: 'flex-start' }}>
+            <Button type="dashed" icon={<Icon name="add" />} onClick={() => add({ requiredCount: 1 })} style={{ alignSelf: 'flex-start' }}>
               Thêm kỹ năng
             </Button>
           </Flex>
@@ -128,7 +127,7 @@ export function SlotRequirementsCell({ slot }: Readonly<{ slot: LiturgicalSlot }
       {summary}
       <Button
         size="small"
-        icon={<TeamOutlined />}
+        icon={<Icon name="roster" />}
         disabled={!requirements.isSuccess}
         onClick={() => setEditing(true)}
         aria-label={`Sửa người cần cho ${slot.name}`}

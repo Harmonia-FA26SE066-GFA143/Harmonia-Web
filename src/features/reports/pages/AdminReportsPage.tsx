@@ -1,4 +1,3 @@
-import { DownloadOutlined } from '@ant-design/icons'
 import { App, Button, Flex, Tabs } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
@@ -6,7 +5,7 @@ import { useSearchParams } from 'react-router'
 import { useChoirs } from '@/features/choirs'
 import { useCatalogOptions } from '@/features/system-categories'
 import { vietnamToday } from '@/lib/api/dates'
-import { PageHeader } from '@/shared/ui'
+import { Icon, PageHeader } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { ActivityTrendCard } from '../components/ActivityTrendCard'
 import { ExportHistory } from '../components/ExportHistory'
@@ -68,7 +67,7 @@ export function AdminReportsPage() {
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Báo cáo' }]}
         description="Số liệu toàn giáo xứ; lọc theo tháng, mùa phụng vụ hoặc ca đoàn."
         extra={
-          <Button type="primary" icon={<DownloadOutlined />} onClick={() => setExporting(true)}>
+          <Button type="primary" icon={<Icon name="download" />} onClick={() => setExporting(true)}>
             Xuất báo cáo
           </Button>
         }

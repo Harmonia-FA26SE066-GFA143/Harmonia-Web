@@ -11,6 +11,7 @@ import { LiturgicalCategoriesPage } from './LiturgicalCategoriesPage'
 const advent: LiturgicalSeason = {
   id: 's1',
   name: 'Mùa Vọng',
+  calendarKey: null,
   startDate: '2026-11-29',
   endDate: '2026-12-24',
   colorHex: '#6B3FA0',
@@ -106,6 +107,25 @@ describe('LiturgicalCategoriesPage', () => {
     )
     expect(await screen.findByText('Khoảng ngày này trùng với một mùa phụng vụ khác đang dùng.')).toBeInTheDocument()
     expect(within(dialog).getByRole('textbox', { name: 'Tên mùa phụng vụ' })).toHaveValue('Mùa Giáng Sinh')
+  })
+
+  it('reads a season tied to the calendar without dates and saves one with no dates (BE a395ce0)', async () => {
+    vi.spyOn(categoriesApi, 'listSeasons').mockResolvedValue([{ ...advent, id: 's2', name: 'Mùa Chay', calendarKey: 'Lent', startDate: null, endDate: null }])
+    const save = vi.spyOn(categoriesApi, 'saveSeason').mockRejectedValue(new ApiError(409, { code: 'LITURGICAL_SEASON_CALENDAR_KEY_DUPLICATE' }))
+    renderPage(<LiturgicalCategoriesPage />, '/admin/liturgical-categories')
+
+    expect(await screen.findByText('Theo lịch: Mùa Chay (hằng năm)')).toBeInTheDocument()
+    expect(screen.queryByText(/Invalid Date/)).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: /Thêm mùa phụng vụ/ }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Tên mùa phụng vụ' }), { target: { value: 'Mùa Chay 2' } })
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Theo mùa của lịch phụng vụ' }))
+    fireEvent.click(await screen.findByTitle('Mùa Chay'))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thêm' }))
+
+    await waitFor(() => expect(save).toHaveBeenCalledWith(undefined, { name: 'Mùa Chay 2', calendarKey: 'Lent', isActive: true }))
+    expect(await screen.findByText('Đã có một mùa phụng vụ đang dùng gắn với mùa này của lịch phụng vụ.')).toBeInTheDocument()
   })
 
   it('adds a liturgical slot with its default order', async () => {
@@ -229,6 +249,58 @@ describe('LiturgicalCategoriesPage', () => {
       }),
     )
     expect(await screen.findByText('Đã lưu thay đổi.')).toBeInTheDocument()
+  })
+
+  it('shows "Không có" for a Mass time without a title and labels the title field without "(không bắt buộc)"', async () => {
+    vi.spyOn(categoriesApi, 'listSeasons').mockResolvedValue([])
+    vi.spyOn(categoriesApi, 'listCatalogItems').mockResolvedValue([{ id: 'm1', name: 'Lễ Chúa Nhật', description: null, isActive: true }])
+    vi.spyOn(categoriesApi, 'listLocations').mockResolvedValue([{ id: 'loc-1', name: 'Nhà thờ chính', address: null, isActive: true }])
+    vi.spyOn(categoriesApi, 'listMassSchedules').mockResolvedValue([
+      { id: 'ms1', dayOfWeek: 'Sunday', time: '05:00', massTypeId: 'm1', locationId: 'loc-gone', title: null, isActive: true },
+    ])
+    renderPage(<LiturgicalCategoriesPage />, '/admin/liturgical-categories', '/admin/liturgical-categories?tab=massSchedules')
+
+    const row = (await screen.findByText('Chúa nhật')).closest('tr') as HTMLElement
+    expect(within(row).getByText('Không có')).toBeInTheDocument()
+    // The locations loaded but this one is not among them: missing, not loading.
+    await waitFor(() => expect(within(row).getByText('Chưa cập nhật')).toBeInTheDocument())
+    expect(within(row).queryByText('—')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: /Thêm giờ lễ cố định/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('textbox', { name: 'Tiêu đề' })).toBeInTheDocument()
+    expect(within(dialog).queryByText(/không bắt buộc/)).toBeNull()
+  })
+
+  it('says a Mass time lookup failed and blocks saving until it is retried', async () => {
+    vi.spyOn(categoriesApi, 'listSeasons').mockResolvedValue([])
+    vi.spyOn(categoriesApi, 'listCatalogItems').mockResolvedValue([{ id: 'm1', name: 'Lễ Chúa Nhật', description: null, isActive: true }])
+    const locations = vi.spyOn(categoriesApi, 'listLocations').mockRejectedValue(new ApiError(403, undefined))
+    vi.spyOn(categoriesApi, 'listMassSchedules').mockResolvedValue([
+      { id: 'ms1', dayOfWeek: 'Sunday', time: '05:00', massTypeId: 'm1', locationId: 'loc-1', title: 'Lễ sáng sớm', isActive: true },
+    ])
+    renderPage(<LiturgicalCategoriesPage />, '/admin/liturgical-categories', '/admin/liturgical-categories?tab=massSchedules')
+
+    const row = (await screen.findByText('Lễ sáng sớm')).closest('tr') as HTMLElement
+    await waitFor(() => expect(within(row).getByText('Chưa tải được')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chỉnh sửa giờ lễ Chúa nhật 05:00' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Không tải được danh sách loại Thánh lễ hoặc nơi cử hành.')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
+
+    const calls = locations.mock.calls.length
+    fireEvent.click(within(dialog).getByRole('button', { name: /Thử lại/ }))
+    await waitFor(() => expect(locations.mock.calls.length).toBeGreaterThan(calls))
+  })
+
+  it('shows "Chưa chọn" for a season without a colour', async () => {
+    vi.spyOn(categoriesApi, 'listSeasons').mockResolvedValue([{ ...advent, colorHex: null }])
+    renderPage(<LiturgicalCategoriesPage />, '/admin/liturgical-categories')
+
+    const row = (await screen.findByText('Mùa Vọng')).closest('tr') as HTMLElement
+    expect(within(row).getByText('Chưa chọn')).toBeInTheDocument()
+    expect(within(row).queryByText('—')).toBeNull()
   })
 
   it('translates a name the calendar still shows in English and deletes a translation after asking', async () => {
