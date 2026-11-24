@@ -22,6 +22,15 @@ export function canEditSongList(status?: SongListStatus): boolean {
 }
 
 /**
+ * The song list is closed once the event is cancelled or its Mass has begun (Harmonia-BE SongListService.cs:422-429,
+ * BE 61b3aa6: LITURGICAL_EVENT_CANCELLED / LITURGICAL_EVENT_ALREADY_PASSED). Date and time are parish wall clock.
+ */
+export function isSongListClosed(program: Pick<LiturgicalProgram, 'date' | 'time' | 'status'>, now = Date.now()): boolean {
+  const parishNow = new Date(now + 7 * 3_600_000).toISOString().slice(0, 16)
+  return program.status === 'cancelled' || `${program.date}T${program.time}` <= parishNow
+}
+
+/**
  * A program as the Choir Director pages use it: a row of `GET /api/liturgical-events` (`LiturgicalEventListItemDto`,
  * never a draft for the Choir Director) or the event of `GET /api/schedule/events/{id}`. Catalog entries come as
  * names; the Priest pages use `LiturgicalEvent` (below).

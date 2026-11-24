@@ -94,6 +94,9 @@ describe('SongListReviewPage', () => {
     expect(within(drawer).getByRole('link', { name: /Xem\/Tải xuống Lời bài hát bản in/ })).toHaveAttribute('href', 'https://files.example/loi.pdf')
     expect(within(drawer).queryByRole('button', { name: /Tải lên|Xoá|Sửa|Tiến độ học/ })).toBeNull()
     expect(materials).toHaveBeenCalledWith('s2')
+    // A ViewDrawer: its footer closes it.
+    fireEvent.click(within(drawer.querySelector('.ant-drawer-footer') as HTMLElement).getByRole('button', { name: 'Đóng' }))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Lễ Vật Tâm Tình' })).toBeNull())
   })
 
   it('requires a note to request a revision of the whole list, then stays on the page', async () => {
@@ -121,6 +124,23 @@ describe('SongListReviewPage', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Lễ Chúa Nhật XXIX' })).toBeInTheDocument()
   })
 
+  it('offers no decision on a submitted list of a cancelled event (BE 61b3aa6)', async () => {
+    vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue(submitted)
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({
+      id: 'e1',
+      date: '2099-10-18',
+      time: '08:00',
+      title: 'Lễ Chúa Nhật XXIX',
+      locationId: 'loc-1',
+      locationName: 'Nhà thờ chính',
+      status: 'cancelled',
+    })
+    renderReview()
+
+    expect(await screen.findByText('Chương trình đã bị hủy')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Duyệt' })).toBeNull()
+  })
+
   it('approves without a note', async () => {
     vi.spyOn(reviewApi, 'getLatestSongList').mockResolvedValue(submitted)
     const review = vi.spyOn(reviewApi, 'reviewSongList').mockResolvedValue()
@@ -129,6 +149,8 @@ describe('SongListReviewPage', () => {
     // The written list is complete while the Priest's review remains independently pending.
     expect(await screen.findByText(/Đã hoàn tất/)).toHaveTextContent('1/6')
     expect(screen.getByText('Đang chờ duyệt')).toBeInTheDocument()
+    // G3-07: the aside is narrow, so the preparation items stack in one column.
+    expect(screen.getByRole('list', { name: 'Tình trạng các mục chuẩn bị' }).style.gridTemplateColumns).toBe('repeat(1, minmax(0, 1fr))')
     fireEvent.click(screen.getByRole('button', { name: 'Duyệt' }))
     const dialog = await confirmDialog('Duyệt danh sách bài hát?')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Duyệt' }))

@@ -1,5 +1,6 @@
 import { apiRequest, orNullOn404 } from '@/lib/api/client'
 import { toQuery, type PagedList } from '@/lib/api/paging'
+import type { EventChoirsValues } from '@/features/choirs'
 import type { EventFilters, EventFormValues, EventStatus, LiturgicalEvent, PreparationStatus, SongListStatus } from '../types'
 
 // `/api/liturgical-events` (Harmonia-BE LiturgicalEventsController), the Parish Priest side; the Choir Director reads
@@ -179,12 +180,18 @@ export async function getPreparationStatus(id: string): Promise<PreparationStatu
 /**
  * Creates a Draft for every active fixed Mass time on each day between the two dates (YYYY-MM-DD, inclusive; from
  * today, at most 62 days), skipping a day + time + location already taken (MassScheduleService.GenerateEventsAsync).
- * Answers the events created, none when there was nothing to create.
+ * With `choirs`, every created draft gets those serving choirs and lead in the same request, all or nothing
+ * (GenerateLiturgicalEventsRequest, B55); without them the drafts have no choir. Answers the events created, none
+ * when there was nothing to create.
  */
-export async function generateEvents(fromDate: string, toDate: string): Promise<LiturgicalEvent[]> {
+export async function generateEvents(fromDate: string, toDate: string, choirs?: EventChoirsValues): Promise<LiturgicalEvent[]> {
   const created = await apiRequest<LiturgicalEventDto[]>('/api/liturgical-events/generation', {
     method: 'POST',
-    body: JSON.stringify({ fromDate, toDate }),
+    body: JSON.stringify({
+      fromDate,
+      toDate,
+      ...(choirs?.choirIds.length ? { choirIds: choirs.choirIds, leadChoirId: choirs.leadChoirId } : {}),
+    }),
   })
   return created.map(toEvent)
 }

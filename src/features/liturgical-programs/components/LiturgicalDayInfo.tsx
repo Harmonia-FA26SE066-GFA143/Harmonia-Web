@@ -1,10 +1,9 @@
-import { SyncOutlined } from '@ant-design/icons'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { App, Button, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { SeasonChip } from '@/shared/ui'
+import { CANCEL_LABEL, Icon, SeasonChip } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { calendarErrorMessage } from '../calendarErrors'
 import { useSyncLiturgicalDays } from '../hooks/useLiturgicalDays'
@@ -92,7 +91,7 @@ export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
       title: `Đồng bộ lịch phụng vụ năm ${year}?`,
       content: `Harmonia lấy lịch phụng vụ năm ${year} từ nguồn lịch trực tuyến và ghi đè các ngày phụng vụ đã có của năm này.`,
       okText: 'Đồng bộ',
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       onOk: () =>
         sync
           .mutateAsync(year)
@@ -105,7 +104,7 @@ export function SyncCalendarButton({ year }: Readonly<{ year: number }>) {
     })
 
   return (
-    <Button icon={<SyncOutlined />} loading={sync.isPending} onClick={confirm}>
+    <Button icon={<Icon name="refresh" />} loading={sync.isPending} onClick={confirm}>
       Đồng bộ lịch phụng vụ {year}
     </Button>
   )

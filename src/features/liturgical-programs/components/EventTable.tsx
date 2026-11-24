@@ -1,5 +1,5 @@
 import { Button, Flex, Table, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
-import { visuallyHidden } from '@/shared/ui'
+import { ACTIONS_COLUMN_TITLE } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { useEventNames } from '../hooks/useEventNames'
 import { formatProgramDate } from '../programFilters'
@@ -50,7 +50,7 @@ export function EventTable({ events, onOpen, pagination = false, loading, select
     { key: 'status', title: 'Trạng thái', width: 130, render: (_, event) => <EventStatusTag status={event.status} /> },
     {
       key: 'actions',
-      title: <span style={visuallyHidden}>Thao tác</span>,
+      title: ACTIONS_COLUMN_TITLE,
       align: 'center',
       width: 120,
       render: (_, event) => (

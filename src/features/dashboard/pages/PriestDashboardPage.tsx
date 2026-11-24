@@ -1,4 +1,3 @@
-import { PlusOutlined } from '@ant-design/icons'
 import { Button, Flex, Skeleton, Typography } from 'antd'
 import dayjs from 'dayjs'
 import type { CSSProperties, ReactNode } from 'react'
@@ -7,7 +6,7 @@ import { paths } from '@/app/router/paths'
 import { EventStatusTag, formatProgramDate, useEvent, useEventNames, useEvents } from '@/features/liturgical-programs'
 import { usePendingSongLists } from '@/features/song-list-review'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
-import { AllDone, EmptyState, EmptyWeek, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { AllDone, EmptyState, EmptyWeek, ErrorState, Icon, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { TodaySeason } from '../components/TodaySeason'
 
 const upcomingLimit = 5
@@ -82,14 +81,17 @@ export function PriestDashboardPage() {
   const lists = pending.data ?? []
 
   const createButton = (
-    <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
+    <Button type="primary" icon={<Icon name="add" />} onClick={() => navigate(paths.priest.programCreate)}>
       Tạo chương trình
     </Button>
   )
 
   return (
     <div className="director-dashboard-page">
-      <PageHeader title="Tổng quan" breadcrumb={[{ title: 'Cha xứ' }, { title: 'Tổng quan' }]} extra={createButton} />
+      <PageHeader title="Tổng quan" breadcrumb={[{ title: 'Cha xứ' }, { title: 'Tổng quan' }]}
+        // SYS-06: with no events the empty state keeps the only create button.
+        extra={upcoming.data !== undefined && upcoming.data.totalCount === 0 ? undefined : createButton}
+      />
       <div className="dash-grid">
         <div className="dash-main">
           <TodaySeason />

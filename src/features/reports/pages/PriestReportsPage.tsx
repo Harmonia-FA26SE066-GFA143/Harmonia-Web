@@ -36,6 +36,7 @@ export function PriestReportsPage() {
       <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={clearFilters} seasons={seasons} />
       <ServiceLede filters={filters} scope={scope} />
       <Tabs
+        className="khop-seg-tabs"
         destroyOnHidden
         activeKey={kind}
         onChange={(key) => show(key as PriestReportKind, filters)}

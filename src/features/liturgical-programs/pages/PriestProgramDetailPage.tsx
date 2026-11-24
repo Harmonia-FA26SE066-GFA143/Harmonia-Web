@@ -1,13 +1,12 @@
-import { ArrowLeftOutlined, BellOutlined, EditOutlined, FileSearchOutlined, StopOutlined } from '@ant-design/icons'
-import { Alert, App, Button, ConfigProvider, Drawer, Flex, Typography } from 'antd'
+import { Alert, App, Button, ConfigProvider, Flex, Typography } from 'antd'
 import { useState } from 'react'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
 import { EventChoirsCard } from '@/features/choirs'
 import { participationErrorMessage, useRemindParticipation } from '@/features/participation'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { CANCEL_LABEL, EmptyState, ErrorState, FormDrawer, Icon, LostLeaf, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
+import { colors, component, spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { PreparationStatusCard } from '../components/PreparationStatusCard'
@@ -25,6 +24,7 @@ import { formatProgramDate } from '../programFilters'
 import { preparationItems } from '../preparationOverview'
 import type { EventFormValues, LiturgicalEvent } from '../types'
 
+const editFormId = 'priest-edit-event-form'
 const breadcrumb = [{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }, { title: 'Chi tiết chương trình' }]
 
 /** Independent preparation items from FE-21 (`preparation-status`). */
@@ -49,7 +49,8 @@ function PriestSteps({ event }: Readonly<{ event: LiturgicalEvent }>) {
         {status.isError && (
           <ErrorState headingLevel={3} title="Không thể tải tiến trình chuẩn bị" error={status.error} hasData={false} onRetry={() => status.refetch()} retrying={status.isFetching} />
         )}
-        {status.isSuccess && <PreparationOverview items={items} />}
+        {/* One column: the aside is a third of the page wide (G3-07). */}
+        {status.isSuccess && <PreparationOverview items={items} columns={1} />}
       </div>
     </section>
   )
@@ -115,7 +116,7 @@ export function PriestProgramDetailPage() {
   const [editing, setEditing] = useState(false)
 
   const backButton = (
-    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(paths.priest.programs)}>
+    <Button icon={<Icon name="arrow-left" />} onClick={() => navigate(paths.priest.programs)}>
       Về danh sách
     </Button>
   )
@@ -129,7 +130,7 @@ export function PriestProgramDetailPage() {
           <ErrorState title="Không thể tải chương trình" error={event.error} hasData={event.data !== undefined} onRetry={() => event.refetch()} retrying={event.isFetching} />
         ) : (
           <EmptyState
-            icon={<FileSearchOutlined />}
+            icon={<LostLeaf width={180} />}
             title="Không tìm thấy chương trình phụng vụ"
             description="Chương trình không tồn tại hoặc đường dẫn không đúng."
             action={backButton}
@@ -194,8 +195,7 @@ export function PriestProgramDetailPage() {
       ),
     })
 
-  // The Priest cannot read the answers (GET api/event-participations is the director's), so the button is always
-  // offered on a published upcoming event and the backend says when nobody is due (BE 69c9d47).
+  // Offered on every published upcoming event; the backend says when nobody is due (BE 69c9d47).
   const handleRemind = () =>
     remind.mutate(undefined, {
       onSuccess: ({ remindedCount, pendingCount }) =>
@@ -219,7 +219,7 @@ export function PriestProgramDetailPage() {
       title: 'Công bố sự kiện?',
       content: 'Ca trưởng nhận thông báo, ca viên của các ca đoàn phục vụ được mời xác nhận tham gia, và sự kiện hiện trong lịch.',
       okText: 'Công bố',
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       onOk: () =>
         publish
           .mutateAsync(data.id)
@@ -262,19 +262,19 @@ export function PriestProgramDetailPage() {
             <PriestAdjacentNav id={data.id} date={data.date} />
             {backButton}
             {!cancelled && (
-              <Button icon={<EditOutlined />} onClick={() => setEditing(true)}>
-                Sửa
+              <Button icon={<Icon name="edit" />} onClick={() => setEditing(true)}>
+                Sửa sự kiện
               </Button>
             )}
             {data.status === 'published' && upcoming && (
-              <Button icon={<BellOutlined />} onClick={handleRemind} loading={remind.isPending}>
+              <Button icon={<Icon name="notification" />} onClick={handleRemind} loading={remind.isPending}>
                 Nhắc xác nhận tham gia
               </Button>
             )}
             {/* The danger action in its own group (artifact PriestProgramDetail). */}
             {canCancel && <span className="priest-actions__gap" aria-hidden />}
             {canCancel && (
-              <Button danger icon={<StopOutlined />} onClick={confirmCancel}>
+              <Button danger icon={<Icon name="close-circle" />} onClick={confirmCancel}>
                 Hủy sự kiện
               </Button>
             )}
@@ -308,7 +308,7 @@ export function PriestProgramDetailPage() {
             type="warning"
             showIcon
             title="Chưa chọn mùa phụng vụ"
-            description="Sự kiện cần có mùa phụng vụ trước khi công bố. Bấm “Sửa” để chọn mùa."
+            description="Sự kiện cần có mùa phụng vụ trước khi công bố. Bấm “Sửa sự kiện” để chọn mùa."
           />
         )}
         {/* Preparation starts once the event is published; a draft or a cancelled event shows only its choirs. */}
@@ -327,25 +327,19 @@ export function PriestProgramDetailPage() {
           <EventChoirsCard eventId={data.id} canEdit locked={cancelled || !upcoming} published={false} />
         )}
       </Flex>
-      {/* The form has its own Save and Cancel; while saving the drawer cannot be closed. */}
-      <Drawer
+      {/* The footer's save submits the form by its id; while saving the drawer cannot be closed (FormDrawer). */}
+      <FormDrawer
         open={editing}
         title="Sửa sự kiện"
-        size={760}
-        onClose={() => setEditing(false)}
-        closable={!update.isPending}
-        keyboard={!update.isPending}
-        mask={{ closable: !update.isPending }}
+        okText="Lưu thay đổi"
+        okButtonProps={{ htmlType: 'submit', form: editFormId, loading: update.isPending }}
+        cancelButtonProps={{ disabled: update.isPending }}
+        size={component.drawer.lg}
+        onCancel={() => setEditing(false)}
         destroyOnHidden
       >
-        <EventForm
-          event={data}
-          saving={update.isPending}
-          submitText="Lưu thay đổi"
-          onSubmit={handleUpdate}
-          onCancel={() => setEditing(false)}
-        />
-      </Drawer>
+        <EventForm formId={editFormId} hideActions event={data} saving={update.isPending} onSubmit={handleUpdate} />
+      </FormDrawer>
     </>
   )
 }

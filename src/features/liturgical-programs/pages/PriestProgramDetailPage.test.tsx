@@ -181,7 +181,7 @@ describe('PriestProgramDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Công bố' }))
     fireEvent.click(within(await confirmDialog('Công bố sự kiện?')).getByRole('button', { name: 'Công bố' }))
 
-    expect(await screen.findByText('Chọn mùa phụng vụ cho sự kiện (bấm Sửa) rồi công bố lại.')).toBeInTheDocument()
+    expect(await screen.findByText('Chọn mùa phụng vụ cho sự kiện (bấm Sửa sự kiện) rồi công bố lại.')).toBeInTheDocument()
   })
 
   it('explains why a past draft cannot be published and offers to correct its date', async () => {
@@ -386,12 +386,37 @@ describe('PriestProgramDetailPage', () => {
     expect(screen.getByText('Đang phân công · 4 lượt phân công')).toBeInTheDocument()
     expect(screen.getByText('Thiếu Tenor cho Con Bước Lên Bàn Thờ: 1/2 người')).toBeInTheDocument()
     expect(screen.getByText((_, element) => element?.textContent === '2/3 buổi đã diễn ra')).toBeInTheDocument()
+    // G3-07: the aside is narrow, so the preparation items stack in one column.
+    expect(screen.getByRole('list', { name: 'Tình trạng các mục chuẩn bị' }).style.gridTemplateColumns).toBe('repeat(1, minmax(0, 1fr))')
     unmount()
 
     get.mockResolvedValue(draft)
     renderDetail()
     expect(await screen.findByText('Lễ Chúa Nhật XXVI', { selector: 'h1' })).toBeInTheDocument()
     expect(screen.queryByText('Tình hình chuẩn bị')).toBeNull()
+  })
+
+  it('shows the members’ participation replies read-only, loaded only when opened (B61)', async () => {
+    vi.spyOn(eventsApi, 'getEvent').mockResolvedValue({ ...draft, status: 'published' })
+    const replies = vi.spyOn(participationApi, 'getParticipation').mockResolvedValue([
+      { id: 'p1', memberId: 'm1', fullName: 'Maria Lan', requestedAt: '2099-09-01T00:00:00Z', response: 'confirmed', respondedAt: '2099-09-02T01:00:00Z', note: 'Hát bè Alto', hasTimeConflict: true },
+      { id: 'p2', memberId: 'm2', fullName: 'Giuse Minh', requestedAt: '2099-09-01T00:00:00Z' },
+    ])
+    renderDetail()
+
+    const open = await screen.findByRole('button', { name: 'Xem danh sách phản hồi tham gia' })
+    expect(replies).not.toHaveBeenCalled()
+    fireEvent.click(open)
+
+    const drawer = await screen.findByRole('dialog', { name: 'Danh sách phản hồi tham gia' })
+    expect(await within(drawer).findByText('Maria Lan')).toBeInTheDocument()
+    expect(replies).toHaveBeenCalledWith('e1')
+    expect(within(drawer).getByText('Trùng lịch')).toBeInTheDocument()
+    expect(within(drawer).getByText('Hát bè Alto')).toBeInTheDocument()
+    expect(within(drawer).getByText('Không có')).toBeInTheDocument()
+    expect(within(drawer).getAllByText('Chưa phản hồi').length).toBeGreaterThan(0)
+    // Read only: the Choir Director's actions are not offered to the Priest.
+    expect(within(drawer).getAllByRole('button').map((button) => button.textContent?.trim()).filter(Boolean)).toEqual(['Đóng'])
   })
 
   it('offers no action on a cancelled event and no cancel on a past one', async () => {
@@ -405,7 +430,7 @@ describe('PriestProgramDetailPage', () => {
 
     get.mockResolvedValue({ ...draft, date: '2020-01-05' })
     renderDetail()
-    expect(await screen.findByRole('button', { name: /Sửa$/ })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Sửa sự kiện$/ })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Hủy sự kiện/ })).toBeNull()
   })
 
@@ -414,9 +439,9 @@ describe('PriestProgramDetailPage', () => {
     const update = vi.spyOn(eventsApi, 'updateEvent').mockResolvedValue({ ...draft, title: 'Lễ Bổn mạng' })
     renderDetail()
 
-    fireEvent.click(await screen.findByRole('button', { name: /Sửa/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Sửa sự kiện/ }))
     const dialog = await screen.findByRole('dialog')
-    const title = within(dialog).getByRole('textbox', { name: 'Tiêu đề (không bắt buộc)' })
+    const title = within(dialog).getByRole('textbox', { name: 'Tiêu đề' })
     expect(title).toHaveValue('Lễ Chúa Nhật XXVI')
     fireEvent.change(title, { target: { value: 'Lễ Bổn mạng' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu thay đổi' }))

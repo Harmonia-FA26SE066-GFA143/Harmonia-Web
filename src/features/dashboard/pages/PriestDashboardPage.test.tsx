@@ -21,6 +21,8 @@ describe('PriestDashboardPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Chưa có sự kiện sắp tới' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Không thể tải danh sách bài hát chờ xem xét' })).toBeInTheDocument()
+    // SYS-06: with no upcoming event the empty state keeps the only create button.
+    expect(screen.getAllByRole('button', { name: /Tạo chương trình/ })).toHaveLength(1)
   })
 
   it('shows a recoverable error when the events cannot be loaded', async () => {
@@ -67,6 +69,7 @@ describe('PriestDashboardPage', () => {
     expect(await screen.findByText('Lễ Chúa Nhật tới')).toBeInTheDocument()
     // Counts sit beside the section titles; no metric tiles.
     expect(screen.getByText('7 sự kiện')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Tạo chương trình/ })).toBeInTheDocument()
     expect(screen.getByLabelText('1 danh sách chờ xem xét')).toBeInTheDocument()
 
     expect(await screen.findByText('Lễ Bổn mạng · 11/10/2099')).toBeInTheDocument()

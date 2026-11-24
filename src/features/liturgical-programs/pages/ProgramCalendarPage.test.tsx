@@ -64,6 +64,25 @@ describe('ProgramCalendarPage', () => {
     )
   })
 
+  it('names the status icon of a draft and a cancelled event in the day cell', async () => {
+    const today = dayjs().format('YYYY-MM-DD')
+    const base = { date: today, locationId: 'loc-1', locationName: 'Nhà thờ chính' }
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue({
+      ...empty,
+      totalCount: 2,
+      totalPages: 1,
+      items: [
+        { ...base, id: 'e1', time: '06:00', title: 'Lễ sáng', status: 'draft' },
+        { ...base, id: 'e2', time: '18:00', title: 'Lễ chiều', status: 'cancelled' },
+      ],
+    })
+    renderPage(<ProgramCalendarPage />, '/priest/calendar')
+
+    // The status does not rest on colour: each icon in the cell carries its name; the key's icons stay decoration.
+    expect((await screen.findAllByRole('img', { name: 'Bản nháp' })).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('img', { name: 'Đã hủy' }).length).toBeGreaterThan(0)
+  })
+
   it('creates an event for the selected day', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(empty)
     const { container } = renderPage(<ProgramCalendarPage />, '/priest/calendar')

@@ -1,14 +1,13 @@
-import { ThunderboltOutlined } from '@ant-design/icons'
 import { Alert, App, Button, DatePicker, Flex, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useState } from 'react'
+import { useRef, useState, type ComponentRef } from 'react'
 import { choirOptionLabel, useChoirs } from '@/features/choirs'
 import { dayOfWeekLabels, useLookup, useMassSchedules } from '@/features/system-categories'
 import { vietnamToday } from '@/lib/api/dates'
 import { colors, spacing } from '@/styles/tokens'
 import { eventErrorMessage } from '../eventErrors'
 import { useGenerateEvents } from '../hooks/useEvents'
-import { FormDrawer } from '@/shared/ui'
+import { FormDrawer, Icon, SELECT_POPUP_PROPS } from '@/shared/ui'
 
 /** GenerateLiturgicalEventsRequestValidator.MaxDays: both ends count. */
 const maxDays = 62
@@ -22,7 +21,7 @@ export function GenerateEventsButton() {
   const [open, setOpen] = useState(false)
   return (
     <>
-      <Button icon={<ThunderboltOutlined />} onClick={() => setOpen(true)}>
+      <Button icon={<Icon name="calendar" />} onClick={() => setOpen(true)}>
         Tạo từ giờ lễ cố định
       </Button>
       {/* Mounted while open only, so the pages do not load the Mass times until they are needed. */}
@@ -40,7 +39,11 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
   const massTypes = useLookup('massTypes').data
   const locations = useLookup('worshipLocations').data
   const generate = useGenerateEvents()
-  const choirs = (useChoirs().data ?? []).filter((choir) => choir.isActive)
+  const rangeRef = useRef<ComponentRef<typeof DatePicker.RangePicker>>(null)
+  const choirsQuery = useChoirs()
+  // A failed or loading choir list never sends drafts without choirs by accident: the submit waits for it.
+  const choirsBlocked = choirsQuery.isPending || choirsQuery.isError
+  const choirs = (choirsQuery.data ?? []).filter((choir) => choir.isActive)
   // Untouched, the only active choir is taken; the Priest may clear it.
   const [pickedChoirIds, setPickedChoirIds] = useState<string[]>()
   const [pickedLeadId, setPickedLeadId] = useState<string>()
@@ -54,10 +57,8 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
     generate.mutate(
       { fromDate: range[0].format('YYYY-MM-DD'), toDate: range[1].format('YYYY-MM-DD'), choirs: { choirIds, leadChoirId } },
       {
-        onSuccess: ({ created, withoutChoirs }) => {
-          if (withoutChoirs > 0)
-            message.warning(`Đã tạo ${created.length} sự kiện nháp; ${withoutChoirs} sự kiện chưa gán được ca đoàn, hãy chọn ca đoàn trong từng sự kiện đó.`, 8)
-          else if (created.length > 0) message.success(`Đã tạo ${created.length} sự kiện nháp.`)
+        onSuccess: ({ created }) => {
+          if (created.length > 0) message.success(`Đã tạo ${created.length} sự kiện nháp.`)
           else message.info('Không có sự kiện mới: các giờ lễ trong khoảng này đã có sự kiện.')
           onClose()
         },
@@ -71,11 +72,11 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
       open
       title="Tạo sự kiện nháp từ giờ lễ cố định"
       okText="Tạo sự kiện nháp"
-      cancelText="Hủy"
-      okButtonProps={{ loading: generate.isPending, disabled: !range || active.length === 0 }}
+      okButtonProps={{ loading: generate.isPending, disabled: !range || active.length === 0 || choirsBlocked }}
       cancelButtonProps={{ disabled: generate.isPending }}
       onOk={submit}
       onCancel={onClose}
+      initialFocusRef={rangeRef}
     >
       <Flex vertical gap={spacing.md}>
         <Typography.Paragraph style={{ margin: 0 }}>
@@ -84,7 +85,10 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
         </Typography.Paragraph>
         <Flex vertical gap={spacing.xs}>
           <Typography.Text strong>Khoảng ngày</Typography.Text>
+          {/* The two-month popup (~560px) stays on the body: inside the 480px drawer it would be clipped. */}
           <DatePicker.RangePicker
+            ref={rangeRef}
+            placement="bottomLeft"
             format="DD/MM/YYYY"
             value={range}
             allowClear={false}
@@ -100,9 +104,12 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
           <Typography.Text style={{ color: colors.textMuted }}>Từ hôm nay, tối đa {maxDays} ngày.</Typography.Text>
         </Flex>
         <Flex vertical gap={spacing.xs}>
-          <Typography.Text strong>Ca đoàn phục vụ (không bắt buộc)</Typography.Text>
+          <Typography.Text strong>Ca đoàn phục vụ</Typography.Text>
           <Select
+            {...SELECT_POPUP_PROPS}
             mode="multiple"
+            loading={choirsQuery.isPending}
+            disabled={choirsBlocked}
             allowClear
             aria-label="Ca đoàn phục vụ"
             placeholder="Chọn sau trong từng sự kiện"
@@ -113,10 +120,23 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
           />
           {choirIds.length > 1 && (
             <Select
+              {...SELECT_POPUP_PROPS}
               aria-label="Ca đoàn phụ trách"
               value={leadChoirId}
               onChange={setPickedLeadId}
               options={choirs.filter((choir) => choirIds.includes(choir.id)).map((choir) => ({ value: choir.id, label: `Phụ trách: ${choirOptionLabel(choir)}` }))}
+            />
+          )}
+          {choirsQuery.isError && (
+            <Alert
+              type="error"
+              showIcon
+              title="Không thể tải danh sách ca đoàn."
+              action={
+                <Button size="small" onClick={() => choirsQuery.refetch()} loading={choirsQuery.isFetching}>
+                  Thử lại
+                </Button>
+              }
             />
           )}
           <Typography.Text style={{ color: colors.textMuted }}>

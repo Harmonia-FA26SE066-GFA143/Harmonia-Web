@@ -15,8 +15,11 @@ const empty = { items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPage
 describe('PriestReportsPage', () => {
   it('offers the two reports the backend has for the Priest', async () => {
     vi.spyOn(reportsApi, 'getReport').mockRejectedValue(new ApiError(403, undefined))
-    renderPage(<PriestReportsPage />, '/priest/reports')
+    const { container } = renderPage(<PriestReportsPage />, '/priest/reports')
 
+    // The segmented tabs of the other report pages; no export, which the backend refuses the Priest (403).
+    expect(container.querySelector('.khop-seg-tabs')).not.toBeNull()
+    expect(screen.queryByRole('button', { name: /Xuất báo cáo/ })).toBeNull()
     expect(screen.getByRole('tab', { name: 'Lịch sử phục vụ' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Sử dụng bài hát' })).toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Tình trạng chuẩn bị' })).toBeNull()
