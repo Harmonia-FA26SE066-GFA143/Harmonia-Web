@@ -31,4 +31,9 @@ export interface AttendanceRecord {
   memberId: string
   fullName: string
   value?: AttendanceValue
+  /**
+   * False for a member who left or went inactive after being recorded: the line is read-only, and saving it refuses
+   * the whole sheet (MEMBER_NOT_ACTIVE, BE 463279d).
+   */
+  isActive: boolean
 }

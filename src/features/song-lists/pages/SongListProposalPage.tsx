@@ -2,7 +2,7 @@ import { Alert, App, Button, Flex, Modal, Typography } from 'antd'
 import { useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { canEditSongList, formatProgramDate, ProgramInfo, useProgram, type LiturgicalProgram } from '@/features/liturgical-programs'
+import { canEditSongList, formatProgramDate, isSongListClosed, ProgramInfo, useProgram, type LiturgicalProgram } from '@/features/liturgical-programs'
 import type { SongFilters } from '@/features/music-library'
 import { useCatalogOptions, type CatalogOption } from '@/features/system-categories'
 import { EmptyState, ErrorState, Icon, LostLeaf, PageHeader, PageSkeleton, SaveButton, useJustSaved } from '@/shared/ui'
@@ -47,7 +47,9 @@ function useEventSongFilters(program: LiturgicalProgram): SongFilters {
 function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram; list: SongList | null }>) {
   const { message } = App.useApp()
   const save = useSaveSongList(program.id, list)
-  const editable = canEditSongList(list?.status)
+  // Closed once the event is cancelled or its Mass has begun (BE 61b3aa6); the list stays readable.
+  const closed = isSongListClosed(program)
+  const editable = canEditSongList(list?.status) && !closed
   const [items, setItems] = useState<DraftItem[]>(() => toDraft(list))
   const [dirty, setDirty] = useState(false)
   const [picking, setPicking] = useState(false)
@@ -137,9 +139,17 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
           )}
         </section>
         <aside className="hm-preview hm-paper" aria-label="Tình trạng và gửi duyệt">
+          {closed && (
+            <Alert
+              type="warning"
+              showIcon
+              title={program.status === 'cancelled' ? 'Chương trình đã bị hủy' : 'Thánh lễ đã bắt đầu'}
+              description="Danh sách bài hát chỉ còn xem, không lưu hay gửi duyệt được nữa."
+            />
+          )}
           {list ? (
             <SongListStatusAlert list={list} />
-          ) : (
+          ) : closed ? null : (
             // A quiet status, not a second rubric above ProgramInfo's "Thông tin chương trình" (G3-06).
             <Alert
               type="info"

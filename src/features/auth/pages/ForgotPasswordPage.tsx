@@ -1,6 +1,7 @@
 import { Button, Flex } from 'antd'
 import { Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { ApiError } from '@/lib/api/errors'
 import { Icon } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { AuthCard } from '../components/AuthCard'
@@ -42,6 +43,7 @@ export function ForgotPasswordPage() {
         onSubmit={(values) => resetRequest.mutate(values)}
         submitting={resetRequest.isPending}
         failed={resetRequest.isError}
+        rateLimited={resetRequest.error instanceof ApiError && resetRequest.error.code === 'RATE_LIMIT_EXCEEDED'}
       />
     </AuthCard>
   )

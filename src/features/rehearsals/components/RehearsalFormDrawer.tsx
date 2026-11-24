@@ -255,11 +255,19 @@ export function RehearsalFormDrawer({
       {!rehearsal && <JointField />}
       <Flex wrap gap={spacing.md}>
         <Form.Item label="Ngày tập" name="date" rules={[{ required: true, message: 'Vui lòng chọn ngày tập.' }]} style={{ flex: '1 1 200px' }}>
-          <DatePicker {...PICKER_POPUP_PROPS} format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
+          <DatePicker
+            {...PICKER_POPUP_PROPS}
+            format="DD/MM/YYYY"
+            placeholder="Chọn ngày"
+            // A new session cannot start in the past (REHEARSAL_START_IN_PAST, BE ac4a7bb); an existing one keeps its day.
+            disabledDate={rehearsal ? undefined : (day) => day.isBefore(dayjs(), 'day')}
+            style={{ width: '100%' }}
+          />
         </Form.Item>
         <Form.Item
           label="Thời gian"
           name="time"
+          dependencies={['date']}
           rules={[
             { required: true, message: 'Vui lòng chọn giờ bắt đầu và kết thúc.' },
             {
@@ -268,6 +276,14 @@ export function RehearsalFormDrawer({
                   ? Promise.resolve()
                   : Promise.reject(new Error('Giờ kết thúc phải sau giờ bắt đầu.')),
             },
+            ({ getFieldValue }) => ({
+              validator: (_, value?: [Dayjs, Dayjs]) => {
+                const date: Dayjs | undefined = getFieldValue('date')
+                return rehearsal || !value || !date || withTime(date, value[0]).isAfter(dayjs())
+                  ? Promise.resolve()
+                  : Promise.reject(new Error('Giờ bắt đầu phải sau thời điểm hiện tại.'))
+              },
+            }),
           ]}
           style={{ flex: '1 1 240px' }}
         >

@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
 import { AdminChoirsPage, DirectorChoirsPage } from '@/features/choirs'
 import * as membersApi from '@/features/members/api/membersApi'
@@ -102,6 +102,22 @@ describe('DirectorProgramListPage', () => {
 })
 
 describe('DirectorProgramDetailPage', () => {
+  // Before the fixture Masses: the song list closes once the Mass begins (BE 61b3aa6).
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-09-20T08:00:00+07:00'))
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('only offers to read the song list once the Mass has begun (BE 61b3aa6)', async () => {
+    vi.setSystemTime(new Date('2026-09-27T09:00:00+07:00'))
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue(program)
+    renderDetail()
+
+    expect(await screen.findByRole('button', { name: 'Xem danh sách đề xuất' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Chỉnh sửa danh sách bài hát' })).toBeNull()
+  })
+
   it('reads the published event and its newest song list, which may not exist yet', async () => {
     vi.spyOn(client, 'apiRequest').mockImplementation(async (path: string) => {
       if (path === '/api/schedule/events/p1') {
@@ -141,6 +157,8 @@ describe('DirectorProgramDetailPage', () => {
   })
 
   it('shows the preparation status the Choir Director now reads from the backend (BE 90af733, B41)', async () => {
+    // After the Mass, which counts as one completed item.
+    vi.setSystemTime(new Date('2026-10-01T08:00:00+07:00'))
     vi.spyOn(programsApi, 'getProgram').mockResolvedValue({ ...program, songListStatus: 'approved' })
     vi.spyOn(songListsApi, 'getSongList').mockResolvedValue(null)
     const status = vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue({
@@ -323,7 +341,7 @@ describe('ChoirsPage', () => {
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia, giuse])
     // The Admin page also reads who is in no choir: one active member, in neither choir.
     vi.spyOn(choirsApi, 'listMembersOfChoir').mockResolvedValue([])
-    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([{ id: 'm9', fullName: 'Anna Đặng Thị Mai', skills: [], roleName: 'ChoirMember' }])
+    vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([{ id: 'm9', fullName: 'Anna Đặng Thị Mai', skills: [], roleName: 'ChoirMember' }])
     vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue({
       items: [{ id: 'u2', fullName: 'Giuse Trần', email: 'giuse@giaoxu.org', phone: null, saintName: null, role: 'director', isActive: true, isPasswordChangeRequired: false }],
       pageNumber: 1,

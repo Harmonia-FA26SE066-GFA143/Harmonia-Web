@@ -13,6 +13,8 @@ const messages: Record<string, string> = {
   PRACTICE_REFERENCE_MISSING: 'Không chấm tự động được: bài tập chưa gắn bản mẫu MIDI.',
   PRACTICE_DUE_DATE_IN_PAST: 'Hạn nộp phải sau thời điểm hiện tại.',
   PRACTICE_TARGET_REQUIRED: 'Chọn ít nhất một kỹ năng hoặc một ca viên.',
+  // BE a3b6b30: the chosen skills and members match no active member of the choir.
+  PRACTICE_ASSIGNMENT_NO_RECIPIENTS: 'Không có ca viên nào đang sinh hoạt khớp với kỹ năng hoặc ca viên đã chọn.',
   CHOIR_NOT_FOUND: 'Ca đoàn đã chọn không còn do bạn phụ trách. Vui lòng tải lại trang.',
   CHOIR_INACTIVE: 'Ca đoàn đã chọn đang ngừng hoạt động.',
   CHOIR_NOT_SERVING_EVENT: 'Ca đoàn đã chọn không phục vụ chương trình này.',

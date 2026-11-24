@@ -21,15 +21,18 @@ interface RehearsalAttendanceDto {
   memberId: string
   fullName: string
   status: ApiAttendanceStatus | null
+  /** BE 463279d; missing on an older backend, which listed active members only. */
+  isActive?: boolean
 }
 
 /** The sheet of one session, every member listed; `value` is absent until recorded. */
 export async function getAttendance(rehearsalId: string): Promise<AttendanceRecord[]> {
   const rows = await apiRequest<RehearsalAttendanceDto[]>(`/api/rehearsals/${rehearsalId}/attendances`)
-  return rows.map(({ memberId, fullName, status }) => ({
+  return rows.map(({ memberId, fullName, status, isActive }) => ({
     memberId,
     fullName,
     value: status ? valueByApi[status] : undefined,
+    isActive: isActive ?? true,
   }))
 }
 

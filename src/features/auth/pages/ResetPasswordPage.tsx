@@ -61,6 +61,7 @@ export function ResetPasswordPage() {
         onSubmit={({ newPassword }) => reset.mutate({ token, newPassword })}
         submitting={reset.isPending}
         failed={reset.isError && !passwordRejected}
+        rateLimited={code === 'RATE_LIMIT_EXCEEDED'}
         passwordError={passwordRejected ? passwordRuleMessage : undefined}
       />
     </AuthCard>

@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { ACTIONS_COLUMN_TITLE, EmptyCell, SeasonChip, StatusTag } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { dueText } from '../programFilters'
-import { canEditSongList, type ProgramListItem } from '../types'
+import { canEditSongList, isSongListClosed, type ProgramListItem } from '../types'
 import { EventStatusTag } from './EventStatusTag'
 import { SongListStatusTag } from './SongListStatusTag'
 
@@ -104,7 +104,7 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
       render: (_, program) => {
         // The Choir Director's detail reads published events only (GET /api/schedule/events/{id}).
         if (program.status === 'cancelled') return null
-        const propose = canEditSongList(program.songListStatus) && program.date >= today
+        const propose = canEditSongList(program.songListStatus) && !isSongListClosed(program)
         return (
           <Button
             type="link"

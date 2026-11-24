@@ -17,11 +17,12 @@ import { usePreparationStatus } from '../hooks/useEvents'
 import { useLiturgicalDays } from '../hooks/useLiturgicalDays'
 import { useProgram } from '../hooks/usePrograms'
 import { preparationItems } from '../preparationOverview'
-import { canEditSongList, type LiturgicalProgramDetail, type SongListStatus } from '../types'
+import { canEditSongList, isSongListClosed, type LiturgicalProgramDetail, type SongListStatus } from '../types'
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Chương trình phụng vụ' }, { title: 'Chi tiết chương trình' }]
 
-function songListAction(status?: SongListStatus): string {
+function songListAction(status: SongListStatus | undefined, closed: boolean): string {
+  if (closed) return 'Xem danh sách đề xuất'
   if (!status) return 'Đề xuất danh sách bài hát'
   return canEditSongList(status) ? 'Chỉnh sửa danh sách bài hát' : 'Xem danh sách đề xuất'
 }
@@ -184,7 +185,7 @@ function ProgramDetail({
                   <SongListStatusTag status={data.songListStatus} />
                 </Flex>
                 <Button type="primary" onClick={openProposal}>
-                  {songListAction(data.songListStatus)}
+                  {songListAction(data.songListStatus, isSongListClosed(data))}
                 </Button>
               </div>
               <div className="ct-reading__body">

@@ -6,6 +6,8 @@ const messages: Record<string, string> = {
   REHEARSAL_ALREADY_PASSED: 'Buổi tập đã kết thúc, không sửa được nữa.',
   REHEARSAL_HAS_ATTENDANCE: 'Buổi tập đã có điểm danh nên không thể xoá.',
   REHEARSAL_TIME_INVALID: 'Giờ kết thúc phải sau giờ bắt đầu.',
+  // BE ac4a7bb: a new session cannot start in the past.
+  REHEARSAL_START_IN_PAST: 'Giờ bắt đầu phải sau thời điểm hiện tại.',
   REHEARSAL_TIME_CONFLICT: 'Địa điểm đã có buổi tập khác trùng giờ.',
   REHEARSAL_SONG_DUPLICATE: 'Mỗi bài hát chỉ chọn một lần.',
   CHOIR_NOT_FOUND: 'Ca đoàn đã chọn không còn do bạn phụ trách. Vui lòng tải lại trang.',

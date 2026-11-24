@@ -248,6 +248,16 @@ describe('RehearsalsPage', () => {
     expect(await within(dialog).findByText('Vui lòng chọn giờ bắt đầu và kết thúc.')).toBeInTheDocument()
     expect(within(dialog).queryByText(/Vui lòng (nhập|chọn) (địa điểm|chương trình)/)).toBeNull()
     expect(save).not.toHaveBeenCalled()
+
+    // A new session cannot start in the past (REHEARSAL_START_IN_PAST, BE ac4a7bb): earlier days are not offered.
+    const dateInput = within(dialog).getByPlaceholderText('Chọn ngày')
+    fireEvent.mouseDown(dateInput)
+    fireEvent.click(dateInput)
+    const today = await waitFor(() => document.querySelector('.ant-picker-cell-today') as HTMLElement)
+    expect(today).not.toBeNull()
+    expect(today).not.toHaveClass('ant-picker-cell-disabled')
+    // The cell before today, unless today opens the month.
+    if (dayjs().date() > 1) expect(today.previousElementSibling ?? today.parentElement?.previousElementSibling?.lastElementChild).toHaveClass('ant-picker-cell-disabled')
   })
 
   it('marks a joint rehearsal and leaves its attendance, edit and delete to the lead choir director', async () => {

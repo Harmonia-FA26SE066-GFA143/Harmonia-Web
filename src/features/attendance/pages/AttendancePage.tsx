@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useUpcomingPrograms } from '@/features/liturgical-programs'
 import { isRehearsalDay, useRecentRehearsals, type Rehearsal } from '@/features/rehearsals'
+import { usePublicSettings } from '@/features/settings'
 import { ApiError } from '@/lib/api/errors'
 import { EmptyState, EmptyWeek, ErrorState, Icon, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
@@ -15,6 +16,7 @@ import { useAttendance } from '../hooks/useAttendance'
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Điểm danh' }]
 
 const hasNotStarted = (rehearsal: Rehearsal) => Date.parse(rehearsal.startAt) > Date.now()
+const isBefore = (time?: number) => time !== undefined && Date.now() < time
 
 /** Today's session, otherwise the latest one that has started, otherwise the next one. */
 function defaultSession(rehearsals: Rehearsal[]): Rehearsal | undefined {
@@ -44,10 +46,17 @@ export function AttendancePage() {
 
   const attendance = useAttendance(selected?.id)
   const program = programs.data?.find((item) => item.id === (selected?.eventId ?? programId))
-  // TBD: Backend API missing (tbd-backlog B49). When attendance opens depends on two settings the Choir Director cannot
-  // read (Rehearsal.AttendanceStartCheckEnabled, AttendanceOpensMinutesBefore), so the sheet is never locked here: the
-  // server decides on save (409 REHEARSAL_NOT_STARTED) and the marks stay on the page.
+  // B49, done in BE 14dabd3: the two settings that open attendance are public to signed-in users. While they are not
+  // read (or an older backend leaves them out) the sheet is not locked and the server decides on save
+  // (409 REHEARSAL_NOT_STARTED, RehearsalAttendanceService.cs:54-59).
+  const settings = usePublicSettings().data
   const beforeStart = selected ? hasNotStarted(selected) : false
+  const opensAt =
+    selected && settings?.attendanceStartCheck
+      ? Date.parse(selected.startAt) - (settings.attendanceOpensMinutesBefore ?? 0) * 60_000
+      : undefined
+  const notOpen = isBefore(opensAt)
+  const settingsKnown = settings?.attendanceStartCheck !== undefined
 
   const pick = (nextId: string) => {
     const next = new URLSearchParams(searchParams)
@@ -125,7 +134,15 @@ export function AttendancePage() {
           {attendance.data !== undefined && attendance.data.length === 0 && (
             <EmptyState title="Chưa có thành viên trong danh sách điểm danh" />
           )}
-          {attendance.data !== undefined && beforeStart && (
+          {attendance.data !== undefined && notOpen && (
+            <Alert
+              type="info"
+              showIcon
+              title={`Điểm danh mở lúc ${dayjs(opensAt).format('HH:mm DD/MM/YYYY')}.`}
+              description="Trước giờ này chỉ xem được danh sách; máy chủ chưa nhận điểm danh."
+            />
+          )}
+          {attendance.data !== undefined && beforeStart && !settingsKnown && (
             <Alert
               type="info"
               showIcon
@@ -140,6 +157,7 @@ export function AttendancePage() {
               rehearsalId={selected.id}
               records={attendance.data}
               picker={picker}
+              readOnly={notOpen}
             />
           )}
         </Flex>

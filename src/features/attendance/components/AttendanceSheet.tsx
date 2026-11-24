@@ -34,9 +34,11 @@ export interface AttendanceSheetProps {
   records: AttendanceRecord[]
   /** The session picker, first in the filter row. */
   picker: ReactNode
+  /** Attendance has not opened yet (B49): the sheet is read, not marked. */
+  readOnly?: boolean
 }
 
-export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<AttendanceSheetProps>) {
+export function AttendanceSheet({ rehearsalId, records, picker, readOnly = false }: Readonly<AttendanceSheetProps>) {
   const { message } = App.useApp()
   const save = useSaveAttendance(rehearsalId)
   // Voice parts come from approved skills: the attendance rows carry none (artifact AttendancePage asks for the part).
@@ -94,7 +96,7 @@ export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<Atten
   const mark = (memberId: string, value: AttendanceValue) =>
     setEdits((current) => withoutSaved({ ...current, [memberId]: value }, records))
   const markAllPresent = () =>
-    setEdits((current) => withoutSaved({ ...current, ...Object.fromEntries(records.map((record) => [record.memberId, 'present'])) }, records))
+    setEdits((current) => withoutSaved({ ...current, ...Object.fromEntries(records.filter((record) => record.isActive).map((record) => [record.memberId, 'present'])) }, records))
   const discard = () => setEdits({})
   const handleSave = () => {
     if (save.isPending) return
@@ -126,7 +128,11 @@ export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<Atten
                 />
               )}
             </Typography.Text>
-            {!valueOf(record) && <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Chưa điểm danh</Typography.Text>}
+            {!record.isActive ? (
+              <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Không còn sinh hoạt · chỉ xem</Typography.Text>
+            ) : (
+              !valueOf(record) && <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Chưa điểm danh</Typography.Text>
+            )}
           </Flex>
         </Flex>
       ),
@@ -160,6 +166,7 @@ export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<Atten
           style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}
           aria-label={`Điểm danh ${record.fullName}`}
           value={valueOf(record)}
+          disabled={readOnly || !record.isActive}
           onChange={(event) => mark(record.memberId, event.target.value)}
           options={options}
         />
@@ -172,7 +179,7 @@ export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<Atten
       {/* Artifact AttendancePage: the session and the bulk start in one filter row, the counts, then the sheet. */}
       <Flex wrap gap={spacing.sm} align="center" className="ctb-filters">
         {picker}
-        <Button icon={<Icon name="check" />} onClick={markAllPresent} disabled={save.isPending}>
+        <Button icon={<Icon name="check" />} onClick={markAllPresent} disabled={readOnly || save.isPending}>
           Đánh dấu tất cả có mặt
         </Button>
         <Input

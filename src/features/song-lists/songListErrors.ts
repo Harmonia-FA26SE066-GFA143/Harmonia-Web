@@ -17,7 +17,9 @@ const messages: Record<string, string> = {
   SLOT_NOT_FOUND: 'Có phần phụng vụ đã chọn không còn tồn tại.',
   LOOKUP_INACTIVE: 'Có phần phụng vụ đã chọn đã ngừng dùng.',
   LITURGICAL_EVENT_NOT_FOUND: 'Chương trình không còn tồn tại.',
-  LITURGICAL_EVENT_CANCELLED: 'Chương trình đã bị hủy.',
+  LITURGICAL_EVENT_CANCELLED: 'Chương trình đã bị hủy, danh sách bài hát chỉ còn xem.',
+  // BE 61b3aa6: closed once the Mass has begun.
+  LITURGICAL_EVENT_ALREADY_PASSED: 'Thánh lễ đã bắt đầu, danh sách bài hát chỉ còn xem.',
   LITURGICAL_EVENT_NOT_PUBLISHED: 'Chương trình chưa được công bố.',
 }
 

@@ -5,7 +5,7 @@ import { colors, gold, spacing, typography } from '@/styles/tokens'
 import { useProgram } from '../hooks/usePrograms'
 import { massTimeLabels, massTimeOf } from '../massTime'
 import { dueText } from '../programFilters'
-import { canEditSongList, type ProgramListItem } from '../types'
+import { canEditSongList, isSongListClosed, type ProgramListItem } from '../types'
 import { SongListStatusTag } from './SongListStatusTag'
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
@@ -23,7 +23,7 @@ export function ProgramPreview({
   const detail = useProgram(program.id)
   const hour = massTimeOf(program.time)
   const due = dueText(program, today)
-  const propose = canEditSongList(program.songListStatus) && program.date >= today
+  const propose = canEditSongList(program.songListStatus) && !isSongListClosed(program)
   const songs = detail.data?.songs ?? []
   const type = program.massTypeName ?? program.ceremonyTypeName
 

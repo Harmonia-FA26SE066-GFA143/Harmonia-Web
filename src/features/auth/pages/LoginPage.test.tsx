@@ -59,6 +59,8 @@ describe('LoginPage', () => {
   it.each([
     [new ApiError(401, { code: 'AUTH_INVALID_CREDENTIALS' }), 'Email hoặc mật khẩu không chính xác.'],
     [new ApiError(403, { code: 'AUTH_ACCOUNT_INACTIVE' }), 'Tài khoản đã bị vô hiệu hoá'],
+    // BE 14dabd3: more than 10 attempts a minute from one address.
+    [new ApiError(429, { code: 'RATE_LIMIT_EXCEEDED' }), 'Bạn đã thử đăng nhập quá nhiều lần'],
     [new ApiError(500, { code: 'INTERNAL_ERROR' }), 'Không thể đăng nhập lúc này'],
     [new TypeError('Failed to fetch'), 'Không thể đăng nhập lúc này'],
   ])('explains %s', async (error, text) => {

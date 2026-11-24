@@ -52,6 +52,9 @@ const addFromLibrary = async (title: string) => {
 }
 
 beforeEach(() => {
+  // The fixture Mass (27/09/2026 08:00) is still ahead: the list closes once it begins (BE 61b3aa6).
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-09-20T08:00:00+07:00'))
   vi.spyOn(programsApi, 'getProgram').mockResolvedValue({
     id: 'p1',
     eventName: 'Lễ Chúa Nhật XXVI',
@@ -68,6 +71,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
 })
 
@@ -327,6 +331,17 @@ describe('SongListProposalPage', () => {
     expect(screen.queryByRole('button', { name: /Gửi duyệt/ })).toBeNull()
     expect(screen.queryByRole('button', { name: /Thêm bài hát từ kho/ })).toBeNull()
     expect(screen.queryByRole('button', { name: /khỏi danh sách/ })).toBeNull()
+  })
+
+  it('is read-only once the Mass has begun, whatever the list status (BE 61b3aa6)', async () => {
+    vi.setSystemTime(new Date('2026-09-27T08:00:00+07:00'))
+    withList(songList({ status: 'needsRevision', items: [item('1', 'Con Bước Lên Bàn Thờ')] }))
+    renderProposal()
+
+    expect(await screen.findByText('Thánh lễ đã bắt đầu')).toBeInTheDocument()
+    expect(screen.getByText('Con Bước Lên Bàn Thờ')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Gửi duyệt/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Thêm bài hát từ kho/ })).toBeNull()
   })
 
   it('shows the Priest notes and allows a new version after a revision request', async () => {

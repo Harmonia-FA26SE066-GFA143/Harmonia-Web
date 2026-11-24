@@ -1,9 +1,9 @@
-import { Button, Flex, Modal, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Button, Flex, Modal, Table, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
 import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
-import { skillLevelLabels, type PendingSkill, type SkillEvidence } from '../types'
+import type { PendingSkill, SkillEvidence } from '../types'
 
 export interface PendingSkillTableProps {
   skills: PendingSkill[]
@@ -49,17 +49,6 @@ export function PendingSkillTable({
           <Typography.Text style={{ ...muted, fontSize: typography.metadata.fontSize }}>{skill.categoryName}</Typography.Text>
         </Flex>
       ),
-    },
-    {
-      key: 'level',
-      title: 'Trình độ',
-      dataIndex: 'level',
-      render: (level?: PendingSkill['level']) =>
-        level ? (
-          <Tag style={{ marginInlineEnd: 0 }}>{skillLevelLabels[level]}</Tag>
-        ) : (
-          <EmptyCell text="Không nêu" />
-        ),
     },
     {
       key: 'evidence',

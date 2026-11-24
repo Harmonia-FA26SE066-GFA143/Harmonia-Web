@@ -32,6 +32,7 @@ function feedbackFor(error: Error, google = false): LoginFeedback {
   if (code === 'AUTH_INVALID_CREDENTIALS') return { kind: google ? 'google-not-registered' : 'invalid-credentials' }
   if (code === 'AUTH_GOOGLE_TOKEN_INVALID' || code === 'AUTH_GOOGLE_TOKEN_REQUIRED') return { kind: 'google-invalid' }
   if (code === 'AUTH_ACCOUNT_INACTIVE') return { kind: 'inactive' }
+  if (code === 'RATE_LIMIT_EXCEEDED') return { kind: 'rate-limited' }
   return { kind: 'unavailable' }
 }
 
