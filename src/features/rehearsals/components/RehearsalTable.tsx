@@ -6,7 +6,7 @@ import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
 import { canTakeAttendance, isUpcoming, type Rehearsal } from '../types'
-import { JointChip, PlannerOnly } from './JointRehearsal'
+import { JointChip, PlannerOnly, RehearsalChoirs } from './JointRehearsal'
 
 export interface RehearsalTableProps {
   rehearsals: Rehearsal[]
@@ -49,6 +49,11 @@ export function RehearsalTable({
           )}
         </Flex>
       ),
+    },
+    {
+      key: 'choirs',
+      title: 'Ca đoàn',
+      render: (_, rehearsal) => <RehearsalChoirs rehearsal={rehearsal} />,
     },
     {
       key: 'program',

@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react'
 import { Flex, Skeleton } from 'antd'
 import { colors, radius, spacing } from '@/styles/tokens'
-import { StaffPlaceholder } from './ChantStaff'
 
 /** Stagger in ms for the nth block of a page; capped at 180ms like DESIGN.md "Continuity". */
 const stagger = (delay: number) => ({ '--hm-delay': `${Math.min(delay, 180)}ms` }) as CSSProperties
@@ -80,13 +79,12 @@ export interface PageSkeletonProps {
   variant?: 'list' | 'grid'
 }
 
-/** Whole-page loading placeholder matching the PageHeader (serif title, incipit, description) + sections layout. */
+/** Whole-page loading placeholder matching the PageHeader (title, description) + sections layout. */
 export function PageSkeleton({ sections = 2, rows = 4, variant = 'list' }: Readonly<PageSkeletonProps>) {
   return (
     <Flex vertical gap={spacing.lg} role="status" aria-busy="true" aria-label="Đang tải trang">
       <Flex vertical gap={spacing.sm} className="hm-skeleton-in">
         <Skeleton.Input active size="large" style={{ width: 300, height: 40 }} />
-        <StaffPlaceholder />
         <Skeleton.Input active size="small" style={{ width: 380 }} />
       </Flex>
       {Array.from({ length: sections }, (_, index) => (

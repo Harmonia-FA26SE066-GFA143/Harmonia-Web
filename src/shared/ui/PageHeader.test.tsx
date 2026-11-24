@@ -30,7 +30,7 @@ describe('PageHeader', () => {
     expect(container.querySelector('.ant-breadcrumb')).toBeNull()
   })
 
-  it('decouples Breadcrumb onto Row 1 above h1 and places Incipit on the h1 row (G3-05b)', () => {
+  it('puts the breadcrumb on Row 1 above the h1, with no staff ornament beside the title', () => {
     const { container } = render(
       <PageHeader
         title="Phòng luyện tập"
@@ -38,13 +38,10 @@ describe('PageHeader', () => {
       />,
     )
     const nav = container.querySelector('.ant-breadcrumb')
-    const incipit = container.querySelector('.hm-incipit')
     const heading = screen.getByRole('heading', { level: 1, name: 'Phòng luyện tập' })
     expect(nav).not.toBeNull()
-    expect(incipit).not.toBeNull()
-    expect(incipit).toHaveAttribute('aria-hidden', 'true')
+    expect(container.querySelector('.hm-incipit')).toBeNull()
     expect(nav!.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(heading.compareDocumentPosition(incipit!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('allows showing a 2-item breadcrumb when showBreadcrumb is true', () => {

@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, useUpcomingPrograms } from '@/features/liturgical-programs'
-import { useCurrentChoir } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
 import {
   CANCEL_LABEL,
@@ -62,10 +61,8 @@ export function RehearsalsPage() {
   const programMap = useMemo(() => new Map((programs.data ?? []).map((program) => [program.id, program])), [programs.data])
   const activeProgram = filters.eventId ? programMap.get(filters.eventId) : undefined
   // The session shown under the week: the one picked, else today's, else the next to come, else the first.
-  // The choir picked in the running head; a session made before choirs had directors (no choirId) shows for all.
-  const currentChoir = useCurrentChoir()
+  // No choir filter: every session names its choir(s) on its card (owner 2026-11-24).
   const weekItems = (weekRehearsals.data?.items ?? [])
-    .filter((rehearsal) => !currentChoir || !rehearsal.choirId || rehearsal.choirId === currentChoir)
     .toSorted((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))
   const picked =
     weekItems.find((rehearsal) => rehearsal.id === pickedId) ??
@@ -249,7 +246,8 @@ export function RehearsalsPage() {
           style={{ marginBottom: spacing.md }}
         />
       )}
-      <Flex vertical gap={spacing.lg}>
+      {/* Keyed by the view, so switching Tuần ↔ Danh sách rises in (.hm-swap answers the switch). */}
+      <Flex key={view} vertical gap={spacing.lg} className="hm-swap">
           <FilterBar
             resultCount={view === 'list' ? rehearsals.data?.totalCount : weekRehearsals.data && weekItems.length}
             error={view === 'list' ? rehearsals.isError : weekRehearsals.isError}
@@ -320,6 +318,7 @@ export function RehearsalsPage() {
                   {picked && (
                     <Card styles={{ body: { padding: 0 } }}>
                     <RehearsalDetail
+                      key={picked.id}
                       rehearsal={picked}
                       program={picked.eventId ? programMap.get(picked.eventId) : undefined}
                       onOpenRoom={openPracticeRoom}

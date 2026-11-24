@@ -11,6 +11,8 @@ export interface Choir {
   /** `User` id of the Choir Director in charge; absent while the Admin has not chosen one. */
   directorId?: string
   directorName?: string
+  /** Members currently in the choir (ChoirDto.cs `MemberCount`). */
+  memberCount?: number
 }
 
 /** Body of POST and PUT /api/choirs (Admin): name required and unique (≤ 100), description ≤ 500. */

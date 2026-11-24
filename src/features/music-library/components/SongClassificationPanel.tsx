@@ -1,6 +1,6 @@
 import { Button, Descriptions, Flex, Tag, Typography } from 'antd'
 import type { ReactNode } from 'react'
-import { ErrorState, Icon, SectionSkeleton } from '@/shared/ui'
+import { ErrorState, Icon, SectionSkeleton, voicePartName } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import type { NamedRef, SkillRequirement, SongClassification } from '../types'
 
@@ -27,7 +27,7 @@ const isEmpty = (c: SongClassification) =>
     (list) => list.length === 0,
   )
 const requirements = (items: SkillRequirement[]) =>
-  items.map((item) => `${item.skillName} ×${item.requiredCount}${item.isMandatory ? ' (bắt buộc)' : ''}`)
+  items.map((item) => `${voicePartName(item.skillName)} ×${item.requiredCount}${item.isMandatory ? ' (bắt buộc)' : ''}`)
 
 export interface SongClassificationPanelProps {
   classification?: SongClassification | null

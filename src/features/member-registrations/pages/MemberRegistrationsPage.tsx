@@ -254,6 +254,7 @@ export function MemberRegistrationsPage() {
               { key: 'gender', label: 'Giới tính', children: genderLabel(viewing.gender) ?? <EmptyCell text="Chưa có" /> },
               { key: 'email', label: 'Email', children: viewing.email },
               { key: 'phone', label: 'Điện thoại', children: viewing.phone ?? <EmptyCell text="Chưa có" /> },
+              { key: 'choir', label: 'Ca đoàn mong muốn', children: viewing.preferredChoirName ?? <EmptyCell text="Chưa chọn" /> },
               { key: 'note', label: 'Lời nhắn', children: viewing.note ? <span style={{ whiteSpace: 'pre-line' }}>{viewing.note}</span> : <EmptyCell text="Không có" /> },
               { key: 'at', label: 'Gửi lúc', children: when(viewing.createdAt) },
             ]}

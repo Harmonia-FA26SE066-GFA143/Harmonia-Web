@@ -8,7 +8,7 @@ import {
   type ProgramListItem,
   type usePreparationStatus,
 } from '@/features/liturgical-programs'
-import { LOADING_COUNT_LABEL, type IconName } from '@/shared/ui'
+import { LOADING_COUNT_LABEL, voicePartName, type IconName } from '@/shared/ui'
 
 /** `EventPreparationStatusDto` as the Web reads it (the feature's index does not export the type). */
 type PreparationStatus = NonNullable<ReturnType<typeof usePreparationStatus>['data']>
@@ -74,7 +74,7 @@ function rosterStepDetail(status: PreparationStatus | undefined, shortages: Prep
         <ul className="next-mass__shortages" aria-label="Vị trí còn thiếu">
           {shortages.map((shortage) => (
             <li key={`${shortage.skillName}-${shortage.songTitle ?? ''}`} className="hm-missing">
-              Thiếu {shortage.requiredCount - shortage.assignedCount} {shortage.skillName}
+              Thiếu {shortage.requiredCount - shortage.assignedCount} {voicePartName(shortage.skillName)}
               {shortage.songTitle ? ` · ${shortage.songTitle}` : ''}
             </li>
           ))}

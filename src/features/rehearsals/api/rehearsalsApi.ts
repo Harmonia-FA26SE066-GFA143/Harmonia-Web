@@ -24,6 +24,7 @@ interface RehearsalDto {
   note: string | null
   songs: RehearsalSongDto[]
   isJoint?: boolean
+  canManage?: boolean
   /** Only on the POST / PUT response (BE 69c9d47, `RehearsalMemberConflictDto.cs`). */
   memberConflicts?: RehearsalMemberConflict[]
 }
@@ -58,6 +59,7 @@ const toRehearsal = (dto: RehearsalDto): Rehearsal => ({
   endAt: parseUtc(dto.endTime).toISOString(),
   note: dto.note ?? undefined,
   songs: toSongs(dto.songs),
+  canManage: dto.canManage,
 })
 
 const toSongItems = (songs: RehearsalSong[]) => songs.map(({ songId, note }) => ({ songId, note }))

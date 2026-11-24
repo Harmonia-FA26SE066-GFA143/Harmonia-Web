@@ -69,7 +69,7 @@ export function ActivityTable({ records, onShowDetail, onPickUser, pagination, l
           {
             key: 'detail',
             title: ACTIONS_COLUMN_TITLE,
-            align: 'right' as const,
+            align: 'center' as const,
             render: (_: unknown, record: ActivityRecord) => (
               <Button
                 type="link"

@@ -1,7 +1,7 @@
 import { App, Button, Checkbox, DatePicker, Flex, Input, Select, TimePicker, type RefSelectProps } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useRef, useState, type Ref } from 'react'
-import { isPlanningDirector, useChoirs, useCurrentChoir, useEventChoirs } from '@/features/choirs'
+import { isPlanningDirector, useChoirs, useEventChoirs } from '@/features/choirs'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
 import { useSongs } from '@/features/music-library'
 import { useCatalogOptions } from '@/features/system-categories'
@@ -178,7 +178,6 @@ export function RehearsalFormDrawer({
   const locations = useCatalogOptions('worshipLocations')
   const choirs = useChoirs()
   const activeChoirs = (choirs.data ?? []).filter((choir) => choir.isActive)
-  const currentChoir = useCurrentChoir()
   // The first field on open: the choir when creating, the program when editing.
   const choirRef = useRef<RefSelectProps>(null)
   const programRef = useRef<RefSelectProps>(null)
@@ -211,7 +210,7 @@ export function RehearsalFormDrawer({
         <Form<FormValues>
           layout="vertical"
           initialValues={{
-            choirId: currentChoir ?? (activeChoirs.length === 1 ? activeChoirs[0].id : undefined),
+            choirId: activeChoirs.length === 1 ? activeChoirs[0].id : undefined,
             eventId: rehearsal ? rehearsal.eventId : defaultProgramId,
             date: rehearsal ? dayjs(rehearsal.startAt) : undefined,
             time: rehearsal ? [dayjs(rehearsal.startAt), dayjs(rehearsal.endAt)] : undefined,

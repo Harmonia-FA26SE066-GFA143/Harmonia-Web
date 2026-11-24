@@ -2,7 +2,7 @@ import { Flex, Typography } from 'antd'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { BrandMark, Incipit } from '@/shared/ui'
+import { BrandMark } from '@/shared/ui'
 
 export interface StatusPageProps {
   /** Browser tab title. */
@@ -36,9 +36,6 @@ export function StatusPage({ tabTitle, picture, code, title, description, action
       <LeafTag className="hm-status__leaf">
         <Flex justify="center" style={{ marginBottom: 16 }}>
           {picture}
-        </Flex>
-        <Flex justify="center" style={{ marginBottom: 8 }}>
-          <Incipit />
         </Flex>
         <p className="hm-status__code">{code}</p>
         <Typography.Title level={1} className="hm-status__title">

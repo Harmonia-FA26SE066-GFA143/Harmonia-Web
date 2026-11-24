@@ -47,40 +47,6 @@ export function ChantStaff({ color = colors.primary }: Readonly<{ color?: string
   )
 }
 
-/** The page head's incipit: four lines and three square notes. Styled and animated by `.hm-incipit` in global.css. */
-export function Incipit() {
-  return (
-    <svg className="hm-incipit" aria-hidden width={72} height={20} viewBox="0 0 72 20" style={{ flex: 'none' }}>
-      {[0.5, 6.5, 12.5, 19.5].map((y) => (
-        <line key={y} x1={0} x2={72} y1={y} y2={y} />
-      ))}
-      <rect x={40} y={8} width={5} height={5} />
-      <rect x={50} y={2} width={5} height={5} />
-      <rect x={60} y={8} width={5} height={5} />
-    </svg>
-  )
-}
-
-const ruled = (w: number) => lines.map((y) => <line key={y} x1={0} x2={w} y1={y + 0.5} y2={y + 0.5} />)
-
-/** A staff with nothing written yet, a C clef at its head and a custos at its end (owner 2026-11-04): an empty state. */
-export function EmptyStaff({ color = colors.primary }: Readonly<{ color?: string }>) {
-  return (
-    <svg aria-hidden width={240} height={29} viewBox="0 0 240 29" style={{ display: 'block' }}>
-      <g stroke={color} strokeOpacity={0.45} strokeWidth={1}>
-        {ruled(240)}
-      </g>
-      <g fill={color}>
-        <rect x={4} y={5} width={5} height={4} />
-        <rect x={4} y={13} width={5} height={4} />
-        <rect x={3} y={5} width={1.4} height={12} />
-        <rect x={226} y={12} width={3.5} height={5} />
-        <rect x={228.3} y={4} width={1} height={10} />
-      </g>
-    </svg>
-  )
-}
-
 /** The staff broken in the middle, its two halves out of line: loading was interrupted. Drawn in `currentColor`. */
 export function BrokenStaff({ width = 160 }: Readonly<{ width?: number }>) {
   const half = width * 0.41
@@ -95,17 +61,6 @@ export function BrokenStaff({ width = 160 }: Readonly<{ width?: number }>) {
             <line x1={width - half} x2={width - 1} y1={y + (i % 2 ? 2 : -0.5)} y2={y + (i % 2 ? 2 : -0.5)} />
           </g>
         ))}
-      </g>
-    </svg>
-  )
-}
-
-/** The bare staff that holds the incipit's place while a page loads. */
-export function StaffPlaceholder() {
-  return (
-    <svg aria-hidden width={width} height={29} viewBox={`0 0 ${width} 29`} style={{ display: 'block' }}>
-      <g stroke={colors.primary} strokeOpacity={0.18} strokeWidth={1}>
-        {ruled(width)}
       </g>
     </svg>
   )

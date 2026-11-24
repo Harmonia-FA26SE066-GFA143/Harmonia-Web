@@ -8,7 +8,6 @@ import { CardGridSkeleton, EmptySongbook, EmptyState, ErrorState, Icon, NoFilter
 import { useNextProgram } from '@/features/liturgical-programs'
 import { useSongList } from '@/features/song-lists'
 import { useCatalogOptions } from '@/features/system-categories'
-import { LibraryRail } from '../components/LibraryRail'
 import { NextMassSongs } from '../components/NextMassSongs'
 import { SongCardGrid } from '../components/SongCardGrid'
 import { SongFilterBar } from '../components/SongFilterBar'
@@ -115,7 +114,6 @@ export function MusicLibraryPage() {
         error={songs.isError}
       />
       <div className={`song-layout${showPeek ? ' has-peek' : ''}`}>
-        <LibraryRail value={filters} onChange={changeFilters} />
         <div className="song-layout__main">
           {nextProgram && <NextMassSongs program={nextProgram} list={nextList.data} />}
           {/* The loading shape of the chosen view (G3-02). */}

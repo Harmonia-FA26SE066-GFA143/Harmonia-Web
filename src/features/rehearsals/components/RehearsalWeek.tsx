@@ -7,7 +7,7 @@ import { Icon, PRACTICE_ROOM_ACTION, StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
 import { canTakeAttendance, isRehearsalDay, isUpcoming, type Rehearsal } from '../types'
-import { JointChip, PlannerOnly } from './JointRehearsal'
+import { JointChip, PlannerOnly, RehearsalChoirs } from './JointRehearsal'
 
 export interface RehearsalWeekProps {
   weekStart: string
@@ -73,8 +73,11 @@ export function RehearsalWeek({ weekStart, direction, rehearsals, programs, sele
                   >
                     <b>{time(rehearsal)}</b>
                     <span>{program?.eventName ?? 'Buổi tập'}</span>
+                    <small className="hm-week__choirs">
+                      {rehearsal.isJoint && 'Tập chung: '}
+                      <RehearsalChoirs rehearsal={rehearsal} />
+                    </small>
                     <small>
-                      {rehearsal.isJoint && 'Tập chung · '}
                       {rehearsal.locationName ?? (rehearsal.songs.length > 0 ? `${rehearsal.songs.length} bài` : 'Chưa chọn bài')}
                     </small>
                   </button>
@@ -108,7 +111,7 @@ export interface RehearsalDetailProps {
 export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendance, onEdit, onDelete }: Readonly<RehearsalDetailProps>) {
   const label = rehearsalLabel(rehearsal)
   return (
-    <section className="hm-rehearsal-detail ctb-detail" aria-label={`Chi tiết buổi tập ${label}`}>
+    <section className="hm-rehearsal-detail ctb-detail hm-swap" aria-label={`Chi tiết buổi tập ${label}`}>
       <div>
         <p className="hm-rubric">Buổi tập đang chọn</p>
         <Flex align="center" gap={spacing.sm} wrap>
@@ -120,6 +123,13 @@ export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendan
           <li>
             <Icon name="calendar" />
             {formatRehearsalTime(rehearsal)}
+          </li>
+          <li>
+            <Icon name="choir" />
+            <span>
+              {rehearsal.isJoint ? 'Các ca đoàn: ' : 'Ca đoàn: '}
+              <RehearsalChoirs rehearsal={rehearsal} />
+            </span>
           </li>
           {rehearsal.locationName && (
             <li>
@@ -142,11 +152,12 @@ export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendan
       <div>
         <Flex justify="space-between" align="center" gap={spacing.sm} className="ctb-detail__head">
           <p className="hm-rubric">Bài tập · {rehearsal.songs.length}</p>
-          {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
-          {isUpcoming(rehearsal) && (
+          {/* Only the empty list gets its own call to action; "Sửa" below opens the same drawer (owner 2026-11-24: no
+              duplicate buttons). The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
+          {isUpcoming(rehearsal) && rehearsal.songs.length === 0 && (
             <PlannerOnly rehearsal={rehearsal}>
-              <Button size="small" type="text" icon={<Icon name="edit" />} onClick={() => onEdit(rehearsal)} aria-label={`Chọn bài tập cho buổi ${label}`}>
-                {rehearsal.songs.length === 0 ? 'Chọn bài tập' : 'Sửa bài tập'}
+              <Button size="small" type="text" icon={<Icon name="add" />} onClick={() => onEdit(rehearsal)} aria-label={`Chọn bài tập cho buổi ${label}`}>
+                Chọn bài tập
               </Button>
             </PlannerOnly>
           )}

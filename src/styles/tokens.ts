@@ -202,6 +202,8 @@ export const motion = {
   reveal: 480,
   entrance: 640,
   ease: 'cubic-bezier(0.16, 1, 0.3, 1)',
+  /** Exits: a soft start and a quick leave, so what goes away never lingers (motion skill, 2026-11-24). */
+  easeIn: 'cubic-bezier(0.7, 0, 0.84, 0)',
   easeInOut: 'cubic-bezier(0.65, 0, 0.35, 1)',
 } as const
 
@@ -348,6 +350,7 @@ const cssVars: Record<string, string> = {
   'dur-reveal': `${motion.reveal}ms`,
   'dur-entrance': `${motion.entrance}ms`,
   'ease-in-out': motion.easeInOut,
+  'ease-in': motion.easeIn,
   'ease': motion.ease,
   'radius-sm': `${radius.sm}px`,
   'radius-md': `${radius.md}px`,

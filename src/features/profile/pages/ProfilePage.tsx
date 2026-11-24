@@ -1,11 +1,9 @@
-import { App, Button, Flex } from 'antd'
+import { App, Button } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { requestFailureMessage } from '@/lib/api/errors'
-import { SignOutModal } from '@/features/auth'
 import { ErrorState, Icon, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
 import { ProfileAvatar } from '../components/ProfileAvatar'
 import { ProfileDetails } from '../components/ProfileDetails'
 import { useMyProfile, useUpdateMyProfile } from '../hooks/useMyProfile'
@@ -17,7 +15,6 @@ export function ProfilePage() {
   const profile = useMyProfile()
   const update = useUpdateMyProfile()
   const [editing, setEditing] = useState(false)
-  const [confirmingSignOut, setConfirmingSignOut] = useState(false)
 
   const handleSave = (values: ProfileUpdateValues) => {
     if (update.isPending) return
@@ -35,14 +32,10 @@ export function ProfilePage() {
       <PageHeader
         title="Hồ sơ cá nhân"
         extra={
-          <Flex wrap gap={spacing.sm}>
-            <Button icon={<Icon name="key" />} onClick={() => navigate(paths.changePassword)}>
-              Đổi mật khẩu
-            </Button>
-            <Button icon={<Icon name="logout" />} onClick={() => setConfirmingSignOut(true)}>
-              Đăng xuất
-            </Button>
-          </Flex>
+          // Sign-out lives in the account menu of the running head, on every page (owner 2026-11-24: no duplicates).
+          <Button icon={<Icon name="key" />} onClick={() => navigate(paths.changePassword)}>
+            Đổi mật khẩu
+          </Button>
         }
       />
 
@@ -68,7 +61,6 @@ export function ProfilePage() {
         </div>
       )}
 
-      <SignOutModal open={confirmingSignOut} onClose={() => setConfirmingSignOut(false)} />
     </>
   )
 }

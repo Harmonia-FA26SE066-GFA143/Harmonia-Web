@@ -3,16 +3,25 @@
  * has no voice-part field: a member counts in a part when one of their approved skills names it.
  */
 export const voiceParts = [
-  { label: 'Soprano', pattern: /(?<![\p{L}\p{N}])(?:soprano|nữ cao)(?![\p{L}\p{N}])/iu },
-  { label: 'Alto', pattern: /(?<![\p{L}\p{N}])(?:alto|nữ trầm)(?![\p{L}\p{N}])/iu },
-  { label: 'Tenor', pattern: /(?<![\p{L}\p{N}])(?:tenor|nam cao)(?![\p{L}\p{N}])/iu },
-  { label: 'Bass', pattern: /(?<!(?:double|electric|acoustic|upright) )(?<![\p{L}\p{N}])(?:bass(?! (?:guitar|drum))|nam trầm)(?![\p{L}\p{N}])/iu },
+  // `label` is the key (counts, icons); `name` is what the UI shows (owner 2026-11-24: voice parts in Vietnamese).
+  { label: 'Soprano', name: 'Nữ cao', pattern: /(?<![\p{L}\p{N}])(?:soprano|nữ cao)(?![\p{L}\p{N}])/iu },
+  { label: 'Alto', name: 'Nữ trầm', pattern: /(?<![\p{L}\p{N}])(?:alto|nữ trầm)(?![\p{L}\p{N}])/iu },
+  { label: 'Tenor', name: 'Nam cao', pattern: /(?<![\p{L}\p{N}])(?:tenor|nam cao)(?![\p{L}\p{N}])/iu },
+  { label: 'Bass', name: 'Nam trầm', pattern: /(?<!(?:double|electric|acoustic|upright) )(?<![\p{L}\p{N}])(?:bass(?! (?:guitar|drum))|nam trầm)(?![\p{L}\p{N}])/iu },
 ] as const
 
 export type VoicePartLabel = (typeof voiceParts)[number]['label']
 
 export const inVoicePart = (skills: readonly string[], pattern: RegExp) =>
   skills.some((skill) => pattern.test(skill.normalize('NFC').replace(/\s+/g, ' ')))
+
+/**
+ * The Vietnamese name of a voice part named in a skill, a score part or a key ("Soprano", "S1 Soprano" → "Nữ cao");
+ * any other text unchanged. Display only: matching still reads the original text.
+ */
+export function voicePartName(text: string): string {
+  return voiceParts.find(({ pattern }) => inVoicePart([text], pattern))?.name ?? text
+}
 
 /** Returns true when the member holds at least one approved voice-part skill. */
 export const hasVoicePart = (skills: readonly string[]) => voiceParts.some((part) => inVoicePart(skills, part.pattern))

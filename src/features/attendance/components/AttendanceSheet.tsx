@@ -2,7 +2,7 @@ import { App, Avatar, Button, Card, Flex, Input, Modal, Radio, Table, Typography
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useBeforeUnload, useBlocker } from 'react-router'
 import { useChoirMembers } from '@/features/members'
-import { Icon, inVoicePart, NoFilterResults, SaveButton, SummaryStrip, UnassignedVoiceCell, useJustSaved, VoicePartIcon, voiceParts } from '@/shared/ui'
+import { Icon, inVoicePart, NoFilterResults, SaveButton, SummaryStrip, UnassignedVoiceCell, useJustSaved, VoicePartIcon, voicePartName, voiceParts } from '@/shared/ui'
 import { nameInitial } from '@/shared/utils/personName'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, media, outcomeColors, radius, shadows, spacing, spine, typography } from '@/styles/tokens'
@@ -148,7 +148,7 @@ export function AttendanceSheet({ rehearsalId, records, picker, readOnly = false
           <Flex wrap gap={spacing.sm} style={{ fontSize: typography.label.fontSize, color: colors.textBody }}>
             {parts.map((part) => (
               <span key={part}>
-                <VoicePartIcon name={part} /> {part}
+                <VoicePartIcon name={part} /> {voicePartName(part)}
               </span>
             ))}
           </Flex>

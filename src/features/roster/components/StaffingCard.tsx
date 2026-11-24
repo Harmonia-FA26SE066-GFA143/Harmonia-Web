@@ -11,6 +11,7 @@ import {
   SELECT_POPUP_PROPS,
   StatusTag,
   useJustSaved,
+  voicePartName,
 } from '@/shared/ui'
 import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 import {
@@ -194,7 +195,7 @@ export function StaffingCard({
       render: (_, row) => (
         <Flex vertical>
           <Flex align="baseline" justify="space-between" gap={spacing.sm}>
-            <p className="hm-rubric" style={{ margin: 0 }}>{row.skillName}</p>
+            <p className="hm-rubric" style={{ margin: 0 }}>{voicePartName(row.skillName)}</p>
             <span
               className={`hm-roster-count${linesOf(row.skillId).length < row.requiredCount ? ' is-short' : ''}`}
               aria-label={`Đã có ${linesOf(row.skillId).length} trên ${row.requiredCount} người`}
@@ -377,7 +378,7 @@ export function StaffingCard({
             key: 'remove',
             title: ACTIONS_COLUMN_TITLE,
             width: 56,
-            align: 'right' as const,
+            align: 'center' as const,
             render: (_: unknown, row: PersonnelRequirement) => (
               <Button
                 type="text"
@@ -496,7 +497,7 @@ export function StaffingCard({
         {noting && (
           <Flex vertical gap={spacing.sm}>
             <Typography.Text>
-              {noting.memberName} · {noting.skillName} · {place}
+              {noting.memberName} · {voicePartName(noting.skillName)} · {place}
             </Typography.Text>
             <Input
               ref={noteInputRef}

@@ -23,10 +23,12 @@ export function RouteStage({ children }: Readonly<{ children: ReactNode }>) {
     const opening = first.current
     first.current = false
     if (reduced || !stage.current?.animate) return
-    stage.current.animate([{ transform: opening ? 'translateY(10px)' : 'translateY(6px)' }, { transform: 'none' }], {
+    const rise = stage.current.animate([{ transform: opening ? 'translateY(10px)' : 'translateY(6px)' }, { transform: 'none' }], {
       duration: opening ? motion.reveal : motion.base,
       easing: motion.ease,
     })
+    // A quick second navigation starts from rest instead of stacking on the unfinished rise.
+    return () => rise.cancel()
   }, [pathname, reduced])
 
   // A lazily loaded page (its code chunk) may take a while on a slow network: say so only past SLOW_PAGE_MS.

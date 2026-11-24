@@ -150,10 +150,10 @@ describe('ParticipationPage', () => {
     expect(await within(parts).findByText('1 xác nhận · 0 từ chối · 1 chưa')).toBeInTheDocument()
     expect(within(parts).getByText('0 xác nhận · 1 từ chối · 0 chưa')).toBeInTheDocument()
     expect(within(parts).getAllByText('Chưa mời ai')).toHaveLength(2)
-    expect(within(parts).getByText(/ít xác nhận nhất: 0 trên 1 người được mời/)).toHaveTextContent('Bè Bass')
+    expect(within(parts).getByText(/ít xác nhận nhất: 0 trên 1 người được mời/)).toHaveTextContent('Bè Nam trầm')
     expect(within(parts).getByRole('link', { name: /Mở phân công/ })).toHaveAttribute('href', '/director/roster?programId=p2')
     // Each part pairs its glyph with the label (never colour alone).
-    expect(within(parts).getByText('Soprano').parentElement?.querySelector('.hm-icon')).not.toBeNull()
+    expect(within(parts).getByText('Nữ cao').parentElement?.querySelector('.hm-icon')).not.toBeNull()
 
     // Muted placeholders instead of bare dashes (G2-11): no voice part, no answer time, no note.
     const organist = screen.getByRole('row', { name: /Maria Nguyễn Thu Hướng/ })

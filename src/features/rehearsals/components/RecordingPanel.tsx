@@ -2,7 +2,7 @@ import { App, Button, Flex, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useRef, useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
-import { EmptyStaff, EmptyState, Icon, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, Icon, SectionSkeleton } from '@/shared/ui'
 import { clock } from '@/shared/utils/media'
 import { saveFile } from '@/shared/utils/saveFile'
 import { colors, spacing } from '@/styles/tokens'
@@ -197,7 +197,7 @@ export function RecordingPanel({ rehearsalId, songId, songTitle, rehearsal = {} 
       {takes.length === 0 && !loadingTakes && !recordings.isError && (
         <EmptyState
           headingLevel={3}
-          icon={<EmptyStaff />}
+          icon={<Icon name="audio" />}
           title="Chưa có bản thu nào cho bài hát này"
           description="Nhấn Thu âm để ghi lại giọng mẫu hoặc hướng dẫn luyện tập. Ca viên của ca đoàn sẽ nghe lại các bản thu này trên ứng dụng di động."
         />

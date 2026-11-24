@@ -46,7 +46,7 @@ function inFilter(request: ParticipationRequest, filter: ResponseFilter) {
 }
 
 /** The member's voice parts in words, from their approved skills. */
-const partsOf = (skills: readonly string[]) => voiceParts.filter(({ pattern }) => inVoicePart(skills, pattern)).map(({ label }) => label).join(', ')
+const partsOf = (skills: readonly string[]) => voiceParts.filter(({ pattern }) => inVoicePart(skills, pattern)).map(({ name }) => name).join(', ')
 
 /** Skills are not part of a request; they come from the member profiles. */
 const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<ParticipationRequest> => [
@@ -181,10 +181,9 @@ export function ParticipationPage() {
       <PageHeader
         title="Xác nhận tham gia"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Xác nhận tham gia' }]}
-        // The first send is offered here; later ones reach members not asked yet, from the list toolbar.
-        extra={
-          program && participation.data !== undefined && (requests.length > 0 ? <ResponseSummary counts={counts} /> : !isPast && sendButton)
-        }
+        // The first send is offered by the empty state below (one button, owner 2026-11-24); later ones reach members
+        // not asked yet, from the list toolbar.
+        extra={program && participation.data !== undefined && requests.length > 0 && <ResponseSummary counts={counts} />}
       />
       <PickedProgramFeedback
         programs={programs}

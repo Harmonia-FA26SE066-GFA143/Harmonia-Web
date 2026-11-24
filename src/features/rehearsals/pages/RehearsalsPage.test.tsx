@@ -131,8 +131,10 @@ describe('RehearsalsPage', () => {
     expect(within(detail).getByRole('link', { name: 'Con Bước Lên Bàn Thờ' })).toHaveAttribute('href', '/director/library/s1')
     expect(within(detail).getByText('1.')).toBeInTheDocument()
     expect(within(detail).getByText('Bè nam vào chậm')).toBeInTheDocument()
-    // Songs can be changed only before the session ends (REHEARSAL_ALREADY_PASSED).
-    expect(within(detail).queryAllByRole('button', { name: /^Chọn bài tập cho buổi/ })).toHaveLength(Date.parse(inWeek(2, 20)) > Date.now() ? 1 : 0)
+    // The session has songs: they are changed through "Sửa" (only before it ends, REHEARSAL_ALREADY_PASSED); the
+    // separate "Chọn bài tập" call to action is for an empty list only.
+    expect(within(detail).queryByRole('button', { name: /^Chọn bài tập cho buổi/ })).toBeNull()
+    expect(within(detail).queryAllByRole('button', { name: /^Sửa buổi tập/ })).toHaveLength(Date.parse(inWeek(2, 20)) > Date.now() ? 1 : 0)
     expect(within(detail).getByRole('link', { name: /Lễ Bổn mạng/ })).toBeInTheDocument()
     // States are words read from the times; the BE has none.
     expect(within(detail).getAllByText(/^(Sắp tới|Hôm nay|Đã qua)$/)).toHaveLength(1)
@@ -266,6 +268,8 @@ describe('RehearsalsPage', () => {
     renderRehearsals()
 
     expect(await screen.findByText('Buổi tập chung')).toBeInTheDocument()
+    // Which choirs rehearse together: every choir serving the program (owner 2026-11-24).
+    expect((await screen.findAllByText(/Ca đoàn Cecilia/)).length).toBeGreaterThan(0)
     // Both sessions are upcoming; only the director's own keeps its actions (the backend answers CHOIR_NOT_LEAD for the other).
     await waitFor(() => expect(screen.queryAllByRole('button', { name: /^Sửa buổi tập/ })).toHaveLength(1))
     expect(screen.queryAllByRole('button', { name: /^Xoá buổi tập/ })).toHaveLength(1)
@@ -491,7 +495,7 @@ describe('RehearsalPracticeRoomPage', () => {
     renderRoom()
 
     expect(await screen.findByRole('heading', { name: 'Bản nốt đồng bộ' })).toBeInTheDocument()
-    fireEvent.click(screen.getByText('Soprano'))
+    fireEvent.click(screen.getByText('Nữ cao'))
     expect(await screen.findByRole('heading', { name: 'Bản nốt đồng bộ' })).toBeInTheDocument()
     expect(getPlayback).toHaveBeenLastCalledWith('emmanuel-midi')
     expect(screen.queryByLabelText('Nghe Emmanuel, bè Soprano')).toBeNull()
@@ -538,7 +542,7 @@ describe('RehearsalPracticeRoomPage', () => {
     fireEvent.click(zoomIn)
     expect(screen.getByText('125%')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('Soprano'))
+    fireEvent.click(screen.getByText('Nữ cao'))
     expect(await screen.findByAltText('Bản nhạc Emmanuel – Soprano')).toHaveAttribute(
       'src',
       'https://files.example/emmanuel-soprano.jpg',

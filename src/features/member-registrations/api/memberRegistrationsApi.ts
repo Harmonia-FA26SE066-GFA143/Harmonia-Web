@@ -13,6 +13,8 @@ export interface MemberRegistration {
   saintName: string | null
   gender?: Gender | null
   note: string | null
+  /** The choir the person asked to join (MemberRegistrationDto.cs `PreferredChoirName`, B54); a wish, not a placement. */
+  preferredChoirName?: string | null
   createdAt: string
   /**
    * Another waiting request or an existing account with the same phone, or the same full name and saint name (Harmonia-BE

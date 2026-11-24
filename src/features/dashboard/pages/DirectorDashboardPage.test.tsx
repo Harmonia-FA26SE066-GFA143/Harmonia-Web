@@ -121,7 +121,7 @@ describe('DirectorDashboardPage', () => {
     expect(steps.getByRole('link', { name: 'Phân công phục vụ' })).toHaveAttribute('href', '/director/roster?programId=p1')
     expect(steps.getByText('Thiếu 1 vị trí')).toBeInTheDocument()
     expect(steps.getByText('6 lượt đã phân công')).toBeInTheDocument()
-    expect(steps.getByRole('list', { name: 'Vị trí còn thiếu' })).toHaveTextContent('Thiếu 1 Bè Tenor · Kinh Hòa Bình')
+    expect(steps.getByRole('list', { name: 'Vị trí còn thiếu' })).toHaveTextContent('Thiếu 1 Nam cao · Kinh Hòa Bình')
     // 4. Rehearsals and attendance.
     expect(steps.getByRole('link', { name: 'Buổi tập & Điểm danh' })).toHaveAttribute('href', '/director/rehearsals?programId=p1')
     expect(steps.getByText('1/3 buổi đã tập')).toBeInTheDocument()

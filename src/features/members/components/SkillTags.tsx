@@ -1,5 +1,5 @@
 import { Flex, Tag, Typography } from 'antd'
-import { hasVoicePart, UnassignedVoiceCell, VoicePartIcon } from '@/shared/ui'
+import { hasVoicePart, UnassignedVoiceCell, VoicePartIcon, voicePartName } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 
 /** A member's approved skills as neutral tags; "—" when none are recorded. */
@@ -9,7 +9,7 @@ export function SkillTags({ skills }: Readonly<{ skills: string[] }>) {
     <Flex wrap gap={4}>
       {skills.map((skill) => (
         <Tag key={skill} style={{ marginInlineEnd: 0 }}>
-          {skill}
+          {voicePartName(skill)}
         </Tag>
       ))}
     </Flex>
@@ -33,7 +33,7 @@ export function VoicePartTags({
       {unassigned && <UnassignedVoiceCell />}
       {shown.map((skill) => (
         <Tag key={skill} icon={hasVoicePart([skill]) ? <VoicePartIcon name={skill} /> : undefined} style={{ marginInlineEnd: 0 }}>
-          {skill}
+          {voicePartName(skill)}
         </Tag>
       ))}
     </Flex>

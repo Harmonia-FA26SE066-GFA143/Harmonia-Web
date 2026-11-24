@@ -93,7 +93,7 @@ export function MembersPage() {
     { label: 'Chờ duyệt kỹ năng', value: pendingSkills, waiting: <Link to={paths.director.skillApproval}>Duyệt kỹ năng</Link> },
   ]
   const voiceCells: SummaryCell[] = [
-    ...voiceParts.map(({ label }) => ({ label, value: voices?.[label] })),
+    ...voiceParts.map(({ label, name }) => ({ label: name, value: voices?.[label] })),
     { label: UNASSIGNED_VOICE_LABEL, value: voices?.unassigned },
   ]
   const description = activeTotal === undefined ? 'Tài khoản ca viên do Quản trị viên tạo.' : `${activeTotal} ca viên đang sinh hoạt`
@@ -130,9 +130,10 @@ export function MembersPage() {
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Danh sách ca viên' }]}
         description={description}
       />
-      <Flex vertical gap={spacing.md} style={{ marginBottom: spacing.lg }}>
+      {/* One strip of counts; the voice breakdown is a quiet line under it (owner 2026-11-24: nine boxes were noise). */}
+      <Flex vertical gap={spacing.sm} style={{ marginBottom: spacing.lg }}>
         <SummaryStrip label="Tình trạng ca viên" cells={statusCells} />
-        <SummaryStrip label="Phân bố theo bè (ca viên đang sinh hoạt)" cells={voiceCells} />
+        <SummaryStrip compact label="Phân bố theo bè (ca viên đang sinh hoạt)" cells={voiceCells} />
       </Flex>
 
       {members.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách ca viên" />}

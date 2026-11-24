@@ -46,8 +46,13 @@ export function useMembersOfChoirs(choirIds: string[]) {
   })
 }
 
-export function useEventChoirs(eventId: string) {
-  return useQuery({ queryKey: [...choirsKey, 'event', eventId], queryFn: () => listEventChoirs(eventId) })
+/** Idle without an event id. */
+export function useEventChoirs(eventId: string | undefined) {
+  return useQuery({
+    queryKey: [...choirsKey, 'event', eventId],
+    queryFn: () => listEventChoirs(eventId!),
+    enabled: Boolean(eventId),
+  })
 }
 
 /** Every attempt reloads the choirs: a refusal usually means someone else changed them meanwhile. */

@@ -979,39 +979,6 @@ textarea {
   white-space: nowrap;
 }
 
-/* The liturgical page head enters once when a page opens. */
-.hm-incipit line {
-  stroke: var(--hm-action-primary);
-  stroke-width: 1;
-  opacity: 0.55;
-  transform-origin: 0 0;
-  animation: hm-staff-draw 360ms var(--hm-ease) both;
-}
-
-.hm-incipit line:nth-of-type(1) { animation-delay: 120ms; }
-.hm-incipit line:nth-of-type(2) { animation-delay: 160ms; }
-.hm-incipit line:nth-of-type(3) { animation-delay: 200ms; }
-.hm-incipit line:nth-of-type(4) { animation-delay: 240ms; }
-
-.hm-incipit rect {
-  fill: var(--hm-action-primary);
-  animation: hm-neume 220ms var(--hm-ease) both;
-}
-
-.hm-incipit rect:nth-of-type(1) { animation-delay: 480ms; }
-.hm-incipit rect:nth-of-type(2) { animation-delay: 540ms; }
-.hm-incipit rect:nth-of-type(3) { animation-delay: 600ms; }
-
-/* The page head and its content enter as one: RouteStage moves the whole page, so neither animates on its own. */
-
-@keyframes hm-staff-draw {
-  from { transform: scaleX(0); }
-}
-
-@keyframes hm-neume {
-  from { transform: translateY(-5px); }
-}
-
 @keyframes hm-rise-small {
   from { transform: translateY(4px); }
 }
@@ -1041,23 +1008,6 @@ textarea {
   stroke: var(--hm-gilt);
   stroke-width: 1.2;
   opacity: 0.6;
-}
-
-.hm-ground__rules line {
-  stroke: var(--hm-action-primary);
-  stroke-width: 1;
-  opacity: 0.4;
-}
-
-.hm-ground__notes {
-  fill: var(--hm-text-primary);
-  stroke: var(--hm-text-primary);
-  stroke-width: 0;
-  opacity: 0.11;
-}
-
-.hm-ground__notes line {
-  stroke-width: 1.2;
 }
 
 /*
@@ -2350,10 +2300,54 @@ textarea {
   margin-top: 24px;
 }
 
+/*
+ * Arrival motion (owner 2026-11-24; motion + frontend-design skills). One authored moment per page stays RouteStage's
+ * rise; beyond it only what answers the user moves: a detail panel keyed by the picked record or the chosen view
+ * (.hm-swap), and the few lists built to arrive in order (.hm-stagger: song cards, the week's rehearsals, a
+ * program's songs). Every block and table row rising on each page read as the generic default, so they do not.
+ * 8px, --hm-dur-base ease-out, 30ms apart capped at 180ms. Transform only, never opacity: a paused or skipped
+ * animation can never leave content hidden (05-qa-report SYS-02).
+ */
+@keyframes hm-arrive {
+  from {
+    transform: translateY(8px);
+  }
+}
+
+.hm-stagger > *,
+.hm-swap {
+  animation: hm-arrive var(--hm-dur-base) var(--hm-ease) backwards;
+}
+
+.hm-stagger > :nth-child(2) { animation-delay: 30ms; }
+.hm-stagger > :nth-child(3) { animation-delay: 60ms; }
+.hm-stagger > :nth-child(4) { animation-delay: 90ms; }
+.hm-stagger > :nth-child(5) { animation-delay: 120ms; }
+.hm-stagger > :nth-child(6) { animation-delay: 150ms; }
+.hm-stagger > :nth-child(n + 7) { animation-delay: 180ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-stagger > *,
+  .hm-swap {
+    animation: none;
+  }
+}
+
+.hm-week__choirs:empty,
+.week-list__choirs:empty {
+  display: none;
+}
+
+/* Which choir rehearses reads before where and what. */
+.week-list__choirs {
+  font-weight: 600;
+  color: var(--hm-text-body);
+}
+
 /* The old page dims while the next one is fetched; the new one then rises in (RouteStage). */
 .hm-route-leaving {
   opacity: 0.6;
-  transition: opacity var(--hm-dur-instant) var(--hm-ease);
+  transition: opacity var(--hm-dur-instant) var(--hm-ease-in);
 }
 
 /* A page whose code is still loading after 300ms: the rose over the old page, which stays put. */
@@ -2441,6 +2435,36 @@ textarea {
   letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
+}
+
+/* A breakdown under a main strip: label–figure pairs on one line, no card, figures at body size. */
+.hm-summary--compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.hm-summary--compact .hm-summary__cell {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+}
+
+.hm-summary--compact .hm-summary__cell dd {
+  margin: 0;
+}
+
+.hm-summary--compact .hm-summary__figure {
+  font-family: var(--hm-font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .hm-summary__cell.is-waiting {
@@ -3040,14 +3064,14 @@ textarea {
 /* Kho bài hát (artifact SongLibraryPage): quick filters, the grid of score pages, and the quick look. */
 .song-layout {
   display: grid;
-  grid-template-columns: 196px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   align-items: start;
   margin-top: 16px;
 }
 
 .song-layout.has-peek {
-  grid-template-columns: 196px minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
 }
 
 .song-layout__main {
@@ -3062,64 +3086,6 @@ textarea {
   border: 1px solid var(--hm-border-hairline);
   border-radius: var(--hm-radius-lg);
   overflow: hidden;
-}
-
-.song-rail {
-  position: sticky;
-  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
-}
-
-.song-rail__list {
-  margin: 0;
-  padding: 0;
-  list-style-type: '';
-}
-
-.song-rail__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  min-height: 32px;
-  padding: 4px 12px;
-  border: 0;
-  border-radius: var(--hm-radius-sm);
-  background: transparent;
-  font: inherit;
-  font-size: 13px;
-  text-align: start;
-  color: var(--hm-text-body);
-  cursor: pointer;
-  transition: background var(--hm-dur-fast) var(--hm-ease), color var(--hm-dur-fast) var(--hm-ease);
-}
-
-.song-rail__item:hover {
-  background: var(--hm-surface-soft);
-  color: var(--hm-text-primary);
-}
-
-.song-rail__item[aria-pressed='true'] {
-  background: var(--hm-surface-base);
-  color: var(--hm-text-primary);
-  font-weight: 600;
-  box-shadow: inset 0 0 0 1px var(--hm-border-default);
-}
-
-.song-rail__item:focus-visible,
-.song-card:focus-visible {
-  outline: 2px solid var(--hm-action-focus);
-  outline-offset: 2px;
-}
-
-.song-rail__count {
-  min-width: 22px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--hm-surface-band);
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  color: var(--hm-text-body);
 }
 
 .song-next {
@@ -3282,6 +3248,27 @@ a.song-next__item:hover {
 .song-card:hover .song-card__page,
 .song-card:focus-visible .song-card__page {
   transform: translateY(-28px);
+}
+
+/* No first page yet: a plain sheet with one mark and the words, no lift (nothing to read under it). */
+.song-card__page.is-blank,
+.song-peek__sheet.is-blank {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 28px;
+  aspect-ratio: 160 / 220;
+  font-size: 12px;
+  color: var(--hm-text-muted);
+  background: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-default);
+  box-shadow: none;
+}
+
+.song-card:hover .song-card__page.is-blank,
+.song-card:focus-visible .song-card__page.is-blank {
+  transform: none;
 }
 
 .song-card__no {
@@ -3553,46 +3540,8 @@ a.song-usage__next:hover {
   }
 }
 
-/* The choir switcher at the start of the ivory band (artifact Spine), set off from the page tabs by a rule. */
-.hm-choir {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 210px;
-  flex-shrink: 0;
-  margin-right: 0;
-  padding-right: 16px;
-  border-right: 1px solid var(--hm-border-default);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.hm-choir__label {
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--hm-text-muted);
-}
-
-.hm-choir__name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 600;
-  color: var(--hm-text-primary);
-}
-
-.hm-choir__select.ant-select {
-  min-width: 0;
-  max-width: 145px;
-  font-weight: 600;
-}
-
-.hm-choir__select.ant-select .ant-select-selection-item {
-  color: var(--hm-text-primary);
-}
-
 /* Running head from 1024 to 1279px (below 1024 the page list is a drawer, AppShell): both bands tighten so a
-   Director's five tabs and an Admin's six areas stay whole. After the .hm-choir and .hm-head-day rules, so it wins. */
+   Director's five tabs and an Admin's six areas stay whole. After the .hm-head-day rules, so it wins. */
 @media (min-width: 1024px) and (max-width: 1279px) {
   .hm-top,
   .hm-sub {
@@ -3614,10 +3563,6 @@ a.song-usage__next:hover {
     gap: 12px;
   }
 
-  .hm-choir {
-    max-width: 184px;
-    padding-right: 12px;
-  }
 
   .hm-head-day {
     max-width: 220px;
@@ -3632,13 +3577,6 @@ a.song-usage__next:hover {
 
   .hm-head-day__name {
     max-width: 168px;
-  }
-}
-
-/* The choir's name and its full-name tooltip stay; the "Ca đoàn:" prefix gives its room to the tabs. */
-@media (min-width: 1024px) and (max-width: 1120px) {
-  .hm-choir__label {
-    display: none;
   }
 }
 
@@ -5248,7 +5186,7 @@ body {
 
 @media (max-width: 1279px) {
   .song-layout.has-peek {
-    grid-template-columns: 180px minmax(0, 1fr) 300px;
+    grid-template-columns: minmax(0, 1fr) 300px;
   }
 
   .song-layout.has-peek .song-cards {
@@ -5303,21 +5241,8 @@ body {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .song-rail,
   .song-peek {
     position: static;
-  }
-
-  /* The quick filters become one wrapping strip of chips above the list. */
-  .song-rail__list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .song-rail__item {
-    width: auto;
-    gap: 8px;
   }
 
   .song-index__materials {

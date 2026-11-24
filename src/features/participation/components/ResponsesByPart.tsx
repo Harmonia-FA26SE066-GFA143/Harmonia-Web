@@ -2,7 +2,7 @@ import { Typography } from 'antd'
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Icon, inVoicePart, VoicePartIcon, voiceParts } from '@/shared/ui'
+import { Icon, inVoicePart, VoicePartIcon, voicePartName, voiceParts } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import type { ParticipationRequest } from '../types'
 
@@ -50,7 +50,7 @@ export function ResponsesByPart({ requests, skillsOf, programId }: Readonly<{ re
             <li key={part.label}>
               <div className="hm-part-bars__head">
                 <span>
-                  <VoicePartIcon name={part.label} /> <b>{part.label}</b>
+                  <VoicePartIcon name={part.label} /> <b>{voicePartName(part.label)}</b>
                 </span>
                 <span style={muted}>
                   {part.total === 0 ? 'Chưa mời ai' : `${part.confirmed} xác nhận · ${part.declined} từ chối · ${part.open} chưa`}
@@ -68,7 +68,7 @@ export function ResponsesByPart({ requests, skillsOf, programId }: Readonly<{ re
       {weakest && (
         <div className="hm-reading-note">
           <Typography.Text>
-            Bè <b>{weakest.label}</b> ít xác nhận nhất: {weakest.confirmed} trên {weakest.total} người được mời.
+            Bè <b>{voicePartName(weakest.label)}</b> ít xác nhận nhất: {weakest.confirmed} trên {weakest.total} người được mời.
           </Typography.Text>
           <Link to={`${paths.director.roster}?programId=${programId}`}>
             Mở phân công <Icon name="arrow-right" />

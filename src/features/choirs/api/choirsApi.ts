@@ -12,15 +12,17 @@ interface ChoirDto {
   isActive: boolean
   directorId: string | null
   directorFullName: string | null
+  memberCount?: number
 }
 
-const toChoir = ({ id, name, description, isActive, directorId, directorFullName }: ChoirDto): Choir => ({
+const toChoir = ({ id, name, description, isActive, directorId, directorFullName, memberCount }: ChoirDto): Choir => ({
   id,
   name,
   description: description ?? undefined,
   isActive,
   directorId: directorId ?? undefined,
   directorName: directorFullName ?? undefined,
+  memberCount,
 })
 
 // PUT replaces every field: a missing director is sent as null, which removes the director.

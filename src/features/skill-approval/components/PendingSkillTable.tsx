@@ -1,7 +1,7 @@
 import { Button, Flex, Modal, Table, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
-import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon } from '@/shared/ui'
+import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon, voicePartName } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import type { PendingSkill, SkillEvidence } from '../types'
 
@@ -45,7 +45,7 @@ export function PendingSkillTable({
       title: 'Kỹ năng',
       render: (_, skill) => (
         <Flex vertical>
-          <Typography.Text>{skill.skillName}</Typography.Text>
+          <Typography.Text>{voicePartName(skill.skillName)}</Typography.Text>
           <Typography.Text style={{ ...muted, fontSize: typography.metadata.fontSize }}>{skill.categoryName}</Typography.Text>
         </Flex>
       ),

@@ -60,7 +60,7 @@ describe('MembersPage', () => {
     renderPage(<MembersPage />, '/m')
 
     const voices = await screen.findByLabelText('Phân bố theo bè (ca viên đang sinh hoạt)')
-    await waitFor(() => expect(within(within(voices).getByText('Soprano').closest('div')!).getByText('2')).toBeInTheDocument())
+    await waitFor(() => expect(within(within(voices).getByText('Nữ cao').closest('div')!).getByText('2')).toBeInTheDocument())
     expect(within(within(voices).getByText('Chưa phân bè').closest('div')!).getByText('1')).toBeInTheDocument()
   })
 
