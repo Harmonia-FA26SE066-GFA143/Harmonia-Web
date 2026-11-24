@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import { sizes } from '@/styles/tokens'
+import { visuallyHidden } from '../visuallyHidden'
 import { iconRegistry, type IconName } from './registry'
 
 export type IconSize = keyof typeof sizes.icon | number
@@ -38,12 +39,11 @@ export function Icon({ name, size, label, className, style }: Readonly<IconProps
         strokeLinecap="round"
         strokeLinejoin="round"
         focusable="false"
-        role={label ? 'img' : undefined}
-        aria-label={label}
-        aria-hidden={label ? undefined : true}
+        aria-hidden="true"
       >
         {iconRegistry[name]}
       </svg>
+      {label && <span style={visuallyHidden}>{label}</span>}
     </span>
   )
 }

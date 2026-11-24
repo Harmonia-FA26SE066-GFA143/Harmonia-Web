@@ -76,11 +76,14 @@ describe('ProgramCalendarPage', () => {
         { ...base, id: 'e2', time: '18:00', title: 'Lễ chiều', status: 'cancelled' },
       ],
     })
-    renderPage(<ProgramCalendarPage />, '/priest/calendar')
+    const { container } = renderPage(<ProgramCalendarPage />, '/priest/calendar')
 
     // The status does not rest on colour: each icon in the cell carries its name; the key's icons stay decoration.
-    expect((await screen.findAllByRole('img', { name: 'Bản nháp' })).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('img', { name: 'Đã hủy' }).length).toBeGreaterThan(0)
+    await waitFor(() => {
+      const iconTexts = [...container.querySelectorAll('.hm-icon')].map((el) => el.textContent)
+      expect(iconTexts).toContain('Bản nháp')
+      expect(iconTexts).toContain('Đã hủy')
+    })
   })
 
   it('creates an event for the selected day', async () => {

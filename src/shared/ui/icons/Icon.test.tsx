@@ -15,17 +15,17 @@ describe('Icon', () => {
   })
 
   it('hides a decorative icon and names a standalone one', () => {
-    const { container, getByRole } = render(
+    const { container, getByText } = render(
       <>
         <Icon name="search" />
         <Icon name="warning" label="Cảnh báo" />
       </>,
     )
-    const decorative = container.querySelector('.hm-icon')
-    expect(decorative).toHaveAttribute('aria-hidden', 'true')
-    expect(decorative).not.toHaveAttribute('role')
-    const named = getByRole('img', { name: 'Cảnh báo' })
-    expect(named).not.toHaveAttribute('aria-hidden')
+    const icons = container.querySelectorAll('.hm-icon')
+    expect(icons[0]).toHaveAttribute('aria-hidden', 'true')
+    expect(icons[0]).not.toHaveAttribute('role')
+    expect(icons[1]).not.toHaveAttribute('aria-hidden')
+    expect(getByText('Cảnh báo')).toBeInTheDocument()
   })
 
   it('has its own drawing for every name', () => {

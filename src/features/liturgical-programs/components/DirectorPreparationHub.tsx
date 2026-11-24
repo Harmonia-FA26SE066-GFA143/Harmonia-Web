@@ -54,7 +54,7 @@ function SongListReviewAlert({
   status,
   decidedAt,
   reviewNotes,
-}: Readonly<{ status?: LiturgicalProgramDetail['songListStatus']; decidedAt?: string; reviewNotes?: string }>) {
+}: Readonly<{ status: LiturgicalProgramDetail['songListStatus']; decidedAt?: string; reviewNotes?: string }>) {
   const timeSuffix = decidedAt ? ` (lúc ${decidedAt})` : ''
   if (status === 'needsRevision') {
     return (
