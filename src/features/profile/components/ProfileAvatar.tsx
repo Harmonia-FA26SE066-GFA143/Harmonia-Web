@@ -1,6 +1,6 @@
-import { DeleteOutlined, UploadOutlined, UserOutlined } from '@ant-design/icons'
 import { App, Avatar, Button, Flex, Typography, Upload } from 'antd'
 import { errorMessage } from '@/lib/api/errors'
+import { Icon } from '@/shared/ui'
 import { fileExtension } from '@/shared/utils/media'
 import { personName } from '@/shared/utils/personName'
 import { colors, spacing } from '@/styles/tokens'
@@ -61,7 +61,7 @@ export function ProfileAvatar({ profile }: Readonly<{ profile: Profile }>) {
 
   return (
     <aside aria-label="Ảnh đại diện" className="hm-profile-id">
-      <Avatar size={96} src={profile.avatarUrl} icon={<UserOutlined />} alt="" style={{ background: colors.primary, flexShrink: 0 }} />
+      <Avatar size={96} src={profile.avatarUrl} icon={<Icon name="account" />} alt="" style={{ background: colors.primary, flexShrink: 0 }} />
       {name && <p className="hm-profile-id__name">{name}</p>}
       <p className="hm-profile-id__mail">{profile.email}</p>
       <Flex gap={spacing.sm} wrap justify="center" className="hm-profile-id__actions">
@@ -73,12 +73,12 @@ export function ProfileAvatar({ profile }: Readonly<{ profile: Profile }>) {
             return false
           }}
         >
-          <Button icon={<UploadOutlined />} loading={update.isPending} disabled={busy && !update.isPending}>
+          <Button icon={<Icon name="upload" />} loading={update.isPending} disabled={busy && !update.isPending}>
             {profile.avatarUrl ? 'Đổi ảnh' : 'Tải ảnh lên'}
           </Button>
         </Upload>
         {profile.avatarUrl && (
-          <Button icon={<DeleteOutlined />} danger loading={remove.isPending} disabled={busy && !remove.isPending} onClick={handleRemove}>
+          <Button icon={<Icon name="delete" />} danger loading={remove.isPending} disabled={busy && !remove.isPending} onClick={handleRemove}>
             Xoá ảnh
           </Button>
         )}

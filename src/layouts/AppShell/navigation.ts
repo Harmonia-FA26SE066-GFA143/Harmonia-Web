@@ -1,36 +1,23 @@
-import {
-  ApartmentOutlined,
-  AppstoreOutlined,
-  AuditOutlined,
-  BarChartOutlined,
-  FileTextOutlined,
-  HistoryOutlined,
-  IdcardOutlined,
-  MessageOutlined,
-  SafetyCertificateOutlined,
-  ScheduleOutlined,
-  SettingOutlined,
-  SoundOutlined,
-  SolutionOutlined,
-  TagsOutlined,
-  TeamOutlined,
-  UnorderedListOutlined,
-  UserSwitchOutlined,
-  UsergroupAddOutlined,
-} from '@ant-design/icons'
-import type { ComponentType } from 'react'
 import { paths } from '@/app/router/paths'
 import { useWaitingRegistrationCount } from '@/features/member-registrations'
 import { usePendingSkills } from '@/features/skill-approval'
-import { AttendanceOutlined, SeasonOutlined, SheetMusicOutlined } from '@/shared/ui'
+import type { IconName } from '@/shared/ui'
+import type { ApiRoleName } from '@/lib/auth/session'
 
 /** A role workspace. Chosen from the URL prefix; it is not an authorization check. */
 export type Surface = 'priest' | 'director' | 'admin'
 
+/** Web workspace of each role. Choir Members use the mobile app, so they have none. */
+export const surfaceByRole: Partial<Record<ApiRoleName, Surface>> = {
+  Admin: 'admin',
+  ParishPriest: 'priest',
+  ChoirDirector: 'director',
+}
+
 export interface NavItem {
   path: string
   label: string
-  icon: ComponentType
+  icon: IconName
   /** How many items wait on this page, when every row of its list is waiting. A hook: called once per tab, every render. */
   useCount?: () => number | undefined
 }
@@ -58,52 +45,52 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
     label: 'Cha xứ',
     basePath: paths.priest.dashboard,
     sections: [
-      { label: 'Tổng quan', items: [{ path: paths.priest.dashboard, label: 'Tổng quan', icon: AppstoreOutlined }] },
+      { label: 'Tổng quan', items: [{ path: paths.priest.dashboard, label: 'Tổng quan', icon: 'overview' }] },
       {
         label: 'Phụng vụ & lịch',
         items: [
-          { path: paths.priest.calendar, label: 'Lịch phụng vụ', icon: SeasonOutlined },
-          { path: paths.priest.programs, label: 'Chương trình phụng vụ', icon: UnorderedListOutlined },
+          { path: paths.priest.calendar, label: 'Lịch phụng vụ', icon: 'liturgy-season' },
+          { path: paths.priest.programs, label: 'Chương trình phụng vụ', icon: 'program' },
         ],
       },
-      { label: 'Ca trưởng', items: [{ path: paths.priest.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined }] },
-      { label: 'Trao đổi', items: [{ path: paths.priest.notes, label: 'Trao đổi với Ca trưởng', icon: MessageOutlined }] },
-      { label: 'Báo cáo', items: [{ path: paths.priest.reports, label: 'Báo cáo', icon: BarChartOutlined }] },
+      { label: 'Ca trưởng', items: [{ path: paths.priest.nominations, label: 'Đề cử Ca trưởng', icon: 'nomination' }] },
+      { label: 'Trao đổi', items: [{ path: paths.priest.notes, label: 'Trao đổi với Ca trưởng', icon: 'notes' }] },
+      { label: 'Báo cáo', items: [{ path: paths.priest.reports, label: 'Báo cáo', icon: 'report' }] },
     ],
   },
   director: {
     label: 'Ca trưởng',
     basePath: paths.director.dashboard,
     sections: [
-      { label: 'Tổng quan', items: [{ path: paths.director.dashboard, label: 'Tổng quan', icon: AppstoreOutlined }] },
+      { label: 'Tổng quan', items: [{ path: paths.director.dashboard, label: 'Tổng quan', icon: 'overview' }] },
       {
         label: 'Ca viên',
         items: [
-          { path: paths.director.members, label: 'Danh sách ca viên', icon: IdcardOutlined },
-          { path: paths.director.choirs, label: 'Ca đoàn', icon: ApartmentOutlined },
-          { path: paths.director.skillApproval, label: 'Duyệt kỹ năng', icon: SafetyCertificateOutlined, useCount: usePendingSkillCount },
-          { path: paths.director.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined },
+          { path: paths.director.members, label: 'Danh sách ca viên', icon: 'choir-member' },
+          { path: paths.director.choirs, label: 'Quản lý ca đoàn', icon: 'choir' },
+          { path: paths.director.skillApproval, label: 'Duyệt kỹ năng', icon: 'skill-approval', useCount: usePendingSkillCount },
+          { path: paths.director.nominations, label: 'Đề cử Ca trưởng', icon: 'nomination' },
         ],
       },
       {
         label: 'Phụng vụ & âm nhạc',
         items: [
-          { path: paths.director.programs, label: 'Chương trình phụng vụ', icon: UnorderedListOutlined },
-          { path: paths.director.library, label: 'Kho bài hát', icon: SheetMusicOutlined },
+          { path: paths.director.programs, label: 'Chương trình phụng vụ', icon: 'program' },
+          { path: paths.director.library, label: 'Kho bài hát', icon: 'song' },
         ],
       },
       {
         label: 'Hoạt động ca đoàn',
         items: [
-          { path: paths.director.rehearsals, label: 'Lịch tập', icon: ScheduleOutlined },
-          { path: paths.director.attendance, label: 'Điểm danh', icon: AttendanceOutlined },
-          { path: paths.director.participation, label: 'Xác nhận tham gia', icon: UsergroupAddOutlined },
-          { path: paths.director.roster, label: 'Phân công', icon: TeamOutlined },
-          { path: paths.director.practice, label: 'Luyện tập', icon: SoundOutlined },
+          { path: paths.director.rehearsals, label: 'Lịch tập', icon: 'rehearsal' },
+          { path: paths.director.attendance, label: 'Điểm danh', icon: 'attendance' },
+          { path: paths.director.participation, label: 'Xác nhận tham gia', icon: 'participation' },
+          { path: paths.director.roster, label: 'Phân công', icon: 'roster' },
+          { path: paths.director.practice, label: 'Luyện tập', icon: 'practice' },
         ],
       },
-      { label: 'Trao đổi', items: [{ path: paths.director.notes, label: 'Trao đổi với Cha xứ', icon: MessageOutlined }] },
-      { label: 'Báo cáo', items: [{ path: paths.director.reports, label: 'Báo cáo ca đoàn', icon: BarChartOutlined }] },
+      { label: 'Trao đổi', items: [{ path: paths.director.notes, label: 'Trao đổi với Cha xứ', icon: 'notes' }] },
+      { label: 'Báo cáo', items: [{ path: paths.director.reports, label: 'Báo cáo ca đoàn', icon: 'report' }] },
     ],
   },
   admin: {
@@ -112,38 +99,38 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
     sections: [
       {
         label: 'Tổng quan',
-        items: [{ path: paths.admin.dashboard, label: 'Tổng quan', icon: AppstoreOutlined }],
+        items: [{ path: paths.admin.dashboard, label: 'Tổng quan', icon: 'overview' }],
       },
       {
         label: 'Người dùng',
         items: [
-          { path: paths.admin.accounts, label: 'Tài khoản', icon: TeamOutlined },
-          { path: paths.admin.memberRegistrations, label: 'Đăng ký gia nhập', icon: UsergroupAddOutlined, useCount: useWaitingRegistrationCount },
-          { path: paths.admin.roles, label: 'Vai trò & Phân quyền', icon: UserSwitchOutlined },
-          { path: paths.admin.nominations, label: 'Đề cử Ca trưởng', icon: SolutionOutlined },
+          { path: paths.admin.accounts, label: 'Tài khoản', icon: 'account' },
+          { path: paths.admin.memberRegistrations, label: 'Đăng ký gia nhập', icon: 'member-add', useCount: useWaitingRegistrationCount },
+          { path: paths.admin.roles, label: 'Vai trò & Phân quyền', icon: 'roles' },
+          { path: paths.admin.nominations, label: 'Đề cử Ca trưởng', icon: 'nomination' },
         ],
       },
       {
         label: 'Tổ chức',
-        items: [{ path: paths.admin.choirs, label: 'Ca đoàn', icon: ApartmentOutlined }],
+        items: [{ path: paths.admin.choirs, label: 'Ca đoàn', icon: 'choir' }],
       },
       {
         label: 'Danh mục',
         items: [
-          { path: paths.admin.skillCategories, label: 'Kỹ năng', icon: TagsOutlined },
-          { path: paths.admin.liturgicalCategories, label: 'Phụng vụ', icon: FileTextOutlined },
+          { path: paths.admin.skillCategories, label: 'Kỹ năng', icon: 'tag' },
+          { path: paths.admin.liturgicalCategories, label: 'Phụng vụ', icon: 'liturgy-category' },
         ],
       },
       {
         label: 'Hệ thống',
         items: [
-          { path: paths.admin.settings, label: 'Cấu hình chung', icon: SettingOutlined },
-          { path: paths.admin.activityLog, label: 'Lịch sử hoạt động', icon: HistoryOutlined },
+          { path: paths.admin.settings, label: 'Cấu hình chung', icon: 'settings' },
+          { path: paths.admin.activityLog, label: 'Lịch sử hoạt động', icon: 'history' },
         ],
       },
       {
         label: 'Báo cáo',
-        items: [{ path: paths.admin.reports, label: 'Báo cáo', icon: BarChartOutlined }],
+        items: [{ path: paths.admin.reports, label: 'Báo cáo', icon: 'report' }],
       },
     ],
   },
@@ -156,7 +143,7 @@ export const workspaceSections: NavSection[] = [
     items: (Object.keys(surfaces) as Surface[]).map((surface) => ({
       path: surfaces[surface].basePath,
       label: surfaces[surface].label,
-      icon: AuditOutlined,
+      icon: 'workspace-switch' as const,
     })),
   },
 ]

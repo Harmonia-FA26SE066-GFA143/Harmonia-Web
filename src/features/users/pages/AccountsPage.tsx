@@ -1,11 +1,10 @@
-import { UserAddOutlined } from '@ant-design/icons'
-import { App, Button, Card, Typography } from 'antd'
+import { App, Button, Card, Flex, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { CANCEL_LABEL, EmptyChoir, EmptyState, ErrorState, Icon, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { accountErrorMessage, duplicateEmailMessage, isDuplicateEmail } from '../accountErrors'
 import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
@@ -93,7 +92,7 @@ export function AccountsPage() {
         : `${accountName(account)} sẽ bị đăng xuất và không đăng nhập được cho tới khi được kích hoạt lại.`,
       okText: active ? 'Kích hoạt' : 'Ngừng hoạt động',
       okButtonProps: { danger: !active },
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       // Enter on the deactivation must not run it.
       focusable: { autoFocusButton: active ? 'ok' : 'cancel' },
       onOk: () =>
@@ -134,7 +133,7 @@ export function AccountsPage() {
   )
 
   const createButton = (
-    <Button type="primary" icon={<UserAddOutlined />} onClick={() => setForm({ open: true })}>
+    <Button type="primary" icon={<Icon name="member-add" />} onClick={() => setForm({ open: true })}>
       Tạo tài khoản
     </Button>
   )
@@ -147,7 +146,8 @@ export function AccountsPage() {
         title="Tài khoản"
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Tài khoản' }]}
         description={`${totalLine}Mật khẩu đầu tiên được gửi qua email khi tạo.`}
-        extra={createButton}
+        // The empty state carries the only primary action (SYS-06).
+        extra={accounts.data !== undefined && total === 0 && !filtered ? undefined : createButton}
       />
 
       {accounts.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách tài khoản" />}
@@ -166,8 +166,10 @@ export function AccountsPage() {
         />
       )}
       {accounts.data !== undefined && (total > 0 || filtered) && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <AccountFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
+        // The filters stand above the table card, not inside it (as on Nominations).
+        <Flex vertical gap={spacing.lg}>
+          <AccountFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} error={accounts.isError} />
+          <Card styles={{ body: { padding: 0 } }}>
           {total === 0 ? (
             <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
               <NoFilterResults onClearFilters={resetFilters} />
@@ -183,7 +185,8 @@ export function AccountsPage() {
               renderActions={renderActions}
             />
           )}
-        </Card>
+          </Card>
+        </Flex>
       )}
 
       <AccountFormDrawer
@@ -191,6 +194,7 @@ export function AccountsPage() {
         account={form.account}
         saving={create.isPending || update.isPending}
         emailError={emailError}
+        onEmailChange={() => setEmailError(undefined)}
         onSubmit={handleSubmit}
         onCancel={closeForm}
       />

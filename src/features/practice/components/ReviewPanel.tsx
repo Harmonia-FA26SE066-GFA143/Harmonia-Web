@@ -122,15 +122,23 @@ export function ReviewPanel({ submissionId, initialResult, initialComment, onDon
         <ErrorState title="Không thể tải bản thu" error={submission.error} hasData={submission.data !== undefined} onRetry={() => submission.refetch()} retrying={submission.isFetching} />
       )}
       {data && (
-        <Form<FormValues> form={form} layout="vertical" initialValues={{ result: initialResult, comment: initialComment }} onFinish={handleFinish}>
-          <Flex vertical gap={spacing.md}>
-            <div>
-              <h2 className="hm-review-panel__name">{data.memberName}</h2>
-              <Typography.Paragraph style={{ color: colors.textMuted, margin: 0 }}>
-                {data.assignmentTitle} · lần {data.attemptNo}, nộp lúc {formatDateTime(data.submittedAt)} ·{' '}
-                {formatDuration(data.durationSeconds)}
-              </Typography.Paragraph>
-            </div>
+        // Three zones: the header and the decision footer stay put, the body between them scrolls (G4: the two
+        // decision buttons stay in view at 1366×768 however long the review history is).
+        <Form<FormValues>
+          form={form}
+          layout="vertical"
+          initialValues={{ result: initialResult, comment: initialComment }}
+          onFinish={handleFinish}
+          className="hm-review-panel__form"
+        >
+          <div className="hm-review-panel__head">
+            <h2 className="hm-review-panel__name">{data.memberName}</h2>
+            <Typography.Paragraph style={{ color: colors.textMuted, margin: 0 }}>
+              {data.assignmentTitle} · lần {data.attemptNo}, nộp lúc {formatDateTime(data.submittedAt)} ·{' '}
+              {formatDuration(data.durationSeconds)}
+            </Typography.Paragraph>
+          </div>
+          <Flex vertical gap={spacing.md} className="hm-review-panel__body">
             <div className="hm-review-panel__audio">
               {/* A sung recording has no transcript; the empty captions track only marks that none exists. */}
               <audio controls src={data.audioUrl} style={{ width: '100%' }} aria-label={`Bản thu của ${data.memberName}`}>
@@ -164,7 +172,6 @@ export function ReviewPanel({ submissionId, initialResult, initialComment, onDon
                 <Input />
               </Form.Item>
             )}
-            {/* The panel's 16px gap separates it from the buttons; antd's own 24px margin would make 40. */}
             <Form.Item
               style={{ marginBottom: 0 }}
               label="Nhận xét"
@@ -181,8 +188,10 @@ export function ReviewPanel({ submissionId, initialResult, initialComment, onDon
                 }),
               ]}
             >
-              <Input.TextArea rows={4} showCount maxLength={1000} placeholder="Nhận xét và hướng dẫn cho ca viên" />
+              <Input.TextArea rows={3} showCount maxLength={1000} placeholder="Nhận xét và hướng dẫn cho ca viên" />
             </Form.Item>
+          </Flex>
+          <div className="hm-review-panel__foot">
             {decided && <output className="hm-review-panel__done hm-pop">{decided}</output>}
             {!decided && reviewed && (
               <Button type="primary" htmlType="submit" loading={saving}>
@@ -199,7 +208,7 @@ export function ReviewPanel({ submissionId, initialResult, initialComment, onDon
                 </Button>
               </Flex>
             )}
-          </Flex>
+          </div>
         </Form>
       )}
     </aside>

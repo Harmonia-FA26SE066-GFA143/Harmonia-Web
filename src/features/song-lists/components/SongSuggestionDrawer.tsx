@@ -2,8 +2,8 @@ import { Checkbox, Flex, Select, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useLookup } from '@/features/system-categories'
-import { EmptyState, ErrorState, FormDrawer, SectionSkeleton } from '@/shared/ui'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { EmptyState, ErrorState, FormDrawer, SectionSkeleton, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 import { useSongSuggestions } from '../hooks/useSongList'
 import type { SongSuggestion } from '../types'
 
@@ -47,13 +47,13 @@ export function SongSuggestionDrawer({ programId, takenBySlot, onAdd, onCancel }
   return (
     <FormDrawer
       open
-      title="Gợi ý bài hát"
+      title="Gợi ý bài theo phần"
       okText={picked.length && slot ? `Thêm ${picked.length} bài vào ${slot.name}` : 'Thêm bài hát'}
       cancelText="Hủy"
       okButtonProps={{ disabled: picked.length === 0 || !slot }}
       onOk={() => slot && onAdd(slot, available.filter((song) => picked.includes(song.songId)))}
       onCancel={onCancel}
-      size={760}
+      size={component.drawer.lg}
     >
       <Flex vertical gap={spacing.md}>
         <Flex vertical gap={4}>
@@ -61,6 +61,7 @@ export function SongSuggestionDrawer({ programId, takenBySlot, onAdd, onCancel }
             Phần phụng vụ
           </label>
           <Select
+            {...SELECT_POPUP_PROPS}
             id="suggestion-slot"
             showSearch
             optionFilterProp="label"

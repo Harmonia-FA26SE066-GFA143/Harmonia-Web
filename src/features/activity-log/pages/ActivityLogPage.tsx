@@ -1,4 +1,4 @@
-import { Card } from 'antd'
+import { Card, Flex } from 'antd'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
@@ -48,29 +48,31 @@ export function ActivityLogPage() {
         />
       )}
       {log.data !== undefined && (total > 0 || filtered) && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <ActivityFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
-          {total === 0 ? (
-            <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
-              <NoFilterResults onClearFilters={resetFilters} />
-            </div>
-          ) : (
-            <ActivityTable
-              records={log.data.items}
-              loading={log.isPlaceholderData}
-              onShowDetail={setSelected}
-              onPickUser={(user) => changeFilters({ ...filters, user })}
-              pagination={{
-                current: page,
-                pageSize,
-                total,
-                hideOnSinglePage: true,
-                showSizeChanger: false,
-                onChange: setPage,
-              }}
-            />
-          )}
-        </Card>
+        <Flex vertical gap={spacing.lg}>
+          <ActivityFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} error={log.isError} />
+          <Card styles={{ body: { padding: 0 } }}>
+            {total === 0 ? (
+              <div style={{ padding: spacing.md }}>
+                <NoFilterResults onClearFilters={resetFilters} />
+              </div>
+            ) : (
+              <ActivityTable
+                records={log.data.items}
+                loading={log.isPlaceholderData}
+                onShowDetail={setSelected}
+                onPickUser={(user) => changeFilters({ ...filters, user })}
+                pagination={{
+                  current: page,
+                  pageSize,
+                  total,
+                  hideOnSinglePage: true,
+                  showSizeChanger: false,
+                  onChange: setPage,
+                }}
+              />
+            )}
+          </Card>
+        </Flex>
       )}
 
       <ActivityDetailDrawer record={selected} onClose={() => setSelected(undefined)} />

@@ -1,10 +1,10 @@
-import { MenuOutlined } from '@ant-design/icons'
 import { Button, Drawer, Flex, Grid, Layout, Menu, type MenuProps } from 'antd'
-import { createElement, useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
-import { BrandMark, OfflineNotice } from '@/shared/ui'
+import { paths } from '@/app/router/paths'
+import { BrandMark, Icon, OfflineNotice } from '@/shared/ui'
 import { layout, sizes, spacing } from '@/styles/tokens'
-import { getSession } from '@/lib/auth/session'
+import { useSession } from '@/lib/auth/session'
 import { roleByApiName } from '@/shared/types/account'
 import { findSelectedPath, getSurface, surfaces, workspaceSections, type NavSection, type Surface } from './navigation'
 import { ChoirSwitcher } from '@/features/choirs'
@@ -26,7 +26,7 @@ function toMenuItems(sections: NavSection[]): MenuProps['items'] {
     label: section.label,
     children: section.items.map((item) => ({
       key: item.path,
-      icon: createElement(item.icon),
+      icon: <Icon name={item.icon} />,
       label: item.label,
     })),
   }))
@@ -41,15 +41,30 @@ function Brand() {
   )
 }
 
+/** Below 1024px the two-band running head no longer fits an Admin's six areas; the page list moves into a drawer. */
+const belowDesktopQuery = '(max-width: 1023px)'
+const matchesBelowDesktop = () => window.matchMedia(belowDesktopQuery).matches
+const subscribeBelowDesktop = (onChange: () => void) => {
+  const query = window.matchMedia(belowDesktopQuery)
+  query.addEventListener('change', onChange)
+  return () => query.removeEventListener('change', onChange)
+}
+
 /**
  * Authenticated application frame: the running head (areas, the area's pages, notifications, account) over the page
- * content and the workspace ground. Below the lg breakpoint (992px) the page list moves into a drawer.
+ * content and the workspace ground. Below 1024px the page list moves into a drawer.
+ *
+ * On `/change-password`, enters Focused Security Mode when the user must replace their initial password
+ * (`isPasswordChangeRequired`) or when there is no session (the confirmation after a completed change): renders only
+ * the 52px Bookcloth bar with Brand (+ a sign-out-only UserMenu while a session exists) and suppresses workspace
+ * navigation/widgets so zero forbidden background API requests fire.
  */
-export function AppShell() {
+export function AppShell({ children }: Readonly<{ children?: ReactNode }>) {
   const location = useLocation()
   const navigate = useNavigate()
   const screens = Grid.useBreakpoint()
-  const isCompact = screens.lg === false
+  const isBelowDesktop = useSyncExternalStore(subscribeBelowDesktop, matchesBelowDesktop)
+  const isCompact = screens.lg === false || isBelowDesktop
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -59,21 +74,70 @@ export function AppShell() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Role-neutral pages (Hồ sơ cá nhân) keep the signed-in user's own navigation; RoleGuard admits only these three roles.
-  const role = getSession()?.user.roleName
+  // Reactive: clearSession() after a voluntary password change switches straight to Focused Security Mode.
+  const session = useSession()
+  const role = session?.user.roleName
+  // Stay in Focused Security Mode on /change-password after clearSession() clears the session post-submit so
+  // re-renders (e.g. scroll) never drop into full workspace chrome or fire unauthenticated header queries.
+  const focusedSecurity =
+    location.pathname === paths.changePassword && (!session || Boolean(session.user.isPasswordChangeRequired))
   const ownSurface = role ? (roleByApiName[role] as string) : undefined
-  const surface =
-    getSurface(location.pathname) ?? (ownSurface && ownSurface in surfaces ? (ownSurface as Surface) : undefined)
+  const resolvedOwnSurface = ownSurface && ownSurface in surfaces ? (ownSurface as Surface) : undefined
+  // Signed-in users always keep their own role's navigation (even when landing on a 403 cross-role URL).
+  const surface = resolvedOwnSurface ?? getSurface(location.pathname)
   const sections = surface ? surfaces[surface].sections : workspaceSections
   const selectedPath = findSelectedPath(sections, location.pathname)
 
-  const controls = (
+  // After clearSession() there is nobody to sign out (logout would go out without a token); the page's own
+  // "Đăng nhập" call to action is the way back, so the bar shows only the brand.
+  const controls = focusedSecurity ? (
+    session && <UserMenu compact={screens.xl === false} focusedSecurityMode />
+  ) : (
     <>
       <TaskCenter />
       <NotificationBell />
       <UserMenu compact={screens.xl === false} />
     </>
   )
+
+  let header = (
+    <RunningHead
+      sections={sections}
+      selectedPath={selectedPath}
+      brand={<Brand />}
+      controls={controls}
+      choir={surface === 'director' ? <ChoirSwitcher /> : undefined}
+      day={<HeadDay surface={surface} />}
+      scrolled={scrolled}
+    />
+  )
+  if (focusedSecurity) {
+    header = (
+      <div className="hm-head">
+        <div className="hm-top">
+          <Brand />
+          <div className="hm-top__end">{controls}</div>
+        </div>
+      </div>
+    )
+  } else if (isCompact) {
+    header = (
+      <div className="hm-head">
+        <div className="hm-top">
+          <Button
+            className="hm-chrome-btn"
+            type="text"
+            icon={<Icon name="menu" />}
+            aria-label="Mở menu điều hướng"
+            onClick={() => setDrawerOpen(true)}
+            style={{ width: sizes.touchTarget, height: sizes.touchTarget }}
+          />
+          <Brand />
+          <div className="hm-top__end">{controls}</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -88,32 +152,7 @@ export function AppShell() {
       >
         Bỏ qua điều hướng, đến nội dung chính
       </a>
-      {isCompact ? (
-        <div className="hm-head">
-          <div className="hm-top">
-            <Button
-              className="hm-chrome-btn"
-              type="text"
-              icon={<MenuOutlined />}
-              aria-label="Mở menu điều hướng"
-              onClick={() => setDrawerOpen(true)}
-              style={{ width: sizes.touchTarget, height: sizes.touchTarget }}
-            />
-            <Brand />
-            <div className="hm-top__end">{controls}</div>
-          </div>
-        </div>
-      ) : (
-        <RunningHead
-          sections={sections}
-          selectedPath={selectedPath}
-          brand={<Brand />}
-          controls={controls}
-          choir={surface === 'director' ? <ChoirSwitcher /> : undefined}
-          day={<HeadDay surface={surface} />}
-          scrolled={scrolled}
-        />
-      )}
+      {header}
       {!isCompact && <WorkspaceGround />}
       <Content
         id="main-content"
@@ -129,13 +168,11 @@ export function AppShell() {
       >
         <div style={{ maxWidth: layout.contentMaxWidth, marginInline: 'auto' }}>
           <OfflineNotice />
-          <SystemAnnouncement />
-          <RouteStage>
-            <Outlet />
-          </RouteStage>
+          {!focusedSecurity && <SystemAnnouncement />}
+          <RouteStage>{children ?? <Outlet />}</RouteStage>
         </div>
       </Content>
-      {isCompact && (
+      {isCompact && !focusedSecurity && (
         <Drawer
           placement="left"
           open={drawerOpen}

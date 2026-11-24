@@ -109,7 +109,7 @@ describe('CreateProgramPage', () => {
     fireEvent.mouseDown(field('Ca đoàn phục vụ', 'combobox'))
     expect(screen.queryByTitle('Ca đoàn cũ')).toBeNull()
     expect(await screen.findAllByTitle('Ca đoàn Cecilia')).not.toHaveLength(0)
-    fireEvent.change(field('Tiêu đề (không bắt buộc)'), { target: { value: '  Lễ Bổn mạng ' } })
+    fireEvent.change(field('Tiêu đề'), { target: { value: '  Lễ Bổn mạng ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
     await waitFor(() =>
@@ -135,13 +135,31 @@ describe('CreateProgramPage', () => {
     vi.spyOn(eventsApi, 'createEvent').mockResolvedValue({ ...created, seasonId: 's-ot' })
     renderPage(<CreateProgramPage />, route, `${route}?date=${future}`)
 
-    expect(screen.getByText(/Để trống thì hệ thống điền mùa/)).toBeInTheDocument()
+    expect(screen.getByText(/hoặc theo khoảng ngày của danh mục mùa/)).toBeInTheDocument()
     enterTime('18:30')
     await choose('Nơi cử hành', 'Nhà thờ chính')
     await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
     fireEvent.click(screen.getByRole('button', { name: 'Lưu bản nháp' }))
 
     expect(await screen.findByText('Đã tạo bản nháp sự kiện, mùa phụng vụ được điền là Mùa Thường Niên.')).toBeInTheDocument()
+  }, FILL_FORM_TIMEOUT_MS)
+
+  it('saves a draft when the form is submitted after a refused "Tạo và công bố"', async () => {
+    const create = vi.spyOn(eventsApi, 'createEvent').mockResolvedValue(created)
+    renderPage(<CreateProgramPage />, route, `${route}?date=${future}`)
+
+    // The publish click fails validation, so it must not leave the form in publish mode.
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo và công bố' }))
+    expect(await screen.findByText('Vui lòng chọn giờ.')).toBeInTheDocument()
+    enterTime('18:30')
+    await choose('Nơi cử hành', 'Nhà thờ chính')
+    await choose('Loại Thánh lễ', 'Thánh lễ Chúa Nhật')
+    // Enter in a field submits the form without either button's click.
+    const form = document.getElementById('priest-create-event-form')
+    expect(form).not.toBeNull()
+    fireEvent.submit(form as HTMLFormElement)
+
+    await waitFor(() => expect(create.mock.calls[0]?.[0]).toMatchObject({ isPublished: false }))
   }, FILL_FORM_TIMEOUT_MS)
 
   it('explains a taken slot and keeps the entered values', async () => {
@@ -160,14 +178,14 @@ describe('CreateProgramPage', () => {
   it('asks before leaving with unsaved input', async () => {
     renderPage(<CreateProgramPage />, route)
 
-    fireEvent.change(field('Tiêu đề (không bắt buộc)'), { target: { value: 'Lễ Bổn mạng' } })
+    fireEvent.change(field('Tiêu đề'), { target: { value: 'Lễ Bổn mạng' } })
     fireEvent.click(screen.getByRole('button', { name: 'Hủy' }))
 
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText('Rời khỏi trang tạo chương trình?')).toBeInTheDocument()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Ở lại' }))
     await waitFor(() => expect(screen.queryByTestId('location')).toBeNull())
-    expect(field('Tiêu đề (không bắt buộc)')).toHaveValue('Lễ Bổn mạng')
+    expect(field('Tiêu đề')).toHaveValue('Lễ Bổn mạng')
 
     fireEvent.click(screen.getByRole('button', { name: 'Hủy' }))
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Rời khỏi trang' }))

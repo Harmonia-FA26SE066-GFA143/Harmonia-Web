@@ -1,12 +1,13 @@
-import { DownOutlined, LogoutOutlined, SwapOutlined, UserOutlined } from '@ant-design/icons'
 import { Avatar, Button, Dropdown, Flex, Typography, type MenuProps } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { SignOutModal } from '@/features/auth'
 import { useMyProfile } from '@/features/profile'
-import { getSession } from '@/lib/auth/session'
+import { useSession } from '@/lib/auth/session'
 import { roleByApiName, roleLabels } from '@/shared/types/account'
+import { Icon } from '@/shared/ui'
+import { getPopupContainer } from '@/shared/ui/popupContainer'
 import { colors, gold, spacing, spine, typography } from '@/styles/tokens'
 import { surfaces, type Surface } from './navigation'
 
@@ -14,39 +15,47 @@ import { surfaces, type Surface } from './navigation'
  * Header user menu with the signed-in user's name and role. The name comes from `GET /api/auth/me`, so it follows
  * edits on the Profile page; while that loads it falls back to the session (login answer), then to the email.
  * The workspace switch is a development aid for reviewing every role surface; it is not rendered in production builds.
+ * In `focusedSecurityMode` (forced password change), only sign-out is offered.
  */
-export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
+export function UserMenu({
+  compact = false,
+  focusedSecurityMode = false,
+}: Readonly<{ compact?: boolean; focusedSecurityMode?: boolean }>) {
   const navigate = useNavigate()
   const [confirmingSignOut, setConfirmingSignOut] = useState(false)
-  const user = getSession()?.user
-  const profile = useMyProfile()
+  const user = useSession()?.user
+  const profile = useMyProfile({ enabled: Boolean(user) && !focusedSecurityMode })
   const name = profile.data?.fullName || user?.fullName || user?.email || 'Người dùng'
   const role = user ? roleLabels[roleByApiName[user.roleName]] : 'Chưa xác định vai trò'
 
-  const items: MenuProps['items'] = [
-    { key: paths.profile, icon: <UserOutlined />, label: 'Hồ sơ cá nhân' },
-    ...(import.meta.env.DEV
-      ? [
-          { type: 'divider' as const },
-          {
-            type: 'group' as const,
-            label: 'Chuyển không gian (chỉ môi trường phát triển)',
-            children: (Object.keys(surfaces) as Surface[]).map((key) => ({
-              key: surfaces[key].basePath,
-              icon: <SwapOutlined />,
-              label: surfaces[key].label,
-            })),
-          },
-        ]
-      : []),
-    { type: 'divider' },
-    { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất' },
-  ]
+  const items: MenuProps['items'] = focusedSecurityMode
+    ? [{ key: 'logout', icon: <Icon name="logout" />, label: 'Đăng xuất' }]
+    : [
+        { key: paths.profile, icon: <Icon name="account" />, label: 'Hồ sơ cá nhân' },
+        ...(import.meta.env.DEV
+          ? [
+              { type: 'divider' as const },
+              {
+                type: 'group' as const,
+                label: 'Chuyển không gian (chỉ môi trường phát triển)',
+                children: (Object.keys(surfaces) as Surface[]).map((key) => ({
+                  key: surfaces[key].basePath,
+                  icon: <Icon name="workspace-switch" />,
+                  label: surfaces[key].label,
+                })),
+              },
+            ]
+          : []),
+        { type: 'divider' },
+        { key: 'logout', icon: <Icon name="logout" />, label: 'Đăng xuất' },
+      ]
 
   return (
     <>
       <Dropdown
         trigger={['click']}
+        placement="bottomRight"
+        getPopupContainer={getPopupContainer}
         menu={{ items, onClick: ({ key }) => (key === 'logout' ? setConfirmingSignOut(true) : navigate(key)) }}
       >
         {/* The label repeats the visible name and role (WCAG 2.5.3) so voice control and screen readers match them. */}
@@ -60,7 +69,7 @@ export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
             <Avatar
               size={32}
               src={profile.data?.avatarUrl}
-              icon={<UserOutlined />}
+              icon={<Icon name="account" />}
               alt=""
               style={{ background: gold.soft, color: colors.textPrimary }}
             />
@@ -75,7 +84,7 @@ export function UserMenu({ compact = false }: Readonly<{ compact?: boolean }>) {
                 </Typography.Text>
               </Flex>
             )}
-            <DownOutlined style={{ fontSize: 9, color: spine.text }} />
+            <Icon name="chevron-down" size="xxs" style={{ color: spine.text }} />
           </Flex>
         </Button>
       </Dropdown>

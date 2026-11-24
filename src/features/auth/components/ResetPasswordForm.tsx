@@ -15,6 +15,8 @@ export interface ResetPasswordFormProps {
   submitting?: boolean
   /** The request failed for a reason the form cannot point at (connection, server). */
   failed?: boolean
+  /** 429 RATE_LIMIT_EXCEEDED on reset-password (BE 14dabd3). */
+  rateLimited?: boolean
   /** The backend rejected the new password. */
   passwordError?: string
   /** Change form: also asks for the current password. */
@@ -29,6 +31,7 @@ export function ResetPasswordForm({
   onSubmit,
   submitting = false,
   failed = false,
+  rateLimited = false,
   passwordError,
   askCurrentPassword = false,
   currentPasswordError,
@@ -43,7 +46,7 @@ export function ResetPasswordForm({
           type="error"
           showIcon
           title={askCurrentPassword ? 'Không thể đổi mật khẩu' : 'Không thể đặt lại mật khẩu'}
-          description="Đã xảy ra lỗi khi kết nối máy chủ. Vui lòng thử lại sau giây lát."
+          description={rateLimited ? 'Bạn đã thử quá nhiều lần trong một phút. Vui lòng đợi một phút rồi thử lại.' : 'Đã xảy ra lỗi khi kết nối máy chủ. Vui lòng thử lại sau giây lát.'}
           action={
             <Button size="small" onClick={() => form.submit()}>
               Thử lại

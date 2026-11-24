@@ -1,11 +1,10 @@
-import { PlusOutlined } from '@ant-design/icons'
 import { App, Button } from 'antd'
 import { useMemo, useState } from 'react'
 import { generatePath, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { requestFailureMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { EmptySongbook, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { CardGridSkeleton, EmptySongbook, EmptyState, ErrorState, Icon, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { useNextProgram } from '@/features/liturgical-programs'
 import { useSongList } from '@/features/song-lists'
 import { useCatalogOptions } from '@/features/system-categories'
@@ -89,7 +88,7 @@ export function MusicLibraryPage() {
   }
 
   const addButton = (
-    <Button type="primary" icon={<PlusOutlined />} onClick={() => setAdding(true)}>
+    <Button type="primary" icon={<Icon name="add" />} onClick={() => setAdding(true)}>
       Thêm bài hát
     </Button>
   )
@@ -113,12 +112,15 @@ export function MusicLibraryPage() {
         onChange={changeFilters}
         onReset={resetFilters}
         resultCount={songs.data?.totalCount}
+        error={songs.isError}
       />
       <div className={`song-layout${showPeek ? ' has-peek' : ''}`}>
         <LibraryRail value={filters} onChange={changeFilters} />
         <div className="song-layout__main">
           {nextProgram && <NextMassSongs program={nextProgram} list={nextList.data} />}
-          {songs.isPending && <SectionSkeleton rows={8} label="Đang tải kho bài hát" />}
+          {/* The loading shape of the chosen view (G3-02). */}
+          {songs.isPending &&
+            (viewMode === 'grid' ? <CardGridSkeleton cards={6} label="Đang tải kho bài hát" /> : <SectionSkeleton rows={8} label="Đang tải kho bài hát" />)}
           {songs.isError && (
             <ErrorState title="Không thể tải kho bài hát" error={songs.error} hasData={songs.data !== undefined} onRetry={() => songs.refetch()} retrying={songs.isFetching} />
           )}

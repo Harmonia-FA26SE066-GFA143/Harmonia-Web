@@ -30,6 +30,22 @@ export function useRehearsal(id: string | undefined) {
   return useQuery({ queryKey: [...rehearsalsKey, 'detail', id], queryFn: () => getRehearsal(id ?? ''), enabled: Boolean(id) })
 }
 
+/**
+ * The session as an already loaded schedule list holds it, or undefined. Reads the cache only, never fetches: the
+ * detail endpoint (`MemberRehearsalDetailDto`) has no program or choir, the list (`RehearsalDto`) has both.
+ */
+export function useCachedRehearsal(id: string | undefined): Rehearsal | undefined {
+  const queryClient = useQueryClient()
+  if (!id) return undefined
+  for (const [, data] of queryClient.getQueriesData<unknown>({ queryKey: rehearsalsKey })) {
+    const list = Array.isArray(data) ? data : (data as { items?: unknown } | undefined)?.items
+    if (!Array.isArray(list)) continue
+    const found = (list as Rehearsal[]).find((item) => item.id === id)
+    if (found) return found
+  }
+  return undefined
+}
+
 /** Loads every page for a bounded week; no rehearsal is silently omitted by the paging limit. */
 export function useAllRehearsals(filters: RehearsalFilters) {
   return useQuery({

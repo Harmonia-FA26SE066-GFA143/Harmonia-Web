@@ -1,9 +1,10 @@
 import type { RouteObject } from 'react-router'
 import { paths } from '../paths'
+import { CHOIR_NAV_LABEL, CREATE_ASSIGNMENT_LABEL, PRACTICE_AREA_LABEL, PRACTICE_ROOM_TITLE, PROGRAM_NOUN } from '@/shared/ui/glossary'
 import { pageRoute } from '../pageRoute'
 
 const area = 'Ca trưởng'
-const programs = 'Chương trình phụng vụ'
+const programs = PROGRAM_NOUN
 
 /**
  * Choir Director routes (Report 1 FE-24–FE-46).
@@ -22,7 +23,7 @@ export const directorRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.director.choirs,
-    { title: 'Ca đoàn của tôi', breadcrumb: [area, 'Ca đoàn'] },
+    { title: 'Ca đoàn của tôi', breadcrumb: [area, CHOIR_NAV_LABEL] },
     async () => (await import('@/features/choirs')).DirectorChoirsPage,
   ),
   pageRoute(
@@ -33,7 +34,7 @@ export const directorRoutes: RouteObject[] = [
   // Director variants of the program list/detail feed the song-list loop, so they are built in phase 5.
   pageRoute(
     paths.director.programs,
-    { title: 'Chương trình phụng vụ', breadcrumb: [area, programs] },
+    { title: PROGRAM_NOUN, breadcrumb: [area, programs] },
     async () => (await import('@/features/liturgical-programs')).DirectorProgramListPage,
   ),
   pageRoute(
@@ -63,7 +64,7 @@ export const directorRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.director.rehearsalDetail,
-    { title: 'Chi tiết buổi tập', breadcrumb: [area, 'Lịch tập', 'Chi tiết buổi tập'] },
+    { title: PRACTICE_ROOM_TITLE, breadcrumb: [area, 'Lịch tập', PRACTICE_ROOM_TITLE] },
     async () => (await import('@/features/rehearsals')).RehearsalPracticeRoomPage,
   ),
   pageRoute(
@@ -88,12 +89,12 @@ export const directorRoutes: RouteObject[] = [
   ),
   pageRoute(
     paths.director.practice,
-    { title: 'Luyện tập', breadcrumb: [area, 'Luyện tập'] },
+    { title: PRACTICE_AREA_LABEL, breadcrumb: [area, PRACTICE_AREA_LABEL] },
     async () => (await import('@/features/practice')).PracticePage,
   ),
   pageRoute(
     paths.director.practiceNew,
-    { title: 'Giao bài tập', breadcrumb: [area, 'Luyện tập', 'Giao bài tập'] },
+    { title: CREATE_ASSIGNMENT_LABEL, breadcrumb: [area, PRACTICE_AREA_LABEL, CREATE_ASSIGNMENT_LABEL] },
     async () => (await import('@/features/practice')).AssignmentCreatePage,
   ),
   pageRoute(

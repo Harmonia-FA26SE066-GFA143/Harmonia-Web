@@ -63,6 +63,26 @@ describe('AdminReportsPage', () => {
     expect(getColumns).toHaveBeenCalledWith('participation')
   })
 
+  it('shows "Chưa có dữ liệu" in a report cell the backend left empty', async () => {
+    vi.spyOn(reportsApi, 'getReport').mockImplementation(async (kind: AdminReportKind) =>
+      kind === 'participation'
+        ? { ...empty, totalCount: 1, items: [{ id: 'm1', cells: { fullName: 'Simon Đức', confirmedCount: 3, declinedCount: '' } }] }
+        : empty,
+    )
+    vi.spyOn(reportsApi, 'getReportColumns').mockResolvedValue([
+      { key: 'fullName', title: 'Họ tên' },
+      { key: 'confirmedCount', title: 'Xác nhận' },
+      { key: 'declinedCount', title: 'Từ chối' },
+    ])
+    renderPage(<AdminReportsPage />, '/admin/reports')
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Xác nhận tham gia' }))
+    const row = (await screen.findByText('Simon Đức')).closest('tr') as HTMLElement
+    expect(within(row).getByText('Chưa có dữ liệu')).toBeInTheDocument()
+    expect(within(row).queryByText('—')).toBeNull()
+    expect(within(row).queryByText('Chưa cập nhật')).toBeNull()
+  })
+
   it('exports by liturgical season in the chosen format and saves the file', async () => {
     vi.spyOn(reportsApi, 'getReport').mockResolvedValue(empty)
     const exportReport = vi.spyOn(reportsApi, 'exportReport').mockResolvedValue(new Blob(['x']))
@@ -134,8 +154,10 @@ describe('AdminReportsPage', () => {
       expect(getReport).toHaveBeenCalledWith('rehearsalAttendance', { month: '2026-10', choirId: 'c1' }, { pageNumber: 1, pageSize: 20 }),
     )
     expect(trend).toHaveBeenCalledWith(expect.objectContaining({ fromDate: '2025-11-01', toDate: '2026-10-31', choirId: 'c1' }))
-    // A filtered view with no rows offers to clear the filters.
-    expect(await screen.findByRole('button', { name: /Xoá bộ lọc/ })).toBeInTheDocument()
+    // A filtered view with no rows offers to clear the filters (the filter bar's reset now uses the same words).
+    expect(await screen.findAllByRole('button', { name: /Xoá bộ lọc/ })).toHaveLength(2)
+    // The Admin chart keeps its own toggle.
+    expect(screen.getByRole('radio', { name: 'Bài tập' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Xuất báo cáo/ }))
     const dialog = await screen.findByRole('dialog')
@@ -214,9 +236,7 @@ describe('DirectorReportsPage', () => {
     expect(await screen.findByText('Đã xuất báo cáo.')).toBeInTheDocument()
   })
 
-  it('charts attendance by week of the chosen month, and practice on demand', async () => {
-    vi.spyOn(reportsApi, 'getReport').mockResolvedValue(empty)
-    const point = (periodStart: string, periodEnd: string, present: number) => ({
+  const point = (periodStart: string, periodEnd: string, present: number) => ({
       periodStart,
       periodEnd,
       rehearsalsRecorded: 1,
@@ -233,6 +253,20 @@ describe('DirectorReportsPage', () => {
       notSubmittedCount: 1,
       completionRate: 0.5,
     })
+  const memberPage = (items: Record<string, string | number>[], totalCount = items.length) => ({
+    ...empty,
+    totalCount,
+    totalPages: 1,
+    items: items.map(({ memberId, ...cells }) => ({ id: String(memberId), cells })),
+  })
+
+  it('locks the chart to attendance on the attendance tab, with its headlines and watch card', async () => {
+    vi.spyOn(reportsApi, 'getReport').mockImplementation(async (kind: AdminReportKind) =>
+      kind === 'rehearsalAttendance'
+        ? memberPage([{ memberId: 'm1', fullName: 'Simon Đức', presentCount: 2, lateCount: 0, excusedCount: 0, absentCount: 3 }])
+        : empty,
+    )
+    vi.spyOn(reportsApi, 'getReportColumns').mockResolvedValue([{ key: 'fullName', title: 'Họ tên' }])
     const trend = vi
       .spyOn(reportsApi, 'getActivityTrend')
       .mockResolvedValue([point('2026-10-01', '2026-10-04', 3), point('2026-10-05', '2026-10-11', 0)])
@@ -243,10 +277,95 @@ describe('DirectorReportsPage', () => {
     expect(
       await screen.findByRole('img', { name: 'Tuần 01/10 – 04/10/2026 · chuyên cần 100%: 3 có mặt, 1 đi trễ' }),
     ).toBeInTheDocument()
+    // The page tab decides the chart: no "Điểm danh | Bài tập" toggle here.
+    expect(screen.queryByRole('radio', { name: 'Bài tập' })).toBeNull()
+    // Headlines use the glossary word "Đi trễ".
+    expect(screen.getAllByText('Đi trễ').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Đi muộn')).toBeNull()
+    expect(await screen.findByText('3 vắng')).toBeInTheDocument()
+  })
 
-    fireEvent.click(screen.getByText('Bài tập'))
+  it('shows the practice chart and the practice watch on the assignment completion tab', async () => {
+    vi.spyOn(reportsApi, 'getReport').mockImplementation(async (kind: AdminReportKind) =>
+      kind === 'assignmentCompletion'
+        ? memberPage([
+            { memberId: 'm1', fullName: 'Simon Đức', assignedCount: 3, passedCount: 0, needsRevisionCount: 1, awaitingReviewCount: 0, notSubmittedCount: 2 },
+            { memberId: 'm2', fullName: 'Anna Mai', assignedCount: 2, passedCount: 0, needsRevisionCount: 0, awaitingReviewCount: 2, notSubmittedCount: 0 },
+          ])
+        : empty,
+    )
+    vi.spyOn(reportsApi, 'getReportColumns').mockResolvedValue([{ key: 'fullName', title: 'Họ tên' }])
+    vi.spyOn(reportsApi, 'getActivityTrend').mockResolvedValue([point('2026-10-01', '2026-10-04', 3)])
+    renderPage(<DirectorReportsPage />, '/director/reports', '/director/reports?tab=assignmentCompletion&by=month&date=2026-10-15')
+
     expect(
       await screen.findByRole('img', { name: 'Tuần 01/10 – 04/10/2026 · hoàn thành 50%: 1 đạt, 1 chưa nộp' }),
     ).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'Điểm danh', checked: true })).toBeNull()
+    expect(await screen.findByText('2 chưa nộp')).toBeInTheDocument()
+    // Anna has nothing missing or to redo, so she is not ranked; her recordings are counted in the reminder.
+    expect(screen.getByText(/2 bản thu đang chờ nhận xét/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Chấm bài' })).toBeInTheDocument()
+  })
+
+  it.each([
+    [[], 'Chưa có ca viên nào trong kỳ này.'],
+    [[{ assignedCount: 0, passedCount: 0, needsRevisionCount: 0, awaitingReviewCount: 0, notSubmittedCount: 0 }], 'Chưa có bài tập nào đến hạn trong kỳ này.'],
+    [[{ assignedCount: 2, passedCount: 1, needsRevisionCount: 0, awaitingReviewCount: 1, notSubmittedCount: 0 }], 'Không ca viên nào chưa nộp hoặc cần chỉnh sửa. Còn 1 bản thu đang chờ nhận xét.'],
+    [[{ assignedCount: 2, passedCount: 2, needsRevisionCount: 0, awaitingReviewCount: 0, notSubmittedCount: 0 }], 'Mọi bài tập đến hạn trong kỳ đều đã đạt.'],
+  ])('says honestly why nobody needs attention for practice (%#)', async (rows, text) => {
+    vi.spyOn(reportsApi, 'getReport').mockImplementation(async (kind: AdminReportKind) =>
+      kind === 'assignmentCompletion' ? memberPage(rows.map((row, i) => ({ memberId: `m${i}`, fullName: `Ca viên ${i}`, ...row }))) : empty,
+    )
+    vi.spyOn(reportsApi, 'getReportColumns').mockResolvedValue([{ key: 'fullName', title: 'Họ tên' }])
+    vi.spyOn(reportsApi, 'getActivityTrend').mockResolvedValue([])
+    renderPage(<DirectorReportsPage />, '/director/reports', '/director/reports?tab=assignmentCompletion&by=month&date=2026-10-15')
+
+    expect(await screen.findByText(text)).toBeInTheDocument()
+    expect(screen.queryByText(/đúng hạn/)).toBeNull()
+    // The waiting recordings are told once, never in both the reminder line and the empty state.
+    expect(screen.queryAllByText(/bản thu đang chờ nhận xét/).length).toBeLessThanOrEqual(1)
+    if (text.includes('đang chờ nhận xét')) expect(screen.getByRole('link', { name: 'Chấm bài' })).toBeInTheDocument()
+  })
+
+  it('sums participation for its headlines and watch, with an honest scope note and no attendance chart', async () => {
+    const getReport = vi.spyOn(reportsApi, 'getReport').mockImplementation(async (kind: AdminReportKind) =>
+      kind === 'participation'
+        ? memberPage(
+            [
+              { memberId: 'm1', fullName: 'Simon Đức', invitedCount: 2, confirmedCount: 1, declinedCount: 0, unsureCount: 1 },
+              { memberId: 'm2', fullName: 'Anna Mai', invitedCount: 0, confirmedCount: 3, declinedCount: 1, unsureCount: 0 },
+            ],
+            150,
+          )
+        : empty,
+    )
+    vi.spyOn(reportsApi, 'getReportColumns').mockResolvedValue([{ key: 'fullName', title: 'Họ tên' }])
+    const trend = vi.spyOn(reportsApi, 'getActivityTrend').mockResolvedValue([])
+    renderPage(<DirectorReportsPage />, '/director/reports', '/director/reports?tab=participation&by=month&date=2026-10-15')
+
+    const sent = (await screen.findByText('Lượt mời đã gửi')).closest('.ctb-figure') as HTMLElement
+    expect(within(sent).getByText('8')).toBeInTheDocument()
+    expect(within(sent).getByText('trong 2/150 ca viên')).toBeInTheDocument()
+    const rate = screen.getByText('Tỉ lệ xác nhận').closest('.ctb-figure') as HTMLElement
+    expect(within(rate).getByText('50%')).toBeInTheDocument()
+    expect(screen.getByText('Phân bố phản hồi trong kỳ')).toBeInTheDocument()
+    expect(screen.getByText('Cần quan tâm — phản hồi tham gia')).toBeInTheDocument()
+    // Most pending (unanswered + unsure) first; the line names what is missing.
+    expect(screen.getByText('2 chưa phản hồi')).toBeInTheDocument()
+    expect(screen.getByText('1 từ chối')).toBeInTheDocument()
+    expect(screen.getByText(/Xếp trong 2 ca viên đầu của 150 người trong kỳ\./)).toBeInTheDocument()
+    expect(getReport).toHaveBeenCalledWith('participation', expect.objectContaining({ fromDate: '2026-10-01' }), { pageNumber: 1, pageSize: 100 })
+    expect(trend).not.toHaveBeenCalled()
+    expect(screen.queryByText(/Theo tuần trong tháng/)).toBeNull()
+  })
+
+  it('shows "Chưa có dữ liệu" for a rate with nothing to divide by', async () => {
+    vi.spyOn(reportsApi, 'getReport').mockResolvedValue(empty)
+    vi.spyOn(reportsApi, 'getActivityTrend').mockResolvedValue([])
+    renderPage(<DirectorReportsPage />, '/director/reports', '/director/reports?by=month&date=2026-10-15')
+
+    expect(await screen.findByText('Tỉ lệ có mặt')).toBeInTheDocument()
+    expect(screen.getAllByText('Chưa có dữ liệu').length).toBeGreaterThan(0)
   })
 })

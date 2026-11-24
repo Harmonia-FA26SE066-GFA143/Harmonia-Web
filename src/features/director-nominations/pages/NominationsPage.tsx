@@ -1,11 +1,24 @@
-import { PlusOutlined } from '@ant-design/icons'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Button, Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
 import { getSession } from '@/lib/auth/session'
-import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, StatusTag } from '@/shared/ui'
+import {
+  ACTIONS_COLUMN_TITLE,
+  EmptyCell,
+  EmptyChoir,
+  EmptyState,
+  ErrorState,
+  FilterBar,
+  filterAllPlaceholder,
+  Icon,
+  NoFilterResults,
+  PageHeader,
+  SectionSkeleton,
+  SELECT_POPUP_PROPS,
+  StatusTag,
+} from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { listNominations } from '../api/nominationsApi'
 import { NominationDetailDrawer } from '../components/NominationDetailDrawer'
@@ -36,18 +49,22 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
     placeholderData: keepPreviousData,
   })
   const total = nominations.data?.totalCount ?? 0
+  const changeStatus = (value?: NominationStatus) => {
+    setStatus(value)
+    setPage(1)
+  }
   const canNominate = role === 'ChoirDirector' || role === 'ParishPriest'
   const createButton = canNominate && (
-    <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreating(true)}>Đề cử Ca trưởng</Button>
+    <Button type="primary" icon={<Icon name="add" />} onClick={() => setCreating(true)}>Đề cử Ca trưởng</Button>
   )
 
   const columns: TableColumnsType<Nomination> = [
     { key: 'member', title: 'Ca viên', render: (_, item) => <Typography.Text strong>{item.memberFullName}</Typography.Text> },
     { key: 'by', title: 'Người đề cử', render: (_, item) => item.nominatedByFullName },
-    { key: 'choir', title: 'Ca đoàn đề xuất', render: (_, item) => item.proposedChoirName ?? <Typography.Text style={{ color: colors.textMuted }}>Chưa đề xuất</Typography.Text> },
+    { key: 'choir', title: 'Ca đoàn đề xuất', render: (_, item) => item.proposedChoirName ?? <EmptyCell text="Chưa đề xuất" /> },
     { key: 'status', title: 'Trạng thái', render: (_, item) => <StatusTag color={statusColors[item.status]} mark={item.status === 'Cancelled' ? 'struck' : undefined}>{statusLabels[item.status]}</StatusTag> },
     { key: 'at', title: 'Ngày đề cử', render: (_, item) => dayjs(parseUtc(item.createdAt)).format('DD/MM/YYYY') },
-    { key: 'open', title: <span className="hm-visually-hidden">Thao tác</span>, align: 'center', width: 112, render: (_, item) => <Button type="link" onClick={() => setOpenId(item.id)} aria-label={`Xem đề cử ${item.memberFullName}`}>Xem</Button> },
+    { key: 'open', title: ACTIONS_COLUMN_TITLE, align: 'center', width: 112, render: (_, item) => <Button type="link" onClick={() => setOpenId(item.id)} aria-label={`Xem đề cử ${item.memberFullName}`}>Xem</Button> },
   ]
 
   return (
@@ -64,26 +81,26 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
         <EmptyState icon={<EmptyChoir />} title="Chưa có đề cử nào" description="Đề cử Ca trưởng sẽ xuất hiện tại đây." action={createButton || undefined} />
       )}
       {nominations.data !== undefined && (total > 0 || status) && (
-        // One sheet: the status filter with the result count, then the table (artifact NominationsPage).
-        <Card styles={{ body: { padding: 0 } }}>
-          <Flex align="center" gap={spacing.sm} wrap style={{ padding: `${spacing.sm + 4}px ${spacing.lg}px` }}>
-            <label htmlFor="nomination-status" style={{ fontSize: typography.label.fontSize, color: colors.textMuted }}>Trạng thái</label>
-            <Select
-              id="nomination-status"
-              allowClear
-              placeholder="Tất cả trạng thái"
-              style={{ width: 240 }}
-              value={status}
-              onChange={(value?: NominationStatus) => {
-                setStatus(value)
-                setPage(1)
-              }}
-              options={(Object.keys(statusLabels) as NominationStatus[]).map((value) => ({ value, label: statusLabels[value] }))}
-            />
-            <Typography.Text aria-live="polite" style={{ marginLeft: 'auto', color: colors.textMuted, fontSize: typography.label.fontSize }}>{total} đề cử</Typography.Text>
-          </Flex>
+        // The status filter with the result count, then the table (artifact NominationsPage).
+        <Flex vertical gap={spacing.lg}>
+          <FilterBar resultCount={nominations.data?.totalCount} error={nominations.isError} resultNoun="đề cử" hasActiveFilters={Boolean(status)} onReset={() => changeStatus()}>
+            <Flex align="center" gap={spacing.sm}>
+              <label htmlFor="nomination-status" style={{ fontSize: typography.label.fontSize, color: colors.textMuted, whiteSpace: 'nowrap' }}>Trạng thái</label>
+              <Select
+                {...SELECT_POPUP_PROPS}
+                id="nomination-status"
+                allowClear
+                placeholder={filterAllPlaceholder('trạng thái')}
+                style={{ minWidth: 220, width: 240, maxWidth: '100%' }}
+                value={status}
+                onChange={changeStatus}
+                options={(Object.keys(statusLabels) as NominationStatus[]).map((value) => ({ value, label: statusLabels[value] }))}
+              />
+            </Flex>
+          </FilterBar>
+          <Card styles={{ body: { padding: 0 } }}>
           {total === 0 ? (
-            <div style={{ padding: `0 ${spacing.lg}px ${spacing.lg}px` }}><NoFilterResults onClearFilters={() => setStatus(undefined)} /></div>
+            <div style={{ padding: spacing.lg }}><NoFilterResults onClearFilters={() => changeStatus()} /></div>
           ) : (
             <Table<Nomination>
               rowKey="id"
@@ -93,7 +110,8 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
               pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
             />
           )}
-        </Card>
+          </Card>
+        </Flex>
       )}
       <NominationDetailDrawer id={openId} onClose={() => setOpenId(undefined)} />
       {canNominate && <NominationFormDrawer open={creating} onClose={() => setCreating(false)} />}

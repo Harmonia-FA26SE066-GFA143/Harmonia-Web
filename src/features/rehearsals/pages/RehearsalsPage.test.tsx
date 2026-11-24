@@ -127,7 +127,12 @@ describe('RehearsalsPage', () => {
     let detail = screen.getByRole('region', { name: /^Chi tiết buổi tập/ })
     expect(within(detail).getByText('Phòng tập nhà xứ')).toBeInTheDocument()
     expect(within(detail).getByText('Con Bước Lên Bàn Thờ')).toBeInTheDocument()
+    // Numbered song rows lead to the song in the library.
+    expect(within(detail).getByRole('link', { name: 'Con Bước Lên Bàn Thờ' })).toHaveAttribute('href', '/director/library/s1')
+    expect(within(detail).getByText('1.')).toBeInTheDocument()
     expect(within(detail).getByText('Bè nam vào chậm')).toBeInTheDocument()
+    // Songs can be changed only before the session ends (REHEARSAL_ALREADY_PASSED).
+    expect(within(detail).queryAllByRole('button', { name: /^Chọn bài tập cho buổi/ })).toHaveLength(Date.parse(inWeek(2, 20)) > Date.now() ? 1 : 0)
     expect(within(detail).getByRole('link', { name: /Lễ Bổn mạng/ })).toBeInTheDocument()
     // States are words read from the times; the BE has none.
     expect(within(detail).getAllByText(/^(Sắp tới|Hôm nay|Đã qua)$/)).toHaveLength(1)
@@ -150,6 +155,21 @@ describe('RehearsalsPage', () => {
     expect(await screen.findByRole('link', { name: 'Lễ Bổn mạng' })).toBeInTheDocument()
     // An older program is not in the upcoming list: a plain link instead of its name.
     expect(screen.getByRole('link', { name: 'Xem chương trình' })).toBeInTheDocument()
+    // FilterBar: one reset button, active while a filter is on, and the result count.
+    expect(screen.getByRole('button', { name: 'Xoá bộ lọc' })).toBeEnabled()
+    expect(screen.getByText('3 buổi tập')).toBeInTheDocument()
+    // A session without songs says so in words, not a bare dash.
+    expect(screen.getAllByText('Chưa cập nhật').length).toBeGreaterThan(0)
+    expect(screen.queryByText('—')).toBeNull()
+  })
+
+  it('keeps the reset button disabled with no filter', async () => {
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(page(rehearsals))
+    renderRehearsals()
+
+    await screen.findByText('Chuẩn bị phục vụ')
+    expect(screen.getByRole('button', { name: 'Xoá bộ lọc' })).toBeDisabled()
+    expect(screen.queryByText('Đặt lại bộ lọc')).toBeNull()
   })
 
   it('edits an upcoming session only, and saves it with its time and location', async () => {
@@ -217,6 +237,9 @@ describe('RehearsalsPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Thêm buổi tập/ }))
     const dialog = await screen.findByRole('dialog')
+    // Optional fields carry no "(không bắt buộc)" suffix (G4-17); the keyboard starts in the choir field.
+    expect(within(dialog).queryByText(/không bắt buộc/)).toBeNull()
+    await waitFor(() => expect(within(dialog).getAllByRole('combobox')[0]).toHaveFocus())
     fireEvent.click(within(dialog).getByRole('button', { name: 'Lên lịch buổi tập' }))
 
     // D8: a new session belongs to one of the director's choirs; with two choirs none is preselected.
@@ -225,6 +248,16 @@ describe('RehearsalsPage', () => {
     expect(await within(dialog).findByText('Vui lòng chọn giờ bắt đầu và kết thúc.')).toBeInTheDocument()
     expect(within(dialog).queryByText(/Vui lòng (nhập|chọn) (địa điểm|chương trình)/)).toBeNull()
     expect(save).not.toHaveBeenCalled()
+
+    // A new session cannot start in the past (REHEARSAL_START_IN_PAST, BE ac4a7bb): earlier days are not offered.
+    const dateInput = within(dialog).getByPlaceholderText('Chọn ngày')
+    fireEvent.mouseDown(dateInput)
+    fireEvent.click(dateInput)
+    const today = await waitFor(() => document.querySelector('.ant-picker-cell-today') as HTMLElement)
+    expect(today).not.toBeNull()
+    expect(today).not.toHaveClass('ant-picker-cell-disabled')
+    // The cell before today, unless today opens the month.
+    if (dayjs().date() > 1) expect(today.previousElementSibling ?? today.parentElement?.previousElementSibling?.lastElementChild).toHaveClass('ant-picker-cell-disabled')
   })
 
   it('marks a joint rehearsal and leaves its attendance, edit and delete to the lead choir director', async () => {

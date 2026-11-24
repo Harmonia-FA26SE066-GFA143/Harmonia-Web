@@ -1,9 +1,9 @@
-import { ArrowRightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { generatePath, Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { massTimeLabels, massTimeOf, songListStatusLabels, type LiturgicalProgram } from '@/features/liturgical-programs'
 import type { SongList } from '@/features/song-lists'
+import { Icon } from '@/shared/ui'
 
 /**
  * The next Mass's songs by part, read from its song list (artifact SongLibraryPage, "Bài cho Lễ sắp tới"). A list not
@@ -22,7 +22,7 @@ export function NextMassSongs({ program, list }: Readonly<{ program: LiturgicalP
           {program.eventName} · {hour ? `${massTimeLabels[hour]} ` : ''}{dayjs(program.date).format('DD/MM')} {program.time} · {status}
         </span>
         <Link className="song-next__open" to={generatePath(paths.director.songListProposal, { programId: program.id })}>
-          Mở đề xuất <ArrowRightOutlined aria-hidden />
+          Mở đề xuất <Icon name="arrow-right" />
         </Link>
       </header>
       <ul className="song-next__row">

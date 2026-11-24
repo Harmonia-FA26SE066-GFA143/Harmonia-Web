@@ -1,18 +1,17 @@
-import { CheckCircleOutlined, CloseCircleOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { App, Button, Drawer, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useBackgroundTasks, type BackgroundTask } from '@/shared/tasks/BackgroundTasks'
-import { NeumeSpinner } from '@/shared/ui'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { Icon, NeumeSpinner } from '@/shared/ui'
+import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 
 const statusText: Record<BackgroundTask['status'], string> = { running: 'Đang chạy', succeeded: 'Đã xong', failed: 'Không thành công' }
 
 function StatusIcon({ status }: Readonly<{ status: BackgroundTask['status'] }>) {
   if (status === 'running') return <NeumeSpinner size={14} />
-  if (status === 'succeeded') return <CheckCircleOutlined style={{ color: 'var(--hm-success)' }} />
-  return <CloseCircleOutlined style={{ color: colors.error }} />
+  if (status === 'succeeded') return <Icon name="check-circle" style={{ color: 'var(--hm-success)' }} />
+  return <Icon name="close-circle" style={{ color: colors.error }} />
 }
 
 /**
@@ -74,11 +73,11 @@ export function TaskCenter() {
         type="text"
         aria-label={running ? `${running} tác vụ đang chạy. Mở danh sách tác vụ` : 'Mở danh sách tác vụ'}
         onClick={() => setOpen(true)}
-        icon={running ? <NeumeSpinner size={16} /> : <UnorderedListOutlined />}
+        icon={running ? <NeumeSpinner size={16} /> : <Icon name="tasks" />}
       >
         {running > 0 && <span aria-hidden>{running}</span>}
       </Button>
-      <Drawer title="Tác vụ" open={open} onClose={() => setOpen(false)} size={420}>
+      <Drawer title="Tác vụ" open={open} onClose={() => setOpen(false)} size={component.drawer.sm}>
         <Typography.Paragraph type="secondary" style={{ marginTop: 0 }}>
           Tác vụ vẫn chạy khi bạn chuyển trang. Tải lại hoặc đóng tab sẽ dừng tác vụ đang chạy.
         </Typography.Paragraph>

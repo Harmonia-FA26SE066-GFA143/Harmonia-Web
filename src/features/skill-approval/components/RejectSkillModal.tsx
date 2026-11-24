@@ -1,6 +1,6 @@
 import { Input, Modal, Typography } from 'antd'
 import type { PendingSkill } from '../types'
-import { Form } from '@/shared/ui'
+import { CANCEL_LABEL, Form } from '@/shared/ui'
 
 export interface RejectSkillModalProps {
   /** The declaration being rejected; the modal is closed without one. */
@@ -19,7 +19,7 @@ export function RejectSkillModal({ skill, saving = false, onSubmit, onCancel, af
       open={Boolean(skill)}
       title="Từ chối kỹ năng"
       okText="Từ chối"
-      cancelText="Hủy"
+      cancelText={CANCEL_LABEL}
       okButtonProps={{ htmlType: 'submit', danger: true, loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}

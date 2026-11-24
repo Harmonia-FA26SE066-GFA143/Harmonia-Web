@@ -5,7 +5,8 @@ import { vietnamToday } from '@/lib/api/dates'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { useNoteRecipients } from '../hooks/useNotes'
 import type { DirectorNoteValues } from '../types'
-import { Form, FormDrawer } from '@/shared/ui'
+import { CANCEL_LABEL, Form, FormDrawer, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { component } from '@/styles/tokens'
 
 export interface SendNoteDrawerProps {
   open: boolean
@@ -25,6 +26,7 @@ function NoteFields() {
     <>
       <Form.Item label="Gửi đến" name="toUserIds" rules={[{ required: true, message: 'Chọn ít nhất một Ca trưởng.' }]}>
         <Select
+          {...SELECT_POPUP_PROPS}
           autoFocus
           mode="multiple"
           showSearch
@@ -36,7 +38,7 @@ function NoteFields() {
         />
       </Form.Item>
       <Form.Item label="Ngày" name="noteDate" extra="Chọn ngày, sự kiện hoặc cả hai." {...dateOnlyFieldProps}>
-        <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%', maxWidth: 220 }} />
+        <DatePicker getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer} placement="bottomLeft" format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%', maxWidth: 220 }} />
       </Form.Item>
       <Form.Item
         label="Sự kiện"
@@ -52,6 +54,7 @@ function NoteFields() {
         ]}
       >
         <Select
+          {...SELECT_POPUP_PROPS}
           allowClear
           showSearch
           optionFilterProp="label"
@@ -89,7 +92,8 @@ export function SendNoteDrawer({ open, saving = false, onSubmit, onCancel }: Rea
       open={open}
       title="Gửi ghi chú cho Ca trưởng"
       okText="Gửi ghi chú"
-      cancelText="Hủy"
+      size={component.drawer.sm}
+      cancelText={CANCEL_LABEL}
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}

@@ -1,10 +1,9 @@
-import { EditOutlined, EllipsisOutlined, FilterOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
 import { Alert, Badge, Button, Calendar, Flex, Grid, Popover, Segmented, Select, Spin, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useId, useMemo, useState, type KeyboardEvent } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { ErrorState, PageHeader, SeasonChip, SectionSkeleton, visuallyHidden } from '@/shared/ui'
+import { ErrorState, Icon, PageHeader, SeasonChip, SectionSkeleton, SELECT_POPUP_PROPS, visuallyHidden } from '@/shared/ui'
 import { colors, gold, spacing, typography } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
@@ -123,7 +122,7 @@ export function ProgramCalendarPage() {
                 and the event's name keeps the cell's two lines. */}
             {event.status !== 'published' && (
               <span title={eventStatusLabels[event.status]} style={{ marginInlineEnd: 4 }}>
-                {event.status === 'draft' ? <EditOutlined aria-label={eventStatusLabels.draft} /> : <StopOutlined aria-label={eventStatusLabels.cancelled} />}
+                {event.status === 'draft' ? <Icon name="edit" label={eventStatusLabels.draft} /> : <Icon name="close-circle" label={eventStatusLabels.cancelled} />}
               </span>
             )}
             {event.time} {eventName(event)}
@@ -146,6 +145,7 @@ export function ProgramCalendarPage() {
             <Popover
               trigger="click"
               placement="bottomRight"
+              getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer}
               content={
                 <Flex vertical gap={spacing.sm} style={{ minWidth: 240 }}>
                   <SyncCalendarButton year={selected.year()} />
@@ -153,9 +153,9 @@ export function ProgramCalendarPage() {
                 </Flex>
               }
             >
-              <Button icon={<EllipsisOutlined aria-hidden />}>Thao tác khác</Button>
+              <Button icon={<Icon name="more" />}>Thao tác khác</Button>
             </Popover>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
+            <Button type="primary" icon={<Icon name="add" />} onClick={() => navigate(paths.priest.programCreate)}>
               Tạo chương trình
             </Button>
           </Flex>
@@ -174,6 +174,7 @@ export function ProgramCalendarPage() {
             <Popover
               trigger="click"
               placement="bottom"
+              getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer}
               content={
                 <Flex vertical gap={spacing.sm}>
                   <Typography.Text strong>Trạng thái chương trình</Typography.Text>
@@ -189,10 +190,11 @@ export function ProgramCalendarPage() {
                 </Flex>
               }
             >
-              <Button icon={<FilterOutlined aria-hidden />}>Bộ lọc</Button>
+              <Button icon={<Icon name="filter" />}>Bộ lọc</Button>
             </Popover>
             <Flex wrap gap={spacing.sm} style={{ marginInlineStart: 'auto' }}>
               <Select
+                {...SELECT_POPUP_PROPS}
                 aria-label="Năm"
                 value={selected.year()}
                 onChange={(year: number) => changeMonth(selected.year(year))}
@@ -200,6 +202,7 @@ export function ProgramCalendarPage() {
                 style={{ minWidth: 84 }}
               />
               <Select
+                {...SELECT_POPUP_PROPS}
                 aria-label="Tháng"
                 value={selected.month()}
                 onChange={(monthIndex: number) => changeMonth(selected.month(monthIndex))}
@@ -241,10 +244,10 @@ export function ProgramCalendarPage() {
                 <Flex component="ul" aria-label="Chú thích lịch" align="center" wrap gap={spacing.md} className="priest-calendar__key">
                   <li className={eventChip('published')}>{eventStatusLabels.published}</li>
                   <li className={eventChip('draft')}>
-                    <EditOutlined aria-hidden /> {eventStatusLabels.draft}
+                    <Icon name="edit" /> {eventStatusLabels.draft}
                   </li>
                   <li className={eventChip('cancelled')}>
-                    <StopOutlined aria-hidden /> <s>{eventStatusLabels.cancelled}</s>
+                    <Icon name="close-circle" /> <s>{eventStatusLabels.cancelled}</s>
                   </li>
                   <li>
                     <strong style={{ color: colors.textPrimary }}>Chữ đậm</strong>: ngày phụng vụ đồng bộ từ lịch trực tuyến
@@ -289,7 +292,7 @@ export function ProgramCalendarPage() {
             {selected.isBefore(dayjs(), 'day') ? (
               <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>Ngày đã qua, không tạo thêm chương trình.</Typography.Text>
             ) : (
-              <Button icon={<PlusOutlined />} onClick={createForDate}>
+              <Button icon={<Icon name="add" />} onClick={createForDate}>
                 Tạo chương trình cho ngày này
               </Button>
             )}

@@ -4,6 +4,7 @@ import { generatePath, Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate } from '@/features/liturgical-programs'
 import { isRehearsalDay, rehearsalLabel, type Rehearsal } from '@/features/rehearsals'
+import { SELECT_POPUP_PROPS } from '@/shared/ui'
 
 export interface SessionPickerProps {
   session: Rehearsal
@@ -15,6 +16,7 @@ export interface SessionPickerProps {
 export function SessionPicker({ session, sessions, onPick }: Readonly<SessionPickerProps>) {
   return (
     <Select
+      {...SELECT_POPUP_PROPS}
       aria-label="Buổi tập"
       showSearch
       optionFilterProp="label"

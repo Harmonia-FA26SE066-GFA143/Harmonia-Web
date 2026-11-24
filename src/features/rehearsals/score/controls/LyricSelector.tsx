@@ -1,5 +1,6 @@
 import { Flex, Select } from 'antd'
 import type { ReactNode } from 'react'
+import { SELECT_POPUP_PROPS } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import type { LyricPart, LyricSelection } from './useLyricSelection'
 
@@ -38,6 +39,7 @@ export function LyricSelector({
         <Field id="hm-lyric-part" label="Lời của bè">
           <Select
             id="hm-lyric-part"
+            {...SELECT_POPUP_PROPS}
             value={selection.partKey}
             onChange={onPart}
             options={parts.map((part) => ({ value: part.partKey, label: part.label }))}
@@ -49,6 +51,7 @@ export function LyricSelector({
         <Field id="hm-lyric-verse" label="Khổ lời">
           <Select
             id="hm-lyric-verse"
+            {...SELECT_POPUP_PROPS}
             value={selection.verse}
             onChange={onVerse}
             options={verses.map((verse) => ({ value: verse, label: `Khổ ${verse}` }))}

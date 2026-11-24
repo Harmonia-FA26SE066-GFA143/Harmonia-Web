@@ -1,7 +1,7 @@
-import { CaretRightFilled, PauseOutlined } from '@ant-design/icons'
 import { Button, Flex, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type WaveSurfer from 'wavesurfer.js'
+import { Icon } from '@/shared/ui'
 import { clock } from '@/shared/utils/media'
 import { colors, radius, spacing } from '@/styles/tokens'
 
@@ -91,7 +91,7 @@ export function AudioWaveform({ url, title }: Readonly<{ url: string; title: str
       <Button
         type="primary"
         shape="circle"
-        icon={playing ? <PauseOutlined /> : <CaretRightFilled />}
+        icon={playing ? <Icon name="pause" /> : <Icon name="play-solid" />}
         loading={state === 'loading'}
         onClick={toggle}
         aria-label={`${playing ? 'Tạm dừng' : 'Phát'} ${title}`}
@@ -101,7 +101,7 @@ export function AudioWaveform({ url, title }: Readonly<{ url: string; title: str
         {/* wavesurfer draws here; clicking the wave seeks, the button covers keyboard use. */}
         <div ref={container} aria-hidden style={{ display: state === 'idle' ? 'none' : 'block', minHeight: 40 }} />
       </div>
-      <Typography.Text style={{ color: colors.textMuted, fontVariantNumeric: 'tabular-nums', fontSize: 12.5, flexShrink: 0 }}>
+      <Typography.Text style={{ color: colors.textMuted, fontSize: 12.5, flexShrink: 0 }}>
         {state === 'ready' ? `${clock(time)} / ${clock(duration)}` : '–:–'}
       </Typography.Text>
     </Flex>

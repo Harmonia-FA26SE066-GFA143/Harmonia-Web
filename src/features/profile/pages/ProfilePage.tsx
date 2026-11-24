@@ -1,11 +1,10 @@
-import { KeyOutlined, LogoutOutlined } from '@ant-design/icons'
 import { App, Button, Flex } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { requestFailureMessage } from '@/lib/api/errors'
 import { SignOutModal } from '@/features/auth'
-import { ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { ErrorState, Icon, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { ProfileAvatar } from '../components/ProfileAvatar'
 import { ProfileDetails } from '../components/ProfileDetails'
@@ -37,10 +36,10 @@ export function ProfilePage() {
         title="Hồ sơ cá nhân"
         extra={
           <Flex wrap gap={spacing.sm}>
-            <Button icon={<KeyOutlined />} onClick={() => navigate(paths.changePassword)}>
+            <Button icon={<Icon name="key" />} onClick={() => navigate(paths.changePassword)}>
               Đổi mật khẩu
             </Button>
-            <Button icon={<LogoutOutlined />} onClick={() => setConfirmingSignOut(true)}>
+            <Button icon={<Icon name="logout" />} onClick={() => setConfirmingSignOut(true)}>
               Đăng xuất
             </Button>
           </Flex>

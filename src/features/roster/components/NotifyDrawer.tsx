@@ -1,7 +1,7 @@
-import { Checkbox, Flex, Typography } from 'antd'
-import { useState } from 'react'
-import { colors, spacing } from '@/styles/tokens'
-import { FormDrawer } from '@/shared/ui'
+import { Checkbox, Flex, Typography, type CheckboxRef } from 'antd'
+import { useRef, useState } from 'react'
+import { colors, component, spacing } from '@/styles/tokens'
+import { CANCEL_LABEL, FormDrawer } from '@/shared/ui'
 
 export interface NotifyDrawerProps {
   open: boolean
@@ -15,6 +15,7 @@ export interface NotifyDrawerProps {
 /** Choose the assigned members who receive the assignment notification (FE-40); all are selected by default. */
 export function NotifyDrawer({ open, members, sending = false, onSend, onCancel }: Readonly<NotifyDrawerProps>) {
   const [deselected, setDeselected] = useState<string[]>([])
+  const selectAllRef = useRef<CheckboxRef>(null)
   const selected = members.filter((member) => !deselected.includes(member.memberId)).map((member) => member.memberId)
 
   return (
@@ -22,7 +23,9 @@ export function NotifyDrawer({ open, members, sending = false, onSend, onCancel 
       open={open}
       title="Gửi thông báo phân công"
       okText={selected.length ? `Gửi cho ${selected.length} thành viên` : 'Gửi thông báo'}
-      cancelText="Hủy"
+      cancelText={CANCEL_LABEL}
+      size={component.drawer.sm}
+      initialFocusRef={selectAllRef}
       okButtonProps={{ disabled: selected.length === 0, loading: sending }}
       cancelButtonProps={{ disabled: sending }}
       onOk={() => onSend(selected)}
@@ -35,6 +38,7 @@ export function NotifyDrawer({ open, members, sending = false, onSend, onCancel 
       </Typography.Paragraph>
       <Flex vertical gap={spacing.xs}>
         <Checkbox
+          ref={selectAllRef}
           checked={selected.length === members.length}
           indeterminate={selected.length > 0 && selected.length < members.length}
           onChange={(event) => setDeselected(event.target.checked ? [] : members.map((member) => member.memberId))}

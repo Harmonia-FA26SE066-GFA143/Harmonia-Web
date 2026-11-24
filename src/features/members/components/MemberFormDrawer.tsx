@@ -1,11 +1,13 @@
-import { DatePicker, Flex, Input, Radio, Select, Typography } from 'antd'
+import { DatePicker, Flex, Input, Radio, Select, Typography, type InputRef } from 'antd'
 import type { Dayjs } from 'dayjs'
+import { useRef } from 'react'
 import { vietnamToday } from '@/lib/api/dates'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
-import { spacing } from '@/styles/tokens'
+import { colors, component, radius, spacing } from '@/styles/tokens'
 import { memberStatuses, memberStatusLabels, type MemberProfile, type MemberProfileValues } from '../types'
-import { Form, FormDrawer } from '@/shared/ui'
+import { CANCEL_LABEL, EDIT_MEMBER_ACTION, Form, FormDrawer, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { genderOptions, personName, saintNameRules } from '@/shared/utils/personName'
+import { VoicePartTags } from './SkillTags'
 
 export interface MemberFormDrawerProps {
   /** The member being edited; the drawer is closed without one. */
@@ -28,12 +30,15 @@ const notAfterToday = (message: string) => ({
  * belong to the account (the member or the Admin edits them), so they are shown read-only.
  */
 export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }: Readonly<MemberFormDrawerProps>) {
+  const firstField = useRef<InputRef>(null)
   return (
     <FormDrawer
       open={Boolean(member)}
-      title="Sửa thông tin ca viên"
+      title={EDIT_MEMBER_ACTION}
+      size={component.drawer.sm}
       okText="Lưu thay đổi"
-      cancelText="Hủy"
+      cancelText={CANCEL_LABEL}
+      initialFocusRef={firstField}
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
@@ -60,28 +65,50 @@ export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }:
       )}
     >
       {member && (
-        <Typography.Paragraph>
-          <Typography.Text strong>{personName(member.fullName, member.saintName)}</Typography.Text> · {member.email}
-        </Typography.Paragraph>
+        <section
+          aria-label="Thông tin chỉ xem"
+          style={{
+            marginBottom: spacing.lg,
+            padding: spacing.md,
+            borderRadius: radius.md,
+            background: colors.background,
+            border: `1px solid ${colors.border}`,
+          }}
+        >
+          <dl className="hm-facts">
+            <dt>Họ tên</dt>
+            <dd>{personName(member.fullName, member.saintName)}</dd>
+            <dt>Email</dt>
+            <dd>{member.email}</dd>
+            <dt>Bè (từ kỹ năng đã duyệt)</dt>
+            <dd>
+              <VoicePartTags skills={member.skills} voiceOnly showUnassigned />
+            </dd>
+          </dl>
+          <Typography.Paragraph style={{ margin: `${spacing.sm}px 0 0`, color: colors.textMuted }}>
+            Họ tên và email thuộc tài khoản (do Ca viên hoặc Quản trị viên cập nhật). Bè được xác định tự động từ kỹ năng
+            đã duyệt.
+          </Typography.Paragraph>
+        </section>
       )}
-      <Form.Item label="Tên thánh (không bắt buộc)" name="saintName" rules={saintNameRules}>
-        <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
+      <Form.Item label="Tên thánh" name="saintName" rules={saintNameRules}>
+        <Input ref={firstField} autoComplete="off" placeholder="Ví dụ: Giuse" />
       </Form.Item>
       <Form.Item label="Giới tính" name="gender">
         <Radio.Group options={genderOptions} />
       </Form.Item>
-      <Form.Item label="Số điện thoại (không bắt buộc)" name="phone" rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}>
-        <Input type="tel" autoComplete="off" />
+      <Form.Item label="Số điện thoại" name="phone" rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}>
+        <Input type="tel" autoComplete="off" placeholder="Ví dụ: 0901 234 567" />
       </Form.Item>
       <Flex gap={spacing.md} wrap>
         <Form.Item
-          label="Ngày sinh (không bắt buộc)"
+          label="Ngày sinh"
           name="dateOfBirth"
           {...dateOnlyFieldProps}
           rules={[notAfterToday('Ngày sinh không được sau hôm nay.')]}
           style={{ flex: '1 1 180px' }}
         >
-          <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" disabledDate={afterToday} style={{ width: '100%' }} />
+          <DatePicker {...SELECT_POPUP_PROPS} format="DD/MM/YYYY" placeholder="Chọn ngày" disabledDate={afterToday} style={{ width: '100%' }} />
         </Form.Item>
         <Form.Item
           label="Ngày tham gia"
@@ -93,11 +120,11 @@ export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }:
           ]}
           style={{ flex: '1 1 180px' }}
         >
-          <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" disabledDate={afterToday} style={{ width: '100%' }} />
+          <DatePicker {...SELECT_POPUP_PROPS} format="DD/MM/YYYY" placeholder="Chọn ngày" disabledDate={afterToday} style={{ width: '100%' }} />
         </Form.Item>
       </Flex>
       <Form.Item label="Trạng thái" name="status" rules={[{ required: true, message: 'Vui lòng chọn trạng thái.' }]}>
-        <Select options={memberStatuses.map((status) => ({ value: status, label: memberStatusLabels[status] }))} />
+        <Select {...SELECT_POPUP_PROPS} options={memberStatuses.map((status) => ({ value: status, label: memberStatusLabels[status] }))} />
       </Form.Item>
     </FormDrawer>
   )

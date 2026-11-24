@@ -1,5 +1,5 @@
 import { Button, Table, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
-import { colors } from '@/styles/tokens'
+import { ACTIONS_COLUMN_TITLE, EmptyCell, UNKNOWN_METRIC_LABEL } from '@/shared/ui'
 import { dateColumnKeys } from '../reportDefinitions'
 import type { ReportColumn, ReportRow } from '../types'
 
@@ -14,7 +14,7 @@ export interface ReportTableProps {
   onOpenProgram?: (programId: string) => void
 }
 
-/** Report rows rendered as returned; counts, dates and times use tabular figures; empty cells show "—". */
+/** Report rows rendered as returned; counts, dates and times use tabular figures; empty cells show `<EmptyCell text={UNKNOWN_METRIC_LABEL} />` ("Chưa có dữ liệu"). */
 export function ReportTable({ columns, rows, pagination, loading, onOpenProgram }: Readonly<ReportTableProps>) {
   const tableColumns: TableColumnsType<ReportRow> = [
     ...columns.map((column) => {
@@ -25,9 +25,9 @@ export function ReportTable({ columns, rows, pagination, loading, onOpenProgram 
         align: numeric ? ('right' as const) : undefined,
         render: (_: unknown, row: ReportRow) => {
           const value = row.cells[column.key]
-          if (value === undefined || value === '') return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
+          if (value === undefined || value === '') return <EmptyCell text={UNKNOWN_METRIC_LABEL} />
           return numeric ? (
-            <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{value}</Typography.Text>
+            <Typography.Text style={{ whiteSpace: 'nowrap' }}>{value}</Typography.Text>
           ) : (
             // Long text wraps, but never so narrow that a name breaks into single words; short values keep their width.
             <span style={{ display: 'inline-block', minWidth: String(value).length > 12 ? 100 : undefined }}>{value}</span>
@@ -39,7 +39,7 @@ export function ReportTable({ columns, rows, pagination, loading, onOpenProgram 
       ? [
           {
             key: 'program-link',
-            title: 'Thao tác',
+            title: ACTIONS_COLUMN_TITLE,
             align: 'center' as const,
             width: 112,
             render: (_: unknown, { programId, cells }: ReportRow) =>

@@ -1,8 +1,8 @@
-import { SendOutlined } from '@ant-design/icons'
-import { App, Badge, Button, Card, Flex, Typography } from 'antd'
+import { Alert, App, Badge, Button, Card, Flex, Typography } from 'antd'
+import { spacing } from '@/styles/tokens'
 import { useEffect, useState } from 'react'
 import { getSession } from '@/lib/auth/session'
-import { EmptyState, ErrorState, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, Icon, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { ChatThread } from '../components/ChatThread'
 import { SendNoteDrawer } from '../components/SendNoteDrawer'
 import {
@@ -65,8 +65,11 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
     })
   }
 
+  // Blocks only when neither list arrived; one failing beside the other still leaves people to write to.
+  const failedQuery = conversations.isError ? conversations : recipients.isError ? recipients : undefined
   const loading = conversations.isPending || recipients.isPending
-  const failed = conversations.isError ? conversations : recipients.isError ? recipients : undefined
+  const failed = !loading && !conversations.data && !recipients.data ? failedQuery : undefined
+  const partial = !loading && failedQuery !== undefined && failed === undefined
 
   return (
     <>
@@ -75,17 +78,11 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
         breadcrumb={[{ title: sender ? 'Cha xứ' : 'Ca trưởng' }, { title: 'Trao đổi' }]}
         description="Nhắn tin trực tiếp, tin mới hiện ngay không cần tải lại trang."
         extra={
-          <Flex gap={8} align="center">
-            {/* The state in words; the dot only echoes it. */}
-            <output className={`notes-live${live ? ' is-live' : ''}`}>
-              {live ? 'Đã kết nối' : 'Mất kết nối, đang thử lại'}
-            </output>
-            {sender && (
-              <Button icon={<SendOutlined />} onClick={() => setNoting(true)}>
-                Gửi ghi chú theo ngày/sự kiện
-              </Button>
-            )}
-          </Flex>
+          sender && (
+            <Button icon={<Icon name="send" />} onClick={() => setNoting(true)}>
+              Gửi ghi chú theo ngày/sự kiện
+            </Button>
+          )
         }
       />
 
@@ -99,8 +96,28 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
           description="Khi có tài khoản đang hoạt động, bạn sẽ nhắn được tại đây."
         />
       )}
+      {partial && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: spacing.md }}
+          title={
+            conversations.isError
+              ? 'Không tải được các cuộc trò chuyện cũ; danh sách có thể chưa đầy đủ.'
+              : 'Không tải được danh sách người nhận; chỉ hiện những người đã trò chuyện.'
+          }
+          action={
+            <Button size="small" onClick={() => void failedQuery?.refetch()} loading={failedQuery?.isFetching}>
+              Thử lại
+            </Button>
+          }
+        />
+      )}
       {!loading && !failed && selected && (
-        <Card styles={{ body: { padding: 0, display: 'flex', height: 'min(70vh, 640px)', minHeight: 420 } }}>
+        <Card
+          className="notes-shell-card"
+          styles={{ body: { padding: 0, display: 'flex', height: 'clamp(420px, calc(100vh - 260px), 680px)' } }}
+        >
           <nav aria-labelledby="notes-people-heading" className="notes-people hm-paper">
             <h2 id="notes-people-heading" className="hm-rubric">
               Cuộc trò chuyện
@@ -122,7 +139,19 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
             ))}
           </nav>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <ChatThread key={selected.id} partnerId={selected.id} partnerName={selected.name} selfId={selfId} />
+            <ChatThread
+              key={selected.id}
+              partnerId={selected.id}
+              partnerName={selected.name}
+              partnerSubtitle={sender ? 'Ca trưởng' : 'Cha xứ'}
+              selfId={selfId}
+              liveStatus={
+                // The state in words; the dot only echoes it. Inside the opaque chat header (G4-03).
+                <output className={`notes-live${live ? ' is-live' : ''}`}>
+                  {live ? 'Đã kết nối' : 'Mất kết nối, đang thử lại'}
+                </output>
+              }
+            />
           </div>
         </Card>
       )}

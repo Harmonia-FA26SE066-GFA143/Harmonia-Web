@@ -58,6 +58,7 @@ beforeEach(() => {
     { id: 'k-bass', name: 'Bass' },
   ])
   vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([])
+  vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([])
 })
 
 afterEach(() => {
@@ -220,6 +221,41 @@ describe('PracticePage', () => {
     expect(await screen.findByRole('complementary', { name: 'Chấm bài của Anna Đặng Thị Mai' }, { timeout: 3000 })).toBeInTheDocument()
   })
 
+  it('names the open row "Đang chấm" in words and does not switch rows when its player is used', async () => {
+    const other = submission({ id: 'sub-2', memberName: 'Anna Đặng Thị Mai' })
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission(), other]))
+    vi.spyOn(practiceApi, 'getSubmission').mockImplementation(async (id) => (id === 'sub-2' ? other : submission()))
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+    renderPractice()
+
+    await screen.findByRole('complementary', { name: 'Chấm bài của Giuse Vũ Đình Khôi' })
+    const open = screen.getByRole('button', { name: 'Chấm bài của Giuse Vũ Đình Khôi' })
+    expect(open).toHaveTextContent('Đang chấm')
+    expect(open).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByRole('button', { name: 'Chấm bài của Anna Đặng Thị Mai' })).not.toHaveAttribute('aria-current')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe bản thu của Anna Đặng Thị Mai' }))
+    expect(screen.getByRole('complementary', { name: 'Chấm bài của Giuse Vũ Đình Khôi' })).toBeInTheDocument()
+    // The decision buttons sit in the panel's fixed footer, outside the scrolling body.
+    const panel = screen.getByRole('complementary', { name: 'Chấm bài của Giuse Vũ Đình Khôi' })
+    expect(within(panel).getByRole('button', { name: 'Đạt' }).closest('.hm-review-panel__foot')).not.toBeNull()
+  })
+
+  it('lays the assignment form out as a workbench with the summary and send button beside it', async () => {
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
+    renderPractice('/director/practice/new')
+
+    const send = await screen.findByRole('button', { name: /Giao bài tập/ })
+    const summary = screen.getByRole('region', { name: 'Kiểm tra trước khi giao' }).closest('.hm-assign-summary')
+    expect(summary).not.toBeNull()
+    expect(summary).toContainElement(send)
+    expect(summary?.parentElement).toHaveClass('hm-split', 'hm-split--assign')
+    expect(screen.queryByText(/không bắt buộc/)).toBeNull()
+    // Nothing chosen yet: muted words, not a bare dash.
+    expect(within(summary as HTMLElement).getAllByText('Chưa chọn').length).toBeGreaterThan(0)
+    expect(within(summary as HTMLElement).queryByText('—')).toBeNull()
+  })
+
   it('does not send the moment mark alone as the comment when "Đạt" is chosen instead', async () => {
     vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([submission()]))
     vi.spyOn(practiceApi, 'getSubmission').mockResolvedValue(submission())
@@ -311,10 +347,10 @@ describe('PracticePage', () => {
     expect(choir).toHaveAttribute('role', 'combobox')
     expect(await screen.findByTitle('Ca đoàn Cecilia')).toBeInTheDocument()
     // Reset keeps a default that arrived after Ant Design Form read its initialValues.
-    fireEvent.click(screen.getByRole('button', { name: 'Xóa nội dung' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Xoá nội dung' }))
     expect(screen.getByTitle('Ca đoàn Cecilia')).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Tiêu đề'), { target: { value: 'Tập bài nhập lễ' } })
-    const song = screen.getByLabelText('Bài hát (không bắt buộc)')
+    const song = screen.getByLabelText('Bài hát')
     expect(song).toHaveAttribute('role', 'combobox')
     fireEvent.mouseDown(song)
     fireEvent.click(await screen.findByTitle('Con Bước Lên Bàn Thờ'))
@@ -355,7 +391,7 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(await screen.findByRole('button', { name: /Giao bài tập/ }))
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bài hát (không bắt buộc)' }))
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bài hát' }))
     fireEvent.click(await screen.findByTitle('Con Bước Lên Bàn Thờ'))
 
     for (const title of ['Bản tương tác', 'Nốt tập']) {
@@ -371,7 +407,7 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(await screen.findByRole('button', { name: /Giao bài tập/ }))
-    fireEvent.change(screen.getByRole('combobox', { name: 'Bài hát (không bắt buộc)' }), { target: { value: 'Xin Vâng' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Bài hát' }), { target: { value: 'Xin Vâng' } })
 
     await waitFor(() => expect(listSongs).toHaveBeenCalledWith({ search: 'Xin Vâng' }, { pageNumber: 1, pageSize: 50 }))
   })
@@ -395,15 +431,43 @@ describe('PracticePage', () => {
     ])
     renderPractice()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Tiến độ' }))
-    expect(await screen.findByText('Chọn một sự kiện')).toBeInTheDocument()
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Sự kiện' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Tiến độ chuẩn bị' }))
+    expect(await screen.findByText('Chọn một chương trình')).toBeInTheDocument()
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Chương trình phụng vụ' }))
     fireEvent.click(await screen.findByTitle('Lễ Chúa Nhật · 18/10/2026 08:00 · Nhà thờ chính'))
 
     expect(await screen.findByText('Maria Trần Thị Lan')).toBeInTheDocument()
     expect(progress).toHaveBeenCalledWith('ev-1')
     expect(screen.getByText('Xác nhận')).toBeInTheDocument()
     expect(screen.getByText('2/3')).toBeInTheDocument()
+    // No assignment given: a muted label instead of a bare dash, and 0/0 is not counted as "all passed".
+    expect(screen.getByText('Chưa có dữ liệu')).toBeInTheDocument()
+    const chips = screen.getByRole('status', { name: 'Tóm tắt tiến độ chuẩn bị' })
+    expect(chips).toHaveTextContent('Đã xác nhận: 1/1 đã mời')
+    expect(chips).toHaveTextContent('Chưa giao bài tập')
+    expect(chips).toHaveTextContent('Quá hạn: 0 ca viên')
+  })
+
+  it('counts readiness chips only over members invited or given assignments', async () => {
+    vi.spyOn(practiceApi, 'listSubmissions').mockResolvedValue(page([]))
+    vi.mocked(programsApi.listPrograms).mockResolvedValue(
+      programPage({ id: 'ev-1', date: '2026-10-18', time: '08:00:00', eventName: 'Lễ Chúa Nhật', locationName: 'Nhà thờ chính' }),
+    )
+    const row = { rehearsalsHeld: 0, rehearsalsAttended: 0, assignmentsOverdue: 0 }
+    vi.spyOn(practiceApi, 'listPreparationProgress').mockResolvedValue([
+      { ...row, memberId: 'm1', fullName: 'A', participationStatus: 'confirmed', assignmentsTotal: 2, assignmentsPassed: 2 },
+      { ...row, memberId: 'm2', fullName: 'B', participationStatus: 'invited', assignmentsTotal: 2, assignmentsPassed: 1, assignmentsOverdue: 1 },
+      { ...row, memberId: 'm3', fullName: 'C', assignmentsTotal: 0, assignmentsPassed: 0 },
+    ])
+    renderPractice('/director/practice?programId=ev-1')
+
+    const chips = await screen.findByRole('status', { name: 'Tóm tắt tiến độ chuẩn bị' })
+    expect(chips).toHaveTextContent('Đã xác nhận: 1/2 đã mời')
+    expect(chips).toHaveTextContent('Đạt đủ bài tập: 1/2 được giao')
+    expect(chips).toHaveTextContent('Quá hạn: 1 ca viên')
+    // The program context is a liturgy banner, not an info alert, and clears the context in place.
+    const banner = screen.getByRole('region', { name: 'Chương trình đang chọn' })
+    expect(within(banner).getByRole('button', { name: /Xem tất cả chương trình/ })).toBeInTheDocument()
   })
 
   it('lists the assignments given and opens the submissions of one', async () => {
@@ -424,7 +488,7 @@ describe('PracticePage', () => {
     const submissions = vi.spyOn(practiceApi, 'listAssignmentSubmissions').mockResolvedValue(page([submission()]))
     renderPractice()
 
-    fireEvent.click(await screen.findByRole('tab', { name: 'Bài tập' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Bài tập đã giao' }))
     expect(await screen.findByText('Tập bè Tenor')).toBeInTheDocument()
     expect(assignments).toHaveBeenCalledWith(undefined, { pageNumber: 1, pageSize: 20 })
     expect(screen.getByText('1 kỹ năng')).toBeInTheDocument()
@@ -432,6 +496,10 @@ describe('PracticePage', () => {
     expect(screen.getByText('Chương trình đã qua')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Tập bè Tenor' }))
+    // Read-only ViewDrawer (B59): 720px with a single "Đóng" footer, no edit or withdraw action.
+    const drawer = await screen.findByRole('dialog', { name: 'Chi tiết bài tập' })
+    expect(within(drawer).getAllByRole('button', { name: 'Đóng' }).length).toBeGreaterThan(0)
+    expect(within(drawer).queryByRole('button', { name: /Sửa|Xoá|Thu hồi/ })).toBeNull()
     expect(await screen.findByText('Giuse Vũ Đình Khôi')).toBeInTheDocument()
     expect(submissions).toHaveBeenCalledWith('as-1', undefined, { pageNumber: 1, pageSize: 20 })
     // The status filter comes before the status tags of the rows.

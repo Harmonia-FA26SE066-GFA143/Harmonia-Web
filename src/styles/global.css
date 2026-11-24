@@ -13,6 +13,15 @@ body,
   height: 100%;
 }
 
+/* Harmonia icons (src/shared/ui/icons). They also carry `anticon`, so Ant Design spacing and the `.anticon` rules below apply. */
+.hm-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
 body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
@@ -117,6 +126,7 @@ body {
   background: var(--hm-surface-base);
   border-radius: var(--hm-radius-lg);
   overflow: hidden;
+  max-width: 100%;
 }
 
 /* Printed column heads: ink on the parchment band, sentence case (Harmonia Design System, 2026-11-10). */
@@ -144,10 +154,6 @@ body {
   background: var(--hm-action-primary);
 }
 
-.ant-btn:not(:disabled):active {
-  transform: scale(0.99);
-}
-
 /* On the evening card's bookcloth a burgundy focus ring would vanish (1.9:1): the pale spine text instead. */
 .mass-time-dark .ant-btn.ant-btn:focus-visible {
   outline: 2px solid var(--hm-text-on-chrome);
@@ -163,13 +169,13 @@ body {
   font-weight: 600;
 }
 
-/* Hover lifts and fades are decoration: people who ask for less motion get none. */
+/* Hover lifts and fades are decoration: people who ask for less motion get none (`0s` avoids trapping @rc-component/motion offscreen). */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
     animation-iteration-count: 1 !important;
   }
 }
@@ -218,21 +224,18 @@ body {
  */
 @keyframes hm-rise {
   from {
-    opacity: 0;
     transform: translateY(6px);
   }
 }
 
 @keyframes hm-from-right {
   from {
-    opacity: 0;
     transform: translateX(16px);
   }
 }
 
 @keyframes hm-from-left {
   from {
-    opacity: 0;
     transform: translateX(-16px);
   }
 }
@@ -245,34 +248,11 @@ body {
 
 @keyframes hm-pop {
   from {
-    opacity: 0;
     transform: scale(0.8);
   }
 }
 
-/*
- * A list arriving as a list: its rows rise in turn, 40ms apart, the delay capped at 240ms (seventh row on). Table rows
- * do the same when they are inserted (first load, a new page, a new filter); a re-sort keeps its rows and stays still.
- */
-.hm-stagger > *,
-.ant-table-tbody > tr.ant-table-row {
-  animation: hm-rise var(--hm-dur-base) var(--hm-ease) backwards;
-}
-
-.hm-stagger > :nth-child(2), .ant-table-tbody > tr.ant-table-row:nth-child(2) { animation-delay: 40ms; }
-.hm-stagger > :nth-child(3), .ant-table-tbody > tr.ant-table-row:nth-child(3) { animation-delay: 80ms; }
-.hm-stagger > :nth-child(4), .ant-table-tbody > tr.ant-table-row:nth-child(4) { animation-delay: 120ms; }
-.hm-stagger > :nth-child(5), .ant-table-tbody > tr.ant-table-row:nth-child(5) { animation-delay: 160ms; }
-.hm-stagger > :nth-child(6), .ant-table-tbody > tr.ant-table-row:nth-child(6) { animation-delay: 200ms; }
-.hm-stagger > :nth-child(n + 7), .ant-table-tbody > tr.ant-table-row:nth-child(n + 7) { animation-delay: 240ms; }
-
-/* Reduced motion: the rows are there at once, without waiting out their turn. */
-@media (prefers-reduced-motion: reduce) {
-  .hm-stagger > *,
-  .ant-table-tbody > tr.ant-table-row {
-    animation: none;
-  }
-}
+/* R2.1: Table rows and list items mount immediately at opacity: 1 with zero entrance animation on re-renders. */
 
 /* The rehearsal week slides in from the side it was paged to. */
 .hm-week-next {
@@ -323,6 +303,7 @@ body {
 
   .hm-rose-spinner .hm-lobe {
     animation: none;
+    fill-opacity: 0.35;
   }
 }
 
@@ -333,13 +314,8 @@ body {
 
 /*
  * Shared motion classes (DESIGN.md "Motion").
- * hm-reveal: hidden until <Reveal> (shared/ui) adds .is-visible as it scrolls into view, then fades and rises once.
- * The animation only fills backwards, so after it ends hover transforms (hm-lift) work. --hm-delay staggers a row.
+ * hm-reveal: R2.1 — always opacity: 1 immediately, never trapped hidden waiting on IntersectionObserver.
  */
-.hm-reveal:not(.is-visible) {
-  opacity: 0;
-}
-
 .hm-reveal.is-visible {
   animation: hm-reveal-in var(--hm-dur-reveal) var(--hm-ease) var(--hm-delay, 0ms) backwards;
 }
@@ -353,8 +329,7 @@ body {
 
 @keyframes hm-reveal-in {
   from {
-    opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(10px);
   }
 }
 
@@ -362,11 +337,11 @@ body {
 .hm-lift {
   transition:
     transform var(--hm-dur-base) var(--hm-ease),
-    box-shadow var(--hm-dur-base) var(--hm-ease);
+    box-shadow var(--hm-dur-base) var(--hm-ease),
+    border-color var(--hm-dur-base) var(--hm-ease);
 }
 
-.hm-lift:focus-within,
-.hm-lift:active {
+.hm-lift:focus-within {
   transform: translateY(-2px);
   box-shadow: var(--hm-lift-shadow);
 }
@@ -379,8 +354,27 @@ body {
 }
 
 .hm-lift:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.995);
   transition-duration: var(--hm-dur-instant);
+}
+
+/* Tactile button & table-row transitions without layout shift or opacity hiding (R2.1). */
+.ant-btn:not(:disabled) {
+  transition:
+    transform var(--hm-dur-fast) var(--hm-ease),
+    background-color var(--hm-dur-fast) var(--hm-ease),
+    border-color var(--hm-dur-fast) var(--hm-ease),
+    color var(--hm-dur-fast) var(--hm-ease),
+    box-shadow var(--hm-dur-fast) var(--hm-ease);
+}
+
+.ant-btn:not(:disabled):active {
+  transform: translateY(1px);
+  transition-duration: var(--hm-dur-instant);
+}
+
+.ant-table-tbody > tr.ant-table-row > td {
+  transition: background-color var(--hm-dur-fast) var(--hm-ease);
 }
 
 /* hm-glow: a gentle colour wash on hover or focus; the text keeps its colour. */
@@ -414,7 +408,55 @@ body {
   height: 100%;
 }
 
-/* The type scale stops at 600; `<strong>` (antd Typography `strong`) would otherwise take the browser's 700. */
+/* SYS-07 & G4-17: Flush-right drawer close button, left title, sticky opaque footer, and 24px body bottom clearance. */
+.ant-drawer-header-title {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ant-drawer-close {
+  margin-inline-end: 0;
+}
+
+.ant-drawer-body {
+  padding-bottom: 24px;
+  scroll-padding-bottom: 24px;
+}
+
+.ant-drawer-footer {
+  background: var(--hm-surface-base);
+  border-top: 1px solid var(--hm-border-default);
+  padding: 12px 24px;
+}
+
+/* G2-14: Non-resizable TextAreas with bottom clearance when showCount is enabled. */
+textarea.ant-input {
+  resize: none;
+}
+
+.ant-form-item:has(.ant-input-textarea-show-count) {
+  margin-bottom: 20px;
+}
+
+/* G4-04: Segmented control sits in a visible track sized to its items rather than stretching across the row. */
+.ant-segmented {
+  width: fit-content;
+  background: var(--hm-surface-band);
+  border: 1px solid var(--hm-border-strong);
+  padding: 3px;
+  border-radius: var(--hm-radius-md);
+}
+
+/* G1-13: UserMenu group labels visibly subordinate to interactive menu items. */
+.ant-dropdown .ant-dropdown-menu-item-group-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--hm-text-muted);
+}
+
 strong,
 b {
   font-weight: 600;
@@ -441,10 +483,8 @@ textarea {
 
 .practice-room-layout .practice-room-player {
   padding: 24px;
-}
-
-.practice-room-layout .practice-room-player {
   min-width: 0;
+  transition: box-shadow var(--hm-dur-base) var(--hm-ease), border-color var(--hm-dur-base) var(--hm-ease);
 }
 
 .practice-room-controls {
@@ -453,15 +493,135 @@ textarea {
   border-block: 1px solid var(--hm-border-default);
 }
 
-.ant-typography.practice-room-note {
-  margin: 0;
-}
-
 .practice-room-field {
   display: grid;
   gap: 8px;
   min-width: min(360px, 100%);
 }
+
+.practice-room-field:has(.ant-segmented) {
+  min-width: 0;
+}
+
+/* G4-04: the voice-part bar keeps its own width and never stretches across the console. */
+.practice-room-parts.ant-segmented {
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.practice-room-song-select {
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 420px;
+}
+
+.practice-room-song-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  color: var(--hm-action-primary);
+  font-weight: 500;
+  transition: color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.practice-room-song-link:hover {
+  color: var(--hm-text-primary);
+}
+
+.practice-room-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+.practice-room-meta > span + span:not(.practice-room-meta-note)::before {
+  content: '·';
+  margin-right: 10px;
+  color: var(--hm-border-control);
+}
+
+.practice-room-meta-note {
+  flex-basis: 100%;
+  color: var(--hm-text-body);
+}
+
+.practice-room-status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  min-width: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--hm-border-hairline);
+  color: var(--hm-text-muted);
+}
+
+.practice-room-status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.practice-room-status-item:first-child {
+  color: var(--hm-text-primary);
+  font-weight: 500;
+}
+
+.practice-room-drawer-context {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.practice-room-playback-state {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: 999px;
+  color: var(--hm-focus-muted, var(--hm-text-muted));
+  font-size: 13px;
+  white-space: nowrap;
+  transition: border-color var(--hm-dur-base) var(--hm-ease), color var(--hm-dur-base) var(--hm-ease);
+}
+
+.practice-room-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hm-border-control);
+}
+
+.practice-room-playback-state[data-state='playing'] {
+  border-color: var(--hm-action-primary);
+  color: var(--hm-action-primary);
+}
+
+.practice-room-playback-state[data-state='playing'] .practice-room-live-dot {
+  background: var(--hm-action-primary);
+  animation: practice-room-pulse 1.2s var(--hm-ease) infinite;
+}
+
+.practice-room-playback-state[data-state='ready'] .practice-room-live-dot {
+  background: var(--hm-gilt);
+}
+
+@keyframes practice-room-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.6); }
+}
+
+.practice-room-layout .practice-room-player:focus-within {
+  box-shadow: var(--hm-shadow-md);
+}
+
+/* Reduced motion: the global rule (top of this file) sets every transition and animation to 0s. */
 
 .karaoke-lyrics {
   min-height: 180px;
@@ -569,7 +729,7 @@ textarea {
   height: var(--hm-header-height);
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
   padding: 0 24px;
   background: var(--hm-surface-chrome);
   border-bottom: 1px solid var(--hm-gilt);
@@ -577,9 +737,10 @@ textarea {
 
 .hm-brand {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 24px;
+  font-weight: 700;
+  font-size: 20px;
   line-height: 1;
+  letter-spacing: -0.02em;
   color: var(--hm-text-on-brand);
   view-transition-name: hm-brand;
 }
@@ -614,7 +775,7 @@ textarea {
 
 .hm-pill {
   top: 0;
-  height: var(--hm-control-compact);
+  height: 36px;
   border-radius: var(--hm-radius-md);
   background: var(--hm-surface-chrome-selected);
 }
@@ -634,7 +795,7 @@ textarea {
 .hm-area {
   position: relative;
   flex: none;
-  height: var(--hm-control-compact);
+  height: 36px;
   padding: 0 12px;
   display: flex;
   align-items: center;
@@ -684,6 +845,8 @@ textarea {
 .hm-sub {
   height: var(--hm-subnav-height);
   display: flex;
+  align-items: center;
+  gap: 16px;
   padding: 0 24px;
   background: var(--hm-surface-reading);
   border-bottom: 1px solid var(--hm-border-default);
@@ -707,6 +870,9 @@ textarea {
 }
 
 .hm-tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
   align-items: stretch;
 }
 
@@ -723,28 +889,20 @@ textarea {
   mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
 }
 
+/* Measured at its true width (RunningHead `mark`): never shrinks below its tabs. */
 .hm-tabs__list {
+  flex: 0 0 auto;
   display: flex;
   align-items: stretch;
-  gap: 2px;
-}
-
-.hm-tabs__list.in-from-right > .hm-tab {
-  animation: hm-tab-in-right 260ms var(--hm-ease) both;
-  animation-delay: calc(40ms + var(--k, 0) * 30ms);
-}
-
-.hm-tabs__list.in-from-left > .hm-tab {
-  animation: hm-tab-in-left 260ms var(--hm-ease) both;
-  animation-delay: calc(40ms + var(--k, 0) * 30ms);
+  gap: 16px;
 }
 
 @keyframes hm-tab-in-right {
-  from { opacity: 0; transform: translateX(14px); }
+  from { transform: translateX(8px); }
 }
 
 @keyframes hm-tab-in-left {
-  from { opacity: 0; transform: translateX(-14px); }
+  from { transform: translateX(-8px); }
 }
 
 .hm-underline {
@@ -757,7 +915,7 @@ textarea {
   flex: none;
   display: flex;
   align-items: center;
-  padding: 0 12px;
+  padding: 0 4px;
   color: var(--hm-text-body);
   font-weight: 500;
   white-space: nowrap;
@@ -791,7 +949,6 @@ textarea {
   font-weight: 600;
   line-height: 20px;
   text-align: center;
-  font-variant-numeric: tabular-nums;
   /* A waiting count breathes once when it appears (DESIGN "Motion"). */
   animation: hm-attention-once 1200ms var(--hm-ease-in-out) 200ms;
 }
@@ -835,14 +992,14 @@ textarea {
 }
 
 @keyframes hm-neume {
-  from { opacity: 0; transform: translateY(-5px); }
+  from { transform: translateY(-5px); }
 }
 
 @keyframes hm-rise-small {
-  from { opacity: 0; transform: translateY(4px); }
+  from { transform: translateY(4px); }
 }
 
-/* The workspace ground: fixed under the running head, decoration only, faded in once. */
+/* The workspace ground: fixed under the running head, decoration only. */
 .hm-ground {
   position: fixed;
   left: 0;
@@ -853,11 +1010,13 @@ textarea {
   height: calc(100% - var(--hm-header-height) - var(--hm-subnav-height));
   pointer-events: none;
   z-index: 0;
-  animation: hm-ground-in var(--hm-dur-entrance) var(--hm-ease) both;
+  opacity: 0.35;
 }
 
-@keyframes hm-ground-in {
-  from { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .hm-ground {
+    animation: none;
+  }
 }
 
 .hm-ground__rose {
@@ -889,7 +1048,8 @@ textarea {
  * letters, so the name still reads above it. One staged scene: the name rises, then the window.
  */
 .landing-hero {
-  --name: min(25vw, 380px);
+  /* Be Vietnam Pro sets "Harmonia" about 4.7em wide (Cormorant was 3.9em): 18vw keeps it inside the viewport. */
+  --name: min(18vw, 280px);
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -908,10 +1068,10 @@ textarea {
   text-align: center;
   white-space: nowrap;
   font-family: var(--hm-font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--name);
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   color: var(--hm-text-on-media);
   pointer-events: none;
   animation: landing-rise var(--hm-dur-reveal) var(--hm-ease) both;
@@ -1014,7 +1174,13 @@ textarea {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
   gap: 24px;
-  align-items: start;
+  /* G1-11: the two sheets of a pair stand the same height. */
+  align-items: stretch;
+}
+
+.dash-pair > .hm-sheet-section {
+  display: flex;
+  flex-direction: column;
 }
 
 .dash-aside {
@@ -1066,7 +1232,7 @@ textarea {
   color: var(--hm-text-muted);
 }
 
-/* A date as the songbook prints it: the day in the display serif over a small label. */
+/* A date as the songbook prints it: the day in the display weight over a small label. */
 .hm-date {
   display: flex;
   flex-direction: column;
@@ -1077,8 +1243,9 @@ textarea {
 
 .hm-date b {
   font-family: var(--hm-font-display);
-  font-size: 26px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
@@ -1091,7 +1258,6 @@ textarea {
 
 .week-list,
 .upcoming-strip,
-.next-mass__signals,
 .next-mass__shortages {
   margin: 0;
   padding: 0;
@@ -1126,6 +1292,15 @@ textarea {
   color: var(--hm-text-muted);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* G1-11: a rehearsal's place and songs wrap to two lines before they are cut. */
+.week-list__meta {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.4;
+  white-space: normal;
 }
 
 .upcoming-strip {
@@ -1323,9 +1498,10 @@ textarea {
 .next-mass__name {
   margin: 2px 0;
   font-family: var(--hm-font-display);
-  font-size: 26px;
-  font-weight: 600;
-  line-height: 1.15;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: -0.02em;
   color: var(--hm-text-on-brand);
 }
 
@@ -1338,17 +1514,6 @@ textarea {
 
 .next-mass__body .hm-rubric {
   margin: 0;
-}
-
-.next-mass__signals li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 0;
-  border-top: 1px solid var(--hm-border-default);
-  font-size: 13px;
-  color: var(--hm-text-primary);
 }
 
 /* Each signal states its value in words; the mark only echoes it. */
@@ -1397,9 +1562,130 @@ textarea {
   color: var(--hm-area-roster-ink);
 }
 
-.ant-typography.next-mass__ready {
+.next-mass__ready {
   color: var(--hm-area-rehearsal-ink);
   font-weight: 500;
+}
+
+/* The five preparation steps on one rule (Signature Screen #1): a marker per step, its name leading to its page. */
+.prep-timeline {
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.prep-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  padding-bottom: 14px;
+}
+
+/* The rule joins the markers; it stops at the last step. */
+.prep-step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  bottom: 0;
+  left: 13.5px;
+  border-left: 1px solid var(--hm-border-default);
+}
+
+.prep-step__marker {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--hm-border-control);
+  border-radius: 50%;
+  background: var(--hm-surface-base);
+  font-size: 14px;
+  color: var(--hm-text-muted);
+}
+
+.prep-step.is-todo .prep-step__marker {
+  border-style: dashed;
+}
+
+.prep-step.is-progress .prep-step__marker {
+  border-color: var(--hm-text-body);
+  color: var(--hm-text-body);
+}
+
+.prep-step.is-waiting .prep-step__marker {
+  border-color: var(--hm-area-attention-border);
+  background: var(--hm-area-attention-tint);
+  color: var(--hm-area-attention-ink);
+}
+
+.prep-step.is-done .prep-step__marker {
+  border-color: var(--hm-area-rehearsal-border);
+  background: var(--hm-area-rehearsal-tint);
+  color: var(--hm-area-rehearsal-ink);
+}
+
+.prep-step__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.prep-step__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.prep-step__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-text-primary);
+}
+
+.prep-step__arrow {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.prep-step__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.prep-step__due.is-overdue {
+  font-weight: 600;
+  color: var(--hm-area-attention-ink);
+}
+
+.prep-step__link {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .prep-step__marker,
+  .prep-step__arrow {
+    transition: transform var(--hm-dur-fast) var(--hm-ease), opacity var(--hm-dur-fast) var(--hm-ease);
+  }
+
+  .prep-step:has(.prep-step__title:hover, .prep-step__title:focus-visible) .prep-step__marker {
+    transform: scale(1.08);
+  }
+
+  .prep-step__title:hover .prep-step__arrow,
+  .prep-step__title:focus-visible .prep-step__arrow {
+    transform: translateX(3px);
+    opacity: 1;
+  }
 }
 
 .next-mass__more {
@@ -1475,9 +1761,10 @@ textarea {
 
 .ordo-day {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 36px;
-  line-height: 1;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-action-primary);
 }
@@ -1485,9 +1772,10 @@ textarea {
 .ordo-name {
   display: block;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 1.2;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   font-variant-numeric: lining-nums;
 }
 
@@ -1535,9 +1823,10 @@ textarea {
 .ordo-count {
   display: block;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 72px;
-  line-height: 0.95;
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-action-primary);
 }
@@ -1646,21 +1935,22 @@ textarea {
 }
 
 .song-index__number {
-  font-family: var(--hm-font-display);
+  font-family: var(--hm-font-ui);
   font-weight: 600;
-  font-size: 22px;
+  font-size: 14px;
   line-height: 1;
   text-align: right;
   font-variant-numeric: lining-nums;
-  color: var(--hm-text-muted);
+  color: var(--hm-text-body);
   transition: color var(--hm-dur-fast) var(--hm-ease);
 }
 
 .song-index__title {
   font-family: var(--hm-font-display);
   font-weight: 600;
-  font-size: 24px;
-  line-height: 1.2;
+  font-size: 18px;
+  line-height: 1.32;
+  letter-spacing: -0.01em;
   font-variant-numeric: lining-nums;
   overflow-wrap: anywhere;
   color: var(--hm-text-primary);
@@ -1731,9 +2021,10 @@ textarea {
 .ant-typography.landing-story__heading {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 56px;
-  line-height: 1.06;
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
@@ -1760,9 +2051,10 @@ textarea {
 
 .landing-chapter__numeral {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 44px;
-  line-height: 1;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   color: var(--hm-text-muted);
   transition: color var(--hm-dur-base) var(--hm-ease);
 }
@@ -1770,9 +2062,10 @@ textarea {
 .landing-chapter__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 44px;
-  line-height: 1.1;
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
   color: var(--hm-text-muted);
   transition: color var(--hm-dur-base) var(--hm-ease);
 }
@@ -1843,9 +2136,10 @@ textarea {
 .landing-sheet__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 30px;
-  line-height: 1.15;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-text-primary);
 }
 
@@ -1885,21 +2179,29 @@ textarea {
 .landing-sheet__song {
   font-family: var(--hm-font-display);
   font-weight: 600;
-  font-size: 20px;
+  font-size: 16px;
   color: var(--hm-text-primary);
   white-space: nowrap;
 }
 
 .landing-sheet__in {
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity var(--hm-dur-base) var(--hm-ease), transform var(--hm-dur-base) var(--hm-ease);
+  opacity: 1;
+  transform: none;
+  transition: transform var(--hm-dur-base) var(--hm-ease);
   transition-delay: calc(var(--k, 0) * 60ms);
 }
 
 .landing-sheet__in.is-in {
   opacity: 1;
   transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-sheet__in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 .landing-sheet__note {
@@ -1921,9 +2223,10 @@ textarea {
   min-height: 32px;
   margin: 24px 0 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 26px;
-  line-height: 1.2;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-action-primary);
 }
 
@@ -1964,12 +2267,13 @@ textarea {
   display: block;
 }
 
-/* Status pages: the code set in the display serif. */
+/* Status pages: the code set large in the display weight. */
 .ant-result .ant-result-title {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 56px;
-  line-height: 1.1;
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
 }
 
@@ -2017,7 +2321,6 @@ textarea {
 
 @keyframes hm-pop-in {
   from {
-    opacity: 0;
     transform: scale(0.97);
   }
 }
@@ -2081,6 +2384,7 @@ textarea {
 /* SummaryStrip: counts in one sheet, equal columns split by 1px rules, a label over a serif figure. */
 .hm-summary {
   display: grid;
+  grid-template-columns: repeat(var(--hm-summary-cols, 4), minmax(0, 1fr));
   margin: 0;
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-lg);
@@ -2114,9 +2418,10 @@ textarea {
 
 .hm-summary__figure {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 32px;
-  line-height: 1.1;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
@@ -2197,9 +2502,10 @@ textarea {
 .hm-preview__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 28px;
-  line-height: 1.15;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-text-primary);
 }
 
@@ -2228,6 +2534,19 @@ textarea {
 
 .hm-table-pick .ant-table-tbody > tr.is-picked > td {
   background: var(--hm-surface-selected);
+}
+
+/* The review queue opens a row by its action button only (a click on the player must not switch rows). */
+.hm-review-queue .ant-table-tbody > tr {
+  cursor: default;
+}
+
+/* G3-08: seven columns beside the 360px preview; 10px sides (not 16) leave each fixed-width column room for its text. */
+/* The Director's program list only (EventTable and SubmissionTable share .hm-table-pick); `.ant-table-wrapper` raises
+   the selector above Ant Design's own runtime cell rule. */
+.ct-program-table.ant-table-wrapper .ant-table-thead > tr > th,
+.ct-program-table.ant-table-wrapper .ant-table-tbody > tr > td {
+  padding-inline: 10px;
 }
 
 /* Lịch tập: the week as seven columns (artifact RehearsalsPage). */
@@ -2260,15 +2579,17 @@ textarea {
   padding: 8px 12px;
   background: var(--hm-surface-band);
   border-bottom: 1px solid var(--hm-border-default);
-  color: var(--hm-text-muted);
-  font-size: 12px;
+  color: var(--hm-text-body);
+  font-size: 13px;
   font-weight: 600;
 }
 
+/* Be Vietnam Pro, not the display serif: Cormorant's old-style numerals read thin and uneven at this size. */
 .hm-week__head b {
-  font-family: var(--hm-font-display);
-  font-size: 24px;
-  line-height: 1;
+  font-family: var(--hm-font-ui);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
   color: var(--hm-text-primary);
   font-variant-numeric: lining-nums;
 }
@@ -2387,8 +2708,8 @@ textarea {
 
 .hm-roster-count {
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 20px;
+  font-weight: 700;
+  font-size: 18px;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
@@ -2405,18 +2726,61 @@ textarea {
 .hm-review-panel {
   position: sticky;
   top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--hm-header-height) - var(--hm-subnav-height) - 32px);
+  padding: 18px 20px;
   background: var(--hm-surface-base);
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-lg);
 }
 
+/* Header and decision footer fixed, the body between them scrolls: the decision stays above the fold. */
+.hm-review-panel__form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.hm-review-panel__head {
+  flex: none;
+  margin-bottom: 12px;
+}
+
+.hm-review-panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hm-review-panel__foot {
+  flex: none;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hm-border-default);
+  background: var(--hm-surface-base);
+}
+
+/*
+ * Short screens (1366×768): unscrolled, the panel starts ~326px down (head, page header, tabs, filters), so it is held
+ * to 100vh − 340px for its decision footer to end above the fold (≤ 756px); the body scrolls inside.
+ */
+@media (min-width: 1100px) and (max-height: 820px) {
+  .hm-review-panel {
+    max-height: calc(100vh - 340px);
+    padding: 14px 18px;
+  }
+}
+
 .hm-review-panel__name {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 28px;
-  line-height: 1.15;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
 }
 
 .hm-review-panel__audio {
@@ -2438,7 +2802,72 @@ textarea {
 
 /* Giao bài tập: form sections beside a sticky summary (artifact AssignPracticePage). */
 .hm-split--assign {
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+
+/* Practice: the program the page is narrowed to, in the liturgy area's colours (not an info alert). */
+.hm-context-banner {
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  background: var(--hm-surface-reading);
+  border: 1px solid var(--hm-area-liturgy-border);
+  border-radius: var(--hm-radius-md);
+}
+
+.hm-context-banner > .ant-typography::before {
+  content: '';
+  display: inline-block;
+  margin-inline-end: 8px;
+  vertical-align: middle;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hm-area-liturgy-ink);
+}
+
+/* Tiến độ chuẩn bị: three summary chips beside the program picker. */
+.hm-progress-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hm-progress-chips > span {
+  padding: 4px 12px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: 999px;
+  background: var(--hm-surface-base);
+  font-size: 13px;
+}
+
+.hm-progress-chips > span.is-warning {
+  border-color: var(--hm-area-attention-ink);
+  color: var(--hm-area-attention-ink);
+}
+
+/* Two fields side by side in a form section (DOM order = reading order). */
+.hm-form-row-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 16px;
+}
+
+@media (max-width: 767px) {
+  .hm-form-row-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* G4-18: the review and the send button stay in view while the form scrolls. */
+.hm-assign-summary {
+  position: sticky;
+  top: calc(var(--hm-header-height) + var(--hm-subnav-height) + 16px);
+  align-self: start;
+}
+
+.ant-card.hm-assign-summary {
+  background-color: var(--hm-surface-reading);
+  border-top: 1px solid var(--hm-gilt);
 }
 
 .hm-form-section {
@@ -2449,7 +2878,7 @@ textarea {
 
 .hm-facts {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: 118px minmax(0, 1fr);
   gap: 8px 12px;
   margin: 0;
 }
@@ -2540,20 +2969,33 @@ textarea {
 .hm-head-day {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
+  flex-shrink: 0;
+  max-width: 260px;
   margin-left: auto;
-  padding-left: 16px;
+  padding-left: 0;
   white-space: nowrap;
   min-width: 0;
 }
 
 .hm-head-day__mass {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
+  padding: 3px 10px;
+  border-radius: var(--hm-radius-sm);
+  background: var(--hm-surface-base);
+  border: 1px solid var(--hm-border-default);
   color: var(--hm-text-primary);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: border-color var(--hm-dur-fast) var(--hm-ease), color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.hm-head-day__mass:hover {
+  border-color: var(--hm-action-primary);
+  color: var(--hm-action-primary);
 }
 
 .hm-head-day__mass:hover .hm-head-day__name {
@@ -2576,23 +3018,6 @@ textarea {
 .hm-head-day__hour {
   color: var(--hm-gilt-ink);
   font-weight: 600;
-}
-
-/* Between the desktop and drawer breakpoints, keep every page tab whole. The contextual day stays useful but gives
-   its label and wide event name up before the navigation is masked through the middle of its last word. */
-@media (max-width: 1199px) and (min-width: 992px) {
-  .hm-head-day {
-    gap: 8px;
-    padding-left: 8px;
-  }
-
-  .hm-head-day__label {
-    display: none;
-  }
-
-  .hm-head-day__name {
-    max-width: 168px;
-  }
 }
 
 /* Kho bài hát (artifact SongLibraryPage): quick filters, the grid of score pages, and the quick look. */
@@ -2761,8 +3186,35 @@ a.song-next__item:hover {
   list-style-type: '';
 }
 
+/* Rail + quick look leave ~790px at 1366–1440: three even cards, not four narrow ones (G3-15). */
+.song-layout.has-peek .song-cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (min-width: 1680px) {
+  .song-layout.has-peek .song-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .song-cards > li {
   display: flex;
+}
+
+/* "Bộ lọc khác": equal columns (G3-10/16). :not([hidden]) so the closed panel stays hidden. */
+.song-filter-panel__grid:not([hidden]) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1099px) {
+  .song-filter-panel__grid:not([hidden]) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.song-filter-panel__grid .ant-select {
+  width: 100%;
 }
 
 .song-cards__pager {
@@ -2819,13 +3271,14 @@ a.song-next__item:hover {
   position: absolute;
   left: 8px;
   bottom: 6px;
-  padding: 2px 8px 0;
+  padding: 2px 8px;
+  border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-sm);
   background: var(--hm-surface-reading);
-  font-family: var(--hm-font-display);
-  font-size: 24px;
+  font-family: var(--hm-font-ui);
+  font-size: 13px;
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.4;
   color: var(--hm-action-primary);
 }
 
@@ -2918,9 +3371,10 @@ a.song-next__item:hover {
 .song-peek__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-text-primary);
 }
 
@@ -2962,6 +3416,109 @@ a.song-next__item:hover {
   color: var(--hm-text-muted);
 }
 
+/* The quick look's actions wrap inside 340px instead of clipping. */
+.song-peek__body .ant-btn {
+  max-width: 100%;
+  white-space: normal;
+  height: auto;
+  min-height: 32px;
+}
+
+/* Nơi bài hát được dùng: four groups, each from a Choir Director endpoint. */
+.song-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.song-usage__title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-text-primary);
+}
+
+.song-usage__line,
+.song-usage__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--hm-text-body);
+}
+
+.song-usage__empty {
+  color: var(--hm-text-muted);
+}
+
+.song-usage__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style-type: '';
+}
+
+.song-usage__item,
+.song-usage__next {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-sm);
+  background: var(--hm-surface-base);
+  font-size: 13px;
+  color: var(--hm-text-primary);
+  transition: border-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.song-usage__item > span:not(.song-usage__arrow),
+.song-usage__item small,
+.song-usage__next > *:not(.song-usage__arrow) {
+  grid-column: 1;
+  overflow-wrap: anywhere;
+}
+
+.song-usage__item small,
+.song-usage__next > span:not(.song-usage__arrow) {
+  font-size: 12px;
+  color: var(--hm-text-muted);
+}
+
+.song-usage__item > .song-usage__arrow,
+.song-usage__next > .song-usage__arrow {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  align-self: center;
+  justify-self: end;
+  color: var(--hm-action-primary);
+}
+
+.song-usage__next {
+  background: var(--hm-surface-reading);
+  border-top-color: var(--hm-gilt);
+}
+
+.song-usage__next .ant-tag {
+  justify-self: start;
+}
+
+a.song-usage__item:hover,
+a.song-usage__next:hover {
+  border-color: var(--hm-action-primary);
+  color: var(--hm-text-primary);
+}
+
+.song-usage__assign {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
 /* Staff divider (artifact Patterns): two short staves round a small rose; at most one per reading page. */
 .hm-staff-divider {
   display: block;
@@ -2983,8 +3540,10 @@ a.song-next__item:hover {
 .hm-choir {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-right: 16px;
+  gap: 6px;
+  max-width: 210px;
+  flex-shrink: 0;
+  margin-right: 0;
   padding-right: 16px;
   border-right: 1px solid var(--hm-border-default);
   font-size: 13px;
@@ -2992,22 +3551,85 @@ a.song-next__item:hover {
 }
 
 .hm-choir__label {
+  flex-shrink: 0;
   font-size: 12px;
   color: var(--hm-text-muted);
 }
 
 .hm-choir__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: 600;
   color: var(--hm-text-primary);
 }
 
 .hm-choir__select.ant-select {
-  min-width: 140px;
+  min-width: 0;
+  max-width: 145px;
   font-weight: 600;
 }
 
 .hm-choir__select.ant-select .ant-select-selection-item {
   color: var(--hm-text-primary);
+}
+
+/* Running head from 1024 to 1279px (below 1024 the page list is a drawer, AppShell): both bands tighten so a
+   Director's five tabs and an Admin's six areas stay whole. After the .hm-choir and .hm-head-day rules, so it wins. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .hm-top,
+  .hm-sub {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .hm-area {
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .hm-pill__bar {
+    left: 10px;
+    right: 10px;
+  }
+
+  .hm-tabs__list {
+    gap: 12px;
+  }
+
+  .hm-choir {
+    max-width: 184px;
+    padding-right: 12px;
+  }
+
+  .hm-head-day {
+    max-width: 220px;
+  }
+}
+
+/* The day gives up its label and long event name before any page tab is cut. */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .hm-head-day__label {
+    display: none;
+  }
+
+  .hm-head-day__name {
+    max-width: 168px;
+  }
+}
+
+/* The choir's name and its full-name tooltip stay; the "Ca đoàn:" prefix gives its room to the tabs. */
+@media (min-width: 1024px) and (max-width: 1120px) {
+  .hm-choir__label {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .hm-top {
+    padding: 0 16px;
+    gap: 12px;
+  }
 }
 
 /*
@@ -3118,8 +3740,10 @@ a.song-next__item:hover {
 .ant-typography.priest-calendar__month {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
 }
 
@@ -3238,7 +3862,41 @@ a.song-next__item:hover {
 }
 
 .notes-live.is-live {
-  color: var(--hm-status-success-ink, var(--hm-text-body));
+  color: var(--hm-success, var(--hm-text-body));
+}
+
+/* G4-02, G4-03, G4-12: Opaque conversation header, date dividers, and 24px bottom viewport clearance. */
+.notes-shell-card {
+  margin-bottom: 24px;
+}
+
+.chat-header {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--hm-surface-base);
+  border-bottom: 1px solid var(--hm-border-default);
+}
+
+.chat-date-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--hm-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.chat-date-divider::before,
+.chat-date-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--hm-border-default);
 }
 
 /*
@@ -3341,7 +3999,8 @@ a.song-next__item:hover {
 /* Sign-in frame (artifact AuthPages): the landing hero held still, its arched window of light opened to hold the
    form. The name sits behind the window's crown; a long form lengthens the window and the page scrolls. */
 .hm-auth {
-  --name: 220px;
+  /* Be Vietnam Pro sets "Harmonia" about 4.7em wide: this keeps it inside a 1024px window. */
+  --name: min(180px, 16vw);
   position: fixed;
   inset: 0;
   overflow-y: auto;
@@ -3383,10 +4042,10 @@ a.song-next__item:hover {
   text-align: center;
   white-space: nowrap;
   font-family: var(--hm-font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--name);
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   color: var(--hm-text-on-media);
   pointer-events: none;
 }
@@ -3405,8 +4064,9 @@ a.song-next__item:hover {
   margin: 0;
   font-family: var(--hm-font-display);
   font-weight: 600;
-  font-size: 32px;
-  line-height: 1.15;
+  font-size: 24px;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
   color: var(--hm-text-on-media);
 }
 
@@ -3449,9 +4109,10 @@ a.song-next__item:hover {
 h1.ant-typography.hm-auth__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 40px;
-  line-height: 1.08;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
   text-align: center;
   text-wrap: balance;
   color: var(--hm-text-on-media);
@@ -3558,6 +4219,53 @@ h1.ant-typography.hm-auth__title {
   gap: 0 16px;
 }
 
+@media (max-width: 575px) {
+  .hm-auth__pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The required mark on the dark window. */
+.hm-auth__window .ant-form-item-required::before {
+  color: var(--hm-gilt) !important;
+}
+
+/* Compact window (join form): same 480px column, less air, so the submit button ends above a 768px fold. */
+.hm-auth--compact {
+  /* A smaller name and a shorter first row lift the crown (~157px → ~105px top at 1366×768). */
+  --name: min(140px, 13vw);
+  grid-template-rows: calc(20px + var(--name) * 0.48) max-content;
+  padding-block: 16px;
+}
+
+.hm-auth--compact .hm-auth__name {
+  top: 18px;
+}
+
+.hm-auth--compact .hm-auth__window {
+  /* Also minus the 2 × 16px padding-block: the window bottom-aligns its content (safe flex-end), so a taller window
+     would push the submit button past the fold and the frame past 100vh. */
+  min-height: calc(100vh - 32px - 20px - var(--name) * 0.48);
+}
+
+.hm-auth--compact .hm-auth__body {
+  /* Still clears the 240px crown. */
+  padding: 72px 32px 20px;
+}
+
+.hm-auth--compact h1.ant-typography.hm-auth__title {
+  font-size: 28px;
+  text-wrap: balance;
+}
+
+.hm-auth--compact .hm-auth__content {
+  margin-top: 16px;
+}
+
+.hm-auth--compact .ant-form-item {
+  margin-bottom: 10px;
+}
+
 /*
  * Landing and sign-in are one scene (owner 2026-11-15: "liền mạch"). Moving between them, the browser morphs the
  * mark, the name and the arched window (React Router viewTransition): signing in, the window rises and grows to hold
@@ -3632,11 +4340,24 @@ h1.ant-typography.hm-auth__title {
 /* Status pages (404, 403, render error): the brand top left, one reading leaf in the middle. */
 .hm-status {
   position: relative;
+  box-sizing: border-box;
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 96px 32px;
   background: var(--hm-surface-page);
+}
+
+.hm-status--in-shell {
+  min-height: auto;
+  padding: 48px 16px;
+  background: transparent;
+}
+
+@media (max-height: 820px) {
+  .hm-status:not(.hm-status--in-shell) {
+    padding-block: 48px;
+  }
 }
 
 .hm-status__brand {
@@ -3677,9 +4398,10 @@ h1.ant-typography.hm-auth__title {
 h1.ant-typography.hm-status__title {
   margin: 4px 0 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 40px;
-  line-height: 1.1;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
 }
 
 .ant-typography.hm-status__lead {
@@ -3697,9 +4419,9 @@ h1.ant-typography.hm-status__title {
 /* Profile: identity card on a reading surface beside the details sheet. */
 .hm-profile {
   display: grid;
-  grid-template-columns: 320px minmax(0, 720px);
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
 }
 
 .hm-profile-id {
@@ -3781,7 +4503,16 @@ h1.ant-typography.hm-status__title {
 }
 
 .hm-profile-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
   max-width: 720px;
+}
+
+@media (max-width: 767px) {
+  .hm-profile-form__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Shared key/value rhythm for detail drawers and read-only identity panels. */
@@ -3844,7 +4575,7 @@ h1.ant-typography.hm-status__title {
 .landing-close__window {
   box-sizing: border-box;
   align-self: end;
-  width: 480px;
+  width: min(480px, calc(100% - 32px));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3859,9 +4590,10 @@ h1.ant-typography.hm-status__title {
 h2.ant-typography.landing-close__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-weight: 600;
-  font-size: 40px;
-  line-height: 1.08;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
   text-wrap: balance;
   color: var(--hm-text-on-media);
 }
@@ -3928,6 +4660,11 @@ h2.ant-typography.landing-close__title {
   gap: 8px;
 }
 
+/* BrandMark renders a <div>, not an <svg>: keep the mark full size while the words wrap. */
+.landing-close__brand > :first-child {
+  flex-shrink: 0;
+}
+
 .landing-close :focus-visible {
   outline: 2px solid var(--hm-text-on-media);
   outline-offset: 2px;
@@ -3962,6 +4699,40 @@ html[data-door='close'] .landing-close__window {
 
 .hm-sheet-section.ct-reading {
   background-color: var(--hm-surface-reading);
+}
+
+/* G3-07: the 2×2 preparation hub ends with room under its card feet; nothing sets a height on the column. */
+.ct-detail .ct-main {
+  padding-bottom: 24px;
+}
+
+/*
+ * G3-03: the sticky preview of the program list keeps its due line and buttons reachable at 1366×768: taller than the
+ * window, it scrolls inside itself instead of hiding its foot below the fold.
+ */
+.ct-program-preview {
+  max-height: calc(100vh - var(--hm-header-height) - var(--hm-subnav-height) - 32px);
+  overflow-y: auto;
+}
+
+/* Signature #3: a 3px hairline in the day's liturgical colour under the program head, only when the calendar gives one (B64). */
+.hm-mass-host.ct-season-ribbon {
+  border-bottom: 3px solid var(--hm-season-ribbon);
+}
+
+/* The parts of the Mass lift a little under the pointer; the readiness marks stay where they are. */
+.ct-order__item {
+  transition: background-color 160ms ease;
+}
+
+.ct-order__item:hover {
+  background-color: color-mix(in srgb, var(--hm-gilt) 6%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-order__item {
+    transition: none;
+  }
 }
 
 .ct-reading__body,
@@ -4001,6 +4772,14 @@ html[data-door='close'] .landing-close__window {
   white-space: pre-line;
 }
 
+.ct-facts__para {
+  margin: 0;
+}
+
+.ct-facts__para + .ct-facts__para {
+  margin-top: 8px;
+}
+
 .ct-facts__none {
   font-weight: 400;
   color: var(--hm-text-muted);
@@ -4028,9 +4807,10 @@ html[data-door='close'] .landing-close__window {
 .ct-choir__name {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-size: 26px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-text-primary);
 }
 
@@ -4051,9 +4831,10 @@ html[data-door='close'] .landing-close__window {
 
 .ct-waiting b {
   font-family: var(--hm-font-display);
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
@@ -4102,7 +4883,6 @@ html[data-door='close'] .landing-close__window {
   margin-inline-start: auto;
   color: var(--hm-text-muted);
   font-size: 13px;
-  font-variant-numeric: tabular-nums;
 }
 
 .ctb-today.hm-today-band {
@@ -4151,9 +4931,10 @@ html[data-door='close'] .landing-close__window {
 .ctb-detail__title {
   margin: 0;
   font-family: var(--hm-font-display);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.25;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
   color: var(--hm-text-primary);
 }
 
@@ -4176,34 +4957,71 @@ html[data-door='close'] .landing-close__window {
   color: var(--hm-text-muted);
 }
 
+/* Numbered song rows: an aligned Be Vietnam Pro index instead of the browser's serif ::marker. */
 .ctb-songs {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin: 0;
-  padding-inline-start: 20px;
+  padding: 0;
+  list-style: none;
 }
 
-.ctb-songs li::marker {
-  font-family: var(--hm-font-display);
+.ctb-songs li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: baseline;
+}
+
+.ctb-songs__index {
+  min-width: 24px;
+  font-family: var(--hm-font-ui);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--hm-text-muted);
+  font-variant-numeric: lining-nums;
+  color: var(--hm-text-primary);
 }
 
-.ctb-songs b {
+.ctb-songs__title {
   display: block;
   font-weight: 600;
 }
 
-.ctb-songs span {
+.ctb-songs__note {
   display: block;
-  color: var(--hm-text-muted);
+  margin-top: 4px;
+  padding-inline-start: 8px;
+  border-inline-start: 2px solid var(--hm-area-rehearsal-border);
+  color: var(--hm-text-body);
   font-size: 13px;
+}
+
+.ctb-songs--compact {
+  gap: 4px;
+}
+
+.ctb-songs--compact .ctb-songs__index {
+  font-size: 13px;
+}
+
+.ctb-detail__head {
+  margin-bottom: 8px;
+}
+
+.ctb-detail__head .hm-rubric {
+  margin: 0;
+}
+
+.ctb-songs-field__label {
+  color: var(--hm-text-primary);
 }
 
 /* Xác nhận tham gia: the answers' strip on the head's right. */
 .ctb-head-strip {
-  min-width: 480px;
+  min-width: min(480px, 100%);
+  width: 100%;
+  max-width: 560px;
 }
 
 /* Luyện tập: the review queue's size beside its tab label. */
@@ -4216,7 +5034,6 @@ html[data-door='close'] .landing-close__window {
   color: var(--hm-area-attention-ink);
   font-size: 12px;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
 }
 
 /* Báo cáo: four headline figures on reading cards, then the chart beside the watch list. */
@@ -4244,9 +5061,10 @@ html[data-door='close'] .landing-close__window {
 
 .ctb-figure b {
   font-family: var(--hm-font-display);
-  font-size: 44px;
-  font-weight: 600;
+  font-size: 36px;
+  font-weight: 700;
   line-height: 1.1;
+  letter-spacing: -0.02em;
   font-variant-numeric: lining-nums;
   color: var(--hm-text-primary);
 }
@@ -4371,4 +5189,287 @@ html[data-door='close'] .landing-close__window {
 .khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
   color: var(--hm-text-primary);
   font-weight: 600;
+}
+
+/*
+ * Responsive layout, 1920 down to 768px (M5-4b, owner 2026-11-23). Last in the file, so each rule bends the base rule
+ * it names without raising specificity. The page never scrolls sideways: a grid that cannot fit stacks, a table
+ * scrolls inside its own card, a drawer is never wider than the window. `clip` (not `hidden`) keeps sticky heads.
+ */
+html,
+body {
+  overflow-x: clip;
+}
+
+.ant-table-wrapper .ant-table-content {
+  overflow-x: auto;
+}
+
+.ant-drawer .ant-drawer-content-wrapper {
+  max-width: 100vw;
+}
+
+/* A filter control may shrink to the bar's width, never push past it. */
+.hm-filter-bar > * {
+  max-width: 100%;
+}
+
+/* Side columns narrow before they stack, so the list keeps its width. */
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .hm-split {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+
+  .hm-split.hm-split--review {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+
+  .hm-split.hm-split--assign {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+@media (max-width: 1279px) {
+  .song-layout.has-peek {
+    grid-template-columns: 180px minmax(0, 1fr) 300px;
+  }
+
+  .song-layout.has-peek .song-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1199px) {
+  .ct-choirs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Two roles a row; the second row takes a rule on top, the third role none on its start. */
+  .admin-roles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-roles > li:nth-child(odd) {
+    border-inline-start: 0;
+  }
+
+  .admin-roles > li:nth-child(n + 3) {
+    border-top: 1px solid var(--hm-border-default);
+  }
+}
+
+/* Below 1100px a side panel follows its list instead of sitting beside it. */
+@media (max-width: 1099px) {
+  .hm-split,
+  .hm-split.hm-split--review,
+  .hm-split.hm-split--assign,
+  .hm-split.priest-review,
+  .hm-split.priest-calendar__split,
+  .hm-split.priest-create {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hm-preview,
+  .hm-review-panel,
+  .hm-assign-summary,
+  .ct-program-preview {
+    position: static;
+    max-height: none;
+  }
+
+  .ct-detail .ct-main {
+    padding-bottom: 0;
+  }
+
+  .song-layout,
+  .song-layout.has-peek {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .song-rail,
+  .song-peek {
+    position: static;
+  }
+
+  /* The quick filters become one wrapping strip of chips above the list. */
+  .song-rail__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .song-rail__item {
+    width: auto;
+    gap: 8px;
+  }
+
+  .song-index__materials {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .ctb-figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .upcoming-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .upcoming-strip > li:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .upcoming-strip > li:nth-child(n + 3) {
+    border-top: 1px solid var(--hm-border-default);
+  }
+
+  /* The week reads as two columns of day cards instead of seven cramped ones. */
+  .hm-week {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hm-week__day {
+    min-height: 132px;
+    border-bottom: 1px solid var(--hm-border-default);
+  }
+
+  .hm-week__day:nth-child(odd) {
+    border-inline-start: 0;
+  }
+
+  .hm-week__day:nth-child(even) {
+    border-inline-start: 1px solid var(--hm-border-default);
+  }
+
+  .hm-rehearsal-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ctb-detail > div + div {
+    padding-inline-start: 0;
+    padding-top: 24px;
+    border-inline-start: 0;
+    border-top: 1px solid var(--hm-border-default);
+  }
+
+  .ctb-head-strip {
+    min-width: 0;
+  }
+
+  .ctb-report-split,
+  .priest-lede,
+  .admin-settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-settings__aside {
+    position: static;
+  }
+
+  /* Trao đổi: the people above the conversation. */
+  .ant-card-body:has(> .notes-people) {
+    flex-direction: column;
+  }
+
+  .notes-people {
+    width: 100%;
+    max-height: 240px;
+    border-right: 0;
+    border-bottom: 1px solid var(--hm-border-default);
+  }
+
+  /* Sign-in: one column, the window full width; the verse gives its place to the form. */
+  .hm-auth {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 24px;
+  }
+
+  .hm-auth__window {
+    grid-column: 1;
+    width: min(480px, 100%);
+    justify-self: center;
+  }
+
+  .hm-auth__verse {
+    display: none;
+  }
+}
+
+@media (max-width: 991px) {
+  .hm-profile {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 959px) {
+  .hm-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hm-summary__cell:nth-child(odd) {
+    border-inline-start: 0;
+  }
+
+  .hm-summary__cell:nth-child(n + 3) {
+    border-top: 1px solid var(--hm-border-default);
+  }
+}
+
+@media (max-width: 767px) {
+  .ct-choirs,
+  .song-console,
+  .song-filter-panel__grid:not([hidden]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .song-layout.has-peek .song-cards {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  /* The materials move under the title, so a short line never crushes it. */
+  .song-index .song-index__row {
+    grid-template-columns: 44px 44px minmax(0, 1fr) 16px;
+    padding-inline: 16px;
+  }
+
+  .song-index__materials {
+    grid-column: 3 / 4;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+
+  .hm-profile-list > div {
+    grid-template-columns: 136px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .upcoming-strip,
+  .ctb-figures,
+  .admin-roles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .upcoming-strip > li + li,
+  .admin-roles > li + li {
+    border-inline-start: 0;
+    border-left: 0;
+    border-top: 1px solid var(--hm-border-default);
+  }
+}
+
+@media (max-width: 575px) {
+  .hm-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hm-summary__cell + .hm-summary__cell {
+    border-inline-start: 0;
+    border-top: 1px solid var(--hm-border-default);
+  }
 }

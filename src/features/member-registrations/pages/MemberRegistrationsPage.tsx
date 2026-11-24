@@ -1,6 +1,5 @@
-import { SearchOutlined } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, App, Avatar, Button, Card, Descriptions, Drawer, Flex, Form, Input, Modal, Table, Typography, type TableColumnsType } from 'antd'
+import { Alert, App, Avatar, Button, Card, Descriptions, Flex, Input, Modal, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -9,17 +8,30 @@ import { parseUtc } from '@/lib/api/dates'
 import { errorMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { genderLabel, nameInitial, personName } from '@/shared/utils/personName'
-import { EmptyChoir, EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton, StatusTag } from '@/shared/ui'
-import { colors, sizes, spacing, typography } from '@/styles/tokens'
+import {
+  ACTIONS_COLUMN_TITLE,
+  CANCEL_LABEL,
+  CLOSE_LABEL,
+  EmptyCell,
+  EmptyChoir,
+  EmptyState,
+  ErrorState,
+  FilterBar,
+  Form,
+  Icon,
+  NoFilterResults,
+  PageHeader,
+  SectionSkeleton,
+  StatusTag,
+  ViewDrawer,
+} from '@/shared/ui'
+import { colors, component, spacing, typography } from '@/styles/tokens'
 import { acceptRegistration, deleteRegistration, listRegistrations, type MemberRegistration } from '../api/memberRegistrationsApi'
 import { registrationsKey } from '../hooks/useWaitingRegistrations'
 
 const pageSize = 20
 const key = registrationsKey
 const when = (value: string) => dayjs(parseUtc(value)).format('DD/MM/YYYY HH:mm')
-const emptyValue = (label: 'Chưa có' | 'Không có') => (
-  <Typography.Text style={{ color: colors.textMuted }}>{label}</Typography.Text>
-)
 
 const failure = (error: Error, fallback: string) =>
   errorMessage(
@@ -62,17 +74,22 @@ export function MemberRegistrationsPage() {
   })
   const remove = useMutation({ mutationFn: deleteRegistration, onSettled: refresh })
   const total = registrations.data?.totalCount ?? 0
+  // The handled request was the last row of a later page: step back instead of landing on an empty page.
+  const leavePageIfEmptied = () => {
+    if (registrations.data?.items.length === 1 && page > 1) setPage((p) => Math.max(1, p - 1))
+  }
 
   const handleAccept = (item: MemberRegistration) =>
     modal.confirm({
       title: `Chấp nhận yêu cầu của ${item.fullName}?`,
       content: `Hệ thống sẽ tạo tài khoản Ca viên và gửi mật khẩu đầu tiên tới ${item.email}. Yêu cầu sẽ rời danh sách.`,
       okText: 'Tạo tài khoản',
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       onOk: () =>
         accept
           .mutateAsync(item.id)
           .then(() => {
+            leavePageIfEmptied()
             // The new member is in no choir yet, and only members of a choir are asked to serve: lead on to that step.
             message.success({
               duration: 8,
@@ -102,6 +119,7 @@ export function MemberRegistrationsPage() {
     remove
       .mutateAsync({ id: item.id, reason })
       .then(() => {
+        leavePageIfEmptied()
         message.success(`Đã từ chối yêu cầu. Lý do được gửi tới ${item.email}.`)
         setRejecting(undefined)
         setViewing(undefined)
@@ -130,12 +148,12 @@ export function MemberRegistrationsPage() {
         </Flex>
       ),
     },
-    { key: 'phone', title: 'Điện thoại', render: (_, item) => item.phone ?? emptyValue('Chưa có') },
-    { key: 'note', title: 'Lời nhắn', ellipsis: true, render: (_, item) => item.note ?? emptyValue('Không có') },
+    { key: 'phone', title: 'Điện thoại', render: (_, item) => item.phone ?? <EmptyCell text="Chưa có" /> },
+    { key: 'note', title: 'Lời nhắn', ellipsis: true, render: (_, item) => item.note ?? <EmptyCell text="Không có" /> },
     { key: 'createdAt', title: 'Gửi lúc', render: (_, item) => when(item.createdAt) },
     {
       key: 'actions',
-      title: 'Thao tác',
+      title: ACTIONS_COLUMN_TITLE,
       align: 'center',
       width: 300,
       render: (_, item) => (
@@ -167,14 +185,24 @@ export function MemberRegistrationsPage() {
         <EmptyState icon={<EmptyChoir />} title="Chưa có yêu cầu nào" description="Yêu cầu gửi từ trang chủ sẽ xuất hiện tại đây." />
       )}
       {registrations.data !== undefined && (total > 0 || keyword) && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <Flex wrap align="end" gap={spacing.sm} style={{ padding: spacing.md }}>
+        // The search stands above the table card, not inside it (as on Nominations).
+        <Flex vertical gap={spacing.lg}>
+          <FilterBar
+            resultCount={registrations.isError ? undefined : total}
+            error={registrations.isError}
+            resultNoun="yêu cầu"
+            hasActiveFilters={Boolean(search.trim())}
+            onReset={() => {
+              setSearch('')
+              setPage(1)
+            }}
+          >
             <Flex vertical gap={4} style={{ flex: '1 1 260px', maxWidth: 360 }}>
               <label htmlFor="registration-search" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Tìm theo họ tên hoặc email</label>
               <Input
                 id="registration-search"
                 allowClear
-                prefix={<SearchOutlined aria-hidden />}
+                prefix={<Icon name="search" />}
                 value={search}
                 onChange={(event) => {
                   setSearch(event.target.value)
@@ -182,10 +210,8 @@ export function MemberRegistrationsPage() {
                 }}
               />
             </Flex>
-            <Typography.Text aria-live="polite" style={{ marginInlineStart: 'auto', color: colors.textMuted, lineHeight: `${sizes.controlHeight}px` }}>
-              {total} yêu cầu
-            </Typography.Text>
-          </Flex>
+          </FilterBar>
+          <Card styles={{ body: { padding: 0 } }}>
           {total === 0 ? (
             <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}><NoFilterResults onClearFilters={() => setSearch('')} /></div>
           ) : (
@@ -197,21 +223,24 @@ export function MemberRegistrationsPage() {
               pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
             />
           )}
-        </Card>
+          </Card>
+        </Flex>
       )}
 
-      <Drawer
+      <ViewDrawer
         open={Boolean(viewing)}
         title={viewing ? `Yêu cầu của ${viewing.fullName}` : 'Yêu cầu'}
-        size={480}
+        size={component.drawer.sm}
         onClose={() => setViewing(undefined)}
+        destroyOnHidden
         footer={
-          viewing && (
+          viewing ? (
             <Flex justify="flex-end" gap={spacing.sm}>
+              <Button onClick={() => setViewing(undefined)}>{CLOSE_LABEL}</Button>
               <Button danger onClick={() => handleDelete(viewing)}>Từ chối</Button>
               <Button type="primary" onClick={() => handleAccept(viewing)}>Chấp nhận</Button>
             </Flex>
-          )
+          ) : null
         }
       >
         {viewing && (
@@ -220,12 +249,12 @@ export function MemberRegistrationsPage() {
             column={1}
             items={[
               { key: 'status', label: 'Trạng thái', children: 'Đang chờ xử lý' },
-              { key: 'saint', label: 'Tên thánh', children: viewing.saintName ?? emptyValue('Chưa có') },
+              { key: 'saint', label: 'Tên thánh', children: viewing.saintName ?? <EmptyCell text="Chưa có" /> },
               { key: 'name', label: 'Họ tên', children: viewing.fullName },
-              { key: 'gender', label: 'Giới tính', children: genderLabel(viewing.gender) ?? emptyValue('Chưa có') },
+              { key: 'gender', label: 'Giới tính', children: genderLabel(viewing.gender) ?? <EmptyCell text="Chưa có" /> },
               { key: 'email', label: 'Email', children: viewing.email },
-              { key: 'phone', label: 'Điện thoại', children: viewing.phone ?? emptyValue('Chưa có') },
-              { key: 'note', label: 'Lời nhắn', children: viewing.note ? <span style={{ whiteSpace: 'pre-line' }}>{viewing.note}</span> : emptyValue('Không có') },
+              { key: 'phone', label: 'Điện thoại', children: viewing.phone ?? <EmptyCell text="Chưa có" /> },
+              { key: 'note', label: 'Lời nhắn', children: viewing.note ? <span style={{ whiteSpace: 'pre-line' }}>{viewing.note}</span> : <EmptyCell text="Không có" /> },
               { key: 'at', label: 'Gửi lúc', children: when(viewing.createdAt) },
             ]}
           />
@@ -247,14 +276,14 @@ export function MemberRegistrationsPage() {
             }
           />
         ) : null}
-      </Drawer>
+      </ViewDrawer>
 
       <Modal
         open={Boolean(rejecting)}
         title={rejecting ? `Từ chối yêu cầu của ${rejecting.fullName}?` : 'Từ chối yêu cầu'}
         okText="Từ chối yêu cầu"
         okButtonProps={{ danger: true, loading: remove.isPending }}
-        cancelText="Hủy"
+        cancelText={CANCEL_LABEL}
         onOk={() => rejectForm.submit()}
         onCancel={() => setRejecting(undefined)}
         destroyOnHidden

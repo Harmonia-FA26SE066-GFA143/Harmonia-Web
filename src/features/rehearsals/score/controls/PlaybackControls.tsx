@@ -1,6 +1,6 @@
-import { CaretRightFilled, PauseOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Flex, Slider, Tooltip, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
+import { Icon } from '@/shared/ui'
 import { clock as formatTime } from '@/shared/utils/media'
 import { colors, sizes, spacing } from '@/styles/tokens'
 import type { PlaybackClock } from '../clock/usePlaybackClock'
@@ -18,8 +18,28 @@ function playLabel(playing: boolean, finished: boolean) {
 }
 
 function playIcon(playing: boolean, finished: boolean) {
-  if (playing) return <PauseOutlined />
-  return finished ? <ReloadOutlined /> : <CaretRightFilled />
+  if (playing) return <Icon name="pause" />
+  return finished ? <Icon name="refresh" /> : <Icon name="play-solid" />
+}
+
+function playbackState(playing: boolean, finished: boolean, duration: number) {
+  if (playing) return { key: 'playing', label: 'Đang phát' }
+  if (finished) return { key: 'finished', label: 'Đã phát xong' }
+  return duration > 0 ? { key: 'ready', label: 'Sẵn sàng' } : { key: 'idle', label: 'Chưa sẵn sàng' }
+}
+
+/**
+ * The transport state in words beside the play button, so it never rests on the icon alone. Derived from what the
+ * player already renders (play/pause and the once-a-second tick): it adds no render of its own.
+ */
+export function PlaybackState({ playing, finished, duration }: Readonly<{ playing: boolean; finished: boolean; duration: number }>) {
+  const { key, label } = playbackState(playing, finished, duration)
+  return (
+    <span className="practice-room-playback-state" data-state={key}>
+      <span className="practice-room-live-dot" aria-hidden />
+      {label}
+    </span>
+  )
 }
 
 /** Play/pause, position slider and time. React state changes once per second of playback, not per frame. */
@@ -66,6 +86,7 @@ export function PlaybackControls({ clock, title }: Readonly<{ clock: PlaybackClo
             }}
           />
         </Tooltip>
+        <PlaybackState playing={playing} finished={finished} duration={duration} />
         <Slider
           className="hm-playback-slider"
           min={0}

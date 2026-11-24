@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as choirsApi from '@/features/choirs/api/choirsApi'
 import { AdminChoirsPage, DirectorChoirsPage } from '@/features/choirs'
 import * as membersApi from '@/features/members/api/membersApi'
@@ -14,6 +14,7 @@ import { clearSession, setSession } from '@/lib/auth/session'
 import { renderPage } from '@/test/renderPage'
 import { programPage } from '@/test/programs'
 import * as eventsApi from '../api/eventsApi'
+import * as liturgicalDaysApi from '../api/liturgicalDaysApi'
 import * as programsApi from '../api/programsApi'
 import type { LiturgicalProgramDetail } from '../types'
 import { DirectorProgramDetailPage } from './DirectorProgramDetailPage'
@@ -61,6 +62,30 @@ describe('DirectorProgramListPage', () => {
     expect(screen.getByText(/Quản trị viên chọn ca trưởng cho ca đoàn ở trang Ca đoàn/)).toBeInTheDocument()
   })
 
+  it('offers the library, never a create action, when no program is published yet', async () => {
+    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(programPage())
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cecilia', isActive: true, directorId: 'u1' }])
+    renderPage(<DirectorProgramListPage />, '/director/programs')
+
+    expect(await screen.findByRole('heading', { name: 'Chưa có chương trình phụng vụ nào' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Tạo chương trình/ })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Mở kho bài hát' }))
+    expect(await screen.findByTestId('location')).toHaveTextContent('/director/library')
+  })
+
+  it('filters through the shared bar and reads missing cells as "Chưa cập nhật"', async () => {
+    vi.spyOn(programsApi, 'listPrograms').mockResolvedValue(programPage(program))
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue(program)
+    renderPage(<DirectorProgramListPage />, '/director/programs')
+
+    expect(await screen.findByText('1 chương trình')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Xoá bộ lọc' })).toBeDisabled()
+    expect(screen.getByRole('columnheader', { name: 'Thao tác' })).toBeInTheDocument()
+    // No season, no due date in the fixture: the table says so instead of a bare dash.
+    expect(screen.getAllByText('Chưa cập nhật').length).toBeGreaterThan(0)
+    expect(screen.queryByText('—')).toBeNull()
+  })
+
   it('pages on the server and marks cancelled programs', async () => {
     const list = vi
       .spyOn(programsApi, 'listPrograms')
@@ -77,6 +102,22 @@ describe('DirectorProgramListPage', () => {
 })
 
 describe('DirectorProgramDetailPage', () => {
+  // Before the fixture Masses: the song list closes once the Mass begins (BE 61b3aa6).
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-09-20T08:00:00+07:00'))
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('only offers to read the song list once the Mass has begun (BE 61b3aa6)', async () => {
+    vi.setSystemTime(new Date('2026-09-27T09:00:00+07:00'))
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue(program)
+    renderDetail()
+
+    expect(await screen.findByRole('button', { name: 'Xem danh sách đề xuất' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Chỉnh sửa danh sách bài hát' })).toBeNull()
+  })
+
   it('reads the published event and its newest song list, which may not exist yet', async () => {
     vi.spyOn(client, 'apiRequest').mockImplementation(async (path: string) => {
       if (path === '/api/schedule/events/p1') {
@@ -116,10 +157,14 @@ describe('DirectorProgramDetailPage', () => {
   })
 
   it('shows the preparation status the Choir Director now reads from the backend (BE 90af733, B41)', async () => {
+    // After the Mass, which counts as one completed item.
+    vi.setSystemTime(new Date('2026-10-01T08:00:00+07:00'))
     vi.spyOn(programsApi, 'getProgram').mockResolvedValue({ ...program, songListStatus: 'approved' })
     vi.spyOn(songListsApi, 'getSongList').mockResolvedValue(null)
     const status = vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue({
       songListStatus: 'approved',
+      songListDueDate: '2026-09-20',
+      isSongListOverdue: false,
       participation: { invited: 1, confirmed: 2, declined: 0, unsure: 0 },
       rosterActiveAssignments: 0,
       rosterShortages: [{ skillName: 'Đàn organ', requiredCount: 1, assignedCount: 0 }],
@@ -148,6 +193,134 @@ describe('DirectorProgramDetailPage', () => {
     expect(status).toHaveBeenCalledWith('p1')
   })
 
+  it('reads each part of the Mass with its files and staffing, in the colour of the synced day (Signature #3)', async () => {
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue({
+      ...program,
+      songListStatus: 'approved',
+      songs: [
+        { id: 'i1', songId: 's1', liturgicalPart: 'Ca nhập lễ', title: 'Con Bước Lên Bàn Thờ' },
+        { id: 'i2', songId: 's2', liturgicalPart: 'Đáp ca', title: 'Chúa Là Mục Tử' },
+      ],
+    })
+    vi.spyOn(programsApi, 'getSongCredits').mockImplementation(async (songId) =>
+      songId === 's1'
+        ? { composer: 'Kim Long', materials: 2, materialCounts: { sheetMusic: 1, lyrics: 0, sampleAudio: 1, rehearsalMaterial: 0, interactiveScore: 0 } }
+        : { materials: 0, materialCounts: { sheetMusic: 0, lyrics: 0, sampleAudio: 0, rehearsalMaterial: 0, interactiveScore: 0 } },
+    )
+    vi.spyOn(songListsApi, 'getSongList').mockResolvedValue(null)
+    vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue({
+      songListStatus: 'approved',
+      songListDueDate: '2026-09-20',
+      isSongListOverdue: false,
+      participation: { invited: 0, confirmed: 0, declined: 0, unsure: 0 },
+      rosterFinalized: false,
+      rosterActiveAssignments: 1,
+      rosterShortages: [{ songListItemId: 'i2', songTitle: 'Chúa Là Mục Tử', skillName: 'Xướng đáp ca', requiredCount: 1, assignedCount: 0 }],
+      rehearsalsTotal: 0,
+      rehearsalsHeld: 0,
+      attendanceExpected: 0,
+      attendancePresent: 0,
+      practiceExpected: 0,
+      practicePassed: 0,
+      practiceOverdue: 0,
+    })
+    const days = vi.spyOn(liturgicalDaysApi, 'listLiturgicalDays').mockResolvedValue([
+      { date: '2026-09-27', celebrationName: 'Chúa nhật XXVI Thường niên', seasonKey: 'OrdinaryTime', color: 'green' },
+    ])
+    const { container } = renderDetail()
+
+    const order = await screen.findByRole('list', { name: 'Các bài hát theo thứ tự trong lễ' })
+    expect(within(order).getByText('Ca nhập lễ')).toBeInTheDocument()
+    expect(await within(order).findByRole('group', { name: 'Tài liệu của Con Bước Lên Bàn Thờ' })).toHaveTextContent('Bản nhạcAudio mẫu')
+    expect(await within(order).findByText('Chưa có tài liệu đính kèm')).toBeInTheDocument()
+    expect(await within(order).findByText('Thiếu Xướng đáp ca (0/1)')).toBeInTheDocument()
+    // The backend lists shortages only: a part it does not list is "not short", never claimed as fully staffed.
+    expect(within(order).getByText('Không thiếu nhân sự')).toBeInTheDocument()
+    expect(within(order).queryByText('Đủ nhân sự')).toBeNull()
+    expect(within(order).getByRole('link', { name: 'Phân công' })).toHaveAttribute('href', '/director/roster?programId=p1')
+    expect(days).toHaveBeenCalledWith('2026-09-27', '2026-09-27')
+    await waitFor(() => expect(container.querySelector('.ct-season-ribbon')).not.toBeNull())
+  })
+
+  it('keeps staffing marks back until the list is approved, and stays neutral when the calendar is not synced', async () => {
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue({ ...program, songListStatus: 'submitted' })
+    vi.spyOn(liturgicalDaysApi, 'listLiturgicalDays').mockResolvedValue([])
+    const { container } = renderDetail()
+
+    // Said once for the list, not repeated under every part.
+    expect(await screen.findAllByText('Phân công phục vụ cho từng phần mở sau khi danh sách được duyệt.')).toHaveLength(1)
+    expect(screen.queryByText('Chờ duyệt bài hát để phân công')).toBeNull()
+    expect(screen.queryByText('Không thiếu nhân sự')).toBeNull()
+    expect(container.querySelector('.ct-season-ribbon')).toBeNull()
+  })
+
+  const approvedProgram = { ...program, songListStatus: 'approved' as const, songs: [{ id: 'i1', liturgicalPart: 'Ca nhập lễ', title: 'Con Bước Lên Bàn Thờ' }] }
+  const prepStatus = (patch: Partial<Awaited<ReturnType<typeof eventsApi.getPreparationStatus>>>) => ({
+    songListStatus: 'approved' as const,
+    songListDueDate: '2026-09-20',
+    isSongListOverdue: false,
+    participation: { invited: 0, confirmed: 0, declined: 0, unsure: 0 },
+    rosterActiveAssignments: 0,
+    rosterShortages: [],
+    rehearsalsTotal: 0,
+    rehearsalsHeld: 0,
+    attendanceExpected: 0,
+    attendancePresent: 0,
+    practiceExpected: 0,
+    practicePassed: 0,
+    practiceOverdue: 0,
+    ...patch,
+  })
+
+  it('shows no staffing mark on an approved list while the preparation status loads (R2.6)', async () => {
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue(approvedProgram)
+    vi.spyOn(eventsApi, 'getPreparationStatus').mockReturnValue(new Promise(() => {}))
+    renderDetail()
+
+    const order = await screen.findByRole('list', { name: 'Các bài hát theo thứ tự trong lễ' })
+    expect(within(order).queryByText(/nhân sự|Thiếu /)).toBeNull()
+  })
+
+  it('shows no staffing mark on an approved list when the preparation status fails', async () => {
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue(approvedProgram)
+    vi.spyOn(eventsApi, 'getPreparationStatus').mockRejectedValue(new ApiError(403, undefined))
+    renderDetail()
+
+    expect(await screen.findByText('Không thể tải tình hình chuẩn bị.')).toBeInTheDocument()
+    const order = screen.getByRole('list', { name: 'Các bài hát theo thứ tự trong lễ' })
+    expect(within(order).queryByText(/nhân sự|Thiếu /)).toBeNull()
+  })
+
+  it('says "Không thiếu nhân sự" for an unlisted part only once a roster exists', async () => {
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue(approvedProgram)
+    const status = vi.spyOn(eventsApi, 'getPreparationStatus').mockResolvedValue(prepStatus({}))
+    const { unmount } = renderDetail()
+
+    await waitFor(() => expect(status).toHaveBeenCalled())
+    expect(await screen.findByText('Chưa có lịch')).toBeInTheDocument()
+    expect(screen.queryByText('Không thiếu nhân sự')).toBeNull()
+    unmount()
+
+    status.mockResolvedValue(prepStatus({ rosterFinalized: false }))
+    renderDetail()
+    expect(await screen.findByText('Không thiếu nhân sự')).toBeInTheDocument()
+  })
+
+  it('explains an empty song list once, under the single song-list action', async () => {
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue({ ...program, songListStatus: undefined, songs: [] })
+    renderDetail()
+
+    expect(await screen.findByRole('heading', { name: 'Chưa có danh sách bài hát' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Đề xuất danh sách bài hát' })).toHaveLength(1)
+  })
+
+  it('shows a designed empty state when the program is not found', async () => {
+    vi.spyOn(programsApi, 'getProgram').mockResolvedValue(null)
+    renderDetail()
+
+    expect(await screen.findByRole('heading', { name: 'Không tìm thấy chương trình phụng vụ' })).toBeInTheDocument()
+  })
+
   it.each([
     [undefined, 'Đề xuất danh sách bài hát'],
     ['submitted', 'Xem danh sách đề xuất'],
@@ -168,7 +341,7 @@ describe('ChoirsPage', () => {
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia, giuse])
     // The Admin page also reads who is in no choir: one active member, in neither choir.
     vi.spyOn(choirsApi, 'listMembersOfChoir').mockResolvedValue([])
-    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([{ id: 'm9', fullName: 'Anna Đặng Thị Mai', skills: [], roleName: 'ChoirMember' }])
+    vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([{ id: 'm9', fullName: 'Anna Đặng Thị Mai', skills: [], roleName: 'ChoirMember' }])
     vi.spyOn(accountsApi, 'listAccounts').mockResolvedValue({
       items: [{ id: 'u2', fullName: 'Giuse Trần', email: 'giuse@giaoxu.org', phone: null, saintName: null, role: 'director', isActive: true, isPasswordChangeRequired: false }],
       pageNumber: 1,

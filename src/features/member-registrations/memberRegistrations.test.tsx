@@ -120,4 +120,29 @@ describe('MemberRegistrationsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Xem yêu cầu của An Nguyễn' }))
     expect(await screen.findByText(/Tài khoản: An Nguyễn \(an@x\.vn\), trùng số điện thoại/)).toBeInTheDocument()
   })
+
+  it('searches in the shared FilterBar and shows missing fields as muted text', async () => {
+    vi.spyOn(api, 'listRegistrations').mockResolvedValue(page([{ ...row, note: null }]))
+    renderPage(<MemberRegistrationsPage />, '/admin/member-registrations')
+
+    expect(await screen.findByText('1 yêu cầu')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Xoá bộ lọc' })).toBeDisabled()
+    expect(document.querySelector('.ant-card .hm-filter-bar')).toBeNull()
+    expect(screen.getByRole('columnheader', { name: 'Thao tác' })).toBeInTheDocument()
+    expect(screen.getByText('Chưa có')).toBeInTheDocument()
+    expect(screen.getByText('Không có')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Tìm theo họ tên hoặc email'), { target: { value: 'An' } })
+    expect(screen.getByRole('button', { name: 'Xoá bộ lọc' })).toBeEnabled()
+  })
+
+  it('opens the request with Đóng, Từ chối, Chấp nhận in that order', async () => {
+    vi.spyOn(api, 'listRegistrations').mockResolvedValue(page([row]))
+    renderPage(<MemberRegistrationsPage />, '/admin/member-registrations')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Xem yêu cầu của An Nguyễn' }))
+    await screen.findByRole('dialog', { name: 'Yêu cầu của An Nguyễn' })
+    const footer = document.querySelector('.ant-drawer-footer') as HTMLElement
+    expect(within(footer).getAllByRole('button').map((button) => button.textContent)).toEqual(['Đóng', 'Từ chối', 'Chấp nhận'])
+  })
 })

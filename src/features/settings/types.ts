@@ -29,4 +29,10 @@ export interface PublicSettings {
   announcement?: string
   /** For account requests and support; readable before signing in. */
   contactEmail?: string
+  /**
+   * When attendance opens (Rehearsal.AttendanceStartCheckEnabled / AttendanceOpensMinutesBefore, public to signed-in
+   * users since BE 14dabd3, B49). Absent when the backend does not send them; then the Web does not lock the sheet.
+   */
+  attendanceStartCheck?: boolean
+  attendanceOpensMinutesBefore?: number
 }

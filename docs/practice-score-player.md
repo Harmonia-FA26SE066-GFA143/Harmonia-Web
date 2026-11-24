@@ -25,8 +25,8 @@ One audio element is the only clock. Everything else is derived from it, and tim
 
 - `ScorePackageSource.load(signal)` returns a `ScorePackage`: the score (`musicxml` text or `mxl` bytes), an `audioUrl`, and `dispose()` for the object URLs. A source throws only `ScoreSourceError` (`invalid-type`, `too-large`, `read-failed`, `aborted`, `unavailable`).
 - **Dev fixture** (`DevFixtureScoreSource`): `sample.mxl` (self-written, 4 bars, one part, repeat with volta, two verses) and `sample.wav` (FluidSynth from the same MIDI, GeneralUser GS SoundFont). Used only when `env.useDevFixtures` (`import.meta.env.DEV && VITE_USE_DEV_FIXTURES === 'true'`); the files are imported dynamically after that guard, so the default production build (`npm run build`, with neither `NODE_ENV` nor the fixture flag set) has neither in `dist/` (checked by `devFixtureAssets.test.ts` and by grepping `dist/` after such a build).
-- **Local files** (`BrowserFileScoreSource` through `LocalScoreFilePicker`): temporary. The user picks a `.musicxml`/`.mxl` (up to 20 MB, the BE's upload limit) and a `.wav` (up to 100 MB, a Web-only limit). Nothing leaves the browser. Shown only when the dev flag is off.
-- **API source: not written.** The BE already has `GET api/music-materials/{id}/score` (`MusicMaterialsController.cs:82-85` at BE `d74096c`; tbd-backlog B47), which returns fresh signed URLs of the score and of the WAV rendered from the same revision. An `ApiScorePackageSource` has to call it, fetch both files, keep the revision and hashes, and hand the result to the same `ScorePackage` shape. Until then the picker is the only production source.
+- **API source** (`ApiScoreSource`): calls `GET api/music-materials/{id}/score` (`MusicMaterialsController.cs:82-85`, tbd-backlog B47), fetches the MusicXML/MXL score and the rendered WAV from the same revision, and caches them in `practiceScoreCache.ts`.
+- **Local files** (`BrowserFileScoreSource` through `LocalScoreFilePicker`): optional fallback when testing a local `.musicxml`/`.mxl` (up to 20 MB) and `.wav` (up to 100 MB) in the browser.
 
 ## Try it
 
@@ -68,8 +68,7 @@ Verovio 6.4.1 is `LGPL-3.0-only`, used unmodified from npm and loaded as a separ
 
 ## Left to do
 
-1. `ApiScorePackageSource` on the BE endpoint above, then remove `LocalScoreFilePicker` (or keep it for the Choir Director only, if the owner wants).
-2. One WAV per part, so changing the part changes the sound.
-3. Move parse and layout to a Web Worker; render pages on demand for long scores.
-4. Measure Safari and Firefox and a real SATB score; revisit `MAX_SCORE_NOTES` with those numbers.
-5. Lyrics that follow the repeat pass; melisma across a volta.
+1. One WAV per part, so changing the part changes the sound.
+2. Move parse and layout to a Web Worker; render pages on demand for long scores.
+3. Measure Safari and Firefox and a real SATB score; revisit `MAX_SCORE_NOTES` with those numbers.
+4. Lyrics that follow the repeat pass; melisma across a volta.

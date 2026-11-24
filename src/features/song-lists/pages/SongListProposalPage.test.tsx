@@ -52,6 +52,9 @@ const addFromLibrary = async (title: string) => {
 }
 
 beforeEach(() => {
+  // The fixture Mass (27/09/2026 08:00) is still ahead: the list closes once it begins (BE 61b3aa6).
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-09-20T08:00:00+07:00'))
   vi.spyOn(programsApi, 'getProgram').mockResolvedValue({
     id: 'p1',
     eventName: 'Lễ Chúa Nhật XXVI',
@@ -68,6 +71,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
 })
 
@@ -79,7 +83,24 @@ describe('SongListProposalPage', () => {
     expect(await screen.findByRole('heading', { name: 'Không thể tải danh sách bài hát' })).toBeInTheDocument()
   })
 
-  it("opens the library filtered by the event's season and Mass type, which the Director can clear", async () => {
+  it('shows the picker count as loading, then as unreadable when the library fails, never as zero songs', async () => {
+    withList(null)
+    let fail: (error: unknown) => void = () => {}
+    vi.spyOn(songsApi, 'listSongs').mockReturnValue(new Promise((_, reject) => (fail = reject)))
+    renderProposal()
+
+    fireEvent.click((await screen.findAllByRole('button', { name: /Thêm bài hát từ kho/ }))[0])
+    const picker = await screen.findByRole('dialog')
+    expect(await within(picker).findByText('Đang tải…')).toBeInTheDocument()
+    expect(within(picker).queryByText('0 bài hát')).not.toBeInTheDocument()
+
+    // 403 is not retried (providers.tsx), so the error state shows at once.
+    fail(new ApiError(403, undefined))
+    expect(await within(picker).findByText('Không thể tải số liệu')).toBeInTheDocument()
+    expect(within(picker).queryByText('Đang tải…')).not.toBeInTheDocument()
+  })
+
+  it("opens on the whole library and filters by the event's season and Mass type only when asked (G3-14)", async () => {
     withList(null)
     withLibrary()
     vi.spyOn(programsApi, 'getProgram').mockResolvedValue({
@@ -103,9 +124,15 @@ describe('SongListProposalPage', () => {
 
     fireEvent.click((await screen.findAllByRole('button', { name: /Thêm bài hát từ kho/ }))[0])
     const picker = await screen.findByRole('dialog')
+    // Unclassified songs stay visible: the picker opens unfiltered, with the songs listed at once.
+    expect(await within(picker).findByRole('checkbox', { name: /Lễ Vật Tâm Tình/ })).toBeInTheDocument()
+    expect(list).toHaveBeenLastCalledWith({ search: '' }, expect.anything())
+
+    fireEvent.click(await within(picker).findByRole('button', { name: /Áp dụng gợi ý mùa & loại lễ/ }))
     await waitFor(() =>
       expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ seasonId: 'season-ot', massTypeId: 'mass-sunday' }), expect.anything()),
     )
+    expect(within(picker).getByText('Đang lọc theo mùa và loại lễ của chương trình.')).toBeInTheDocument()
 
     // The picker keeps the compact filter panel; only the full library exposes its primary filters.
     expect(within(picker).queryByRole('combobox', { name: 'Mùa phụng vụ' })).not.toBeInTheDocument()
@@ -113,8 +140,33 @@ describe('SongListProposalPage', () => {
     expect(within(picker).getByRole('combobox', { name: 'Mùa phụng vụ' })).toBeVisible()
     expect(within(picker).getByRole('combobox', { name: 'Chủ đề' })).toBeVisible()
 
-    fireEvent.click(within(picker).getByRole('button', { name: 'Xoá tất cả bộ lọc' }))
+    fireEvent.click(within(picker).getByRole('button', { name: 'Xoá bộ lọc' }))
     await waitFor(() => expect(list).toHaveBeenLastCalledWith({ search: '' }, expect.anything()))
+    expect(await within(picker).findByRole('button', { name: /Áp dụng gợi ý mùa & loại lễ/ })).toBeInTheDocument()
+  })
+
+  it('shows one quiet status before any proposal, and drawers named like their openers at the 720px tier (G3-06, SYS-07)', async () => {
+    withList(null)
+    vi.spyOn(songListsApi, 'listSongSuggestions').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 50, totalCount: 0, totalPages: 0 })
+    renderProposal()
+
+    const aside = await screen.findByRole('complementary', { name: 'Tình trạng và gửi duyệt' })
+    expect(within(aside).getByText('Chưa có đề xuất danh sách bài hát')).toBeInTheDocument()
+    expect(aside.querySelectorAll('.hm-rubric')).toHaveLength(1)
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Gợi ý bài theo phần/ })[0])
+    const drawer = await screen.findByRole('dialog')
+    expect(within(drawer).getByText('Gợi ý bài theo phần', { selector: '.ant-drawer-title' })).toBeInTheDocument()
+    expect(drawer.closest('.ant-drawer-content-wrapper')).toHaveStyle({ width: '720px' })
+  })
+
+  it('reads an empty part or note as "Chưa cập nhật" and never asks for an optional note in brackets', async () => {
+    withList(songList({ status: 'submitted', items: [{ ...item('1', 'Con Bước Lên Bàn Thờ'), slotName: '' }] }))
+    renderProposal()
+
+    await screen.findByText('Con Bước Lên Bàn Thờ')
+    expect(screen.getAllByText('Chưa cập nhật')).toHaveLength(2)
+    expect(screen.queryByPlaceholderText(/không bắt buộc/)).toBeNull()
   })
 
   it('composes a first list from the library, saves it and submits it', async () => {
@@ -279,6 +331,17 @@ describe('SongListProposalPage', () => {
     expect(screen.queryByRole('button', { name: /Gửi duyệt/ })).toBeNull()
     expect(screen.queryByRole('button', { name: /Thêm bài hát từ kho/ })).toBeNull()
     expect(screen.queryByRole('button', { name: /khỏi danh sách/ })).toBeNull()
+  })
+
+  it('is read-only once the Mass has begun, whatever the list status (BE 61b3aa6)', async () => {
+    vi.setSystemTime(new Date('2026-09-27T08:00:00+07:00'))
+    withList(songList({ status: 'needsRevision', items: [item('1', 'Con Bước Lên Bàn Thờ')] }))
+    renderProposal()
+
+    expect(await screen.findByText('Thánh lễ đã bắt đầu')).toBeInTheDocument()
+    expect(screen.getByText('Con Bước Lên Bàn Thờ')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Gửi duyệt/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Thêm bài hát từ kho/ })).toBeNull()
   })
 
   it('shows the Priest notes and allows a new version after a revision request', async () => {

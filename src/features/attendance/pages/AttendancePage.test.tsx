@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
 import type { Rehearsal } from '@/features/rehearsals'
 import * as rehearsalsApi from '@/features/rehearsals/api/rehearsalsApi'
+import * as settingsApi from '@/features/settings/api/settingsApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import { programPage } from '@/test/programs'
@@ -51,9 +52,9 @@ describe('AttendancePage', () => {
       { id: 'r2', eventId: 'p1', startAt: at(3, 19), endAt: at(3, 21), locationName: 'Nhà thờ', songs: [] },
     ))
     const get = vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
-      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' },
-      { memberId: 'm2', fullName: 'Simon Phan Văn Đức' },
-      { memberId: 'm3', fullName: 'Anna Đặng Thị Mai' },
+      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', isActive: true, value: 'present' },
+      { memberId: 'm2', fullName: 'Simon Phan Văn Đức', isActive: true },
+      { memberId: 'm3', fullName: 'Anna Đặng Thị Mai', isActive: true },
     ])
     const save = vi.spyOn(attendanceApi, 'saveAttendance').mockResolvedValue()
     renderAttendance()
@@ -77,8 +78,8 @@ describe('AttendancePage', () => {
     ))
     // A backend that remembers what is saved.
     let stored: AttendanceRecord[] = [
-      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' },
-      { memberId: 'm2', fullName: 'Simon Phan Văn Đức' },
+      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', isActive: true, value: 'present' },
+      { memberId: 'm2', fullName: 'Simon Phan Văn Đức', isActive: true },
     ]
     const get = vi.spyOn(attendanceApi, 'getAttendance').mockImplementation(async () => stored.map((record) => ({ ...record })))
     const save = vi.spyOn(attendanceApi, 'saveAttendance').mockImplementation(async (_, values) => {
@@ -103,25 +104,32 @@ describe('AttendancePage', () => {
     expect(within(screen.getByRole('radiogroup', { name: 'Điểm danh Simon Phan Văn Đức' })).getByRole('radio', { name: 'Vắng' })).toBeChecked()
   })
 
-  it('marks everyone present at once', async () => {
+  it('marks everyone present at once, except a member no longer active, whose line is read-only (BE 463279d)', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions(
       { id: 'r1', eventId: 'p1', ...today, locationName: 'Nhà thờ', songs: [] },
     ))
     vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
-      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'absent' },
-      { memberId: 'm2', fullName: 'Simon Phan Văn Đức' },
+      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', isActive: true, value: 'absent' },
+      { memberId: 'm2', fullName: 'Simon Phan Văn Đức', isActive: true },
+      { memberId: 'm3', fullName: 'Phêrô Lê Văn Nam', value: 'absent', isActive: false },
     ])
     renderAttendance('/director/attendance?rehearsalId=r1')
 
     fireEvent.click(await screen.findByRole('button', { name: /Đánh dấu tất cả có mặt/ }))
+    // Saving the inactive member would refuse the whole sheet (MEMBER_NOT_ACTIVE).
     expect(screen.getByText('2 thay đổi chưa lưu')).toBeInTheDocument()
+    expect(screen.getByText('Không còn sinh hoạt · chỉ xem')).toBeInTheDocument()
+    expect(within(screen.getByRole('radiogroup', { name: 'Điểm danh Phêrô Lê Văn Nam' })).getByRole('radio', { name: 'Có mặt' })).toBeDisabled()
+    // Glossary terms: "Đi trễ" in the counts and the mark's title; a member without a voice-part skill is "Chưa phân bè".
+    expect(within(screen.getByLabelText(/^Điểm danh: /)).getByText('Đi trễ')).toBeInTheDocument()
+    expect(screen.getAllByText('Chưa phân bè')).toHaveLength(3)
   })
 
   it('corrects a past session, as the backend allows any time after the start', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions(
       { id: 'r0', eventId: 'p1', startAt: at(-1, 19), endAt: at(-1, 21), locationName: 'Nhà thờ', songs: [] },
     ))
-    vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([{ memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' }])
+    vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([{ memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', isActive: true, value: 'present' }])
     const save = vi.spyOn(attendanceApi, 'saveAttendance').mockResolvedValue()
     renderAttendance('/director/attendance?rehearsalId=r0')
 
@@ -133,12 +141,27 @@ describe('AttendancePage', () => {
     await waitFor(() => expect(save).toHaveBeenCalledWith('r0', { m1: 'late' }))
   })
 
+  it('locks the sheet until attendance opens, as the public settings say (B49, BE 14dabd3)', async () => {
+    vi.spyOn(settingsApi, 'getPublicSettings').mockResolvedValue({ attendanceStartCheck: true, attendanceOpensMinutesBefore: 30 })
+    vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions(
+      { id: 'r0', eventId: 'p1', startAt: at(7, 19), endAt: at(7, 21), locationName: 'Nhà thờ', songs: [] },
+    ))
+    vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([{ memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', isActive: true }])
+    renderAttendance('/director/attendance?rehearsalId=r0')
+
+    expect(await screen.findByText(`Điểm danh mở lúc ${dayjs(at(7, 19)).subtract(30, 'minute').format('HH:mm DD/MM/YYYY')}.`)).toBeInTheDocument()
+    const group = within(screen.getByRole('radiogroup', { name: 'Điểm danh Maria Nguyễn Thu Hướng' }))
+    expect(group.getByRole('radio', { name: 'Có mặt' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Đánh dấu tất cả có mặt/ })).toBeDisabled()
+    expect(screen.queryByText(/Giờ mở điểm danh tuỳ cấu hình của Admin/)).toBeNull()
+  })
+
   it('keeps the sheet open before the start and keeps the marks when the server refuses', async () => {
     vi.spyOn(rehearsalsApi, 'listRehearsals').mockResolvedValue(sessions(
       { id: 'r0', eventId: 'p1', startAt: at(7, 19), endAt: at(7, 21), locationName: 'Nhà thờ', songs: [] },
     ))
     vi.spyOn(attendanceApi, 'getAttendance').mockResolvedValue([
-      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', value: 'present' },
+      { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', isActive: true, value: 'present' },
     ])
     renderAttendance('/director/attendance?rehearsalId=r0')
 

@@ -61,30 +61,53 @@ export function GoogleSignInButton({ clientId, onCredential, disabled = false, w
 
   useEffect(() => {
     let active = true
+    let observer: ResizeObserver | undefined
     loadGoogleIdentity()
       .then((google) => {
-        if (!active || !container.current) return
-        const availableWidth = Math.floor(container.current.getBoundingClientRect().width)
-        const buttonWidth = availableWidth > 0 ? Math.min(width, availableWidth) : width
-        google.accounts.id.initialize({
+        const el = container.current
+        if (!active || !el) return
+        const id = google.accounts.id
+        id.initialize({
           client_id: clientId,
           callback: ({ credential }) => credential && handler.current(credential),
         })
-        google.accounts.id.renderButton(container.current, {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          text: 'signin_with',
-          shape: 'rectangular',
-          locale: 'vi',
-          width: buttonWidth,
-        })
+        let lastWidth = 0
+        // GIS takes 200–400px. Narrower than 200 the button is left out rather than overflowing; it is drawn again
+        // only when the whole-pixel width changes, after clearing the old one so resizing never stacks iframes.
+        const render = () => {
+          const availableWidth = Math.floor(el.getBoundingClientRect().width || el.clientWidth)
+          if (availableWidth > 0 && availableWidth < 200) {
+            el.replaceChildren()
+            lastWidth = 0
+            return
+          }
+          // 0 means not laid out (jsdom): fall back to the requested width.
+          const targetWidth = Math.min(400, availableWidth || width)
+          if (targetWidth === lastWidth) return
+          lastWidth = targetWidth
+          el.replaceChildren()
+          id.renderButton(el, {
+            type: 'standard',
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'rectangular',
+            locale: 'vi',
+            width: targetWidth,
+          })
+        }
+        render()
+        if (typeof ResizeObserver !== 'undefined') {
+          observer = new ResizeObserver(render)
+          observer.observe(el)
+        }
       })
       .catch(() => {
         // Blocked or offline: the button stays hidden.
       })
     return () => {
       active = false
+      observer?.disconnect()
     }
   }, [clientId, width])
 

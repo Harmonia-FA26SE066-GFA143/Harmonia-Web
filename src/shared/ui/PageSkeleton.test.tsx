@@ -14,4 +14,11 @@ describe('PageSkeleton', () => {
     render(<SectionSkeleton label="Đang tải danh sách tài khoản" />)
     expect(screen.getByRole('status', { name: 'Đang tải danh sách tài khoản' })).toBeInTheDocument()
   })
+
+  it('renders a card-grid skeleton when variant="grid" (R2.5, G3-02)', () => {
+    const { container } = render(<SectionSkeleton variant="grid" rows={4} label="Đang tải thư viện" />)
+    const output = screen.getByRole('status', { name: 'Đang tải thư viện' })
+    expect(output).toHaveAttribute('aria-busy', 'true')
+    expect(container.querySelectorAll('.ant-skeleton')).toHaveLength(4)
+  })
 })

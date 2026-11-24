@@ -1,9 +1,9 @@
-import { PlayCircleOutlined } from '@ant-design/icons'
-import { Button, Flex, Modal, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Button, Flex, Modal, Table, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
+import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
-import { skillLevelLabels, type PendingSkill, type SkillEvidence } from '../types'
+import type { PendingSkill, SkillEvidence } from '../types'
 
 export interface PendingSkillTableProps {
   skills: PendingSkill[]
@@ -51,26 +51,15 @@ export function PendingSkillTable({
       ),
     },
     {
-      key: 'level',
-      title: 'Trình độ',
-      dataIndex: 'level',
-      render: (level?: PendingSkill['level']) =>
-        level ? (
-          <Tag style={{ marginInlineEnd: 0 }}>{skillLevelLabels[level]}</Tag>
-        ) : (
-          <Typography.Text style={muted}>Không nêu</Typography.Text>
-        ),
-    },
-    {
       key: 'evidence',
       title: 'Minh chứng',
       render: (_, skill) => {
         const { evidence } = skill
-        if (!evidence) return <Typography.Text style={muted}>Không gửi</Typography.Text>
+        if (!evidence) return <EmptyCell text="Không gửi" />
         return evidence.kind === 'voice' ? (
           <audio controls preload="none" src={evidence.url} aria-label={`Nghe minh chứng ${skill.skillName} của ${skill.memberName}`} style={{ height: 36, width: 240 }} />
         ) : (
-          <Button icon={<PlayCircleOutlined />} onClick={() => setClip({ skill, evidence })} aria-label={`Xem clip ${skill.skillName} của ${skill.memberName}`}>
+          <Button icon={<Icon name="play" />} onClick={() => setClip({ skill, evidence })} aria-label={`Xem clip ${skill.skillName} của ${skill.memberName}`}>
             Xem clip
           </Button>
         )
@@ -81,14 +70,14 @@ export function PendingSkillTable({
       title: 'Ngày khai báo',
       dataIndex: 'declaredAt',
       render: (declaredAt: string) => (
-        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums' }}>
+        <Typography.Text>
           {formatDateTime(declaredAt)}
         </Typography.Text>
       ),
     },
     {
       key: 'actions',
-      title: 'Thao tác',
+      title: ACTIONS_COLUMN_TITLE,
       align: 'center',
       width: 184,
       render: (_, skill) => (

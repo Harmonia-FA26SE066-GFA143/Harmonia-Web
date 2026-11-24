@@ -1,10 +1,9 @@
-import { MailOutlined } from '@ant-design/icons'
 import { Button, Typography } from 'antd'
 import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useContactEmail } from '@/features/settings'
-import { BrandMark, HeroNave, StatusTag, visuallyHidden, type StatusTagProps } from '@/shared/ui'
+import { BrandMark, HeroNave, Icon, StatusTag, visuallyHidden, type StatusTagProps } from '@/shared/ui'
 import { colors, gold, media, seasonColors, spacing, spine, typography } from '@/styles/tokens'
 import { LandingStory } from './LandingStory'
 
@@ -30,7 +29,7 @@ const advent: { day: string; month: string; celebration: string; marks: Mark[] }
 
 const serif: CSSProperties = { fontFamily: typography.displayFontFamily, fontWeight: 600, fontVariantNumeric: 'lining-nums', margin: 0 }
 // The page runs edge to edge; its content keeps the shell's measure.
-const measure: CSSProperties = { maxWidth: 1360, marginInline: 'auto', paddingInline: 40 }
+const measure: CSSProperties = { boxSizing: 'border-box', maxWidth: 1440, marginInline: 'auto', paddingInline: 40 }
 const goldRule = `1px solid ${gold.line}`
 // The ivory band fills the rest of the first screen under the hero.
 const bandHeight = 260
@@ -112,7 +111,7 @@ export function LandingPage() {
             <Button ghost href={paths.join} onClick={goTo(paths.join)} style={{ height: 44, fontWeight: 500, marginInlineEnd: spacing.sm }}>
               Đăng ký tham gia ca đoàn
             </Button>
-            <Button ghost icon={<MailOutlined />} href={`mailto:${contactEmail}`} style={{ height: 44, fontWeight: 500 }}>
+            <Button ghost icon={<Icon name="mail" />} href={`mailto:${contactEmail}`} style={{ height: 44, fontWeight: 500 }}>
               Liên hệ quản trị viên
             </Button>
           </div>
@@ -209,13 +208,13 @@ export function LandingPage() {
             Đăng ký tham gia ca đoàn
           </Button>
           <a href={`mailto:${contactEmail}`} className="on-media-link landing-close__mail">
-            <MailOutlined aria-hidden /> {contactEmail}
+            <Icon name="mail" /> {contactEmail}
           </a>
         </div>
         <footer className="landing-close__foot">
           <span className="landing-close__brand">
             <BrandMark size={24} />
-            Harmonia · Hệ thống điều phối ca đoàn và quản lý âm nhạc phụng vụ
+            <span style={{ minWidth: 0, textWrap: 'balance' }}>Harmonia · Hệ thống điều phối ca đoàn và quản lý âm nhạc phụng vụ</span>
           </span>
           <span>Trang thánh ca: National Gallery of Art, Washington</span>
         </footer>

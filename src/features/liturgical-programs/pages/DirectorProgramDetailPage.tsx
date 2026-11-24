@@ -1,26 +1,28 @@
-import { ArrowLeftOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { Button, ConfigProvider, Flex, Typography } from 'antd'
+import type { ReactNode } from 'react'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
 import { EventChoirsCard, LeadChoirNotice } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, Icon, LostLeaf, PageHeader, PageSkeleton, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { DirectorPreparationHub } from '../components/DirectorPreparationHub'
 import { PreparationOverview } from '../components/PreparationOverview'
 import { DirectorAdjacentNav } from '../components/AdjacentProgramNav'
 import { ProgramHeader } from '../components/ProgramHeader'
-import { ProgramItemList } from '../components/ProgramItemList'
+import { ProgramItemList, type ProgramItem } from '../components/ProgramItemList'
 import { SongListStatusTag } from '../components/SongListStatusTag'
 import { usePreparationStatus } from '../hooks/useEvents'
+import { useLiturgicalDays } from '../hooks/useLiturgicalDays'
 import { useProgram } from '../hooks/usePrograms'
 import { preparationItems } from '../preparationOverview'
-import { canEditSongList, type LiturgicalProgramDetail, type SongListStatus } from '../types'
+import { canEditSongList, isSongListClosed, type LiturgicalProgramDetail, type SongListStatus } from '../types'
 
 const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Chương trình phụng vụ' }, { title: 'Chi tiết chương trình' }]
 
-function songListAction(status?: SongListStatus): string {
+function songListAction(status: SongListStatus | undefined, closed: boolean): string {
+  if (closed) return 'Xem danh sách đề xuất'
   if (!status) return 'Đề xuất danh sách bài hát'
   return canEditSongList(status) ? 'Chỉnh sửa danh sách bài hát' : 'Xem danh sách đề xuất'
 }
@@ -55,16 +57,58 @@ function DirectorSteps({ program }: Readonly<{ program: LiturgicalProgramDetail 
 }
 
 /**
+ * Staffing of one part, from the shortages of `GET /api/liturgical-events/{id}/preparation-status`, matched by
+ * song-list item (`RosterShortageDto.SongListItemId`; a whole-service role has neither id nor title, RosterService.cs:321-324).
+ * Only once the list is approved, since the roster opens then; nothing while the status loads or if it failed.
+ * The backend lists shortages only, so an unlisted part reads "Không thiếu nhân sự", never "full": the part may need
+ * nobody at all (RosterService.cs:332-337).
+ */
+function StaffingMark({ program, item }: Readonly<{ program: LiturgicalProgramDetail; item: ProgramItem }>) {
+  const prep = usePreparationStatus(program.id)
+  if (program.songListStatus !== 'approved' || !prep.data) return null
+  const shortages = prep.data.rosterShortages.filter((shortage) => shortage.songListItemId === item.id)
+  if (shortages.length === 0) {
+    // No roster yet means nothing has been checked against the requirements.
+    if (prep.data.rosterFinalized === undefined) return null
+    return (
+      <Flex wrap gap={spacing.xs}>
+        <StatusTag style={{ marginInlineEnd: 0 }}>Không thiếu nhân sự</StatusTag>
+      </Flex>
+    )
+  }
+  return (
+    <Flex wrap align="center" gap={spacing.xs}>
+      {shortages.map((shortage) => (
+        <StatusTag key={shortage.skillName} color="gold" style={{ marginInlineEnd: 0 }}>
+          {`Thiếu ${shortage.skillName} (${shortage.assignedCount}/${shortage.requiredCount})`}
+        </StatusTag>
+      ))}
+      <Link to={`${paths.director.roster}?programId=${program.id}`} style={{ fontSize: 13 }}>
+        Phân công
+      </Link>
+    </Flex>
+  )
+}
+
+/** The liturgical colour of the program's date, only when the synced calendar gives it (B64); otherwise neutral. */
+function useDayTone(date: string) {
+  const days = useLiturgicalDays(date, date)
+  const day = days.data?.get(date)
+  return { seasonKey: day?.seasonKey, color: day?.color }
+}
+
+/**
  * Choir Director: one program read like a missal page (artifact DirectorProgramDetailPage): the celebration in the
- * display serif; the songs in order on the reading surface and the preparation hub that links rehearsals, attendance,
- * participation, roster and practice; beside them the independent preparation signals and the serving choirs.
+ * display serif; the songs in liturgical order with what each part already has (files, staffing) on the reading
+ * surface; the preparation hub that links rehearsals, attendance, participation, roster and practice; beside them the
+ * independent preparation signals and the serving choirs.
  */
 export function DirectorProgramDetailPage() {
   const navigate = useNavigate()
   const { programId = '' } = useParams()
   const program = useProgram(programId)
   const backButton = (
-    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(paths.director.programs)}>
+    <Button icon={<Icon name="arrow-left" />} onClick={() => navigate(paths.director.programs)}>
       Về danh sách
     </Button>
   )
@@ -78,7 +122,7 @@ export function DirectorProgramDetailPage() {
           <ErrorState title="Không thể tải chương trình" error={program.error} hasData={program.data !== undefined} onRetry={() => program.refetch()} retrying={program.isFetching} />
         ) : (
           <EmptyState
-            icon={<FileSearchOutlined />}
+            icon={<LostLeaf />}
             title="Không tìm thấy chương trình phụng vụ"
             description="Chương trình không tồn tại, đã bị hủy hoặc đường dẫn không đúng."
             action={backButton}
@@ -88,7 +132,17 @@ export function DirectorProgramDetailPage() {
     )
   }
 
-  const { data } = program
+  return <ProgramDetail data={program.data} program={program} backButton={backButton} />
+}
+
+/** The loaded program; split out so the calendar day is read only once the date is known. */
+function ProgramDetail({
+  data,
+  program,
+  backButton,
+}: Readonly<{ data: LiturgicalProgramDetail; program: ReturnType<typeof useProgram>; backButton: ReactNode }>) {
+  const navigate = useNavigate()
+  const tone = useDayTone(data.date)
   const openProposal = () => navigate(generatePath(paths.director.songListProposal, { programId: data.id }))
   const details = [
     data.massTypeName !== data.eventName && data.massTypeName,
@@ -106,6 +160,8 @@ export function DirectorProgramDetailPage() {
         time={data.time}
         place={data.locationName}
         seasonName={data.seasonName}
+        seasonKey={tone.seasonKey}
+        color={tone.color}
         details={details || undefined}
         breadcrumb={breadcrumb}
         actions={
@@ -125,17 +181,25 @@ export function DirectorProgramDetailPage() {
             <section className="hm-sheet-section ct-reading" aria-labelledby="program-songs">
               <div className="hm-sheet-section__head">
                 <Flex align="center" gap={spacing.sm} wrap>
-                  <h2 id="program-songs" className="hm-rubric">Chương trình</h2>
+                  <h2 id="program-songs" className="hm-rubric">Thứ tự phụng vụ</h2>
                   <SongListStatusTag status={data.songListStatus} />
                 </Flex>
                 <Button type="primary" onClick={openProposal}>
-                  {songListAction(data.songListStatus)}
+                  {songListAction(data.songListStatus, isSongListClosed(data))}
                 </Button>
               </div>
               <div className="ct-reading__body">
+                {data.songs.length > 0 && data.songListStatus !== 'approved' && (
+                  // Said once for the whole list, in words true for a draft, a pending review or a returned list alike.
+                  <Typography.Text style={{ display: 'block', paddingTop: spacing.sm, color: colors.textMuted, fontSize: 13 }}>
+                    Phân công phục vụ cho từng phần mở sau khi danh sách được duyệt.
+                  </Typography.Text>
+                )}
                 {data.songs.length > 0 ? (
                   <ProgramItemList
                     items={data.songs.map(({ id, songId, liturgicalPart, title, note }) => ({ id, songId, slotName: liturgicalPart, title, note }))}
+                    showMaterials
+                    renderStatus={(item) => <StaffingMark program={data} item={item} />}
                     renderAction={(item) =>
                       item.songId && (
                         <Link to={generatePath(paths.director.songDetail, { songId: item.songId })} aria-label={`Xem bài ${item.title}`} style={{ fontWeight: 500 }}>
@@ -145,14 +209,17 @@ export function DirectorProgramDetailPage() {
                     }
                   />
                 ) : (
-                  <Typography.Text style={{ color: colors.textMuted }}>
-                    Chưa có danh sách bài hát. Chọn bài từ kho và gửi Cha xứ duyệt.
-                  </Typography.Text>
+                  // The section head holds the one action that starts the list (SYS-06), so this only explains it.
+                  <EmptyState
+                    headingLevel={3}
+                    title="Chưa có danh sách bài hát"
+                    description="Chọn bài cho từng phần phụng vụ từ kho bài hát rồi gửi Cha xứ duyệt; sau khi duyệt, bạn phân công phục vụ và giao bài luyện tập."
+                  />
                 )}
               </div>
             </section>
           </ConfigProvider>
-          <DirectorPreparationHub program={data} onOpenSongList={openProposal} />
+          <DirectorPreparationHub program={data} />
         </div>
         <aside className="ct-aside" aria-label="Chuẩn bị và ca đoàn phục vụ">
           <DirectorSteps program={data} />

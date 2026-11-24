@@ -5,7 +5,7 @@ import { colors, gold, spacing, typography } from '@/styles/tokens'
 import { useProgram } from '../hooks/usePrograms'
 import { massTimeLabels, massTimeOf } from '../massTime'
 import { dueText } from '../programFilters'
-import { canEditSongList, type LiturgicalProgram } from '../types'
+import { canEditSongList, isSongListClosed, type ProgramListItem } from '../types'
 import { SongListStatusTag } from './SongListStatusTag'
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
@@ -19,16 +19,16 @@ export function ProgramPreview({
   today,
   onOpen,
   onPropose,
-}: Readonly<{ program: LiturgicalProgram; today: string; onOpen: () => void; onPropose: () => void }>) {
+}: Readonly<{ program: ProgramListItem; today: string; onOpen: () => void; onPropose: () => void }>) {
   const detail = useProgram(program.id)
   const hour = massTimeOf(program.time)
   const due = dueText(program, today)
-  const propose = canEditSongList(program.songListStatus) && program.date >= today
+  const propose = canEditSongList(program.songListStatus) && !isSongListClosed(program)
   const songs = detail.data?.songs ?? []
   const type = program.massTypeName ?? program.ceremonyTypeName
 
   return (
-    <aside className="hm-preview hm-paper" aria-label={`Xem trước: ${program.eventName}`}>
+    <aside className="hm-preview hm-paper ct-program-preview" aria-label={`Xem trước: ${program.eventName}`}>
       <Typography.Text style={{ color: gold.ink, fontSize: typography.label.fontSize, fontWeight: 600 }}>
         {[hour && massTimeLabels[hour], program.time, dayjs(program.date).format('dddd, DD/MM/YYYY')].filter(Boolean).join(' · ')}
       </Typography.Text>

@@ -1,11 +1,10 @@
-import { BellOutlined } from '@ant-design/icons'
 import { App, Badge, Button, Dropdown, Flex, theme, Typography } from 'antd'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { formatDateTime } from '@/lib/api/dates'
 import { requestFailureMessage } from '@/lib/api/errors'
 import { getSession } from '@/lib/auth/session'
-import { ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
+import { ErrorState, Icon, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { colors, radius, sizes, spacing, typography } from '@/styles/tokens'
 import {
   useMarkAllNotificationsRead,
@@ -190,7 +189,7 @@ export function NotificationBell() {
           style={{ width: sizes.touchTarget, height: sizes.touchTarget }}
           icon={
             <Badge count={unread} overflowCount={99} size="small">
-              <BellOutlined style={{ fontSize: 20 }} />
+              <Icon name="notification" size={20} />
             </Badge>
           }
         />

@@ -1,6 +1,6 @@
-import { CloudOutlined } from '@ant-design/icons'
 import { Alert } from 'antd'
 import { useSyncExternalStore } from 'react'
+import { Icon } from './icons'
 
 function subscribe(onChange: () => void) {
   window.addEventListener('online', onChange)
@@ -24,7 +24,7 @@ export function OfflineNotice() {
     <Alert
       type="warning"
       showIcon
-      icon={<CloudOutlined />}
+      icon={<Icon name="offline" />}
       role="status"
       message="Bạn đang ngoại tuyến"
       description="Một số dữ liệu có thể chưa tải được. Ứng dụng sẽ thử lại khi kết nối mạng trở lại."

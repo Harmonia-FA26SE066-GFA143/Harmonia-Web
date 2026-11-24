@@ -1,6 +1,6 @@
-import { PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons'
 import { App, Button, Flex, Typography } from 'antd'
 import { useRef, useState } from 'react'
+import { Icon } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { useFetchSubmission } from '../hooks/usePractice'
 import { formatDuration } from '../practiceFormat'
@@ -47,7 +47,7 @@ export function InlinePlayer({ submission, onTime }: Readonly<InlinePlayerProps>
   return (
     <Flex align="center" gap={spacing.sm}>
       <Button
-        icon={playing ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+        icon={<Icon name={playing ? 'pause-circle' : 'play'} />}
         loading={state === 'loading'}
         onClick={toggle}
         aria-label={`${playing ? 'Tạm dừng' : 'Nghe'} bản thu của ${submission.memberName}`}

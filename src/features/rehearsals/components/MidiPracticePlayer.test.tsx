@@ -237,6 +237,27 @@ describe('MidiPracticePlayer synchronized playback', () => {
     expect(await screen.findByRole('button', { name: 'Tạm dừng Kyrie' })).toBeInTheDocument()
   })
 
+  it('says it has finished when the audio ends, though no second tick was rendered since', async () => {
+    renderPlayer()
+    act(() => {
+      audio().duration = 12
+      audio().dispatch('loadedmetadata')
+    })
+    expect(screen.getByText('Sẵn sàng')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Phát Kyrie' }))
+    expect(await screen.findByText('Đang phát')).toBeInTheDocument()
+
+    // `ended` gives no last time update: the state shown must read the clock, not the last rendered second.
+    act(() => {
+      audio().currentTime = 12
+      audio().paused = true
+      audio().ended = true
+      audio().dispatch('ended')
+    })
+
+    expect(await screen.findByText('Đã phát xong')).toBeInTheDocument()
+  })
+
   it('locks playback with the legacy warning when audio loading fails', () => {
     renderPlayer()
 

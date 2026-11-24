@@ -1,9 +1,8 @@
-import { CheckOutlined, SearchOutlined } from '@ant-design/icons'
 import { App, Avatar, Button, Card, Flex, Input, Modal, Radio, Table, Typography, type TableColumnsType } from 'antd'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useBeforeUnload, useBlocker } from 'react-router'
 import { useChoirMembers } from '@/features/members'
-import { inVoicePart, NoFilterResults, SaveButton, SummaryStrip, useJustSaved, voiceParts } from '@/shared/ui'
+import { Icon, inVoicePart, NoFilterResults, SaveButton, SummaryStrip, UnassignedVoiceCell, useJustSaved, VoicePartIcon, voiceParts } from '@/shared/ui'
 import { nameInitial } from '@/shared/utils/personName'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, media, outcomeColors, radius, shadows, spacing, spine, typography } from '@/styles/tokens'
@@ -24,8 +23,8 @@ const withoutSaved = (edits: Record<string, AttendanceValue>, records: Attendanc
   return Object.fromEntries(Object.entries(edits).filter(([memberId, value]) => saved.get(memberId) !== value))
 }
 
-/** The member's voice parts in words, from their approved skills; none when no skill names a part. */
-const partsOf = (skills: readonly string[]) => voiceParts.filter(({ pattern }) => inVoicePart(skills, pattern)).map(({ label }) => label).join(', ')
+/** The member's voice parts, from their approved skills; none when no skill names a part. */
+const partsOf = (skills: readonly string[]) => voiceParts.filter(({ pattern }) => inVoicePart(skills, pattern)).map(({ label }) => label)
 
 const initial = nameInitial
 
@@ -35,9 +34,11 @@ export interface AttendanceSheetProps {
   records: AttendanceRecord[]
   /** The session picker, first in the filter row. */
   picker: ReactNode
+  /** Attendance has not opened yet (B49): the sheet is read, not marked. */
+  readOnly?: boolean
 }
 
-export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<AttendanceSheetProps>) {
+export function AttendanceSheet({ rehearsalId, records, picker, readOnly = false }: Readonly<AttendanceSheetProps>) {
   const { message } = App.useApp()
   const save = useSaveAttendance(rehearsalId)
   // Voice parts come from approved skills: the attendance rows carry none (artifact AttendancePage asks for the part).
@@ -95,7 +96,7 @@ export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<Atten
   const mark = (memberId: string, value: AttendanceValue) =>
     setEdits((current) => withoutSaved({ ...current, [memberId]: value }, records))
   const markAllPresent = () =>
-    setEdits((current) => withoutSaved({ ...current, ...Object.fromEntries(records.map((record) => [record.memberId, 'present'])) }, records))
+    setEdits((current) => withoutSaved({ ...current, ...Object.fromEntries(records.filter((record) => record.isActive).map((record) => [record.memberId, 'present'])) }, records))
   const discard = () => setEdits({})
   const handleSave = () => {
     if (save.isPending) return
@@ -127,7 +128,11 @@ export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<Atten
                 />
               )}
             </Typography.Text>
-            {!valueOf(record) && <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Chưa điểm danh</Typography.Text>}
+            {!record.isActive ? (
+              <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Không còn sinh hoạt · chỉ xem</Typography.Text>
+            ) : (
+              !valueOf(record) && <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Chưa điểm danh</Typography.Text>
+            )}
           </Flex>
         </Flex>
       ),
@@ -136,11 +141,19 @@ export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<Atten
       key: 'part',
       title: 'Bè',
       width: 160,
-      render: (_, record) => (
-        <Typography.Text style={{ fontSize: typography.label.fontSize, color: colors.textMuted }}>
-          {partsOf(skillsOf.get(record.memberId) ?? []) || 'Chưa có bè'}
-        </Typography.Text>
-      ),
+      render: (_, record) => {
+        const parts = partsOf(skillsOf.get(record.memberId) ?? [])
+        if (parts.length === 0) return <UnassignedVoiceCell />
+        return (
+          <Flex wrap gap={spacing.sm} style={{ fontSize: typography.label.fontSize, color: colors.textBody }}>
+            {parts.map((part) => (
+              <span key={part}>
+                <VoicePartIcon name={part} /> {part}
+              </span>
+            ))}
+          </Flex>
+        )
+      },
     },
     {
       key: 'value',
@@ -153,6 +166,7 @@ export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<Atten
           style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}
           aria-label={`Điểm danh ${record.fullName}`}
           value={valueOf(record)}
+          disabled={readOnly || !record.isActive}
           onChange={(event) => mark(record.memberId, event.target.value)}
           options={options}
         />
@@ -165,13 +179,13 @@ export function AttendanceSheet({ rehearsalId, records, picker }: Readonly<Atten
       {/* Artifact AttendancePage: the session and the bulk start in one filter row, the counts, then the sheet. */}
       <Flex wrap gap={spacing.sm} align="center" className="ctb-filters">
         {picker}
-        <Button icon={<CheckOutlined />} onClick={markAllPresent} disabled={save.isPending}>
+        <Button icon={<Icon name="check" />} onClick={markAllPresent} disabled={readOnly || save.isPending}>
           Đánh dấu tất cả có mặt
         </Button>
         <Input
           aria-label="Tìm ca viên"
           allowClear
-          prefix={<SearchOutlined aria-hidden />}
+          prefix={<Icon name="search" />}
           placeholder="Tìm ca viên…"
           value={search}
           onChange={(event) => setSearch(event.target.value)}

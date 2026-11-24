@@ -1,8 +1,8 @@
-import { ColorPicker, DatePicker, Flex, Form, Input, InputNumber, Tabs, Typography } from 'antd'
+import { ColorPicker, DatePicker, Flex, Input, InputNumber, Select, Tabs, Typography } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
-import { PageHeader } from '@/shared/ui'
+import { EmptyCell, Form, PageHeader, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { colors, radius, spacing } from '@/styles/tokens'
 import { CatalogManager } from '../components/CatalogManager'
@@ -21,29 +21,55 @@ import {
   useSeasons,
   useSlots,
 } from '../hooks/useCatalogs'
-import type { BasicCatalog, LiturgicalCatalog, LiturgicalSeason, LiturgicalSlot } from '../types'
+import { calendarSeasonLabels, type BasicCatalog, type LiturgicalCatalog, type LiturgicalSeason, type LiturgicalSlot } from '../types'
 
 const formatDate = (value: string) => dayjs(value).format('DD/MM/YYYY')
 
+const calendarKeyOptions = Object.entries(calendarSeasonLabels).map(([value, label]) => ({ value, label }))
+
+/** A keyed season spans every year; dates, when given, come as a pair (SaveLiturgicalSeasonRequestValidator, BE a395ce0). */
+const periodOf = (season: LiturgicalSeason): ReactNode => {
+  const dates = season.startDate && season.endDate ? `${formatDate(season.startDate)} – ${formatDate(season.endDate)}` : undefined
+  if (!season.calendarKey) return dates ?? <EmptyCell />
+  const key = `Theo lịch: ${calendarSeasonLabels[season.calendarKey]}`
+  return dates ? `${key} · ${dates}` : `${key} (hằng năm)`
+}
+
+// A keyed season may leave out both dates, never just one; a season without a key needs both.
+const dateRequired = (other: 'startDate' | 'endDate', message: string) =>
+  ({ getFieldValue }: { getFieldValue: (name: string) => unknown }) => ({
+    validator: (_: unknown, value?: string | null) =>
+      value || (getFieldValue('calendarKey') && !getFieldValue(other)) ? Promise.resolve() : Promise.reject(new Error(message)),
+  })
+
 const seasonFields = (
   <>
+    <Form.Item
+      label="Theo mùa của lịch phụng vụ"
+      name="calendarKey"
+      normalize={(value?: string) => value ?? null}
+      extra="Chọn khi mùa này lặp lại hằng năm theo lịch phụng vụ; khi đó có thể bỏ trống ngày."
+    >
+      <Select {...SELECT_POPUP_PROPS} allowClear placeholder="Không gắn với lịch" options={calendarKeyOptions} aria-label="Theo mùa của lịch phụng vụ" />
+    </Form.Item>
     <Flex gap={spacing.md} wrap>
       <Form.Item
         label="Ngày bắt đầu"
         name="startDate"
         {...dateOnlyFieldProps}
-        rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu.' }]}
+        dependencies={['calendarKey', 'endDate']}
+        rules={[dateRequired('endDate', 'Vui lòng chọn ngày bắt đầu.')]}
         style={{ flex: '1 1 160px' }}
       >
-        <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
+        <DatePicker {...SELECT_POPUP_PROPS} format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
       </Form.Item>
       <Form.Item
         label="Ngày kết thúc"
         name="endDate"
         {...dateOnlyFieldProps}
-        dependencies={['startDate']}
+        dependencies={['calendarKey', 'startDate']}
         rules={[
-          { required: true, message: 'Vui lòng chọn ngày kết thúc.' },
+          dateRequired('startDate', 'Vui lòng chọn ngày kết thúc.'),
           ({ getFieldValue }) => ({
             validator: (_, end?: string) => {
               const start: string | undefined = getFieldValue('startDate')
@@ -55,11 +81,11 @@ const seasonFields = (
         ]}
         style={{ flex: '1 1 160px' }}
       >
-        <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
+        <DatePicker {...SELECT_POPUP_PROPS} format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
       </Form.Item>
     </Flex>
     <Form.Item
-      label="Màu phụng vụ (không bắt buộc)"
+      label="Màu phụng vụ"
       name="colorHex"
       getValueFromEvent={(color: { cleared: boolean; toHexString: () => string }) =>
         color.cleared ? null : color.toHexString()
@@ -76,7 +102,7 @@ const seasonFields = (
 )
 
 function ColorSwatch({ colorHex }: Readonly<{ colorHex: string | null }>) {
-  if (!colorHex) return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
+  if (!colorHex) return <EmptyCell text="Chưa chọn" />
   // The code is shown next to the swatch, so the colour is never the only cue.
   return (
     <Flex align="center" gap={spacing.xs}>
@@ -100,7 +126,7 @@ function SeasonsPanel() {
         {
           key: 'period',
           title: 'Thời gian',
-          render: (_, season: LiturgicalSeason) => `${formatDate(season.startDate)} – ${formatDate(season.endDate)}`,
+          render: (_, season: LiturgicalSeason) => periodOf(season),
         },
         {
           key: 'color',
@@ -157,7 +183,7 @@ function LocationsPanel() {
         },
       ]}
       fields={
-        <Form.Item label="Địa chỉ (không bắt buộc)" name="address" rules={[{ max: 300, message: 'Địa chỉ tối đa 300 ký tự.' }]}>
+        <Form.Item label="Địa chỉ" name="address" rules={[{ max: 300, message: 'Địa chỉ tối đa 300 ký tự.' }]}>
           <Input.TextArea rows={2} showCount maxLength={300} />
         </Form.Item>
       }

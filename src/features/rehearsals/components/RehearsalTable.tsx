@@ -1,8 +1,8 @@
-import { CheckSquareOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import { Button, Flex, Table, Tooltip, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
 import { generatePath, Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
+import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
 import { canTakeAttendance, isUpcoming, type Rehearsal } from '../types'
@@ -20,7 +20,7 @@ export interface RehearsalTableProps {
 }
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
-const none = <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
+const none = <EmptyCell />
 
 export function RehearsalTable({
   rehearsals,
@@ -60,7 +60,7 @@ export function RehearsalTable({
         return program ? (
           <Flex vertical gap={2}>
             <Link to={link}>{program.eventName}</Link>
-            <Typography.Text style={{ ...muted, fontVariantNumeric: 'tabular-nums' }}>{formatProgramDate(program.date)}</Typography.Text>
+            <Typography.Text style={muted}>{formatProgramDate(program.date)}</Typography.Text>
           </Flex>
         ) : (
           <Link to={link}>Xem chương trình</Link>
@@ -74,19 +74,22 @@ export function RehearsalTable({
         rehearsal.songs.length === 0 ? (
           none
         ) : (
-          <ul style={{ margin: 0, paddingInlineStart: 18 }}>
-            {rehearsal.songs.map((song) => (
+          <ol className="ctb-songs ctb-songs--compact">
+            {rehearsal.songs.map((song, index) => (
               <li key={song.songId}>
-                {song.songTitle}
-                {song.note && <Typography.Text style={{ color: colors.textMuted }}> · {song.note}</Typography.Text>}
+                <span className="ctb-songs__index" aria-hidden>{index + 1}.</span>
+                <span>
+                  {song.songTitle}
+                  {song.note && <Typography.Text style={{ color: colors.textMuted }}> · {song.note}</Typography.Text>}
+                </span>
               </li>
             ))}
-          </ul>
+          </ol>
         ),
     },
     {
       key: 'actions',
-      title: 'Thao tác',
+      title: ACTIONS_COLUMN_TITLE,
       align: 'center',
       width: 260,
       render: (_, rehearsal) => (
@@ -94,7 +97,7 @@ export function RehearsalTable({
           <PlannerOnly rehearsal={rehearsal}>
           <Button
             type="link"
-            icon={<CheckSquareOutlined />}
+            icon={<Icon name="check-square" />}
             onClick={() => onTakeAttendance(rehearsal)}
             aria-label={`${canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${rehearsalLabel(rehearsal)}`}
           >
@@ -103,14 +106,14 @@ export function RehearsalTable({
           {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
           {isUpcoming(rehearsal) && (
             <Tooltip title="Sửa buổi tập" trigger={['hover', 'focus']}>
-              <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${rehearsalLabel(rehearsal)}`} />
+              <Button type="text" icon={<Icon name="edit" />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${rehearsalLabel(rehearsal)}`} />
             </Tooltip>
           )}
           <Tooltip title="Xoá buổi tập" trigger={['hover', 'focus']}>
             <Button
               type="text"
               danger
-              icon={<DeleteOutlined />}
+              icon={<Icon name="delete" />}
               onClick={() => onDelete(rehearsal)}
               aria-label={`Xoá buổi tập ${rehearsalLabel(rehearsal)}`}
             />

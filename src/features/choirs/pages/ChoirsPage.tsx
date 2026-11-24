@@ -1,15 +1,25 @@
-import { EditOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons'
 import { App, Button, Card, Flex, Table, Typography, type TableColumnsType } from 'antd'
 import { useState, type CSSProperties } from 'react'
 import { accountName, useActiveDirectors } from '@/features/users'
 import { ApiError } from '@/lib/api/errors'
-import { EmptyState, ErrorState, PageHeader, SectionSkeleton, StatusTag } from '@/shared/ui'
+import {
+  ACTIONS_COLUMN_TITLE,
+  CHOIR_NAV_LABEL,
+  EmptyCell,
+  EmptyState,
+  ErrorState,
+  Icon,
+  PageHeader,
+  SectionSkeleton,
+  StatusTag,
+  UNKNOWN_METRIC_LABEL,
+} from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { ChoirFormDrawer } from '../components/ChoirFormDrawer'
 import { ChoirMembersDrawer } from '../components/ChoirMembersDrawer'
 import { UnplacedMembersNotice } from '../components/UnplacedMembersNotice'
-import { useChoirs, useSaveChoir } from '../hooks/useChoirs'
+import { useChoirs, useMembersOfChoir, useSaveChoir } from '../hooks/useChoirs'
 import type { Choir, ChoirValues } from '../types'
 
 type FormState = { open: false } | { open: true; choir?: Choir }
@@ -61,6 +71,41 @@ function AdminChoirForm({ form, onClose }: Readonly<{ form: FormState; onClose: 
   )
 }
 
+/** `ChoirDto` carries no member count: each card reads its own `GET /api/choirs/{id}/members` (G2-10, R2.6). */
+function MemberCount({ choirId }: Readonly<{ choirId: string }>) {
+  const members = useMembersOfChoir(choirId)
+  let text: string
+  if (members.isPending) text = 'Đang tải số ca viên…'
+  else if (members.isError) text = UNKNOWN_METRIC_LABEL
+  else text = `${members.data.length} ca viên`
+  return (
+    <Typography.Text style={{ color: members.isSuccess ? colors.textBody : colors.textMuted, fontSize: 13, fontWeight: members.isSuccess ? 600 : 400 }}>
+      {text}
+    </Typography.Text>
+  )
+}
+
+/** A Director's choir as a sheet with its name in the serif (artifact ChoirsPage). */
+function DirectorChoirCard({ choir, index, onOpenMembers }: Readonly<{ choir: Choir; index: number; onOpenMembers: (choir: Choir) => void }>) {
+  return (
+    <li className="ct-choir hm-lift" style={{ '--i': index } as CSSProperties}>
+      <Flex align="flex-start" justify="space-between" gap={spacing.sm}>
+        <h2 className="ct-choir__name">{choir.name}</h2>
+        <StatusTag color={choir.isActive ? 'green' : 'default'} mark={choir.isActive ? undefined : 'draft'} style={{ marginInlineEnd: 0 }}>
+          {choir.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+        </StatusTag>
+      </Flex>
+      <MemberCount choirId={choir.id} />
+      <Typography.Paragraph style={{ ...(choir.description ? {} : muted), margin: 0, flex: 1 }}>
+        {choir.description ?? 'Chưa có mô tả'}
+      </Typography.Paragraph>
+      <Button icon={<Icon name="choir" />} onClick={() => onOpenMembers(choir)} aria-label={`Ca viên của ${choir.name}`} style={{ alignSelf: 'flex-start' }}>
+        Ca viên
+      </Button>
+    </li>
+  )
+}
+
 /**
  * The choirs of the parish (D7, D8, `/api/choirs`). Admin: every choir, add, rename, switch off, choose its Choir
  * Director, and its members. Choir Director: their own choirs and their members. Both add members from the whole
@@ -73,7 +118,7 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
   const [membersOf, setMembersOf] = useState<Choir>()
 
   const addButton = admin && (
-    <Button type="primary" icon={<PlusOutlined />} onClick={() => setForm({ open: true })}>
+    <Button type="primary" icon={<Icon name="add" />} onClick={() => setForm({ open: true })}>
       Thêm ca đoàn
     </Button>
   )
@@ -94,7 +139,7 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
           {
             key: 'director',
             title: 'Ca trưởng phụ trách',
-            render: (_: unknown, choir: Choir) => choir.directorName ?? <Typography.Text style={muted}>Chưa có</Typography.Text>,
+            render: (_: unknown, choir: Choir) => choir.directorName ?? <EmptyCell text="Chưa có" />,
           },
         ]
       : []),
@@ -109,19 +154,19 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
     },
     {
       key: 'actions',
-      title: 'Thao tác',
+      title: ACTIONS_COLUMN_TITLE,
       align: 'center',
       width: admin ? 184 : 120,
       fixed: 'right',
       render: (_, choir) => (
         <Flex justify="center" gap={4}>
-          <Button icon={<TeamOutlined />} onClick={() => setMembersOf(choir)} aria-label={`Ca viên của ${choir.name}`}>
+          <Button icon={<Icon name="choir" />} onClick={() => setMembersOf(choir)} aria-label={`Ca viên của ${choir.name}`}>
             Ca viên
           </Button>
           {admin && (
             <Button
               type="text"
-              icon={<EditOutlined />}
+              icon={<Icon name="edit" />}
               onClick={() => setForm({ open: true, choir })}
               aria-label={`Chỉnh sửa ${choir.name}`}
             />
@@ -135,13 +180,14 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
     <>
       <PageHeader
         title={admin ? 'Ca đoàn' : 'Ca đoàn của tôi'}
-        breadcrumb={admin ? [{ title: 'Quản trị hệ thống' }, { title: 'Ca đoàn' }] : [{ title: 'Ca trưởng' }, { title: 'Ca đoàn' }]}
+        breadcrumb={admin ? [{ title: 'Quản trị hệ thống' }, { title: 'Ca đoàn' }] : [{ title: 'Ca trưởng' }, { title: CHOIR_NAV_LABEL }]}
         description={
           admin
             ? 'Ca đoàn của giáo xứ và ca trưởng phụ trách. Một ca viên có thể thuộc nhiều ca đoàn.'
             : 'Ca đoàn bạn phụ trách. Một ca viên có thể thuộc nhiều ca đoàn.'
         }
-        extra={addButton}
+        // The Admin's empty state carries the only "Thêm ca đoàn" (SYS-06).
+        extra={admin && choirs.isSuccess && choirs.data.length === 0 ? undefined : addButton}
       />
       {choirs.isPending && <SectionSkeleton rows={4} label="Đang tải ca đoàn" />}
       {choirs.isError && (
@@ -159,24 +205,11 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
         />
       )}
       {admin && choirs.isSuccess && choirs.data.length > 0 && <UnplacedMembersNotice choirs={choirs.data} />}
-      {/* A Director leads one to a few choirs: each is a sheet with its name in the serif (artifact ChoirsPage). */}
+      {/* A Director leads one to a few choirs, so one member request per card stays small. */}
       {!admin && choirs.isSuccess && choirs.data.length > 0 && (
         <ul className="ct-choirs hm-stagger" aria-label="Ca đoàn bạn phụ trách">
           {choirs.data.map((choir, index) => (
-            <li key={choir.id} className="ct-choir hm-lift" style={{ '--i': index } as CSSProperties}>
-              <Flex align="flex-start" justify="space-between" gap={spacing.sm}>
-                <h2 className="ct-choir__name">{choir.name}</h2>
-                <StatusTag color={choir.isActive ? 'green' : 'default'} mark={choir.isActive ? undefined : 'draft'} style={{ marginInlineEnd: 0 }}>
-                  {choir.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
-                </StatusTag>
-              </Flex>
-              <Typography.Paragraph style={{ ...(choir.description ? {} : muted), margin: 0, flex: 1 }}>
-                {choir.description ?? 'Chưa có mô tả'}
-              </Typography.Paragraph>
-              <Button icon={<TeamOutlined />} onClick={() => setMembersOf(choir)} aria-label={`Ca viên của ${choir.name}`} style={{ alignSelf: 'flex-start' }}>
-                Ca viên
-              </Button>
-            </li>
+            <DirectorChoirCard key={choir.id} choir={choir} index={index} onOpenMembers={setMembersOf} />
           ))}
         </ul>
       )}

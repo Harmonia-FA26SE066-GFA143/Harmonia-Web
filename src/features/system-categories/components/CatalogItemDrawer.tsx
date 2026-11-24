@@ -1,5 +1,5 @@
-import { Input, Switch } from 'antd'
-import type { ReactNode } from 'react'
+import { Input, Switch, type InputRef } from 'antd'
+import { useRef, type ReactNode } from 'react'
 import type { CatalogEntry } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
@@ -34,12 +34,13 @@ export function CatalogItemDrawer<T extends CatalogEntry, V extends { name: stri
   onSubmit,
   onCancel,
 }: Readonly<CatalogItemDrawerProps<T, V>>) {
+  const nameRef = useRef<InputRef>(null)
   return (
     <FormDrawer
       open={open}
       title={item ? titles.edit : titles.create}
       okText={item ? 'Lưu thay đổi' : 'Thêm'}
-      cancelText="Hủy"
+      initialFocusRef={nameRef}
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
@@ -65,7 +66,7 @@ export function CatalogItemDrawer<T extends CatalogEntry, V extends { name: stri
           { max: nameMax, message: `${nameLabel} tối đa ${nameMax} ký tự.` },
         ]}
       >
-        <Input autoFocus />
+        <Input ref={nameRef} />
       </Form.Item>
       {fields}
       <Form.Item

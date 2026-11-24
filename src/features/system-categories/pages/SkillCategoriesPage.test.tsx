@@ -12,9 +12,9 @@ const categories: CatalogItem[] = [
 ]
 
 const skills: Skill[] = [
-  { id: 's1', categoryId: 'c-vocal', name: 'Soprano', description: null, isActive: true },
-  { id: 's2', categoryId: 'c-vocal', name: 'Alto', description: null, isActive: false },
-  { id: 's3', categoryId: 'c-instrument', name: 'Organ', description: 'Đệm đàn Thánh lễ', isActive: true },
+  { id: 's1', categoryId: 'c-vocal', name: 'Soprano', description: null, gender: 'Female', isActive: true },
+  { id: 's2', categoryId: 'c-vocal', name: 'Alto', description: null, gender: 'Female', isActive: false },
+  { id: 's3', categoryId: 'c-instrument', name: 'Organ', description: 'Đệm đàn Thánh lễ', gender: null, isActive: true },
 ]
 
 beforeEach(() => {
@@ -79,6 +79,16 @@ describe('SkillCategoriesPage', () => {
     expect(within(soprano).queryByText('—')).toBeNull()
   })
 
+  it('shows "Chưa cập nhật" when the categories loaded but the skill category is not among them', async () => {
+    vi.spyOn(categoriesApi, 'listSkills').mockResolvedValue([{ ...skills[0], categoryId: 'c-gone' }])
+    renderPage(<SkillCategoriesPage />, '/admin/skill-categories')
+
+    const soprano = (await screen.findByText('Soprano')).closest('tr') as HTMLElement
+    await waitFor(() => expect(within(soprano).getByText('Chưa cập nhật')).toBeInTheDocument())
+    expect(within(soprano).queryByText('Chưa tải được')).toBeNull()
+    expect(within(soprano).queryByText('—')).toBeNull()
+  })
+
   it('requires a name and a category before adding a skill', async () => {
     vi.spyOn(categoriesApi, 'listSkills').mockResolvedValue(skills)
     const save = vi.spyOn(categoriesApi, 'saveSkill')
@@ -97,7 +107,7 @@ describe('SkillCategoriesPage', () => {
     vi.spyOn(categoriesApi, 'listSkills').mockResolvedValue(skills)
     const save = vi
       .spyOn(categoriesApi, 'saveSkill')
-      .mockResolvedValue({ id: 's4', categoryId: 'c-instrument', name: 'Guitar', description: null, isActive: true })
+      .mockResolvedValue({ id: 's4', categoryId: 'c-instrument', name: 'Guitar', description: null, gender: null, isActive: true })
     renderPage(<SkillCategoriesPage />, '/admin/skill-categories')
 
     fireEvent.click(await screen.findByRole('button', { name: /Thêm kỹ năng/ }))
@@ -116,7 +126,7 @@ describe('SkillCategoriesPage', () => {
     vi.spyOn(categoriesApi, 'listSkills').mockResolvedValue(skills)
     let finish: () => void = () => {}
     const save = vi.spyOn(categoriesApi, 'saveSkill').mockImplementation(
-      () => new Promise((resolve) => (finish = () => resolve({ id: 's4', categoryId: 'c-vocal', name: 'Tenor', description: null, isActive: true }))),
+      () => new Promise((resolve) => (finish = () => resolve({ id: 's4', categoryId: 'c-vocal', name: 'Tenor', description: null, gender: null, isActive: true }))),
     )
     renderPage(<SkillCategoriesPage />, '/admin/skill-categories')
 
@@ -152,9 +162,24 @@ describe('SkillCategoriesPage', () => {
         name: 'Organ',
         categoryId: 'c-instrument',
         description: 'Đệm đàn Thánh lễ',
+        gender: null,
         isActive: false,
       }),
     )
+  })
+
+  it('shows who may declare a skill and sends its gender back on save, since PUT replaces it (BE 1e2f8f8)', async () => {
+    vi.spyOn(categoriesApi, 'listSkills').mockResolvedValue(skills)
+    const save = vi.spyOn(categoriesApi, 'saveSkill').mockResolvedValue(skills[0])
+    renderPage(<SkillCategoriesPage />, '/admin/skill-categories')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Chỉnh sửa Soprano' }))
+    expect(screen.getAllByText('Nữ').length).toBeGreaterThan(0)
+    expect(screen.getByText('Mọi ca viên', { selector: 'td' })).toBeInTheDocument()
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu thay đổi' }))
+
+    await waitFor(() => expect(save).toHaveBeenCalledWith('s1', expect.objectContaining({ name: 'Soprano', gender: 'Female' })))
   })
 
   it('shows a taken name under the field and keeps the entered values', async () => {

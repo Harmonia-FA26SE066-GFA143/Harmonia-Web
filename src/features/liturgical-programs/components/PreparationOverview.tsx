@@ -1,6 +1,6 @@
-import { CheckOutlined, ClockCircleOutlined, EllipsisOutlined, MinusOutlined } from '@ant-design/icons'
 import { Flex, Typography } from 'antd'
 import type { ReactNode } from 'react'
+import { Icon } from '@/shared/ui'
 import { colors, radius, sections, spacing, typography } from '@/styles/tokens'
 import type { PreparationItem, PreparationState } from '../preparationOverview'
 
@@ -11,10 +11,10 @@ export interface PreparationOverviewProps {
 }
 
 const appearance: Record<PreparationState, { icon: ReactNode; tone: string; background: string; border: string }> = {
-  done: { icon: <CheckOutlined />, tone: colors.primary, background: colors.primarySoft, border: sections.liturgy.border },
-  progress: { icon: <EllipsisOutlined />, tone: colors.textBody, background: colors.softSurface, border: colors.mutedBorder },
-  waiting: { icon: <ClockCircleOutlined />, tone: sections.attention.ink, background: sections.attention.tint, border: sections.attention.border },
-  todo: { icon: <MinusOutlined />, tone: colors.textMuted, background: colors.surface, border: colors.border },
+  done: { icon: <Icon name="check" />, tone: colors.primary, background: colors.primarySoft, border: sections.liturgy.border },
+  progress: { icon: <Icon name="more" />, tone: colors.textBody, background: colors.softSurface, border: colors.mutedBorder },
+  waiting: { icon: <Icon name="history" />, tone: sections.attention.ink, background: sections.attention.tint, border: sections.attention.border },
+  todo: { icon: <Icon name="minus" />, tone: colors.textMuted, background: colors.surface, border: colors.border },
 }
 
 /**

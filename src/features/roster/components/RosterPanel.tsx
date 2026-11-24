@@ -1,8 +1,7 @@
-import { BulbOutlined, LockOutlined, NotificationOutlined, SoundOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Flex, Segmented, Select, Tooltip, Typography } from 'antd'
-import { useState, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
-import { ErrorState, SectionSkeleton, StatusTag } from '@/shared/ui'
+import { CANCEL_LABEL, ErrorState, Icon, SectionSkeleton, SELECT_POPUP_PROPS, StatusTag, UNKNOWN_METRIC_LABEL } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import {
   useFinalizeRoster,
@@ -11,6 +10,7 @@ import {
   useRoster,
   useSendRosterNotifications,
   useShortages,
+  useSongRequirements,
   useSuggestRoster,
 } from '../hooks/useRoster'
 import { ApiError } from '@/lib/api/errors'
@@ -43,6 +43,39 @@ const uniqueMembers = (lines: RosterAssignment[]) => [
   ...new Map(lines.map((line) => [line.memberId, { memberId: line.memberId, fullName: line.memberName }])).values(),
 ]
 
+function formatFinalizeError(error: Error, lines: RosterAssignment[], songs: RosterSong[], fallback: string) {
+  const detail = error instanceof ApiError ? (error.body as { message?: unknown } | null)?.message : undefined
+  const id = typeof detail === 'string' ? /Assignment ([0-9a-f-]{36})/i.exec(detail)?.[1] : undefined
+  const line = id ? lines.find((item) => item.id === id) : undefined
+  const text = rosterErrorMessage(error, fallback)
+  if (!line) return { content: text, duration: undefined }
+  const song = line.songListItemId ? songs.find((item) => item.id === line.songListItemId)?.title : undefined
+  // A whole-service line has no song; a song line whose song is no longer listed names the member and skill only.
+  const place = line.songListItemId ? song : 'cả buổi lễ'
+  const where = [line.memberName, line.skillName, place].filter(Boolean).join(' · ')
+  return { content: `${text} Dòng cần sửa: ${where}.`, duration: 8 }
+}
+
+function resolveStaffingStatus(params: {
+  reqsPending: boolean
+  reqsError: boolean
+  declaredCount: number
+  linesLength: number
+  shortCount: number
+}): { text: string; style?: CSSProperties } {
+  const { reqsPending, reqsError, declaredCount, linesLength, shortCount } = params
+  if (shortCount > 0) {
+    return {
+      text: `${shortCount} vị trí còn thiếu`,
+      style: { color: 'var(--hm-area-attention-ink)', fontWeight: 600 },
+    }
+  }
+  if (reqsPending) return { text: 'Đang kiểm tra yêu cầu…', style: { color: colors.textMuted } }
+  if (reqsError) return { text: UNKNOWN_METRIC_LABEL, style: { color: colors.textMuted } }
+  if (declaredCount === 0 && linesLength === 0) return { text: 'Chưa khai báo yêu cầu vị trí', style: { color: colors.textMuted } }
+  return { text: 'Đủ người cho mọi vị trí đã khai' }
+}
+
 /**
  * The roster of one program (FE-35–FE-40), in Harmonia-BE's three tiers (BE d1ca63e): choral singing needs no line,
  * whole-service roles are staffed once (and may be finalized and announced early), song roles per song of the approved
@@ -54,6 +87,8 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
   const roster = useRoster(programId)
   const shortages = useShortages(programId)
   const wholeService = usePersonnelRequirements(programId)
+  // Same queries as each song's StaffingCard (shared cache): needed to tell "nothing declared" from "all staffed" (G4-10).
+  const songRequirements = useSongRequirements(programId, approved ? songs.map((song) => song.id) : [])
   const suggest = useSuggestRoster(programId)
   const finalize = useFinalizeRoster(programId)
   const finalizeWholeService = useFinalizeWholeService(programId)
@@ -94,19 +129,9 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
   // The backend stops at the first line that is no longer valid and names it in the message only:
   // "Assignment {id} is no longer valid." (RosterService.FinalizeAsync). Say who and where.
   const finalizeFailed = (fallback: string) => (error: Error) => {
-    const detail = error instanceof ApiError ? (error.body as { message?: unknown } | null)?.message : undefined
-    const id = typeof detail === 'string' ? /Assignment ([0-9a-f-]{36})/i.exec(detail)?.[1] : undefined
-    const line = id ? lines.find((item) => item.id === id) : undefined
-    const song = line?.songListItemId ? songs.find((item) => item.id === line.songListItemId)?.title : undefined
-    const text = rosterErrorMessage(error, fallback)
-    if (!line) {
-      message.error(text)
-      return
-    }
-    // A whole-service line has no song; a song line whose song is no longer listed names the member and skill only.
-    const place = line.songListItemId ? song : 'cả buổi lễ'
-    const where = [line.memberName, line.skillName, place].filter(Boolean).join(' · ')
-    message.error({ duration: 8, content: `${text} Dòng cần sửa: ${where}.` })
+    const formatted = formatFinalizeError(error, lines, songs, fallback)
+    if (formatted.duration) message.error({ duration: formatted.duration, content: formatted.content })
+    else message.error(formatted.content)
   }
 
   const runSuggestion = () =>
@@ -121,7 +146,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
           title: 'Gợi ý lại phân công?',
           content: 'Các dòng gợi ý trước sẽ được thay bằng gợi ý mới; các dòng bạn tự thêm và các dòng nhạc công đã chốt được giữ nguyên.',
           okText: 'Gợi ý lại',
-          cancelText: 'Hủy',
+          cancelText: CANCEL_LABEL,
           onOk: runSuggestion,
         })
       : runSuggestion()
@@ -134,7 +159,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
       title: 'Chốt phân công?',
       content: `${shortNote}Sau khi chốt, yêu cầu nhân sự và phân công không thể thay đổi.`,
       okText: 'Chốt phân công',
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       onOk: () =>
         finalize
           .mutateAsync(current.id)
@@ -150,7 +175,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
       title: 'Chốt nhạc công?',
       content: `${short ? `Cả buổi lễ còn ${short} vai thiếu người. ` : ''}Sau khi chốt, vai cả buổi lễ chỉ còn thay người được, và bạn gửi được thông báo cho họ ngay, trước khi danh sách bài được duyệt.`,
       okText: 'Chốt nhạc công',
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       onOk: () =>
         finalizeWholeService
           .mutateAsync(current.id)
@@ -173,6 +198,18 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
     )
   }
 
+  const reqsPending = wholeService.isPending || songRequirements.some((query) => query.isPending)
+  const reqsError = wholeService.isError || songRequirements.some((query) => query.isError)
+  const declaredCount = (wholeService.data?.length ?? 0) + songRequirements.reduce((sum, query) => sum + (query.data?.length ?? 0), 0)
+  // Never claim "all staffed" while requirements load, failed, or none were declared (G4-10, R2.6).
+  const { text: staffingStatus, style: staffingStatusStyle } = resolveStaffingStatus({
+    reqsPending,
+    reqsError,
+    declaredCount,
+    linesLength: lines.length,
+    shortCount: shortages.data.length,
+  })
+
   const hasSuggestion = lines.some((line) => line.source === 'suggested')
   const actions = (
     <>
@@ -183,12 +220,12 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
       ) : (
         <Typography.Text style={{ color: colors.textMuted }}>Chưa có phân công</Typography.Text>
       )}
-      <Button icon={<BulbOutlined />} onClick={handleSuggest} disabled={locked} loading={suggest.isPending}>
+      <Button icon={<Icon name="liturgy-tip" />} onClick={handleSuggest} disabled={locked} loading={suggest.isPending}>
         {hasSuggestion ? 'Gợi ý lại' : 'Gợi ý phân công'}
       </Button>
       {(wholeService.data?.length ?? 0) > 0 && (
         <Button
-          icon={<SoundOutlined />}
+          icon={<Icon name="practice" />}
           onClick={handleFinalizeWholeService}
           disabled={!current || locked || wholeServiceLocked || wholeServiceLines.length === 0}
         >
@@ -197,7 +234,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
       )}
       <Tooltip title={locked || wholeServiceLocked ? undefined : 'Chốt phân công (hoặc chốt nhạc công) trước khi gửi thông báo.'}>
         <Button
-          icon={<NotificationOutlined />}
+          icon={<Icon name="notification" />}
           onClick={() => setNotifying(true)}
           disabled={!(locked || wholeServiceLocked) || announceable.length === 0}
         >
@@ -205,7 +242,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
         </Button>
       </Tooltip>
       <Tooltip title={approved ? undefined : 'Chốt phân công được sau khi danh sách bài hát được duyệt.'}>
-        <Button type="primary" icon={<LockOutlined />} onClick={handleFinalize} disabled={!current || locked || !approved}>
+        <Button type="primary" icon={<Icon name="lock" />} onClick={handleFinalize} disabled={!current || locked || !approved}>
           Chốt phân công
         </Button>
       </Tooltip>
@@ -229,6 +266,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
         />
         {scope === 'song' && (
           <Select
+            {...SELECT_POPUP_PROPS}
             aria-label="Bài hát"
             value={songId}
             onChange={setSongId}
@@ -239,8 +277,8 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
             style={{ minWidth: 280 }}
           />
         )}
-        <span className="ctb-filters__end" style={shortages.data.length ? { color: 'var(--hm-area-attention-ink)', fontWeight: 600 } : undefined}>
-          {shortages.data.length ? `${shortages.data.length} vị trí còn thiếu` : 'Đủ người cho mọi vị trí đã khai'}
+        <span className="ctb-filters__end" style={staffingStatusStyle}>
+          {staffingStatus}
         </span>
       </div>
       {children}

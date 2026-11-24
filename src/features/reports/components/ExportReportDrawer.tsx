@@ -4,7 +4,7 @@ import { colors } from '@/styles/tokens'
 import { adminReportKinds, reportDefinitions } from '../reportDefinitions'
 import { reportFormatLabels, type AdminReportKind, type ReportExportRequest, type ReportFilters, type ReportFormat } from '../types'
 import type { FilterOption } from './ReportFilterBar'
-import { Form, FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer, SELECT_POPUP_PROPS } from '@/shared/ui'
 
 export interface ExportReportDrawerProps {
   open: boolean
@@ -43,7 +43,6 @@ export function ExportReportDrawer({
       open={open}
       title="Xuất báo cáo"
       okText="Xuất báo cáo"
-      cancelText="Hủy"
       okButtonProps={{ htmlType: 'submit', loading: exporting }}
       cancelButtonProps={{ disabled: exporting }}
       onCancel={onCancel}
@@ -75,7 +74,7 @@ export function ExportReportDrawer({
       )}
     >
       <Form.Item label="Loại báo cáo" name="kind" rules={[{ required: true, message: 'Vui lòng chọn loại báo cáo.' }]}>
-        <Select options={adminReportKinds.map((kind) => ({ value: kind, label: reportDefinitions[kind].label }))} />
+        <Select {...SELECT_POPUP_PROPS} options={adminReportKinds.map((kind) => ({ value: kind, label: reportDefinitions[kind].label }))} />
       </Form.Item>
       <Form.Item label="Định dạng" name="format">
         <Radio.Group
@@ -97,11 +96,11 @@ export function ExportReportDrawer({
         {({ getFieldValue }) =>
           getFieldValue('scopeType') === 'season' ? (
             <Form.Item label="Mùa phụng vụ" name="seasonId" rules={[{ required: true, message: 'Vui lòng chọn mùa phụng vụ.' }]}>
-              <Select showSearch optionFilterProp="label" placeholder="Chọn mùa phụng vụ" options={seasons} />
+              <Select {...SELECT_POPUP_PROPS} showSearch optionFilterProp="label" placeholder="Chọn mùa phụng vụ" options={seasons} />
             </Form.Item>
           ) : (
             <Form.Item label="Tháng" name="month" rules={[{ required: true, message: 'Vui lòng chọn tháng.' }]}>
-              <DatePicker picker="month" format="MM/YYYY" placeholder="Chọn tháng" style={{ width: '100%' }} />
+              <DatePicker {...SELECT_POPUP_PROPS} picker="month" format="MM/YYYY" placeholder="Chọn tháng" style={{ width: '100%' }} />
             </Form.Item>
           )
         }

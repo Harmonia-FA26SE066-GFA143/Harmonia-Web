@@ -1,5 +1,6 @@
-import { Descriptions, Drawer, Table, Typography } from 'antd'
-import { colors, spacing } from '@/styles/tokens'
+import { Descriptions, Table, Typography } from 'antd'
+import { EmptyCell, ViewDrawer } from '@/shared/ui'
+import { colors, component, spacing } from '@/styles/tokens'
 import { fieldLabel, fieldValue } from '../activityFields'
 import { actionLabel, actorName, entityLabel } from '../activityFilters'
 import { formatDateTime } from '@/lib/api/dates'
@@ -18,7 +19,6 @@ interface FieldChange {
 }
 
 const muted = { color: colors.textMuted }
-const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 /** The fields of the old and new JSON objects, in words; a value that is not an object is shown under "Giá trị". */
 function changesOf({ oldValue, newValue }: ActivityRecord): FieldChange[] {
@@ -45,7 +45,7 @@ export function ActivityDetailDrawer({ record, onClose }: Readonly<ActivityDetai
   const changes = record ? changesOf(record) : []
 
   return (
-    <Drawer open={Boolean(record)} title="Chi tiết hoạt động" onClose={onClose} size={720} destroyOnHidden>
+    <ViewDrawer open={Boolean(record)} title="Chi tiết hoạt động" onClose={onClose} size={component.drawer.lg} destroyOnHidden>
       {record && (
         <>
           <Descriptions
@@ -53,16 +53,16 @@ export function ActivityDetailDrawer({ record, onClose }: Readonly<ActivityDetai
             column={1}
             size="small"
             items={[
-              { key: 'time', label: 'Thời gian', children: <span style={numeric}>{formatDateTime(record.createdAt)}</span> },
+              { key: 'time', label: 'Thời gian', children: <span>{formatDateTime(record.createdAt)}</span> },
               {
                 key: 'actor',
                 label: 'Người thực hiện',
                 children: record.user?.fullName && record.user.email ? `${actorName(record)} (${record.user.email})` : actorName(record),
               },
-              { key: 'action', label: 'Thao tác', children: actionLabel(record.action) },
+              { key: 'action', label: 'Loại thay đổi', children: actionLabel(record.action) },
               { key: 'entity', label: 'Dữ liệu', children: entityLabel(record.entityType) },
-              ...(record.entityId ? [{ key: 'entityId', label: 'Mã bản ghi', children: <span style={numeric}>{record.entityId}</span> }] : []),
-              ...(record.ipAddress ? [{ key: 'ip', label: 'Địa chỉ IP', children: <span style={numeric}>{record.ipAddress}</span> }] : []),
+              ...(record.entityId ? [{ key: 'entityId', label: 'Mã bản ghi', children: <span>{record.entityId}</span> }] : []),
+              ...(record.ipAddress ? [{ key: 'ip', label: 'Địa chỉ IP', children: <span>{record.ipAddress}</span> }] : []),
             ]}
           />
           {changes.length > 0 ? (
@@ -75,8 +75,8 @@ export function ActivityDetailDrawer({ record, onClose }: Readonly<ActivityDetai
               style={{ marginTop: spacing.md }}
               columns={[
                 { key: 'field', title: 'Trường', dataIndex: 'field', render: (field: string) => fieldLabel(record.entityType, field) },
-                { key: 'before', title: 'Trước', dataIndex: 'before', render: (value?: string) => value ?? <span style={muted}>—</span> },
-                { key: 'after', title: 'Sau', dataIndex: 'after', render: (value?: string) => value ?? <span style={muted}>—</span> },
+                { key: 'before', title: 'Trước', dataIndex: 'before', render: (value?: string) => value ?? <EmptyCell text="Không có" /> },
+                { key: 'after', title: 'Sau', dataIndex: 'after', render: (value?: string) => value ?? <EmptyCell text="Không có" /> },
               ]}
             />
           ) : (
@@ -89,6 +89,6 @@ export function ActivityDetailDrawer({ record, onClose }: Readonly<ActivityDetai
           </Typography.Paragraph>
         </>
       )}
-    </Drawer>
+    </ViewDrawer>
   )
 }

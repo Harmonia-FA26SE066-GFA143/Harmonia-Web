@@ -1,4 +1,5 @@
 import { Select } from 'antd'
+import { getPopupContainer } from '@/shared/ui/popupContainer'
 import { useChoirs } from '../hooks/useChoirs'
 import { setCurrentChoir, useCurrentChoir } from '../currentChoir'
 
@@ -17,18 +18,22 @@ export function ChoirSwitcher() {
   if (active.length === 1) {
     return (
       <span className="hm-choir">
-        <span className="hm-choir__label">Ca đoàn</span>
-        <span className="hm-choir__name">{active[0].name}</span>
+        <span className="hm-choir__label">Ca đoàn:</span>
+        <span className="hm-choir__name" title={active[0].name}>
+          {active[0].name}
+        </span>
       </span>
     )
   }
   return (
     <label className="hm-choir">
-      <span className="hm-choir__label">Ca đoàn</span>
+      <span className="hm-choir__label">Ca đoàn:</span>
       <Select
         size="small"
         variant="borderless"
         popupMatchSelectWidth={false}
+        placement="bottomLeft"
+        getPopupContainer={getPopupContainer}
         className="hm-choir__select"
         aria-label="Ca đoàn đang làm việc"
         value={current ?? all}

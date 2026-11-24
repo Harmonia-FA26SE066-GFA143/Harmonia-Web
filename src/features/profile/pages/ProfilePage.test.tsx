@@ -39,13 +39,13 @@ describe('ProfilePage', () => {
     renderPage(<ProfilePage />, '/profile')
 
     fireEvent.click(await screen.findByRole('button', { name: /Chỉnh sửa/ }))
-    expect(screen.getByLabelText('Họ và tên (không bắt buộc)')).toHaveFocus()
+    expect(screen.getByLabelText('Tên thánh')).toHaveFocus()
 
     fireEvent.click(screen.getByRole('button', { name: 'Hủy' }))
     await waitFor(() => expect(screen.getByRole('button', { name: /Chỉnh sửa/ })).toHaveFocus())
 
     fireEvent.click(screen.getByRole('button', { name: /Chỉnh sửa/ }))
-    fireEvent.change(screen.getByLabelText('Họ và tên (không bắt buộc)'), { target: { value: 'An Nguyễn' } })
+    fireEvent.change(screen.getByLabelText('Họ và tên'), { target: { value: 'An Nguyễn' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
     await waitFor(() => expect(screen.getByRole('button', { name: /Chỉnh sửa/ })).toHaveFocus())

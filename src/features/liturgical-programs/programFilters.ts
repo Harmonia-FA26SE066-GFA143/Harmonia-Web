@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { canEditSongList, eventStatusLabels, type EventFilters, type EventStatus, type LiturgicalProgram } from './types'
+import { canEditSongList, eventStatusLabels, type EventFilters, type EventStatus, type ProgramListItem } from './types'
 
 export const formatProgramDate = (date: string) => dayjs(date).format('DD/MM/YYYY')
 
@@ -32,11 +32,18 @@ export function writeEventListState({ status, fromDate, toDate }: EventFilters, 
   return params
 }
 
-/** The reminder date of a list still to send (BE `songListDueDate`, B44); not enforced, so only words. */
-export function dueText(program: LiturgicalProgram, today: string) {
-  // Only an upcoming program still to send has a due date worth saying; a cancelled or past one has none.
-  if (!program.songListDueDate || !canEditSongList(program.songListStatus) || program.status === 'cancelled' || program.date < today) return undefined
+/**
+ * The reminder date of a list still to send (BE `songListDueDate`, B44); not enforced, so only words. Whether it is
+ * late is the backend's call (`isSongListOverdue`, Harmonia-BE LiturgicalEvent.cs:45-48: no approved version past the
+ * due date, a submitted one included); the Web only counts the days for the wording.
+ */
+export function dueText(program: ProgramListItem, today: string) {
   const days = dayjs(program.songListDueDate).diff(dayjs(today), 'day')
-  if (days < 0) return { text: `Quá hạn gửi ${-days} ngày`, late: true }
+  if (program.isSongListOverdue) {
+    const late = Math.max(1, -days)
+    return { text: program.songListStatus === 'submitted' ? `Quá hạn ${late} ngày · chờ duyệt` : `Quá hạn gửi ${late} ngày`, late: true }
+  }
+  // Not late: only an upcoming program still to send has a due date worth saying.
+  if (!canEditSongList(program.songListStatus) || program.status === 'cancelled' || program.date < today || days < 0) return undefined
   return { text: days === 0 ? 'Hạn gửi hôm nay' : `Hạn gửi ${dayjs(program.songListDueDate).format('DD/MM')} · còn ${days} ngày`, late: false }
 }

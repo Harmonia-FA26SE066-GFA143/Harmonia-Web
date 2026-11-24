@@ -9,7 +9,7 @@ import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
 import { useLookup } from '@/features/system-categories'
 import { vietnamToday } from '@/lib/api/dates'
-import { EmptyState, ErrorState, MissingPosition, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, MissingPosition, PageHeader, SectionSkeleton, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { RosterPanel } from '../components/RosterPanel'
 
@@ -46,6 +46,7 @@ export function RosterPage() {
   const picker = (current: NonNullable<typeof program>) => (
     <>
       <Select
+        {...SELECT_POPUP_PROPS}
         aria-label="Thánh lễ"
         showSearch
         optionFilterProp="label"

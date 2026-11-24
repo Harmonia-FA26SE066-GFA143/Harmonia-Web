@@ -1,6 +1,6 @@
-import { CaretRightFilled, PauseOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { useEffect, useRef, useState, type RefObject } from 'react'
+import { Icon } from './icons'
 import { useReducedMotion } from './useReducedMotion'
 import { media, sizes, spacing } from '@/styles/tokens'
 
@@ -281,7 +281,7 @@ export function HeroNave({ aperture, onUnavailable, still = false }: Readonly<He
       {!reduced && (
         <Button
           shape="circle"
-          icon={playing ? <PauseOutlined /> : <CaretRightFilled />}
+          icon={playing ? <Icon name="pause" /> : <Icon name="play-solid" />}
           aria-label={playing ? 'Tạm dừng hình nền' : 'Phát hình nền'}
           onClick={toggle}
           style={{

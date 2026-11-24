@@ -14,21 +14,26 @@ export interface StatusPageProps {
   description: string
   /** Primary action first. */
   actions: ReactNode
+  /** When true (rendered inside `AppShell`), omits the standalone brand link and full-viewport padding (R2.8). */
+  inShell?: boolean
 }
 
 /**
- * 404, 403 and the render error (artifact StatusPages): they stand outside the workspace shell, so the page carries
- * the brand itself and sets its message on one reading leaf in the middle of the viewport.
+ * 404, 403 and the render error (artifact StatusPages): standalone when unauthenticated, or hosted cleanly inside
+ * `AppShell` when authenticated (`inShell`).
  */
-export function StatusPage({ tabTitle, picture, code, title, description, actions }: Readonly<StatusPageProps>) {
+export function StatusPage({ tabTitle, picture, code, title, description, actions, inShell = false }: Readonly<StatusPageProps>) {
+  const LeafTag = inShell ? 'div' : 'main'
   return (
-    <div className="hm-status">
+    <div className={inShell ? 'hm-status hm-status--in-shell' : 'hm-status'}>
       <title>{`${tabTitle} · Harmonia`}</title>
-      <Link to={paths.home} className="hm-status__brand">
-        <BrandMark size={32} />
-        Harmonia
-      </Link>
-      <main className="hm-status__leaf">
+      {!inShell && (
+        <Link to={paths.home} className="hm-status__brand">
+          <BrandMark size={32} />
+          Harmonia
+        </Link>
+      )}
+      <LeafTag className="hm-status__leaf">
         <Flex justify="center" style={{ marginBottom: 16 }}>
           {picture}
         </Flex>
@@ -43,7 +48,7 @@ export function StatusPage({ tabTitle, picture, code, title, description, action
         <Flex wrap justify="center" gap={8} style={{ marginTop: 32 }}>
           {actions}
         </Flex>
-      </main>
+      </LeafTag>
     </div>
   )
 }

@@ -1,7 +1,7 @@
-import { Drawer } from 'antd'
 import { SongMaterialsPanel, useSongMaterials } from '@/features/music-library'
 import { ApiError } from '@/lib/api/errors'
-import { EmptyState, ErrorState, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, SectionSkeleton, ViewDrawer } from '@/shared/ui'
+import { component } from '@/styles/tokens'
 import type { SongListItem } from '../types'
 
 /**
@@ -14,7 +14,7 @@ export function SongMaterialsDrawer({ item, onClose }: Readonly<{ item?: SongLis
   const removed = materials.error instanceof ApiError && materials.error.status === 404
 
   return (
-    <Drawer open={Boolean(item)} title={item?.songTitle} onClose={onClose} size="large" destroyOnHidden>
+    <ViewDrawer open={Boolean(item)} title={item?.songTitle} onClose={onClose} size={component.drawer.lg} destroyOnHidden>
       {materials.isPending && <SectionSkeleton rows={4} label="Đang tải tài liệu" />}
       {removed && (
         <EmptyState
@@ -34,6 +34,6 @@ export function SongMaterialsDrawer({ item, onClose }: Readonly<{ item?: SongLis
         />
       )}
       {materials.isSuccess && <SongMaterialsPanel materials={materials.data} />}
-    </Drawer>
+    </ViewDrawer>
   )
 }

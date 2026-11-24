@@ -1,5 +1,7 @@
-import { Input, Select, Typography } from 'antd'
+import { Input, Select, Typography, type InputRef } from 'antd'
+import { useRef } from 'react'
 import { useCatalogOptions } from '@/features/system-categories'
+import { component } from '@/styles/tokens'
 import {
   materialKindLabels,
   maxLyricsTextLength,
@@ -9,7 +11,7 @@ import {
   type PlaybackInstrument,
   type SongMaterial,
 } from '../types'
-import { Form, FormDrawer } from '@/shared/ui'
+import { Form, FormDrawer, SELECT_POPUP_PROPS } from '@/shared/ui'
 
 /** A material about to be added: a picked file, or typed lyrics (`lyricsText`, possibly drafted by AI). */
 export interface PendingMaterial {
@@ -48,6 +50,7 @@ const instrumentOptions = Object.entries(playbackInstrumentLabels).map(([value, 
  * text here, both when added and when edited; a MIDI or MusicXML file asks which instrument the mobile app plays it with.
  */
 export function UploadMaterialDrawer({ pending, material, saving = false, onSubmit, onCancel }: Readonly<UploadMaterialDrawerProps>) {
+  const titleRef = useRef<InputRef>(null)
   const activeSkills = useCatalogOptions('skills')
   // A material may target a skill switched off since; keep it selectable so saving does not drop it silently.
   const skills =
@@ -79,7 +82,8 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}
       onCancel={onCancel}
-      size={typedLyrics ? 640 : undefined}
+      initialFocusRef={titleRef}
+      size={typedLyrics ? component.drawer.md : component.drawer.sm}
       destroyOnHidden
       drawerRender={(dom) => (
         <Form<MaterialFormValues>
@@ -120,7 +124,7 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
           { max: 200, message: 'Tiêu đề tối đa 200 ký tự.' },
         ]}
       >
-        <Input placeholder="Ví dụ: Audio mẫu bè Tenor" />
+        <Input ref={titleRef} placeholder="Ví dụ: Audio mẫu bè Tenor" />
       </Form.Item>
       {typedLyrics && (
         <Form.Item
@@ -137,7 +141,7 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
       )}
       {playback && (
         <Form.Item label="Nhạc cụ phát" name="instrument" extra="Máy chủ dựng bản phát bằng nhạc cụ này cho phòng tập và ứng dụng di động.">
-          <Select options={instrumentOptions} />
+          <Select {...SELECT_POPUP_PROPS} options={instrumentOptions} />
         </Form.Item>
       )}
       <Form.Item
@@ -145,7 +149,7 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
         name="targetSkillId"
         extra="Để trống nếu tài liệu dành cho cả ca đoàn."
       >
-        <Select allowClear showSearch optionFilterProp="label" placeholder="Cả ca đoàn" options={skills} />
+        <Select {...SELECT_POPUP_PROPS} allowClear showSearch optionFilterProp="label" placeholder="Cả ca đoàn" options={skills} />
       </Form.Item>
     </FormDrawer>
   )

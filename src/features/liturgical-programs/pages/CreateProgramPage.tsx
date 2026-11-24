@@ -1,13 +1,16 @@
-import { App, Modal } from 'antd'
+import { App, Button, Flex, Modal } from 'antd'
 import { useRef, useState } from 'react'
 import { generatePath, useBeforeUnload, useBlocker, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useCatalogOptions } from '@/features/system-categories'
-import { PageHeader } from '@/shared/ui'
+import { CANCEL_LABEL, PageHeader } from '@/shared/ui'
+import { colors, spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
 import { eventErrorMessage } from '../eventErrors'
 import { useCreateEvent } from '../hooks/useEvents'
 import type { EventFormValues } from '../types'
+
+const formId = 'priest-create-event-form'
 
 /**
  * Priest: create a liturgical event (FE-15–FE-16, `POST /api/liturgical-events`). It starts as a Draft and is
@@ -23,6 +26,8 @@ export function CreateProgramPage() {
   const [dirty, setDirty] = useState(false)
   // Set once the event is saved; read at navigation time so the redirect to the new event is not blocked.
   const saved = useRef(false)
+  // Set by the clicked submit button in the summary; the form resets it after each submit attempt.
+  const publishRef = useRef(false)
 
   const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && !saved.current && currentLocation.pathname !== nextLocation.pathname)
   useBeforeUnload((event) => {
@@ -59,12 +64,12 @@ export function CreateProgramPage() {
       <div className="hm-split priest-create">
         <section className="hm-sheet-section priest-form" aria-label="Thông tin sự kiện">
           <EventForm
+            formId={formId}
+            hideActions
+            publishRef={publishRef}
             initialDate={initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) ? initialDate : undefined}
             saving={create.isPending}
-            submitText="Lưu bản nháp"
-            publishText="Tạo và công bố"
             onSubmit={handleSubmit}
-            onCancel={() => navigate(paths.priest.programs)}
             onDirty={() => setDirty(true)}
           />
         </section>
@@ -75,9 +80,39 @@ export function CreateProgramPage() {
           </p>
           <ul className="priest-day-events priest-facts">
             <li>Sự kiện được lưu là bản nháp; Ca trưởng chưa thấy.</li>
-            <li>Công bố cần có mùa phụng vụ. Để trống, mùa của ngày cử hành được điền sẵn.</li>
+            <li>Công bố cần có mùa phụng vụ. Để trống, hệ thống ưu tiên điền mùa từ lịch phụng vụ đã đồng bộ (gồm lễ vọng).</li>
             <li>Khi công bố, Ca trưởng nhận thông báo và ca viên của các ca đoàn phục vụ được mời xác nhận tham gia.</li>
           </ul>
+          {/* The draft button comes first in the DOM: Enter in a field submits with the form's first submit button, so
+              it always saves a draft. The aside is sticky (global.css .hm-preview), so the actions stay in view. */}
+          <Flex vertical gap={spacing.sm} style={{ borderTop: `1px solid ${colors.border}`, paddingTop: spacing.md }}>
+            <Button
+              block
+              htmlType="submit"
+              form={formId}
+              loading={create.isPending}
+              onClick={() => {
+                publishRef.current = false
+              }}
+            >
+              Lưu bản nháp
+            </Button>
+            <Button
+              block
+              type="primary"
+              htmlType="submit"
+              form={formId}
+              loading={create.isPending}
+              onClick={() => {
+                publishRef.current = true
+              }}
+            >
+              Tạo và công bố
+            </Button>
+            <Button block htmlType="button" disabled={create.isPending} onClick={() => navigate(paths.priest.programs)}>
+              {CANCEL_LABEL}
+            </Button>
+          </Flex>
         </aside>
       </div>
       <Modal

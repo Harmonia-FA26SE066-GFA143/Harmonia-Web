@@ -1,4 +1,5 @@
 import { Button, Flex, Table, Tag, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
+import { ACTIONS_COLUMN_TITLE } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { actionLabel, actorName, entityLabel } from '../activityFilters'
 import { formatDateTime } from '@/lib/api/dates'
@@ -24,7 +25,7 @@ export function ActivityTable({ records, onShowDetail, onPickUser, pagination, l
       key: 'time',
       title: 'Thời gian',
       render: (_, record) => (
-        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+        <Typography.Text style={{ whiteSpace: 'nowrap' }}>
           {formatDateTime(record.createdAt)}
         </Typography.Text>
       ),
@@ -59,7 +60,7 @@ export function ActivityTable({ records, onShowDetail, onPickUser, pagination, l
     },
     {
       key: 'action',
-      title: 'Thao tác',
+      title: 'Loại thay đổi',
       render: (_, record) => <Tag style={{ marginInlineEnd: 0 }}>{actionLabel(record.action)}</Tag>,
     },
     { key: 'entity', title: 'Dữ liệu', render: (_, record) => entityLabel(record.entityType) },
@@ -67,7 +68,7 @@ export function ActivityTable({ records, onShowDetail, onPickUser, pagination, l
       ? [
           {
             key: 'detail',
-            title: <span className="hm-visually-hidden">Chi tiết</span>,
+            title: ACTIONS_COLUMN_TITLE,
             align: 'right' as const,
             render: (_: unknown, record: ActivityRecord) => (
               <Button
@@ -75,7 +76,7 @@ export function ActivityTable({ records, onShowDetail, onPickUser, pagination, l
                 onClick={() => onShowDetail(record)}
                 aria-label={`Xem chi tiết: ${actionLabel(record.action)} ${entityLabel(record.entityType)} lúc ${formatDateTime(record.createdAt)}`}
               >
-                Chi tiết
+                Xem
               </Button>
             ),
           },

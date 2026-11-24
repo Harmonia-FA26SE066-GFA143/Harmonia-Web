@@ -1,19 +1,11 @@
-import {
-  ArrowLeftOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  EditOutlined,
-  FileSearchOutlined,
-  FolderOpenOutlined,
-} from '@ant-design/icons'
-import { App, Button, ConfigProvider, Flex, Typography } from 'antd'
+import { Alert, App, Button, ConfigProvider, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState, type ReactNode } from 'react'
 import { generatePath, useNavigate, useParams } from 'react-router'
 import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
 import {
+  isSongListClosed,
   PreparationOverview,
   ProgramHeader,
   ProgramItemList,
@@ -24,7 +16,7 @@ import {
   type ProgramItem,
 } from '@/features/liturgical-programs'
 import { parseUtc } from '@/lib/api/dates'
-import { EmptyState, ErrorState, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, Icon, LostLeaf, PageHeader, PageSkeleton, SectionSkeleton } from '@/shared/ui'
 import { colors, sections, spacing } from '@/styles/tokens'
 import { ReviewForm } from '../components/ReviewForm'
 import { SongMaterialsDrawer } from '../components/SongMaterialsDrawer'
@@ -64,17 +56,17 @@ const confirmations: Record<ReviewDecision, { title: string; content: string; ok
 
 /** Each state is a word and a shape, never colour alone. */
 const listStates: Record<SongList['status'], { icon: ReactNode; label: string; color: string }> = {
-  draft: { icon: <EditOutlined />, label: 'Bản nháp', color: colors.textMuted },
-  submitted: { icon: <ClockCircleOutlined />, label: 'Chờ Cha xứ duyệt', color: sections.attention.ink },
-  approved: { icon: <CheckCircleOutlined />, label: 'Đã duyệt', color: colors.primary },
-  needsRevision: { icon: <EditOutlined />, label: 'Đã yêu cầu chỉnh sửa', color: colors.textBody },
-  rejected: { icon: <CloseCircleOutlined />, label: 'Đã từ chối', color: colors.textBody },
+  draft: { icon: <Icon name="edit" />, label: 'Bản nháp', color: colors.textMuted },
+  submitted: { icon: <Icon name="history" />, label: 'Chờ Cha xứ duyệt', color: sections.attention.ink },
+  approved: { icon: <Icon name="check-circle" />, label: 'Đã duyệt', color: colors.primary },
+  needsRevision: { icon: <Icon name="edit" />, label: 'Đã yêu cầu chỉnh sửa', color: colors.textBody },
+  rejected: { icon: <Icon name="close-circle" />, label: 'Đã từ chối', color: colors.textBody },
 }
 
 const decisionIcons: Record<ReviewDecision, ReactNode> = {
-  approve: <CheckCircleOutlined />,
-  requestRevision: <EditOutlined />,
-  reject: <CloseCircleOutlined />,
+  approve: <Icon name="check-circle" />,
+  requestRevision: <Icon name="edit" />,
+  reject: <Icon name="close-circle" />,
 }
 
 function ListState({ list }: Readonly<{ list: SongList }>) {
@@ -175,7 +167,8 @@ function ReviewSteps({ eventId, date, list }: Readonly<{ eventId: string; date: 
   const decidedHere = list.status !== 'submitted' && status.data?.songListStatus === 'submitted'
   const songListStatus = decidedHere ? list.status : (status.data?.songListStatus ?? list.status)
   const items = preparationItems({ date, songListStatus, status: status.data, failed: status.isError, viewer: 'priest' })
-  return <PreparationOverview items={items} />
+  // One column: the aside is a third of the page wide (G3-07).
+  return <PreparationOverview items={items} columns={1} />
 }
 
 /**
@@ -196,7 +189,7 @@ export function SongListReviewPage() {
 
   const toProgram = () => navigate(generatePath(paths.priest.programDetail, { programId }))
   const backButton = (
-    <Button icon={<ArrowLeftOutlined />} onClick={toProgram}>
+    <Button icon={<Icon name="arrow-left" />} onClick={toProgram}>
       Về chương trình
     </Button>
   )
@@ -254,7 +247,7 @@ export function SongListReviewPage() {
       )}
       {!failed && !event.data && (
         <EmptyState
-          icon={<FileSearchOutlined />}
+          icon={<LostLeaf width={180} />}
           title="Không tìm thấy chương trình phụng vụ"
           description="Chương trình không tồn tại hoặc đường dẫn không đúng."
         />
@@ -278,7 +271,7 @@ export function SongListReviewPage() {
                 items={items}
                 renderAction={(item) => (
                   <Button
-                    icon={<FolderOpenOutlined />}
+                    icon={<Icon name="folder-open" />}
                     onClick={() => setViewing(byId.get(item.id))}
                     aria-label={`Xem bản nhạc và tài liệu của ${item.title}`}
                   >
@@ -290,7 +283,18 @@ export function SongListReviewPage() {
             </section>
           </ConfigProvider>
           <aside className="dash-aside dash-main" aria-label="Quyết định và tình hình chuẩn bị">
-            {list.status === 'submitted' && <ReviewForm saving={review.isPending} onSubmit={handleReview} />}
+            {/* No review once the event is cancelled or its Mass has begun (BE 61b3aa6). */}
+            {list.status === 'submitted' &&
+              (isSongListClosed(event.data) ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  title={event.data.status === 'cancelled' ? 'Chương trình đã bị hủy' : 'Thánh lễ đã bắt đầu'}
+                  description="Danh sách bài hát không còn duyệt được."
+                />
+              ) : (
+                <ReviewForm saving={review.isPending} onSubmit={handleReview} />
+              ))}
             <section className="hm-sheet-section priest-queue hm-paper" aria-labelledby="review-prep-heading">
               <header className="hm-sheet-section__head">
                 <h2 id="review-prep-heading" className="hm-rubric">

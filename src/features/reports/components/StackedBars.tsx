@@ -16,17 +16,17 @@ export interface BarSeries<K extends string> {
   color: string
 }
 
-const chartHeight = 160
-
 /**
  * Column chart of counts stacked by series, one column per bucket. Each column names its counts for screen readers;
- * the legend repeats the colors in words.
+ * the legend repeats the colors in words. `compact` (Director) is a little shorter so the band fits beside its watch card.
  */
 export function StackedBars<K extends string>({
   buckets,
   values,
   series,
-}: Readonly<{ buckets: Bucket[]; values: Record<K, number>[]; series: BarSeries<K>[] }>) {
+  compact = false,
+}: Readonly<{ buckets: Bucket[]; values: Record<K, number>[]; series: BarSeries<K>[]; compact?: boolean }>) {
+  const chartHeight = compact ? 136 : 160
   const totals = values.map((counts) => series.reduce((sum, { key }) => sum + counts[key], 0))
   const max = Math.max(1, ...totals)
 
@@ -41,7 +41,7 @@ export function StackedBars<K extends string>({
             : 'không có dữ liệu'
           return (
             <Flex key={bucket.title} vertical align="center" justify="flex-end" style={{ flex: '1 0 28px', height: '100%' }}>
-              <Typography.Text style={{ fontSize: 12, fontWeight: 600, color: colors.textPrimary, fontVariantNumeric: 'tabular-nums' }}>
+              <Typography.Text style={{ fontSize: 12, fontWeight: 600, color: colors.textPrimary }}>
                 {total || ''}
               </Typography.Text>
               <Tooltip title={`${bucket.title}: ${description}`}>
@@ -69,7 +69,7 @@ export function StackedBars<K extends string>({
               <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, whiteSpace: 'nowrap' }}>
                 {bucket.label}
               </Typography.Text>
-              <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, minHeight: 18, fontVariantNumeric: 'tabular-nums' }}>
+              <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, minHeight: 18 }}>
                 {bucket.note}
               </Typography.Text>
             </Flex>

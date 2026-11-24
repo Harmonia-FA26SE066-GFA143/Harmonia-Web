@@ -1,8 +1,18 @@
-import { Alert, Button, Card, Drawer, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
+import { Alert, Button, Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router'
-import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import {
+  EmptyCell,
+  EmptyState,
+  ErrorState,
+  filterAllPlaceholder,
+  NoFilterResults,
+  PROGRAM_NOUN_SHORT,
+  SectionSkeleton,
+  SELECT_POPUP_PROPS,
+  ViewDrawer,
+} from '@/shared/ui'
+import { colors, component, spacing, typography } from '@/styles/tokens'
 import { useAssignments, useUpcomingEvents } from '../hooks/usePractice'
 import { formatDateTime } from '@/lib/api/dates'
 import { formatEventOption } from '../practiceFormat'
@@ -59,7 +69,7 @@ export function AssignmentsTab() {
       key: 'due',
       title: 'Hạn nộp',
       render: (_, assignment) => (
-        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+        <Typography.Text style={{ whiteSpace: 'nowrap' }}>
           {formatDateTime(assignment.dueDate)}
         </Typography.Text>
       ),
@@ -69,7 +79,7 @@ export function AssignmentsTab() {
       key: 'event',
       title: 'Chương trình',
       render: (_, assignment) => {
-        if (!assignment.eventId) return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
+        if (!assignment.eventId) return <EmptyCell text="Không gắn chương trình" />
         const event = eventsById.get(assignment.eventId)
         // Only upcoming events are listed, so an assignment of a past event shows without its name.
         return event ? formatEventOption(event) : <Typography.Text style={{ color: colors.textMuted }}>Chương trình đã qua</Typography.Text>
@@ -100,14 +110,15 @@ export function AssignmentsTab() {
       )}
       <Flex vertical gap={4} style={{ maxWidth: 420 }}>
       <label htmlFor="assignment-filter-event" style={muted}>
-        Chương trình
+        {PROGRAM_NOUN_SHORT}
       </label>
       <Select
+        {...SELECT_POPUP_PROPS}
         id="assignment-filter-event"
         allowClear
         showSearch
         optionFilterProp="label"
-        placeholder="Tất cả chương trình"
+        placeholder={filterAllPlaceholder('chương trình')}
         value={eventId}
         onChange={(value?: string) => {
           setEventId(value)
@@ -140,15 +151,16 @@ export function AssignmentsTab() {
           />
         </Card>
       )}
-      <Drawer
+      {/* Read-only (B59): the backend offers no edit or withdrawal of an assignment. */}
+      <ViewDrawer
         open={Boolean(open)}
         title="Chi tiết bài tập"
-        size="large"
+        size={component.drawer.lg}
         onClose={() => setOpen(undefined)}
         destroyOnHidden
       >
         {open && <AssignmentSubmissions assignment={open} />}
-      </Drawer>
+      </ViewDrawer>
     </Flex>
   )
 }

@@ -1,19 +1,26 @@
-import { AudioOutlined, BorderOutlined, DeleteOutlined } from '@ant-design/icons'
 import { App, Button, Flex, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useRef, useState } from 'react'
 import { parseUtc } from '@/lib/api/dates'
+import { EmptyStaff, EmptyState, Icon, SectionSkeleton } from '@/shared/ui'
 import { clock } from '@/shared/utils/media'
 import { saveFile } from '@/shared/utils/saveFile'
 import { colors, spacing } from '@/styles/tokens'
 import { useCreateRecording, useDeleteRecording, useRecordings } from '../hooks/useRehearsals'
 import { rehearsalErrorMessage } from '../rehearsalErrors'
+import type { Rehearsal } from '../types'
+import { PlannerOnly } from './JointRehearsal'
 
 export interface RecordingPanelProps {
   /** Absent in the demo room: recording is off. */
   rehearsalId?: string
   songId: string
   songTitle: string
+  /**
+   * Who may record or delete: on a joint rehearsal only the lead choir's director (CheckCanManageRehearsalAsync,
+   * RehearsalRecordingService.cs:42, :89). Every serving choir's director still listens (CanViewAsync, :104-109).
+   */
+  rehearsal?: Pick<Rehearsal, 'isJoint' | 'eventId'>
 }
 
 /** A recorded take with the song it belongs to, which may no longer be the one shown. */
@@ -36,7 +43,7 @@ const canRecord = () => typeof MediaRecorder !== 'undefined' && Boolean(navigato
  * `POST /api/rehearsals/{id}/recordings`); members of the rehearsal's choir listen on mobile. Each song lists its takes,
  * newest first, to play back or delete.
  */
-export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<RecordingPanelProps>) {
+export function RecordingPanel({ rehearsalId, songId, songTitle, rehearsal = {} }: Readonly<RecordingPanelProps>) {
   const { message, modal } = App.useApp()
   const recordings = useRecordings(rehearsalId)
   const create = useCreateRecording(rehearsalId ?? '')
@@ -137,25 +144,29 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
   const recording = startedAt !== undefined
   const takes = (recordings.data ?? []).filter((take) => take.songId === songId).toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))
   const unavailable = !rehearsalId || !canRecord()
+  // Without a rehearsal the query is disabled and stays pending: nothing is loading then.
+  const loadingTakes = Boolean(rehearsalId) && recordings.isPending
 
   return (
     <section aria-label={`Bản thu của ${songTitle}`} style={{ marginTop: spacing.md }}>
-      <Flex wrap gap={spacing.sm} align="center">
-        {recording ? (
-          <Button danger icon={<BorderOutlined />} onClick={() => recorder.current?.stop()}>
-            Dừng và lưu ({clock(elapsed)} · {megabytes(recordedBytes)})
-          </Button>
-        ) : (
-          // One take at a time: a new one would replace the take still waiting to be saved.
-          <Button icon={<AudioOutlined />} onClick={start} disabled={unavailable || unsaved !== undefined} loading={create.isPending}>
-            Thu âm
-          </Button>
-        )}
-        {rehearsalId && !canRecord() && (
-          <Typography.Text type="secondary">Trình duyệt này không ghi âm được. Hãy dùng Chrome, Edge hoặc Firefox.</Typography.Text>
-        )}
-        {recording && <Typography.Text type="secondary" role="status">Đang thu “{songTitle}”…</Typography.Text>}
-      </Flex>
+      <PlannerOnly rehearsal={rehearsal}>
+        <Flex wrap gap={spacing.sm} align="center">
+          {recording ? (
+            <Button danger icon={<Icon name="stop" />} onClick={() => recorder.current?.stop()}>
+              Dừng và lưu ({clock(elapsed)} · {megabytes(recordedBytes)})
+            </Button>
+          ) : (
+            // One take at a time: a new one would replace the take still waiting to be saved.
+            <Button icon={<Icon name="audio" />} onClick={start} disabled={unavailable || unsaved !== undefined} loading={create.isPending}>
+              Thu âm
+            </Button>
+          )}
+          {rehearsalId && !canRecord() && (
+            <Typography.Text type="secondary">Trình duyệt này không ghi âm được. Hãy dùng Chrome, Edge hoặc Firefox.</Typography.Text>
+          )}
+          {recording && <Typography.Text type="secondary" role="status">Đang thu “{songTitle}”…</Typography.Text>}
+        </Flex>
+      </PlannerOnly>
       {unsaved && (
         <Flex wrap align="center" gap={spacing.sm} role="alert" style={{ marginTop: spacing.sm }}>
           <Typography.Text type="danger">
@@ -178,25 +189,40 @@ export function RecordingPanel({ rehearsalId, songId, songTitle }: Readonly<Reco
           </Button>
         </Flex>
       )}
+      {loadingTakes && (
+        <div style={{ marginTop: spacing.md }}>
+          <SectionSkeleton rows={3} label="Đang tải bản thu" />
+        </div>
+      )}
+      {takes.length === 0 && !loadingTakes && !recordings.isError && (
+        <EmptyState
+          headingLevel={3}
+          icon={<EmptyStaff />}
+          title="Chưa có bản thu nào cho bài hát này"
+          description="Nhấn Thu âm để ghi lại giọng mẫu hoặc hướng dẫn luyện tập. Ca viên của ca đoàn sẽ nghe lại các bản thu này trên ứng dụng di động."
+        />
+      )}
       {takes.length > 0 && (
         <ol style={{ listStyle: 'none', margin: `${spacing.sm}px 0 0`, padding: 0 }}>
           {takes.map((take, index) => (
             <li key={take.id} style={{ padding: `${spacing.sm}px 0`, borderTop: `1px solid ${colors.border}` }}>
               <Flex wrap align="center" gap={spacing.sm}>
-                <Typography.Text style={{ minWidth: 160, fontVariantNumeric: 'tabular-nums' }}>
+                <Typography.Text style={{ minWidth: 160 }}>
                   {take.title ?? `Bản thu ${takes.length - index}`} · {dayjs(parseUtc(take.createdAt)).format('DD/MM HH:mm')}
                   {take.durationSeconds ? ` · ${clock(take.durationSeconds)}` : ''}
                 </Typography.Text>
                 <audio controls preload="none" src={take.audioUrl} aria-label={`Nghe bản thu ${takes.length - index} của ${songTitle}`} style={{ height: 40, flex: '1 1 240px' }} />
-                <Tooltip title="Xoá bản thu" trigger={['hover', 'focus']}>
-                  <Button
-                    type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    aria-label={`Xoá bản thu ${takes.length - index} của ${songTitle}`}
-                    onClick={() => handleDelete(take.id, `bản thu ${takes.length - index} của “${songTitle}”`)}
-                  />
-                </Tooltip>
+                <PlannerOnly rehearsal={rehearsal}>
+                  <Tooltip title="Xoá bản thu" trigger={['hover', 'focus']}>
+                    <Button
+                      type="text"
+                      danger
+                      icon={<Icon name="delete" />}
+                      aria-label={`Xoá bản thu ${takes.length - index} của ${songTitle}`}
+                      onClick={() => handleDelete(take.id, `bản thu ${takes.length - index} của “${songTitle}”`)}
+                    />
+                  </Tooltip>
+                </PlannerOnly>
               </Flex>
             </li>
           ))}

@@ -1,14 +1,13 @@
 import { Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { EmptyState, ErrorState, SectionSkeleton, StatusTag, type StatusTagColor } from '@/shared/ui'
+import { EmptyCell, EmptyState, ErrorState, PROGRAM_NOUN, SectionSkeleton, SELECT_POPUP_PROPS, StatusTag, UNKNOWN_METRIC_LABEL, type StatusTagColor } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { usePreparationProgress, useUpcomingEvents } from '../hooks/usePractice'
 import { formatEventOption } from '../practiceFormat'
 import { participationStatusLabels, type MemberProgress, type ParticipationStatus } from '../types'
 
 const muted = { color: colors.textMuted }
-const numeric = { fontVariantNumeric: 'tabular-nums' }
 
 // Preset tag colors; StatusTag darkens the text of the ones that are too pale to read.
 const participationColors: Record<ParticipationStatus, StatusTagColor> = {
@@ -19,7 +18,7 @@ const participationColors: Record<ParticipationStatus, StatusTagColor> = {
 }
 
 const count = (part: number, whole: number) =>
-  whole === 0 ? <Typography.Text style={muted}>—</Typography.Text> : <span style={numeric}>{part}/{whole}</span>
+  whole === 0 ? <EmptyCell text={UNKNOWN_METRIC_LABEL} /> :<span>{part}/{whole}</span>
 
 const columns: TableColumnsType<MemberProgress> = [
   {
@@ -49,14 +48,33 @@ const columns: TableColumnsType<MemberProgress> = [
     dataIndex: 'assignmentsOverdue',
     render: (overdue: number) =>
       overdue > 0 ? (
-        <Typography.Text type="danger" style={numeric}>
+        <Typography.Text type="danger">
           {overdue}
         </Typography.Text>
       ) : (
-        <span style={numeric}>0</span>
+        <span>0</span>
       ),
   },
 ]
+
+/**
+ * Three summary chips (`EventPreparationProgressDto`): a member never invited has no participation status, and one
+ * with no assignment (`assignmentsTotal` 0) is not counted as having passed them all.
+ */
+function ProgressChips({ rows }: Readonly<{ rows: MemberProgress[] }>) {
+  const invited = rows.filter((row) => row.participationStatus != null)
+  const confirmed = invited.filter((row) => row.participationStatus === 'confirmed').length
+  const assigned = rows.filter((row) => row.assignmentsTotal > 0)
+  const allPassed = assigned.filter((row) => row.assignmentsPassed === row.assignmentsTotal).length
+  const overdue = rows.filter((row) => row.assignmentsOverdue > 0).length
+  return (
+    <output className="hm-progress-chips" aria-label="Tóm tắt tiến độ chuẩn bị">
+      <span>{invited.length > 0 ? `Đã xác nhận: ${confirmed}/${invited.length} đã mời` : 'Chưa gửi lời mời tham gia'}</span>
+      <span>{assigned.length > 0 ? `Đạt đủ bài tập: ${allPassed}/${assigned.length} được giao` : 'Chưa giao bài tập'}</span>
+      <span className={overdue > 0 ? 'is-warning' : undefined}>Quá hạn: {overdue} ca viên</span>
+    </output>
+  )
+}
 
 /**
  * Choir Director: each active member's readiness for an upcoming event (FE-46,
@@ -87,29 +105,33 @@ export function ProgressTab() {
 
   return (
     <Flex vertical gap={spacing.md}>
-      <Flex vertical gap={4} style={{ maxWidth: 480 }}>
+      <Flex wrap align="end" justify="space-between" gap={spacing.md}>
+      <Flex vertical gap={4} style={{ flex: '1 1 320px', maxWidth: 480 }}>
       <label htmlFor="progress-event" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
-        Sự kiện
+        {PROGRAM_NOUN}
       </label>
       <Select
+        {...SELECT_POPUP_PROPS}
         id="progress-event"
         showSearch
         optionFilterProp="label"
-        placeholder="Chọn sự kiện sắp tới"
+        placeholder="Chọn chương trình sắp tới"
         loading={events.isPending}
         value={eventId}
         onChange={handleSelectEvent}
         options={(events.data ?? []).map((event) => ({ value: event.id, label: formatEventOption(event) }))}
       />
       </Flex>
+      {eventId && progress.data !== undefined && progress.data.length > 0 && <ProgressChips rows={progress.data} />}
+      </Flex>
       {events.isError && (
-        <ErrorState title="Không thể tải sự kiện" error={events.error} hasData={events.data !== undefined} onRetry={() => events.refetch()} retrying={events.isFetching} />
+        <ErrorState title="Không thể tải chương trình" error={events.error} hasData={events.data !== undefined} onRetry={() => events.refetch()} retrying={events.isFetching} />
       )}
       {events.data !== undefined && events.data.length === 0 && (
-        <EmptyState title="Không có sự kiện sắp tới" description="Tiến độ chuẩn bị được xem theo sự kiện đã công bố." />
+        <EmptyState title="Không có chương trình sắp tới" description="Tiến độ chuẩn bị được xem theo chương trình đã công bố." />
       )}
       {events.data !== undefined && events.data.length > 0 && !eventId && (
-        <EmptyState title="Chọn một sự kiện" description="Chọn sự kiện để xem tiến độ chuẩn bị của từng ca viên." />
+        <EmptyState title="Chọn một chương trình" description="Chọn chương trình để xem tiến độ chuẩn bị của từng ca viên." />
       )}
       {eventId && progress.isPending && <SectionSkeleton rows={6} label="Đang tải tiến độ" />}
       {progress.isError && (

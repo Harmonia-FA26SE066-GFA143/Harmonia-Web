@@ -41,6 +41,7 @@ const scopeByApi = Object.fromEntries(Object.entries(apiScope).map(([scope, api]
 interface PracticeAssignmentDto {
   id: string
   eventId: string | null
+  songId: string | null
   title: string
   instruction: string | null
   scope: ApiScope
@@ -98,6 +99,7 @@ export async function listAssignments(eventId: string | undefined, page: Submiss
     items: result.items.map((dto) => ({
       ...dto,
       eventId: dto.eventId ?? undefined,
+      songId: dto.songId ?? undefined,
       instruction: dto.instruction ?? undefined,
       scope: scopeByApi[dto.scope],
     })),

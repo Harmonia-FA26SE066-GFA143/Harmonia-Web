@@ -1,7 +1,7 @@
-import { CloseOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, ConfigProvider, Flex, Input, Select, TreeSelect, Typography, type InputRef } from 'antd'
+import { Button, Flex, Input, Select, TreeSelect, Typography, type InputRef } from 'antd'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { themeTreeData, useCatalogOptions, useLookup, type CatalogOption } from '@/features/system-categories'
+import { FILTER_ALL_PREFIX, FILTER_RESET_LABEL, filterAllPlaceholder, Icon, resultCountLabel, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { colors, gold, radius, sizes, spacing, typography } from '@/styles/tokens'
 import { materialKindLabels, materialKinds, type SongFilters } from '../types'
 
@@ -11,6 +11,8 @@ export interface SongFilterBarProps {
   onReset: () => void
   /** Songs matching the filters on the server, across all pages. */
   resultCount?: number
+  /** True when the backing songs query failed (`isError`), preventing a stuck "Đang tải…" status (R2.5). */
+  error?: boolean
   /** Additional controls placed on the right of the result count row (e.g. ViewSwitcher). */
   extra?: ReactNode
   /** Show primary filters directly on the library page; pickers keep all filters collapsed. */
@@ -41,7 +43,15 @@ const labelStyle = { fontSize: typography.metadata.fontSize, color: colors.textM
  * FE-29 classification filters of GET /api/songs (a theme also finds its sub-themes' songs) and the library checks:
  * songs not classified yet, songs missing a kind of material. Active filters show as chips, so the panel can stay shut.
  */
-export function SongFilterBar({ value, onChange, onReset, resultCount, extra, libraryLayout = false }: Readonly<SongFilterBarProps>) {
+export function SongFilterBar({
+  value,
+  onChange,
+  onReset,
+  resultCount,
+  error = false,
+  extra,
+  libraryLayout = false,
+}: Readonly<SongFilterBarProps>) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState(value.search)
   const composing = useRef(false)
@@ -89,7 +99,7 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
     {
       key: 'missingMaterial',
       label: 'Thiếu tài liệu',
-      placeholder: 'Không lọc',
+      placeholder: filterAllPlaceholder('tài liệu thiếu'),
       options: materialKinds.map((kind) => ({ value: kind, label: `Chưa có ${materialKindLabels[kind].toLowerCase()}` })),
     },
   ]
@@ -119,11 +129,12 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
     select.key,
     select.label,
     <Select
+      {...SELECT_POPUP_PROPS}
       id={`song-filter-${select.key}`}
       allowClear
       showSearch
       optionFilterProp="label"
-      placeholder={select.placeholder ?? 'Tất cả'}
+      placeholder={select.placeholder ?? FILTER_ALL_PREFIX}
       value={value[select.key]}
       onChange={(selected?: string) => set(select.key, selected)}
       options={select.options}
@@ -132,12 +143,13 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
 
   const themeField = field('themeId', 'Chủ đề',
     <TreeSelect
+      {...SELECT_POPUP_PROPS}
       id="song-filter-themeId"
       allowClear
       showSearch
       treeNodeFilterProp="title"
       treeDefaultExpandAll
-      placeholder="Tất cả"
+      placeholder={FILTER_ALL_PREFIX}
       value={value.themeId}
       onChange={(themeId?: string) => set('themeId', themeId)}
       treeData={themes}
@@ -156,7 +168,7 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
         allowClear
         // GET /api/songs refuses a longer keyword (Harmonia-BE SearchSongsRequestValidator.cs:10, MaximumLength(100)).
         maxLength={100}
-        prefix={<SearchOutlined aria-hidden />}
+        prefix={<Icon name="search" />}
         placeholder="Tên bài hát, nhạc sĩ, người viết lời"
         value={search}
         onCompositionStart={() => {
@@ -183,7 +195,7 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
   const filterToggle = (
     <Button
       ref={filterButton}
-      icon={<FilterOutlined />}
+      icon={<Icon name="filter" />}
       aria-expanded={open}
       aria-controls="song-filter-panel"
       onClick={() => setOpen(!open)}
@@ -193,8 +205,6 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
   )
 
   return (
-    // The library's console is dense, like the filters of the other working pages.
-    <ConfigProvider theme={libraryLayout ? { token: { controlHeight: sizes.controlHeightCompact } } : undefined}>
     <Flex vertical gap={spacing.sm + 4} style={libraryLayout
       ? { padding: spacing.md, background: colors.ivory, border: `1px solid ${colors.border}`, borderTop: `1px solid ${gold.line}`, borderRadius: radius.lg }
       : { padding: spacing.md }}>
@@ -215,10 +225,10 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
       {/* Kept in the page while shut (hidden), so aria-controls always points at it. */}
       <div
         id="song-filter-panel"
+        // Equal columns from global.css (G3-10/16); the grid only applies while open.
+        className="song-filter-panel__grid"
         hidden={!open}
         style={{
-          display: open ? 'grid' : undefined,
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: spacing.md,
           padding: spacing.md,
           background: colors.background,
@@ -241,7 +251,7 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
             <Button
               key={chip.key}
               style={{ minHeight: sizes.controlHeight, height: 'auto', whiteSpace: 'normal', textAlign: 'start' }}
-              icon={<CloseOutlined aria-hidden />}
+              icon={<Icon name="close" />}
               iconPlacement="end"
               aria-label={`Bỏ lọc ${chip.text}`}
               onClick={() => {
@@ -259,18 +269,17 @@ export function SongFilterBar({ value, onChange, onReset, resultCount, extra, li
               filterButton.current?.focus()
             }}
           >
-            Xoá tất cả bộ lọc
+            {FILTER_RESET_LABEL}
           </Button>
         </Flex>
       )}
 
       <Flex justify="space-between" align="center" wrap gap={spacing.sm}>
         <Typography.Text role="status" aria-atomic style={{ color: colors.textMuted }}>
-          {resultCount === undefined ? 'Chưa có kết quả' : `${resultCount} bài hát`}
+          {resultCountLabel(resultCount, 'bài hát', error)}
         </Typography.Text>
         {extra}
       </Flex>
     </Flex>
-    </ConfigProvider>
   )
 }

@@ -17,6 +17,8 @@ export type SignInError =
   | { kind: 'invalid-credentials' }
   | { kind: 'inactive' }
   | { kind: 'unavailable' }
+  /** 429 RATE_LIMIT_EXCEEDED: more than 10 attempts a minute from this address (BE 14dabd3). */
+  | { kind: 'rate-limited' }
   /** Google sign-in: the email has no Harmonia account, or Google's token was refused. */
   | { kind: 'google-not-registered' }
   | { kind: 'google-invalid' }

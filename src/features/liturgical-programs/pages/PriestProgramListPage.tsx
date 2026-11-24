@@ -1,10 +1,9 @@
-import { PlusOutlined } from '@ant-design/icons'
 import { App, Button, Card, Flex } from 'antd'
 import { useMemo, useState } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { vietnamToday } from '@/lib/api/dates'
-import { EmptyState, EmptyWeek, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { CANCEL_LABEL, EmptyState, EmptyWeek, ErrorState, Icon, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { spacing } from '@/styles/tokens'
 import { EventFilterBar } from '../components/EventFilterBar'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
@@ -38,7 +37,7 @@ export function PriestProgramListPage() {
       title: `Công bố ${selected.length} sự kiện đã chọn?`,
       content: 'Ca trưởng nhận thông báo, ca viên của các ca đoàn phục vụ được mời xác nhận tham gia, và các sự kiện hiện trong lịch.',
       okText: 'Công bố',
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       onOk: async () => {
         const { published, notInvited, nobody, refused } = await publish.mutateAsync(selected)
         setSelectedIds(refused.map(({ event }) => event.id))
@@ -88,10 +87,13 @@ export function PriestProgramListPage() {
   const openEvent = (id: string) => navigate(generatePath(paths.priest.programDetail, { programId: id }))
 
   const createButton = (
-    <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.priest.programCreate)}>
+    <Button type="primary" icon={<Icon name="add" />} onClick={() => navigate(paths.priest.programCreate)}>
       Tạo chương trình
     </Button>
   )
+
+  // SYS-06: with nothing to list, the empty state keeps the only create button.
+  const empty = events.data !== undefined && total === 0 && !filtered
 
   return (
     <>
@@ -99,17 +101,21 @@ export function PriestProgramListPage() {
         title="Chương trình phụng vụ"
         breadcrumb={[{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }]}
         extra={
-          <Flex wrap gap={spacing.sm}>
+          empty ? (
             <GenerateEventsButton />
-            {createButton}
-          </Flex>
+          ) : (
+            <Flex wrap gap={spacing.sm}>
+              <GenerateEventsButton />
+              {createButton}
+            </Flex>
+          )
         }
       />
       {events.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách chương trình" />}
       {events.isError && (
         <ErrorState title="Không thể tải danh sách chương trình" error={events.error} hasData={events.data !== undefined} onRetry={() => events.refetch()} retrying={events.isFetching} />
       )}
-      {events.data !== undefined && total === 0 && !filtered && (
+      {empty && (
         <EmptyState
           icon={<EmptyWeek />} title="Chưa có chương trình phụng vụ nào"
           description="Tạo sự kiện đầu tiên, rồi công bố để Ca trưởng bắt đầu chuẩn bị."
@@ -117,11 +123,19 @@ export function PriestProgramListPage() {
         />
       )}
       {events.data !== undefined && (total > 0 || filtered) && (
+        <>
+        <EventFilterBar
+          value={filters}
+          onChange={changeFilters}
+          onReset={resetFilters}
+          resultCount={total}
+          error={events.isError}
+          style={{ marginBottom: spacing.lg }}
+        />
         <div className="hm-split">
         <Card styles={{ body: { padding: 0 } }}>
-          <EventFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
           {total === 0 ? (
-            <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+            <div style={{ padding: spacing.lg }}>
               <NoFilterResults onClearFilters={resetFilters} />
             </div>
           ) : (
@@ -153,6 +167,7 @@ export function PriestProgramListPage() {
           />
         )}
         </div>
+        </>
       )}
     </>
   )

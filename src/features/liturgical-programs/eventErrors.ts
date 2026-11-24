@@ -12,8 +12,8 @@ const messages: Record<string, string> = {
   LITURGICAL_EVENT_ALREADY_PASSED: 'Ngày giờ cử hành đã qua: không tạo, sửa hay công bố được sự kiện này.',
   LITURGICAL_EVENT_DATE_OUTSIDE_LITURGICAL_SEASON: 'Ngày cử hành không nằm trong mùa phụng vụ đã chọn.',
   // Publishing rechecks the event and answers these two directly, not inside VALIDATION_FAILED.
-  LITURGICAL_EVENT_TYPE_REQUIRED: 'Chọn loại lễ hoặc loại nghi thức cho sự kiện (bấm Sửa) rồi công bố lại.',
-  LITURGICAL_EVENT_SEASON_REQUIRED: 'Chọn mùa phụng vụ cho sự kiện (bấm Sửa) rồi công bố lại.',
+  LITURGICAL_EVENT_TYPE_REQUIRED: 'Chọn loại lễ hoặc loại nghi thức cho sự kiện (bấm Sửa sự kiện) rồi công bố lại.',
+  LITURGICAL_EVENT_SEASON_REQUIRED: 'Chọn mùa phụng vụ cho sự kiện (bấm Sửa sự kiện) rồi công bố lại.',
   // BE 678fc34: a generated draft has no choir yet; publishing needs a lead choir.
   LITURGICAL_EVENT_CHOIR_REQUIRED: 'Chọn ca đoàn phục vụ và ca đoàn phụ trách (thẻ Ca đoàn phục vụ) rồi công bố lại.',
   CHOIR_LEAD_INVALID: 'Chọn ca đoàn phụ trách trong số các ca đoàn phục vụ.',

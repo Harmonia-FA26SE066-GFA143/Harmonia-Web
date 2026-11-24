@@ -39,6 +39,24 @@ export function useAssignments(eventId: string | undefined, page: SubmissionPage
   })
 }
 
+/** Loads every page of the assignments given, all or those of one event; none is silently omitted by the paging limit. */
+export function useAllAssignments(eventId?: string) {
+  return useQuery({
+    queryKey: [...practiceKey, 'assignments', 'all', eventId],
+    queryFn: async () => {
+      const pageSize = 100
+      const first = await listAssignments(eventId, { pageNumber: 1, pageSize })
+      const rest = await Promise.all(
+        Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, index) =>
+          listAssignments(eventId, { pageNumber: index + 2, pageSize }),
+        ),
+      )
+      const items = [...first.items, ...rest.flatMap((page) => page.items)]
+      return { items, totalCount: first.totalCount }
+    },
+  })
+}
+
 /** Fetched when the review opens: the signed audio URL of the list may have expired. */
 export function useSubmission(id?: string) {
   return useQuery({

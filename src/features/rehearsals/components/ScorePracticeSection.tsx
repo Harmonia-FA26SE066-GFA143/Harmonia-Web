@@ -38,6 +38,9 @@ const SHEET_FRAME_HEIGHT = 'clamp(320px, calc(100vh - 470px), 560px)'
 
 const devSource = new DevFixtureScoreSource()
 
+/** What the room plays: the interactive score, its loading sheet, or the room's own MIDI/audio `fallback`. */
+export type PracticePlayer = 'loading' | 'score' | 'fallback'
+
 /** Whether trying the same source again can help. `aborted` only comes from this component's own cleanup. */
 const RETRYABLE: Record<ScoreSourceErrorCode, boolean> = {
   'invalid-type': false,
@@ -175,6 +178,7 @@ function ScorePlayer({
   material,
   showLyrics,
   onStale,
+  onPlayerChange,
 }: Readonly<{
   source: ScorePackageSource
   cache?: PracticeScoreCache
@@ -186,6 +190,7 @@ function ScorePlayer({
   material?: SongMaterial
   showLyrics: boolean
   onStale?: () => void
+  onPlayerChange?: (player: PracticePlayer) => void
 }>) {
   const [state, setState] = useState<PlayerState>({ status: 'loading' })
   const [viewerRoot, setViewerRoot] = useState<HTMLDivElement | null>(null)
@@ -363,6 +368,16 @@ function ScorePlayer({
     layout(sheetWidth.current, nextZoom)
   }
 
+  // An audio that never loaded (a corrupt WAV) can never sound, so the room's own player may come back beside the sheet.
+  // A refused play() can still be retried, loaded or not: the fallback stays away then, or two players could sound at once.
+  const audioDead = ready !== undefined && clock.sourceFailed === true && clock.duration <= 0
+  const showsFallback = state.status === 'rejected' || failed || audioDead
+  let player: PracticePlayer = 'loading'
+  if (showsFallback) player = 'fallback'
+  else if (ready) player = 'score'
+  // Tells the room which player sounds now, so its status bar names the right one (nothing yet while the score loads).
+  useEffect(() => onPlayerChange?.(player), [onPlayerChange, player])
+
   if (state.status === 'rejected') {
     return (
       <>
@@ -374,9 +389,6 @@ function ScorePlayer({
 
   const { active } = focus
   const warning = ready && misalignmentNote(ready.notesEndSeconds ?? clock.duration, ready.timelineSeconds)
-  // An audio that never loaded (a corrupt WAV) can never sound, so the room's own player may come back beside the sheet.
-  // A refused play() can still be retried, loaded or not: the fallback stays away then, or two players could sound at once.
-  const audioDead = ready !== undefined && clock.sourceFailed === true && clock.duration <= 0
   // One ScoreViewer element for every state, so it is kept (not rebuilt) as the state moves from loading to ready to refused.
   let viewer: ReactNode
   if (failed) viewer = <ScoreViewer status="error" svgPages={[]} title={title} onRetry={onRetry} />
@@ -449,7 +461,7 @@ function ScorePlayer({
           {ready && <ScoreCredit />}
         </dialog>
       </ConfigProvider>
-      {(failed || audioDead) && fallback}
+      {showsFallback && fallback}
     </>
   )
 }
@@ -468,6 +480,7 @@ export function ScorePracticeSection({
   cacheScope,
   showLyrics = true,
   onStale,
+  onPlayerChange,
 }: Readonly<{
   title: string
   fallback: ReactNode
@@ -476,6 +489,8 @@ export function ScorePracticeSection({
   cacheScope?: string
   showLyrics?: boolean
   onStale?: () => void
+  /** Which player the room shows now: `fallback` without a score source or when the score failed, `loading` meanwhile. */
+  onPlayerChange?: (player: PracticePlayer) => void
 }>) {
   const [picked, setPicked] = useState<ScorePackageSource>()
   const [attempt, setAttempt] = useState(0)
@@ -489,6 +504,11 @@ export function ScorePracticeSection({
   const cachedSource = Boolean(cache && cacheScope && (materialId || env.useDevFixtures))
   const cacheIdentity = cachedSource ? `${cacheScope}:${materialId ?? 'dev-fixture'}` : undefined
   const cacheKey = cacheIdentity ? `${cacheIdentity}:${revision ?? 0}` : undefined
+  const hasSource = Boolean(source)
+  // With a source, the player reports for itself.
+  useEffect(() => {
+    if (!hasSource) onPlayerChange?.('fallback')
+  }, [hasSource, onPlayerChange])
 
   return (
     <>
@@ -517,6 +537,7 @@ export function ScorePracticeSection({
           material={material}
           showLyrics={showLyrics}
           onStale={onStale}
+          onPlayerChange={onPlayerChange}
         />
       ) : (
         fallback

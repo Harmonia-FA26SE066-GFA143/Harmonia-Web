@@ -1,6 +1,6 @@
-import { ReloadOutlined } from '@ant-design/icons'
 import { Button, DatePicker, Flex, Select } from 'antd'
 import dayjs from 'dayjs'
+import { FILTER_RESET_LABEL, Icon, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { hasActiveReportFilters } from '../reportFilters'
 import type { ReportFilters } from '../types'
@@ -32,6 +32,8 @@ export function ReportFilterBar({ value, onChange, onReset, seasons, choirs }: R
           Tháng
         </label>
         <DatePicker
+          getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer}
+          placement="bottomLeft"
           id="report-filter-month"
           picker="month"
           format="MM/YYYY"
@@ -46,6 +48,7 @@ export function ReportFilterBar({ value, onChange, onReset, seasons, choirs }: R
           Mùa phụng vụ
         </label>
         <Select
+          {...SELECT_POPUP_PROPS}
           id="report-filter-seasonId"
           allowClear
           showSearch
@@ -63,6 +66,7 @@ export function ReportFilterBar({ value, onChange, onReset, seasons, choirs }: R
             Ca đoàn
           </label>
           <Select
+            {...SELECT_POPUP_PROPS}
             id="report-filter-choirId"
             allowClear
             showSearch
@@ -75,8 +79,8 @@ export function ReportFilterBar({ value, onChange, onReset, seasons, choirs }: R
           />
         </Flex>
       )}
-      <Button icon={<ReloadOutlined />} onClick={onReset} disabled={!hasActiveReportFilters(value)}>
-        Đặt lại bộ lọc
+      <Button icon={<Icon name="refresh" />} onClick={onReset} disabled={!hasActiveReportFilters(value)}>
+        {FILTER_RESET_LABEL}
       </Button>
     </Flex>
   )

@@ -18,7 +18,7 @@ export function ProgramDateCell({ date, label }: Readonly<{ date: string; label:
         <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
           {weekday.charAt(0).toUpperCase() + weekday.slice(1)}
         </Typography.Text>
-        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums' }}>{label}</Typography.Text>
+        <Typography.Text>{label}</Typography.Text>
       </Flex>
     </Flex>
   )

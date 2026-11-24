@@ -16,6 +16,9 @@ const messages: Record<string, string> = {
   LOOKUP_NOT_FOUND: 'Mục này không còn tồn tại. Vui lòng tải lại trang.',
   SKILL_NOT_FOUND: 'Kỹ năng này không còn tồn tại. Vui lòng tải lại trang.',
   SKILL_CATEGORY_NOT_FOUND: 'Nhóm kỹ năng đã chọn không còn tồn tại. Vui lòng tải lại trang.',
+  // BE a395ce0: one active season per calendar season.
+  LITURGICAL_SEASON_CALENDAR_KEY_DUPLICATE: 'Đã có một mùa phụng vụ đang dùng gắn với mùa này của lịch phụng vụ.',
+  LITURGICAL_SEASON_CALENDAR_KEY_INVALID: 'Mùa của lịch phụng vụ không hợp lệ. Vui lòng chọn lại.',
   LITURGICAL_SEASON_DATE_OVERLAP: 'Khoảng ngày này trùng với một mùa phụng vụ khác đang dùng.',
   // A seeded skill category, a skill someone is assigned to at an upcoming event, or a season whose new dates leave out an upcoming event (LookupService.cs:121, 151, 370).
   LOOKUP_IN_USE:

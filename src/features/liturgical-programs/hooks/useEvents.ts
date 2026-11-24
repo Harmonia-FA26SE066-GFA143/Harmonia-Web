@@ -10,7 +10,7 @@ import {
   updateEvent,
   type EventPage,
 } from '../api/eventsApi'
-import { updateEventChoirs, type EventChoirsValues } from '@/features/choirs'
+import type { EventChoirsValues } from '@/features/choirs'
 import { sendParticipationRequests } from '@/features/participation'
 import type { EventFilters, EventFormValues, LiturgicalEvent } from '../types'
 
@@ -93,22 +93,8 @@ export const usePublishEvents = () =>
     return { published: events.length - refused.length, notInvited: outcomes.failed, nobody: outcomes.nobody, refused }
   })
 
-/**
- * Creates the drafts, then gives each one the chosen choirs: the generation request carries no choir (tbd-backlog
- * B55), and a draft without a lead choir cannot be published. `withoutChoirs` counts the drafts whose choirs were
- * refused.
- */
+/** Creates the drafts with the chosen choirs in one request (B55); a refused choir refuses the whole generation. */
 export const useGenerateEvents = () =>
-  useEventMutation(async ({ fromDate, toDate, choirs }: { fromDate: string; toDate: string; choirs?: EventChoirsValues }) => {
-    const created = await generateEvents(fromDate, toDate)
-    let withoutChoirs = 0
-    if (choirs?.choirIds.length) {
-      // ponytail: one PUT per draft, in order; B55 (choirs on the generation request) replaces the loop.
-      for (const event of created) {
-        await updateEventChoirs(event.id, choirs).catch(() => {
-          withoutChoirs += 1
-        })
-      }
-    }
-    return { created, withoutChoirs }
-  })
+  useEventMutation(async ({ fromDate, toDate, choirs }: { fromDate: string; toDate: string; choirs?: EventChoirsValues }) => ({
+    created: await generateEvents(fromDate, toDate, choirs),
+  }))

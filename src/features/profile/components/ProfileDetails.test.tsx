@@ -32,8 +32,8 @@ describe('ProfileDetails', () => {
     const { onSave } = renderDetails({ editing: true })
 
     expect(screen.getAllByRole('textbox')).toHaveLength(3)
-    fireEvent.change(screen.getByLabelText('Số điện thoại (không bắt buộc)'), { target: { value: '0901234567' } })
-    fireEvent.change(screen.getByLabelText('Tên thánh (không bắt buộc)'), { target: { value: 'Giuse' } })
+    fireEvent.change(screen.getByLabelText('Số điện thoại'), { target: { value: '0901234567' } })
+    fireEvent.change(screen.getByLabelText('Tên thánh'), { target: { value: 'Giuse' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
 
     await waitFor(() => expect(onSave).toHaveBeenCalledWith({ fullName: 'Nguyễn Văn An', phone: '0901234567', saintName: 'Giuse' }))
@@ -42,7 +42,7 @@ describe('ProfileDetails', () => {
   it('keeps the saint name when only the phone is changed, since the backend replaces every field', async () => {
     const { onSave } = renderDetails({ editing: true, profile: { ...activeProfile, saintName: 'Maria' } })
 
-    fireEvent.change(screen.getByLabelText('Số điện thoại (không bắt buộc)'), { target: { value: '0901234567' } })
+    fireEvent.change(screen.getByLabelText('Số điện thoại'), { target: { value: '0901234567' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
 
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ saintName: 'Maria' })))
@@ -51,8 +51,8 @@ describe('ProfileDetails', () => {
   it('keeps name and phone within the backend limits', async () => {
     const { onSave } = renderDetails({ editing: true })
 
-    fireEvent.change(screen.getByLabelText('Họ và tên (không bắt buộc)'), { target: { value: 'a'.repeat(101) } })
-    fireEvent.change(screen.getByLabelText('Số điện thoại (không bắt buộc)'), { target: { value: '0'.repeat(21) } })
+    fireEvent.change(screen.getByLabelText('Họ và tên'), { target: { value: 'a'.repeat(101) } })
+    fireEvent.change(screen.getByLabelText('Số điện thoại'), { target: { value: '0'.repeat(21) } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
 
     expect(await screen.findByText('Họ và tên tối đa 100 ký tự.')).toBeInTheDocument()
@@ -63,7 +63,7 @@ describe('ProfileDetails', () => {
   it('allows an empty name, as the backend does', async () => {
     const { onSave } = renderDetails({ editing: true })
 
-    fireEvent.change(screen.getByLabelText('Họ và tên (không bắt buộc)'), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText('Họ và tên'), { target: { value: '' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))
 
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ fullName: '' })))

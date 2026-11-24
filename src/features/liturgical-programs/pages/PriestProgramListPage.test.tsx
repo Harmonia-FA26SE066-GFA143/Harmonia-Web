@@ -49,6 +49,9 @@ describe('PriestProgramListPage', () => {
     renderPage(<PriestProgramListPage />, '/priest/programs')
 
     expect(await screen.findByRole('heading', { name: 'Chưa có chương trình phụng vụ nào' })).toBeInTheDocument()
+    // SYS-06: the empty state keeps the only create button; the header keeps the generation.
+    expect(screen.getAllByRole('button', { name: /Tạo chương trình/ })).toHaveLength(1)
+    expect(screen.getByRole('button', { name: /Tạo từ giờ lễ cố định/ })).toBeInTheDocument()
   })
 
   it('lists one page of events with place, time and status, and opens one', async () => {
@@ -62,6 +65,7 @@ describe('PriestProgramListPage', () => {
     expect(table.getAllByText('04/10/2026 · 07:00')).toHaveLength(2)
     expect(screen.getByRole('complementary', { name: /Xem trước/ })).toBeInTheDocument()
     expect(screen.getByText('2 sự kiện')).toBeInTheDocument()
+    expect(table.getByRole('columnheader', { name: 'Thao tác' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Lễ Bổn mạng ngày 04/10/2026' }))
     expect(await screen.findByTestId('location')).toHaveTextContent('/priest/programs/e2')
@@ -94,11 +98,16 @@ describe('PriestProgramListPage', () => {
     vi.spyOn(categoriesApi, 'listLookup').mockImplementation(async (kind) =>
       kind === 'worshipLocations' ? [{ id: 'loc-1', name: 'Nhà thờ chính' }] : [],
     )
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
     const generate = vi.spyOn(eventsApi, 'generateEvents').mockResolvedValue([event('e3', 'Lễ sáng sớm', 'draft')])
     renderPage(<PriestProgramListPage />, '/priest/programs')
 
     fireEvent.click(await screen.findByRole('button', { name: /Tạo từ giờ lễ cố định/ }))
     const dialog = await screen.findByRole('dialog')
+    // The date range takes focus first, without opening its calendar.
+    const [fromInput] = within(dialog).getAllByRole('textbox').filter((input) => input.closest('.ant-picker-range'))
+    await waitFor(() => expect(fromInput).toHaveFocus())
+    expect(document.querySelector('.ant-picker-dropdown:not(.ant-picker-dropdown-hidden)')).toBeNull()
     // Only the active Mass time is used.
     expect(await within(dialog).findByText('Chúa nhật · 05:00 · Lễ sáng sớm · Nhà thờ chính')).toBeInTheDocument()
     expect(within(dialog).queryByText(/Lễ chiều/)).not.toBeInTheDocument()
@@ -106,7 +115,10 @@ describe('PriestProgramListPage', () => {
 
     const today = dayjs(vietnamToday())
     await waitFor(() =>
-      expect(generate).toHaveBeenCalledWith(today.format('YYYY-MM-DD'), today.add(27, 'day').format('YYYY-MM-DD')),
+      expect(generate).toHaveBeenCalledWith(today.format('YYYY-MM-DD'), today.add(27, 'day').format('YYYY-MM-DD'), {
+        choirIds: [],
+        leadChoirId: undefined,
+      }),
     )
     expect(await screen.findByText('Đã tạo 1 sự kiện nháp.')).toBeInTheDocument()
   })
@@ -121,8 +133,10 @@ describe('PriestProgramListPage', () => {
       { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true, directorId: 'u1' },
       { id: 'c2', name: 'Ca đoàn cũ', isActive: false },
     ])
-    vi.spyOn(eventsApi, 'generateEvents').mockResolvedValue([event('e3', 'Lễ sáng sớm', 'draft'), event('e4', 'Lễ sáng sớm', 'draft')])
-    const setChoirs = vi.spyOn(choirsApi, 'updateEventChoirs').mockResolvedValueOnce([]).mockRejectedValueOnce(new ApiError(500, undefined))
+    const generate = vi
+      .spyOn(eventsApi, 'generateEvents')
+      .mockResolvedValue([event('e3', 'Lễ sáng sớm', 'draft'), event('e4', 'Lễ sáng sớm', 'draft')])
+    const setChoirs = vi.spyOn(choirsApi, 'updateEventChoirs')
     renderPage(<PriestProgramListPage />, '/priest/programs')
 
     fireEvent.click(await screen.findByRole('button', { name: /Tạo từ giờ lễ cố định/ }))
@@ -130,11 +144,31 @@ describe('PriestProgramListPage', () => {
     expect(await within(dialog).findByText('Ca đoàn Cecilia')).toBeInTheDocument()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Tạo sự kiện nháp' }))
 
-    expect(await screen.findByText(/Đã tạo 2 sự kiện nháp; 1 sự kiện chưa gán được ca đoàn/)).toBeInTheDocument()
-    expect(setChoirs.mock.calls).toEqual([
-      ['e3', { choirIds: ['c1'], leadChoirId: 'c1' }],
-      ['e4', { choirIds: ['c1'], leadChoirId: 'c1' }],
+    // B55: the choirs travel with the generation request; no per-draft update follows.
+    expect(await screen.findByText('Đã tạo 2 sự kiện nháp.')).toBeInTheDocument()
+    expect(generate.mock.calls[0]?.[2]).toEqual({ choirIds: ['c1'], leadChoirId: 'c1' })
+    expect(setChoirs).not.toHaveBeenCalled()
+  })
+
+  it('locks the generation while the choirs cannot be loaded, and offers to retry', async () => {
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue(page(events))
+    vi.spyOn(categoriesApi, 'listMassSchedules').mockResolvedValue([
+      { id: 'ms1', dayOfWeek: 'Sunday', time: '05:00', massTypeId: 'm1', locationId: 'loc-1', title: 'Lễ sáng sớm', isActive: true },
     ])
+    vi.spyOn(categoriesApi, 'listLookup').mockResolvedValue([])
+    const listChoirs = vi.spyOn(choirsApi, 'listChoirs').mockRejectedValue(new ApiError(403, undefined))
+    const generate = vi.spyOn(eventsApi, 'generateEvents')
+    renderPage(<PriestProgramListPage />, '/priest/programs')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Tạo từ giờ lễ cố định/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(await within(dialog).findByText('Không thể tải danh sách ca đoàn.')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Tạo sự kiện nháp' })).toBeDisabled()
+
+    const calls = listChoirs.mock.calls.length
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thử lại' }))
+    await waitFor(() => expect(listChoirs.mock.calls.length).toBeGreaterThan(calls))
+    expect(generate).not.toHaveBeenCalled()
   })
 
   it('publishes the selected upcoming drafts, invites their members and names each refusal', async () => {

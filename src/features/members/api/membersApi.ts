@@ -33,13 +33,31 @@ interface MemberProfileSummaryDto {
 
 const skillNames = (dto: MemberProfileSummaryDto) => dto.approvedSkills.map((skill) => skill.skillName)
 
+const toChoirMember = (dto: MemberProfileSummaryDto): ChoirMember => ({
+  id: dto.id,
+  fullName: dto.fullName,
+  skills: skillNames(dto),
+  roleName: dto.roleName,
+})
+
+// 100 is the backend maximum page size (MemberProfilesController).
+const activePage = (pageNumber: number) =>
+  apiRequest<PagedList<MemberProfileSummaryDto>>(`/api/member-profiles${toQuery({ status: 'Active', pageNumber, pageSize: 100 })}`)
+
 /** Active members only (owner decision 2026-10-06): the lists that use them invite members to serve. */
 export async function listChoirMembers(): Promise<ChoirMember[]> {
   // ponytail: one page of 100, the backend maximum; a larger choir would need paging or a search here.
-  const page = await apiRequest<PagedList<MemberProfileSummaryDto>>(
-    `/api/member-profiles${toQuery({ status: 'Active', pageNumber: 1, pageSize: 100 })}`,
+  return (await activePage(1)).items.map(toChoirMember)
+}
+
+/** Every active member across all pages, for counts that must not stop at 100 (G2-03, B54). */
+export async function listAllChoirMembers(): Promise<ChoirMember[]> {
+  const first = await activePage(1)
+  // ponytail: 50 pages (5,000 members) bound against a runaway loop; far beyond a parish.
+  const rest = await Promise.all(
+    Array.from({ length: Math.min(first.totalPages, 50) - 1 }, (_, index) => activePage(index + 2)),
   )
-  return page.items.map((dto) => ({ id: dto.id, fullName: dto.fullName, skills: skillNames(dto), roleName: dto.roleName }))
+  return [first, ...rest].flatMap((page) => page.items.map(toChoirMember))
 }
 
 export interface MemberPage {

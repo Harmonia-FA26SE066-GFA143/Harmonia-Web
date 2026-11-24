@@ -1,9 +1,8 @@
-import { ArrowRightOutlined } from '@ant-design/icons'
 import { Typography } from 'antd'
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { inVoicePart, voiceParts } from '@/shared/ui'
+import { Icon, inVoicePart, VoicePartIcon, voiceParts } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import type { ParticipationRequest } from '../types'
 
@@ -50,7 +49,9 @@ export function ResponsesByPart({ requests, skillsOf, programId }: Readonly<{ re
           {parts.map((part, index) => (
             <li key={part.label}>
               <div className="hm-part-bars__head">
-                <b>{part.label}</b>
+                <span>
+                  <VoicePartIcon name={part.label} /> <b>{part.label}</b>
+                </span>
                 <span style={muted}>
                   {part.total === 0 ? 'Chưa mời ai' : `${part.confirmed} xác nhận · ${part.declined} từ chối · ${part.open} chưa`}
                 </span>
@@ -70,7 +71,7 @@ export function ResponsesByPart({ requests, skillsOf, programId }: Readonly<{ re
             Bè <b>{weakest.label}</b> ít xác nhận nhất: {weakest.confirmed} trên {weakest.total} người được mời.
           </Typography.Text>
           <Link to={`${paths.director.roster}?programId=${programId}`}>
-            Mở phân công <ArrowRightOutlined aria-hidden />
+            Mở phân công <Icon name="arrow-right" />
           </Link>
         </div>
       )}

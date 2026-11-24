@@ -1,4 +1,3 @@
-import { SwapOutlined } from '@ant-design/icons'
 import { App, Button, Flex, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -6,7 +5,7 @@ import { paths } from '@/app/router/paths'
 import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import type { SystemRole } from '@/shared/types/account'
-import { EmptyState, ErrorState, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { EmptyState, ErrorState, Icon, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { accountErrorMessage } from '../accountErrors'
 import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
@@ -92,7 +91,10 @@ export function RolesPage() {
               />
             ) : (
               <>
-                <AccountFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} />
+                {/* Inset under the section heading, aligned with its 24px padding, right above the table. */}
+                <div style={{ padding: `0 ${spacing.lg}px ${spacing.md}px` }}>
+                  <AccountFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} error={accounts.isError} />
+                </div>
                 {total === 0 ? (
                   <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
                     <NoFilterResults onClearFilters={resetFilters} />
@@ -111,7 +113,7 @@ export function RolesPage() {
                         <Typography.Text style={{ color: colors.textMuted }}>Không thể tự đổi vai trò</Typography.Text>
                       ) : (
                         <Button
-                          icon={<SwapOutlined />}
+                          icon={<Icon name="swap" />}
                           onClick={() => setChanging(account)}
                           aria-label={`Thay đổi vai trò của ${accountName(account)}`}
                         >

@@ -1,6 +1,7 @@
-import { Form, Select, Tabs, Typography } from 'antd'
+import { Select, Tabs, Typography } from 'antd'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
-import { PageHeader } from '@/shared/ui'
+import { EmptyCell, Form, PageHeader, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { genderLabel, genderOptions, type Gender } from '@/shared/utils/personName'
 import { colors } from '@/styles/tokens'
 import { CatalogManager } from '../components/CatalogManager'
 import { descriptionColumn, descriptionField } from '../components/description'
@@ -13,7 +14,12 @@ function SkillsPanel() {
   const categories = categoryQuery.data ?? []
   const categoryName = new Map(categories.map((category) => [category.id, category.name]))
   // While the categories load or when they failed, a skill's category is unknown, not absent.
-  const unknownCategory = { pending: 'Đang tải…', error: 'Chưa tải được', success: '—' }[categoryQuery.status]
+  const unknownCategory =
+    categoryQuery.status === 'success' ? (
+      <EmptyCell />
+    ) : (
+      <Typography.Text style={{ color: colors.textMuted }}>{categoryQuery.status === 'pending' ? 'Đang tải…' : 'Chưa tải được'}</Typography.Text>
+    )
   return (
     <CatalogManager
       noun="kỹ năng"
@@ -24,8 +30,13 @@ function SkillsPanel() {
           key: 'category',
           title: 'Nhóm kỹ năng',
           dataIndex: 'categoryId',
-          render: (categoryId: string) =>
-            categoryName.get(categoryId) ?? <Typography.Text style={{ color: colors.textMuted }}>{unknownCategory}</Typography.Text>,
+          render: (categoryId: string) => categoryName.get(categoryId) ?? unknownCategory,
+        },
+        {
+          key: 'gender',
+          title: 'Dành cho',
+          dataIndex: 'gender',
+          render: (gender: Gender | null) => (gender ? genderLabel(gender) : 'Mọi ca viên'),
         },
         descriptionColumn,
       ]}
@@ -33,6 +44,7 @@ function SkillsPanel() {
         <>
           <Form.Item label="Nhóm kỹ năng" name="categoryId" rules={[{ required: true, message: 'Vui lòng chọn nhóm kỹ năng.' }]}>
             <Select
+              {...SELECT_POPUP_PROPS}
               loading={categoryQuery.isPending}
               notFoundContent={categoryQuery.isError ? 'Không tải được danh sách nhóm kỹ năng.' : undefined}
               placeholder="Chọn nhóm kỹ năng"
@@ -41,6 +53,15 @@ function SkillsPanel() {
                 label: isActive ? name : `${name} (ngừng dùng)`,
               }))}
             />
+          </Form.Item>
+          {/* PUT replaces the whole skill, so the gender is always sent back (SaveSkillRequest.Gender, BE 1e2f8f8). */}
+          <Form.Item
+            label="Dành cho"
+            name="gender"
+            normalize={(value?: Gender) => value ?? null}
+            extra="Chỉ ca viên thuộc giới tính này được khai báo kỹ năng, ví dụ bè Soprano dành cho nữ."
+          >
+            <Select {...SELECT_POPUP_PROPS} allowClear placeholder="Mọi ca viên" aria-label="Dành cho" options={genderOptions} />
           </Form.Item>
           {descriptionField}
         </>

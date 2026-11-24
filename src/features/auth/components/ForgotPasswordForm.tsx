@@ -7,9 +7,11 @@ export interface ForgotPasswordFormProps {
   onSubmit: (values: PasswordResetRequestValues) => void
   submitting?: boolean
   failed?: boolean
+  /** 429 RATE_LIMIT_EXCEEDED: more than 10 requests a minute from this address (BE 14dabd3). */
+  rateLimited?: boolean
 }
 
-export function ForgotPasswordForm({ onSubmit, submitting = false, failed = false }: Readonly<ForgotPasswordFormProps>) {
+export function ForgotPasswordForm({ onSubmit, submitting = false, failed = false, rateLimited = false }: Readonly<ForgotPasswordFormProps>) {
   const [form] = Form.useForm<PasswordResetRequestValues>()
 
   return (
@@ -19,7 +21,7 @@ export function ForgotPasswordForm({ onSubmit, submitting = false, failed = fals
           type="error"
           showIcon
           title="Không thể gửi yêu cầu"
-          description="Đã xảy ra lỗi kết nối với máy chủ. Vui lòng thử lại sau giây lát."
+          description={rateLimited ? 'Bạn đã thử quá nhiều lần trong một phút. Vui lòng đợi một phút rồi thử lại.' : 'Đã xảy ra lỗi kết nối với máy chủ. Vui lòng thử lại sau giây lát.'}
           action={
             <Button size="small" onClick={() => form.submit()}>
               Thử lại

@@ -1,19 +1,19 @@
 import { Button, Flex, Table, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
 import dayjs from 'dayjs'
-import { SeasonChip, StatusTag } from '@/shared/ui'
+import { ACTIONS_COLUMN_TITLE, EmptyCell, SeasonChip, StatusTag } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { dueText } from '../programFilters'
-import { canEditSongList, type LiturgicalProgram } from '../types'
+import { canEditSongList, isSongListClosed, type ProgramListItem } from '../types'
 import { EventStatusTag } from './EventStatusTag'
 import { SongListStatusTag } from './SongListStatusTag'
 
 export interface ProgramTableProps {
-  programs: LiturgicalProgram[]
+  programs: ProgramListItem[]
   /** The program shown in the preview beside the list; a row click picks it. */
   selectedId?: string
-  onSelect: (program: LiturgicalProgram) => void
-  onOpen: (program: LiturgicalProgram) => void
-  onPropose: (program: LiturgicalProgram) => void
+  onSelect: (program: ProgramListItem) => void
+  onOpen: (program: ProgramListItem) => void
+  onPropose: (program: ProgramListItem) => void
   /** Server-side paging of GET /api/liturgical-events. */
   pagination?: TablePaginationConfig | false
   loading?: boolean
@@ -33,13 +33,15 @@ const weekdayMark = (date: string) => {
  * place, season, Mass type, song-list state and its due date, and the one action that fits the list's state.
  */
 export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose, pagination = false, loading, today }: Readonly<ProgramTableProps>) {
-  const columns: TableColumnsType<LiturgicalProgram> = [
+  const columns: TableColumnsType<ProgramListItem> = [
     {
       key: 'name',
       title: 'Chương trình',
-      // Floors, not widths: fixed widths on every other column left this one to the auto layout's leftovers, a letter per
-      // line beside the detail panel at 1440. Tags keep one line; the name, type and due text may take two.
-      minWidth: 200,
+      // Every column has a width and the layout is fixed, so the sum (892) is the table's floor: it fits the list card
+      // beside the preview (916px at 1366, 974px at 1440/1920) and wider cards share the rest in proportion. Earlier
+      // floors (`minWidth`) let tags and padding push the table to 1023px and cut the action column (G3-08).
+      // The name, type and due text wrap by words; tags keep one line.
+      width: 216,
       render: (_, program) => (
         <Flex align="center" gap={12}>
           <span className="hm-date" aria-hidden>
@@ -58,34 +60,35 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
     {
       key: 'season',
       title: 'Mùa',
-      minWidth: 150,
-      render: (_, program) => (program.seasonName ? <SeasonChip seasonName={program.seasonName} size="small" /> : <Typography.Text style={secondary}>—</Typography.Text>),
+      width: 132,
+      render: (_, program) => (program.seasonName ? <SeasonChip seasonName={program.seasonName} size="small" /> : <EmptyCell />),
     },
     {
       key: 'type',
       title: 'Loại lễ',
-      minWidth: 110,
-      render: (_, program) => program.massTypeName ?? program.ceremonyTypeName ?? <Typography.Text style={secondary}>—</Typography.Text>,
+      width: 96,
+      render: (_, program) => program.massTypeName ?? program.ceremonyTypeName ?? <EmptyCell />,
     },
     {
       key: 'status',
       title: 'Trạng thái lễ',
-      minWidth: 100,
+      width: 104,
       render: (_, program) => <EventStatusTag status={program.status} />,
     },
     {
       key: 'songList',
       title: 'Danh sách bài hát',
-      minWidth: 110,
+      // The longest tag, "Yêu cầu chỉnh sửa", on one line.
+      width: 148,
       render: (_, program) => program.songListStatus ? <SongListStatusTag status={program.songListStatus} /> : <StatusTag mark="draft" style={{ marginInlineEnd: 0 }}>Chưa đề xuất</StatusTag>,
     },
     {
       key: 'due',
       title: 'Hạn đề xuất',
-      minWidth: 110,
+      width: 100,
       render: (_, program) => {
         const due = dueText(program, today)
-        if (!due) return <Typography.Text style={secondary}>—</Typography.Text>
+        if (!due) return <EmptyCell />
         return (
           <Typography.Text style={{ ...secondary, color: due.late ? 'var(--hm-area-attention-ink)' : colors.textMuted, fontWeight: due.late ? 600 : undefined }}>
             {due.text}
@@ -95,16 +98,18 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
     },
     {
       key: 'actions',
-      title: <span className="hm-visually-hidden">Thao tác</span>,
+      title: ACTIONS_COLUMN_TITLE,
       align: 'center',
-      minWidth: 90,
+      width: 96,
       render: (_, program) => {
         // The Choir Director's detail reads published events only (GET /api/schedule/events/{id}).
         if (program.status === 'cancelled') return null
-        const propose = canEditSongList(program.songListStatus) && program.date >= today
+        const propose = canEditSongList(program.songListStatus) && !isSongListClosed(program)
         return (
           <Button
             type="link"
+            // The link needs no side padding of its own inside the 96px column; "Đề xuất" stays on one line.
+            style={{ paddingInline: 0 }}
             onClick={(event) => {
               event.stopPropagation()
               if (propose) onPropose(program)
@@ -120,16 +125,18 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
   ]
 
   return (
-    <Table<LiturgicalProgram>
+    <Table<ProgramListItem>
       rowKey="id"
-      className="hm-table-pick"
+      className="hm-table-pick ct-program-table"
       columns={columns}
       dataSource={programs}
       loading={loading}
       pagination={pagination}
       rowClassName={(program) => (program.id === selectedId ? 'is-picked' : '')}
       onRow={(program) => ({ onClick: () => program.status !== 'cancelled' && onSelect(program) })}
-      scroll={{ x: 900 }}
+      // The sum of the column widths; below it (never on the desktop widths in scope) the table scrolls inside its card.
+      tableLayout="fixed"
+      scroll={{ x: 892 }}
     />
   )
 }

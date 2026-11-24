@@ -87,6 +87,15 @@ function FeedbackAlert({ feedback }: Readonly<{ feedback: LoginFeedback }>) {
           description="Vui lòng thử lại, hoặc đăng nhập bằng email và mật khẩu."
         />
       )
+    case 'rate-limited':
+      return (
+        <Alert
+          type="error"
+          showIcon
+          title="Bạn đã thử đăng nhập quá nhiều lần"
+          description="Vui lòng đợi một phút rồi thử lại."
+        />
+      )
     case 'unavailable':
       return (
         <Alert

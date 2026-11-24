@@ -1,18 +1,8 @@
-import {
-  CompressOutlined,
-  DownloadOutlined,
-  LeftOutlined,
-  RightOutlined,
-  UpOutlined,
-  DownOutlined,
-  ZoomInOutlined,
-  ZoomOutOutlined,
-} from '@ant-design/icons'
 import { Button, Flex, Skeleton, Typography } from 'antd'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import type { SongMaterial } from '@/features/music-library'
-import { ErrorState } from '@/shared/ui'
+import { ErrorState, Icon } from '@/shared/ui'
 import { fileExtension } from '@/shared/utils/media'
 import { colors, radius, spacing } from '@/styles/tokens'
 
@@ -98,11 +88,11 @@ export function PracticeScoreViewer({
           <Typography.Text type="secondary">{material.title} · {material.fileName}</Typography.Text>
         </div>
         <Flex wrap gap={spacing.sm}>
-          <Button icon={<DownloadOutlined />} href={material.url ?? undefined} target="_blank" rel="noreferrer">
+          <Button icon={<Icon name="download" />} href={material.url ?? undefined} target="_blank" rel="noreferrer">
             Mở/Tải xuống
           </Button>
           <Button
-            icon={collapsed ? <DownOutlined /> : <UpOutlined />}
+            icon={collapsed ? <Icon name="chevron-down" /> : <Icon name="chevron-up" />}
             aria-expanded={!collapsed}
             aria-controls="practice-score-content"
             onClick={() => setCollapsed((value) => !value)}
@@ -119,7 +109,7 @@ export function PracticeScoreViewer({
               <Flex className="practice-score-toolbar" wrap justify="space-between" align="center" gap={spacing.sm}>
                 <Flex align="center" gap={spacing.sm}>
                   <Button
-                    icon={<LeftOutlined />}
+                    icon={<Icon name="chevron-left" />}
                     aria-label="Trang bản nhạc trước"
                     disabled={pageNumber <= 1}
                     onClick={() => setPageNumber((value) => Math.max(1, value - 1))}
@@ -128,17 +118,17 @@ export function PracticeScoreViewer({
                     Trang {pageNumber} / {numPages || '…'}
                   </Typography.Text>
                   <Button
-                    icon={<RightOutlined />}
+                    icon={<Icon name="chevron-right" />}
                     aria-label="Trang bản nhạc sau"
                     disabled={!numPages || pageNumber >= numPages}
                     onClick={() => setPageNumber((value) => Math.min(numPages, value + 1))}
                   />
                 </Flex>
                 <Flex align="center" gap={spacing.sm}>
-                  <Button icon={<ZoomOutOutlined />} aria-label="Thu nhỏ bản nhạc" disabled={scale <= minScale} onClick={() => zoom(-1)} />
+                  <Button icon={<Icon name="zoom-out" />} aria-label="Thu nhỏ bản nhạc" disabled={scale <= minScale} onClick={() => zoom(-1)} />
                   <Typography.Text style={{ minWidth: 48, textAlign: 'center' }}>{Math.round(scale * 100)}%</Typography.Text>
-                  <Button icon={<ZoomInOutlined />} aria-label="Phóng to bản nhạc" disabled={scale >= maxScale} onClick={() => zoom(1)} />
-                  <Button icon={<CompressOutlined />} onClick={() => setScale(1)}>Vừa chiều rộng</Button>
+                  <Button icon={<Icon name="zoom-in" />} aria-label="Phóng to bản nhạc" disabled={scale >= maxScale} onClick={() => zoom(1)} />
+                  <Button icon={<Icon name="fit-page" />} onClick={() => setScale(1)}>Vừa chiều rộng</Button>
                 </Flex>
               </Flex>
 

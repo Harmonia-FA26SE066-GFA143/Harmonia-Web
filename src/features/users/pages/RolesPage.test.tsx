@@ -80,4 +80,29 @@ describe('RolesPage', () => {
 
     await waitFor(() => expect(change).toHaveBeenCalledWith('a1', 'priest'))
   })
+
+  it('opens on the role of the account chosen, not the choice left on the previous one', async () => {
+    renderRoles()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thay đổi vai trò của Giuse Trần Minh Tâm' }))
+    let dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Cha xứ/ }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Hủy' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Thay đổi vai trò của Têrêsa Lê Hoàng Vy' }))
+    dialog = await screen.findByRole('dialog')
+    await waitFor(() => expect(within(dialog).getByRole('radio', { name: /Ca viên/ })).toBeChecked())
+    expect(within(dialog).getByRole('radio', { name: /Cha xứ/ })).not.toBeChecked()
+    expect(within(dialog).getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
+  })
+
+  it('warns that a Choir Member moved to another role leaves their choirs', async () => {
+    renderRoles()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thay đổi vai trò của Têrêsa Lê Hoàng Vy' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).queryByText(/rút tài khoản này khỏi các ca đoàn/)).toBeNull()
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Ca trưởng/ }))
+    expect(await within(dialog).findByText(/rút tài khoản này khỏi các ca đoàn/)).toBeInTheDocument()
+  })
 })

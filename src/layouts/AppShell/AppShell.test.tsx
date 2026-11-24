@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers'
@@ -12,6 +12,8 @@ import * as profileApi from '@/features/profile/api/profileApi'
 import * as settingsApi from '@/features/settings/api/settingsApi'
 import * as skillsApi from '@/features/skill-approval/api/memberSkillsApi'
 import { clearSession, setSession } from '@/lib/auth/session'
+import { useBackgroundTasks, type TaskOutcome } from '@/shared/tasks/BackgroundTasks'
+import type { ReactNode } from 'react'
 import { AppShell } from './AppShell'
 import { programPage } from '@/test/programs'
 
@@ -34,9 +36,27 @@ function setViewportWidth(width: number) {
   })
 }
 
-function renderShellAt(path: string) {
+/** Page content that can start a background task, so the TaskCenter button appears in the running head. */
+function TaskStarter() {
+  const { start } = useBackgroundTasks()
+  return (
+    <>
+      <p>Nội dung trang</p>
+      <button
+        type="button"
+        onClick={() =>
+          start({ type: 'extract-lyrics', key: 'extract-lyrics:m1', title: 'Trích lời', sourcePath: '/a', run: () => new Promise<TaskOutcome>(() => {}), errorMessage: (error) => error.message })
+        }
+      >
+        Bắt đầu tác vụ
+      </button>
+    </>
+  )
+}
+
+function renderShellAt(path: string, content: ReactNode = <p>Nội dung trang</p>) {
   const router = createMemoryRouter(
-    [{ element: <AppShell />, children: [{ path: '*', element: <p>Nội dung trang</p> }] }],
+    [{ element: <AppShell />, children: [{ path: '*', element: content }] }],
     { initialEntries: [path] },
   )
   render(
@@ -98,6 +118,40 @@ describe('AppShell', () => {
     await waitFor(() => expect(strip).not.toHaveClass('has-more-end'))
   })
 
+  it.each([
+    [622, false],
+    [623, true],
+  ])('fades the end of the five-page activity strip only past the 2px tolerance (list %ipx in a 620px strip)', async (listWidth, faded) => {
+    setViewportWidth(1280)
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('hm-tabs') ? 620 : 0
+    })
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('hm-tabs__list') ? listWidth : 0
+    })
+    renderShellAt('/director/rehearsals')
+
+    const pages = await screen.findByRole('navigation', { name: 'Các trang của Hoạt động ca đoàn' })
+    const strip = pages.querySelector('.hm-tabs')
+    expect(strip).not.toBeNull()
+    if (faded) await waitFor(() => expect(strip).toHaveClass('has-more-end'))
+    else await waitFor(() => expect(strip).not.toHaveClass('has-more-end'))
+  })
+
+  it('keeps the running head at 1024px', async () => {
+    setViewportWidth(1024)
+    renderShellAt('/director/rehearsals')
+    expect(await screen.findByRole('navigation', { name: 'Các trang của Hoạt động ca đoàn' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Mở menu điều hướng' })).toBeNull()
+  })
+
+  it('shows the compact drawer trigger instead of the running head at 768px', async () => {
+    setViewportWidth(768)
+    renderShellAt('/director/rehearsals')
+    expect(await screen.findByRole('button', { name: 'Mở menu điều hướng' })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Các trang của Hoạt động ca đoàn' })).toBeNull()
+  })
+
   it('marks an area with something waiting, and shows today’s season and the next Mass in the ivory band', async () => {
     setViewportWidth(1440)
     const today = dayjs().format('YYYY-MM-DD')
@@ -117,7 +171,11 @@ describe('AppShell', () => {
     const pages = screen.getByRole('navigation', { name: 'Các trang của Hoạt động ca đoàn' })
     expect(await within(pages).findByText('Mùa Thường Niên')).toBeInTheDocument()
     // The nearest one, not the first listed.
-    expect(await within(pages).findByRole('link', { name: /^Thánh lễ kế tiếp: Lễ Chúa Nhật/ })).toHaveAttribute('href', '/director/programs/p3')
+    const nextMass = await within(pages).findByRole('link', { name: /^Thánh lễ kế tiếp: Lễ Chúa Nhật/ })
+    expect(nextMass).toHaveAttribute('href', '/director/programs/p3')
+    // Keyboard focus opens the same detail popover as hover.
+    fireEvent.focus(nextMass)
+    expect(await screen.findByText('Lễ Chúa Nhật')).toBeInTheDocument()
   })
 
   it('lets the Choir Director pick the choir they work in, kept in this browser', async () => {
@@ -370,5 +428,124 @@ describe('AppShell', () => {
 
     expect(await screen.findByText('Tuần này tạm ngưng tập thứ Năm.')).toBeInTheDocument()
     expect(screen.getByText('Nội dung trang')).toBeInTheDocument()
+  })
+
+  it('prefixes ChoirSwitcher with "Ca đoàn:" and exposes full title when single choir truncates', async () => {
+    setViewportWidth(1440)
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Giáo xứ Đức Mẹ Hằng Cứu Giúp', isActive: true },
+    ])
+    renderShellAt('/director/rehearsals')
+
+    expect(await screen.findByText('Ca đoàn:')).toBeInTheDocument()
+    const nameEl = screen.getByText('Ca đoàn Giáo xứ Đức Mẹ Hằng Cứu Giúp')
+    expect(nameEl).toHaveAttribute('title', 'Ca đoàn Giáo xứ Đức Mẹ Hằng Cứu Giúp')
+  })
+
+  it('enters Focused Security Mode on /change-password when password change is required and fires zero forbidden queries', async () => {
+    setViewportWidth(1440)
+    setSession({
+      accessToken: 'access',
+      accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+      refreshToken: 'refresh',
+      user: { id: 'u1', email: 'director@giaoxu.org', roleName: 'ChoirDirector', isPasswordChangeRequired: true },
+    })
+    const choirsSpy = vi.spyOn(choirsApi, 'listChoirs')
+    const daysSpy = vi.spyOn(daysApi, 'listLiturgicalDays')
+    const programsSpy = vi.spyOn(programsApi, 'listPrograms')
+    const notifSpy = vi.spyOn(notificationsApi, 'countUnreadNotifications')
+    const skillsSpy = vi.spyOn(skillsApi, 'listPendingSkills')
+    const regSpy = vi.spyOn(registrationsApi, 'listRegistrations')
+    const profileSpy = vi.spyOn(profileApi, 'getMyProfile')
+
+    renderShellAt('/change-password')
+
+    const userMenu = await screen.findByRole('button', { name: /Menu người dùng/ })
+    expect(screen.queryByRole('navigation', { name: 'Điều hướng chính' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Thông báo/ })).toBeNull()
+    expect(screen.queryByRole('combobox', { name: 'Ca đoàn đang làm việc' })).toBeNull()
+
+    fireEvent.click(userMenu)
+    expect(await screen.findByText('Đăng xuất')).toBeInTheDocument()
+    expect(screen.queryByText('Hồ sơ cá nhân')).toBeNull()
+
+    expect(choirsSpy).not.toHaveBeenCalled()
+    expect(daysSpy).not.toHaveBeenCalled()
+    expect(programsSpy).not.toHaveBeenCalled()
+    expect(notifSpy).not.toHaveBeenCalled()
+    expect(skillsSpy).not.toHaveBeenCalled()
+    expect(regSpy).not.toHaveBeenCalled()
+    expect(profileSpy).not.toHaveBeenCalled()
+  })
+
+  it('remains in Focused Security Mode after clearSession() and scroll re-render on /change-password', async () => {
+    setViewportWidth(1440)
+    const daysSpy = vi.spyOn(daysApi, 'listLiturgicalDays')
+    const notifSpy = vi.spyOn(notificationsApi, 'countUnreadNotifications')
+    const profileSpy = vi.spyOn(profileApi, 'getMyProfile')
+
+    renderShellAt('/change-password')
+
+    expect(await screen.findByText('Nội dung trang')).toBeInTheDocument()
+    // No session left: no user menu with an unknown user and a sign-out that would call logout without a token.
+    expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
+    fireEvent.scroll(window, { target: { scrollY: 120 } })
+    expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
+
+    expect(screen.queryByRole('navigation', { name: 'Điều hướng chính' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Thông báo/ })).toBeNull()
+    expect(daysSpy).not.toHaveBeenCalled()
+    expect(notifSpy).not.toHaveBeenCalled()
+    expect(profileSpy).not.toHaveBeenCalled()
+  })
+
+  it('switches to Focused Security Mode as soon as clearSession() runs after a voluntary password change', async () => {
+    setViewportWidth(1440)
+    setSession({
+      accessToken: 'access',
+      accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+      refreshToken: 'refresh',
+      user: { id: 'u1', email: 'director@giaoxu.org', roleName: 'ChoirDirector', isPasswordChangeRequired: false },
+    })
+    const profileSpy = vi.spyOn(profileApi, 'getMyProfile').mockResolvedValue({
+      fullName: 'Ca trưởng',
+      email: 'director@giaoxu.org',
+      role: 'director',
+    })
+    // Two active choirs, so the switcher is the combobox checked before the transition.
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([
+      { id: 'c1', name: 'Ca đoàn Cecilia', isActive: true },
+      { id: 'c2', name: 'Ca đoàn Thiếu nhi', isActive: true },
+    ])
+
+    renderShellAt('/change-password', <TaskStarter />)
+    expect(await screen.findByRole('button', { name: /Menu người dùng/ })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toBeInTheDocument()
+    await waitFor(() => expect(profileSpy).toHaveBeenCalled())
+    profileSpy.mockClear()
+    // A running task, so TaskCenter has its button in the running head.
+    fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu tác vụ' }))
+    // The full running head is there first, so the absence checks below prove a transition.
+    expect(await screen.findByRole('button', { name: /Mở danh sách tác vụ/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Thông báo/ })).toBeInTheDocument()
+    expect(await screen.findByRole('combobox', { name: 'Ca đoàn đang làm việc' })).toBeInTheDocument()
+    expect(document.querySelector('.hm-head-day')).not.toBeNull()
+    expect(document.querySelector('.hm-sub')).not.toBeNull()
+
+    // No rerender(), resize, scroll or navigation: the session store alone must update the shell.
+    act(() => clearSession())
+
+    expect(screen.queryByRole('button', { name: /Menu người dùng/ })).toBeNull()
+    expect(screen.queryByRole('navigation', { name: 'Điều hướng chính' })).toBeNull()
+    expect(screen.queryByRole('navigation', { name: /^Các trang của / })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Mở danh sách tác vụ/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Thông báo/ })).toBeNull()
+    expect(screen.queryByRole('combobox', { name: 'Ca đoàn đang làm việc' })).toBeNull()
+    // The focused bar is the single 52px `.hm-top` row: no HeadDay, no sub-nav row of the 96px running head.
+    expect(document.querySelector('.hm-head-day')).toBeNull()
+    expect(document.querySelector('.hm-sub')).toBeNull()
+    expect(document.querySelectorAll('.hm-top')).toHaveLength(1)
+    expect(screen.getByText('Nội dung trang')).toBeInTheDocument()
+    expect(profileSpy).toHaveBeenCalledTimes(0)
   })
 })

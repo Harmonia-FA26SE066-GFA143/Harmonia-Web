@@ -1,9 +1,9 @@
-import { Checkbox, Flex, Typography } from 'antd'
-import { useState } from 'react'
+import { Checkbox, Flex, Typography, type CheckboxRef } from 'antd'
+import { useRef, useState } from 'react'
 import { useChoirs, useEventChoirs, useMembersOfChoirs } from '@/features/choirs'
 import { SkillTags, useChoirMembers } from '@/features/members'
-import { EmptyState, ErrorState, FormDrawer, SectionSkeleton } from '@/shared/ui'
-import { colors, radius, spacing } from '@/styles/tokens'
+import { CANCEL_LABEL, EmptyState, ErrorState, FormDrawer, SectionSkeleton } from '@/shared/ui'
+import { colors, component, radius, spacing } from '@/styles/tokens'
 
 export interface SendRequestDrawerProps {
   open: boolean
@@ -37,6 +37,8 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
   // Track deselected members so everyone is selected by default, including members loaded later.
   const [deselected, setDeselected] = useState<string[]>([])
   const [everyoneChoice, setEveryoneChoice] = useState<boolean>()
+  // The first checkbox shown takes the focus on open; one ref is enough since only one of them renders first.
+  const firstCheckboxRef = useRef<CheckboxRef>(null)
   // The lead choir's director asks for the whole program, so the other serving choirs are included unless unticked.
   const everyone = otherChoirs.length > 0 && (everyoneChoice ?? true)
 
@@ -56,7 +58,8 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
       open={open}
       title="Gửi yêu cầu xác nhận tham gia"
       okText={okText}
-      cancelText="Hủy"
+      cancelText={CANCEL_LABEL}
+      initialFocusRef={firstCheckboxRef}
       okButtonProps={{ disabled: !loaded || (!everyone && selected.length === 0), loading: sending }}
       cancelButtonProps={{ disabled: sending }}
       onOk={() => onSend(everyone ? undefined : selected)}
@@ -65,7 +68,7 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
         setDeselected([])
         setEveryoneChoice(undefined)
       }}
-      size={600}
+      size={component.drawer.md}
       destroyOnHidden
     >
       {!failed && !loaded && <SectionSkeleton rows={5} label="Đang tải thành viên" />}
@@ -79,7 +82,7 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
       {!failed && loaded && (
         <Flex vertical gap={spacing.md}>
           {otherChoirs.length > 0 && (
-            <Checkbox checked={everyone} onChange={(event) => setEveryoneChoice(event.target.checked)}>
+            <Checkbox ref={firstCheckboxRef} checked={everyone} onChange={(event) => setEveryoneChoice(event.target.checked)}>
               Mời mọi ca viên của các ca đoàn phục vụ chương trình
               <Typography.Text style={{ display: 'block', color: colors.textMuted }}>
                 Gồm cả {otherNames}. Bạn không xem được danh sách ca viên của ca đoàn do ca trưởng khác phụ trách, nên chỉ mời
@@ -95,6 +98,7 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
           {available.length > 0 && !everyone && (
             <Flex vertical gap={spacing.sm}>
               <Checkbox
+                ref={otherChoirs.length > 0 ? undefined : firstCheckboxRef}
                 checked={selected.length === available.length}
                 indeterminate={selected.length > 0 && selected.length < available.length}
                 onChange={(event) => toggleAll(event.target.checked)}

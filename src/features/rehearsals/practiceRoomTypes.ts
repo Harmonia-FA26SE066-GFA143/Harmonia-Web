@@ -13,5 +13,8 @@ export interface PracticeRoomView {
   endAt: string
   locationName?: string
   note?: string
+  /** The program it prepares; from the schedule list (`RehearsalDto.EventId`), the detail endpoint omits it. */
+  eventId?: string
+  isJoint?: boolean
   songs: PracticeRoomSong[]
 }

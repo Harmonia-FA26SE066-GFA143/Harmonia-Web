@@ -1,9 +1,19 @@
-import { EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Input, Select, Switch, Table, TimePicker, Typography } from 'antd'
+import { Alert, App, Button, Card, Flex, Input, Select, Switch, Table, TimePicker, Typography, type RefSelectProps } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ApiError } from '@/lib/api/errors'
-import { EmptyState, ErrorState, Form, FormDrawer, SectionSkeleton, StatusTag } from '@/shared/ui'
+import {
+  ACTIONS_COLUMN_TITLE,
+  EmptyCell,
+  EmptyState,
+  ErrorState,
+  Form,
+  FormDrawer,
+  Icon,
+  SectionSkeleton,
+  SELECT_POPUP_PROPS,
+  StatusTag,
+} from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { useCatalogItems, useLocations, useMassSchedules, useSaveMassSchedule } from '../hooks/useCatalogs'
 import { dayOfWeekLabels, type CatalogEntry, type DayOfWeek, type MassSchedule, type MassScheduleValues } from '../types'
@@ -33,6 +43,17 @@ const optionsOf = (entries: CatalogEntry[] | undefined, current?: string) =>
 
 type DrawerState = { open: false } | { open: true; schedule?: MassSchedule }
 
+const muted = (text: string) => <Typography.Text style={{ color: colors.textMuted }}>{text}</Typography.Text>
+
+/** A lookup name in the table: while the list loads or after it failed the name is unknown, not absent. */
+function lookupCell(query: { status: 'pending' | 'error' | 'success'; data?: CatalogEntry[] }, id: string) {
+  const name = query.data?.find((entry) => entry.id === id)?.name
+  if (name) return name
+  if (query.status === 'pending') return muted('Đang tải…')
+  if (query.status === 'error') return muted('Chưa tải được')
+  return <EmptyCell />
+}
+
 /**
  * Admin: the parish's fixed weekly Mass times (`api/mass-schedules`). The Parish Priest generates draft events from the
  * active ones; changing a schedule does not touch events generated before.
@@ -45,8 +66,8 @@ export function MassSchedulesPanel() {
   const save = useSaveMassSchedule()
   const [drawer, setDrawer] = useState<DrawerState>({ open: false })
   const editing = drawer.open ? drawer.schedule : undefined
-
-  const nameIn = (entries: CatalogEntry[] | undefined, id: string) => entries?.find((entry) => entry.id === id)?.name ?? '—'
+  const dayOfWeekRef = useRef<RefSelectProps>(null)
+  const lookupFailed = massTypes.isError || locations.isError
 
   const submit = (values: FormValues) => {
     if (save.isPending) return
@@ -75,7 +96,7 @@ export function MassSchedulesPanel() {
   }
 
   const addButton = (
-    <Button type="primary" icon={<PlusOutlined />} onClick={() => setDrawer({ open: true })}>
+    <Button type="primary" icon={<Icon name="add" />} onClick={() => setDrawer({ open: true })}>
       Thêm giờ lễ cố định
     </Button>
   )
@@ -109,9 +130,9 @@ export function MassSchedulesPanel() {
           columns={[
             { key: 'day', title: 'Thứ', render: (_, schedule) => <Typography.Text strong>{dayOfWeekLabels[schedule.dayOfWeek]}</Typography.Text> },
             { key: 'time', title: 'Giờ', dataIndex: 'time' },
-            { key: 'title', title: 'Tiêu đề', render: (_, schedule) => schedule.title ?? <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text> },
-            { key: 'massType', title: 'Loại Thánh lễ', render: (_, schedule) => nameIn(massTypes.data, schedule.massTypeId) },
-            { key: 'location', title: 'Nơi cử hành', render: (_, schedule) => nameIn(locations.data, schedule.locationId) },
+            { key: 'title', title: 'Tiêu đề', render: (_, schedule) => schedule.title ?? <EmptyCell text="Không có" /> },
+            { key: 'massType', title: 'Loại Thánh lễ', render: (_, schedule) => lookupCell(massTypes, schedule.massTypeId) },
+            { key: 'location', title: 'Nơi cử hành', render: (_, schedule) => lookupCell(locations, schedule.locationId) },
             {
               key: 'status',
               title: 'Trạng thái',
@@ -124,13 +145,13 @@ export function MassSchedulesPanel() {
             },
             {
               key: 'actions',
-              title: 'Thao tác',
+              title: ACTIONS_COLUMN_TITLE,
               align: 'center',
               width: 128,
               fixed: 'right',
               render: (_, schedule) => (
                 <Button
-                  icon={<EditOutlined />}
+                  icon={<Icon name="edit" />}
                   onClick={() => setDrawer({ open: true, schedule })}
                   aria-label={`Chỉnh sửa giờ lễ ${dayOfWeekLabels[schedule.dayOfWeek]} ${schedule.time}`}
                 >
@@ -150,8 +171,12 @@ export function MassSchedulesPanel() {
         open={drawer.open}
         title={editing ? 'Chỉnh sửa giờ lễ cố định' : 'Thêm giờ lễ cố định'}
         okText={editing ? 'Lưu thay đổi' : 'Thêm'}
-        cancelText="Hủy"
-        okButtonProps={{ htmlType: 'submit', loading: save.isPending }}
+        initialFocusRef={dayOfWeekRef}
+        okButtonProps={{
+          htmlType: 'submit',
+          loading: save.isPending,
+          disabled: massTypes.isPending || locations.isPending || lookupFailed,
+        }}
         cancelButtonProps={{ disabled: save.isPending }}
         onCancel={() => setDrawer({ open: false })}
         destroyOnHidden
@@ -169,22 +194,60 @@ export function MassSchedulesPanel() {
           </Form>
         )}
       >
+        {lookupFailed && (
+          <Alert
+            type="error"
+            showIcon
+            title="Không tải được danh sách loại Thánh lễ hoặc nơi cử hành."
+            action={
+              <Button
+                size="small"
+                loading={massTypes.isFetching || locations.isFetching}
+                onClick={() => {
+                  if (massTypes.isError) massTypes.refetch()
+                  if (locations.isError) locations.refetch()
+                }}
+              >
+                Thử lại
+              </Button>
+            }
+            style={{ marginBottom: spacing.md }}
+          />
+        )}
         <Flex gap={spacing.md} wrap>
           <Form.Item label="Thứ" name="dayOfWeek" rules={[{ required: true, message: 'Vui lòng chọn thứ.' }]} style={{ flex: '1 1 160px' }}>
-            <Select options={dayOptions} />
+            <Select {...SELECT_POPUP_PROPS} ref={dayOfWeekRef} options={dayOptions} />
           </Form.Item>
           <Form.Item label="Giờ" name="time" rules={[{ required: true, message: 'Vui lòng chọn giờ.' }]} style={{ flex: '1 1 160px' }}>
-            <TimePicker format="HH:mm" minuteStep={5} placeholder="Chọn giờ" style={{ width: '100%' }} />
+            <TimePicker {...SELECT_POPUP_PROPS} format="HH:mm" minuteStep={5} placeholder="Chọn giờ" style={{ width: '100%' }} />
           </Form.Item>
         </Flex>
         <Form.Item label="Loại Thánh lễ" name="massTypeId" rules={[{ required: true, message: 'Vui lòng chọn loại Thánh lễ.' }]}>
-          <Select showSearch optionFilterProp="label" placeholder="Chọn loại Thánh lễ" options={optionsOf(massTypes.data, editing?.massTypeId)} />
+          <Select
+            {...SELECT_POPUP_PROPS}
+            showSearch
+            optionFilterProp="label"
+            placeholder="Chọn loại Thánh lễ"
+            loading={massTypes.isPending}
+            disabled={massTypes.isPending || massTypes.isError}
+            notFoundContent={massTypes.isError ? 'Không tải được danh sách loại Thánh lễ.' : undefined}
+            options={optionsOf(massTypes.data, editing?.massTypeId)}
+          />
         </Form.Item>
         <Form.Item label="Nơi cử hành" name="locationId" rules={[{ required: true, message: 'Vui lòng chọn nơi cử hành.' }]}>
-          <Select showSearch optionFilterProp="label" placeholder="Chọn nơi cử hành" options={optionsOf(locations.data, editing?.locationId)} />
+          <Select
+            {...SELECT_POPUP_PROPS}
+            showSearch
+            optionFilterProp="label"
+            placeholder="Chọn nơi cử hành"
+            loading={locations.isPending}
+            disabled={locations.isPending || locations.isError}
+            notFoundContent={locations.isError ? 'Không tải được danh sách nơi cử hành.' : undefined}
+            options={optionsOf(locations.data, editing?.locationId)}
+          />
         </Form.Item>
         <Form.Item
-          label="Tiêu đề (không bắt buộc)"
+          label="Tiêu đề"
           name="title"
           extra="Đặt làm tiêu đề cho sự kiện được tạo từ giờ lễ này, vd “Lễ sáng sớm”."
           rules={[{ max: 200, message: 'Tiêu đề tối đa 200 ký tự.' }]}

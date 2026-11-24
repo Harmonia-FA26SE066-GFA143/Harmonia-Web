@@ -1,9 +1,21 @@
-import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined, TranslationOutlined } from '@ant-design/icons'
-import { App, Button, Card, Flex, Input, Select, Table, Tag, Typography } from 'antd'
-import { useState } from 'react'
+import { App, Button, Card, Flex, Input, Select, Table, Tag, Typography, type InputRef, type RefSelectProps } from 'antd'
+import { useRef, useState } from 'react'
 import { ApiError, requestFailureMessage } from '@/lib/api/errors'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { CardTitle, EmptyState, ErrorState, Form, FormDrawer, NoFilterResults, SectionSkeleton } from '@/shared/ui'
+import {
+  ACTIONS_COLUMN_TITLE,
+  CANCEL_LABEL,
+  CardTitle,
+  EmptyState,
+  ErrorState,
+  filterAllPlaceholder,
+  Form,
+  FormDrawer,
+  Icon,
+  NoFilterResults,
+  SectionSkeleton,
+  SELECT_POPUP_PROPS,
+} from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { useDeleteLiturgicalName, useLiturgicalNames, useSaveLiturgicalName, useUntranslatedNames } from '../hooks/useLiturgicalNames'
 import {
@@ -40,6 +52,8 @@ function TranslationDrawer({ form, onClose }: Readonly<{ form: FormState; onClos
   const editing = form.open ? form.translation : undefined
   // A name picked from the untranslated list is written exactly as the calendar returns it, so it is not edited.
   const fixedName = form.open && form.untranslated !== undefined
+  const kindRef = useRef<RefSelectProps>(null)
+  const viNameRef = useRef<InputRef>(null)
 
   const submit = (values: LiturgicalNameTranslationValues) => {
     if (save.isPending) return
@@ -65,7 +79,7 @@ function TranslationDrawer({ form, onClose }: Readonly<{ form: FormState; onClos
       open={form.open}
       title={editing ? 'Sửa bản dịch' : 'Thêm bản dịch'}
       okText={editing ? 'Lưu thay đổi' : 'Thêm'}
-      cancelText="Hủy"
+      initialFocusRef={fixedName ? viNameRef : kindRef}
       okButtonProps={{ htmlType: 'submit', loading: save.isPending }}
       cancelButtonProps={{ disabled: save.isPending }}
       onCancel={() => {
@@ -84,7 +98,7 @@ function TranslationDrawer({ form, onClose }: Readonly<{ form: FormState; onClos
       )}
     >
       <Form.Item label="Loại" name="kind" rules={[{ required: true, message: 'Vui lòng chọn loại.' }]}>
-        <Select options={kindOptions} disabled={fixedName} />
+        <Select {...SELECT_POPUP_PROPS} ref={kindRef} options={kindOptions} disabled={fixedName} />
       </Form.Item>
       <Form.Item
         label="Tên tiếng Anh"
@@ -107,7 +121,7 @@ function TranslationDrawer({ form, onClose }: Readonly<{ form: FormState; onClos
           { max: 200, message: 'Tối đa 200 ký tự.' },
         ]}
       >
-        <Input autoFocus />
+        <Input ref={viNameRef} />
       </Form.Item>
     </FormDrawer>
   )
@@ -138,7 +152,7 @@ function UntranslatedCard({ onTranslate }: Readonly<{ onTranslate: (name: Liturg
               </Flex>
               <Button
                 size="small"
-                icon={<TranslationOutlined />}
+                icon={<Icon name="translate" />}
                 onClick={() => onTranslate({ ...name, vietnameseName: '' })}
                 aria-label={`Dịch ${name.englishName}`}
               >
@@ -175,7 +189,7 @@ export function LiturgicalNamesPanel() {
       okButtonProps: { danger: true },
       // Enter on a destructive dialog must not run it.
       focusable: { autoFocusButton: 'cancel' },
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       onOk: () =>
         remove
           .mutateAsync(translation.id)
@@ -193,7 +207,7 @@ export function LiturgicalNamesPanel() {
           <Flex wrap gap={spacing.sm} style={{ flex: '1 1 360px' }}>
             <Input
               allowClear
-              prefix={<SearchOutlined aria-hidden />}
+              prefix={<Icon name="search" />}
               placeholder="Tìm theo tên tiếng Anh hoặc tiếng Việt…"
               aria-label="Tìm bản dịch"
               value={search}
@@ -204,9 +218,10 @@ export function LiturgicalNamesPanel() {
               style={{ flex: '1 1 240px', maxWidth: 360 }}
             />
             <Select
+              {...SELECT_POPUP_PROPS}
               allowClear
               aria-label="Loại tên"
-              placeholder="Mọi loại"
+              placeholder={filterAllPlaceholder('loại')}
               value={kind}
               onChange={(value?: LiturgicalNameKind) => {
                 setKind(value)
@@ -216,7 +231,7 @@ export function LiturgicalNamesPanel() {
               style={{ minWidth: 160 }}
             />
           </Flex>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setForm({ open: true })}>
+          <Button type="primary" icon={<Icon name="add" />} onClick={() => setForm({ open: true })}>
             Thêm bản dịch
           </Button>
         </Flex>
@@ -251,14 +266,14 @@ export function LiturgicalNamesPanel() {
               { key: 'vietnamese', title: 'Tên tiếng Việt', render: (_, item) => <Typography.Text strong>{item.vietnameseName}</Typography.Text> },
               {
                 key: 'actions',
-                title: 'Thao tác',
+                title: ACTIONS_COLUMN_TITLE,
                 align: 'center',
                 width: 96,
                 fixed: 'right',
                 render: (_, item) => (
                   <Flex justify="center" gap={4}>
-                    <Button type="text" icon={<EditOutlined />} onClick={() => setForm({ open: true, translation: item })} aria-label={`Sửa bản dịch ${item.englishName}`} />
-                    <Button type="text" danger icon={<DeleteOutlined />} onClick={() => confirmDelete(item)} aria-label={`Xoá bản dịch ${item.englishName}`} />
+                    <Button type="text" icon={<Icon name="edit" />} onClick={() => setForm({ open: true, translation: item })} aria-label={`Sửa bản dịch ${item.englishName}`} />
+                    <Button type="text" danger icon={<Icon name="delete" />} onClick={() => confirmDelete(item)} aria-label={`Xoá bản dịch ${item.englishName}`} />
                   </Flex>
                 ),
               },

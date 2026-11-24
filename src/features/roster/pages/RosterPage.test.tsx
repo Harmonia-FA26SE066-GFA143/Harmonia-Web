@@ -218,7 +218,10 @@ describe('RosterPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Giuse Vũ Đình Khôi, Tenor/ }))
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Ghi chú vai' }))
-    fireEvent.change(await screen.findByRole('textbox', { name: 'Ghi chú vai' }), { target: { value: 'Người dẫn truyện' } })
+    const input = await screen.findByRole('textbox', { name: 'Ghi chú vai' })
+    // FormDrawer initialFocusRef puts the keyboard in the note field.
+    await waitFor(() => expect(input).toHaveFocus())
+    fireEvent.change(input, { target: { value: 'Người dẫn truyện' } })
     fireEvent.click(screen.getByRole('button', { name: 'Lưu ghi chú' }))
 
     await waitFor(() => expect(note).toHaveBeenCalledWith('a1', 'Người dẫn truyện'))
@@ -318,9 +321,35 @@ describe('RosterPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Gửi thông báo phân công/ }))
     const dialog = await screen.findByRole('dialog')
+    await waitFor(() => expect(within(dialog).getByRole('checkbox', { name: /Chọn tất cả/ })).toHaveFocus())
     fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi cho 1 thành viên' }))
 
     await waitFor(() => expect(notify).toHaveBeenCalledWith('r1', ['m1']))
+  })
+
+  it('says no position is declared instead of claiming everyone is staffed (G4-10)', async () => {
+    withRoster(null, [], [])
+    vi.mocked(rosterApi.getPersonnelRequirements).mockResolvedValue([])
+    renderRoster()
+
+    expect(await screen.findByText('Chưa khai báo yêu cầu vị trí')).toBeInTheDocument()
+    expect(screen.queryByText('Đủ người cho mọi vị trí đã khai')).toBeNull()
+  })
+
+  it('says everyone is staffed only when positions are declared and none is short', async () => {
+    withRoster(null, [], [organ])
+    renderRoster()
+
+    expect(await screen.findByText('Đủ người cho mọi vị trí đã khai')).toBeInTheDocument()
+  })
+
+  it('opens the add-member list inside its card, not loose in the page (G4-16)', async () => {
+    withRoster(roster)
+    renderRoster()
+    await showSongs()
+
+    fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Thêm ca viên cho Tenor' }))
+    expect((await screen.findByTitle('Giuse Nguyễn Hoàng Long')).closest('.ant-card')).not.toBeNull()
   })
 
   it('never shows another program in place of the one in the link', async () => {

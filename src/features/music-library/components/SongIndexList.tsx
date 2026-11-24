@@ -1,9 +1,8 @@
-import { AlignLeftOutlined, ArrowRightOutlined, CustomerServiceOutlined } from '@ant-design/icons'
 import { Flex, Pagination, Spin } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { generatePath, Link, useLocation } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { SheetMusicOutlined, StatusTag } from '@/shared/ui'
+import { Icon, StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { songListState } from '../songFilters'
 import { materialKindLabels, type MaterialKind, type Song } from '../types'
@@ -20,9 +19,9 @@ export interface SongIndexListProps {
 
 // Rehearsal material stays in the table's count; the index names what a singer looks for first.
 const shownMaterials: { kind: MaterialKind; icon: ReactNode }[] = [
-  { kind: 'sheetMusic', icon: <SheetMusicOutlined /> },
-  { kind: 'lyrics', icon: <AlignLeftOutlined /> },
-  { kind: 'sampleAudio', icon: <CustomerServiceOutlined /> },
+  { kind: 'sheetMusic', icon: <Icon name="sheet-music" /> },
+  { kind: 'lyrics', icon: <Icon name="lyrics" /> },
+  { kind: 'sampleAudio', icon: <Icon name="audio" /> },
 ]
 
 /** A material in words, as the "Thiếu tài liệu" filter names it; a missing one is muted, never struck through. */
@@ -51,7 +50,7 @@ function SongThumbnail({ url }: Readonly<{ url?: string | null }>) {
   const [failed, setFailed] = useState(false)
   return (
     <span aria-hidden className="song-index__thumb">
-      {url && !failed ? <img src={url} alt="" loading="lazy" onError={() => setFailed(true)} /> : <SheetMusicOutlined />}
+      {url && !failed ? <img src={url} alt="" loading="lazy" onError={() => setFailed(true)} /> : <Icon name="sheet-music" />}
     </span>
   )
 }
@@ -112,7 +111,7 @@ export function SongIndexList({
                 ) : (
                   <span />
                 )}
-                <ArrowRightOutlined aria-hidden className="song-index__arrow" />
+                <Icon name="arrow-right" className="song-index__arrow" />
               </li>
             )
           })}

@@ -1,10 +1,11 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearSession, setSession } from '@/lib/auth/session'
+import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
 import * as api from '../api/notesApi'
 import type { DirectorNote } from '../types'
-import { DirectorNotesPage } from './NotesPage'
+import { DirectorNotesPage, PriestNotesPage } from './NotesPage'
 
 // The hub is not reachable in a test; the page then says it is disconnected and works from the REST answers.
 vi.mock('@microsoft/signalr', () => {
@@ -90,5 +91,55 @@ describe('DirectorNotesPage', () => {
 
     await waitFor(() => expect(send.mock.calls[0]).toEqual(['priest-1', 'Dạ con đã nhận.']))
     await waitFor(() => expect(composer).toHaveValue(''))
+  })
+
+  it('shows the live state in the opaque chat header and a divider for each day', async () => {
+    vi.spyOn(api, 'listConversations').mockResolvedValue([{ userId: 'priest-1', fullName: 'Cha Giuse', lastNote: note({}), unreadCount: 0 }])
+    vi.spyOn(api, 'listThread').mockResolvedValue(
+      // Newest first, as the backend pages them.
+      threadPage([
+        note({ id: 'n3', sentAt: '2026-11-10T03:00:00Z', content: 'Tin thứ ba' }),
+        note({ id: 'n2', sentAt: '2026-11-10T02:00:00Z', content: 'Tin thứ hai' }),
+        note({ id: 'n1', sentAt: '2026-11-08T02:00:00Z', content: 'Tin đầu' }),
+      ]),
+    )
+    const { container } = renderNotes()
+
+    await screen.findByText('Tin thứ ba')
+    const live = screen.getByText('Mất kết nối, đang thử lại')
+    expect(live.closest('.chat-header')).not.toBeNull()
+    expect(screen.getAllByRole('separator', { name: /\d{2}\/\d{2}\/\d{4}|Hôm nay|Hôm qua/ })).toHaveLength(2)
+    expect(screen.getByRole('separator', { name: '08/11/2026' })).toBeInTheDocument()
+    expect(container.querySelector('.notes-shell-card')).not.toBeNull()
+    expect(screen.getByLabelText('Nhắn cho Cha Giuse')).toHaveAccessibleDescription('Enter để gửi, Shift+Enter để xuống dòng.')
+  })
+
+  it('keeps the chat usable when one of its two lists fails', async () => {
+    vi.spyOn(api, 'listConversations').mockRejectedValue(new ApiError(403, undefined))
+    vi.spyOn(api, 'listThread').mockResolvedValue(threadPage([]))
+    renderNotes()
+
+    expect(await screen.findByRole('log', { name: 'Tin nhắn với Cha Giuse' })).toBeInTheDocument()
+    expect(screen.getByText(/Không tải được các cuộc trò chuyện cũ/)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Không thể tải cuộc trò chuyện' })).toBeNull()
+  })
+
+  it('blocks with a recoverable error only when both lists fail', async () => {
+    vi.mocked(api.listRecipients).mockRejectedValue(new ApiError(403, undefined))
+    vi.spyOn(api, 'listConversations').mockRejectedValue(new ApiError(403, undefined))
+    renderNotes()
+
+    expect(await screen.findByRole('heading', { name: 'Không thể tải cuộc trò chuyện' })).toBeInTheDocument()
+  })
+})
+
+describe('PriestNotesPage', () => {
+  it('keeps the note-by-date action in the page header and the chat beside it', async () => {
+    vi.spyOn(api, 'listConversations').mockResolvedValue([])
+    vi.spyOn(api, 'listThread').mockResolvedValue(threadPage([]))
+    renderPage(<PriestNotesPage />, '/priest/notes')
+
+    expect(await screen.findByRole('button', { name: /Gửi ghi chú theo ngày\/sự kiện/ })).toBeInTheDocument()
+    expect(await screen.findByRole('log', { name: 'Tin nhắn với Cha Giuse' })).toBeInTheDocument()
   })
 })

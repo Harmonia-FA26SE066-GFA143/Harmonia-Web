@@ -1,10 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useReducedMotion } from '@/shared/ui'
 import { motion } from '@/styles/tokens'
 import type { NavSection } from './navigation'
 
-const tabOverflowTolerance = 8
+/** Sub-pixel font settling stays under this; a real overflow is at least one tab gap wider. */
+const tabOverflowTolerance = 2
 
 /**
  * Keeps a marker (the area pill with its active bar, the page underline) on the current item of `box`, gliding from where it was. Only
@@ -38,9 +39,9 @@ function useGlidingMarker(selector: string, duration: number, delay: number, cha
           ],
           { duration, delay, easing: motion.ease, fill: 'backwards' },
         )
-        // The active bar draws out from its middle once the marker has landed.
+        // The active bar draws out from its middle once the marker has landed (transform-only, no opacity: 0).
         el.querySelector('.hm-pill__bar')?.animate?.(
-          [{ transform: 'scaleX(0)', opacity: 0 }, { transform: 'scaleX(1)', opacity: 1 }],
+          [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }],
           { duration: 240, delay: delay + duration * 0.6, easing: motion.ease, fill: 'backwards' },
         )
       }
@@ -78,10 +79,6 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
   const areaIndex = Math.max(found, 0)
   const area = sections[areaIndex]
 
-  // The page tabs re-letter in from the side the user moved toward; not on first arrival.
-  const [seen, setSeen] = useState<{ area: number; from?: 'left' | 'right' }>({ area: areaIndex })
-  if (seen.area !== areaIndex) setSeen({ area: areaIndex, from: areaIndex > seen.area ? 'right' : 'left' })
-
   const { box: areasBox, marker: pill } = useGlidingMarker('[aria-current="true"]', 320, 0, areaIndex)
   const { box: tabsBox, marker: underline } = useGlidingMarker('[aria-current="page"]', 280, 60, selectedPath)
 
@@ -92,12 +89,13 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
     if (!box) return
     const list = box.querySelector<HTMLElement>('.hm-tabs__list')
     if (!list) return
+    // R2.7: an edge fades only when the tabs truly overflow the strip, never because the strip is still settling.
     const mark = () => {
-      const listWidth = list.scrollWidth
-      box.classList.toggle('has-more-start', box.scrollLeft > tabOverflowTolerance)
+      const hasOverflow = list.scrollWidth > box.clientWidth + tabOverflowTolerance
+      box.classList.toggle('has-more-start', hasOverflow && box.scrollLeft > tabOverflowTolerance)
       box.classList.toggle(
         'has-more-end',
-        box.scrollLeft + box.clientWidth < listWidth - tabOverflowTolerance,
+        hasOverflow && box.scrollLeft + box.clientWidth < list.scrollWidth - tabOverflowTolerance,
       )
     }
     const wheel = (event: WheelEvent) => {
@@ -119,6 +117,8 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
     const observer = new ResizeObserver(settle)
     observer.observe(box)
     observer.observe(list)
+    // The choir switcher and the day load after the head and take their width from the band.
+    if (box.parentElement) observer.observe(box.parentElement)
     let cancelled = false
     void document.fonts?.ready.then(() => {
       if (!cancelled) settle()
@@ -159,7 +159,7 @@ export function RunningHead({ sections, selectedPath, brand, controls, choir, da
         {choir}
         <div ref={tabsBox} className="hm-tabs">
           <span ref={underline} className="hm-underline" aria-hidden />
-          <div key={areaIndex} className={['hm-tabs__list', seen.from && `in-from-${seen.from}`].filter(Boolean).join(' ')}>
+          <div key={areaIndex} className="hm-tabs__list">
             {area.items.map((item, index) => (
               <Link
                 key={item.path}

@@ -11,7 +11,6 @@ const tenor: PendingSkill = {
   memberName: 'Giuse Vũ Đình Khôi',
   skillName: 'Tenor',
   categoryName: 'Bè hát',
-  level: 'intermediate',
   declaredAt: '2026-11-10T02:00:00Z',
 }
 
@@ -66,5 +65,19 @@ describe('SkillApprovalPage', () => {
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Duyệt' }))
 
     expect(await screen.findByText(/đã được Ca trưởng khác xử lý/)).toBeInTheDocument()
+  })
+
+  it('uses ACTIONS_COLUMN_TITLE and EmptyCell for missing evidence, with no level column (BE d497b1d)', async () => {
+    vi.spyOn(api, 'listPendingSkills').mockResolvedValue(page([{ ...tenor, evidence: undefined }]))
+    renderApproval()
+
+    const table = await screen.findByRole('table')
+    expect(within(table).getByRole('columnheader', { name: 'Thao tác' })).toBeInTheDocument()
+    expect(within(table).queryByRole('columnheader', { name: 'Trình độ' })).toBeNull()
+    expect(within(table).getByText('Không gửi')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Từ chối Tenor của Giuse Vũ Đình Khôi' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('button', { name: 'Hủy' })).toBeInTheDocument()
   })
 })

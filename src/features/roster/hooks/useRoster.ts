@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addAssignment,
   finalizeRoster,
@@ -38,12 +38,19 @@ export function useShortages(programId?: string) {
   })
 }
 
+const requirementsQuery = (programId: string, songListItemId?: string) => ({
+  queryKey: [...rosterKey(programId), 'requirements', songListItemId ?? 'whole-service'],
+  queryFn: () => (songListItemId ? getPersonnelRequirements(songListItemId) : getEventRequirements(programId)),
+})
+
 /** Requirements of one song of the approved list, or of the whole service when no song is given. */
 export function usePersonnelRequirements(programId: string, songListItemId?: string) {
-  return useQuery({
-    queryKey: [...rosterKey(programId), 'requirements', songListItemId ?? 'whole-service'],
-    queryFn: () => (songListItemId ? getPersonnelRequirements(songListItemId) : getEventRequirements(programId)),
-  })
+  return useQuery(requirementsQuery(programId, songListItemId))
+}
+
+/** Requirements of several songs at once, sharing the cache of each song's StaffingCard. */
+export function useSongRequirements(programId: string, songListItemIds: string[]) {
+  return useQueries({ queries: songListItemIds.map((id) => requirementsQuery(programId, id)) })
 }
 
 function useRosterChange<TVariables, TResult>(programId: string, mutationFn: (variables: TVariables) => Promise<TResult>) {

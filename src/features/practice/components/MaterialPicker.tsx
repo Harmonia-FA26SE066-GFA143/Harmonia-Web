@@ -1,15 +1,14 @@
-import { CustomerServiceOutlined, DownloadOutlined, ExportOutlined, FileTextOutlined, FolderOpenOutlined, PlayCircleOutlined, ReadOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Flex, Tag, Typography } from 'antd'
-import type { ComponentType } from 'react'
 import { isPlayableAudio, materialKindLabels, rendersPlayback, type SongMaterial } from '@/features/music-library'
+import { Icon, type IconName } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 
-const kindIcons: Record<SongMaterial['kind'], ComponentType> = {
-  sheetMusic: ReadOutlined,
-  lyrics: FileTextOutlined,
-  sampleAudio: CustomerServiceOutlined,
-  rehearsalMaterial: FolderOpenOutlined,
-  interactiveScore: PlayCircleOutlined,
+const kindIcons: Record<SongMaterial['kind'], IconName> = {
+  sheetMusic: 'sheet-music',
+  lyrics: 'lyrics',
+  sampleAudio: 'audio',
+  rehearsalMaterial: 'folder-open',
+  interactiveScore: 'play',
 }
 
 /**
@@ -25,7 +24,6 @@ export function MaterialPicker({
     <Checkbox.Group value={value} onChange={onChange} style={{ width: '100%' }}>
       <Flex vertical gap={spacing.sm} style={{ width: '100%' }}>
         {materials.map((material) => {
-          const Icon = kindIcons[material.kind]
           const selected = value?.includes(material.id)
           return (
             <Flex
@@ -43,7 +41,7 @@ export function MaterialPicker({
               <Checkbox value={material.id} style={{ flex: '1 1 240px', minWidth: 0 }}>
                 <Flex align="center" gap={spacing.sm}>
                   <span aria-hidden style={{ color: colors.primary, fontSize: 18 }}>
-                    <Icon />
+                    <Icon name={kindIcons[material.kind]} />
                   </span>
                   <span>
                     <Typography.Text strong>{material.title}</Typography.Text>
@@ -62,14 +60,14 @@ export function MaterialPicker({
               )}
               {/* MIDI and MusicXML do not open in a browser tab; they are downloaded. */}
               {material.url && rendersPlayback(material.fileName) && (
-                <Button type="link" icon={<DownloadOutlined />} href={material.url} aria-label={`Tải xuống ${material.title}`}>
+                <Button type="link" icon={<Icon name="download" />} href={material.url} aria-label={`Tải xuống ${material.title}`}>
                   Tải xuống
                 </Button>
               )}
               {material.url && !isPlayableAudio(material) && !rendersPlayback(material.fileName) && (
                 <Button
                   type="link"
-                  icon={<ExportOutlined />}
+                  icon={<Icon name="export" />}
                   href={material.url}
                   target="_blank"
                   rel="noopener noreferrer"

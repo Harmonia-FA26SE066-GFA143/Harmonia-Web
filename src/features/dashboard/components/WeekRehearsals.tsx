@@ -1,11 +1,10 @@
-import { ArrowRightOutlined } from '@ant-design/icons'
 import { Button, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { generatePath, Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useAllRehearsals } from '@/features/rehearsals'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
-import { ErrorState, SectionSkeleton } from '@/shared/ui'
+import { ErrorState, Icon, PRACTICE_ROOM_ACTION, SectionSkeleton } from '@/shared/ui'
 
 const capitalize = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`
 
@@ -26,7 +25,7 @@ export function WeekRehearsals() {
           Buổi tập tuần này
         </h2>
         <Link to={paths.director.rehearsals} className="hm-sheet-section__link">
-          Lịch tập <ArrowRightOutlined aria-hidden />
+          Lịch tập <Icon name="arrow-right" />
         </Link>
       </header>
       {rehearsals.isPending && <SectionSkeleton rows={3} label="Đang tải buổi tập tuần này" />}
@@ -55,7 +54,7 @@ export function WeekRehearsals() {
                 </span>
                 {isToday && (
                   <Button type="primary" size="small" href={room} onClick={(event) => { event.preventDefault(); navigate(room) }}>
-                    Vào phòng tập
+                    {PRACTICE_ROOM_ACTION}
                   </Button>
                 )}
               </li>

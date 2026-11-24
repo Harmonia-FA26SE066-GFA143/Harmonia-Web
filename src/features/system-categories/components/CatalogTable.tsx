@@ -1,7 +1,6 @@
-import { EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Input, Table, Typography, type TableColumnsType } from 'antd'
 import { useMemo, useState } from 'react'
-import { EmptyState, ErrorState, NoFilterResults, SectionSkeleton, StatusTag } from '@/shared/ui'
+import { ACTIONS_COLUMN_TITLE, EmptyState, ErrorState, Icon, NoFilterResults, SectionSkeleton, StatusTag } from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing } from '@/styles/tokens'
 import type { CatalogEntry } from '../types'
@@ -75,7 +74,7 @@ export function CatalogTable<T extends CatalogEntry>({
         title={labels.emptyTitle}
         description={labels.emptyDescription}
         action={
-          <Button type="primary" icon={<PlusOutlined />} onClick={onAdd}>
+          <Button type="primary" icon={<Icon name="add" />} onClick={onAdd}>
             {labels.addLabel}
           </Button>
         }
@@ -89,7 +88,7 @@ export function CatalogTable<T extends CatalogEntry>({
       title: 'STT',
       width: 72,
       render: (_, item) => (
-        <Typography.Text style={{ fontVariantNumeric: 'tabular-nums', color: colors.textMuted }}>
+        <Typography.Text style={{ color: colors.textMuted }}>
           {items.indexOf(item) + 1}
         </Typography.Text>
       ),
@@ -104,12 +103,12 @@ export function CatalogTable<T extends CatalogEntry>({
     statusColumn,
     {
       key: 'actions',
-      title: 'Thao tác',
+      title: ACTIONS_COLUMN_TITLE,
       align: 'center',
       width: 140,
       fixed: 'right',
       render: (_, item) => (
-        <Button icon={<EditOutlined />} onClick={() => onEdit(item)} aria-label={`Chỉnh sửa ${item.name}`}>
+        <Button icon={<Icon name="edit" />} onClick={() => onEdit(item)} aria-label={`Chỉnh sửa ${item.name}`}>
           Chỉnh sửa
         </Button>
       ),
@@ -121,7 +120,7 @@ export function CatalogTable<T extends CatalogEntry>({
       <Flex wrap justify="space-between" align="center" gap={spacing.sm} style={{ padding: spacing.md }}>
         <Input
           allowClear
-          prefix={<SearchOutlined aria-hidden />}
+          prefix={<Icon name="search" />}
           placeholder={`Tìm kiếm ${labels.noun}…`}
           aria-label={`Tìm kiếm ${labels.noun}`}
           value={search}
@@ -132,7 +131,7 @@ export function CatalogTable<T extends CatalogEntry>({
           <Typography.Text aria-live="polite" style={{ color: colors.textMuted }}>
             {hasSearch ? `${visible.length} kết quả trong ${items.length} ${labels.noun}` : `${items.length} ${labels.noun}`}
           </Typography.Text>
-          <Button type="primary" icon={<PlusOutlined />} onClick={onAdd}>
+          <Button type="primary" icon={<Icon name="add" />} onClick={onAdd}>
             {labels.addLabel}
           </Button>
         </Flex>

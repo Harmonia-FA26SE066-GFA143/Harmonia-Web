@@ -49,5 +49,14 @@ export async function updateSetting(id: string, value: string): Promise<void> {
 export async function getPublicSettings(): Promise<PublicSettings> {
   const rows = await apiRequest<SystemSettingDto[]>('/api/system-settings/public')
   const value = (key: string) => rows.find((row) => row.key === key)?.value.trim() || undefined
-  return { parishName: value('Parish.Name'), choirName: value('Choir.Name'), announcement: value('System.Announcement'), contactEmail: value('Contact.Email') }
+  const check = value('Rehearsal.AttendanceStartCheckEnabled')
+  const minutes = Number(value('Rehearsal.AttendanceOpensMinutesBefore'))
+  return {
+    parishName: value('Parish.Name'),
+    choirName: value('Choir.Name'),
+    announcement: value('System.Announcement'),
+    contactEmail: value('Contact.Email'),
+    attendanceStartCheck: check === undefined ? undefined : check.toLowerCase() === 'true',
+    attendanceOpensMinutesBefore: Number.isFinite(minutes) ? minutes : undefined,
+  }
 }

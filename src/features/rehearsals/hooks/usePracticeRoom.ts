@@ -12,6 +12,8 @@ export function usePracticeRoom(rehearsal: Rehearsal | undefined) {
       endAt: rehearsal.endAt,
       locationName: rehearsal.locationName,
       note: rehearsal.note,
+      eventId: rehearsal.eventId,
+      isJoint: rehearsal.isJoint,
       songs: rehearsal.songs.map((song) => ({ id: song.songId, title: song.songTitle, note: song.note })),
     }
   }, [rehearsal])

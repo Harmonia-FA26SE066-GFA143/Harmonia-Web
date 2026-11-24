@@ -1,7 +1,7 @@
 import { Pagination, Spin } from 'antd'
 import { useState } from 'react'
-import { visuallyHidden } from '@/shared/ui'
-import { cardMaterials, songMeta, usageText } from '../songCard'
+import { MATERIAL_LABELS, visuallyHidden } from '@/shared/ui'
+import { materialKinds, songMeta, usageText } from '../songCard'
 import type { Song } from '../types'
 
 const blankStaves = [44, 74, 104, 134, 164, 194]
@@ -85,12 +85,12 @@ export function SongCardGrid({ songs, page, pageSize, total, loading, selectedId
                   <span className="song-card__meta">{songMeta(song)}</span>
                   {song.materialCounts && (
                     <span className="song-card__mats">
-                      {cardMaterials.map(({ kind, label }) => {
+                      {materialKinds.map((kind) => {
                         const has = (song.materialCounts?.[kind] ?? 0) > 0
                         return (
                           <span key={kind} className={has ? undefined : 'is-miss'}>
                             <span aria-hidden>{has ? '●' : '○'}</span> {!has && <span style={visuallyHidden}>Chưa có </span>}
-                            {label}
+                            {MATERIAL_LABELS[kind]}
                           </span>
                         )
                       })}

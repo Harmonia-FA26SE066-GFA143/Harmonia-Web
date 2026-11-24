@@ -22,6 +22,15 @@ export function canEditSongList(status?: SongListStatus): boolean {
 }
 
 /**
+ * The song list is closed once the event is cancelled or its Mass has begun (Harmonia-BE SongListService.cs:422-429,
+ * BE 61b3aa6: LITURGICAL_EVENT_CANCELLED / LITURGICAL_EVENT_ALREADY_PASSED). Date and time are parish wall clock.
+ */
+export function isSongListClosed(program: Pick<LiturgicalProgram, 'date' | 'time' | 'status'>, now = Date.now()): boolean {
+  const parishNow = new Date(now + 7 * 3_600_000).toISOString().slice(0, 16)
+  return program.status === 'cancelled' || `${program.date}T${program.time}` <= parishNow
+}
+
+/**
  * A program as the Choir Director pages use it: a row of `GET /api/liturgical-events` (`LiturgicalEventListItemDto`,
  * never a draft for the Choir Director) or the event of `GET /api/schedule/events/{id}`. Catalog entries come as
  * names; the Priest pages use `LiturgicalEvent` (below).
@@ -42,13 +51,20 @@ export interface LiturgicalProgram {
   specialRequirements?: string
   /** Newest song-list version; absent until the Choir Director proposes one. */
   songListStatus?: SongListStatus
+}
+
+/**
+ * A row of `GET /api/liturgical-events` (`LiturgicalEventListItemDto`). The published-event detail
+ * (`GET /api/schedule/events/{id}`, `MemberEventDetailDto`) has no song-list due date, so only list rows carry it.
+ */
+export interface ProgramListItem extends LiturgicalProgram {
+  /** YYYY-MM-DD: the celebration date minus the `SongList.LeadDays` setting (BE 90af733, B44). A reminder, not enforced. */
+  songListDueDate: string
   /**
-   * YYYY-MM-DD: the celebration date minus the `SongList.LeadDays` setting (BE 90af733, B44). A reminder, not enforced.
-   * Only on lists of events (`GET /api/liturgical-events`).
+   * True when `songListDueDate` has passed, the event is today or later and not cancelled, and the newest list is not
+   * Approved; a Submitted list still counts as late (`LiturgicalEvent.IsSongListOverdue`, Harmonia-BE LiturgicalEvent.cs:45-48).
    */
-  songListDueDate?: string
-  /** True when `songListDueDate` has passed and no list is Submitted or Approved (`LiturgicalEventListItemDto.IsSongListOverdue`). */
-  isSongListOverdue?: boolean
+  isSongListOverdue: boolean
 }
 
 export interface ProgramSong {
@@ -66,6 +82,8 @@ export interface SongCredits {
   composer?: string
   lyricist?: string
   materials: number
+  /** Files per kind (`SongDto.MaterialCounts`), for the Director's per-part readiness; absent in older callers' data. */
+  materialCounts?: Record<'sheetMusic' | 'lyrics' | 'sampleAudio' | 'rehearsalMaterial' | 'interactiveScore', number>
 }
 
 export interface LiturgicalProgramDetail extends LiturgicalProgram {
@@ -136,6 +154,8 @@ export interface EventFilters {
 
 /** A position still short of people (`RosterShortageDto`); no song for a whole-service role (BE d1ca63e). */
 export interface StaffingShortage {
+  /** The song-list item short of people (`RosterShortageDto.SongListItemId`); absent for a whole-service role. */
+  songListItemId?: string
   songTitle?: string
   skillName: string
   requiredCount: number
@@ -150,9 +170,9 @@ export interface PreparationStatus {
   /** Newest song-list version; absent when none was proposed. */
   songListStatus?: SongListStatus
   /** YYYY-MM-DD: celebration date minus `SongList.LeadDays` (`EventPreparationStatusDto.SongListDueDate`, BE 90af733). */
-  songListDueDate?: string
-  /** True when `songListDueDate` has passed and no list is Submitted or Approved (`EventPreparationStatusDto.IsSongListOverdue`). */
-  isSongListOverdue?: boolean
+  songListDueDate: string
+  /** Same rule as `ProgramListItem.isSongListOverdue` (`EventPreparationStatusDto.IsSongListOverdue`): only an Approved list clears it. */
+  isSongListOverdue: boolean
   participation: { invited: number; confirmed: number; declined: number; unsure: number }
   /** Absent while the event has no roster. */
   rosterFinalized?: boolean

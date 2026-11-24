@@ -70,11 +70,24 @@ export function SubmissionTable({
       title: 'Thao tác',
       align: 'center',
       width: 132,
-      render: (_, submission) => (
-        <Button onClick={() => onOpen(submission)} aria-label={`${submission.feedbacks.length ? 'Xem nhận xét' : 'Chấm bài'} của ${submission.memberName}`}>
-          {submission.feedbacks.length ? 'Xem nhận xét' : 'Chấm bài'}
-        </Button>
-      ),
+      render: (_, submission) => {
+        const open = submission.id === selectedId
+        const reviewed = submission.feedbacks.length > 0
+        // The open row says so in words, not only by its tint.
+        let label = reviewed ? 'Xem nhận xét' : 'Chấm bài'
+        if (open) label = reviewed ? 'Đang xem' : 'Đang chấm'
+        return (
+          <Button
+            type={open ? 'primary' : 'default'}
+            ghost={open}
+            onClick={() => onOpen(submission)}
+            aria-current={open ? 'true' : undefined}
+            aria-label={`${reviewed ? 'Xem nhận xét' : 'Chấm bài'} của ${submission.memberName}`}
+          >
+            {label}
+          </Button>
+        )
+      },
     },
   ]
 
@@ -87,8 +100,7 @@ export function SubmissionTable({
       pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: onPageChange }}
       scroll={{ x: 'max-content' }}
       rowClassName={(submission) => (submission.id === selectedId ? 'is-picked' : '')}
-      className="hm-table-pick"
-      onRow={(submission) => ({ onClick: () => onOpen(submission) })}
+      className="hm-table-pick hm-review-queue"
     />
   )
 }

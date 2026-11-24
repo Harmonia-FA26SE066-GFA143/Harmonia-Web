@@ -1,8 +1,15 @@
 import { Button, Drawer, Flex, type ButtonProps, type DrawerProps } from 'antd'
-import type { ReactNode } from 'react'
-import { spacing } from '@/styles/tokens'
+import type { ReactNode, RefObject } from 'react'
+import { component, spacing } from '@/styles/tokens'
+import { withBodyClearance } from './drawerStyles'
+import { CANCEL_LABEL } from './glossary'
 
-export interface FormDrawerProps extends Omit<DrawerProps, 'footer' | 'onClose' | 'mask' | 'maskClosable' | 'keyboard' | 'closable'> {
+export type DrawerWidthTier = (typeof component.drawer)[keyof typeof component.drawer]
+
+export interface FormDrawerProps
+  extends Omit<DrawerProps, 'footer' | 'onClose' | 'mask' | 'maskClosable' | 'keyboard' | 'closable' | 'size'> {
+  /** Standard tiers: 480 (sm), 640 (md), 720 (lg). Literal numbers kept only for gradual M5/M6 migration. */
+  size?: DrawerWidthTier | (number & {})
   okText: ReactNode
   cancelText?: ReactNode
   okButtonProps?: ButtonProps
@@ -12,36 +19,55 @@ export interface FormDrawerProps extends Omit<DrawerProps, 'footer' | 'onClose' 
   onCancel: () => void
   /** Runs once the drawer has finished closing, e.g. to reset local state. */
   afterClose?: () => void
+  /** Optional first editable input ref focused automatically when the drawer opens (G3-13). */
+  initialFocusRef?: RefObject<{ focus?: () => void } | null>
 }
 
 /**
- * Create/edit work that keeps the page in view: a panel from the right with Cancel and the action in its footer, the
- * modal-like API the forms already used. A click beside the panel does not close it, so a stray click cannot drop
- * what was typed. While the action is loading it cannot be closed at all (Escape, ×, Cancel), so a request in flight
- * is not abandoned. Focus stays inside and returns to the trigger on close (antd defaults).
- * Confirmations of one decision (delete, sign out, send) stay a Modal.
+ * Right-docked create/edit drawer contract (R4.2, SYS-07, G3-13, G4-17):
+ * - Always `placement="right"`, standard width tiers `480 | 640 | 720` (`component.drawer`).
+ * - Flush-right `×` close & flush-left `title` (styled globally via `.ant-drawer-header-title`).
+ * - `title` must match the opener button's action label (e.g. `"Thêm buổi tập"`).
+ * - Body includes `24px` bottom padding & `scrollPaddingBottom` so the last field never clips under the sticky footer.
+ *
+ * Modal vs. Drawer vs. Dedicated Page decision matrix (`02-ux-architecture.md` §5.2):
+ * - **Modal**: Single-decision confirmation, destructive action, or irreversible status lock (never multi-field forms).
+ * - **Drawer (`FormDrawer` / `ViewDrawer`)**: Create/edit/inspect/pick flows (1–8 fields or secondary lookup) keeping parent context visible.
+ * - **Dedicated Page**: Full-workspace multi-section authoring, split studio/chat, or deep hierarchical entities with URL shareability.
  */
 export function FormDrawer({
+  open,
   okText,
-  cancelText = 'Hủy',
+  cancelText = CANCEL_LABEL,
   okButtonProps,
   cancelButtonProps,
   onOk,
   onCancel,
   afterClose,
-  size = 480,
+  afterOpenChange,
+  initialFocusRef,
+  placement = 'right',
+  size = component.drawer.sm,
+  styles,
   ...props
 }: Readonly<FormDrawerProps>) {
   const busy = Boolean(okButtonProps?.loading)
+
   return (
     <Drawer
+      open={open}
+      placement={placement}
       size={size}
       onClose={onCancel}
       closable={!busy}
       keyboard={!busy}
       mask={{ closable: false }}
+      styles={withBodyClearance(styles)}
       afterOpenChange={(open) => {
-        if (!open) afterClose?.()
+        // Fires after the open motion, also when mounted with open={true}, and after the drawer's own panel focus.
+        if (open) initialFocusRef?.current?.focus?.()
+        else afterClose?.()
+        afterOpenChange?.(open)
       }}
       footer={
         <Flex justify="flex-end" gap={spacing.sm}>

@@ -1,13 +1,12 @@
-import { UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, App, Button, DatePicker, Drawer, Flex, Input, Modal, Radio, Select, Skeleton, Steps, Timeline, Typography, Upload } from 'antd'
+import { Alert, App, Button, DatePicker, Flex, Input, Modal, Radio, Select, Steps, Timeline, Typography, Upload } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useState, type ReactNode } from 'react'
 import { useChoirs } from '@/features/choirs'
 import { parseUtc } from '@/lib/api/dates'
 import { getSession } from '@/lib/auth/session'
-import { ErrorState, Form, StatusTag, type StatusTagColor } from '@/shared/ui'
-import { colors, radius, spacing, typography } from '@/styles/tokens'
+import { CANCEL_LABEL, CLOSE_LABEL, ErrorState, Form, Icon, SectionSkeleton, SELECT_POPUP_PROPS, StatusTag, ViewDrawer, type StatusTagColor } from '@/shared/ui'
+import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 import {
   appointNomination,
   approveNomination,
@@ -143,7 +142,7 @@ function DecisionDialog({ dialog, item, onClose }: Readonly<{ dialog: Dialog; it
       open
       title={copy.title}
       okText={copy.ok}
-      cancelText="Hủy"
+      cancelText={CANCEL_LABEL}
       okButtonProps={{ danger: copy.danger, loading: run.isPending }}
       onOk={() => form.submit()}
       onCancel={onClose}
@@ -175,7 +174,7 @@ function DecisionDialog({ dialog, item, onClose }: Readonly<{ dialog: Dialog; it
               Tài khoản sẽ đổi sang vai trò Ca trưởng, phiên đăng nhập bị thu hồi, người này rời các ca đoàn với tư cách ca viên, và thay Ca trưởng hiện tại của ca đoàn được chọn.
             </Typography.Paragraph>
             <Form.Item name="choirId" label="Ca đoàn" initialValue={item.proposedChoirId ?? undefined} extra={item.proposedChoirName ? `Đề xuất: ${item.proposedChoirName}` : undefined} rules={[{ required: true, message: 'Vui lòng chọn ca đoàn.' }]}>
-              <Select loading={choirs.isPending} placeholder="Chọn ca đoàn đang hoạt động" options={choirs.data?.filter((choir) => choir.isActive).map((choir) => ({ value: choir.id, label: choir.directorName ? `${choir.name} (Ca trưởng hiện tại: ${choir.directorName})` : choir.name }))} />
+              <Select {...SELECT_POPUP_PROPS} loading={choirs.isPending} placeholder="Chọn ca đoàn đang hoạt động" options={choirs.data?.filter((choir) => choir.isActive).map((choir) => ({ value: choir.id, label: choir.directorName ? `${choir.name} (Ca trưởng hiện tại: ${choir.directorName})` : choir.name }))} />
             </Form.Item>
           </>
         )}
@@ -183,14 +182,14 @@ function DecisionDialog({ dialog, item, onClose }: Readonly<{ dialog: Dialog; it
           <>
             <Form.Item name="courseName" label="Tên khoá học" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập tên khoá học.' }, { max: 200, message: 'Vui lòng nhập tối đa 200 ký tự.' }]}><Input /></Form.Item>
             <Form.Item name="organizer" label="Đơn vị tổ chức" rules={[{ max: 200, message: 'Vui lòng nhập tối đa 200 ký tự.' }]}><Input /></Form.Item>
-            <Form.Item name="startDate" label="Ngày bắt đầu" rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu.' }]}><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item>
+            <Form.Item name="startDate" label="Ngày bắt đầu" rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu.' }]}><DatePicker {...SELECT_POPUP_PROPS} format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item>
             <Form.Item
               name="endDate"
               label="Ngày kết thúc"
               dependencies={['startDate']}
               rules={[{ validator: (_, end: Dayjs | null | undefined) => { const start: Dayjs | undefined = form.getFieldValue('startDate'); return end && start && end.isBefore(start, 'day') ? Promise.reject(new Error('Ngày kết thúc cần từ ngày bắt đầu trở đi.')) : Promise.resolve() } }]}
             >
-              <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+              <DatePicker {...SELECT_POPUP_PROPS} format="DD/MM/YYYY" style={{ width: '100%' }} />
             </Form.Item>
           </>
         )}
@@ -233,7 +232,7 @@ function TrainingRow({ training, nominationId, canManage, onResult }: Readonly<{
       content: 'Chỉ dùng khi nhập nhầm. Đề cử sẽ trở lại trạng thái trước khi cử đi học.',
       okText: 'Xoá khoá học',
       okButtonProps: { danger: true },
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       focusable: { autoFocusButton: 'cancel' },
       onOk: () => remove.mutateAsync().then(() => message.success('Đã xoá khoá học.')).catch((error: Error) => message.error(nominationErrorMessage(error, 'Không thể xoá khoá học. Vui lòng thử lại.'))),
     })
@@ -252,7 +251,7 @@ function TrainingRow({ training, nominationId, canManage, onResult }: Readonly<{
         {training.certificateUrl && <a href={training.certificateUrl} target="_blank" rel="noopener noreferrer">Xem chứng chỉ {training.certificateFileName}</a>}
         {canManage && (
           <Upload accept={certificateTypes.join(',')} maxCount={1} showUploadList={false} beforeUpload={pick}>
-            <Button size="small" icon={<UploadOutlined />} loading={upload.isPending}>{training.certificateUrl ? 'Thay chứng chỉ' : 'Tải chứng chỉ'}</Button>
+            <Button size="small" icon={<Icon name="upload" />} loading={upload.isPending}>{training.certificateUrl ? 'Thay chứng chỉ' : 'Tải chứng chỉ'}</Button>
           </Upload>
         )}
         {canManage && inProgress && <Button size="small" onClick={onResult}>Ghi kết quả</Button>}
@@ -282,7 +281,7 @@ export function NominationDetailDrawer({ id, onClose }: Readonly<{ id?: string; 
       title: `Duyệt đề cử ${target.memberFullName}?`,
       content: 'Người đề cử và ca viên sẽ nhận được thông báo. Bước tiếp theo là đào tạo hoặc miễn đào tạo.',
       okText: 'Duyệt đề cử',
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       onOk: () => approve.mutateAsync(target.id).then(() => message.success('Đã duyệt đề cử.')).catch((error: Error) => message.error(nominationErrorMessage(error, 'Không thể duyệt đề cử. Vui lòng thử lại.'))),
     })
 
@@ -292,21 +291,21 @@ export function NominationDetailDrawer({ id, onClose }: Readonly<{ id?: string; 
       content: 'Đề cử sẽ chuyển sang Đã hủy và không mở lại được.',
       okText: 'Rút đề cử',
       okButtonProps: { danger: true },
-      cancelText: 'Hủy',
+      cancelText: CANCEL_LABEL,
       focusable: { autoFocusButton: 'cancel' },
       onOk: () => withdraw.mutateAsync(target.id).then(() => message.success('Đã rút đề cử.')).catch((error: Error) => message.error(nominationErrorMessage(error, 'Không thể rút đề cử. Vui lòng thử lại.'))),
     })
 
   const ended = item?.status === 'Rejected' || item?.status === 'Cancelled'
   return (
-    <Drawer
+    <ViewDrawer
       open={Boolean(id)}
-      size={640}
+      size={component.drawer.md}
       title={item ? `Đề cử ${item.memberFullName}` : 'Đề cử Ca trưởng'}
       onClose={onClose}
       destroyOnHidden
       footer={
-        item && actions.length > 0 && (
+        item && actions.length > 0 ? (
           <Flex wrap justify="flex-end" gap={spacing.sm}>
             {actions.includes('withdraw') && <Button danger onClick={() => confirmWithdraw(item)}>Rút đề cử</Button>}
             {actions.includes('reject') && <Button danger onClick={() => setDialog({ kind: 'reject' })}>Từ chối</Button>}
@@ -315,11 +314,12 @@ export function NominationDetailDrawer({ id, onClose }: Readonly<{ id?: string; 
             {actions.includes('startTraining') && <Button onClick={() => setDialog({ kind: 'training' })}>Cử đi học</Button>}
             {actions.includes('approve') && <Button type="primary" onClick={() => confirmApprove(item)}>Duyệt</Button>}
             {actions.includes('appoint') && <Button type="primary" onClick={() => setDialog({ kind: 'appoint' })}>Bổ nhiệm</Button>}
+            <Button onClick={onClose}>{CLOSE_LABEL}</Button>
           </Flex>
-        )
+        ) : undefined
       }
     >
-      {nomination.isPending && Boolean(id) && <Skeleton active paragraph={{ rows: 10 }} />}
+      {nomination.isPending && Boolean(id) && <SectionSkeleton rows={8} label="Đang tải đề cử" />}
       {nomination.isError && <ErrorState headingLevel={3} title="Không thể tải đề cử" description={nominationErrorMessage(nomination.error, 'Vui lòng thử lại.')} error={nomination.error} onRetry={() => nomination.refetch()} retrying={nomination.isFetching} />}
       {item && (
         <>
@@ -343,7 +343,7 @@ export function NominationDetailDrawer({ id, onClose }: Readonly<{ id?: string; 
             <Timeline items={historyOf(item).map(({ key: entryKey, content }) => ({ key: entryKey, content }))} />
           </Section>
           <Section title="Khoá đào tạo">
-            {trainings.isPending && <Skeleton active paragraph={{ rows: 2 }} title={false} />}
+            {trainings.isPending && <SectionSkeleton rows={2} label="Đang tải khoá đào tạo" />}
             {trainings.isError && <ErrorState headingLevel={3} title="Không thể tải khoá đào tạo" error={trainings.error} onRetry={() => trainings.refetch()} retrying={trainings.isFetching} />}
             {trainings.data?.length === 0 && <Typography.Text type="secondary">Chưa có khoá đào tạo.</Typography.Text>}
             {trainings.data && trainings.data.length > 0 && (
@@ -357,6 +357,6 @@ export function NominationDetailDrawer({ id, onClose }: Readonly<{ id?: string; 
           {dialog && <DecisionDialog dialog={dialog} item={item} onClose={() => setDialog(undefined)} />}
         </>
       )}
-    </Drawer>
+    </ViewDrawer>
   )
 }

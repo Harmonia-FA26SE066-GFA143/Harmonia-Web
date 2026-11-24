@@ -1,5 +1,4 @@
-import { CaretRightFilled, PauseOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Flex, Skeleton, Slider, Typography } from 'antd'
+import { Button, Flex, Slider, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   playbackInstrumentLabels,
@@ -10,9 +9,10 @@ import {
 } from '@/features/music-library'
 import { ApiError } from '@/lib/api/errors'
 import { clock } from '@/shared/utils/media'
-import { ErrorState } from '@/shared/ui'
+import { ErrorState, Icon, SectionSkeleton } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import { usePlaybackClock } from '../score/clock/usePlaybackClock'
+import { PlaybackState } from '../score/controls/PlaybackControls'
 import { TimedLyricsView } from './TimedLyricsView'
 
 const canvasHeight = 300
@@ -281,11 +281,12 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMate
         <Button
           type="primary"
           shape="circle"
-          icon={playing ? <PauseOutlined /> : <CaretRightFilled />}
+          icon={playing ? <Icon name="pause" /> : <Icon name="play-solid" />}
           onClick={() => void toggle()}
           disabled={sourceFailed}
           aria-label={`${playing ? 'Tạm dừng' : 'Phát'} ${title}`}
         />
+        <PlaybackState playing={playing} finished={!playing && duration > 0 && getTime() >= duration} duration={duration} />
         <Slider
           min={0}
           max={duration}
@@ -314,7 +315,7 @@ export function MidiPracticePlayer({ materialId, title, timedMaterial, showLyric
 }>) {
   const playback = useMaterialPlayback(materialId)
 
-  if (playback.isPending) return <Skeleton active paragraph={{ rows: 8 }} title={{ width: '28%' }} />
+  if (playback.isPending) return <SectionSkeleton rows={6} label="Đang tải bản MIDI" />
   if (playback.isError) {
     return (
       <ErrorState
@@ -334,7 +335,7 @@ export function MidiPracticePlayer({ materialId, title, timedMaterial, showLyric
         <Typography.Text type="secondary">
           Âm sắc {playbackInstrumentLabels[playback.data.playback.instrument]}. Nốt sáng lên theo âm thanh đang phát.
         </Typography.Text>
-        <Button size="small" icon={<ReloadOutlined />} loading={playback.isFetching} onClick={() => playback.refetch()}>
+        <Button size="small" icon={<Icon name="refresh" />} loading={playback.isFetching} onClick={() => playback.refetch()}>
           Tải lại bản phát
         </Button>
       </Flex>
