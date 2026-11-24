@@ -36,6 +36,16 @@ function emptyText(rows: ReportRow[]) {
 
 const needsAttention = (row: ReportRow) => cellCount(row, 'notSubmittedCount') + cellCount(row, 'needsRevisionCount') > 0
 
+function practiceLead(rows: ReportRow[]) {
+  const awaiting = sumOf(rows, 'awaitingReviewCount')
+  // Only above a ranked list; with nobody ranked the empty state says it (no repeat).
+  return awaiting > 0 && rows.some(needsAttention) ? (
+    <Typography.Paragraph style={{ margin: 0, padding: `${spacing.sm}px ${spacing.lg}px`, color: colors.textMuted }}>
+      {awaiting} bản thu đang chờ nhận xét · <Link to={paths.director.practice}>Chấm bài</Link>
+    </Typography.Paragraph>
+  ) : null
+}
+
 /**
  * "Cần quan tâm" for practice: members with assignments not submitted or to be redone in the period, most not
  * submitted first (`GET /api/reports/assignment-completion`), with a reminder of the recordings waiting for review.
@@ -61,15 +71,7 @@ export function PracticeWatch({ filters }: Readonly<{ filters: ReportFilters }>)
         cellCount(row, 'notSubmittedCount') ? `${cellCount(row, 'notSubmittedCount')} chưa nộp` : `${cellCount(row, 'needsRevisionCount')} cần sửa`
       }
       empty={emptyText}
-      lead={(rows) => {
-        const awaiting = sumOf(rows, 'awaitingReviewCount')
-        // Only above a ranked list; with nobody ranked the empty state says it (no repeat).
-        return awaiting > 0 && rows.some(needsAttention) ? (
-          <Typography.Paragraph style={{ margin: 0, padding: `${spacing.sm}px ${spacing.lg}px`, color: colors.textMuted }}>
-            {awaiting} bản thu đang chờ nhận xét · <Link to={paths.director.practice}>Chấm bài</Link>
-          </Typography.Paragraph>
-        ) : null
-      }}
+      lead={practiceLead}
       legend="Thanh: đạt · cần chỉnh sửa · chờ nhận xét · chưa nộp, cùng màu với biểu đồ."
       loadingLabel="Đang tải hoàn thành bài tập"
       errorTitle="Không thể tải hoàn thành bài tập"

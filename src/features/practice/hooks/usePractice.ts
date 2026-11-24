@@ -46,11 +46,12 @@ export function useAllAssignments(eventId?: string) {
     queryFn: async () => {
       const pageSize = 100
       const first = await listAssignments(eventId, { pageNumber: 1, pageSize })
-      const items = [...first.items]
-      for (let pageNumber = 2; pageNumber <= first.totalPages; pageNumber += 1) {
-        const next = await listAssignments(eventId, { pageNumber, pageSize })
-        items.push(...next.items)
-      }
+      const rest = await Promise.all(
+        Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, index) =>
+          listAssignments(eventId, { pageNumber: index + 2, pageSize }),
+        ),
+      )
+      const items = [...first.items, ...rest.flatMap((page) => page.items)]
       return { items, totalCount: first.totalCount }
     },
   })

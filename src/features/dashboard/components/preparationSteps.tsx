@@ -35,6 +35,55 @@ interface StepInput {
   reviewCount?: number
 }
 
+function songListActionLabel(listStatus?: ProgramListItem['songListStatus']) {
+  if (!listStatus) return 'Đề xuất danh sách bài hát'
+  if (listStatus === 'draft') return 'Mở bản nháp danh sách'
+  if (listStatus === 'needsRevision' || listStatus === 'rejected') return 'Sửa danh sách bài hát'
+  return 'Xem danh sách bài hát'
+}
+
+function participationSummary(counts?: PreparationStatus['participation']) {
+  if (!counts) return ''
+  const total = counts.invited + counts.confirmed + counts.declined + counts.unsure
+  if (total === 0) return ''
+  return [
+    counts.declined > 0 && `${counts.declined} từ chối`,
+    counts.unsure > 0 && `${counts.unsure} chưa chắc chắn`,
+    counts.invited > 0 && `${counts.invited} chưa trả lời`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
+
+function practiceStepState(status: PreparationStatus | undefined, unknown: string): Pick<PreparationStep, 'state' | 'value'> {
+  if (!status) return { state: 'todo', value: unknown }
+  if (status.practiceExpected === 0) return { state: 'todo', value: 'Chưa giao bài' }
+  return {
+    state: status.practicePassed >= status.practiceExpected ? 'done' : 'progress',
+    value: `${status.practicePassed}/${status.practiceExpected} lượt đạt`,
+  }
+}
+
+function rosterStepDetail(status: PreparationStatus | undefined, shortages: PreparationStatus['rosterShortages']): ReactNode {
+  const hasRoster = status?.rosterFinalized !== undefined
+  if (!hasRoster && shortages.length === 0) return false
+  return (
+    <>
+      {hasRoster && <span>{status.rosterActiveAssignments} lượt đã phân công</span>}
+      {shortages.length > 0 && (
+        <ul className="next-mass__shortages" aria-label="Vị trí còn thiếu">
+          {shortages.map((shortage) => (
+            <li key={`${shortage.skillName}-${shortage.songTitle ?? ''}`} className="hm-missing">
+              Thiếu {shortage.requiredCount - shortage.assignedCount} {shortage.skillName}
+              {shortage.songTitle ? ` · ${shortage.songTitle}` : ''}
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  )
+}
+
 /**
  * The five steps of preparing one Mass for the Choir Director, every value from `ProgramListItem` and
  * `EventPreparationStatusDto` (Harmonia-BE EventPreparationStatusDto.cs). The backend has no required order or
@@ -50,39 +99,12 @@ export function preparationSteps({ program, status, failed, reviewCount }: StepI
   const review = item('Cha xứ duyệt')
   const songList = list.state === 'done' ? review : list
   const listStatus = program.songListStatus
-  const songListAction = !listStatus
-    ? 'Đề xuất danh sách bài hát'
-    : listStatus === 'draft'
-      ? 'Mở bản nháp danh sách'
-      : listStatus === 'needsRevision' || listStatus === 'rejected'
-        ? 'Sửa danh sách bài hát'
-        : 'Xem danh sách bài hát'
-
   const participation = item('Xác nhận tham gia')
-  const counts = status?.participation
-  const answered =
-    counts && counts.invited + counts.confirmed + counts.declined + counts.unsure > 0
-      ? [
-          counts.declined > 0 && `${counts.declined} từ chối`,
-          counts.unsure > 0 && `${counts.unsure} chưa chắc chắn`,
-          counts.invited > 0 && `${counts.invited} chưa trả lời`,
-        ]
-          .filter(Boolean)
-          .join(' · ')
-      : ''
-
+  const answered = participationSummary(status?.participation)
   const roster = item('Chốt phân công')
   const shortages = status?.rosterShortages ?? []
   const rehearsals = item('Tập')
-
-  const practice: Pick<PreparationStep, 'state' | 'value'> = !status
-    ? { state: 'todo', value: unknown }
-    : status.practiceExpected === 0
-      ? { state: 'todo', value: 'Chưa giao bài' }
-      : {
-          state: status.practicePassed >= status.practiceExpected ? 'done' : 'progress',
-          value: `${status.practicePassed}/${status.practiceExpected} lượt đạt`,
-        }
+  const practice = practiceStepState(status, unknown)
 
   return [
     {
@@ -97,7 +119,7 @@ export function preparationSteps({ program, status, failed, reviewCount }: StepI
         </span>
       ),
       to: generatePath(paths.director.songListProposal, { programId: program.id }),
-      action: songListAction,
+      action: songListActionLabel(listStatus),
     },
     {
       key: 'participation',
@@ -115,21 +137,7 @@ export function preparationSteps({ program, status, failed, reviewCount }: StepI
       icon: 'roster',
       state: roster.state,
       value: roster.value,
-      detail: (status?.rosterFinalized !== undefined || shortages.length > 0) && (
-        <>
-          {status && status.rosterFinalized !== undefined && <span>{status.rosterActiveAssignments} lượt đã phân công</span>}
-          {shortages.length > 0 && (
-            <ul className="next-mass__shortages" aria-label="Vị trí còn thiếu">
-              {shortages.map((shortage) => (
-                <li key={`${shortage.skillName}-${shortage.songTitle ?? ''}`} className="hm-missing">
-                  Thiếu {shortage.requiredCount - shortage.assignedCount} {shortage.skillName}
-                  {shortage.songTitle ? ` · ${shortage.songTitle}` : ''}
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      ),
+      detail: rosterStepDetail(status, shortages),
       to: `${paths.director.roster}${query}`,
       action: 'Mở phân công',
     },

@@ -61,7 +61,7 @@ export function ActivityTrendCard({
   view?: View
   compact?: boolean
 }>) {
-  const [ownView, setView] = useState<View>('attendance')
+  const [ownView, setOwnView] = useState<View>('attendance')
   const view = lockedView ?? ownView
   const trend = useActivityTrend(query)
   const points = trend.data ?? []
@@ -76,7 +76,7 @@ export function ActivityTrendCard({
         <Segmented<View>
           aria-label="Số liệu của biểu đồ"
           value={view}
-          onChange={setView}
+          onChange={setOwnView}
           options={[
             { value: 'attendance', label: 'Điểm danh' },
             { value: 'practice', label: 'Bài tập' },

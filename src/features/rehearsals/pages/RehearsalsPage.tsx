@@ -251,7 +251,7 @@ export function RehearsalsPage() {
       )}
       <Flex vertical gap={spacing.lg}>
           <FilterBar
-            resultCount={view === 'list' ? rehearsals.data?.totalCount : weekRehearsals.data ? weekItems.length : undefined}
+            resultCount={view === 'list' ? rehearsals.data?.totalCount : weekRehearsals.data && weekItems.length}
             error={view === 'list' ? rehearsals.isError : weekRehearsals.isError}
             resultNoun="buổi tập"
             hasActiveFilters={filtered}

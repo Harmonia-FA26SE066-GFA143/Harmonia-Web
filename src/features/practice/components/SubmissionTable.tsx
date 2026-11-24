@@ -74,7 +74,8 @@ export function SubmissionTable({
         const open = submission.id === selectedId
         const reviewed = submission.feedbacks.length > 0
         // The open row says so in words, not only by its tint.
-        const label = open ? (reviewed ? 'Đang xem' : 'Đang chấm') : reviewed ? 'Xem nhận xét' : 'Chấm bài'
+        let label = reviewed ? 'Xem nhận xét' : 'Chấm bài'
+        if (open) label = reviewed ? 'Đang xem' : 'Đang chấm'
         return (
           <Button
             type={open ? 'primary' : 'default'}

@@ -14,8 +14,11 @@ export type IconProps = {
   style?: CSSProperties
 }
 
-const toFontSize = (size?: IconSize) =>
-  size === undefined ? '1em' : `${typeof size === 'number' ? size : sizes.icon[size]}px`
+function toFontSize(size?: IconSize) {
+  if (size === undefined) return '1em'
+  const pixels = typeof size === 'number' ? size : sizes.icon[size]
+  return `${pixels}px`
+}
 
 /** One Harmonia icon. `anticon` keeps Ant Design's spacing for icons in Button, Menu and Alert. */
 export function Icon({ name, size, label, className, style }: Readonly<IconProps>) {
@@ -23,8 +26,6 @@ export function Icon({ name, size, label, className, style }: Readonly<IconProps
     <span
       className={className ? `hm-icon anticon ${className}` : 'hm-icon anticon'}
       style={{ fontSize: toFontSize(size), ...style }}
-      role={label ? 'img' : undefined}
-      aria-label={label}
       aria-hidden={label ? undefined : true}
     >
       <svg
@@ -37,7 +38,9 @@ export function Icon({ name, size, label, className, style }: Readonly<IconProps
         strokeLinecap="round"
         strokeLinejoin="round"
         focusable="false"
-        aria-hidden="true"
+        role={label ? 'img' : undefined}
+        aria-label={label}
+        aria-hidden={label ? undefined : true}
       >
         {iconRegistry[name]}
       </svg>

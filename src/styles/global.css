@@ -126,6 +126,7 @@ body {
   background: var(--hm-surface-base);
   border-radius: var(--hm-radius-lg);
   overflow: hidden;
+  max-width: 100%;
 }
 
 /* Printed column heads: ink on the parchment band, sentence case (Harmonia Design System, 2026-11-10). */
@@ -482,10 +483,8 @@ textarea {
 
 .practice-room-layout .practice-room-player {
   padding: 24px;
-}
-
-.practice-room-layout .practice-room-player {
   min-width: 0;
+  transition: box-shadow var(--hm-dur-base) var(--hm-ease), border-color var(--hm-dur-base) var(--hm-ease);
 }
 
 .practice-room-controls {
@@ -616,10 +615,6 @@ textarea {
 @keyframes practice-room-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.6); }
-}
-
-.practice-room-layout .practice-room-player {
-  transition: box-shadow var(--hm-dur-base) var(--hm-ease), border-color var(--hm-dur-base) var(--hm-ease);
 }
 
 .practice-room-layout .practice-room-player:focus-within {
@@ -2389,6 +2384,7 @@ textarea {
 /* SummaryStrip: counts in one sheet, equal columns split by 1px rules, a label over a serif figure. */
 .hm-summary {
   display: grid;
+  grid-template-columns: repeat(var(--hm-summary-cols, 4), minmax(0, 1fr));
   margin: 0;
   border: 1px solid var(--hm-border-default);
   border-radius: var(--hm-radius-lg);
@@ -5205,10 +5201,6 @@ body {
   overflow-x: clip;
 }
 
-.ant-table-wrapper {
-  max-width: 100%;
-}
-
 .ant-table-wrapper .ant-table-content {
   overflow-x: auto;
 }
@@ -5220,10 +5212,6 @@ body {
 /* A filter control may shrink to the bar's width, never push past it. */
 .hm-filter-bar > * {
   max-width: 100%;
-}
-
-.hm-summary {
-  grid-template-columns: repeat(var(--hm-summary-cols, 4), minmax(0, 1fr));
 }
 
 /* Side columns narrow before they stack, so the list keeps its width. */

@@ -216,7 +216,9 @@ export function RehearsalPracticeRoomPage() {
     else if (!materials.isPending && !materials.isError) modeLabel = 'Chưa có audio mẫu'
   }
 
-  const attendanceQuery = `?rehearsalId=${room.rehearsalId}${room.eventId ? `&programId=${room.eventId}` : ''}`
+  const attendanceParams = new URLSearchParams({ rehearsalId: room.rehearsalId })
+  if (room.eventId) attendanceParams.set('programId', room.eventId)
+  const attendanceQuery = `?${attendanceParams.toString()}`
   const description = (
     <span className="practice-room-meta">
       {room.isJoint ? <JointChip rehearsal={room} /> : <span>Buổi tập</span>}

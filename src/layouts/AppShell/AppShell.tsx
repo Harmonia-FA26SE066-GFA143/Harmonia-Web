@@ -100,6 +100,45 @@ export function AppShell({ children }: Readonly<{ children?: ReactNode }>) {
     </>
   )
 
+  let header = (
+    <RunningHead
+      sections={sections}
+      selectedPath={selectedPath}
+      brand={<Brand />}
+      controls={controls}
+      choir={surface === 'director' ? <ChoirSwitcher /> : undefined}
+      day={<HeadDay surface={surface} />}
+      scrolled={scrolled}
+    />
+  )
+  if (focusedSecurity) {
+    header = (
+      <div className="hm-head">
+        <div className="hm-top">
+          <Brand />
+          <div className="hm-top__end">{controls}</div>
+        </div>
+      </div>
+    )
+  } else if (isCompact) {
+    header = (
+      <div className="hm-head">
+        <div className="hm-top">
+          <Button
+            className="hm-chrome-btn"
+            type="text"
+            icon={<Icon name="menu" />}
+            aria-label="Mở menu điều hướng"
+            onClick={() => setDrawerOpen(true)}
+            style={{ width: sizes.touchTarget, height: sizes.touchTarget }}
+          />
+          <Brand />
+          <div className="hm-top__end">{controls}</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <a
@@ -113,39 +152,7 @@ export function AppShell({ children }: Readonly<{ children?: ReactNode }>) {
       >
         Bỏ qua điều hướng, đến nội dung chính
       </a>
-      {focusedSecurity ? (
-        <div className="hm-head">
-          <div className="hm-top">
-            <Brand />
-            <div className="hm-top__end">{controls}</div>
-          </div>
-        </div>
-      ) : isCompact ? (
-        <div className="hm-head">
-          <div className="hm-top">
-            <Button
-              className="hm-chrome-btn"
-              type="text"
-              icon={<Icon name="menu" />}
-              aria-label="Mở menu điều hướng"
-              onClick={() => setDrawerOpen(true)}
-              style={{ width: sizes.touchTarget, height: sizes.touchTarget }}
-            />
-            <Brand />
-            <div className="hm-top__end">{controls}</div>
-          </div>
-        </div>
-      ) : (
-        <RunningHead
-          sections={sections}
-          selectedPath={selectedPath}
-          brand={<Brand />}
-          controls={controls}
-          choir={surface === 'director' ? <ChoirSwitcher /> : undefined}
-          day={<HeadDay surface={surface} />}
-          scrolled={scrolled}
-        />
-      )}
+      {header}
       {!isCompact && <WorkspaceGround />}
       <Content
         id="main-content"

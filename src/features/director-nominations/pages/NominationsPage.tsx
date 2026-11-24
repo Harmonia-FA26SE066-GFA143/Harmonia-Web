@@ -83,7 +83,7 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
       {nominations.data !== undefined && (total > 0 || status) && (
         // The status filter with the result count, then the table (artifact NominationsPage).
         <Flex vertical gap={spacing.lg}>
-          <FilterBar resultCount={nominations.data?.totalCount} error={nominations.isError} resultNoun="đề cử" hasActiveFilters={Boolean(status)} onReset={() => changeStatus(undefined)}>
+          <FilterBar resultCount={nominations.data?.totalCount} error={nominations.isError} resultNoun="đề cử" hasActiveFilters={Boolean(status)} onReset={() => changeStatus()}>
             <Flex align="center" gap={spacing.sm}>
               <label htmlFor="nomination-status" style={{ fontSize: typography.label.fontSize, color: colors.textMuted, whiteSpace: 'nowrap' }}>Trạng thái</label>
               <Select
@@ -100,7 +100,7 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
           </FilterBar>
           <Card styles={{ body: { padding: 0 } }}>
           {total === 0 ? (
-            <div style={{ padding: spacing.lg }}><NoFilterResults onClearFilters={() => changeStatus(undefined)} /></div>
+            <div style={{ padding: spacing.lg }}><NoFilterResults onClearFilters={() => changeStatus()} /></div>
           ) : (
             <Table<Nomination>
               rowKey="id"

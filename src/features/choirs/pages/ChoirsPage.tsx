@@ -74,7 +74,10 @@ function AdminChoirForm({ form, onClose }: Readonly<{ form: FormState; onClose: 
 /** `ChoirDto` carries no member count: each card reads its own `GET /api/choirs/{id}/members` (G2-10, R2.6). */
 function MemberCount({ choirId }: Readonly<{ choirId: string }>) {
   const members = useMembersOfChoir(choirId)
-  const text = members.isPending ? 'Đang tải số ca viên…' : members.isError ? UNKNOWN_METRIC_LABEL : `${members.data.length} ca viên`
+  let text: string
+  if (members.isPending) text = 'Đang tải số ca viên…'
+  else if (members.isError) text = UNKNOWN_METRIC_LABEL
+  else text = `${members.data.length} ca viên`
   return (
     <Typography.Text style={{ color: members.isSuccess ? colors.textBody : colors.textMuted, fontSize: 13, fontWeight: members.isSuccess ? 600 : 400 }}>
       {text}

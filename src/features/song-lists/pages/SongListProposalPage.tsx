@@ -147,9 +147,8 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
               description="Danh sách bài hát chỉ còn xem, không lưu hay gửi duyệt được nữa."
             />
           )}
-          {list ? (
-            <SongListStatusAlert list={list} />
-          ) : closed ? null : (
+          {list && <SongListStatusAlert list={list} />}
+          {!list && !closed && (
             // A quiet status, not a second rubric above ProgramInfo's "Thông tin chương trình" (G3-06).
             <Alert
               type="info"

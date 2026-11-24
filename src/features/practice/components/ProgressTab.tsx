@@ -68,11 +68,11 @@ function ProgressChips({ rows }: Readonly<{ rows: MemberProgress[] }>) {
   const allPassed = assigned.filter((row) => row.assignmentsPassed === row.assignmentsTotal).length
   const overdue = rows.filter((row) => row.assignmentsOverdue > 0).length
   return (
-    <div className="hm-progress-chips" role="status" aria-label="Tóm tắt tiến độ chuẩn bị">
+    <output className="hm-progress-chips" aria-label="Tóm tắt tiến độ chuẩn bị">
       <span>{invited.length > 0 ? `Đã xác nhận: ${confirmed}/${invited.length} đã mời` : 'Chưa gửi lời mời tham gia'}</span>
       <span>{assigned.length > 0 ? `Đạt đủ bài tập: ${allPassed}/${assigned.length} được giao` : 'Chưa giao bài tập'}</span>
       <span className={overdue > 0 ? 'is-warning' : undefined}>Quá hạn: {overdue} ca viên</span>
-    </div>
+    </output>
   )
 }
 

@@ -5,9 +5,17 @@ const none = <span className="ct-facts__none">Chưa ghi</span>
 
 const urlPattern = /https?:\/\/[^\s<>()]+/g
 
+const trailingPunctuation = new Set(['.', ',', ';', ':', '!', '?', ')', ']'])
+
+function stripTrailingPunctuation(raw: string) {
+  let end = raw.length
+  while (end > 0 && trailingPunctuation.has(raw[end - 1])) end -= 1
+  return raw.slice(0, end)
+}
+
 /** "Liên kết tham khảo (host)", or null when the text is not a valid http(s) address. */
 function linkOf(raw: string) {
-  const href = raw.replace(/[.,;:!?)\]]+$/, '')
+  const href = stripTrailingPunctuation(raw)
   try {
     const url = new URL(href)
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
@@ -35,16 +43,46 @@ function withLinks(text: string): ReactNode[] {
   return parts
 }
 
+const separatorChars = new Set(['-', '=', '_', '*', '~'])
+
+function isSeparatorLine(trimmed: string) {
+  if (trimmed.length < 3) return false
+  for (const ch of trimmed) {
+    if (!separatorChars.has(ch) && ch !== ' ' && ch !== '\t') return false
+  }
+  return true
+}
+
 /**
  * Imported notes arrive with separator lines ("-----", "====", "***") and runs of blank lines; shown as clean paragraphs.
  * Presentation only: the stored notes are untouched.
  */
 function noteParagraphs(notes: string) {
-  return notes
-    .replaceAll('\r\n', '\n')
-    .split(/\n\s*\n|\n\s*[-=_*~]{3,}\s*(?:\n|$)/)
-    .map((paragraph) => paragraph.replace(/^[-=_*~\s]{3,}$/gm, '').replace(/[ \t]+/g, ' ').trim())
-    .filter(Boolean)
+  const lines = notes.replaceAll('\r\n', '\n').split('\n')
+  const blocks: string[] = []
+  let current: string[] = []
+  const flush = () => {
+    if (current.length === 0) return
+    const text = current.join('\n').replace(/[ \t]+/g, ' ').trim()
+    if (text) blocks.push(text)
+    current = []
+  }
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (!trimmed || isSeparatorLine(trimmed)) flush()
+    else current.push(line)
+  }
+  flush()
+  return blocks
+}
+
+function keyedParagraphs(paragraphs: string[]) {
+  const seen = new Map<string, number>()
+  return paragraphs.map((text) => {
+    const count = (seen.get(text) ?? 0) + 1
+    seen.set(text, count)
+    return { key: `${text.slice(0, 32)}-${count}`, text }
+  })
 }
 
 /**
@@ -58,7 +96,7 @@ export function SongInfoPanel({ song }: Readonly<{ song: Song }>) {
     { label: 'Nhạc sĩ', value: song.composer },
     { label: 'Người viết lời', value: song.lyricist },
   ]
-  const paragraphs = song.notes ? noteParagraphs(song.notes) : []
+  const paragraphs = song.notes ? keyedParagraphs(noteParagraphs(song.notes)) : []
   return (
     <dl className="ct-facts">
       {facts.map(({ label, value }) => (
@@ -71,9 +109,8 @@ export function SongInfoPanel({ song }: Readonly<{ song: Song }>) {
         <div className="is-wide">
           <dt>Ghi chú</dt>
           <dd className="ct-facts__text">
-            {paragraphs.map((paragraph, index) => (
-              // Paragraphs of one note have no id; their order never changes while shown.
-              <p key={index} className="ct-facts__para">{withLinks(paragraph)}</p>
+            {paragraphs.map(({ key, text }) => (
+              <p key={key} className="ct-facts__para">{withLinks(text)}</p>
             ))}
           </dd>
         </div>

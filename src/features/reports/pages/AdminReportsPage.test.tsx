@@ -155,7 +155,7 @@ describe('AdminReportsPage', () => {
     )
     expect(trend).toHaveBeenCalledWith(expect.objectContaining({ fromDate: '2025-11-01', toDate: '2026-10-31', choirId: 'c1' }))
     // A filtered view with no rows offers to clear the filters (the filter bar's reset now uses the same words).
-    expect((await screen.findAllByRole('button', { name: /Xoá bộ lọc/ })).length).toBe(2)
+    expect(await screen.findAllByRole('button', { name: /Xoá bộ lọc/ })).toHaveLength(2)
     // The Admin chart keeps its own toggle.
     expect(screen.getByRole('radio', { name: 'Bài tập' })).toBeInTheDocument()
 
