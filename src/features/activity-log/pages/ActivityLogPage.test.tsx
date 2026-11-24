@@ -107,4 +107,27 @@ describe('ActivityLogPage', () => {
     expect(within(dialog).getByText('Mã băm audio phát (SHA-256)')).toBeInTheDocument()
     expect(within(dialog).queryByText('ScoreSha256')).toBeNull()
   })
+
+  it('names director nominations, training and event choirs and their audited fields in Vietnamese', async () => {
+    vi.spyOn(activityLogApi, 'listActivityLog').mockResolvedValue(
+      page([
+        {
+          id: 'l4',
+          createdAt: '2026-10-13T02:00:00Z',
+          action: 'Updated',
+          entityType: 'DirectorNomination',
+          entityId: 'dn-1',
+          oldValue: '{"Status":"Pending"}',
+          newValue: '{"Status":"InTraining","ReviewNote":"Cử đi học khoá giáo phận."}',
+        },
+      ]),
+    )
+    renderPage(<ActivityLogPage />, '/admin/activity-log', '/admin/activity-log?entityType=DirectorNomination')
+
+    expect(await screen.findAllByText('Đề cử ca trưởng')).not.toHaveLength(0)
+    fireEvent.click(await screen.findByRole('button', { name: /Xem chi tiết: Cập nhật Đề cử ca trưởng/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Đang đào tạo')).toBeInTheDocument()
+    expect(within(dialog).getByText('Ghi chú xem xét')).toBeInTheDocument()
+  })
 })

@@ -50,6 +50,7 @@ export class BrowserFileScoreSource implements ScorePackageSource {
     return {
       score: scoreFile,
       audioUrl,
+      estimatedBytes: score.size + audio.size,
       dispose() {
         if (disposed) return
         disposed = true

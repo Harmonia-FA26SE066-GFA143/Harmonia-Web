@@ -95,7 +95,11 @@ export function useCreateAssignment() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (values: AssignmentValues) => createAssignment(values),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [...practiceKey, 'assignments'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...practiceKey, 'assignments'] })
+      queryClient.invalidateQueries({ queryKey: [...practiceKey, 'preparation-progress'] })
+      queryClient.invalidateQueries({ queryKey: ['liturgical-events', 'preparation'] })
+    },
   })
 }
 

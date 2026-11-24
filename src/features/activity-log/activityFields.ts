@@ -70,6 +70,29 @@ const fieldLabels: Record<string, string> = {
   ColorHex: 'Màu',
   DefaultOrder: 'Thứ tự mặc định',
   Address: 'Địa chỉ',
+  SaintName: 'Tên thánh',
+  Gender: 'Giới tính',
+  RevokedAt: 'Thu hồi lúc',
+  RevokeReason: 'Lý do thu hồi',
+  ChoirId: 'Ca đoàn',
+  IsLead: 'Phụ trách chính',
+  SubstituteDirectorId: 'Ca trưởng thay thế',
+  Reason: 'Lý do',
+  NominatedById: 'Người đề cử',
+  ProposedChoirId: 'Ca đoàn dự kiến',
+  ReviewNote: 'Ghi chú xem xét',
+  TrainingWaiverReason: 'Lý do miễn đào tạo',
+  AppointedChoirId: 'Ca đoàn bổ nhiệm',
+  AppointedAt: 'Bổ nhiệm lúc',
+  NominationId: 'Hồ sơ đề cử',
+  CourseName: 'Khoá đào tạo',
+  Organizer: 'Đơn vị tổ chức',
+  Result: 'Kết quả',
+  ResultNote: 'Nhận xét kết quả',
+  CertificateFileName: 'Tên tệp chứng chỉ',
+  CertificatePublicId: 'Mã tệp chứng chỉ',
+  ParentId: 'Chủ đề cha',
+  RequiredCount: 'Số người cần',
 }
 
 /** The same property name means something else on these entity types. */
@@ -79,12 +102,13 @@ const fieldLabelsByEntity: Record<string, string> = {
 }
 
 // Enum names of SongListStatus, ReviewDecision, RosterStatus, AssignmentSource, RosterAssignmentStatus, SkillLevel,
-// ApprovalStatus, EventStatus, MaterialType, AttendanceStatus and SettingDataType.
+// ApprovalStatus, EventStatus, MaterialType, AttendanceStatus, SettingDataType, DirectorNominationStatus, DirectorTrainingResult and Gender.
 const enumLabels: Record<string, string> = {
   Draft: 'Bản nháp',
   Submitted: 'Đã gửi duyệt',
   Approved: 'Đã duyệt',
   Rejected: 'Bị từ chối',
+  Revoked: 'Đã thu hồi',
   NeedsRevision: 'Cần chỉnh sửa',
   Approve: 'Phê duyệt',
   Reject: 'Từ chối',
@@ -98,6 +122,14 @@ const enumLabels: Record<string, string> = {
   Intermediate: 'Trung cấp',
   Advanced: 'Nâng cao',
   Pending: 'Chờ duyệt',
+  InTraining: 'Đang đào tạo',
+  Trained: 'Đã hoàn tất đào tạo',
+  Appointed: 'Đã bổ nhiệm',
+  InProgress: 'Đang học',
+  Passed: 'Đạt',
+  Failed: 'Không đạt',
+  Male: 'Nam',
+  Female: 'Nữ',
   Published: 'Đã công bố',
   Cancelled: 'Đã hủy',
   SheetMusic: 'Bản nhạc',
@@ -116,7 +148,7 @@ const enumLabels: Record<string, string> = {
 }
 
 /** Only these fields hold enum names; a name or a note that happens to read "Active" stays as written. */
-const enumFields = new Set(['Status', 'Decision', 'Source', 'Level', 'MaterialType', 'DataType'])
+const enumFields = new Set(['Status', 'Decision', 'Source', 'Level', 'MaterialType', 'DataType', 'Result', 'Gender'])
 
 const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/
 const timeOnly = /^(\d{2}):(\d{2})(:\d{2}(\.\d+)?)?$/

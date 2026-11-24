@@ -1,18 +1,19 @@
 import { AudioOutlined, FileTextOutlined, SoundOutlined } from '@ant-design/icons'
 import { Button, Card, Drawer, Flex, Segmented, Select, Skeleton, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { lazy, Suspense, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { isMidiFile, isPlayableAudio, supportsTimedLyrics, useSongMaterials } from '@/features/music-library'
 import { ApiError } from '@/lib/api/errors'
 import { EmptySongbook, EmptyState, ErrorState, PageHeader } from '@/shared/ui'
-import { colors, spacing, typography } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { RecordingPanel } from '../components/RecordingPanel'
 import { MidiPracticePlayer } from '../components/MidiPracticePlayer'
 import { ScorePracticeSection } from '../components/ScorePracticeSection'
 import { TimedAudioPlayer } from '../components/TimedAudioPlayer'
 import { usePracticeRoom } from '../hooks/usePracticeRoom'
+import { createPracticeScoreCache } from '../score/cache/practiceScoreCache'
 
 // The PDF library is large and only a song with a PDF score needs it; the rehearsal schedule shares this chunk.
 const PracticeScoreViewer = lazy(async () => ({ default: (await import('../components/PracticeScoreViewer')).PracticeScoreViewer }))
@@ -33,6 +34,12 @@ export function RehearsalPracticeRoomPage() {
   const [showLyrics, setShowLyrics] = useState(false)
   const [documentsOpen, setDocumentsOpen] = useState(false)
   const [recordingOpen, setRecordingOpen] = useState(false)
+  const [scoreCache] = useState(createPracticeScoreCache)
+  useEffect(() => {
+    // React StrictMode replays effects without recreating state: reopen after its simulated cleanup, close on real leave.
+    scoreCache.open()
+    return () => scoreCache.close()
+  }, [scoreCache])
   // Sample audio per voice part and typed lyrics come from the song's materials (GET /api/music-materials).
   // A list read again may be shorter than the one the selection was made in.
   const current = Math.min(selectedIndex, Math.max(0, (room?.songs.length ?? 0) - 1))
@@ -161,9 +168,10 @@ export function RehearsalPracticeRoomPage() {
   return (
     <div className="rehearsal-practice-room">
       <PageHeader
-        title={room.title}
+        title={song?.title ?? room.title}
         breadcrumb={[{ title: 'Ca trưởng' }, { title: <Link to={paths.director.rehearsals}>Lịch tập</Link> }, { title: 'Phòng tập' }]}
         description={[
+          'Buổi tập',
           `${dayjs(room.startAt).format('DD/MM')} · ${dayjs(room.startAt).format('HH:mm')}–${dayjs(room.endAt).format('HH:mm')}`,
           room.locationName,
           `${room.songs.length} bài hát`,
@@ -183,8 +191,7 @@ export function RehearsalPracticeRoomPage() {
       ) : (
         <div className="practice-room-layout">
           <section className="hm-sheet-section practice-room-player" aria-label={`Đang tập: ${song.title}`}>
-            <Typography.Title level={2} style={{ margin: 0, fontFamily: typography.displayFontFamily, fontSize: 32, fontWeight: 600, lineHeight: 1.2, fontVariantNumeric: 'lining-nums' }}>{song.title}</Typography.Title>
-            {song.note && <Typography.Paragraph type="secondary" style={{ margin: `${spacing.xs}px 0 0` }}>Cần tập: {song.note}</Typography.Paragraph>}
+            {song.note && <Typography.Paragraph className="practice-room-note" type="secondary">Cần tập: {song.note}</Typography.Paragraph>}
             <Flex wrap justify="space-between" align="end" gap={spacing.md} className="practice-room-controls">
               <Flex wrap align="end" gap={spacing.md} style={{ flex: 1, minWidth: 0 }}>
                 <label className="practice-room-field">
@@ -210,7 +217,16 @@ export function RehearsalPracticeRoomPage() {
               </Flex>
             </Flex>
 
-            <ScorePracticeSection key={song.id} title={song.title} fallback={materialContent} material={partInteractiveScore} showLyrics={showLyrics} onStale={refreshMaterials} />
+            <ScorePracticeSection
+              key={song.id}
+              title={song.title}
+              fallback={materialContent}
+              material={partInteractiveScore}
+              cache={scoreCache}
+              cacheScope={song.id}
+              showLyrics={showLyrics}
+              onStale={refreshMaterials}
+            />
           </section>
 
           <Drawer title={`Tài liệu · ${song.title}`} open={documentsOpen} onClose={() => setDocumentsOpen(false)} size="large" destroyOnHidden>

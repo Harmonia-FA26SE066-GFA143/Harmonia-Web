@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router'
 import { PickedProgramFeedback, usePickedProgram } from '@/features/liturgical-programs'
 import { NoChoirNotice } from '@/features/choirs'
 import { useChoirMembers } from '@/features/members'
-import { formatDateTime } from '@/lib/api/dates'
+import { formatDateTime, vietnamToday } from '@/lib/api/dates'
 import { EmptyState, ErrorState, inVoicePart, NoFilterResults, PageHeader, SectionSkeleton, StatusTag, voiceParts, type StatusTagColor } from '@/shared/ui'
 import { nameInitial } from '@/shared/utils/personName'
 import { matchesSearch } from '@/shared/utils/search'
@@ -99,7 +99,7 @@ export function ParticipationPage() {
   const { message } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
   const { programs, lookup, program, options: allPrograms, looking, missing } = usePickedProgram(searchParams.get('programId'))
-  const today = dayjs().format('YYYY-MM-DD')
+  const today = vietnamToday()
   // No request for a program that is already past (decision 2026-09-30, 6a.3).
   const isPast = program !== undefined && program.date < today
   const participation = useParticipation(program?.id)

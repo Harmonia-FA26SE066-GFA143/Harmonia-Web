@@ -280,7 +280,7 @@ export const component = {
   card: { border: `1px solid ${semantic.border.hairline}`, background: semantic.surface.base, headHeight: 52, padding: 24 },
   drawer: { sm: 480, md: 600, lg: 720 },
   skeleton: { from: semantic.surface.soft, to: semantic.surface.selected },
-  pageHeader: { title: { fontSize: 34, lineHeight: 1.1, fontWeight: 600 } },
+  pageHeader: { title: { fontSize: 34, lineHeight: 1.2, fontWeight: 600 } },
 } as const
 
 // ---------------------------------------------------------------- CSS variables (`--hm-*`)

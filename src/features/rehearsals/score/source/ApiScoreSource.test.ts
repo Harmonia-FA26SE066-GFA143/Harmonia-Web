@@ -49,6 +49,9 @@ describe('ApiScoreSource', () => {
     expect(result.score).toMatchObject({ format: 'musicxml', fileName: 'bai.musicxml' })
     expect(result.audioUrl).toBe('blob:audio')
     expect(result.notesEndSeconds).toBe(180.4)
+    expect(result.estimatedBytes).toBe(
+      files['https://f/score'].length + files['https://f/audio'].length + files['https://f/notes'].length,
+    )
     result.dispose()
     result.dispose()
     expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1)

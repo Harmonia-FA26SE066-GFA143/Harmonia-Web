@@ -113,7 +113,12 @@ export function useUploadMaterial(songId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (values: UploadMaterialValues) => uploadMaterial(songId, values),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: materialsKey(songId) })
+      queryClient.invalidateQueries({ queryKey: [...songsKey, 'list'] })
+      queryClient.invalidateQueries({ queryKey: [...songsKey, 'song', songId] })
+      queryClient.invalidateQueries({ queryKey: ['songs', 'credits', songId] })
+    },
   })
 }
 
@@ -121,7 +126,12 @@ export function useDeleteMaterial(songId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (materialId: string) => deleteMaterial(materialId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: materialsKey(songId) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: materialsKey(songId) })
+      queryClient.invalidateQueries({ queryKey: [...songsKey, 'list'] })
+      queryClient.invalidateQueries({ queryKey: [...songsKey, 'song', songId] })
+      queryClient.invalidateQueries({ queryKey: ['songs', 'credits', songId] })
+    },
   })
 }
 

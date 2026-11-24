@@ -51,7 +51,15 @@ export function MemberRegistrationsPage() {
     placeholderData: keepPreviousData,
   })
   const refresh = () => queryClient.invalidateQueries({ queryKey: key })
-  const accept = useMutation({ mutationFn: acceptRegistration, onSettled: refresh })
+  const accept = useMutation({
+    mutationFn: acceptRegistration,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['choir-members'] })
+      queryClient.invalidateQueries({ queryKey: ['member-profiles'] })
+      queryClient.invalidateQueries({ queryKey: ['users', 'accounts'] })
+    },
+    onSettled: refresh,
+  })
   const remove = useMutation({ mutationFn: deleteRegistration, onSettled: refresh })
   const total = registrations.data?.totalCount ?? 0
 

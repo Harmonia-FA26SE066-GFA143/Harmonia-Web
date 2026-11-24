@@ -26,6 +26,8 @@ export function useSaveAttendance(rehearsalId: string) {
       queryClient.invalidateQueries({ queryKey: attendanceKey(rehearsalId) })
       // A session with attendance can no longer be deleted (decision 2026-09-30, 6a.7).
       queryClient.invalidateQueries({ queryKey: ['rehearsals'] })
+      queryClient.invalidateQueries({ queryKey: ['liturgical-events', 'preparation'] })
+      queryClient.invalidateQueries({ queryKey: ['practice', 'preparation-progress'] })
     },
   })
 }

@@ -30,6 +30,7 @@ interface EventListItemDto extends ProgramFields {
   status: ApiEventStatus
   latestSongListStatus: ApiSongListStatus | null
   songListDueDate: string
+  isSongListOverdue?: boolean
 }
 
 interface SongListDto {
@@ -66,6 +67,7 @@ export async function listPrograms(filters: EventFilters, page: EventPage): Prom
     items: result.items.map((dto) => ({
       ...toProgram(dto, dto.status, dto.latestSongListStatus),
       songListDueDate: dto.songListDueDate,
+      isSongListOverdue: dto.isSongListOverdue,
     })),
   }
 }

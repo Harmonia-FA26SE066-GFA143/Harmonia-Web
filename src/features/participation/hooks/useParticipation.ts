@@ -17,7 +17,10 @@ export function useSendParticipationRequests(programId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (memberIds?: string[]) => sendParticipationRequests(programId, memberIds),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: participationKey(programId) }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: participationKey(programId) })
+      queryClient.invalidateQueries({ queryKey: ['liturgical-events', 'preparation', programId] })
+    },
   })
 }
 
@@ -30,6 +33,9 @@ export function useConfirmAllParticipation(programId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: () => confirmAllParticipation(programId),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: participationKey(programId) }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: participationKey(programId) })
+      queryClient.invalidateQueries({ queryKey: ['liturgical-events', 'preparation', programId] })
+    },
   })
 }
