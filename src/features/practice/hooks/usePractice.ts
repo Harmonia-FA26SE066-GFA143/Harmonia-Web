@@ -4,6 +4,9 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import {
   commentSubmission,
   createAssignment,
+  deleteAssignment,
+  updateAssignment,
+  type AssignmentEdit,
   getSubmission,
   listAssignments,
   listAssignmentSubmissions,
@@ -107,6 +110,24 @@ export const useCommentSubmission = () =>
   usePracticeChange(({ id, comment, result }: { id: string; comment: string; result?: ReviewResult }) =>
     commentSubmission(id, { comment, result }),
   )
+
+/** An edited or withdrawn assignment refreshes "Bài đã giao" and the preparation counts, like a new one. */
+function useAssignmentMutation<TVariables>(mutationFn: (variables: TVariables) => Promise<void>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [...practiceKey, 'assignments'] })
+      queryClient.invalidateQueries({ queryKey: [...practiceKey, 'preparation-progress'] })
+      queryClient.invalidateQueries({ queryKey: ['liturgical-events', 'preparation'] })
+    },
+  })
+}
+
+export const useUpdateAssignment = () =>
+  useAssignmentMutation(({ id, values }: { id: string; values: AssignmentEdit }) => updateAssignment(id, values))
+
+export const useDeleteAssignment = () => useAssignmentMutation((id: string) => deleteAssignment(id))
 
 /** A new assignment shows under "Bài đã giao". */
 export function useCreateAssignment() {

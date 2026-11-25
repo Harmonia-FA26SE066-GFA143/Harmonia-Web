@@ -13,6 +13,8 @@ export interface ChoirMember {
   skills: string[]
   /** The account's role now: a profile is kept after its account stops being a Choir Member (BE 9b1f587, B46). */
   roleName?: ApiRoleName
+  /** Choirs the member belongs to now (MemberProfileSummaryDto.Choirs); one active choir at most since 2026-11-18. */
+  choirs?: { id: string; name: string }[]
 }
 
 /** `MemberStatus` of Harmonia-BE. */
@@ -32,6 +34,8 @@ export const memberStatusLabels: Record<MemberStatus, string> = {
  */
 export interface MemberProfile {
   id: string
+  /** Choirs the member belongs to now (MemberProfileSummaryDto.Choirs). */
+  choirs?: { id: string; name: string }[]
   fullName: string
   email: string
   phone: string | null
@@ -45,6 +49,8 @@ export interface MemberProfile {
   status: MemberStatus
   /** Names of the approved skills. */
   skills: string[]
+  /** The approved skills with their MemberSkill id, to revoke one (B63). */
+  approvedSkills?: { id: string; name: string }[]
   /** Public URL of the member's own picture (BE 90af733); absent without one. */
   avatarUrl?: string
   /**

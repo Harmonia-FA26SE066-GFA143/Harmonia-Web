@@ -56,7 +56,10 @@ export async function resolveNotificationPath(notification: AppNotification, rol
   }
 }
 
-export function notificationPath({ referenceType, referenceId }: AppNotification, roleName?: ApiRoleName): string | undefined {
+export function notificationPath({ referenceType, referenceId, type }: AppNotification, roleName?: ApiRoleName): string | undefined {
+  // A cancelled event has no detail page for the Choir Director (GET api/schedule/events/{id} reads published ones
+  // only, LiturgicalEventRepository.cs:72): the list shows it as cancelled instead of a "not found" page.
+  if (type === 'EventCancelled' && referenceType === 'LiturgicalEvent' && roleName === 'ChoirDirector') return paths.director.programs
   const route = roleName && referenceType ? routes[roleName]?.[referenceType] : undefined
   if (typeof route === 'function') return referenceId ? route(referenceId) : undefined
   return route

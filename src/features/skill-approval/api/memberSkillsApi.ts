@@ -38,6 +38,14 @@ export async function approveSkill(id: string): Promise<void> {
   await apiRequest<unknown>(`/api/member-skills/${id}/approve`, { method: 'PATCH' })
 }
 
+/**
+ * Takes back an approved skill (PATCH api/member-skills/{id}/revoke, MemberSkillsController.cs:93-98): the reason is
+ * required (≤ 500), the member and the lead directors of affected events are notified (MemberSkillService.cs:182-207).
+ */
+export async function revokeSkill(id: string, reason: string): Promise<void> {
+  await apiRequest<unknown>(`/api/member-skills/${id}/revoke`, { method: 'PATCH', body: JSON.stringify({ reason }) })
+}
+
 /** The reason is required and shown to the member (RejectMemberSkillRequestValidator: ≤ 500). */
 export async function rejectSkill(id: string, reason: string): Promise<void> {
   await apiRequest<unknown>(`/api/member-skills/${id}/reject`, { method: 'PATCH', body: JSON.stringify({ reason }) })

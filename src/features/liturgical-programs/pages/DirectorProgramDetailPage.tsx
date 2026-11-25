@@ -1,5 +1,4 @@
 import { Button, ConfigProvider, Flex, Typography } from 'antd'
-import type { ReactNode } from 'react'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
@@ -117,7 +116,7 @@ export function DirectorProgramDetailPage() {
   if (!program.data) {
     return (
       <>
-        <PageHeader title="Chi tiết chương trình phụng vụ" breadcrumb={breadcrumb} extra={backButton} />
+        <PageHeader title="Chi tiết chương trình phụng vụ" breadcrumb={breadcrumb} />
         {program.isError ? (
           <ErrorState title="Không thể tải chương trình" error={program.error} hasData={program.data !== undefined} onRetry={() => program.refetch()} retrying={program.isFetching} />
         ) : (
@@ -132,15 +131,14 @@ export function DirectorProgramDetailPage() {
     )
   }
 
-  return <ProgramDetail data={program.data} program={program} backButton={backButton} />
+  return <ProgramDetail data={program.data} program={program} />
 }
 
 /** The loaded program; split out so the calendar day is read only once the date is known. */
 function ProgramDetail({
   data,
   program,
-  backButton,
-}: Readonly<{ data: LiturgicalProgramDetail; program: ReturnType<typeof useProgram>; backButton: ReactNode }>) {
+}: Readonly<{ data: LiturgicalProgramDetail; program: ReturnType<typeof useProgram> }>) {
   const navigate = useNavigate()
   const tone = useDayTone(data.date)
   const openProposal = () => navigate(generatePath(paths.director.songListProposal, { programId: data.id }))
@@ -167,7 +165,6 @@ function ProgramDetail({
         actions={
           <>
             <DirectorAdjacentNav id={data.id} date={data.date} />
-            {backButton}
           </>
         }
       />

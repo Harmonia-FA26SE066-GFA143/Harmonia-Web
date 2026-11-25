@@ -2,6 +2,7 @@ import { App, Button, Flex, Select, Table, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useChoirMembers } from '@/features/members'
+import { getSession } from '@/lib/auth/session'
 import { ACTIONS_COLUMN_TITLE, CANCEL_LABEL, EmptyState, ErrorState, Icon, SectionSkeleton, SELECT_POPUP_PROPS, ViewDrawer } from '@/shared/ui'
 import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
@@ -31,8 +32,12 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
   const [picked, setPicked] = useState<string[]>([])
   const profiles = useChoirMembers(adding)
 
+  // A Choir Director only invites; the member joins on accepting. The Admin places members directly (ChoirService.cs:210-219).
+  const invites = getSession()?.user.roleName === 'ChoirDirector'
   const current = new Set((members.data ?? []).map((member) => member.memberId))
-  const candidates = (profiles.data ?? []).filter((profile) => !current.has(profile.id))
+  // One active choir per member: someone in another choir moves by their own request, and the backend refuses the whole
+  // batch for them (MEMBER_ALREADY_IN_CHOIR), so they are not offered.
+  const candidates = (profiles.data ?? []).filter((profile) => !current.has(profile.id) && !profile.choirs?.some((other) => other.id !== choirId))
 
   const closeAdding = () => {
     setAdding(false)
@@ -42,7 +47,11 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
   const handleAdd = () =>
     add.mutate(picked, {
       onSuccess: () => {
-        message.success(`Đã thêm ${picked.length} ca viên vào ${choirName}.`)
+        message.success(
+          invites
+            ? `Đã gửi lời mời tới ${picked.length} ca viên. Họ sẽ vào ${choirName} khi chấp nhận lời mời.`
+            : `Đã thêm ${picked.length} ca viên vào ${choirName}.`,
+        )
         closeAdding()
       },
       onError: (error) => message.error(choirErrorMessage(error, 'Không thể thêm ca viên. Vui lòng thử lại.')),
@@ -72,7 +81,7 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
       size={component.drawer.lg}
       extra={
         <Button type="primary" icon={<Icon name="add" />} disabled={!choir?.isActive || adding} onClick={() => setAdding(true)}>
-          Thêm ca viên
+          {invites ? 'Mời ca viên' : 'Thêm ca viên'}
         </Button>
       }
       destroyOnHidden
@@ -87,8 +96,12 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
           gap={spacing.sm}
           style={{ padding: spacing.md, marginBottom: spacing.md, border: `1px solid ${colors.border}`, borderRadius: radius.md, background: colors.background }}
         >
-          <Typography.Text strong>Thêm ca viên vào {choirName}</Typography.Text>
-          <Typography.Text style={muted}>Chỉ ca viên đang sinh hoạt; một ca viên có thể thuộc nhiều ca đoàn.</Typography.Text>
+          <Typography.Text strong>{invites ? `Mời ca viên vào ${choirName}` : `Thêm ca viên vào ${choirName}`}</Typography.Text>
+          <Typography.Text style={muted}>
+            {invites
+              ? 'Chỉ ca viên đang sinh hoạt và chưa thuộc ca đoàn nào. Họ vào ca đoàn sau khi chấp nhận lời mời.'
+              : 'Chỉ ca viên đang sinh hoạt và chưa thuộc ca đoàn nào; ca viên của ca đoàn khác tự xin chuyển.'}
+          </Typography.Text>
           <Select
             {...SELECT_POPUP_PROPS}
             autoFocus
@@ -96,20 +109,20 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
             allowClear
             showSearch
             optionFilterProp="label"
-            aria-label="Ca viên cần thêm"
+            aria-label={invites ? 'Ca viên cần mời' : 'Ca viên cần thêm'}
             placeholder="Chọn ca viên"
             loading={profiles.isPending}
             value={picked}
             onChange={setPicked}
             options={candidates.map((profile) => ({ value: profile.id, label: profile.fullName }))}
-            notFoundContent="Mọi ca viên đang sinh hoạt đã ở trong ca đoàn này"
+            notFoundContent="Không còn ca viên đang sinh hoạt nào chưa có ca đoàn"
           />
           <Flex justify="flex-end" gap={spacing.sm}>
             <Button onClick={closeAdding} disabled={add.isPending}>
               {CANCEL_LABEL}
             </Button>
             <Button type="primary" onClick={handleAdd} disabled={picked.length === 0} loading={add.isPending}>
-              {picked.length ? `Thêm ${picked.length} ca viên` : 'Thêm ca viên'}
+              {invites ? (picked.length ? `Gửi lời mời (${picked.length})` : 'Gửi lời mời') : picked.length ? `Thêm ${picked.length} ca viên` : 'Thêm ca viên'}
             </Button>
           </Flex>
         </Flex>

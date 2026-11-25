@@ -19,7 +19,7 @@ import { eventErrorMessage } from '../eventErrors'
 import { inviteServingMembers, type InviteOutcome, useCancelEvent, useEvent, usePreparationStatus, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
 import { useEventNames } from '../hooks/useEventNames'
 import { useProgram } from '../hooks/usePrograms'
-import { formatDateTime, vietnamToday } from '@/lib/api/dates'
+import { formatDateTime, vietnamNow } from '@/lib/api/dates'
 import { formatProgramDate } from '../programFilters'
 import { preparationItems } from '../preparationOverview'
 import type { EventFormValues, LiturgicalEvent } from '../types'
@@ -125,7 +125,7 @@ export function PriestProgramDetailPage() {
   if (!event.data) {
     return (
       <>
-        <PageHeader title="Chi tiết chương trình phụng vụ" breadcrumb={breadcrumb} extra={backButton} />
+        <PageHeader title="Chi tiết chương trình phụng vụ" breadcrumb={breadcrumb} />
         {event.isError ? (
           <ErrorState title="Không thể tải chương trình" error={event.error} hasData={event.data !== undefined} onRetry={() => event.refetch()} retrying={event.isFetching} />
         ) : (
@@ -142,7 +142,9 @@ export function PriestProgramDetailPage() {
 
   const data: LiturgicalEvent = event.data
   const cancelled = data.status === 'cancelled'
-  const upcoming = data.date >= vietnamToday()
+  // Not started yet, to the minute: the backend refuses to publish an event that has begun (HasPassed,
+  // LiturgicalEventService.cs:340), and a Mass that has begun is not cancelled either (owner 2026-11-25).
+  const upcoming = `${data.date}T${data.time}` > vietnamNow()
   const draft = data.status === 'draft'
   const pastDraft = draft && !upcoming
   const canCancel = !cancelled && upcoming
@@ -232,7 +234,8 @@ export function PriestProgramDetailPage() {
       title: `Hủy sự kiện “${eventName(data)}”?`,
       content:
         data.status === 'published'
-          ? 'Sự kiện đã công bố: Ca trưởng và ca viên sẽ nhận thông báo hủy. Không thể hoàn tác.'
+          ? // BE origin/main 1040339 (LiturgicalEventService.CancelAsync) deletes what would be stuck on a cancelled event.
+            'Sự kiện đã công bố: Ca trưởng và ca viên sẽ nhận thông báo hủy. Các buổi tập chưa diễn ra và bài tập chưa có ai nộp của sự kiện sẽ bị xoá. Không thể hoàn tác.'
           : 'Bản nháp sẽ bị hủy. Không thể hoàn tác.',
       okText: 'Hủy sự kiện',
       okButtonProps: { danger: true },
@@ -260,7 +263,6 @@ export function PriestProgramDetailPage() {
         actions={
           <>
             <PriestAdjacentNav id={data.id} date={data.date} />
-            {backButton}
             {!cancelled && (
               <Button icon={<Icon name="edit" />} onClick={() => setEditing(true)}>
                 Sửa sự kiện

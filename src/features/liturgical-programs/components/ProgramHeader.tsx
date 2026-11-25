@@ -1,7 +1,7 @@
 import { Breadcrumb, Flex, Typography, type BreadcrumbProps } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
-import { ChantStaff, SeasonChip, seasonTone } from '@/shared/ui'
+import { SeasonChip, seasonTone } from '@/shared/ui'
 import { colors, gold, spacing, typography } from '@/styles/tokens'
 import { formatProgramDate } from '../programFilters'
 import { massTimeLabels, massTimeOf } from '../massTime'
@@ -82,7 +82,6 @@ export function ProgramHeader({ title, date, time, place, seasonName, seasonKey,
           )}
           <Flex align="flex-end" gap={spacing.xl} aria-hidden>
             {hour && <MassTimeMark time={hour} color={hour === 'evening' ? colors.primary : gold.line} style={{ opacity: hour === 'evening' ? 0.55 : 0.8 }} />}
-            <ChantStaff />
           </Flex>
         </Flex>
       </Flex>

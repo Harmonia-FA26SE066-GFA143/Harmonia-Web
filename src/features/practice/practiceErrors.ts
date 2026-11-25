@@ -12,6 +12,9 @@ const messages: Record<string, string> = {
   PRACTICE_AUDIO_UNREADABLE: 'Không chấm tự động được: bản thu không đọc được hoặc có quá ít tiếng hát.',
   PRACTICE_REFERENCE_MISSING: 'Không chấm tự động được: bài tập chưa gắn bản mẫu MIDI.',
   PRACTICE_DUE_DATE_IN_PAST: 'Hạn nộp phải sau thời điểm hiện tại.',
+  // Edit and withdrawal (B59, PracticeAssignmentService.DeleteAsync): a member's recording is never thrown away.
+  PRACTICE_ASSIGNMENT_HAS_SUBMISSIONS: 'Bài tập đã có ca viên nộp bài nên không thu hồi được.',
+  PRACTICE_ASSIGNMENT_NOT_FOUND: 'Bài tập không còn tồn tại. Danh sách đã được tải lại.',
   PRACTICE_TARGET_REQUIRED: 'Chọn ít nhất một kỹ năng hoặc một ca viên.',
   // BE a3b6b30: the chosen skills and members match no active member of the choir.
   PRACTICE_ASSIGNMENT_NO_RECIPIENTS: 'Không có ca viên nào đang sinh hoạt khớp với kỹ năng hoặc ca viên đã chọn.',

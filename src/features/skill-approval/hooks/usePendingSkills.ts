@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { approveSkill, listPendingSkills, rejectSkill, type PendingSkillPage } from '../api/memberSkillsApi'
+import { approveSkill, listPendingSkills, rejectSkill, revokeSkill, type PendingSkillPage } from '../api/memberSkillsApi'
 
 const pendingKey = ['skill-approval', 'pending'] as const
 
@@ -32,3 +32,5 @@ function useReview<TVariables>(mutationFn: (variables: TVariables) => Promise<vo
 export const useApproveSkill = () => useReview((id: string) => approveSkill(id))
 
 export const useRejectSkill = () => useReview(({ id, reason }: { id: string; reason: string }) => rejectSkill(id, reason))
+
+export const useRevokeSkill = () => useReview(({ id, reason }: { id: string; reason: string }) => revokeSkill(id, reason))

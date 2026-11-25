@@ -155,6 +155,24 @@ export async function commentSubmission(id: string, values: { comment: string; r
   })
 }
 
+/** Fields an assignment keeps editable (UpdatePracticeAssignmentRequest.cs): its audience and materials are fixed. */
+export interface AssignmentEdit {
+  title: string
+  instruction?: string
+  /** ISO time, after now (PRACTICE_DUE_DATE_IN_PAST). */
+  dueDate: string
+}
+
+/** Changes title, instruction or due date (PUT api/practice-assignments/{id}, BE B59). */
+export async function updateAssignment(id: string, values: AssignmentEdit): Promise<void> {
+  await apiRequest<unknown>(`/api/practice-assignments/${id}`, { method: 'PUT', body: JSON.stringify(values) })
+}
+
+/** Withdraws an assignment nobody has submitted to (409 PRACTICE_ASSIGNMENT_HAS_SUBMISSIONS otherwise, B59). */
+export async function deleteAssignment(id: string): Promise<void> {
+  await apiRequest<unknown>(`/api/practice-assignments/${id}`, { method: 'DELETE' })
+}
+
 /** Gives an assignment (FE-41); the backend notifies its members. */
 export async function createAssignment(values: AssignmentValues): Promise<void> {
   await apiRequest<unknown>('/api/practice-assignments', {

@@ -7,6 +7,7 @@ import { Icon, PRACTICE_ROOM_ACTION, StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
 import { canTakeAttendance, isRehearsalDay, isUpcoming, type Rehearsal } from '../types'
+import { useRehearsalChoirNames } from '../hooks/useRehearsalChoirNames'
 import { JointChip, PlannerOnly, RehearsalChoirs } from './JointRehearsal'
 
 export interface RehearsalWeekProps {
@@ -60,29 +61,15 @@ export function RehearsalWeek({ weekStart, direction, rehearsals, programs, sele
               <b>{day.format('DD')}</b>
             </div>
             <div className="hm-week__items">
-              {items.map((rehearsal) => {
-                const program = rehearsal.eventId ? programs.get(rehearsal.eventId) : undefined
-                return (
-                  <button
-                    key={rehearsal.id}
-                    type="button"
-                    className={`hm-week__card is-rehearsal${isUpcoming(rehearsal) ? '' : ' is-past'}`}
-                    aria-pressed={rehearsal.id === selectedId}
-                    aria-label={[`Buổi tập ${rehearsalLabel(rehearsal)}`, program && `cho ${program.eventName}`].filter(Boolean).join(', ')}
-                    onClick={() => onSelect(rehearsal)}
-                  >
-                    <b>{time(rehearsal)}</b>
-                    <span>{program?.eventName ?? 'Buổi tập'}</span>
-                    <small className="hm-week__choirs">
-                      {rehearsal.isJoint && 'Tập chung: '}
-                      <RehearsalChoirs rehearsal={rehearsal} />
-                    </small>
-                    <small>
-                      {rehearsal.locationName ?? (rehearsal.songs.length > 0 ? `${rehearsal.songs.length} bài` : 'Chưa chọn bài')}
-                    </small>
-                  </button>
-                )
-              })}
+              {items.map((rehearsal) => (
+                <WeekRehearsalCard
+                  key={rehearsal.id}
+                  rehearsal={rehearsal}
+                  program={rehearsal.eventId ? programs.get(rehearsal.eventId) : undefined}
+                  selected={rehearsal.id === selectedId}
+                  onSelect={onSelect}
+                />
+              ))}
               {masses.map((program) => (
                 <Link key={program.id} className="hm-week__card is-mass" to={generatePath(paths.director.programDetail, { programId: program.id })}>
                   <b>{program.time}</b>
@@ -95,6 +82,31 @@ export function RehearsalWeek({ weekStart, direction, rehearsals, programs, sele
         )
       })}
     </ol>
+  )
+}
+
+/** One session in its day: the label read aloud names its choirs too, as the card shows them. */
+function WeekRehearsalCard({
+  rehearsal,
+  program,
+  selected,
+  onSelect,
+}: Readonly<{ rehearsal: Rehearsal; program?: LiturgicalProgram; selected: boolean; onSelect: (rehearsal: Rehearsal) => void }>) {
+  const choirs = useRehearsalChoirNames(rehearsal)
+  const choirText = choirs && choirs.length > 0 ? `${rehearsal.isJoint ? 'tập chung ' : ''}${choirs.join(', ')}` : undefined
+  return (
+    <button
+      type="button"
+      className={`hm-week__card is-rehearsal${isUpcoming(rehearsal) ? '' : ' is-past'}`}
+      aria-pressed={selected}
+      aria-label={[`Buổi tập ${rehearsalLabel(rehearsal)}`, program && `cho ${program.eventName}`, choirText].filter(Boolean).join(', ')}
+      onClick={() => onSelect(rehearsal)}
+    >
+      <b>{time(rehearsal)}</b>
+      <span>{program?.eventName ?? 'Buổi tập'}</span>
+      <small className="hm-week__choirs">{choirText && `${rehearsal.isJoint ? 'Tập chung: ' : ''}${choirs!.join(', ')}`}</small>
+      <small>{rehearsal.locationName ?? (rehearsal.songs.length > 0 ? `${rehearsal.songs.length} bài` : 'Chưa chọn bài')}</small>
+    </button>
   )
 }
 

@@ -86,7 +86,7 @@ export function AssignRoleDrawer({ account, saving = false, onSubmit, onCancel }
           type="warning"
           showIcon
           style={{ marginTop: spacing.sm }}
-          title="Đổi vai trò sẽ rút tài khoản này khỏi các ca đoàn hiện tại và không tự khôi phục nếu đổi lại làm Ca viên."
+          title="Đổi vai trò sẽ rút tài khoản này khỏi các ca đoàn hiện tại và gỡ khỏi xác nhận tham gia, phân công của các lễ sắp tới; không tự khôi phục nếu đổi lại làm Ca viên."
         />
       )}
     </FormDrawer>

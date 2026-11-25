@@ -114,7 +114,8 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false, publ
             <Flex vertical gap={spacing.xs}>
               {current.map((choir) => (
                 <Flex key={choir.choirId} align="center" gap={spacing.sm} wrap>
-                  <Tag color={choir.isLead ? 'gold' : undefined} style={{ marginInlineEnd: 0 }}>
+                  {/* Lead is said in words, not gold: gold is never a status (DESIGN.md, The Gold Is Decoration Rule). */}
+                  <Tag style={{ marginInlineEnd: 0, fontWeight: choir.isLead ? 600 : undefined }}>
                     {choir.name}
                     {choir.isLead && ' · Phụ trách'}
                     {choir.directorId ? choir.directorName && ` (${choir.directorName})` : ' (chưa có ca trưởng)'}

@@ -496,14 +496,39 @@ describe('PracticePage', () => {
     expect(screen.getByText('Chương trình đã qua')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Xem chi tiết Tập bè Tenor' }))
-    // Read-only ViewDrawer (B59): 720px with a single "Đóng" footer, no edit or withdraw action.
+    // ViewDrawer with the edit and withdraw actions of BE B59 (PUT / DELETE api/practice-assignments/{id}).
     const drawer = await screen.findByRole('dialog', { name: 'Chi tiết bài tập' })
     expect(within(drawer).getAllByRole('button', { name: 'Đóng' }).length).toBeGreaterThan(0)
-    expect(within(drawer).queryByRole('button', { name: /Sửa|Xoá|Thu hồi/ })).toBeNull()
+    expect(within(drawer).getByRole('button', { name: 'Sửa' })).toBeInTheDocument()
+    expect(within(drawer).getByRole('button', { name: 'Thu hồi' })).toBeInTheDocument()
     expect(await screen.findByText('Giuse Vũ Đình Khôi')).toBeInTheDocument()
     expect(submissions).toHaveBeenCalledWith('as-1', undefined, { pageNumber: 1, pageSize: 20 })
     // The status filter comes before the status tags of the rows.
     fireEvent.click(screen.getAllByText('Chờ chấm')[0])
     await waitFor(() => expect(submissions).toHaveBeenCalledWith('as-1', 'submitted', { pageNumber: 1, pageSize: 20 }))
+  })
+
+  it('withdraws an assignment from its detail, and explains why one with submissions stays (B59)', async () => {
+    const assignment = { id: 'as-9', title: 'Tập Bánh Hằng Sống', scope: 'all' as const, dueDate: '2099-12-04T10:00:00Z', skillIds: [], memberIds: [] }
+    vi.spyOn(practiceApi, 'listAssignments').mockResolvedValue({ items: [assignment], pageNumber: 1, pageSize: 20, totalCount: 1, totalPages: 1 })
+    vi.spyOn(practiceApi, 'listAssignmentSubmissions').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 })
+    const remove = vi
+      .spyOn(practiceApi, 'deleteAssignment')
+      .mockRejectedValueOnce(new ApiError(409, { code: 'PRACTICE_ASSIGNMENT_HAS_SUBMISSIONS' }))
+      .mockResolvedValueOnce()
+    renderPractice('/director/practice?tab=assignments')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Xem chi tiết Tập Bánh Hằng Sống' }))
+    const withdraw = async () => {
+      fireEvent.click(await screen.findByRole('button', { name: 'Thu hồi' }))
+      const dialog = (await screen.findAllByText('Thu hồi bài tập “Tập Bánh Hằng Sống”?'))[0].closest('.ant-modal') as HTMLElement
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Thu hồi bài tập' }))
+    }
+    await withdraw()
+    expect(await screen.findByText('Bài tập đã có ca viên nộp bài nên không thu hồi được.')).toBeInTheDocument()
+    await withdraw()
+    await waitFor(() => expect(remove).toHaveBeenCalledTimes(2))
+    expect(await screen.findByText('Đã thu hồi bài tập.')).toBeInTheDocument()
+    expect(remove).toHaveBeenLastCalledWith('as-9')
   })
 })

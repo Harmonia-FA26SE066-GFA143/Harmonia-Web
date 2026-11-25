@@ -4,6 +4,7 @@ import * as membersApi from '@/features/members/api/membersApi'
 import * as accountsApi from '@/features/users/api/accountsApi'
 import { ApiError } from '@/lib/api/errors'
 import { renderPage } from '@/test/renderPage'
+import { clearSession, setSession } from '@/lib/auth/session'
 import * as api from '../api/choirsApi'
 import { EventChoirsCard } from '../components/EventChoirsCard'
 import type { Choir, ChoirMembership } from '../types'
@@ -72,6 +73,38 @@ describe('ChoirsPage', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Thêm ca viên' }))
     expect(within(dialog).getByText('Thêm ca viên vào Ca đoàn Cecilia')).toBeInTheDocument()
     expect(within(dialog).getByRole('button', { name: 'Hủy' })).toBeInTheDocument()
+  })
+
+  it('lets a Choir Director invite only members without a choir, and says it is an invitation (ChoirService.cs:210-219)', async () => {
+    setSession({
+      accessToken: 'a',
+      accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+      refreshToken: 'r',
+      user: { id: 'd1', email: 'd@giaoxu.org', roleName: 'ChoirDirector' },
+    })
+    vi.spyOn(api, 'listChoirs').mockResolvedValue([choir()])
+    vi.spyOn(api, 'listMembersOfChoir').mockResolvedValue([membership('m1', 'Maria Lan')])
+    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([
+      { id: 'm2', fullName: 'Phêrô Dũng', skills: [], choirs: [] },
+      { id: 'm3', fullName: 'Anna Hoa', skills: [], choirs: [{ id: 'c9', name: 'Ca đoàn Thiếu nhi' }] },
+    ])
+    const add = vi.spyOn(api, 'addChoirMembers').mockResolvedValue()
+
+    renderPage(<DirectorChoirsPage />, '/director/choirs')
+    fireEvent.click(await screen.findByRole('button', { name: 'Ca viên của Ca đoàn Cecilia' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Ca viên của Ca đoàn Cecilia' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Mời ca viên' }))
+    expect(within(dialog).getByText('Mời ca viên vào Ca đoàn Cecilia')).toBeInTheDocument()
+
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'Ca viên cần mời' }))
+    expect(await screen.findByRole('option', { name: 'Phêrô Dũng' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Anna Hoa' })).toBeNull()
+    fireEvent.click((await screen.findAllByTitle('Phêrô Dũng')).find((node) => node.classList.contains('ant-select-item-option')) as HTMLElement)
+    fireEvent.click(within(dialog).getByRole('button', { name: /^Gửi lời mời/ }))
+
+    await waitFor(() => expect(add).toHaveBeenCalled())
+    expect(await screen.findByText('Đã gửi lời mời tới 1 ca viên. Họ sẽ vào Ca đoàn Cecilia khi chấp nhận lời mời.')).toBeInTheDocument()
+    clearSession()
   })
 
   it('preserves AdminChoirsPage table, EmptyCell, ACTIONS_COLUMN_TITLE and form drawer', async () => {
