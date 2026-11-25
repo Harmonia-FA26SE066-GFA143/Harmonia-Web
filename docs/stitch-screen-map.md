@@ -8,7 +8,7 @@ Lập ở Phase 0 (2026-09-26), làm sạch 2026-10-20, re-check route/BE 2026-1
 - Mỗi dòng là **một page**. Các screen cùng tên khác hậu tố (Đang tải Skeleton, Trạng thái Trống, Lỗi…, Không có kết quả lọc, Modal…) là **state** của page đó, không phải route riêng.
 - Actor suy ra từ sidebar của screen trên Stitch (shell Admin / Cha xứ / Ca trưởng) và ghi chú vai trò của Web (local). Stitch không phải nguồn business rule.
 - Tiền tố `/admin`, `/priest`, `/director` là không gian làm việc theo role; `RoleGuard` chỉ cho role tương ứng vào, còn quyền thật do BE kiểm soát.
-- Số thứ tự giữ nguyên như bản đầu để các tham chiếu cũ vẫn đúng. #3 (Đăng ký) từng bị gỡ khi BE chưa có luồng công khai; từ `c7b514d` BE đã có `POST api/member-registrations`, nhưng Web chưa dựng lại form/màn xử lý. #5a (Chờ xác nhận tài khoản) vẫn không áp dụng.
+- Số thứ tự giữ nguyên như bản đầu để các tham chiếu cũ vẫn đúng. #3 (Đăng ký) từng bị gỡ khi BE chưa có luồng công khai; từ `c7b514d` BE đã có `POST api/member-registrations`, Web dựng lại ở `e687fd9` (2026-11-12): form công khai `/join` (từ 2026-11-25 có ô "Ca đoàn mong muốn") và màn Admin xử lý `/admin/member-registrations`. #5a (Chờ xác nhận tài khoản) vẫn không áp dụng.
 
 ## Bảng page (màn có trên Stitch)
 
@@ -46,7 +46,7 @@ Lập ở Phase 0 (2026-09-26), làm sạch 2026-10-20, re-check route/BE 2026-1
 | 31 | Kho bài hát | Ca trưởng | `/director/library` | `music-library` | `e7556b69066f4fc0bdb75fd2f1ff60ae` Mặc định (chọn; bản `9d462ed531074e32ab4f779495a0ffc6` bỏ vì tự thêm tên tác giả)<br>`84c6d1c1945a4bd1a5d4bb658d33d794` Modal Thêm bài hát<br>`c85e8d4bb0ac4fc29f7e559641c34f40` Đang tải Skeleton<br>`c8bd63639b004e3e935bf5834c004152` Trạng thái Trống<br>`c1c985b101dd4ecba3ee12dc740b0093` Không có kết quả lọc<br>`75d08692dc5a4132b8a4dadb9e672133` Lỗi tải dữ liệu | Đã dựng, nối BE |
 | 32 | Chi tiết bài hát | Ca trưởng | `/director/library/:songId` | `music-library` | `2edd5a15ed274d2fa03cde452694ee05` Mặc định (chọn; bản `7ac0d7d6096449eb93ab2f718fa35907` bỏ vì dồn tài liệu vào một bảng, không chia 4 nhóm và không có "Chưa phân loại")<br>`344309c695d44d90b9f3f3c83fcded90` Modal Xoá tài liệu | Đã dựng, nối BE |
 
-Screen Stitch chưa được Web dựng: **Đăng ký** `04312fd5c7f945ba8f83dcf0f84c2051`; BE nay đã hỗ trợ gửi đăng ký công khai. 115 screen ID gốc, mỗi ID thuộc đúng một page hoặc nằm trong danh sách này; dòng 31–32 là screen bổ sung, không có trong `stitch-screens.txt`. `15354935462241073431` là `DESIGN(2).md`, không phải screen.
+Screen **Đăng ký** `04312fd5c7f945ba8f83dcf0f84c2051` nay ứng với `/join` (dựng mới, không theo Stitch). 115 screen ID gốc, mỗi ID thuộc đúng một page hoặc nằm trong danh sách này; dòng 31–32 là screen bổ sung, không có trong `stitch-screens.txt`. `15354935462241073431` là `DESIGN(2).md`, không phải screen.
 
 ## Page không có trên Stitch (dựng theo BE)
 
