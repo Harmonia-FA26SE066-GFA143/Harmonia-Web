@@ -35,6 +35,21 @@ describe('JoinChoirPage', () => {
     expect(submit.mock.calls[0][0]).toEqual({ gender: 'Female', fullName: 'An Nguyễn', saintName: 'Giuse', email: 'an@giaoxu.org', phone: undefined, note: undefined })
   })
 
+  it('sends the choir the visitor wishes to join, chosen from the public list (CreateMemberRegistrationRequest.PreferredChoirId)', async () => {
+    vi.spyOn(api, 'listPublicChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cecilia', description: null }])
+    const submit = vi.spyOn(api, 'submitRegistration').mockResolvedValue(undefined)
+    renderPage(<JoinChoirPage />, '/join')
+    fill('Họ tên', 'An Nguyễn')
+    fill('Email', 'an@giaoxu.org')
+    fireEvent.click(screen.getByRole('radio', { name: 'Nữ' }))
+    fireEvent.mouseDown(await screen.findByLabelText('Ca đoàn mong muốn'))
+    fireEvent.click((await screen.findAllByTitle('Ca đoàn Cecilia')).find((node) => node.classList.contains('ant-select-item-option')) as HTMLElement)
+    send()
+
+    await waitFor(() => expect(submit).toHaveBeenCalled())
+    expect(submit.mock.calls[0][0]).toMatchObject({ fullName: 'An Nguyễn', preferredChoirId: 'c1' })
+  })
+
   it('keeps the form and explains the rate limit', async () => {
     vi.spyOn(api, 'submitRegistration').mockRejectedValue(new ApiError(429, { code: 'RATE_LIMIT_EXCEEDED' }))
     renderPage(<JoinChoirPage />, '/join')

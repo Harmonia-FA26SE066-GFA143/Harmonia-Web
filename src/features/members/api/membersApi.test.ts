@@ -36,7 +36,7 @@ describe('listChoirMembers', () => {
       ),
     )
 
-    await expect(listChoirMembers()).resolves.toEqual([{ id: 'mp1', fullName: 'Maria Nguyễn Thu Hướng', skills: ['Organ'] }])
+    await expect(listChoirMembers()).resolves.toEqual([{ id: 'mp1', choirs: [], fullName: 'Maria Nguyễn Thu Hướng', skills: ['Organ'] }])
     const url = new URL(String(fetchMock.mock.calls[0][0]), 'http://localhost')
     expect(url.pathname).toBe('/api/member-profiles')
     expect(Object.fromEntries(url.searchParams)).toEqual({ status: 'Active', pageNumber: '1', pageSize: '100' })

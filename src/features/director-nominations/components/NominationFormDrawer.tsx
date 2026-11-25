@@ -38,9 +38,16 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
     queryFn: () => searchMembers({ search, status: 'active' }, { pageNumber: 1, pageSize: 20 }),
     enabled: open,
   })
-  const memberOptions = members.data?.items.map((member) => ({ value: member.id, label: member.fullName })) ?? []
-  if (chosen && !memberOptions.some((option) => option.value === chosen.value)) memberOptions.unshift(chosen)
   const choirs = useChoirs(open)
+  // The search covers the whole parish, but a Choir Director may nominate only members of the choirs they lead
+  // (DirectorNominationService.GetNominatableMemberAsync, MEMBER_NOT_FOUND otherwise): others are not offered.
+  // ponytail: filters one page of 20 results, so a broad keyword may show fewer; a choirId filter on the search would fix it.
+  const ownChoirs = new Set((choirs.data ?? []).map((choir) => choir.id))
+  const memberOptions =
+    members.data?.items
+      .filter((member) => isPriest || member.choirs?.some((choir) => ownChoirs.has(choir.id)))
+      .map((member) => ({ value: member.id, label: member.fullName })) ?? []
+  if (chosen && !memberOptions.some((option) => option.value === chosen.value)) memberOptions.unshift(chosen)
   const memberId = Form.useWatch('memberId', form)
   const eligibility = useQuery({
     queryKey: ['director-nominations', 'eligibility', memberId],

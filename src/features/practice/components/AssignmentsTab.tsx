@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
+import { Alert, App, Button, Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router'
 import {
@@ -6,6 +6,7 @@ import {
   EmptyState,
   ErrorState,
   filterAllPlaceholder,
+  Icon,
   NoFilterResults,
   PROGRAM_NOUN_SHORT,
   SectionSkeleton,
@@ -13,7 +14,9 @@ import {
   ViewDrawer,
 } from '@/shared/ui'
 import { colors, component, spacing, typography } from '@/styles/tokens'
-import { useAssignments, useUpcomingEvents } from '../hooks/usePractice'
+import { useAssignments, useDeleteAssignment, useUpcomingEvents } from '../hooks/usePractice'
+import { practiceErrorMessage } from '../practiceErrors'
+import { AssignmentEditDrawer } from './AssignmentEditDrawer'
 import { formatDateTime } from '@/lib/api/dates'
 import { formatEventOption } from '../practiceFormat'
 import type { PracticeAssignment } from '../types'
@@ -45,6 +48,29 @@ export function AssignmentsTab() {
   const [eventId, setEventId] = useState<string>()
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState<PracticeAssignment>()
+  const [editing, setEditing] = useState<PracticeAssignment>()
+  const { message, modal } = App.useApp()
+  const remove = useDeleteAssignment()
+
+  // Withdrawn only while nobody has submitted (PRACTICE_ASSIGNMENT_HAS_SUBMISSIONS): a recording is never lost.
+  const confirmDelete = (assignment: PracticeAssignment) =>
+    modal.confirm({
+      title: `Thu hồi bài tập “${assignment.title}”?`,
+      content: 'Ca viên sẽ không còn thấy bài tập này. Bài tập đã có người nộp thì không thu hồi được.',
+      okText: 'Thu hồi bài tập',
+      okButtonProps: { danger: true },
+      cancelText: 'Giữ lại',
+      onOk: () =>
+        remove.mutateAsync(assignment.id).then(
+          () => {
+            message.success('Đã thu hồi bài tập.')
+            setOpen(undefined)
+          },
+          (error: Error) => {
+            message.error(practiceErrorMessage(error, 'Không thể thu hồi bài tập. Vui lòng thử lại.'))
+          },
+        ),
+    })
   const assignments = useAssignments(eventId, { pageNumber: page, pageSize })
   const events = useUpcomingEvents()
   const eventsById = useMemo(() => new Map((events.data ?? []).map((event) => [event.id, event])), [events.data])
@@ -151,16 +177,35 @@ export function AssignmentsTab() {
           />
         </Card>
       )}
-      {/* Read-only (B59): the backend offers no edit or withdrawal of an assignment. */}
+      {/* Edit and withdraw since BE B59 (PUT / DELETE api/practice-assignments/{id}). */}
       <ViewDrawer
         open={Boolean(open)}
         title="Chi tiết bài tập"
         size={component.drawer.lg}
         onClose={() => setOpen(undefined)}
         destroyOnHidden
+        extra={
+          open && (
+            <Flex gap={spacing.sm}>
+              <Button icon={<Icon name="edit" />} onClick={() => setEditing(open)}>
+                Sửa
+              </Button>
+              <Button danger icon={<Icon name="delete" />} onClick={() => confirmDelete(open)}>
+                Thu hồi
+              </Button>
+            </Flex>
+          )
+        }
       >
         {open && <AssignmentSubmissions assignment={open} />}
       </ViewDrawer>
+      <AssignmentEditDrawer
+        assignment={editing}
+        onClose={() => {
+          setEditing(undefined)
+          setOpen(undefined)
+        }}
+      />
     </Flex>
   )
 }

@@ -83,15 +83,17 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
       key: 'action',
       title: ACTIONS_COLUMN_TITLE,
       align: 'center',
+      width: 120,
+      // Short verbs as in the program table; the full action and the member's name stay in the accessible name.
       render: (_, member) => (
         <Flex justify="center" gap={4}>
-          <Button type="link" onClick={() => onView(member)} aria-label={`${VIEW_MEMBER_ACTION} ${member.fullName}`}>
-            {VIEW_MEMBER_ACTION}
+          <Button type="link" size="small" onClick={() => onView(member)} aria-label={`${VIEW_MEMBER_ACTION} ${member.fullName}`}>
+            Xem
           </Button>
           {/* A profile kept from an account that changed role is history only (BE 9b1f587: 409 MEMBER_NOT_ACTIVE). */}
           {member.role === 'member' && (
-            <Button type="link" onClick={() => onEdit(member)} aria-label={`${EDIT_MEMBER_ACTION} ${member.fullName}`}>
-              {EDIT_MEMBER_ACTION}
+            <Button type="link" size="small" onClick={() => onEdit(member)} aria-label={`${EDIT_MEMBER_ACTION} ${member.fullName}`}>
+              Sửa
             </Button>
           )}
         </Flex>

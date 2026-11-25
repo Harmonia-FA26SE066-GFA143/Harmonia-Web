@@ -11,5 +11,8 @@ export function parseUtc(value: string): Date {
 /** Today in Vietnam (UTC+7, no daylight saving) as `YYYY-MM-DD`: the date the backend compares `DateOnly` values with (VietnamTime). */
 export const vietnamToday = (now = Date.now()) => new Date(now + 7 * 3_600_000).toISOString().slice(0, 10)
 
+/** Vietnam wall-clock time to the minute, `YYYY-MM-DDTHH:mm`: compares as text with an event's date and time. */
+export const vietnamNow = (now = Date.now()) => new Date(now + 7 * 3_600_000).toISOString().slice(0, 16)
+
 /** A backend `DateTime` in the browser's time, as `DD/MM/YYYY HH:mm`. */
 export const formatDateTime = (value: string) => dayjs(parseUtc(value)).format('DD/MM/YYYY HH:mm')

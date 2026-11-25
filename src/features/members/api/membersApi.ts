@@ -17,6 +17,7 @@ const apiStatus = Object.fromEntries(Object.entries(statusByApi).map(([api, stat
 >
 
 interface MemberProfileSummaryDto {
+  choirs?: { id: string; name: string }[]
   id: string
   fullName: string
   email: string
@@ -26,7 +27,8 @@ interface MemberProfileSummaryDto {
   dateOfBirth: string | null
   joinedDate: string
   status: ApiMemberStatus
-  approvedSkills: { skillId: string; skillName: string }[]
+  /** `id` is the MemberSkill id, used to revoke (MemberSkillSummaryDto.cs, B63). */
+  approvedSkills: { id: string; skillId: string; skillName: string }[]
   avatarUrl: string | null
   roleName: ApiRoleName
 }
@@ -35,6 +37,7 @@ const skillNames = (dto: MemberProfileSummaryDto) => dto.approvedSkills.map((ski
 
 const toChoirMember = (dto: MemberProfileSummaryDto): ChoirMember => ({
   id: dto.id,
+  choirs: dto.choirs ?? [],
   fullName: dto.fullName,
   skills: skillNames(dto),
   roleName: dto.roleName,
@@ -79,6 +82,8 @@ export async function searchMembers(filters: MemberFilters, page: MemberPage): P
 
 const toMemberProfile = (dto: MemberProfileSummaryDto): MemberProfile => ({
   id: dto.id,
+  choirs: dto.choirs ?? [],
+  approvedSkills: dto.approvedSkills.map(({ id, skillName }) => ({ id, name: skillName })),
   fullName: dto.fullName,
   email: dto.email,
   phone: dto.phone,

@@ -1,13 +1,13 @@
-import { useMutation } from '@tanstack/react-query'
-import { Alert, Button, Input, Radio } from 'antd'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Alert, Button, Input, Radio, Select } from 'antd'
 import { Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { AuthCard } from '@/features/auth'
 import { ApiError, errorMessage } from '@/lib/api/errors'
-import { Form, Icon } from '@/shared/ui'
+import { Form, Icon, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { genderOptions, saintNameRules } from '@/shared/utils/personName'
 import { spacing } from '@/styles/tokens'
-import { submitRegistration, type RegistrationValues } from '../api/memberRegistrationsApi'
+import { listPublicChoirs, submitRegistration, type RegistrationValues } from '../api/memberRegistrationsApi'
 
 const failureMessage = (error: Error) =>
   errorMessage(
@@ -15,6 +15,8 @@ const failureMessage = (error: Error) =>
     {
       RATE_LIMIT_EXCEEDED: 'Bạn đã gửi nhiều lần trong thời gian ngắn. Vui lòng thử lại sau 10 phút.',
       VALIDATION_FAILED: 'Thông tin chưa hợp lệ. Vui lòng kiểm tra lại các ô rồi gửi lại.',
+      // The chosen choir was switched off or removed meanwhile (MemberRegistrationService.cs:27-30).
+      CHOIR_NOT_FOUND: 'Ca đoàn bạn chọn không còn nhận thành viên. Vui lòng chọn ca đoàn khác hoặc để trống.',
     },
     'Không thể gửi yêu cầu. Vui lòng thử lại.',
   )
@@ -26,6 +28,7 @@ const fieldLabels: Record<string, string> = {
   phone: 'Số điện thoại',
   saintname: 'Tên thánh',
   note: 'Lời nhắn',
+  preferredchoirid: 'Ca đoàn mong muốn',
 }
 
 /** The fields of `errors` in a 400 VALIDATION_FAILED, by their label on this form; an unknown one is left out. */
@@ -38,6 +41,8 @@ const fieldsOf = (error: Error | null) =>
 export function JoinChoirPage() {
   const navigate = useNavigate()
   const submit = useMutation({ mutationFn: submitRegistration })
+  // Optional: when the list cannot be read the field is left out and the request still goes through.
+  const choirs = useQuery({ queryKey: ['choirs', 'public'], queryFn: listPublicChoirs })
   const [form] = Form.useForm<RegistrationValues>()
 
   if (submit.isSuccess) {
@@ -52,13 +57,14 @@ export function JoinChoirPage() {
     )
   }
 
-  const trimmed = ({ fullName, email, phone, saintName, gender, note }: RegistrationValues): RegistrationValues => ({
+  const trimmed = ({ fullName, email, phone, saintName, gender, note, preferredChoirId }: RegistrationValues): RegistrationValues => ({
     gender,
     fullName: fullName.trim(),
     saintName: saintName?.trim() || undefined,
     email: email.trim(),
     phone: phone?.trim() || undefined,
     note: note?.trim() || undefined,
+    preferredChoirId,
   })
 
   return (
@@ -101,8 +107,18 @@ export function JoinChoirPage() {
         >
           <Input type="email" autoComplete="email" />
         </Form.Item>
-        <Form.Item name="note" label="Lời nhắn" extra="Ví dụ ca đoàn bạn muốn tham gia." rules={[{ max: 500, message: 'Vui lòng nhập tối đa 500 ký tự.' }]}>
-          <Input.TextArea rows={2} showCount maxLength={500} placeholder="Ví dụ: Em muốn tham gia ca đoàn Cecilia, hát giọng Alto." />
+        {choirs.data && choirs.data.length > 0 && (
+          <Form.Item name="preferredChoirId" label="Ca đoàn mong muốn" extra="Quản trị viên sẽ xem xét khi xếp ca đoàn cho bạn.">
+            <Select
+              {...SELECT_POPUP_PROPS}
+              allowClear
+              placeholder="Chưa chọn"
+              options={choirs.data.map((choir) => ({ value: choir.id, label: choir.name }))}
+            />
+          </Form.Item>
+        )}
+        <Form.Item name="note" label="Lời nhắn" rules={[{ max: 500, message: 'Vui lòng nhập tối đa 500 ký tự.' }]}>
+          <Input.TextArea rows={2} showCount maxLength={500} placeholder="Ví dụ: Em hát giọng Alto, sinh hoạt được tối thứ Năm." />
         </Form.Item>
         {submit.isError && (
           <Alert

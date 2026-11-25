@@ -5415,3 +5415,20 @@ body {
     border-top: 1px solid var(--hm-border-default);
   }
 }
+
+/* Approved skills with their revoke action, under the tags of the member drawer (B63). */
+.hm-revoke-list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--hm-border-default);
+}
+
+.hm-revoke-list > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--hm-border-default);
+}

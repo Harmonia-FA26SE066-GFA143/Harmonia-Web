@@ -4,7 +4,7 @@ import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, PickedProgramFeedback, SongListStatusTag, usePickedProgram } from '@/features/liturgical-programs'
 import { NoChoirNotice } from '@/features/choirs'
-import { useChoirMembers } from '@/features/members'
+import { useAllChoirMembers } from '@/features/members'
 import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
 import { useLookup } from '@/features/system-categories'
@@ -31,7 +31,8 @@ export function RosterPage() {
   // Whole-service roles are staffed before the song list is approved, so the answers are read for every program.
   const participation = useParticipation(programId || undefined)
   const skills = useLookup('skills')
-  const members = useChoirMembers()
+  // Every page of active members: a parish with more than 100 must still find each one's skills (flow audit 4.1).
+  const members = useAllChoirMembers()
   // Members who answered Confirmed or Unsure can be assigned (ServiceRosterRepository); skills from their profiles.
   const eligible = useMemo(() => {
     const skillsOf = new Map((members.data ?? []).map((member) => [member.id, member.skills]))

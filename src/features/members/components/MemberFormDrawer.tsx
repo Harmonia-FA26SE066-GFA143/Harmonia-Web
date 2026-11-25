@@ -1,4 +1,4 @@
-import { DatePicker, Flex, Input, Radio, Select, Typography, type InputRef } from 'antd'
+import { Alert, DatePicker, Flex, Input, Radio, Select, Typography, type InputRef } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { useRef } from 'react'
 import { vietnamToday } from '@/lib/api/dates'
@@ -125,6 +125,19 @@ export function MemberFormDrawer({ member, saving = false, onSubmit, onCancel }:
       </Flex>
       <Form.Item label="Trạng thái" name="status" rules={[{ required: true, message: 'Vui lòng chọn trạng thái.' }]}>
         <Select {...SELECT_POPUP_PROPS} options={memberStatuses.map((status) => ({ value: status, label: memberStatusLabels[status] }))} />
+      </Form.Item>
+      {/* Stopping service has effects since BE origin/main 1040339 (MemberProfileService.UpdateAsync →
+          ChoirService.DropMemberFromUpcomingEventsAsync): said before the save, not discovered after. */}
+      <Form.Item noStyle shouldUpdate={(before, after) => before.status !== after.status}>
+        {({ getFieldValue }) =>
+          member?.status === 'active' && getFieldValue('status') !== 'active' ? (
+            <Alert
+              type="warning"
+              showIcon
+              title="Ca viên sẽ được gỡ khỏi xác nhận tham gia và phân công của các lễ sắp tới. Phân công đã chốt sẽ mở lại để xếp người thay, Ca trưởng phụ trách lễ nhận thông báo."
+            />
+          ) : null
+        }
       </Form.Item>
     </FormDrawer>
   )

@@ -77,7 +77,7 @@ describe('MembersPage', () => {
     expect(screen.getByRole('button', { name: 'Xoá bộ lọc' })).toBeDisabled()
   })
 
-  it('opens a read-only profile without a revoke action, then the edit form from it (G2-09, G2-04, B63)', async () => {
+  it('opens the profile, with no revoke action when no approved skill carries its id, then the edit form (G2-09, G2-04)', async () => {
     vi.spyOn(api, 'searchMembers').mockResolvedValue(page([member()]))
     vi.spyOn(api, 'listAllChoirMembers').mockResolvedValue([])
     renderPage(<MembersPage />, '/m')
@@ -92,6 +92,40 @@ describe('MembersPage', () => {
     expect(form.getByText('Bè (từ kỹ năng đã duyệt)')).toBeInTheDocument()
     expect(form.getByText(/Họ tên và email thuộc tài khoản/)).toBeInTheDocument()
     expect(form.queryByText(/không bắt buộc/)).toBeNull()
+  })
+
+  it('revokes an approved skill with a reason from the profile (B63, PATCH member-skills/{id}/revoke)', async () => {
+    vi.spyOn(api, 'searchMembers').mockResolvedValue(page([member({ skills: ['Soprano'], approvedSkills: [{ id: 'ms1', name: 'Soprano' }] })]))
+    vi.spyOn(api, 'listAllChoirMembers').mockResolvedValue([])
+    const revoke = vi.spyOn(skillsApi, 'revokeSkill').mockResolvedValue()
+    renderPage(<MembersPage />, '/m')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Xem hồ sơ Nguyễn Thị Lan' }))
+    const view = within(await screen.findByRole('dialog', { name: 'Hồ sơ ca viên' }))
+    fireEvent.click(view.getByRole('button', { name: 'Thu hồi kỹ năng Nữ cao' }))
+    // The modal opens over the profile drawer, so it is found by its own title.
+    const modal = within((await screen.findByText('Thu hồi kỹ năng', { selector: '.ant-modal-title' })).closest('.ant-modal') as HTMLElement)
+    fireEvent.click(modal.getByRole('button', { name: 'Thu hồi' }))
+    expect(await modal.findByText('Vui lòng nhập lý do thu hồi.')).toBeInTheDocument()
+    fireEvent.change(modal.getByLabelText('Lý do thu hồi'), { target: { value: 'Chưa đạt bè nữ cao' } })
+    fireEvent.click(modal.getByRole('button', { name: 'Thu hồi' }))
+
+    await waitFor(() => expect(revoke).toHaveBeenCalledWith('ms1', 'Chưa đạt bè nữ cao'))
+    expect(await screen.findByText('Đã thu hồi kỹ năng Nữ cao. Ca viên sẽ nhận được thông báo.')).toBeInTheDocument()
+    expect(view.queryByRole('button', { name: 'Thu hồi kỹ năng Nữ cao' })).toBeNull()
+  })
+
+  it('warns before a member stops serving that upcoming invitations and roster lines go (BE origin/main 1040339)', async () => {
+    vi.spyOn(api, 'searchMembers').mockResolvedValue(page([member()]))
+    vi.spyOn(api, 'listAllChoirMembers').mockResolvedValue([])
+    renderPage(<MembersPage />, '/m')
+
+    fireEvent.click(await screen.findByRole('button', { name: /Chỉnh sửa hồ sơ Nguyễn Thị Lan/ }))
+    const form = within(await screen.findByRole('dialog', { name: 'Chỉnh sửa hồ sơ' }))
+    expect(form.queryByText(/gỡ khỏi xác nhận tham gia và phân công/)).toBeNull()
+    fireEvent.mouseDown(form.getByLabelText('Trạng thái'))
+    fireEvent.click((await screen.findAllByTitle('Tạm nghỉ')).find((node) => node.classList.contains('ant-select-item-option')) as HTMLElement)
+    expect(await form.findByText(/gỡ khỏi xác nhận tham gia và phân công/)).toBeInTheDocument()
   })
 
   it('offers only the profile view for a profile kept after a role change (B46)', async () => {

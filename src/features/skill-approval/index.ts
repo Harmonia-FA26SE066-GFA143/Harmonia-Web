@@ -1,2 +1,3 @@
 export { SkillApprovalPage } from './pages/SkillApprovalPage'
-export { usePendingSkills } from './hooks/usePendingSkills'
+export { usePendingSkills, useRevokeSkill } from './hooks/usePendingSkills'
+export { RejectSkillModal } from './components/RejectSkillModal'

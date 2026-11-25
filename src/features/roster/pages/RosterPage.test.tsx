@@ -93,7 +93,7 @@ beforeEach(() => {
     asked('m4', 'Simon Phan Văn Đức', 'confirmed'),
     asked('m5', 'Phêrô Lê Minh Tâm', 'unsure'),
   ])
-  vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([
+  vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([
     { id: 'm1', fullName: 'Giuse Vũ Đình Khôi', skills: ['Tenor'] },
     { id: 'm2', fullName: 'Giuse Nguyễn Hoàng Long', skills: ['Tenor'] },
     { id: 'm3', fullName: 'Vinhsơn Nguyễn Văn Hưng', skills: ['Tenor'] },

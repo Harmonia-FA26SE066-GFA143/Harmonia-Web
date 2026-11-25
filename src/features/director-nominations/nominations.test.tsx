@@ -131,8 +131,15 @@ describe('NominationsPage', () => {
   it('lets a Choir Director nominate after seeing the record, and explains an open nomination', async () => {
     asRole('ChoirDirector', 'u9')
     vi.spyOn(api, 'listNominations').mockResolvedValue({ items: [], pageNumber: 1, pageSize: 20, totalCount: 0, totalPages: 0 })
-    vi.spyOn(membersApi, 'searchMembers').mockResolvedValue({ items: [{ id: 'm1', fullName: 'An Nguyễn' } as never], pageNumber: 1, pageSize: 20, totalCount: 1, totalPages: 1 })
-    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([])
+    // The search covers the parish; only members of the director's own choirs are offered (DirectorNominationService).
+    vi.spyOn(membersApi, 'searchMembers').mockResolvedValue({
+      items: [
+        { id: 'm1', fullName: 'An Nguyễn', choirs: [{ id: 'c1', name: 'Ca đoàn Cecilia' }] } as never,
+        { id: 'm2', fullName: 'Bình Trần', choirs: [{ id: 'c9', name: 'Ca đoàn khác' }] } as never,
+      ],
+      pageNumber: 1, pageSize: 20, totalCount: 2, totalPages: 1,
+    })
+    vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([{ id: 'c1', name: 'Ca đoàn Cecilia', isActive: true }])
     vi.spyOn(api, 'getEligibility').mockResolvedValue(detail('Pending').stats)
     const create = vi.spyOn(api, 'createNomination').mockRejectedValue(new ApiError(409, { code: 'DIRECTOR_NOMINATION_ALREADY_OPEN' }))
     renderPage(<NominationsPage area="Khu" />, '/x')
@@ -145,7 +152,10 @@ describe('NominationsPage', () => {
 
     await waitFor(() => expect(membersApi.searchMembers).toHaveBeenCalled())
     fireEvent.mouseDown(drawer.getByLabelText(/Ca viên/))
-    fireEvent.click(await screen.findByTitle('An Nguyễn'))
+    const offered = await screen.findByTitle('An Nguyễn')
+    // Open list: a member of another choir is not offered.
+    expect(screen.queryByTitle('Bình Trần')).toBeNull()
+    fireEvent.click(offered)
     expect(await drawer.findByText(/Ca viên chưa đạt đủ ngưỡng/)).toBeInTheDocument()
 
     fireEvent.change(drawer.getByLabelText(/Lý do đề cử/), { target: { value: 'Bắt nhịp tốt' } })

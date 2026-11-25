@@ -51,12 +51,19 @@ export function RehearsalPracticeRoomPage() {
   // from (RehearsalDto) has them, so they are kept from it.
   const knownEventId = known?.eventId
   const knownChoirId = known?.choirId
+  // Nor does it say whether the caller manages the session (RehearsalDto.CanManage is on the list only).
+  const knownCanManage = known?.canManage
   const merged = useMemo<Rehearsal | undefined>(
     () =>
       fetched.data
-        ? { ...fetched.data, eventId: fetched.data.eventId ?? knownEventId, choirId: fetched.data.choirId ?? knownChoirId }
+        ? {
+            ...fetched.data,
+            eventId: fetched.data.eventId ?? knownEventId,
+            choirId: fetched.data.choirId ?? knownChoirId,
+            canManage: fetched.data.canManage ?? knownCanManage,
+          }
         : undefined,
-    [fetched.data, knownEventId, knownChoirId],
+    [fetched.data, knownEventId, knownChoirId, knownCanManage],
   )
   const room = usePracticeRoom(merged ?? known)
   const [selectedIndex, setSelectedIndex] = useState(0)

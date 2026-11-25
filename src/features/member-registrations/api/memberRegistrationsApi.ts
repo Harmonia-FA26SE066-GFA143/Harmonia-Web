@@ -38,6 +38,13 @@ export interface RegistrationValues {
   saintName?: string
   gender: Gender
   note?: string
+  /** One of `listPublicChoirs`, optional (CreateMemberRegistrationRequest.cs:20-21); a wish the Admin sees. */
+  preferredChoirId?: string
+}
+
+/** Active choirs a visitor may name in the request (anonymous GET api/choirs/public, ChoirsController.cs:32-37). */
+export function listPublicChoirs(): Promise<{ id: string; name: string; description: string | null }[]> {
+  return apiRequest('/api/choirs/public')
 }
 
 /** Answers 204 even for an email that already has an account, so the form cannot probe who is registered. */
