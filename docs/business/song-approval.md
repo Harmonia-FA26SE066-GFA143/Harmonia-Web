@@ -1,6 +1,6 @@
 # Song-List Approval and Music Library
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked through 2026-11-10 at `main@d74096c`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked through 2026-11-10 at `main@d74096c`; review notes re-checked 2026-11-25 at `main@1040339`. Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 FE-17–FE-20, FE-30–FE-32, LI-03
 
@@ -15,7 +15,7 @@ Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked through 2026-1
 - **Versions**: each event has numbered versions. A new version is created only when there is none or the newest was Rejected or NeedsRevision; the new version starts as Draft, links to the previous one, and carries its own items (`:68-133`). A Draft is edited in place by replacing its items (`:135-179`). An event with an Approved version accepts no new version (`SONG_LIST_EVENT_HAS_APPROVED_VERSION`).
 - **Preconditions**: the event is published and not cancelled; songs and liturgical slots exist and are active; at least one song; the same song only once per slot, a slot may hold several songs (`:77-107`, `CreateSongListRequestValidator`).
 - **Submit**: newest version, Draft, not empty; notifies every active Parish Priest (`:181-231`).
-- **Review**: one decision for the whole list: Approve, Reject or RequestRevision, by any Parish Priest. Notes are required for Reject and RequestRevision, optional for Approve. Only a Submitted list can be decided; the proposing Director is notified (`:233-288`, `ReviewSongListRequestValidator.cs`).
+- **Review**: one decision for the whole list: Approve, Reject or RequestRevision, by any Parish Priest. Notes are required for Reject and RequestRevision, optional for Approve. Only a Submitted list can be decided; the proposing Director is notified (`:233-288`). Review notes are at most 1000 characters (`ReviewSongListRequestValidator.cs:20`, `1040339`).
 - **Per song** the Choir Director may add a note; the Priest does not decide per song.
 - **Lead choir** (D8): only the lead choir's director creates, edits and submits a list (`CHOIR_NOT_LEAD`, `:84, 158, 209`); a new list records the lead choir (`:126`).
 - **Deleting a song** sets it inactive, and is refused with `409 SONG_IN_USE` when the song is in a song list, a rehearsal or a practice assignment (`SongService.cs:60-68`, `718696c`). This enforces owner decision 5a.5; there is no archive or restore.

@@ -1,6 +1,6 @@
 # Harmonia Choir Skills
 
-Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e` , 2026-11-04 at `main@9b1f587` and 2026-11-16 at `main@69c9d47` (revocation only). Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
+Cleaned 2026-10-20 against Harmonia-BE `main@a6af23e`; re-checked 2026-10-25 at `main@42e604e` , 2026-11-04 at `main@9b1f587` 2026-11-16 at `main@69c9d47` (revocation only) and 2026-11-25 at `main@1040339` (revocation). Where the BE covers a behavior it decides (owner decision 2026-10-07); owner decisions stay only where the BE says nothing.
 
 ## EXPLICIT — Report 1 FE-02–FE-04, FE-25, FE-49
 
@@ -22,4 +22,4 @@ Report 1 names Soprano, Alto, Tenor, Bass, Guitar, Organ, Solo Singing, and Psal
 
 ## Re-checked at BE `main@69c9d47` (2026-11-16, revocation)
 
-- The Choir Director revokes an approved skill with a required reason of at most 500 characters (`PATCH api/member-skills/{id}/revoke`, `MemberSkillsController.cs:79-84`, `RevokeMemberSkillRequestValidator.cs`); only an `Approved` skill can be revoked (`MEMBER_SKILL_NOT_APPROVED`, `MemberSkillService.cs:182-184`), the member is notified and so are the lead directors of events it affects (`:201-207`). The Web cannot offer it yet: no response the Choir Director reads carries the member-skill id of an approved skill (`MemberSkillSummaryDto.cs:4-11`; backlog B63).
+- The Choir Director revokes an approved skill with a required reason of at most 500 characters (`PATCH api/member-skills/{id}/revoke`, `MemberSkillsController.cs:93`, `RevokeMemberSkillRequestValidator.cs`); only an `Approved` skill can be revoked (`MEMBER_SKILL_NOT_APPROVED`, `MemberSkillService.cs:182-184`), the member is notified and so are the lead directors of events it affects (`:201-207`). The id comes from `MemberProfileSummaryDto.approvedSkills[].id` (`MemberSkillSummaryDto.cs:7`, `14dabd3`; backlog B63); the Web offers revoke in the member profile.
