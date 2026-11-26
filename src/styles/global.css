@@ -5,6 +5,14 @@
 :root {
   --hm-dur-slow: var(--hm-dur-panel);
   --hm-lift-shadow: var(--hm-shadow-lg);
+  --hm-alert-info-border: color-mix(in srgb, var(--hm-info) 24%, var(--hm-border-default));
+  --hm-alert-success-border: color-mix(in srgb, var(--hm-success) 24%, var(--hm-border-default));
+  --hm-alert-warning-border: color-mix(in srgb, var(--hm-warning) 28%, var(--hm-border-default));
+  --hm-alert-error-border: color-mix(in srgb, var(--hm-error) 26%, var(--hm-border-default));
+  --hm-saved-wash-bg: color-mix(in srgb, var(--hm-action-primary) 16%, transparent);
+  --hm-order-hover-bg: color-mix(in srgb, var(--hm-gilt) 6%, transparent);
+  --hm-event-published-border: color-mix(in srgb, var(--hm-success) 35%, transparent);
+  --hm-event-draft-border: color-mix(in srgb, var(--hm-warning) 45%, transparent);
 }
 
 html,
@@ -33,8 +41,15 @@ body {
 }
 
 /* Headings break into even lines, never one word alone on the last. */
-:where(h1, h2, h3) {
-  text-wrap: balance;
+@supports (text-wrap: balance) {
+  :where(h1, h2, h3),
+  .ant-typography.landing-story__heading,
+  h1.ant-typography.hm-auth__title,
+  .ant-typography.hm-auth__lead,
+  h2.ant-typography.landing-close__title,
+  .ant-typography.landing-close__lead {
+    text-wrap: balance;
+  }
 }
 
 /* Custom modern slim scrollbar */
@@ -134,6 +149,23 @@ body {
   padding: 8px 12px;
   font-weight: 600;
   font-size: 12px;
+}
+
+/* Manuscript marginalia notices: soft pigment washes with subtle tonal hairline borders instead of harsh SaaS outlines. */
+.ant-alert-info {
+  border-color: var(--hm-alert-info-border);
+}
+
+.ant-alert-success {
+  border-color: var(--hm-alert-success-border);
+}
+
+.ant-alert-warning {
+  border-color: var(--hm-alert-warning-border);
+}
+
+.ant-alert-error {
+  border-color: var(--hm-alert-error-border);
 }
 
 /* Each card heading starts on a punctum, the square note of chant, in burgundy. */
@@ -584,6 +616,12 @@ textarea {
   min-width: 0;
 }
 
+.practice-room-status-item + .practice-room-status-item::before {
+  content: '·';
+  margin-inline-end: 10px;
+  color: var(--hm-border-control);
+}
+
 .practice-room-status-item:first-child {
   color: var(--hm-text-primary);
   font-weight: 500;
@@ -759,7 +797,6 @@ textarea {
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--hm-text-on-brand);
-  view-transition-name: hm-brand;
 }
 
 .hm-top__end {
@@ -775,7 +812,18 @@ textarea {
   position: relative;
   display: flex;
   overflow-x: auto;
-  scrollbar-width: none;
+}
+
+.hm-areas::-webkit-scrollbar,
+.hm-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+@supports (scrollbar-width: none) {
+  .hm-areas,
+  .hm-tabs {
+    scrollbar-width: none;
+  }
 }
 
 .hm-areas {
@@ -895,14 +943,17 @@ textarea {
 
 /* Tabs cut by the band fade out at that edge, so it reads as "more this way". */
 .hm-tabs.has-more-end {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
   mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
 }
 
 .hm-tabs.has-more-start {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent);
   mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent);
 }
 
 .hm-tabs.has-more-start.has-more-end {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
   mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
 }
 
@@ -1978,10 +2029,10 @@ textarea {
 .landing-story {
   max-width: 1360px;
   margin-inline: auto;
-  padding: 120px 40px 96px;
+  padding: 88px 40px 80px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 460px;
-  gap: 96px;
+  gap: 80px;
   align-items: start;
 }
 
@@ -1989,29 +2040,29 @@ textarea {
   margin: 0;
   font-family: var(--hm-font-display);
   font-weight: 700;
-  font-size: 44px;
-  line-height: 1.18;
+  font-size: 42px;
+  line-height: 1.24;
   letter-spacing: -0.02em;
-  text-wrap: balance;
 }
 
 .ant-typography.landing-story__lead {
-  margin: 24px 0 0;
+  margin: 20px 0 0;
   max-width: 52ch;
   font-size: 17px;
   color: var(--hm-text-body);
 }
 
 .landing-story__chapters {
-  margin: 48px 0 0;
+  margin: 36px 0 0;
   padding: 0;
   list-style: none;
 }
 
 .landing-chapter {
-  min-height: 56vh;
+  min-height: clamp(200px, 28vh, 260px);
+  padding-block: 28px;
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-columns: 76px minmax(0, 1fr);
   align-items: center;
   border-top: 1px solid var(--hm-border-default);
 }
@@ -3112,11 +3163,15 @@ textarea {
 
 .song-next__row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
   gap: 8px;
   margin: 0;
   padding: 0;
   list-style-type: '';
+}
+
+.song-next__row > li:only-child {
+  max-width: 320px;
 }
 
 .song-next__item {
@@ -3269,6 +3324,60 @@ a.song-next__item:hover {
 .song-card:hover .song-card__page.is-blank,
 .song-card:focus-visible .song-card__page.is-blank {
   transform: none;
+}
+
+/* Score exists (PDF / MEI) without a raster thumbnail: an ivory octavo leaf with restrained ruled staves. */
+.song-card__page.is-manuscript,
+.song-peek__sheet.is-manuscript {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  aspect-ratio: 160 / 220;
+  background: #fff;
+  border: 1px solid var(--hm-border-default);
+  border-top: 2px solid var(--hm-gilt);
+  box-shadow: var(--hm-shadow-sm);
+}
+
+.song-card:hover .song-card__page.is-manuscript,
+.song-card:focus-visible .song-card__page.is-manuscript {
+  transform: translateY(-8px);
+}
+
+.song-score-leaf__head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--hm-area-liturgy-ink);
+}
+
+.song-score-leaf__staves {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.song-score-leaf__staves > i {
+  display: block;
+  height: 13px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--hm-border-control) 42%, transparent) 0,
+    color-mix(in srgb, var(--hm-border-control) 42%, transparent) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+
+.song-score-leaf__key {
+  margin-top: auto;
+  font-size: 11px;
+  color: var(--hm-text-muted);
 }
 
 .song-card__no {
@@ -3594,7 +3703,7 @@ a.song-usage__next:hover {
 
 /* Save confirmed: the row of the record just saved washes once (shared/motion/savedRow). */
 @keyframes hm-saved-wash {
-  from { background-color: color-mix(in srgb, var(--hm-action-primary) 16%, transparent); }
+  from { background-color: var(--hm-saved-wash-bg); }
 }
 
 [data-just-saved],
@@ -3974,6 +4083,22 @@ a.song-usage__next:hover {
   position: fixed;
   inset: 0;
   z-index: -1;
+  overflow: hidden;
+  background: var(--hm-surface-media);
+}
+
+.hm-auth__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hm-auth__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 38%, transparent 30%, rgb(28 12 17 / 0.56) 100%);
 }
 
 .hm-auth__brand.on-media-link {
@@ -4069,14 +4194,12 @@ h1.ant-typography.hm-auth__title {
   line-height: 1.28;
   letter-spacing: -0.02em;
   text-align: center;
-  text-wrap: balance;
   color: var(--hm-text-on-media);
 }
 
 .ant-typography.hm-auth__lead {
   margin: 8px 0 0;
   text-align: center;
-  text-wrap: balance;
   color: var(--hm-text-on-media-muted);
 }
 
@@ -4187,38 +4310,51 @@ h1.ant-typography.hm-auth__title {
 
 /* Compact window (join form): same 480px column, less air, so the submit button ends above a 768px fold. */
 .hm-auth--compact {
-  /* A smaller name and a shorter first row lift the crown (~157px → ~105px top at 1366×768). */
-  --name: min(140px, 13vw);
-  grid-template-rows: calc(20px + var(--name) * 0.48) max-content;
-  padding-block: 16px;
+  /* A smaller name and a shorter first row lift the crown (~157px → ~96px top at 1366×768). */
+  --name: min(132px, 12vw);
+  grid-template-rows: calc(16px + var(--name) * 0.44) max-content;
+  padding-block: 12px;
 }
 
 .hm-auth--compact .hm-auth__name {
-  top: 18px;
+  top: 14px;
 }
 
 .hm-auth--compact .hm-auth__window {
-  /* Also minus the 2 × 16px padding-block: the window bottom-aligns its content (safe flex-end), so a taller window
+  /* Also minus the 2 × 12px padding-block: the window bottom-aligns its content (safe flex-end), so a taller window
      would push the submit button past the fold and the frame past 100vh. */
-  min-height: calc(100vh - 32px - 20px - var(--name) * 0.48);
+  min-height: calc(100vh - 24px - 16px - var(--name) * 0.44);
+  border-radius: 220px 220px 0 0;
 }
 
 .hm-auth--compact .hm-auth__body {
-  /* Still clears the 240px crown. */
-  padding: 72px 32px 20px;
+  padding: 58px 32px 18px;
 }
 
 .hm-auth--compact h1.ant-typography.hm-auth__title {
-  font-size: 28px;
-  text-wrap: balance;
+  font-size: 26px;
+}
+
+.hm-auth--compact .ant-typography.hm-auth__lead {
+  margin-top: 4px;
+  font-size: 13px;
 }
 
 .hm-auth--compact .hm-auth__content {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .hm-auth--compact .ant-form-item {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+.hm-auth--compact .ant-form-item:has(.ant-input-textarea-show-count) {
+  margin-bottom: 16px;
+}
+
+.hm-auth--compact .hm-auth__foot {
+  margin-top: 14px;
+  padding-top: 12px;
 }
 
 /*
@@ -4227,14 +4363,20 @@ h1.ant-typography.hm-auth__title {
  * the form while the name settles smaller above it; going home, it closes back. Width is shared (480px), so the
  * window's picture is pinned to its top instead of being stretched.
  */
-.landing-hero__name,
-.hm-auth__name {
-  view-transition-name: hm-name;
-}
+@supports (view-transition-name: none) {
+  .hm-brand {
+    view-transition-name: hm-brand;
+  }
 
-.landing-hero__window,
-.hm-auth__window {
-  view-transition-name: hm-window;
+  .landing-hero__name,
+  .hm-auth__name {
+    view-transition-name: hm-name;
+  }
+
+  .landing-hero__window,
+  .hm-auth__window {
+    view-transition-name: hm-window;
+  }
 }
 
 ::view-transition-group(hm-window),
@@ -4304,7 +4446,7 @@ h1.ant-typography.hm-auth__title {
 }
 
 .hm-status--in-shell {
-  min-height: auto;
+  min-height: 0;
   padding: 48px 16px;
   background: transparent;
 }
@@ -4508,6 +4650,68 @@ h1.ant-typography.hm-status__title {
 
 /* Landing close (redesign-trang-chung): the page ends as it opens, the nave under the same arched window, which now
    holds the ways in, over a footer bar with the credits. */
+.landing-roles-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 48px;
+  align-items: end;
+}
+
+.landing-parish-plate {
+  margin: 0;
+  justify-self: end;
+  width: 100%;
+  max-width: 320px;
+}
+
+.landing-parish-plate__frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--hm-gilt);
+  background: var(--hm-surface-media);
+}
+
+.landing-parish-plate__frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 32%;
+}
+
+.landing-parish-plate figcaption {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--hm-text-on-chrome-muted);
+  text-align: end;
+}
+
+.landing-roles-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1023px) {
+  .landing-roles-head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .landing-parish-plate {
+    justify-self: start;
+  }
+
+  .landing-parish-plate figcaption {
+    text-align: start;
+  }
+
+  .landing-roles-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 24px;
+  }
+}
+
 .landing-close {
   position: relative;
   isolation: isolate;
@@ -4525,6 +4729,15 @@ h1.ant-typography.hm-status__title {
   position: absolute;
   inset: 0;
   z-index: -1;
+}
+
+.landing-close__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
 }
 
 .landing-close__window {
@@ -4549,13 +4762,11 @@ h2.ant-typography.landing-close__title {
   font-size: 32px;
   line-height: 1.28;
   letter-spacing: -0.02em;
-  text-wrap: balance;
   color: var(--hm-text-on-media);
 }
 
 .ant-typography.landing-close__lead {
   margin: 16px 0 32px;
-  text-wrap: balance;
   color: var(--hm-text-on-media-muted);
 }
 
@@ -4626,13 +4837,15 @@ h2.ant-typography.landing-close__title {
 }
 
 /* From the close, its window is the door into the sign-in (LandingPage sets html[data-door]). */
-html[data-door='close'] .landing-hero__window,
-html[data-door='close'] .landing-hero__name {
-  view-transition-name: none;
-}
+@supports (view-transition-name: none) {
+  html[data-door='close'] .landing-hero__window,
+  html[data-door='close'] .landing-hero__name {
+    view-transition-name: none;
+  }
 
-html[data-door='close'] .landing-close__window {
-  view-transition-name: hm-window;
+  html[data-door='close'] .landing-close__window {
+    view-transition-name: hm-window;
+  }
 }
 
 /*
@@ -4681,7 +4894,7 @@ html[data-door='close'] .landing-close__window {
 }
 
 .ct-order__item:hover {
-  background-color: color-mix(in srgb, var(--hm-gilt) 6%, transparent);
+  background-color: var(--hm-order-hover-bg);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4883,6 +5096,17 @@ html[data-door='close'] .landing-close__window {
   border-inline-start: 1px solid var(--hm-border-default);
 }
 
+.ctb-detail__note-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.ctb-detail__actions {
+  padding-top: 12px;
+  border-top: 1px solid var(--hm-border-default);
+}
+
 .ctb-detail__title {
   margin: 0;
   font-family: var(--hm-font-display);
@@ -5059,14 +5283,14 @@ html[data-door='close'] .landing-close__window {
 
 .priest-event--published {
   background: var(--hm-success-tint);
-  border-color: color-mix(in srgb, var(--hm-success) 35%, transparent);
+  border-color: var(--hm-event-published-border);
   color: var(--hm-success);
 }
 
 .priest-event--draft {
   background: var(--hm-warning-tint);
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--hm-warning) 45%, transparent);
+  border-color: var(--hm-event-draft-border);
   color: var(--hm-warning);
 }
 

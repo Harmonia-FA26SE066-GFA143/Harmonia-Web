@@ -2,6 +2,8 @@ import { Button, Typography } from 'antd'
 import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
+import naveAisle from '@/assets/images/brand/parish-nave-aisle.webp'
+import sanctuaryAltar from '@/assets/images/brand/parish-sanctuary-altar.webp'
 import { useContactEmail } from '@/features/settings'
 import { BrandMark, HeroNave, Icon, StatusTag, visuallyHidden, type StatusTagProps } from '@/shared/ui'
 import { colors, gold, media, seasonColors, spacing, spine, typography } from '@/styles/tokens'
@@ -97,7 +99,7 @@ export function LandingPage() {
               <canvas ref={aperture} className="landing-hero__light" />
             )}
             <div aria-hidden style={{ position: 'absolute', inset: 0, background: media.windowScrim }} />
-            <Typography.Title id="hero-heading" level={1} style={{ ...serif, position: 'relative', color: media.text, fontSize: 40, lineHeight: 1.08, textAlign: 'center', textWrap: 'balance' }}>
+            <Typography.Title id="hero-heading" level={1} style={{ ...serif, position: 'relative', color: media.text, fontSize: 34, lineHeight: 1.24, letterSpacing: '-0.02em', textAlign: 'center', textWrap: 'balance' }}>
               Mỗi Thánh lễ, <br />
               một ca đoàn sẵn sàng.
             </Typography.Title>
@@ -164,17 +166,27 @@ export function LandingPage() {
 
       {/* The close: the roles and the way in, on the songbook's bookcloth. */}
       <section aria-labelledby="roles-heading" style={{ background: spine.background, color: spine.text }}>
-        <div style={{ ...measure, paddingBlock: `${spacing.xxl * 2}px ${spacing.xxl}px` }}>
-          <Typography.Title id="roles-heading" level={2} style={{ ...serif, fontSize: 52, lineHeight: 1.08, color: media.text, maxWidth: 640 }}>
-            Mỗi người một việc, chung một lịch.
-          </Typography.Title>
-          <Typography.Paragraph style={{ margin: `${spacing.md}px 0 0`, fontSize: 17, color: spine.text }}>
-            Quyền được chia theo đúng trách nhiệm trong cộng đoàn.
-          </Typography.Paragraph>
-          <div style={{ marginTop: spacing.xxl + spacing.md, display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', borderTop: goldRule }}>
+        <div style={{ ...measure, paddingBlock: `${spacing.xxl * 2}px ${spacing.xxl * 1.5}px` }}>
+          <div className="landing-roles-head">
+            <div>
+              <Typography.Title id="roles-heading" level={2} style={{ ...serif, fontSize: 46, lineHeight: 1.18, letterSpacing: '-0.02em', color: media.text, maxWidth: 580 }}>
+                Mỗi người một việc, chung một lịch.
+              </Typography.Title>
+              <Typography.Paragraph style={{ margin: `${spacing.md}px 0 0`, fontSize: 17, lineHeight: 1.65, color: spine.text, maxWidth: '48ch' }}>
+                Quyền được chia theo đúng trách nhiệm trong cộng đoàn — từ cung thánh đến từng buổi tập hát của giáo xứ.
+              </Typography.Paragraph>
+            </div>
+            <figure className="landing-parish-plate">
+              <div className="landing-parish-plate__frame">
+                <img src={sanctuaryAltar} alt="Gian cung thánh trong nhà thờ giáo xứ" decoding="async" />
+              </div>
+              <figcaption>Gian cung thánh · Giáo xứ Tân Định</figcaption>
+            </figure>
+          </div>
+          <div className="landing-roles-grid" style={{ marginTop: spacing.xxl, borderTop: goldRule }}>
             {roles.map((role, index) => (
               <article key={role.title} style={{ padding: `${spacing.lg + spacing.xs}px ${spacing.lg}px 0`, paddingInlineStart: index ? spacing.lg : 0, borderLeft: index ? goldRule : undefined }}>
-                <Typography.Title level={3} style={{ ...serif, fontSize: 30, lineHeight: 1.15, color: media.text }}>
+                <Typography.Title level={3} style={{ ...serif, fontSize: 26, lineHeight: 1.24, letterSpacing: '-0.015em', color: media.text }}>
                   {role.title}
                 </Typography.Title>
                 <Typography.Text style={{ display: 'block', marginTop: spacing.xs, fontSize: 12, fontWeight: 500, color: spine.groupTitle }}>{role.where}</Typography.Text>
@@ -186,12 +198,12 @@ export function LandingPage() {
       </section>
 
       {/*
-        The close answers the opening: the nave again under the same arched window, now holding the ways in. Its
-        "Đăng nhập" opens this window into the sign-in form, as the hero's does.
+        The close answers the opening: the real parish nave along the center aisle under the same arched window, now holding
+        the ways in. Its "Đăng nhập" opens this window into the sign-in form, as the hero's does.
       */}
       <section aria-labelledby="contact-heading" className="landing-close">
         <div aria-hidden className="landing-close__nave">
-          <HeroNave still />
+          <img src={naveAisle} alt="" decoding="async" className="landing-close__photo" />
           <div style={{ position: 'absolute', inset: 0, background: media.heroScrim }} />
         </div>
         <div className="landing-close__window">
@@ -216,7 +228,7 @@ export function LandingPage() {
             <BrandMark size={24} />
             <span style={{ minWidth: 0, textWrap: 'balance' }}>Harmonia · Hệ thống điều phối ca đoàn và quản lý âm nhạc phụng vụ</span>
           </span>
-          <span>Trang thánh ca: National Gallery of Art, Washington</span>
+          <span>Không gian phụng vụ: Giáo xứ Tân Định</span>
         </footer>
       </section>
     </div>

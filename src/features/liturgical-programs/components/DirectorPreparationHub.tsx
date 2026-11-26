@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Col, Flex, Progress, Row, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Col, Flex, Progress, Row, Typography } from 'antd'
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
@@ -6,7 +6,7 @@ import { paths } from '@/app/router/paths'
 import { useSongList } from '@/features/song-lists'
 import { parseUtc } from '@/lib/api/dates'
 import { CardTitle, CREATE_ASSIGNMENT_LABEL, ErrorState, Icon, SectionSkeleton, StatusTag } from '@/shared/ui'
-import { colors, radius, sections, spacing, typography } from '@/styles/tokens'
+import { colors, radius, sections, spacing, typography, type SectionKey } from '@/styles/tokens'
 import { usePreparationStatus } from '../hooks/useEvents'
 import type { LiturgicalProgramDetail } from '../types'
 
@@ -20,30 +20,46 @@ interface DirectorPreparationHubProps {
 
 const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize }
 
-/** One preparation step: its name and state, what stands, and the buttons that move it on, at the card's foot. */
-function StepCard({ icon, title, tag, actions, children }: Readonly<{ icon: ReactNode; title: string; tag: ReactNode; actions: ReactNode; children: ReactNode }>) {
+/** One preparation step: its name and state on an ivory sheet accented by its area cloth, and the actions at its foot. */
+function StepCard({
+  area,
+  icon,
+  title,
+  tag,
+  actions,
+  children,
+}: Readonly<{ area: SectionKey; icon: ReactNode; title: string; tag: ReactNode; actions: ReactNode; children: ReactNode }>) {
+  const tone = sections[area]
   return (
     <Col xs={24} lg={12}>
-      <Card
-        size="small"
-        variant="outlined"
-        style={{ height: '100%', borderRadius: radius.md, background: colors.softSurface, display: 'flex', flexDirection: 'column' }}
-        styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
+      <div
+        style={{
+          height: '100%',
+          boxSizing: 'border-box',
+          padding: `${spacing.md}px ${spacing.md + 4}px`,
+          borderRadius: radius.md,
+          background: colors.ivory,
+          border: `1px solid ${colors.border}`,
+          borderTop: `2px solid ${tone.cloth}`,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
       >
         <div>
           <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
-            <Flex align="center" gap={spacing.xs} style={{ color: colors.primary, fontSize: typography.cardHeading.fontSize }}>
+            <Flex align="center" gap={spacing.xs} style={{ color: tone.ink, fontSize: typography.cardHeading.fontSize }}>
               {icon}
-              <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
+              <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize, color: colors.textPrimary }}>
                 {title}
               </Typography.Text>
             </Flex>
             {tag}
           </Flex>
-          <div style={{ minHeight: 46 }}>{children}</div>
+          <div style={{ minHeight: 44 }}>{children}</div>
         </div>
-        <div style={{ marginTop: spacing.md }}>{actions}</div>
-      </Card>
+        <div style={{ marginTop: spacing.md, paddingTop: spacing.sm, borderTop: `1px solid ${colors.border}` }}>{actions}</div>
+      </div>
     </Col>
   )
 }
@@ -173,18 +189,18 @@ function ParticipationStep({ programId, prep, onNavigate }: Readonly<{ programId
     ? prep.participation.invited + prep.participation.confirmed + prep.participation.declined + prep.participation.unsure
     : 0
   const confirmedCount = prep?.participation.confirmed ?? 0
-  let tag: ReactNode = <StatusTag color="gold">Chờ phản hồi</StatusTag>
-  if (totalInvited === 0) tag = <Tag style={{ marginInlineEnd: 0 }}>Chưa gửi</Tag>
-  else if (confirmedCount > 0) tag = <StatusTag color="green">{confirmedCount} đã xác nhận</StatusTag>
+  let tag: ReactNode = <StatusTag color="gold" style={{ marginInlineEnd: 0 }}>Chờ phản hồi</StatusTag>
+  if (totalInvited === 0) tag = <StatusTag mark="draft" style={{ marginInlineEnd: 0 }}>Chưa gửi</StatusTag>
+  else if (confirmedCount > 0) tag = <StatusTag color="green" style={{ marginInlineEnd: 0 }}>{confirmedCount} đã xác nhận</StatusTag>
 
   return (
     <StepCard
+      area="liturgy"
       icon={<Icon name="participation" />}
       title="Xác nhận tham gia"
       tag={tag}
       actions={
         <Button
-          block
           icon={<Icon name="arrow-right" />}
           iconPlacement="end"
           onClick={() => onNavigate(`${paths.director.participation}?programId=${programId}`)}
@@ -225,28 +241,27 @@ function RehearsalStep({ programId, prep, onNavigate }: Readonly<{ programId: st
 
   return (
     <StepCard
+      area="rehearsal"
       icon={<Icon name="rehearsal" />}
       title="Buổi tập và điểm danh"
       tag={
         rehearsalsTotal === 0 ? (
-          <Tag style={{ marginInlineEnd: 0 }}>Chưa có lịch</Tag>
+          <StatusTag mark="draft" style={{ marginInlineEnd: 0 }}>Chưa có lịch</StatusTag>
         ) : (
-          <StatusTag color="processing">
+          <StatusTag color="processing" style={{ marginInlineEnd: 0 }}>
             {rehearsalsHeld}/{rehearsalsTotal} buổi đã tập
           </StatusTag>
         )
       }
       actions={
-        <Flex gap={spacing.xs}>
+        <Flex wrap gap={spacing.xs}>
           <Button
-            style={{ flex: 1 }}
             icon={<Icon name="calendar" />}
             onClick={() => onNavigate(`${paths.director.rehearsals}?programId=${programId}`)}
           >
             Lịch tập
           </Button>
           <Button
-            style={{ flex: 1 }}
             onClick={() => onNavigate(`${paths.director.attendance}?programId=${programId}`)}
           >
             Điểm danh
@@ -279,19 +294,19 @@ function PracticeStep({ programId, prep, onNavigate }: Readonly<{ programId: str
   const practicePassed = prep?.practicePassed ?? 0
   const practiceOverdue = prep?.practiceOverdue ?? 0
   const practiceRate = practiceExpected > 0 ? Math.round((practicePassed / practiceExpected) * 100) : undefined
-  let tag: ReactNode = <StatusTag color="green">{practicePassed}/{practiceExpected} đạt</StatusTag>
-  if (practiceExpected === 0) tag = <Tag style={{ marginInlineEnd: 0 }}>Chưa giao bài</Tag>
-  else if (practiceOverdue > 0) tag = <StatusTag color="red">{practiceOverdue} quá hạn</StatusTag>
+  let tag: ReactNode = <StatusTag color="green" style={{ marginInlineEnd: 0 }}>{practicePassed}/{practiceExpected} đạt</StatusTag>
+  if (practiceExpected === 0) tag = <StatusTag mark="draft" style={{ marginInlineEnd: 0 }}>Chưa giao bài</StatusTag>
+  else if (practiceOverdue > 0) tag = <StatusTag color="red" style={{ marginInlineEnd: 0 }}>{practiceOverdue} quá hạn</StatusTag>
 
   return (
     <StepCard
+      area="practice"
       icon={<Icon name="practice" />}
       title="Bài tập và luyện tập"
       tag={tag}
       actions={
-        <Flex gap={spacing.xs}>
+        <Flex wrap gap={spacing.xs}>
           <Button
-            style={{ flex: 1 }}
             icon={<Icon name="arrow-right" />}
             iconPlacement="end"
             onClick={() => onNavigate(`${paths.director.practice}?programId=${programId}&tab=progress`)}
@@ -299,7 +314,6 @@ function PracticeStep({ programId, prep, onNavigate }: Readonly<{ programId: str
             Xem tiến độ
           </Button>
           <Button
-            style={{ flex: 1 }}
             onClick={() => onNavigate(`${paths.director.practiceNew}?programId=${programId}`)}
           >
             {CREATE_ASSIGNMENT_LABEL}
@@ -346,18 +360,18 @@ function RosterStep({
   const rosterFinalized = prep?.rosterFinalized ?? false
   const activeAssignments = prep?.rosterActiveAssignments ?? 0
   const shortages = prep?.rosterShortages ?? []
-  let tag: ReactNode = <StatusTag color="processing">Đang phân công</StatusTag>
-  if (!songListApproved) tag = <Tag style={{ marginInlineEnd: 0 }}>Chờ duyệt bài hát</Tag>
-  else if (rosterFinalized) tag = <StatusTag color="green">Đã chốt phân công</StatusTag>
+  let tag: ReactNode = <StatusTag color="processing" style={{ marginInlineEnd: 0 }}>Đang phân công</StatusTag>
+  if (!songListApproved) tag = <StatusTag mark="draft" style={{ marginInlineEnd: 0 }}>Chờ duyệt bài hát</StatusTag>
+  else if (rosterFinalized) tag = <StatusTag color="green" style={{ marginInlineEnd: 0 }}>Đã chốt phân công</StatusTag>
 
   return (
     <StepCard
+      area="roster"
       icon={<Icon name="roster" />}
       title="Phân công phục vụ"
       tag={tag}
       actions={
         <Button
-          block
           type={songListApproved ? 'primary' : 'default'}
           icon={<Icon name="arrow-right" />}
           iconPlacement="end"

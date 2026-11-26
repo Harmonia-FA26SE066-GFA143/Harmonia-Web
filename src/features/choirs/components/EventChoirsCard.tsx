@@ -1,7 +1,7 @@
-import { Alert, App, Button, Card, Flex, Input, Select, Tag, Typography } from 'antd'
+import { Alert, App, Button, Card, Flex, Input, Select, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { CANCEL_LABEL, CardTitle, ErrorState, Form, Icon, SectionSkeleton, SELECT_POPUP_PROPS } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { colors, radius, sections, spacing } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { useChoirs, useEventChoirs, useUpdateEventChoirs } from '../hooks/useChoirs'
 import { choirOptionLabel } from '../leadChoir'
@@ -113,23 +113,40 @@ export function EventChoirsCard({ eventId, canEdit = false, locked = false, publ
           {current.length > 0 ? (
             <Flex vertical gap={spacing.xs}>
               {current.map((choir) => (
-                <Flex key={choir.choirId} align="center" gap={spacing.sm} wrap>
-                  {/* Lead is said in words, not gold: gold is never a status (DESIGN.md, The Gold Is Decoration Rule). */}
-                  <Tag style={{ marginInlineEnd: 0, fontWeight: choir.isLead ? 600 : undefined }}>
-                    {choir.name}
-                    {choir.isLead && ' · Phụ trách'}
-                    {choir.directorId ? choir.directorName && ` (${choir.directorName})` : ' (chưa có ca trưởng)'}
-                  </Tag>
-                  {choir.substituteDirectorName && (
-                    <Typography.Text>Ca trưởng thay thế: {choir.substituteDirectorName}</Typography.Text>
+                <div
+                  key={choir.choirId}
+                  style={{
+                    padding: `${spacing.sm}px ${spacing.md - 4}px`,
+                    borderRadius: radius.sm,
+                    background: choir.isLead ? sections.liturgy.tint : colors.ivory,
+                    border: `1px solid ${choir.isLead ? sections.liturgy.border : colors.border}`,
+                  }}
+                >
+                  <Flex align="center" justify="space-between" gap={spacing.sm} wrap>
+                    <Flex align="center" gap={spacing.xs} style={{ minWidth: 0 }}>
+                      <Icon name="choir" style={{ color: choir.isLead ? sections.liturgy.ink : colors.textMuted }} />
+                      {/* Lead is said in words, not gold: gold is never a status (DESIGN.md, The Gold Is Decoration Rule). */}
+                      <Typography.Text style={{ fontWeight: choir.isLead ? 600 : 500, color: choir.isLead ? sections.liturgy.ink : colors.textPrimary }}>
+                        {choir.name}
+                        {choir.isLead && ' · Phụ trách'}
+                        {choir.directorId ? choir.directorName && ` (${choir.directorName})` : ' (chưa có ca trưởng)'}
+                      </Typography.Text>
+                    </Flex>
+                    {canEdit && !locked && (
+                      <Button size="small" type="link" style={{ paddingInline: 0 }} onClick={() => setSubstituteFor(choir)} aria-label={`Ca trưởng thay thế cho ${choir.name}`}>
+                        {choir.substituteDirectorId ? 'Đổi ca trưởng thay thế' : 'Đặt ca trưởng thay thế'}
+                      </Button>
+                    )}
+                  </Flex>
+                  {(choir.substituteDirectorName || choir.reason) && (
+                    <Flex wrap gap={spacing.sm} style={{ marginTop: 4, fontSize: 13 }}>
+                      {choir.substituteDirectorName && (
+                        <Typography.Text style={{ fontSize: 13 }}>Ca trưởng thay thế: {choir.substituteDirectorName}</Typography.Text>
+                      )}
+                      {choir.reason && <Typography.Text style={{ ...muted, fontSize: 13 }}>Lý do: {choir.reason}</Typography.Text>}
+                    </Flex>
                   )}
-                  {choir.reason && <Typography.Text style={muted}>Lý do: {choir.reason}</Typography.Text>}
-                  {canEdit && !locked && (
-                    <Button size="small" type="link" onClick={() => setSubstituteFor(choir)} aria-label={`Ca trưởng thay thế cho ${choir.name}`}>
-                      {choir.substituteDirectorId ? 'Đổi ca trưởng thay thế' : 'Đặt ca trưởng thay thế'}
-                    </Button>
-                  )}
-                </Flex>
+                </div>
               ))}
             </Flex>
           ) : (

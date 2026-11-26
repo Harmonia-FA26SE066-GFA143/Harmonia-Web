@@ -52,7 +52,13 @@ export function SongQuickLook({ song, number, part }: Readonly<{ song: Song; num
     <aside className="song-peek" aria-label="Xem nhanh bài hát">
       <div key={song.id} className="song-peek__in">
         <div className="song-peek__page" aria-hidden>
-          <ScorePage url={song.sheetMusicThumbnailUrl} className="song-peek__sheet" />
+          <ScorePage
+            url={song.sheetMusicThumbnailUrl}
+            hasScore={(song.materialCounts?.sheetMusic ?? 0) > 0 || (song.materialCounts?.interactiveScore ?? 0) > 0}
+            interactive={(song.materialCounts?.interactiveScore ?? 0) > 0}
+            keySignature={song.musicalKey}
+            className="song-peek__sheet"
+          />
         </div>
         <div className="song-peek__body">
           <span className="song-card__meta">Mục {number}{part ? ` · ${part}` : ''}</span>

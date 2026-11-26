@@ -196,7 +196,7 @@ describe('ParticipationPage', () => {
     expect(screen.getByText(/Cập nhật lúc \d{2}:\d{2}/)).toBeInTheDocument()
     expect(screen.getByText('Tất cả (3)')).toBeInTheDocument()
     // Tag text is darker than the Ant Design preset, which is below 4.5:1 for green and gold.
-    expect(screen.getByText('Xác nhận', { selector: '.ant-tag' })).toHaveStyle({ color: '#237804' })
+    expect(screen.getByText('Xác nhận', { selector: '.ant-tag' })).toHaveStyle({ color: '#24503f' })
     expect(screen.getByText('Chưa chắc chắn', { selector: '.ant-tag' })).toHaveStyle({ color: '#7a4f0c' })
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Tìm thành viên' }), { target: { value: 'Soprano' } })
