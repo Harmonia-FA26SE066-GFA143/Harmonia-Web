@@ -1,7 +1,7 @@
-import { App, DatePicker, Input } from 'antd'
+import { App, Button, DatePicker, Input, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { CANCEL_LABEL, Form, FormDrawer, SELECT_POPUP_PROPS } from '@/shared/ui'
-import { component } from '@/styles/tokens'
+import { colors, component, spacing } from '@/styles/tokens'
 import { useUpdateAssignment } from '../hooks/usePractice'
 import { practiceErrorMessage } from '../practiceErrors'
 import type { PracticeAssignment } from '../types'
@@ -60,12 +60,13 @@ export function AssignmentEditDrawer({ assignment, onClose }: Readonly<{ assignm
             <Input />
           </Form.Item>
           <Form.Item label="Hướng dẫn" name="instruction" rules={[{ max: 1000, message: 'Tối đa 1000 ký tự.' }]}>
-            <Input.TextArea autoSize={{ minRows: 3, maxRows: 8 }} />
+            <Input.TextArea rows={3} showCount maxLength={1000} placeholder="Hướng dẫn luyện tập cho ca viên" />
           </Form.Item>
           <Form.Item
             label="Hạn nộp"
             name="dueDate"
             extra="Người được giao và tài liệu giữ nguyên như lúc giao."
+            style={{ marginBottom: spacing.xs }}
             rules={[
               { required: true, message: 'Vui lòng chọn hạn nộp.' },
               {
@@ -84,6 +85,18 @@ export function AssignmentEditDrawer({ assignment, onClose }: Readonly<{ assignm
               style={{ width: '100%' }}
             />
           </Form.Item>
+          <div className="hm-quick-picks">
+            <Typography.Text style={{ color: colors.textMuted, fontSize: 12 }}>Gia hạn nhanh:</Typography.Text>
+            <Button size="small" onClick={() => form.setFieldValue('dueDate', dayjs().add(1, 'day').hour(21).minute(0).second(0).millisecond(0))}>
+              Tối mai · 21:00
+            </Button>
+            <Button size="small" onClick={() => form.setFieldValue('dueDate', dayjs().add(3, 'day').hour(21).minute(0).second(0).millisecond(0))}>
+              +3 ngày · 21:00
+            </Button>
+            <Button size="small" onClick={() => form.setFieldValue('dueDate', dayjs().add(7, 'day').hour(21).minute(0).second(0).millisecond(0))}>
+              +7 ngày · 21:00
+            </Button>
+          </div>
         </Form>
       )}
     </FormDrawer>

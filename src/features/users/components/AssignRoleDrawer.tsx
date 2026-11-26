@@ -47,16 +47,17 @@ export function AssignRoleDrawer({ account, saving = false, onSubmit, onCancel }
       )}
     >
       {account && (
-        <Descriptions
-          className="hm-key-value"
-          size="small"
-          column={1}
-          style={{ marginBottom: spacing.md }}
-          items={[
-            { key: 'name', label: 'Tài khoản', children: account.fullName ? `${account.fullName} (${account.email})` : account.email },
-            { key: 'current', label: 'Vai trò hiện tại', children: roleLabels[account.role] },
-          ]}
-        />
+        <div className="hm-form-context">
+          <Descriptions
+            className="hm-key-value"
+            size="small"
+            column={1}
+            items={[
+              { key: 'name', label: 'Tài khoản', children: account.fullName ? `${account.fullName} (${account.email})` : account.email },
+              { key: 'current', label: 'Vai trò hiện tại', children: roleLabels[account.role] },
+            ]}
+          />
+        </div>
       )}
       <Form.Item
         label="Vai trò mới"
@@ -64,9 +65,9 @@ export function AssignRoleDrawer({ account, saving = false, onSubmit, onCancel }
         rules={[{ required: true, message: 'Vui lòng chọn vai trò.' }]}
         extra="Người dùng sẽ phải đăng nhập lại sau khi đổi vai trò."
       >
-        <Radio.Group style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
+        <Radio.Group style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs, width: '100%' }}>
           {assignableRoles.map((role) => (
-            <Radio key={role} value={role}>
+            <Radio key={role} value={role} className="hm-choice-card">
               <Flex vertical>
                 <Flex align="center" gap={spacing.xs}>
                   <Typography.Text strong>{roleLabels[role]}</Typography.Text>

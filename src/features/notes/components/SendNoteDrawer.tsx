@@ -1,4 +1,4 @@
-import { DatePicker, Input, Select } from 'antd'
+import { DatePicker, Flex, Input, Select } from 'antd'
 import dayjs from 'dayjs'
 import { useEventNames, useEvents } from '@/features/liturgical-programs'
 import { vietnamToday } from '@/lib/api/dates'
@@ -6,7 +6,7 @@ import { dateOnlyFieldProps } from '@/shared/utils/dateField'
 import { useNoteRecipients } from '../hooks/useNotes'
 import type { DirectorNoteValues } from '../types'
 import { CANCEL_LABEL, Form, FormDrawer, SELECT_POPUP_PROPS } from '@/shared/ui'
-import { component } from '@/styles/tokens'
+import { component, spacing } from '@/styles/tokens'
 
 export interface SendNoteDrawerProps {
   open: boolean
@@ -37,37 +37,41 @@ function NoteFields() {
           options={(recipients.data ?? []).map(({ id, fullName, email }) => ({ value: id, label: fullName || email }))}
         />
       </Form.Item>
-      <Form.Item label="Ngày" name="noteDate" extra="Chọn ngày, sự kiện hoặc cả hai." {...dateOnlyFieldProps}>
-        <DatePicker getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer} placement="bottomLeft" format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%', maxWidth: 220 }} />
-      </Form.Item>
-      <Form.Item
-        label="Sự kiện"
-        name="eventId"
-        dependencies={['noteDate']}
-        rules={[
-          ({ getFieldValue }) => ({
-            validator: (_, value?: string) =>
-              value || getFieldValue('noteDate')
-                ? Promise.resolve()
-                : Promise.reject(new Error('Chọn ngày hoặc sự kiện cho ghi chú.')),
-          }),
-        ]}
-      >
-        <Select
-          {...SELECT_POPUP_PROPS}
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          placeholder="Các sự kiện từ hôm nay"
-          loading={events.isPending}
-          options={(events.data?.items ?? [])
-            .filter((event) => event.status !== 'cancelled')
-            .map((event) => {
-              const startsAt = dayjs(`${event.date}T${event.time}`).format('DD/MM/YYYY HH:mm')
-              return { value: event.id, label: `${eventName(event)} · ${startsAt}` }
-            })}
-        />
-      </Form.Item>
+      <Flex wrap gap={spacing.md}>
+        <Form.Item label="Ngày" name="noteDate" {...dateOnlyFieldProps} style={{ flex: '0 0 188px' }}>
+          <DatePicker getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer} placement="bottomLeft" format="DD/MM/YYYY" placeholder="Chọn ngày" style={{ width: '100%' }} />
+        </Form.Item>
+        <Form.Item
+          label="Sự kiện"
+          name="eventId"
+          extra="Chọn ngày, sự kiện hoặc cả hai."
+          dependencies={['noteDate']}
+          style={{ flex: '1 1 280px' }}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator: (_, value?: string) =>
+                value || getFieldValue('noteDate')
+                  ? Promise.resolve()
+                  : Promise.reject(new Error('Chọn ngày hoặc sự kiện cho ghi chú.')),
+            }),
+          ]}
+        >
+          <Select
+            {...SELECT_POPUP_PROPS}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Các sự kiện từ hôm nay"
+            loading={events.isPending}
+            options={(events.data?.items ?? [])
+              .filter((event) => event.status !== 'cancelled')
+              .map((event) => {
+                const startsAt = dayjs(`${event.date}T${event.time}`).format('DD/MM/YYYY HH:mm')
+                return { value: event.id, label: `${eventName(event)} · ${startsAt}` }
+              })}
+          />
+        </Form.Item>
+      </Flex>
       <Form.Item
         label="Nội dung"
         name="content"
@@ -76,7 +80,7 @@ function NoteFields() {
           { max: 2000, message: 'Nội dung tối đa 2000 ký tự.' },
         ]}
       >
-        <Input.TextArea rows={5} showCount maxLength={2000} />
+        <Input.TextArea rows={5} showCount maxLength={2000} placeholder="Nhập lưu ý hoặc yêu cầu gửi tới Ca trưởng…" />
       </Form.Item>
     </>
   )
@@ -92,7 +96,7 @@ export function SendNoteDrawer({ open, saving = false, onSubmit, onCancel }: Rea
       open={open}
       title="Gửi ghi chú cho Ca trưởng"
       okText="Gửi ghi chú"
-      size={component.drawer.sm}
+      size={component.drawer.md}
       cancelText={CANCEL_LABEL}
       okButtonProps={{ htmlType: 'submit', loading: saving }}
       cancelButtonProps={{ disabled: saving }}

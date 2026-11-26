@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { useState } from 'react'
 import { useLookup } from '@/features/system-categories'
 import { EmptyState, ErrorState, FormDrawer, SectionSkeleton, SELECT_POPUP_PROPS } from '@/shared/ui'
-import { colors, component, radius, spacing, typography } from '@/styles/tokens'
+import { colors, component, spacing, typography } from '@/styles/tokens'
 import { useSongSuggestions } from '../hooks/useSongList'
 import type { SongSuggestion } from '../types'
 
@@ -98,29 +98,23 @@ export function SongSuggestionDrawer({ programId, takenBySlot, onAdd, onCancel }
           />
         )}
         {available.length > 0 && (
-          <Checkbox.Group value={picked} onChange={setPicked} style={{ width: '100%' }}>
-            <Flex vertical gap={spacing.xs} style={{ width: '100%', maxHeight: 380, overflowY: 'auto' }}>
-              {available.map((song) => (
-                <Checkbox
-                  key={song.songId}
-                  value={song.songId}
-                  style={{ padding: spacing.sm, border: `1px solid ${colors.border}`, borderRadius: radius.md, marginInlineStart: 0 }}
-                >
-                  <Flex vertical gap={2}>
-                    <Typography.Text strong>{song.title}</Typography.Text>
-                    {song.composer && <Typography.Text style={muted}>{song.composer}</Typography.Text>}
-                    <Flex wrap align="center" gap={4}>
-                      {reasons(song).map((reason) => (
-                        <Tag key={reason} color="green" style={{ marginInlineEnd: 0 }}>
-                          {reason}
-                        </Tag>
-                      ))}
-                      <Typography.Text style={muted}>· {usageText(song)}</Typography.Text>
-                    </Flex>
+          <Checkbox.Group value={picked} onChange={setPicked} className="hm-choice-list">
+            {available.map((song) => (
+              <Checkbox key={song.songId} value={song.songId} className="hm-choice-card">
+                <Flex vertical gap={2}>
+                  <Typography.Text strong>{song.title}</Typography.Text>
+                  {song.composer && <Typography.Text style={muted}>{song.composer}</Typography.Text>}
+                  <Flex wrap align="center" gap={4}>
+                    {reasons(song).map((reason) => (
+                      <Tag key={reason} color="green" style={{ marginInlineEnd: 0 }}>
+                        {reason}
+                      </Tag>
+                    ))}
+                    <Typography.Text style={muted}>· {usageText(song)}</Typography.Text>
                   </Flex>
-                </Checkbox>
-              ))}
-            </Flex>
+                </Flex>
+              </Checkbox>
+            ))}
           </Checkbox.Group>
         )}
         {more > 0 && (

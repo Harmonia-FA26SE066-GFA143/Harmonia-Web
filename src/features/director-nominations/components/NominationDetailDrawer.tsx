@@ -170,9 +170,11 @@ function DecisionDialog({ dialog, item, onClose }: Readonly<{ dialog: Dialog; it
         )}
         {dialog.kind === 'appoint' && (
           <>
-            <Typography.Paragraph type="secondary">
-              Tài khoản sẽ đổi sang vai trò Ca trưởng, phiên đăng nhập bị thu hồi, người này rời các ca đoàn với tư cách ca viên, và thay Ca trưởng hiện tại của ca đoàn được chọn.
-            </Typography.Paragraph>
+            <div className="hm-form-context">
+              <Typography.Paragraph type="secondary" style={{ margin: 0 }}>
+                Tài khoản sẽ đổi sang vai trò Ca trưởng, phiên đăng nhập bị thu hồi, người này rời các ca đoàn với tư cách ca viên, và thay Ca trưởng hiện tại của ca đoàn được chọn.
+              </Typography.Paragraph>
+            </div>
             <Form.Item name="choirId" label="Ca đoàn" initialValue={item.proposedChoirId ?? undefined} extra={item.proposedChoirName ? `Đề xuất: ${item.proposedChoirName}` : undefined} rules={[{ required: true, message: 'Vui lòng chọn ca đoàn.' }]}>
               <Select {...SELECT_POPUP_PROPS} loading={choirs.isPending} placeholder="Chọn ca đoàn đang hoạt động" options={choirs.data?.filter((choir) => choir.isActive).map((choir) => ({ value: choir.id, label: choir.directorName ? `${choir.name} (Ca trưởng hiện tại: ${choir.directorName})` : choir.name }))} />
             </Form.Item>
@@ -180,23 +182,25 @@ function DecisionDialog({ dialog, item, onClose }: Readonly<{ dialog: Dialog; it
         )}
         {dialog.kind === 'training' && (
           <>
-            <Form.Item name="courseName" label="Tên khoá học" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập tên khoá học.' }, { max: 200, message: 'Vui lòng nhập tối đa 200 ký tự.' }]}><Input /></Form.Item>
-            <Form.Item name="organizer" label="Đơn vị tổ chức" rules={[{ max: 200, message: 'Vui lòng nhập tối đa 200 ký tự.' }]}><Input /></Form.Item>
-            <Form.Item name="startDate" label="Ngày bắt đầu" rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu.' }]}><DatePicker {...SELECT_POPUP_PROPS} format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item>
-            <Form.Item
-              name="endDate"
-              label="Ngày kết thúc"
-              dependencies={['startDate']}
-              rules={[{ validator: (_, end: Dayjs | null | undefined) => { const start: Dayjs | undefined = form.getFieldValue('startDate'); return end && start && end.isBefore(start, 'day') ? Promise.reject(new Error('Ngày kết thúc cần từ ngày bắt đầu trở đi.')) : Promise.resolve() } }]}
-            >
-              <DatePicker {...SELECT_POPUP_PROPS} format="DD/MM/YYYY" style={{ width: '100%' }} />
-            </Form.Item>
+            <Form.Item name="courseName" label="Tên khoá học" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập tên khoá học.' }, { max: 200, message: 'Vui lòng nhập tối đa 200 ký tự.' }]}><Input placeholder="Ví dụ: Khoá Ca trưởng Giáo phận 2026" /></Form.Item>
+            <Form.Item name="organizer" label="Đơn vị tổ chức" rules={[{ max: 200, message: 'Vui lòng nhập tối đa 200 ký tự.' }]}><Input placeholder="Ví dụ: Ban Thánh nhạc Giáo phận" /></Form.Item>
+            <div className="hm-form-row-2">
+              <Form.Item name="startDate" label="Ngày bắt đầu" rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu.' }]}><DatePicker {...SELECT_POPUP_PROPS} format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item>
+              <Form.Item
+                name="endDate"
+                label="Ngày kết thúc"
+                dependencies={['startDate']}
+                rules={[{ validator: (_, end: Dayjs | null | undefined) => { const start: Dayjs | undefined = form.getFieldValue('startDate'); return end && start && end.isBefore(start, 'day') ? Promise.reject(new Error('Ngày kết thúc cần từ ngày bắt đầu trở đi.')) : Promise.resolve() } }]}
+              >
+                <DatePicker {...SELECT_POPUP_PROPS} format="DD/MM/YYYY" style={{ width: '100%' }} />
+              </Form.Item>
+            </div>
           </>
         )}
         {dialog.kind === 'result' && (
           <>
             <Form.Item name="result" label="Kết quả" rules={[{ required: true, message: 'Vui lòng chọn kết quả.' }]}>
-              <Radio.Group options={[{ value: 'Passed', label: 'Đạt' }, { value: 'Failed', label: 'Không đạt' }]} />
+              <Radio.Group optionType="button" options={[{ value: 'Passed', label: 'Đạt' }, { value: 'Failed', label: 'Không đạt' }]} />
             </Form.Item>
             <Form.Item name="note" label="Ghi chú" rules={[{ max: 500, message: 'Vui lòng nhập tối đa 500 ký tự.' }]}><Input.TextArea rows={3} showCount maxLength={500} /></Form.Item>
           </>

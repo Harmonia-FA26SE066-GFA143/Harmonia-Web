@@ -1,5 +1,6 @@
-import { DatePicker, Radio, Select, Typography } from 'antd'
+import { Button, DatePicker, Radio, Select, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
+import { vietnamToday } from '@/lib/api/dates'
 import { colors } from '@/styles/tokens'
 import { adminReportKinds, reportDefinitions } from '../reportDefinitions'
 import { reportFormatLabels, type AdminReportKind, type ReportExportRequest, type ReportFilters, type ReportFormat } from '../types'
@@ -38,6 +39,9 @@ export function ExportReportDrawer({
   onSubmit,
   onCancel,
 }: Readonly<ExportReportDrawerProps>) {
+  const [form] = Form.useForm<ExportFormValues>()
+  const currentMonth = dayjs(vietnamToday()).startOf('month')
+
   return (
     <FormDrawer
       open={open}
@@ -49,6 +53,7 @@ export function ExportReportDrawer({
       destroyOnHidden
       drawerRender={(dom) => (
         <Form<ExportFormValues>
+          form={form}
           layout="vertical"
           disabled={exporting}
           initialValues={{
@@ -78,6 +83,7 @@ export function ExportReportDrawer({
       </Form.Item>
       <Form.Item label="Định dạng" name="format">
         <Radio.Group
+          optionType="button"
           options={(Object.keys(reportFormatLabels) as ReportFormat[]).map((format) => ({
             value: format,
             label: reportFormatLabels[format],
@@ -86,6 +92,7 @@ export function ExportReportDrawer({
       </Form.Item>
       <Form.Item label="Phạm vi" name="scopeType">
         <Radio.Group
+          optionType="button"
           options={[
             { value: 'month', label: 'Theo tháng' },
             { value: 'season', label: 'Theo mùa phụng vụ' },
@@ -99,16 +106,37 @@ export function ExportReportDrawer({
               <Select {...SELECT_POPUP_PROPS} showSearch optionFilterProp="label" placeholder="Chọn mùa phụng vụ" options={seasons} />
             </Form.Item>
           ) : (
-            <Form.Item label="Tháng" name="month" rules={[{ required: true, message: 'Vui lòng chọn tháng.' }]}>
+            <Form.Item
+              label="Tháng"
+              name="month"
+              rules={[{ required: true, message: 'Vui lòng chọn tháng.' }]}
+              extra={
+                <span className="hm-quick-picks">
+                  <Button size="small" type="dashed" disabled={exporting} onClick={() => form.setFieldValue('month', currentMonth)}>
+                    Tháng này
+                  </Button>
+                  <Button
+                    size="small"
+                    type="dashed"
+                    disabled={exporting}
+                    onClick={() => form.setFieldValue('month', currentMonth.subtract(1, 'month'))}
+                  >
+                    Tháng trước
+                  </Button>
+                </span>
+              }
+            >
               <DatePicker {...SELECT_POPUP_PROPS} picker="month" format="MM/YYYY" placeholder="Chọn tháng" style={{ width: '100%' }} />
             </Form.Item>
           )
         }
       </Form.Item>
-      <Typography.Paragraph style={{ margin: 0, color: colors.textMuted }}>
-        File gồm mọi dòng của báo cáo trong phạm vi đã chọn và được lưu vào lịch sử xuất.
-        {filters.choirId && ' Điểm danh, xác nhận tham gia và bài tập chỉ gồm ca viên của ca đoàn đang lọc trên trang.'}
-      </Typography.Paragraph>
+      <div className="hm-form-context" style={{ marginBottom: 0 }}>
+        <Typography.Paragraph style={{ margin: 0, color: colors.textMuted }}>
+          File gồm mọi dòng của báo cáo trong phạm vi đã chọn và được lưu vào lịch sử xuất.
+          {filters.choirId && ' Điểm danh, xác nhận tham gia và bài tập chỉ gồm ca viên của ca đoàn đang lọc trên trang.'}
+        </Typography.Paragraph>
+      </div>
     </FormDrawer>
   )
 }

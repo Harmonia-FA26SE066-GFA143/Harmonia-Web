@@ -111,10 +111,12 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
       )}
     >
       {fileName && (
-        <Typography.Paragraph type="secondary" ellipsis={{ tooltip: fileName }}>
-          Tệp: {fileName}
-          {editing && ` (${materialKindLabels[editing.kind]}; muốn đổi tệp thì dùng nút Thay file)`}
-        </Typography.Paragraph>
+        <div className="hm-form-context">
+          <Typography.Paragraph type="secondary" ellipsis={{ tooltip: fileName }} style={{ margin: 0 }}>
+            Tệp: {fileName}
+            {editing && ` (${materialKindLabels[editing.kind]}; muốn đổi tệp thì dùng nút Thay file)`}
+          </Typography.Paragraph>
+        </div>
       )}
       <Form.Item
         label="Tiêu đề"
@@ -136,7 +138,12 @@ export function UploadMaterialDrawer({ pending, material, saving = false, onSubm
             { max: maxLyricsTextLength, message: `Lời bài hát tối đa ${maxLyricsTextLength.toLocaleString('vi-VN')} ký tự.` },
           ]}
         >
-          <Input.TextArea autoSize={{ minRows: 10, maxRows: 24 }} placeholder="Gõ hoặc dán lời bài hát, mỗi câu một dòng" />
+          <Input.TextArea
+            autoSize={{ minRows: 10, maxRows: 24 }}
+            showCount
+            maxLength={maxLyricsTextLength}
+            placeholder="Gõ hoặc dán lời bài hát, mỗi câu một dòng"
+          />
         </Form.Item>
       )}
       {playback && (

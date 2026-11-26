@@ -1,9 +1,10 @@
-import { Checkbox, Flex, Typography, type CheckboxRef } from 'antd'
+import { Checkbox, Flex, Input, Typography, type CheckboxRef } from 'antd'
 import { useRef, useState } from 'react'
 import { useChoirs, useEventChoirs, useMembersOfChoirs } from '@/features/choirs'
 import { SkillTags, useChoirMembers } from '@/features/members'
-import { CANCEL_LABEL, EmptyState, ErrorState, FormDrawer, SectionSkeleton } from '@/shared/ui'
-import { colors, component, radius, spacing } from '@/styles/tokens'
+import { CANCEL_LABEL, EmptyState, ErrorState, FormDrawer, Icon, SectionSkeleton } from '@/shared/ui'
+import { matchesSearch } from '@/shared/utils/search'
+import { colors, component, spacing } from '@/styles/tokens'
 
 export interface SendRequestDrawerProps {
   open: boolean
@@ -37,6 +38,7 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
   // Track deselected members so everyone is selected by default, including members loaded later.
   const [deselected, setDeselected] = useState<string[]>([])
   const [everyoneChoice, setEveryoneChoice] = useState<boolean>()
+  const [search, setSearch] = useState('')
   // The first checkbox shown takes the focus on open; one ref is enough since only one of them renders first.
   const firstCheckboxRef = useRef<CheckboxRef>(null)
   // The lead choir's director asks for the whole program, so the other serving choirs are included unless unticked.
@@ -47,10 +49,18 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
   const available = (members.data ?? [])
     .filter((member) => !excludedMemberIds.includes(member.memberId))
     .map((member) => ({ id: member.memberId, fullName: member.fullName, skills: skillsOf.get(member.memberId) ?? [] }))
+  const visible = search.trim()
+    ? available.filter((member) => matchesSearch(search, member.fullName) || member.skills.some((skill) => matchesSearch(search, skill)))
+    : available
   const selected = available.filter((member) => !deselected.includes(member.id)).map((member) => member.id)
   const otherNames = otherChoirs.map((choir) => choir.name).join(', ')
 
   const toggleAll = (checked: boolean) => setDeselected(checked ? [] : available.map((member) => member.id))
+  const toggleVisible = (checkedIds: string[]) => {
+    const visibleIds = new Set(visible.map((member) => member.id))
+    const nextUncheckedVisible = visible.map((member) => member.id).filter((id) => !checkedIds.includes(id))
+    setDeselected([...deselected.filter((id) => !visibleIds.has(id)), ...nextUncheckedVisible])
+  }
   const okText = everyone ? 'Gửi cho mọi ca viên chưa được mời' : selected.length ? `Gửi cho ${selected.length} thành viên` : 'Gửi yêu cầu'
 
   return (
@@ -67,6 +77,7 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
       afterClose={() => {
         setDeselected([])
         setEveryoneChoice(undefined)
+        setSearch('')
       }}
       size={component.drawer.md}
       destroyOnHidden
@@ -82,9 +93,9 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
       {!failed && loaded && (
         <Flex vertical gap={spacing.md}>
           {otherChoirs.length > 0 && (
-            <Checkbox ref={firstCheckboxRef} checked={everyone} onChange={(event) => setEveryoneChoice(event.target.checked)}>
-              Mời mọi ca viên của các ca đoàn phục vụ chương trình
-              <Typography.Text style={{ display: 'block', color: colors.textMuted }}>
+            <Checkbox ref={firstCheckboxRef} className="hm-choice-card" checked={everyone} onChange={(event) => setEveryoneChoice(event.target.checked)}>
+              <Typography.Text strong>Mời mọi ca viên của các ca đoàn phục vụ chương trình</Typography.Text>
+              <Typography.Text style={{ display: 'block', color: colors.textMuted, marginTop: 2 }}>
                 Gồm cả {otherNames}. Bạn không xem được danh sách ca viên của ca đoàn do ca trưởng khác phụ trách, nên chỉ mời
                 được cả ca đoàn đó cùng lúc.
               </Typography.Text>
@@ -97,6 +108,16 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
           )}
           {available.length > 0 && !everyone && (
             <Flex vertical gap={spacing.sm}>
+              {available.length >= 5 && (
+                <Input
+                  allowClear
+                  prefix={<Icon name="search" />}
+                  value={search}
+                  aria-label="Tìm thành viên cần mời"
+                  placeholder="Tìm theo họ tên hoặc kỹ năng…"
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              )}
               <Checkbox
                 ref={otherChoirs.length > 0 ? undefined : firstCheckboxRef}
                 checked={selected.length === available.length}
@@ -105,24 +126,24 @@ export function SendRequestDrawer({ open, programId, excludedMemberIds, sending 
               >
                 Chọn tất cả ({selected.length}/{available.length})
               </Checkbox>
-              <Checkbox.Group
-                value={selected}
-                onChange={(values) => setDeselected(available.map((member) => member.id).filter((id) => !values.includes(id)))}
-                style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs, maxHeight: 360, overflowY: 'auto' }}
-              >
-                {available.map((member) => (
-                  <Checkbox
-                    key={member.id}
-                    value={member.id}
-                    style={{ padding: spacing.sm, border: `1px solid ${colors.border}`, borderRadius: radius.md, marginInlineStart: 0 }}
-                  >
-                    <Flex wrap gap={spacing.sm} align="center">
-                      <Typography.Text>{member.fullName}</Typography.Text>
-                      <SkillTags skills={member.skills} />
-                    </Flex>
-                  </Checkbox>
-                ))}
-              </Checkbox.Group>
+              {visible.length === 0 ? (
+                <Typography.Text style={{ color: colors.textMuted }}>Không có thành viên nào khớp từ khóa.</Typography.Text>
+              ) : (
+                <Checkbox.Group
+                  value={selected.filter((id) => visible.some((member) => member.id === id))}
+                  onChange={toggleVisible}
+                  className="hm-choice-list"
+                >
+                  {visible.map((member) => (
+                    <Checkbox key={member.id} value={member.id} className="hm-choice-card">
+                      <Flex wrap gap={spacing.sm} align="center">
+                        <Typography.Text strong>{member.fullName}</Typography.Text>
+                        <SkillTags skills={member.skills} />
+                      </Flex>
+                    </Checkbox>
+                  ))}
+                </Checkbox.Group>
+              )}
             </Flex>
           )}
         </Flex>
