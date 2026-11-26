@@ -8,6 +8,7 @@ import {
   CardTitle,
   EmptyState,
   ErrorState,
+  FilterBar,
   filterAllPlaceholder,
   Form,
   FormDrawer,
@@ -111,7 +112,7 @@ function TranslationDrawer({ form, onClose }: Readonly<{ form: FormState; onClos
           { max: 200, message: 'Tối đa 200 ký tự.' },
         ]}
       >
-        <Input disabled={fixedName} />
+        <Input disabled={fixedName} placeholder={fixedName ? undefined : 'Ví dụ: Saint Cecilia'} />
       </Form.Item>
       <Form.Item
         label="Tên tiếng Việt"
@@ -121,7 +122,7 @@ function TranslationDrawer({ form, onClose }: Readonly<{ form: FormState; onClos
           { max: 200, message: 'Tối đa 200 ký tự.' },
         ]}
       >
-        <Input ref={viNameRef} />
+        <Input ref={viNameRef} placeholder="Ví dụ: Thánh Cêcilia, Trinh nữ Tử đạo" />
       </Form.Item>
     </FormDrawer>
   )
@@ -199,55 +200,62 @@ export function LiturgicalNamesPanel() {
 
   const total = names.data?.totalCount ?? 0
 
+  const resetFilters = () => {
+    setSearch('')
+    setKind(undefined)
+    setPage(1)
+  }
+
   return (
     <>
       <UntranslatedCard onTranslate={(untranslated) => setForm({ open: true, untranslated })} />
-      <Card styles={{ body: { padding: 0 } }}>
-        <Flex wrap justify="space-between" align="center" gap={spacing.sm} style={{ padding: spacing.md }}>
-          <Flex wrap gap={spacing.sm} style={{ flex: '1 1 360px' }}>
-            <Input
-              allowClear
-              prefix={<Icon name="search" />}
-              placeholder="Tìm theo tên tiếng Anh hoặc tiếng Việt…"
-              aria-label="Tìm bản dịch"
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value)
-                setPage(1)
-              }}
-              style={{ flex: '1 1 240px', maxWidth: 360 }}
-            />
-            <Select
-              {...SELECT_POPUP_PROPS}
-              allowClear
-              aria-label="Loại tên"
-              placeholder={filterAllPlaceholder('loại')}
-              value={kind}
-              onChange={(value?: LiturgicalNameKind) => {
-                setKind(value)
-                setPage(1)
-              }}
-              options={kindOptions}
-              style={{ minWidth: 160 }}
-            />
-          </Flex>
+      <FilterBar
+        resultCount={names.isError ? undefined : total}
+        error={names.isError}
+        resultNoun="bản dịch"
+        hasActiveFilters={filtered}
+        onReset={resetFilters}
+        extra={
           <Button type="primary" icon={<Icon name="add" />} onClick={() => setForm({ open: true })}>
             Thêm bản dịch
           </Button>
-        </Flex>
+        }
+      >
+        <Input
+          allowClear
+          prefix={<Icon name="search" />}
+          placeholder="Tìm theo tên tiếng Anh hoặc tiếng Việt…"
+          aria-label="Tìm bản dịch"
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value)
+            setPage(1)
+          }}
+          style={{ flex: '1 1 240px', maxWidth: 360 }}
+        />
+        <Select
+          {...SELECT_POPUP_PROPS}
+          allowClear
+          aria-label="Loại tên"
+          placeholder={filterAllPlaceholder('loại')}
+          value={kind}
+          onChange={(value?: LiturgicalNameKind) => {
+            setKind(value)
+            setPage(1)
+          }}
+          options={kindOptions}
+          style={{ minWidth: 160 }}
+        />
+      </FilterBar>
+      <Card styles={{ body: { padding: 0 } }} style={{ marginTop: spacing.md }}>
         {names.isPending && <SectionSkeleton rows={5} label="Đang tải bản dịch" />}
         {names.isError && (
           <ErrorState title="Không thể tải bản dịch" error={names.error} hasData={names.data !== undefined} onRetry={() => names.refetch()} retrying={names.isFetching} />
         )}
         {names.isSuccess && total === 0 && (
-          <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+          <div style={{ padding: spacing.md }}>
             {filtered ? (
-              <NoFilterResults
-                onClearFilters={() => {
-                  setSearch('')
-                  setKind(undefined)
-                }}
-              />
+              <NoFilterResults onClearFilters={resetFilters} />
             ) : (
               <EmptyState headingLevel={3} title="Chưa có bản dịch nào" description="Thêm bản dịch hoặc dịch các tên còn tiếng Anh ở trên." />
             )}

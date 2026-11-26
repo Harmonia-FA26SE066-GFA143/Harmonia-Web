@@ -64,9 +64,11 @@ export function ReplaceMaterialFileDrawer({ material, saving = false, onSubmit, 
     >
       {material && (
         <Flex vertical gap={spacing.md}>
-          <Typography.Text style={{ color: colors.textMuted }}>
-            {materialKindLabels[material.kind]} · file hiện tại: {material.fileName ?? 'không có'}. Tên, loại, bè và các bài tập đang gắn tài liệu giữ nguyên.
-          </Typography.Text>
+          <div className="hm-form-context" style={{ marginBottom: 0 }}>
+            <Typography.Text style={{ color: colors.textMuted }}>
+              {materialKindLabels[material.kind]} · file hiện tại: {material.fileName ?? 'không có'}. Tên, loại, bè và các bài tập đang gắn tài liệu giữ nguyên.
+            </Typography.Text>
+          </div>
           <Upload
             accept={materialExtensions[material.kind].join(',')}
             maxCount={1}

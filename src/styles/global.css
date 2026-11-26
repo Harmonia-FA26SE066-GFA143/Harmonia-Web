@@ -13,6 +13,8 @@
   --hm-order-hover-bg: color-mix(in srgb, var(--hm-gilt) 6%, transparent);
   --hm-event-published-border: color-mix(in srgb, var(--hm-success) 35%, transparent);
   --hm-event-draft-border: color-mix(in srgb, var(--hm-warning) 45%, transparent);
+  --hm-choice-checked-bg: color-mix(in srgb, var(--hm-action-primary) 6%, var(--hm-surface-reading));
+  --hm-choice-hover-bg: color-mix(in srgb, var(--hm-surface-reading) 70%, var(--hm-surface-base));
 }
 
 html,
@@ -2944,8 +2946,18 @@ textarea {
   gap: 0 16px;
 }
 
+.hm-form-row-asymmetric {
+  display: grid;
+  grid-template-columns: minmax(0, 148px) minmax(0, 1fr);
+  gap: 0 16px;
+}
+
 @media (max-width: 767px) {
   .hm-form-row-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hm-form-row-asymmetric {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -2966,6 +2978,108 @@ textarea {
   padding-bottom: 8px;
   margin-bottom: 16px;
   border-bottom: 1px solid var(--hm-border-hairline);
+}
+
+.hm-form-section:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+/* Ivory context sheet at the head of an edit drawer or dialog: read-only facts separated from editable fields. */
+.hm-form-context {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: var(--hm-radius-md);
+  background: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-default);
+  border-top: 2px solid var(--hm-gilt);
+}
+
+/* Selectable checkbox / radio option rows in pickers and role drawers: clear hover & checked state. */
+.hm-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-inline-end: 2px;
+}
+
+.ant-checkbox-wrapper.hm-choice-card,
+.ant-radio-wrapper.hm-choice-card {
+  box-sizing: border-box;
+  width: 100%;
+  margin-inline: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-md);
+  background: var(--hm-surface-base);
+  align-items: flex-start;
+  transition:
+    border-color var(--hm-dur-fast) var(--hm-ease),
+    background-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.ant-checkbox-wrapper.hm-choice-card:hover,
+.ant-radio-wrapper.hm-choice-card:hover {
+  border-color: var(--hm-border-control);
+  background: var(--hm-choice-hover-bg);
+}
+
+.ant-checkbox-wrapper.hm-choice-card:has(.ant-checkbox-checked),
+.ant-radio-wrapper.hm-choice-card:has(.ant-radio-checked) {
+  border-color: var(--hm-action-primary);
+  background: var(--hm-choice-checked-bg);
+}
+
+/* Selected-items summary strip in multi-search pickers so earlier picks stay visible and removable. */
+.hm-picked-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 8px 12px;
+  border-radius: var(--hm-radius-md);
+  background: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-default);
+}
+
+/* Rehearsal form per-song notes: keeps each song's title visible above/beside its note input. */
+.hm-song-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--hm-radius-md);
+  background: var(--hm-surface-reading);
+  border: 1px solid var(--hm-border-default);
+}
+
+.hm-song-notes__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hm-song-notes__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-text-primary);
+}
+
+/* Quiet date/time preset buttons under or beside date pickers. */
+.hm-quick-picks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .hm-facts {

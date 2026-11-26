@@ -101,6 +101,24 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
             }}
             style={{ width: '100%' }}
           />
+          <div className="hm-quick-picks">
+            <Button size="small" type="dashed" onClick={() => setRange([today, today.add(27, 'day')])}>
+              4 tuần tới
+            </Button>
+            <Button
+              size="small"
+              type="dashed"
+              onClick={() => {
+                const start = today.add(1, 'month').startOf('month')
+                setRange([start, start.endOf('month')])
+              }}
+            >
+              Tháng sau
+            </Button>
+            <Button size="small" type="dashed" onClick={() => setRange([today, today.add(maxDays - 1, 'day')])}>
+              Tối đa {maxDays} ngày
+            </Button>
+          </div>
           <Typography.Text style={{ color: colors.textMuted }}>Từ hôm nay, tối đa {maxDays} ngày.</Typography.Text>
         </Flex>
         <Flex vertical gap={spacing.xs}>
@@ -154,7 +172,7 @@ function GenerateEventsDrawer({ onClose }: Readonly<{ onClose: () => void }>) {
           />
         )}
         {active.length > 0 && (
-          <div>
+          <div className="hm-form-context" style={{ marginBottom: 0 }}>
             <Typography.Text strong>Giờ lễ sẽ dùng ({active.length})</Typography.Text>
             <ul style={{ margin: `${spacing.xs}px 0 0`, paddingInlineStart: spacing.lg }}>
               {active.map((schedule) => (

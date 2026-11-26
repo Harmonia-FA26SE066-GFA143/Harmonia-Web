@@ -1,7 +1,7 @@
-import { App, Button, Input, Modal, Select, Typography } from 'antd'
+import { App, Button, Flex, Input, Modal, Select, Typography } from 'antd'
 import { useEffect } from 'react'
-import { Form } from '@/shared/ui'
-import { colors } from '@/styles/tokens'
+import { Form, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { colors, spacing } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { useChoirs, useDirectorCandidates, useSetSubstituteDirector } from '../hooks/useChoirs'
 import type { EventChoir } from '../types'
@@ -71,19 +71,25 @@ export function SubstituteDirectorModal({ eventId, choir, onClose }: Readonly<Su
       title={choir && `Ca trưởng thay thế · ${choir.name}`}
       destroyOnHidden
       onCancel={onClose}
-      footer={[
-        choir?.substituteDirectorId && (
-          <Button key="clear" danger disabled={save.isPending} onClick={() => submit(null)}>
-            Gỡ người thay
-          </Button>
-        ),
-        <Button key="cancel" onClick={onClose} disabled={save.isPending}>
-          Hủy
-        </Button>,
-        <Button key="save" type="primary" loading={save.isPending} onClick={() => form.submit()}>
-          Lưu
-        </Button>,
-      ]}
+      footer={
+        <Flex justify="space-between" align="center" gap={spacing.sm} wrap>
+          <div>
+            {choir?.substituteDirectorId && (
+              <Button danger disabled={save.isPending} onClick={() => submit(null)}>
+                Gỡ người thay
+              </Button>
+            )}
+          </div>
+          <Flex gap={spacing.sm}>
+            <Button onClick={onClose} disabled={save.isPending}>
+              Hủy
+            </Button>
+            <Button type="primary" loading={save.isPending} onClick={() => form.submit()}>
+              Lưu
+            </Button>
+          </Flex>
+        </Flex>
+      }
     >
       {choir && (
         <Form<Fields>
@@ -92,12 +98,15 @@ export function SubstituteDirectorModal({ eventId, choir, onClose }: Readonly<Su
           initialValues={startValues(choir)}
           onFinish={({ directorId, reason }) => directorId && submit(directorId, reason?.trim())}
         >
-          <Typography.Paragraph style={{ color: colors.textMuted }}>
-            Chỉ áp dụng cho chương trình này. Người thay có quyền ca trưởng của ca đoàn ở chương trình này
-            {choir.directorName ? `; ${choir.directorName} vẫn giữ quyền.` : '.'}
-          </Typography.Paragraph>
+          <div className="hm-form-context">
+            <Typography.Paragraph style={{ margin: 0, color: colors.textMuted }}>
+              Chỉ áp dụng cho chương trình này. Người thay có quyền ca trưởng của ca đoàn ở chương trình này
+              {choir.directorName ? `; ${choir.directorName} vẫn giữ quyền.` : '.'}
+            </Typography.Paragraph>
+          </div>
           <Form.Item label="Ca trưởng thay thế" name="directorId" rules={[{ required: true, message: 'Chọn ca trưởng thay thế.' }]}>
             <Select
+              {...SELECT_POPUP_PROPS}
               showSearch
               optionFilterProp="label"
               placeholder="Chọn ca trưởng"

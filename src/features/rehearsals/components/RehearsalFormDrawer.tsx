@@ -75,7 +75,7 @@ function SongsField() {
     })
 
   return (
-    <Form.Item>
+    <Form.Item style={{ marginBottom: spacing.md }}>
       <Flex vertical gap={spacing.sm}>
         {/* The helper has its own row above the field (G4-17): a button cannot sit inside the field's <label>. */}
         <Flex justify="space-between" align="center" wrap gap={spacing.sm}>
@@ -83,7 +83,7 @@ function SongsField() {
             Bài hát tập
           </span>
           <Button size="small" icon={<Icon name="program" />} disabled={!eventId} loading={defaults.isPending} onClick={fillFromProgram}>
-            Lấy bài hát từ danh sách đã duyệt của chương trình
+            Lấy bài hát từ danh sách đã duyệt
           </Button>
         </Flex>
         <Form.Item name="songs" noStyle>
@@ -101,16 +101,26 @@ function SongsField() {
             options={options}
           />
         </Form.Item>
-        {/* Removing a song keeps its note in the form, but only the notes of chosen songs are sent. */}
-        {chosen?.map((song) => (
-          <Form.Item key={song.value} name={['songNotes', song.value]} noStyle>
-            <Input
-              maxLength={500}
-              aria-label={`Ghi chú cho bài ${song.label}`}
-              placeholder={`${song.label}: cần tập phần nào`}
-            />
-          </Form.Item>
-        ))}
+        {/* Removing a song keeps its note in the form, but only the notes of chosen songs are sent.
+            Each chosen song shows its title explicitly so typing a note never hides which song it belongs to. */}
+        {chosen && chosen.length > 0 && (
+          <div className="hm-song-notes">
+            {chosen.map((song, index) => (
+              <div key={song.value} className="hm-song-notes__item">
+                <div className="hm-song-notes__head">
+                  <span>{`${index + 1}. ${song.label}`}</span>
+                </div>
+                <Form.Item name={['songNotes', song.value]} noStyle>
+                  <Input
+                    maxLength={500}
+                    aria-label={`Ghi chú cho bài ${song.label}`}
+                    placeholder="Ghi chú phần cần tập (vd: bè nam vào chậm, hát 2 câu đầu)"
+                  />
+                </Form.Item>
+              </div>
+            ))}
+          </div>
+        )}
       </Flex>
     </Form.Item>
   )
@@ -240,62 +250,71 @@ export function RehearsalFormDrawer({
         </Form>
       )}
     >
-      {!rehearsal && (
-        <ChoirField selectRef={choirRef} activeChoirs={activeChoirs} loading={choirs.isPending} noChoir={choirs.isSuccess && activeChoirs.length === 0} />
-      )}
-      <Form.Item
-        label="Chương trình phụng vụ"
-        name="eventId"
-        // BE 69c9d47: a joint rehearsal keeps its program (REHEARSAL_JOINT_EVENT_LOCKED).
-        extra={rehearsal?.isJoint ? 'Buổi tập chung gắn với chương trình này, không đổi được.' : undefined}
-      >
-        <Select {...SELECT_POPUP_PROPS} ref={programRef} allowClear={!rehearsal?.isJoint} disabled={rehearsal?.isJoint} showSearch optionFilterProp="label" placeholder="Chọn chương trình" options={programOptions} />
-      </Form.Item>
-      {!rehearsal && <JointField />}
-      <Flex wrap gap={spacing.md}>
-        <Form.Item label="Ngày tập" name="date" rules={[{ required: true, message: 'Vui lòng chọn ngày tập.' }]} style={{ flex: '1 1 200px' }}>
-          <DatePicker
-            {...PICKER_POPUP_PROPS}
-            format="DD/MM/YYYY"
-            placeholder="Chọn ngày"
-            // A new session cannot start in the past (REHEARSAL_START_IN_PAST, BE ac4a7bb); an existing one keeps its day.
-            disabledDate={rehearsal ? undefined : (day) => day.isBefore(dayjs(), 'day')}
-            style={{ width: '100%' }}
-          />
-        </Form.Item>
+      <section className="hm-form-section">
+        <p className="hm-rubric">Ngữ cảnh buổi tập</p>
+        {!rehearsal && (
+          <ChoirField selectRef={choirRef} activeChoirs={activeChoirs} loading={choirs.isPending} noChoir={choirs.isSuccess && activeChoirs.length === 0} />
+        )}
         <Form.Item
-          label="Thời gian"
-          name="time"
-          dependencies={['date']}
-          rules={[
-            { required: true, message: 'Vui lòng chọn giờ bắt đầu và kết thúc.' },
-            {
-              validator: (_, value?: [Dayjs, Dayjs]) =>
-                !value || value[1].isAfter(value[0])
-                  ? Promise.resolve()
-                  : Promise.reject(new Error('Giờ kết thúc phải sau giờ bắt đầu.')),
-            },
-            ({ getFieldValue }) => ({
-              validator: (_, value?: [Dayjs, Dayjs]) => {
-                const date: Dayjs | undefined = getFieldValue('date')
-                return rehearsal || !value || !date || withTime(date, value[0]).isAfter(dayjs())
-                  ? Promise.resolve()
-                  : Promise.reject(new Error('Giờ bắt đầu phải sau thời điểm hiện tại.'))
-              },
-            }),
-          ]}
-          style={{ flex: '1 1 240px' }}
+          label="Chương trình phụng vụ"
+          name="eventId"
+          // BE 69c9d47: a joint rehearsal keeps its program (REHEARSAL_JOINT_EVENT_LOCKED).
+          extra={rehearsal?.isJoint ? 'Buổi tập chung gắn với chương trình này, không đổi được.' : 'Để trống nếu buổi tập ôn chung không gắn một Thánh lễ cụ thể.'}
         >
-          <TimePicker.RangePicker {...PICKER_POPUP_PROPS} format="HH:mm" minuteStep={5} placeholder={['Bắt đầu', 'Kết thúc']} style={{ width: '100%' }} />
+          <Select {...SELECT_POPUP_PROPS} ref={programRef} allowClear={!rehearsal?.isJoint} disabled={rehearsal?.isJoint} showSearch optionFilterProp="label" placeholder="Chọn chương trình" options={programOptions} />
         </Form.Item>
-      </Flex>
-      <Form.Item label="Địa điểm" name="locationId">
-        <Select {...SELECT_POPUP_PROPS} allowClear showSearch optionFilterProp="label" placeholder="Chọn nơi tập" options={locationOptions} />
-      </Form.Item>
-      <SongsField />
-      <Form.Item label="Ghi chú" name="note">
-        <Input.TextArea rows={3} maxLength={500} showCount placeholder="Nội dung chính của buổi tập" />
-      </Form.Item>
+        {!rehearsal && <JointField />}
+      </section>
+      <section className="hm-form-section">
+        <p className="hm-rubric">Thời gian và địa điểm</p>
+        <Flex wrap gap={spacing.md}>
+          <Form.Item label="Ngày tập" name="date" rules={[{ required: true, message: 'Vui lòng chọn ngày tập.' }]} style={{ flex: '1 1 180px' }}>
+            <DatePicker
+              {...PICKER_POPUP_PROPS}
+              format="DD/MM/YYYY"
+              placeholder="Chọn ngày"
+              // A new session cannot start in the past (REHEARSAL_START_IN_PAST, BE ac4a7bb); an existing one keeps its day.
+              disabledDate={rehearsal ? undefined : (day) => day.isBefore(dayjs(), 'day')}
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Thời gian"
+            name="time"
+            dependencies={['date']}
+            rules={[
+              { required: true, message: 'Vui lòng chọn giờ bắt đầu và kết thúc.' },
+              {
+                validator: (_, value?: [Dayjs, Dayjs]) =>
+                  !value || value[1].isAfter(value[0])
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('Giờ kết thúc phải sau giờ bắt đầu.')),
+              },
+              ({ getFieldValue }) => ({
+                validator: (_, value?: [Dayjs, Dayjs]) => {
+                  const date: Dayjs | undefined = getFieldValue('date')
+                  return rehearsal || !value || !date || withTime(date, value[0]).isAfter(dayjs())
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('Giờ bắt đầu phải sau thời điểm hiện tại.'))
+                },
+              }),
+            ]}
+            style={{ flex: '1 1 220px' }}
+          >
+            <TimePicker.RangePicker {...PICKER_POPUP_PROPS} format="HH:mm" minuteStep={5} placeholder={['Bắt đầu', 'Kết thúc']} style={{ width: '100%' }} />
+          </Form.Item>
+        </Flex>
+        <Form.Item label="Địa điểm" name="locationId">
+          <Select {...SELECT_POPUP_PROPS} allowClear showSearch optionFilterProp="label" placeholder="Chọn nơi tập" options={locationOptions} />
+        </Form.Item>
+      </section>
+      <section className="hm-form-section">
+        <p className="hm-rubric">Nội dung tập</p>
+        <SongsField />
+        <Form.Item label="Ghi chú buổi tập" name="note" style={{ marginBottom: 0 }}>
+          <Input.TextArea rows={3} maxLength={500} showCount placeholder="Nội dung chính hoặc dặn dò chung cho ca viên" />
+        </Form.Item>
+      </section>
     </FormDrawer>
   )
 }

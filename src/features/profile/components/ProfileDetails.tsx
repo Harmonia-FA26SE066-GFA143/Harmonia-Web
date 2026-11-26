@@ -67,10 +67,10 @@ export function ProfileDetails({ profile, editing, saving = false, onEdit, onCan
               <Input autoComplete="off" placeholder="Ví dụ: Giuse" autoFocus />
             </Form.Item>
             <Form.Item label="Họ và tên" name="fullName" rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}>
-              <Input autoComplete="name" />
+              <Input autoComplete="name" placeholder="Ví dụ: Trần Minh Tâm" />
             </Form.Item>
             <Form.Item label="Giới tính" name="gender">
-              <Radio.Group options={genderOptions} />
+              <Radio.Group optionType="button" options={genderOptions} />
             </Form.Item>
             <Form.Item label="Số điện thoại" name="phone" rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}>
               <Input type="tel" autoComplete="tel" placeholder="Ví dụ: 0901 234 567" />

@@ -35,7 +35,7 @@ export function AccountFormDrawer({ open, account, saving = false, emailError, o
       open={open}
       title={account ? 'Sửa tài khoản' : 'Tạo tài khoản'}
       okText={account ? 'Lưu thay đổi' : 'Tạo tài khoản'}
-      size={component.drawer.sm}
+      size={component.drawer.md}
       cancelText={CANCEL_LABEL}
       initialFocusRef={emailRef}
       okButtonProps={{ htmlType: 'submit', loading: saving }}
@@ -65,49 +65,59 @@ export function AccountFormDrawer({ open, account, saving = false, emailError, o
         </Form>
       )}
     >
-      <Form.Item
-        label="Email"
-        name="email"
-        extra={account ? 'Dùng làm tên đăng nhập.' : 'Dùng làm tên đăng nhập. Mật khẩu đầu tiên được tạo tự động và gửi tới email này.'}
-        validateStatus={emailError ? 'error' : undefined}
-        help={emailError}
-        rules={[
-          { required: true, message: 'Vui lòng nhập email.' },
-          { type: 'email', message: 'Email không hợp lệ.' },
-        ]}
-      >
-        <Input ref={emailRef} inputMode="email" autoComplete="off" placeholder="ten@giaoxu.org" />
-      </Form.Item>
-      <Form.Item label="Tên thánh" name="saintName" rules={saintNameRules}>
-        <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
-      </Form.Item>
-      <Form.Item
-        label="Họ và tên"
-        name="fullName"
-        rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}
-      >
-        <Input autoComplete="off" />
-      </Form.Item>
-      {/* Required on a new account (CreateUserRequestValidator); an older account may still have none. */}
-      <Form.Item label="Giới tính" name="gender" rules={account ? undefined : [{ required: true, message: 'Vui lòng chọn giới tính.' }]}>
-        <Radio.Group options={genderOptions} />
-      </Form.Item>
-      <Form.Item
-        label="Số điện thoại"
-        name="phone"
-        rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}
-      >
-        <Input type="tel" autoComplete="off" placeholder="Ví dụ: 0901 234 567" />
-      </Form.Item>
-      {!account && (
-        <Form.Item label="Vai trò" name="role" rules={[{ required: true, message: 'Vui lòng chọn vai trò.' }]}>
-          <Select
-            {...SELECT_POPUP_PROPS}
-            placeholder="Chọn vai trò"
-            options={assignableRoles.map((role) => ({ value: role, label: roleLabels[role] }))}
-          />
+      <div className="hm-form-section">
+        <p className="hm-rubric">Tài khoản đăng nhập</p>
+        <Form.Item
+          label="Email"
+          name="email"
+          extra={account ? 'Dùng làm tên đăng nhập.' : 'Dùng làm tên đăng nhập. Mật khẩu đầu tiên được tạo tự động và gửi tới email này.'}
+          validateStatus={emailError ? 'error' : undefined}
+          help={emailError}
+          rules={[
+            { required: true, message: 'Vui lòng nhập email.' },
+            { type: 'email', message: 'Email không hợp lệ.' },
+          ]}
+        >
+          <Input ref={emailRef} inputMode="email" autoComplete="off" placeholder="ten@giaoxu.org" />
         </Form.Item>
-      )}
+        {!account && (
+          <Form.Item label="Vai trò" name="role" rules={[{ required: true, message: 'Vui lòng chọn vai trò.' }]}>
+            <Select
+              {...SELECT_POPUP_PROPS}
+              placeholder="Chọn vai trò"
+              options={assignableRoles.map((role) => ({ value: role, label: roleLabels[role] }))}
+            />
+          </Form.Item>
+        )}
+      </div>
+      <div className="hm-form-section">
+        <p className="hm-rubric">Thông tin cá nhân</p>
+        <div className="hm-form-row-asymmetric">
+          <Form.Item label="Tên thánh" name="saintName" rules={saintNameRules}>
+            <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
+          </Form.Item>
+          <Form.Item
+            label="Họ và tên"
+            name="fullName"
+            rules={[{ max: 100, message: 'Họ và tên tối đa 100 ký tự.' }]}
+          >
+            <Input autoComplete="off" placeholder="Ví dụ: Trần Minh Tâm" />
+          </Form.Item>
+        </div>
+        <div className="hm-form-row-2">
+          {/* Required on a new account (CreateUserRequestValidator); an older account may still have none. */}
+          <Form.Item label="Giới tính" name="gender" rules={account ? undefined : [{ required: true, message: 'Vui lòng chọn giới tính.' }]}>
+            <Radio.Group optionType="button" options={genderOptions} />
+          </Form.Item>
+          <Form.Item
+            label="Số điện thoại"
+            name="phone"
+            rules={[{ max: 20, message: 'Số điện thoại tối đa 20 ký tự.' }]}
+          >
+            <Input type="tel" autoComplete="off" placeholder="Ví dụ: 0901 234 567" />
+          </Form.Item>
+        </div>
+      </div>
     </FormDrawer>
   )
 }

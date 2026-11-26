@@ -50,7 +50,7 @@ export function CatalogItemDrawer<T extends CatalogEntry, V extends { name: stri
         <Form<V>
           layout="vertical"
           initialValues={item ?? { isActive: true }}
-          onFinish={(values) => onSubmit({ ...values, name: values.name.trim() })}
+          onFinish={(values) => onSubmit({ isActive: true, ...values, name: values.name.trim() } as V)}
         >
           {dom}
         </Form>
@@ -69,14 +69,16 @@ export function CatalogItemDrawer<T extends CatalogEntry, V extends { name: stri
         <Input ref={nameRef} />
       </Form.Item>
       {fields}
-      <Form.Item
-        label="Đang sử dụng"
-        name="isActive"
-        valuePropName="checked"
-        extra="Mục ngừng dùng vẫn được giữ lại nhưng không còn hiện trong các danh sách chọn. Nơi đang dùng mục này, chẳng hạn một sự kiện nháp, phải chọn mục khác trước khi lưu hoặc công bố."
-      >
-        <Switch />
-      </Form.Item>
+      {item && (
+        <Form.Item
+          label="Đang sử dụng"
+          name="isActive"
+          valuePropName="checked"
+          extra="Mục ngừng dùng vẫn được giữ lại nhưng không còn hiện trong các danh sách chọn. Nơi đang dùng mục này, chẳng hạn một sự kiện nháp, phải chọn mục khác trước khi lưu hoặc công bố."
+        >
+          <Switch />
+        </Form.Item>
+      )}
     </FormDrawer>
   )
 }

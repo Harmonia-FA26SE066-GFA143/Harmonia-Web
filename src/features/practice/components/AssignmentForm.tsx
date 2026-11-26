@@ -1,4 +1,4 @@
-import { App, Button, Card, DatePicker, Flex, Input, Radio, Select, Typography, type SelectProps } from 'antd'
+import { Alert, App, Button, Card, DatePicker, Flex, Input, Radio, Select, Typography, type SelectProps } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -131,6 +131,15 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
   const songOptions: SelectProps['options'] = shownEventSongs.length > 0 ? [{ label: 'Trong danh sách của chương trình', options: shownEventSongs }, { label: 'Kho bài hát', options: otherSongs }] : otherSongs
   const songTitle = chosenSong?.label
   const event = events.data?.find((item) => item.id === eventId)
+  const eventStart = event ? dayjs(`${event.eventDate}T${event.time}`) : undefined
+  const beforeEventPreset = eventStart?.subtract(1, 'day').hour(21).minute(0).second(0).millisecond(0)
+  const canSuggestBeforeEvent = Boolean(beforeEventPreset && beforeEventPreset.isAfter(dayjs()))
+  const dueAfterEvent = Boolean(dueDate && eventStart && dueDate.isAfter(eventStart))
+
+  const applyDuePreset = (target: Dayjs) => {
+    form.setFieldValue('dueDate', target)
+    form.setFields([{ name: 'dueDate', errors: [] }])
+  }
 
   const resetForm = () => {
     form.resetFields()
@@ -216,36 +225,36 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
           </section>
           <section className="hm-form-section">
             <p className="hm-rubric">2. Nội dung luyện tập</p>
-            <Form.Item
-              label="Tiêu đề"
-              name="title"
-              rules={[
-                { required: true, whitespace: true, message: 'Vui lòng nhập tiêu đề.' },
-                { max: 200, message: 'Tiêu đề tối đa 200 ký tự.' },
-              ]}
-            >
-              <Input placeholder="Ví dụ: Tập bè Tenor bài Con Bước Lên Bàn Thờ" />
-            </Form.Item>
-            <Form.Item label="Hướng dẫn" name="instruction" rules={[{ max: 1000, message: 'Tối đa 1000 ký tự.' }]}>
-              <Input.TextArea rows={3} showCount maxLength={1000} />
-            </Form.Item>
-            <Form.Item label="Bài hát" name="songId">
-              <Select
-                {...SELECT_POPUP_PROPS}
-                allowClear
-                showSearch
-                filterOption={false}
-                onSearch={setSongSearch}
-                placeholder="Gõ tên bài để tìm trong kho"
-                loading={songs.isFetching}
-                onChange={(value?: string) => {
-                  setPickedSong(value ? [...eventSongs, ...librarySongs].find((option) => option.value === value) : undefined)
-                  setSongSearch('')
-                  form.setFieldValue('materialIds', undefined)
-                }}
-                options={songOptions}
-              />
-            </Form.Item>
+            <div className="hm-form-row-2">
+              <Form.Item
+                label="Tiêu đề"
+                name="title"
+                rules={[
+                  { required: true, whitespace: true, message: 'Vui lòng nhập tiêu đề.' },
+                  { max: 200, message: 'Tiêu đề tối đa 200 ký tự.' },
+                ]}
+              >
+                <Input placeholder="Ví dụ: Tập bè Tenor bài Con Bước Lên Bàn Thờ" />
+              </Form.Item>
+              <Form.Item label="Bài hát" name="songId">
+                <Select
+                  {...SELECT_POPUP_PROPS}
+                  allowClear
+                  showSearch
+                  filterOption={false}
+                  onSearch={setSongSearch}
+                  placeholder="Gõ tên bài để tìm trong kho"
+                  loading={songs.isFetching}
+                  onChange={(value?: string) => {
+                    const nextSong = value ? [...eventSongs, ...librarySongs].find((option) => option.value === value) : undefined
+                    setPickedSong(nextSong)
+                    setSongSearch('')
+                    form.setFieldValue('materialIds', undefined)
+                  }}
+                  options={songOptions}
+                />
+              </Form.Item>
+            </div>
             {songId && materials.isPending && <Typography.Paragraph style={muted}>Đang tải tài liệu của bài…</Typography.Paragraph>}
             {songId && materials.isError && <Typography.Paragraph type="danger">Không thể tải tài liệu của bài hát.</Typography.Paragraph>}
             {songId && materials.data?.length === 0 && (
@@ -260,6 +269,9 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
                 <MaterialPicker materials={materials.data} />
               </Form.Item>
             )}
+            <Form.Item label="Hướng dẫn" name="instruction" rules={[{ max: 1000, message: 'Tối đa 1000 ký tự.' }]} style={{ marginBottom: 0 }}>
+              <Input.TextArea rows={3} showCount maxLength={1000} placeholder="Ví dụ: Nghe kỹ đoạn chuyển giọng ở câu 2 và giữ đều nhịp." />
+            </Form.Item>
           </section>
           <section className="hm-form-section">
             <p className="hm-rubric">3. Người nhận</p>
@@ -291,6 +303,7 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
             <Form.Item
               label="Hạn nộp"
               name="dueDate"
+              style={{ marginBottom: spacing.xs }}
               rules={[
                 { required: true, message: 'Vui lòng chọn hạn nộp.' },
                 {
@@ -309,6 +322,31 @@ export function AssignmentForm({ onCancel, onCreated }: Readonly<AssignmentFormP
                 style={{ width: '100%', maxWidth: 260 }}
               />
             </Form.Item>
+            <div className="hm-quick-picks">
+              <Typography.Text style={{ ...muted, fontSize: 12 }}>Chọn nhanh:</Typography.Text>
+              <Button size="small" onClick={() => applyDuePreset(dayjs().add(1, 'day').hour(21).minute(0).second(0).millisecond(0))}>
+                Tối mai · 21:00
+              </Button>
+              <Button size="small" onClick={() => applyDuePreset(dayjs().add(3, 'day').hour(21).minute(0).second(0).millisecond(0))}>
+                +3 ngày · 21:00
+              </Button>
+              <Button size="small" onClick={() => applyDuePreset(dayjs().add(7, 'day').hour(21).minute(0).second(0).millisecond(0))}>
+                +7 ngày · 21:00
+              </Button>
+              {canSuggestBeforeEvent && beforeEventPreset && (
+                <Button size="small" onClick={() => applyDuePreset(beforeEventPreset)}>
+                  Trước lễ 1 ngày · 21:00
+                </Button>
+              )}
+            </div>
+            {dueAfterEvent && (
+              <Alert
+                type="warning"
+                showIcon
+                style={{ marginTop: spacing.sm }}
+                title="Hạn nộp đang trễ hơn giờ cử hành của chương trình phụng vụ đã chọn."
+              />
+            )}
           </section>
         </Card>
         <Card className="hm-assign-summary">
