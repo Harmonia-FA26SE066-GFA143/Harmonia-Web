@@ -5,8 +5,7 @@ import { materialKinds, songMeta, usageText } from '../songCard'
 import type { Song } from '../types'
 
 /**
- * A plain sheet where the score's first page would be: parchment, one hairline, a small sheet-music mark and the words
- * (owner 2026-11-24: the dashed edge and empty staves on every card read as noise). Drawn, so it never fails to load.
+ * A plain sheet where the score's first page would be when no score has been uploaded yet.
  */
 function BlankScorePage({ className }: Readonly<{ className: string }>) {
   return (
@@ -17,10 +16,47 @@ function BlankScorePage({ className }: Readonly<{ className: string }>) {
   )
 }
 
-/** Page 1 of the score on parchment; a blank sheet when there is none or it fails to load. */
-export function ScorePage({ url, className = 'song-card__page' }: Readonly<{ url?: string | null; className?: string }>) {
+/**
+ * When a song already has a PDF or interactive score (`materialCounts.sheetMusic > 0` or `interactiveScore > 0`)
+ * without a separate raster thumbnail, show a calm ruled choir octavo leaf instead of falsely claiming "Chưa có bản nhạc".
+ */
+function ManuscriptScorePage({
+  className,
+  interactive,
+  keySignature,
+}: Readonly<{ className: string; interactive?: boolean; keySignature?: string | null }>) {
+  return (
+    <span className={`${className} is-manuscript`} aria-hidden>
+      <span className="song-score-leaf__head">
+        <Icon name={interactive ? 'play' : 'sheet-music'} size="sm" />
+        <span>{interactive ? 'Bản nhạc tương tác' : 'Tổng phổ'}</span>
+      </span>
+      <span className="song-score-leaf__staves">
+        <i />
+        <i />
+        <i />
+      </span>
+      {keySignature && <span className="song-score-leaf__key">{keySignature}</span>}
+    </span>
+  )
+}
+
+/** Page 1 of the score on parchment; a ruled score leaf when a PDF/MEI exists without thumbnail, or blank when none. */
+export function ScorePage({
+  url,
+  hasScore = false,
+  interactive = false,
+  keySignature,
+  className = 'song-card__page',
+}: Readonly<{ url?: string | null; hasScore?: boolean; interactive?: boolean; keySignature?: string | null; className?: string }>) {
   const [failed, setFailed] = useState(false)
-  if (!url || failed) return <BlankScorePage className={className} />
+  if (!url || failed) {
+    return hasScore ? (
+      <ManuscriptScorePage className={className} interactive={interactive} keySignature={keySignature} />
+    ) : (
+      <BlankScorePage className={className} />
+    )
+  }
   return <img className={className} src={url} alt="" width={160} height={220} loading="lazy" onError={() => setFailed(true)} />
 }
 
@@ -54,7 +90,12 @@ export function SongCardGrid({ songs, page, pageSize, total, loading, selectedId
             <li key={song.id} data-row-key={song.id}>
               <button type="button" className="song-card hm-lift" aria-pressed={song.id === selectedId} onClick={() => onSelect(song)}>
                 <span className="song-card__thumb" aria-hidden>
-                  <ScorePage url={song.sheetMusicThumbnailUrl} />
+                  <ScorePage
+                    url={song.sheetMusicThumbnailUrl}
+                    hasScore={(song.materialCounts?.sheetMusic ?? 0) > 0 || (song.materialCounts?.interactiveScore ?? 0) > 0}
+                    interactive={(song.materialCounts?.interactiveScore ?? 0) > 0}
+                    keySignature={song.musicalKey}
+                  />
                   <span className="song-card__no">{(page - 1) * pageSize + index + 1}</span>
                 </span>
                 <span className="song-card__body">

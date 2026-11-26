@@ -1,18 +1,35 @@
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { BrandMark, HeroNave, visuallyHidden } from '@/shared/ui'
+import apseLancets from '@/assets/images/brand/parish-apse-lancets.webp'
+import vaultArcade from '@/assets/images/brand/parish-vault-arcade.webp'
+import { BrandMark, visuallyHidden } from '@/shared/ui'
 import { media } from '@/styles/tokens'
 
+export type AuthScene = 'vault' | 'apse'
+
+const scenes: Record<AuthScene, { src: string; position: string }> = {
+  vault: { src: vaultArcade, position: 'center 20%' },
+  apse: { src: apseLancets, position: 'center 24%' },
+}
+
 /**
- * The sign-in backdrop: the landing hero held still (one frame of the drawn nave, so nothing moves beside a form), its
- * giant name across the top, the brand linking home and a psalm verse at the foot.
+ * The sign-in and registration backdrop: real architecture of the parish church held still behind the dark window,
+ * its giant name across the top, the brand linking home and a psalm verse at the foot.
  */
-export function SignInImage() {
+export function SignInImage({ scene = 'vault' }: Readonly<{ scene?: AuthScene }>) {
+  const { src, position } = scenes[scene]
   return (
     <>
       <div aria-hidden className="hm-auth__scene">
-        <HeroNave still />
+        <img
+          src={src}
+          alt=""
+          decoding="async"
+          className="hm-auth__photo"
+          style={{ objectPosition: position }}
+        />
         <div style={{ position: 'absolute', inset: 0, background: media.heroScrim }} />
+        <div className="hm-auth__vignette" />
       </div>
       {/* The landing's header mark, in the same place; the name is written across the page. */}
       <Link to={paths.home} viewTransition className="on-media-link hm-auth__brand hm-brand">

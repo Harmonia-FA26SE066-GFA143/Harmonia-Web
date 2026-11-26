@@ -70,6 +70,7 @@ export function JoinChoirPage() {
   return (
     <AuthCard
       compact
+      scene="apse"
       title="Đăng ký tham gia ca đoàn"
       description="Gửi thông tin để Quản trị viên xem xét. Yêu cầu này chưa tạo tài khoản đăng nhập."
       footer={<Link to={paths.login}>Đã có tài khoản? Đăng nhập</Link>}
@@ -99,22 +100,33 @@ export function JoinChoirPage() {
             <Input type="tel" autoComplete="tel" placeholder="Ví dụ: 0901 234 567" />
           </Form.Item>
         </div>
-        <Form.Item
-          name="email"
-          label="Email"
-          extra="Mật khẩu đầu tiên sẽ gửi tới email này nếu yêu cầu được chấp nhận."
-          rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập email.' }, { type: 'email', message: 'Vui lòng nhập email dạng ten@giaoxu.org.' }, { max: 256, message: 'Vui lòng nhập tối đa 256 ký tự.' }]}
-        >
-          <Input type="email" autoComplete="email" />
-        </Form.Item>
-        {choirs.data && choirs.data.length > 0 && (
-          <Form.Item name="preferredChoirId" label="Ca đoàn mong muốn" extra="Quản trị viên sẽ xem xét khi xếp ca đoàn cho bạn.">
-            <Select
-              {...SELECT_POPUP_PROPS}
-              allowClear
-              placeholder="Chưa chọn"
-              options={choirs.data.map((choir) => ({ value: choir.id, label: choir.name }))}
-            />
+        {choirs.data && choirs.data.length > 0 ? (
+          <div className="hm-auth__pair">
+            <Form.Item
+              name="email"
+              label="Email"
+              extra="Nhận mật khẩu đầu khi được duyệt."
+              rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập email.' }, { type: 'email', message: 'Vui lòng nhập email dạng ten@giaoxu.org.' }, { max: 256, message: 'Vui lòng nhập tối đa 256 ký tự.' }]}
+            >
+              <Input type="email" autoComplete="email" />
+            </Form.Item>
+            <Form.Item name="preferredChoirId" label="Ca đoàn mong muốn" extra="Để Quản trị viên xếp ca đoàn.">
+              <Select
+                {...SELECT_POPUP_PROPS}
+                allowClear
+                placeholder="Chưa chọn"
+                options={choirs.data.map((choir) => ({ value: choir.id, label: choir.name }))}
+              />
+            </Form.Item>
+          </div>
+        ) : (
+          <Form.Item
+            name="email"
+            label="Email"
+            extra="Mật khẩu đầu tiên sẽ gửi tới email này nếu yêu cầu được chấp nhận."
+            rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập email.' }, { type: 'email', message: 'Vui lòng nhập email dạng ten@giaoxu.org.' }, { max: 256, message: 'Vui lòng nhập tối đa 256 ký tự.' }]}
+          >
+            <Input type="email" autoComplete="email" />
           </Form.Item>
         )}
         <Form.Item name="note" label="Lời nhắn" rules={[{ max: 500, message: 'Vui lòng nhập tối đa 500 ký tự.' }]}>

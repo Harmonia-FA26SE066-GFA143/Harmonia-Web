@@ -192,28 +192,36 @@ export function RehearsalDetail({ rehearsal, program, onOpenRoom, onTakeAttendan
           </ol>
         )}
       </div>
-      <div>
-        <p className="hm-rubric">Ghi chú</p>
-        <Typography.Paragraph style={{ marginBottom: spacing.md, whiteSpace: 'pre-line' }}>
-          {rehearsal.note ?? <Typography.Text style={muted}>Không có ghi chú.</Typography.Text>}
-        </Typography.Paragraph>
-        <Flex wrap gap={spacing.sm}>
+      <div className="ctb-detail__note-col">
+        <div>
+          <Flex align="center" justify="space-between" gap={spacing.xs} className="ctb-detail__head">
+            <p className="hm-rubric">Ghi chú</p>
+            <PlannerOnly rehearsal={rehearsal}>
+              <Flex align="center" gap={2}>
+                {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
+                {isUpcoming(rehearsal) && (
+                  <Button size="small" type="text" icon={<Icon name="edit" />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${label}`}>
+                    Sửa
+                  </Button>
+                )}
+                <Button size="small" danger type="text" icon={<Icon name="delete" />} onClick={() => onDelete(rehearsal)} aria-label={`Xoá buổi tập ${label}`}>
+                  Xoá
+                </Button>
+              </Flex>
+            </PlannerOnly>
+          </Flex>
+          <Typography.Paragraph style={{ marginBottom: spacing.md, whiteSpace: 'pre-line' }}>
+            {rehearsal.note ?? <Typography.Text style={muted}>Không có ghi chú.</Typography.Text>}
+          </Typography.Paragraph>
+        </div>
+        <Flex wrap align="center" gap={spacing.sm} className="ctb-detail__actions">
           <Button type="primary" onClick={() => onOpenRoom(rehearsal)}>
             {PRACTICE_ROOM_ACTION}
           </Button>
           <PlannerOnly rehearsal={rehearsal}>
-          <Button icon={<Icon name="check-square" />} onClick={() => onTakeAttendance(rehearsal)} aria-label={`${canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${label}`}>
-            {canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
-          </Button>
-          {/* The backend refuses to edit a session that has ended (REHEARSAL_ALREADY_PASSED). */}
-          {isUpcoming(rehearsal) && (
-            <Button icon={<Icon name="edit" />} onClick={() => onEdit(rehearsal)} aria-label={`Sửa buổi tập ${label}`}>
-              Sửa
+            <Button icon={<Icon name="check-square" />} onClick={() => onTakeAttendance(rehearsal)} aria-label={`${canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'} buổi tập ${label}`}>
+              {canTakeAttendance(rehearsal) ? 'Điểm danh' : 'Xem điểm danh'}
             </Button>
-          )}
-          <Button danger icon={<Icon name="delete" />} onClick={() => onDelete(rehearsal)} aria-label={`Xoá buổi tập ${label}`}>
-            Xoá
-          </Button>
           </PlannerOnly>
         </Flex>
       </div>

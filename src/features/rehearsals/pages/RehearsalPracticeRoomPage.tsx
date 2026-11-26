@@ -303,16 +303,18 @@ export function RehearsalPracticeRoomPage() {
                     </Link>
                   </Flex>
                 </div>
-                <div className="practice-room-field">
-                  <Typography.Text type="secondary">Bè</Typography.Text>
-                  <Segmented
-                    className="practice-room-parts"
-                    value={shownPart}
-                    onChange={(value) => setPart(String(value))}
-                    options={parts.map((name) => ({ value: name, label: voicePartName(name), icon: <VoicePartIcon name={name} /> }))}
-                    aria-label="Bản tập theo bè"
-                  />
-                </div>
+                {parts.length > 1 && (
+                  <div className="practice-room-field">
+                    <Typography.Text type="secondary">Bè</Typography.Text>
+                    <Segmented
+                      className="practice-room-parts"
+                      value={shownPart}
+                      onChange={(value) => setPart(String(value))}
+                      options={parts.map((name) => ({ value: name, label: voicePartName(name), icon: <VoicePartIcon name={name} /> }))}
+                      aria-label="Bản tập theo bè"
+                    />
+                  </div>
+                )}
               </Flex>
               <Flex wrap gap={spacing.sm}>
                 <Button icon={<Icon name="lyrics" />} onClick={() => setShowLyrics((value) => !value)} aria-pressed={showLyrics}>

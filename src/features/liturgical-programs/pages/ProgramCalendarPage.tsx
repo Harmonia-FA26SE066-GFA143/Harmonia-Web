@@ -192,7 +192,7 @@ export function ProgramCalendarPage() {
             >
               <Button icon={<Icon name="filter" />}>Bộ lọc</Button>
             </Popover>
-            <Flex wrap gap={spacing.sm} style={{ marginInlineStart: 'auto' }}>
+            <Flex wrap align="center" gap={spacing.sm} style={{ marginInlineStart: 'auto' }}>
               <Select
                 {...SELECT_POPUP_PROPS}
                 aria-label="Năm"
@@ -209,7 +209,11 @@ export function ProgramCalendarPage() {
                 options={monthOptions}
                 style={{ minWidth: 112 }}
               />
-              <Button onClick={() => changeMonth(dayjs())}>Hôm nay</Button>
+              <Flex gap={4} align="center">
+                <Button icon={<Icon name="chevron-left" />} aria-label="Tháng trước" onClick={() => changeMonth(selected.subtract(1, 'month'))} />
+                <Button onClick={() => changeMonth(dayjs())}>Hôm nay</Button>
+                <Button icon={<Icon name="chevron-right" />} aria-label="Tháng sau" onClick={() => changeMonth(selected.add(1, 'month'))} />
+              </Flex>
             </Flex>
           </Flex>
           {!events.isPlaceholderData && events.data.totalCount === 0 && (

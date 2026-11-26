@@ -33,9 +33,9 @@ Harmonia nối **lịch phụng vụ của Cha xứ** với **việc chuẩn b�
 | --- | --- | --- |
 | **Ca trưởng** | `/director` | Đề xuất danh sách bài hát, lên lịch tập, mời tham gia, phân công phục vụ, điểm danh, chấm bài luyện tập, duyệt kỹ năng ca viên, xem báo cáo, quản lý kho bài hát |
 | **Cha xứ** | `/priest` | Tạo và công bố chương trình phụng vụ (thủ công hoặc sinh từ lịch Thánh lễ), đồng bộ lịch phụng vụ, duyệt danh sách bài hát, theo dõi tình hình chuẩn bị |
-| **Quản trị viên** | `/admin` | Tài khoản và vai trò, ca đoàn, danh mục (mùa, loại lễ, nghi thức, chủ đề, kỹ năng), nhật ký hoạt động |
+| **Quản trị viên** | `/admin` | Tài khoản và vai trò, ca đoàn, đơn đăng ký gia nhập, bổ nhiệm Ca trưởng, danh mục (mùa, loại lễ, nghi thức, chủ đề, kỹ năng), cấu hình chung, nhật ký hoạt động |
 
-Ngoài ra có trang giới thiệu công khai, đăng nhập (kể cả Google) và trang hồ sơ cá nhân.
+Ngoài ra có trang giới thiệu công khai (`/`), trang đăng ký gia nhập ca đoàn (`/join`), đăng nhập (kể cả Google) và trang hồ sơ cá nhân.
 
 ## Điểm nổi bật
 
@@ -47,7 +47,7 @@ Ngoài ra có trang giới thiệu công khai, đăng nhập (kể cả Google) 
 
 ## Thiết kế
 
-Giao diện theo **Harmonia Design System**: đỏ rượu giáo xứ `#8E3B4B`, nền giấy ngà, vàng chỉ để trang trí, màu mùa phụng vụ trên dải mùa. Dùng một phông chữ tự phục vụ duy nhất là **Be Vietnam Pro** (tối ưu đầy đủ dấu tiếng Việt) và bộ **85 icon SVG nội bộ** (`src/shared/ui/icons/`). Bản sắc Công giáo ở mức tiết chế: khuông nhạc thánh ca và hình vòm, không thập giá trên nút, không gradient vàng.
+Giao diện theo **Harmonia Design System** (*Illuminated Missal*): đỏ rượu giáo xứ `#8E3B4B`, nền giấy ấm `#F5F0E8`, bảng màu trạng thái dịu mắt tương phản cao (`≥ 6.5:1`), vàng chỉ để trang trí và màu mùa phụng vụ trên dải mùa. Dùng một phông chữ tự phục vụ duy nhất là **Be Vietnam Pro** (tối ưu đầy đủ dấu tiếng Việt) và bộ **85 icon SVG nội bộ** (`src/shared/ui/icons/`). Ảnh thực tế không gian Nhà thờ Giáo xứ Tân Định (`src/assets/images/brand/`, ghi nguồn tại [`public/media/ATTRIBUTION.md`](public/media/ATTRIBUTION.md)) chỉ xuất hiện ở trang công khai và xác thực; các không gian làm việc giữ nền giấy tĩnh để tập trung điều phối. Bản sắc Công giáo ở mức tiết chế: khuông nhạc thánh ca và hình vòm, không thập giá trên nút, không gradient vàng.
 
 Trạng thái không bao giờ chỉ dựa vào màu; mọi trạng thái đều có chữ. Chuyển động tôn trọng thiết lập *giảm chuyển động* của hệ điều hành. Bố cục desktop được kiểm tra ở `1366×768`, `1440×900` và `1920×1080`.
 
@@ -106,16 +106,17 @@ Mở <http://localhost:5173>.
 
 ```text
 src/
-├── app/         # router, providers, phân quyền theo vai trò
+├── app/         # router, providers, phân quyền theo vai trò, trang chủ công khai
+├── assets/      # ảnh không gian giáo xứ dùng riêng cho trang công khai & xác thực
 ├── config/      # đọc biến môi trường
 ├── features/    # mỗi nghiệp vụ một thư mục: api/, components/, hooks/, pages/, types.ts
 ├── layouts/     # khung ứng dụng: thanh trên, điều hướng
 ├── lib/         # client API, phiên đăng nhập, lỗi, phân trang
-├── shared/      # component và hook dùng chung (EmptyState, StatusTag, SeasonChip…)
+├── shared/      # component, icon SVG nội bộ và hook dùng chung (PageHeader, StatusTag…)
 └── styles/      # design tokens, theme Ant Design, global.css
 ```
 
-Các nghiệp vụ trong `src/features/`: kho bài hát, chương trình phụng vụ, danh sách bài hát và duyệt, buổi tập và điểm danh, xác nhận tham gia, phân công, luyện tập, kỹ năng, thành viên và đăng ký, ca đoàn, báo cáo, thông báo, tài khoản, danh mục, nhật ký.
+Các nghiệp vụ trong `src/features/`: kho bài hát, chương trình phụng vụ, danh sách bài hát và duyệt, buổi tập và điểm danh, xác nhận tham gia, phân công, luyện tập, kỹ năng, thành viên, đơn đăng ký gia nhập, đề cử Ca trưởng, ca đoàn, trao đổi Cha xứ – Ca trưởng, báo cáo, thông báo, tài khoản, danh mục, cấu hình, nhật ký.
 
 ## Làm việc với backend
 

@@ -1,6 +1,6 @@
 import { Typography } from 'antd'
 import type { ReactNode } from 'react'
-import { SignInImage } from './SignInImage'
+import { SignInImage, type AuthScene } from './SignInImage'
 
 export interface AuthCardProps {
   title: ReactNode
@@ -12,17 +12,19 @@ export interface AuthCardProps {
   footer?: ReactNode
   /** Tighter spacing for a long form (join), so its submit button stays above a 768px fold. */
   compact?: boolean
+  /** Architectural parish backdrop behind the window. */
+  scene?: AuthScene
 }
 
 /**
  * Frame shared by the sign-in, password and join screens (artifact AuthPages, desktop web only): the landing hero's
- * window of light, opened to hold the form, over the still nave and the giant name. It covers the blank layout's
+ * window of light, opened to hold the form, over the parish church backdrop and the giant name. It covers the blank layout's
  * padding so the scene reaches the edges; a long form lengthens the window and the page scrolls.
  */
-export function AuthCard({ title, description, icon, children, footer, compact = false }: Readonly<AuthCardProps>) {
+export function AuthCard({ title, description, icon, children, footer, compact = false, scene = 'vault' }: Readonly<AuthCardProps>) {
   return (
     <div className={compact ? 'hm-auth hm-auth--compact' : 'hm-auth'}>
-      <SignInImage />
+      <SignInImage scene={scene} />
       <section className="hm-auth__window">
         <div className="hm-auth__body">
           {icon && (
