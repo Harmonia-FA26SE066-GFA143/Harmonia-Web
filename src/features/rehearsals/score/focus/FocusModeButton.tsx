@@ -12,7 +12,7 @@ export function FocusModeButton({
   buttonRef,
 }: Readonly<{ active: boolean; onToggle: () => void; buttonRef: Ref<HTMLButtonElement> }>) {
   return (
-    <Tooltip title={`${active ? 'Thoát' : 'Bật'} chế độ tập trung (F)`}>
+    <Tooltip title={`${active ? 'Thoát' : 'Bật'} chế độ tập trung (F)`} trigger={['hover', 'focus']}>
       <Button
         ref={buttonRef}
         className="hm-lift"

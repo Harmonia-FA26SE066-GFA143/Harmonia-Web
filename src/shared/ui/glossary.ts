@@ -56,3 +56,8 @@ export function resultCountLabel(resultCount: number | undefined, noun: string, 
 export function filterAllPlaceholder(categoryNoun: string): string {
   return `${FILTER_ALL_PREFIX} ${categoryNoun}`
 }
+
+/** Builds a warm Vietnamese range summary for Ant Design Pagination `showTotal`. */
+export function paginationTotal(noun = 'mục'): (total: number, range: [number, number]) => string {
+  return (total, [start, end]) => `${start}–${end} / ${total} ${noun}`
+}

@@ -318,7 +318,7 @@ export function StaffingCard({
                           <Typography.Text style={{ color: 'var(--hm-area-attention-ink)', fontWeight: 600 }}> · trùng buổi tập</Typography.Text>
                         )}
                       </span>
-                      <Icon name="chevron-down" />
+                      <Icon name="chevron-down" className="hm-dropdown-chevron" />
                     </Button>
                   </Dropdown>
                   {inReplace && (

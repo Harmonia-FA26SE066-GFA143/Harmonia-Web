@@ -85,7 +85,7 @@ export function PlaybackControls({
         </Typography.Paragraph>
       )}
       <Flex align="center" gap={spacing.md} style={{ minHeight: sizes.controlHeight }}>
-        <Tooltip title={`${label} (Space). ← → lùi hoặc tiến ${SEEK_STEP} giây, Home về đầu.`}>
+        <Tooltip title={`${label} (Space). ← → lùi hoặc tiến ${SEEK_STEP} giây, Home về đầu.`} trigger={['hover', 'focus']}>
           <Button
             type="primary"
             shape="circle"
@@ -119,7 +119,7 @@ export function PlaybackControls({
           style={{ flex: 1, minWidth: 120, marginBlock: 0 }}
         />
         {setPlaybackRate && (
-          <Tooltip title="Đổi tốc độ phát (0,75× · 0,85× · 1× · 1,15×)">
+          <Tooltip title="Đổi tốc độ phát (0,75× · 0,85× · 1× · 1,15×)" trigger={['hover', 'focus']}>
             <Button
               size="small"
               className="hm-speed-btn"

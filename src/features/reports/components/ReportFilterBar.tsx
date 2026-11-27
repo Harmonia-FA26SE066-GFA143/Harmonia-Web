@@ -94,7 +94,13 @@ export function ReportFilterBar({
             <label htmlFor="report-filter-choirId" style={labelStyle}>
               Ca đoàn
             </label>
-            {choirDisabledReason ? <Tooltip title={choirDisabledReason}>{choirControl}</Tooltip> : choirControl}
+            {choirDisabledReason ? (
+              <Tooltip title={choirDisabledReason} trigger={['hover', 'focus']}>
+                {choirControl}
+              </Tooltip>
+            ) : (
+              choirControl
+            )}
           </Flex>
         )}
       </FilterBar>
