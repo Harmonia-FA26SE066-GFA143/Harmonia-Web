@@ -1,4 +1,5 @@
-import { App, Avatar, Button, Flex, Typography, Upload } from 'antd'
+import { App, Avatar, Button, Flex, Typography } from 'antd'
+import { useRef } from 'react'
 import { errorMessage } from '@/lib/api/errors'
 import { Icon } from '@/shared/ui'
 import { fileExtension } from '@/shared/utils/media'
@@ -30,6 +31,7 @@ export function ProfileAvatar({ profile }: Readonly<{ profile: Profile }>) {
   const { message, modal } = App.useApp()
   const update = useUpdateMyAvatar()
   const remove = useDeleteMyAvatar()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const busy = update.isPending || remove.isPending
 
   const handlePick = (file: File) => {
@@ -60,23 +62,30 @@ export function ProfileAvatar({ profile }: Readonly<{ profile: Profile }>) {
   const name = personName(profile.fullName, profile.saintName)
 
   return (
-    <aside aria-label="Ảnh đại diện" className="hm-profile-id">
+    <aside aria-label="Hồ sơ nhận diện" className="hm-profile-id">
       <Avatar size={96} src={profile.avatarUrl} icon={<Icon name="account" />} alt="" style={{ background: colors.primary, flexShrink: 0 }} />
       {name && <p className="hm-profile-id__name">{name}</p>}
       <p className="hm-profile-id__mail">{profile.email}</p>
       <Flex gap={spacing.sm} wrap justify="center" className="hm-profile-id__actions">
-        <Upload
-          showUploadList={false}
+        <input
+          ref={fileInputRef}
+          type="file"
           accept={accepted.join(',')}
-          beforeUpload={(file) => {
-            handlePick(file)
-            return false
+          hidden
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            event.target.value = ''
+            if (file) handlePick(file)
           }}
+        />
+        <Button
+          icon={<Icon name="upload" />}
+          loading={update.isPending}
+          disabled={busy && !update.isPending}
+          onClick={() => fileInputRef.current?.click()}
         >
-          <Button icon={<Icon name="upload" />} loading={update.isPending} disabled={busy && !update.isPending}>
-            {profile.avatarUrl ? 'Đổi ảnh' : 'Tải ảnh lên'}
-          </Button>
-        </Upload>
+          {profile.avatarUrl ? 'Đổi ảnh' : 'Tải ảnh lên'}
+        </Button>
         {profile.avatarUrl && (
           <Button icon={<Icon name="delete" />} danger loading={remove.isPending} disabled={busy && !remove.isPending} onClick={handleRemove}>
             Xoá ảnh

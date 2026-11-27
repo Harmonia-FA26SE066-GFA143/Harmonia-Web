@@ -1,6 +1,17 @@
-import { Button, Card, Flex, Input, Table, Typography, type TableColumnsType } from 'antd'
+import { Button, Card, Flex, Input, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useMemo, useState } from 'react'
-import { ACTIONS_COLUMN_TITLE, EmptyState, ErrorState, Icon, NoFilterResults, SectionSkeleton, StatusTag } from '@/shared/ui'
+import {
+  ACTIONS_COLUMN_TITLE,
+  EmptyState,
+  ErrorState,
+  FilterBar,
+  filterAllPlaceholder,
+  Icon,
+  NoFilterResults,
+  SectionSkeleton,
+  SELECT_POPUP_PROPS,
+  StatusTag,
+} from '@/shared/ui'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing } from '@/styles/tokens'
 import type { CatalogEntry } from '../types'
@@ -23,6 +34,7 @@ export interface CatalogTableProps<T extends CatalogEntry> {
   items?: T[]
   loading?: boolean
   error?: boolean
+  errorDetail?: Error | null
   retrying?: boolean
   onRetry: () => void
   onAdd: () => void
@@ -54,20 +66,41 @@ export function CatalogTable<T extends CatalogEntry>({
   items,
   loading = false,
   error = false,
+  errorDetail,
   retrying = false,
   onRetry,
   onAdd,
   onEdit,
 }: Readonly<CatalogTableProps<T>>) {
   const [search, setSearch] = useState('')
+  const [activeFilter, setActiveFilter] = useState<boolean>()
   const visible = useMemo(
-    () => (items ?? []).filter((item) => matchesSearch(search, item.name, item.description ?? undefined)),
-    [items, search],
+    () =>
+      (items ?? []).filter(
+        (item) =>
+          (activeFilter === undefined || item.isActive === activeFilter) &&
+          matchesSearch(search, item.name, item.description ?? undefined),
+      ),
+    [items, search, activeFilter],
   )
-  const hasSearch = search.trim().length > 0
+  const hasFilters = search.trim().length > 0 || activeFilter !== undefined
+  const resetFilters = () => {
+    setSearch('')
+    setActiveFilter(undefined)
+  }
 
   if (loading) return <SectionSkeleton rows={5} label={`Đang tải danh mục ${labels.noun}`} />
-  if (error) return <ErrorState title={labels.errorTitle} onRetry={onRetry} retrying={retrying} />
+  if (error) {
+    return (
+      <ErrorState
+        title={labels.errorTitle}
+        error={errorDetail ?? undefined}
+        hasData={items !== undefined}
+        onRetry={onRetry}
+        retrying={retrying}
+      />
+    )
+  }
   if (!items || items.length === 0) {
     return (
       <EmptyState
@@ -116,8 +149,17 @@ export function CatalogTable<T extends CatalogEntry>({
   ]
 
   return (
-    <Card styles={{ body: { padding: 0 } }}>
-      <Flex wrap justify="space-between" align="center" gap={spacing.sm} style={{ padding: spacing.md }}>
+    <Flex vertical gap={spacing.md}>
+      <FilterBar
+        resultText={hasFilters ? `${visible.length} kết quả trong ${items.length} ${labels.noun}` : `${items.length} ${labels.noun}`}
+        hasActiveFilters={hasFilters}
+        onReset={resetFilters}
+        extra={
+          <Button type="primary" icon={<Icon name="add" />} onClick={onAdd}>
+            {labels.addLabel}
+          </Button>
+        }
+      >
         <Input
           allowClear
           prefix={<Icon name="search" />}
@@ -125,30 +167,37 @@ export function CatalogTable<T extends CatalogEntry>({
           aria-label={`Tìm kiếm ${labels.noun}`}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          style={{ flex: '1 1 240px', maxWidth: 360 }}
+          style={{ flex: '1 1 220px', maxWidth: 320 }}
         />
-        <Flex align="center" gap={spacing.md} wrap>
-          <Typography.Text aria-live="polite" style={{ color: colors.textMuted }}>
-            {hasSearch ? `${visible.length} kết quả trong ${items.length} ${labels.noun}` : `${items.length} ${labels.noun}`}
-          </Typography.Text>
-          <Button type="primary" icon={<Icon name="add" />} onClick={onAdd}>
-            {labels.addLabel}
-          </Button>
-        </Flex>
-      </Flex>
-      {visible.length === 0 ? (
-        <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
-          <NoFilterResults onClearFilters={() => setSearch('')} />
-        </div>
-      ) : (
-        <Table<T>
-          rowKey="id"
-          columns={allColumns}
-          dataSource={visible}
-          pagination={{ pageSize: 10, hideOnSinglePage: true }}
-          scroll={{ x: 'max-content' }}
+        <Select
+          {...SELECT_POPUP_PROPS}
+          allowClear
+          aria-label={`Trạng thái ${labels.noun}`}
+          placeholder={filterAllPlaceholder('trạng thái')}
+          value={activeFilter}
+          onChange={(value?: boolean) => setActiveFilter(value)}
+          options={[
+            { value: true, label: 'Đang dùng' },
+            { value: false, label: 'Ngừng dùng' },
+          ]}
+          style={{ minWidth: 164 }}
         />
-      )}
-    </Card>
+      </FilterBar>
+      <Card styles={{ body: { padding: 0 } }}>
+        {visible.length === 0 ? (
+          <div style={{ padding: spacing.md }}>
+            <NoFilterResults />
+          </div>
+        ) : (
+          <Table<T>
+            rowKey="id"
+            columns={allColumns}
+            dataSource={visible}
+            pagination={{ pageSize: 20, hideOnSinglePage: true }}
+            scroll={{ x: 'max-content' }}
+          />
+        )}
+      </Card>
+    </Flex>
   )
 }

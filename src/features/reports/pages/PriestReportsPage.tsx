@@ -50,7 +50,11 @@ export function PriestReportsPage() {
               filters={filters}
               filtered={hasActiveReportFilters(filters)}
               onClearFilters={clearFilters}
-              onOpenProgram={(programId) => navigate(generatePath(paths.priest.programDetail, { programId }))}
+              onOpenProgram={
+                reportKind === 'serviceHistory'
+                  ? (programId) => navigate(generatePath(paths.priest.programDetail, { programId }))
+                  : undefined
+              }
             />
           ),
         }))}

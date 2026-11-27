@@ -1,6 +1,5 @@
 import { Input, Typography } from 'antd'
-import { Form } from '@/shared/ui'
-import { colors } from '@/styles/tokens'
+import { EmptyCell, Form } from '@/shared/ui'
 
 // The description column and field of catalogs that have one (Harmonia-BE validators: ≤ 300).
 
@@ -13,7 +12,7 @@ export const descriptionColumn = {
       // A long description wraps here instead of widening the table past the card.
       <Typography.Paragraph style={{ margin: 0, minWidth: 200, maxWidth: 300 }}>{description}</Typography.Paragraph>
     ) : (
-      <Typography.Text style={{ color: colors.textMuted }}>Chưa có mô tả</Typography.Text>
+      <EmptyCell text="Chưa có mô tả" />
     ),
 }
 

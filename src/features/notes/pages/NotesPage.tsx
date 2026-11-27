@@ -1,8 +1,11 @@
 import { Alert, App, Badge, Button, Card, Flex, Typography } from 'antd'
-import { spacing } from '@/styles/tokens'
+import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
+import { paths } from '@/app/router/paths'
+import { parseUtc } from '@/lib/api/dates'
 import { getSession } from '@/lib/auth/session'
 import { EmptyState, ErrorState, Icon, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { colors, spacing, typography } from '@/styles/tokens'
 import { ChatThread } from '../components/ChatThread'
 import { SendNoteDrawer } from '../components/SendNoteDrawer'
 import {
@@ -11,6 +14,7 @@ import {
   useMarkConversationRead,
   useNoteRecipients,
   useSendNote,
+  type NotesLiveStatus,
 } from '../hooks/useNotes'
 import { noteErrorMessage } from '../notesErrors'
 import type { DirectorNoteValues } from '../types'
@@ -20,6 +24,19 @@ interface Contact {
   name: string
   unread: number
   preview?: string
+  lastSentAt?: string
+  lastFromSelf?: boolean
+}
+
+const liveLabels: Record<NotesLiveStatus, { text: string; className: string }> = {
+  connecting: { text: 'Đang kết nối…', className: 'notes-live is-connecting' },
+  connected: { text: 'Đã kết nối', className: 'notes-live is-live' },
+  reconnecting: { text: 'Mất kết nối, đang thử lại', className: 'notes-live' },
+}
+
+const shortTime = (sentAt: string) => {
+  const local = dayjs(parseUtc(sentAt))
+  return local.isSame(dayjs(), 'day') ? local.format('HH:mm') : local.format('DD/MM')
 }
 
 /**
@@ -36,12 +53,20 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
   const markRead = useMarkConversationRead()
   const sendNote = useSendNote()
   const [selectedId, setSelectedId] = useState<string>()
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [noting, setNoting] = useState(false)
 
   const byId = new Map<string, Contact>()
   for (const { id, fullName, email } of recipients.data ?? []) byId.set(id, { id, name: fullName || email, unread: 0 })
   for (const { userId, fullName, unreadCount, lastNote } of conversations.data ?? []) {
-    byId.set(userId, { id: userId, name: fullName || byId.get(userId)?.name || 'Chưa có họ tên', unread: unreadCount, preview: lastNote.content })
+    byId.set(userId, {
+      id: userId,
+      name: fullName || byId.get(userId)?.name || 'Chưa có họ tên',
+      unread: unreadCount,
+      preview: lastNote.content,
+      lastSentAt: lastNote.sentAt,
+      lastFromSelf: lastNote.fromUserId === selfId,
+    })
   }
   // Conversations come latest first; recipients without one follow, in the order the backend sent them.
   const order = new Map((conversations.data ?? []).map((row, index) => [row.userId, index]))
@@ -116,7 +141,7 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
       {!loading && !failed && selected && (
         <Card
           className="notes-shell-card"
-          styles={{ body: { padding: 0, display: 'flex', height: 'clamp(420px, calc(100vh - 260px), 680px)' } }}
+          styles={{ body: { padding: 0, display: 'flex', height: 'clamp(420px, calc(100vh - 250px), 820px)' } }}
         >
           <nav aria-labelledby="notes-people-heading" className="notes-people hm-paper">
             <h2 id="notes-people-heading" className="hm-rubric">
@@ -132,9 +157,20 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
               >
                 <Flex justify="space-between" align="center" gap={8}>
                   <Typography.Text strong ellipsis>{contact.name}</Typography.Text>
-                  {contact.unread > 0 && <Badge count={contact.unread} aria-label={`${contact.unread} tin chưa đọc`} />}
+                  <Flex align="center" gap={6} style={{ flexShrink: 0 }}>
+                    {contact.lastSentAt && (
+                      <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
+                        {shortTime(contact.lastSentAt)}
+                      </Typography.Text>
+                    )}
+                    {contact.unread > 0 && <Badge count={contact.unread} aria-label={`${contact.unread} tin chưa đọc`} />}
+                  </Flex>
                 </Flex>
-                {contact.preview && <Typography.Text type="secondary" ellipsis style={{ display: 'block' }}>{contact.preview}</Typography.Text>}
+                {contact.preview && (
+                  <Typography.Text type="secondary" ellipsis style={{ display: 'block', fontSize: typography.metadata.fontSize }}>
+                    {contact.lastFromSelf ? `Bạn: ${contact.preview}` : contact.preview}
+                  </Typography.Text>
+                )}
               </button>
             ))}
           </nav>
@@ -145,10 +181,13 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
               partnerName={selected.name}
               partnerSubtitle={sender ? 'Ca trưởng' : 'Cha xứ'}
               selfId={selfId}
+              draft={drafts[selected.id] ?? ''}
+              onDraftChange={(value) => setDrafts((current) => ({ ...current, [selected.id]: value }))}
+              eventPathTemplate={sender ? paths.priest.programDetail : paths.director.programDetail}
               liveStatus={
                 // The state in words; the dot only echoes it. Inside the opaque chat header (G4-03).
-                <output className={`notes-live${live ? ' is-live' : ''}`}>
-                  {live ? 'Đã kết nối' : 'Mất kết nối, đang thử lại'}
+                <output className={liveLabels[live].className}>
+                  {liveLabels[live].text}
                 </output>
               }
             />
@@ -157,7 +196,13 @@ function NotesPage({ sender }: Readonly<{ sender: boolean }>) {
       )}
 
       {sender && (
-        <SendNoteDrawer open={noting} saving={sendNote.isPending} onSubmit={handleNote} onCancel={() => setNoting(false)} />
+        <SendNoteDrawer
+          open={noting}
+          saving={sendNote.isPending}
+          defaultRecipientId={selected?.id}
+          onSubmit={handleNote}
+          onCancel={() => setNoting(false)}
+        />
       )}
     </>
   )

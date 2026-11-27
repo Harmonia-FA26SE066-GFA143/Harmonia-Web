@@ -59,6 +59,7 @@ export function CatalogManager<T extends CatalogEntry, V extends { name: string 
         items={query.data}
         loading={query.isPending}
         error={query.isError}
+        errorDetail={query.error}
         retrying={query.isFetching}
         onRetry={() => query.refetch()}
         onAdd={() => open()}

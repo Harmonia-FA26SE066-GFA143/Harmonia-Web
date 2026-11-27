@@ -72,6 +72,7 @@ export interface SongCardGridProps {
   /** Changes when the filters change, so the cards rise in again. */
   animationKey: string
   onSelect: (song: Song) => void
+  onOpen?: (song: Song) => void
   onPageChange: (page: number) => void
 }
 
@@ -80,7 +81,7 @@ export interface SongCardGridProps {
  * title, credits, materials as filled or empty dots with words, and how often the song was sung. A card picks the song
  * for the quick look beside the grid.
  */
-export function SongCardGrid({ songs, page, pageSize, total, loading, selectedId, partOf, animationKey, onSelect, onPageChange }: Readonly<SongCardGridProps>) {
+export function SongCardGrid({ songs, page, pageSize, total, loading, selectedId, partOf, animationKey, onSelect, onOpen, onPageChange }: Readonly<SongCardGridProps>) {
   return (
     <Spin spinning={loading}>
       <ul key={animationKey} className="song-cards hm-stagger" aria-label="Bài hát">
@@ -88,7 +89,13 @@ export function SongCardGrid({ songs, page, pageSize, total, loading, selectedId
           const part = partOf(song)
           return (
             <li key={song.id} data-row-key={song.id}>
-              <button type="button" className="song-card hm-lift" aria-pressed={song.id === selectedId} onClick={() => onSelect(song)}>
+              <button
+                type="button"
+                className="song-card hm-lift"
+                aria-pressed={song.id === selectedId}
+                onClick={() => onSelect(song)}
+                onDoubleClick={() => onOpen?.(song)}
+              >
                 <span className="song-card__thumb" aria-hidden>
                   <ScorePage
                     url={song.sheetMusicThumbnailUrl}

@@ -1,6 +1,6 @@
 import { Button, Drawer, Flex, Grid, Layout, Menu, type MenuProps } from 'antd'
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { BrandMark, Icon, OfflineNotice } from '@/shared/ui'
 import { layout, sizes, spacing } from '@/styles/tokens'
@@ -31,12 +31,18 @@ function toMenuItems(sections: NavSection[]): MenuProps['items'] {
   }))
 }
 
-function Brand() {
-  return (
+function Brand({ to }: Readonly<{ to?: string }>) {
+  const content = (
     <Flex align="center" gap={spacing.sm} style={{ flexShrink: 0 }}>
       <BrandMark size={28} />
       <span className="hm-brand">Harmonia</span>
     </Flex>
+  )
+  if (!to) return content
+  return (
+    <Link to={to} className="hm-brand-link" aria-label="Harmonia — về trang tổng quan">
+      {content}
+    </Link>
   )
 }
 
@@ -99,11 +105,13 @@ export function AppShell({ children }: Readonly<{ children?: ReactNode }>) {
     </>
   )
 
+  const homePath = surface ? surfaces[surface].basePath : paths.home
+
   let header = (
     <RunningHead
       sections={sections}
       selectedPath={selectedPath}
-      brand={<Brand />}
+      brand={<Brand to={homePath} />}
       controls={controls}
       day={<HeadDay surface={surface} />}
       scrolled={scrolled}
@@ -111,16 +119,16 @@ export function AppShell({ children }: Readonly<{ children?: ReactNode }>) {
   )
   if (focusedSecurity) {
     header = (
-      <div className="hm-head">
+      <header className="hm-head">
         <div className="hm-top">
           <Brand />
           <div className="hm-top__end">{controls}</div>
         </div>
-      </div>
+      </header>
     )
   } else if (isCompact) {
     header = (
-      <div className="hm-head">
+      <header className={`hm-head${scrolled ? ' is-scrolled' : ''}`}>
         <div className="hm-top">
           <Button
             className="hm-chrome-btn"
@@ -130,10 +138,10 @@ export function AppShell({ children }: Readonly<{ children?: ReactNode }>) {
             onClick={() => setDrawerOpen(true)}
             style={{ width: sizes.touchTarget, height: sizes.touchTarget }}
           />
-          <Brand />
+          <Brand to={homePath} />
           <div className="hm-top__end">{controls}</div>
         </div>
-      </div>
+      </header>
     )
   }
 

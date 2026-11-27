@@ -19,15 +19,17 @@ export interface SectionSkeletonProps {
 /**
  * Loading placeholder matching card-grid geometry (G3-02, R2.5). Zero `opacity: 0` traps.
  */
-export function CardGridSkeleton({ cards = 6, label = 'Đang tải danh sách thẻ' }: Readonly<{ cards?: number; label?: string }>) {
+export function CardGridSkeleton({ cards = 6, label = 'Đang tải danh sách thẻ', delay = 0 }: Readonly<{ cards?: number; label?: string; delay?: number }>) {
   return (
     <output
       aria-busy="true"
       aria-label={label}
+      className="hm-skeleton-in"
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
         gap: spacing.md,
+        ...stagger(delay),
       }}
     >
       {Array.from({ length: cards }, (_, index) => (
@@ -51,7 +53,7 @@ export function CardGridSkeleton({ cards = 6, label = 'Đang tải danh sách th
  * Loading placeholder for one section (table, card group, form) so the rest of the page stays usable.
  */
 export function SectionSkeleton({ rows = 5, variant = 'list', label = 'Đang tải dữ liệu', delay = 0 }: Readonly<SectionSkeletonProps>) {
-  if (variant === 'grid') return <CardGridSkeleton cards={rows} label={label} />
+  if (variant === 'grid') return <CardGridSkeleton cards={rows} label={label} delay={delay} />
 
   return (
     <output

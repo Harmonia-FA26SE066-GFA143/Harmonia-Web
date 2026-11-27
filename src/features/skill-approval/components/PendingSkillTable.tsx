@@ -1,7 +1,7 @@
-import { Button, Flex, Modal, Table, Typography, type TableColumnsType } from 'antd'
-import { useState } from 'react'
+import { Alert, Button, Flex, Modal, Table, Typography, type TableColumnsType } from 'antd'
+import { useRef, useState } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
-import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon, voicePartName } from '@/shared/ui'
+import { ACTIONS_COLUMN_TITLE, EmptyCell, hasVoicePart, Icon, VoicePartIcon, voicePartName } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import type { PendingSkill, SkillEvidence } from '../types'
 
@@ -33,6 +33,13 @@ export function PendingSkillTable({
   onReject,
 }: Readonly<PendingSkillTableProps>) {
   const [clip, setClip] = useState<{ skill: PendingSkill; evidence: SkillEvidence }>()
+  const [clipFailed, setClipFailed] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const pauseOthers = (current: HTMLAudioElement) => {
+    containerRef.current?.querySelectorAll('audio').forEach((node) => {
+      if (node !== current && !node.paused) node.pause()
+    })
+  }
   const columns: TableColumnsType<PendingSkill> = [
     {
       key: 'member',
@@ -45,7 +52,10 @@ export function PendingSkillTable({
       title: 'Kỹ năng',
       render: (_, skill) => (
         <Flex vertical>
-          <Typography.Text>{voicePartName(skill.skillName)}</Typography.Text>
+          <Typography.Text>
+            {hasVoicePart([skill.skillName]) && <VoicePartIcon name={skill.skillName} />}{' '}
+            {voicePartName(skill.skillName)}
+          </Typography.Text>
           <Typography.Text style={{ ...muted, fontSize: typography.metadata.fontSize }}>{skill.categoryName}</Typography.Text>
         </Flex>
       ),
@@ -57,9 +67,25 @@ export function PendingSkillTable({
         const { evidence } = skill
         if (!evidence) return <EmptyCell text="Không gửi" />
         return evidence.kind === 'voice' ? (
-          <audio controls preload="none" src={evidence.url} aria-label={`Nghe minh chứng ${skill.skillName} của ${skill.memberName}`} style={{ height: 36, width: 240 }} />
+          <audio
+            controls
+            preload="none"
+            src={evidence.url}
+            onPlay={(event) => pauseOthers(event.currentTarget)}
+            aria-label={`Nghe minh chứng ${skill.skillName} của ${skill.memberName}`}
+            style={{ height: 36, width: 240 }}
+          >
+            <track kind="captions" />
+          </audio>
         ) : (
-          <Button icon={<Icon name="play" />} onClick={() => setClip({ skill, evidence })} aria-label={`Xem clip ${skill.skillName} của ${skill.memberName}`}>
+          <Button
+            icon={<Icon name="play" />}
+            onClick={() => {
+              setClipFailed(false)
+              setClip({ skill, evidence })
+            }}
+            aria-label={`Xem clip ${skill.skillName} của ${skill.memberName}`}
+          >
             Xem clip
           </Button>
         )
@@ -105,7 +131,7 @@ export function PendingSkillTable({
   ]
 
   return (
-    <>
+    <div ref={containerRef}>
       <Table<PendingSkill>
         rowKey="id"
         columns={columns}
@@ -121,12 +147,33 @@ export function PendingSkillTable({
         footer={null}
         width={720}
         destroyOnHidden
-        onCancel={() => setClip(undefined)}
+        onCancel={() => {
+          setClip(undefined)
+          setClipFailed(false)
+        }}
       >
         {clip && (
-          <video controls autoPlay src={clip.evidence.url} aria-label={`Clip minh chứng: ${clip.evidence.fileName}`} style={{ width: '100%', borderRadius: 8 }} />
+          <Flex vertical gap={spacing.sm}>
+            <video
+              controls
+              src={clip.evidence.url}
+              onError={() => setClipFailed(true)}
+              aria-label={`Clip minh chứng: ${clip.evidence.fileName}`}
+              style={{ width: '100%', borderRadius: 8 }}
+            >
+              <track kind="captions" />
+            </video>
+            {clipFailed && (
+              <Alert
+                type="warning"
+                showIcon
+                title="Không phát được clip minh chứng."
+                description="Liên kết tạm có thể đã hết hạn. Đóng hộp thoại và tải lại trang để lấy liên kết mới."
+              />
+            )}
+          </Flex>
         )}
       </Modal>
-    </>
+    </div>
   )
 }

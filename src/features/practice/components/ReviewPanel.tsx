@@ -1,5 +1,5 @@
 import { App, Button, Flex, Input, Radio, Typography } from 'antd'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ErrorState, Form, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { useCommentSubmission, useReviewSubmission, useScoreSubmission, useSubmission } from '../hooks/usePractice'
@@ -74,6 +74,7 @@ export function ReviewPanel({ submissionId, initialResult, initialComment, onDon
   const [form] = Form.useForm<FormValues>()
   // The decision just saved, shown in place for a moment before the next submission is picked.
   const [decided, setDecided] = useState<string>()
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const submission = useSubmission(submissionId)
   const review = useReviewSubmission()
   const comment = useCommentSubmission()
@@ -81,14 +82,21 @@ export function ReviewPanel({ submissionId, initialResult, initialComment, onDon
   const reviewed = Boolean(data?.feedbacks.length)
   const saving = review.isPending || comment.isPending
 
+  useEffect(() => () => clearTimeout(advanceTimer.current), [])
+
   const handleFinish = ({ result, comment: text }: FormValues) => {
     if (!data || saving) return
     const callbacks = {
       onSuccess: () => {
         message.success(reviewed ? 'Đã thêm nhận xét.' : 'Đã chấm bài.')
         const outcome: ReviewResult = result === 'needsRevision' ? 'needsRevision' : 'passed'
-        setDecided(reviewed ? 'Đã gửi nhận xét' : `Đã chấm: ${practiceStatusLabels[outcome]}`)
-        setTimeout(onDone, 700)
+        if (reviewed) {
+          form.setFieldValue('comment', '')
+        } else {
+          setDecided(`Đã chấm: ${practiceStatusLabels[outcome]}`)
+          clearTimeout(advanceTimer.current)
+          advanceTimer.current = setTimeout(onDone, 700)
+        }
       },
       onError: (error: Error) => message.error(practiceErrorMessage(error, 'Không thể lưu đánh giá. Vui lòng thử lại.')),
     }

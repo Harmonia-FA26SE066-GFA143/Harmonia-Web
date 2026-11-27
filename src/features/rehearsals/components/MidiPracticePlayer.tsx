@@ -1,5 +1,5 @@
-import { Button, Flex, Slider, Typography } from 'antd'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Button, Flex, Typography } from 'antd'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   playbackInstrumentLabels,
   useMaterialPlayback,
@@ -12,7 +12,8 @@ import { clock } from '@/shared/utils/media'
 import { ErrorState, Icon, SectionSkeleton } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import { usePlaybackClock } from '../score/clock/usePlaybackClock'
-import { PlaybackState } from '../score/controls/PlaybackControls'
+import { PlaybackControls } from '../score/controls/PlaybackControls'
+import { useScoreShortcuts } from '../score/controls/useScoreShortcuts'
 import { TimedLyricsView } from './TimedLyricsView'
 
 const canvasHeight = 300
@@ -190,22 +191,23 @@ function playbackDescription(error: Error) {
   return undefined
 }
 
-function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMaterial, showLyrics, onStale }: Readonly<{
+function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMaterial, untimedLyrics, showLyrics, onStale }: Readonly<{
   title: string
   score: MidiPlaybackNotes
   audioUrl: string
   durationSeconds: number
   timedMaterial?: SongMaterial
+  untimedLyrics?: ReactNode
   showLyrics: boolean
   onStale?: () => void
 }>) {
   const canvas = useRef<HTMLCanvasElement>(null)
+  const [root, setRoot] = useState<HTMLDivElement | null>(null)
   const time = useRef(0)
-  const displayedSecond = useRef(0)
-  const [currentTime, setCurrentTime] = useState(0)
   const fallbackDuration = Math.max(durationSeconds, score.durationSeconds)
   const playbackClock = usePlaybackClock(audioUrl, fallbackDuration)
-  const { playing, duration, error, sourceFailed, play, pause, seek: seekPlayback, getTime, subscribe } = playbackClock
+  const { getTime, subscribe } = playbackClock
+  useScoreShortcuts(root, playbackClock)
   const maxNoteDuration = useMemo(
     () => score.notes.reduce((longest, note) => Math.max(longest, note.duration), 0),
     [score.notes],
@@ -217,11 +219,6 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMate
     const drawAt = (seconds: number) => {
       time.current = seconds
       drawPianoRoll(element, score, seconds, maxNoteDuration)
-      const wholeSecond = Math.floor(seconds)
-      if (wholeSecond !== displayedSecond.current) {
-        displayedSecond.current = wholeSecond
-        setCurrentTime(seconds)
-      }
     }
     drawAt(getTime())
     return subscribe(drawAt)
@@ -235,30 +232,16 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMate
     return () => observer.disconnect()
   }, [maxNoteDuration, score])
 
-  const toggle = async () => {
-    if (playing) {
-      pause()
-      return
-    }
-    await play()
-  }
-
-  const seek = (seconds: number) => {
-    seekPlayback(seconds)
-    const actualTime = getTime()
-    time.current = actualTime
-    displayedSecond.current = Math.floor(actualTime)
-    setCurrentTime(actualTime)
-  }
+  const untimed = untimedLyrics ? <div className="karaoke-lyrics" aria-live="off">{untimedLyrics}</div> : undefined
 
   return (
-    <div>
+    <div ref={setRoot} tabIndex={-1} style={{ outline: 'none' }}>
       <Flex justify="space-between" align="baseline" wrap gap={spacing.sm} style={{ marginBottom: spacing.sm }}>
         <Typography.Title level={3} style={{ margin: 0, fontSize: typography.cardHeading.fontSize }}>
           Bản nốt đồng bộ
         </Typography.Title>
         <Typography.Text type="secondary">
-          {score.notes.length.toLocaleString('vi-VN')} nốt · {score.tracks.length} track
+          {score.notes.length.toLocaleString('vi-VN')} nốt · {score.tracks.length} kênh
         </Typography.Text>
       </Flex>
       <figure
@@ -271,45 +254,18 @@ function SynchronizedPlayer({ title, score, audioUrl, durationSeconds, timedMate
           style={{ display: 'block', width: '100%', height: canvasHeight }}
         />
       </figure>
-      {showLyrics && timedMaterial && <TimedLyricsView material={timedMaterial} clock={playbackClock} onStale={onStale} />}
-      {error && (
-        <Typography.Paragraph role="alert" style={{ color: colors.primaryHover, margin: `${spacing.sm}px 0 0` }}>
-          {midiPlaybackError}
-        </Typography.Paragraph>
-      )}
-      <Flex align="center" gap={spacing.md} style={{ marginTop: spacing.md }}>
-        <Button
-          type="primary"
-          shape="circle"
-          icon={playing ? <Icon name="pause" /> : <Icon name="play-solid" />}
-          onClick={() => void toggle()}
-          disabled={sourceFailed}
-          aria-label={`${playing ? 'Tạm dừng' : 'Phát'} ${title}`}
-        />
-        <PlaybackState playing={playing} finished={!playing && duration > 0 && getTime() >= duration} duration={duration} />
-        <Slider
-          min={0}
-          max={duration}
-          step={0.01}
-          value={Math.min(currentTime, duration)}
-          onChange={seek}
-          tooltip={{ formatter: (value) => clock(value ?? 0) }}
-          aria-label={`Vị trí phát ${title}`}
-          style={{ flex: 1, minWidth: 120 }}
-        />
-        <Typography.Text type="secondary" style={{ flexShrink: 0 }}>
-          {clock(currentTime)} / {clock(duration)}
-        </Typography.Text>
-      </Flex>
+      {showLyrics && (timedMaterial ? <TimedLyricsView material={timedMaterial} clock={playbackClock} onStale={onStale} untimed={untimed} /> : untimed)}
+      <PlaybackControls clock={playbackClock} title={title} errorMessage={midiPlaybackError} />
     </div>
   )
 }
 
-export function MidiPracticePlayer({ materialId, title, timedMaterial, showLyrics = true, onStale }: Readonly<{
+export function MidiPracticePlayer({ materialId, title, timedMaterial, untimedLyrics, showLyrics = true, onStale }: Readonly<{
   materialId: string
   title: string
   /** Set when the material can hold timed lyrics. */
   timedMaterial?: SongMaterial
+  untimedLyrics?: ReactNode
   showLyrics?: boolean
   onStale?: () => void
 }>) {
@@ -346,6 +302,7 @@ export function MidiPracticePlayer({ materialId, title, timedMaterial, showLyric
         audioUrl={playback.data.playback.audioUrl}
         durationSeconds={playback.data.playback.durationSeconds}
         timedMaterial={timedMaterial}
+        untimedLyrics={untimedLyrics}
         showLyrics={showLyrics}
         onStale={onStale}
       />

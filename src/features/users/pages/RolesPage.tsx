@@ -1,6 +1,6 @@
 import { App, Button, Flex, Typography } from 'antd'
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
@@ -8,7 +8,7 @@ import type { SystemRole } from '@/shared/types/account'
 import { EmptyState, ErrorState, Icon, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
 import { accountErrorMessage } from '../accountErrors'
-import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
+import { emptyAccountFilters, hasActiveFilters, readAccountListState, writeAccountListState } from '../accountFilters'
 import { AccountFilterBar } from '../components/AccountFilterBar'
 import { AccountTable } from '../components/AccountTable'
 import { AssignRoleDrawer } from '../components/AssignRoleDrawer'
@@ -25,8 +25,8 @@ const pageSize = 20
 export function RolesPage() {
   const navigate = useNavigate()
   const { message } = App.useApp()
-  const [filters, setFilters] = useState<AccountFilters>(emptyAccountFilters)
-  const [page, setPage] = useState(1)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { filters, page } = useMemo(() => readAccountListState(searchParams), [searchParams])
   const search = useDebouncedValue(filters.search)
   const query = useMemo(() => ({ ...filters, search }), [filters, search])
   const accounts = useAccounts(query, { pageNumber: page, pageSize })
@@ -37,10 +37,8 @@ export function RolesPage() {
 
   const total = accounts.data?.totalCount ?? 0
   const filtered = hasActiveFilters(query)
-  const changeFilters = (next: AccountFilters) => {
-    setFilters(next)
-    setPage(1)
-  }
+  const changeFilters = (next: AccountFilters) => setSearchParams(writeAccountListState(next, 1), { replace: true })
+  const setPage = (next: number) => setSearchParams(writeAccountListState(filters, next), { replace: true })
   const resetFilters = () => changeFilters(emptyAccountFilters)
 
   const handleChangeRole = (role: SystemRole) => {
@@ -75,7 +73,14 @@ export function RolesPage() {
       )}
       {accounts.data !== undefined && (
         <Flex vertical gap={spacing.lg}>
-          <RoleSummary counts={counts} />
+          <RoleSummary
+            counts={counts}
+            activeRole={filters.role}
+            onSelectRole={(role) => changeFilters({ ...filters, role: filters.role === role ? undefined : role })}
+          />
+          {!(total === 0 && !filtered) && (
+            <AccountFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} error={accounts.isError} />
+          )}
           <section aria-labelledby="role-assignment-heading" className="hm-sheet-section">
             <header className="hm-sheet-section__head">
               <h2 id="role-assignment-heading" className="hm-rubric">
@@ -89,41 +94,33 @@ export function RolesPage() {
                 description="Tạo tài khoản ở trang Tài khoản trước."
                 action={<Button onClick={() => navigate(paths.admin.accounts)}>Đến trang Tài khoản</Button>}
               />
+            ) : total === 0 ? (
+              <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
+                <NoFilterResults onClearFilters={resetFilters} />
+              </div>
             ) : (
-              <>
-                {/* Inset under the section heading, aligned with its 24px padding, right above the table. */}
-                <div style={{ padding: `0 ${spacing.lg}px ${spacing.md}px` }}>
-                  <AccountFilterBar value={filters} onChange={changeFilters} onReset={resetFilters} resultCount={total} error={accounts.isError} />
-                </div>
-                {total === 0 ? (
-                  <div style={{ padding: `0 ${spacing.md}px ${spacing.md}px` }}>
-                    <NoFilterResults onClearFilters={resetFilters} />
-                  </div>
-                ) : (
-                  <AccountTable
-                    accounts={accounts.data.items}
-                    page={page}
-                    pageSize={pageSize}
-                    total={total}
-                    loading={accounts.isPlaceholderData}
-                    onPageChange={setPage}
-                    // The backend refuses to change the Admin's own role (USER_CANNOT_MODIFY_SELF).
-                    renderActions={(account) =>
-                      account.id === ownId ? (
-                        <Typography.Text style={{ color: colors.textMuted }}>Không thể tự đổi vai trò</Typography.Text>
-                      ) : (
-                        <Button
-                          icon={<Icon name="swap" />}
-                          onClick={() => setChanging(account)}
-                          aria-label={`Thay đổi vai trò của ${accountName(account)}`}
-                        >
-                          Thay đổi vai trò
-                        </Button>
-                      )
-                    }
-                  />
-                )}
-              </>
+              <AccountTable
+                accounts={accounts.data.items}
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                loading={accounts.isPlaceholderData}
+                onPageChange={setPage}
+                // The backend refuses to change the Admin's own role (USER_CANNOT_MODIFY_SELF).
+                renderActions={(account) =>
+                  account.id === ownId ? (
+                    <Typography.Text style={{ color: colors.textMuted }}>Không thể tự đổi vai trò</Typography.Text>
+                  ) : (
+                    <Button
+                      icon={<Icon name="swap" />}
+                      onClick={() => setChanging(account)}
+                      aria-label={`Thay đổi vai trò của ${accountName(account)}`}
+                    >
+                      Thay đổi vai trò
+                    </Button>
+                  )
+                }
+              />
             )}
           </section>
         </Flex>

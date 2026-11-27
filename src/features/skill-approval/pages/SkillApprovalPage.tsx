@@ -52,7 +52,7 @@ export function SkillApprovalPage() {
   const handleApprove = (skill: PendingSkill) => {
     modal.confirm({
       title: 'Duyệt kỹ năng?',
-      content: `${skill.memberName} sẽ được ghi nhận kỹ năng ${skill.skillName}. Sau khi duyệt không thể đổi lại.`,
+      content: `${skill.memberName} sẽ được ghi nhận kỹ năng ${skill.skillName} để dùng trong phân công. Nếu cần, bạn vẫn có thể thu hồi sau trong hồ sơ ca viên.`,
       okText: 'Duyệt',
       cancelText: CANCEL_LABEL,
       afterClose: focusAfterDialog,
@@ -120,9 +120,6 @@ export function SkillApprovalPage() {
               <b>{total}</b> kỹ năng chờ duyệt
             </p>
             <div className="hm-sheet-section">
-              <div className="hm-sheet-section__head ct-sheet-head">
-                <h2 className="hm-rubric">Chờ duyệt</h2>
-              </div>
               <PendingSkillTable
                 skills={pending.data.items}
                 page={page}

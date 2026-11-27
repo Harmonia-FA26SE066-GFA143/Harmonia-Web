@@ -96,7 +96,7 @@ export function SongUsagePanel({ song }: Readonly<{ song: Song }>) {
           <ul className="song-usage__list">
             {assigned.map((assignment) => (
               <li key={assignment.id}>
-                <Link className="song-usage__item" to={paths.director.practice}>
+                <Link className="song-usage__item" to={`${paths.director.practice}?tab=assignments`}>
                   <span>{assignment.title}</span>
                   <small>Hạn {dayjs(parseUtc(assignment.dueDate)).format('DD/MM/YYYY')}</small>
                   <Icon name="arrow-right" className="song-usage__arrow" />

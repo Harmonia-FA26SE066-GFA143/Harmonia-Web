@@ -1,4 +1,4 @@
-import { Card, Flex, Typography } from 'antd'
+import { Card, Flex, Tooltip, Typography } from 'antd'
 import type { CSSProperties, ReactNode } from 'react'
 import { CardTitle, ErrorState, SectionSkeleton } from '@/shared/ui'
 import { colors, outcomeColors, spacing, typography } from '@/styles/tokens'
@@ -42,7 +42,8 @@ const shown = 5
 export function MemberWatch({ kind, filters, title, subtitle, marks, rank, tail, empty, legend, loadingLabel, errorTitle, lead, style }: Readonly<MemberWatchProps>) {
   const report = useReport(kind, filters, { pageNumber: 1, pageSize: 100 })
   const items = report.data?.items ?? []
-  const rows = rank(items).slice(0, shown)
+  const ranked = rank(items)
+  const rows = ranked.slice(0, shown)
   const pad = { padding: spacing.lg }
 
   return (
@@ -70,15 +71,17 @@ export function MemberWatch({ kind, filters, title, subtitle, marks, rank, tail,
             return (
               <li
                 key={row.id}
-                style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 120px 96px', gap: spacing.md, alignItems: 'center', padding: `${spacing.sm + spacing.xs}px ${spacing.lg}px`, borderTop: `1px solid ${colors.border}` }}
+                style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 112px 116px', gap: spacing.sm + 4, alignItems: 'center', padding: `${spacing.sm + spacing.xs}px ${spacing.lg}px`, borderTop: `1px solid ${colors.border}` }}
               >
-                <Typography.Text ellipsis style={{ fontWeight: 500, color: colors.textPrimary }}>
+                <Typography.Text ellipsis={{ tooltip: String(row.cells.fullName ?? '') }} style={{ fontWeight: 500, color: colors.textPrimary }}>
                   {row.cells.fullName}
                 </Typography.Text>
-                <Flex role="img" aria-label={`${row.cells.fullName}: ${words}`} className="mg-fill" style={{ '--i': index, height: 8, borderRadius: 4, overflow: 'hidden', background: colors.softSurface } as CSSProperties}>
-                  {marks.map(({ key, color }) => (cellCount(row, key) ? <span key={key} style={{ flex: cellCount(row, key), background: color }} /> : null))}
-                </Flex>
-                <Typography.Text style={{ textAlign: 'end', color: colors.textMuted }}>{tail(row)}</Typography.Text>
+                <Tooltip title={`${row.cells.fullName}: ${words}`} trigger={['hover', 'focus']}>
+                  <Flex role="img" tabIndex={0} aria-label={`${row.cells.fullName}: ${words}`} className="mg-fill" style={{ '--i': index, height: 8, borderRadius: 4, overflow: 'hidden', background: colors.softSurface } as CSSProperties}>
+                    {marks.map(({ key, color }) => (cellCount(row, key) ? <span key={key} style={{ flex: cellCount(row, key), background: color }} /> : null))}
+                  </Flex>
+                </Tooltip>
+                <Typography.Text style={{ textAlign: 'end', color: colors.textMuted, whiteSpace: 'nowrap' }}>{tail(row)}</Typography.Text>
               </li>
             )
           })}
@@ -86,6 +89,7 @@ export function MemberWatch({ kind, filters, title, subtitle, marks, rank, tail,
       )}
       {report.isSuccess && (rows.length > 0 || report.data.totalCount > items.length) && (
         <Typography.Paragraph style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize, margin: 0, padding: `${spacing.sm}px ${spacing.lg}px ${spacing.md}px` }}>
+          {ranked.length > shown && `Hiển thị ${shown}/${ranked.length} ca viên cần quan tâm. `}
           {rows.length > 0 && legend}
           {/* One page of the report is ranked here; say so when the period holds more members than it. */}
           {report.data.totalCount > items.length && ` Xếp trong ${items.length} ca viên đầu của ${report.data.totalCount} người trong kỳ.`}

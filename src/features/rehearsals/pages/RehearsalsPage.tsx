@@ -75,35 +75,54 @@ export function RehearsalsPage() {
   const changeFilters = (next: RehearsalFilters) => {
     setFilters(next)
     setPage(1)
+    setSearchParams(
+      (current) => {
+        const nextParams = new URLSearchParams(current)
+        if (next.eventId) nextParams.set('programId', next.eventId)
+        else nextParams.delete('programId')
+        return nextParams
+      },
+      { replace: true },
+    )
+  }
+  const jumpToWeek = (isoDate: string) => {
+    const anchor = dayjs(isoDate)
+    const monday = anchor.subtract((anchor.day() + 6) % 7, 'day').format('YYYY-MM-DD')
+    if (monday !== weekStart) setDirection(monday > weekStart ? 'next' : 'prev')
+    setWeekStart(monday)
+    setSearchParams(
+      (current) => {
+        const nextParams = new URLSearchParams(current)
+        nextParams.set('week', monday)
+        return nextParams
+      },
+      { replace: true },
+    )
   }
   const changeWeek = (days: number) => {
     const next = dayjs(weekStart).add(days, 'day').format('YYYY-MM-DD')
     setDirection(days > 0 ? 'next' : 'prev')
     setWeekStart(next)
-    setSearchParams((current) => {
-      const nextParams = new URLSearchParams(current)
-      nextParams.set('week', next)
-      return nextParams
-    })
+    setSearchParams(
+      (current) => {
+        const nextParams = new URLSearchParams(current)
+        nextParams.set('week', next)
+        return nextParams
+      },
+      { replace: true },
+    )
   }
-  const goToday = () => {
-    const todayAnchor = dayjs(vietnamToday())
-    const today = todayAnchor.subtract((todayAnchor.day() + 6) % 7, 'day').format('YYYY-MM-DD')
-    if (today !== weekStart) setDirection(today > weekStart ? 'next' : 'prev')
-    setWeekStart(today)
-    setSearchParams((current) => {
-      const nextParams = new URLSearchParams(current)
-      nextParams.set('week', today)
-      return nextParams
-    })
-  }
+  const goToday = () => jumpToWeek(vietnamToday())
   const changeView = (next: 'week' | 'list') => {
     setView(next)
-    setSearchParams((current) => {
-      const nextParams = new URLSearchParams(current)
-      nextParams.set('view', next)
-      return nextParams
-    })
+    setSearchParams(
+      (current) => {
+        const nextParams = new URLSearchParams(current)
+        nextParams.set('view', next)
+        return nextParams
+      },
+      { replace: true },
+    )
   }
   const openPracticeRoom = (rehearsal: Rehearsal) =>
     navigate(generatePath(paths.director.rehearsalDetail, { rehearsalId: rehearsal.id }), { state: { rehearsal } })
@@ -182,6 +201,7 @@ export function RehearsalsPage() {
         programs={programMap}
         loading={rehearsals.isPlaceholderData}
         pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
+        onOpenRoom={openPracticeRoom}
         onTakeAttendance={takeAttendance}
         onEdit={setEditing}
         onDelete={handleDelete}
@@ -276,7 +296,36 @@ export function RehearsalsPage() {
           {view === 'week' ? (
             weekRehearsals.data !== undefined ? (
               weekRehearsals.data.items.length === 0 && filtered ? (
-                <div style={{ padding: spacing.md }}><NoFilterResults onClearFilters={() => changeFilters({})} /></div>
+                rehearsals.data && rehearsals.data.totalCount > 0 ? (
+                  <Alert
+                    type="info"
+                    showIcon
+                    title={`Tuần này chưa có buổi tập cho bộ lọc đang chọn — có ${rehearsals.data.totalCount} buổi tập ở tuần khác.`}
+                    description="Bạn có thể chuyển nhanh tới tuần có buổi tập gần nhất hoặc xem toàn bộ ở chế độ danh sách."
+                    action={
+                      <Flex wrap gap={spacing.xs}>
+                        {rehearsals.data.items[0] && (
+                          <Button
+                            size="small"
+                            type="primary"
+                            onClick={() => {
+                              const upcomingItem =
+                                rehearsals.data.items.find((item) => isUpcoming(item)) ?? rehearsals.data.items[0]
+                              jumpToWeek(dayjs(upcomingItem.startAt).format('YYYY-MM-DD'))
+                            }}
+                          >
+                            Đến tuần có buổi tập
+                          </Button>
+                        )}
+                        <Button size="small" onClick={() => changeView('list')}>
+                          Xem dạng danh sách
+                        </Button>
+                      </Flex>
+                    }
+                  />
+                ) : (
+                  <div style={{ padding: spacing.md }}><NoFilterResults onClearFilters={() => changeFilters({})} /></div>
+                )
               ) : (
                 <>
                   {/* A week that has ended needs no schedule. */}

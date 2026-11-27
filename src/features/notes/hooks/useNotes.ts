@@ -65,16 +65,18 @@ export function useMarkConversationRead() {
   })
 }
 
+export type NotesLiveStatus = 'connecting' | 'connected' | 'reconnecting'
+
 /**
  * Listens on the backend's SignalR hub (`/hubs/notifications`, Harmonia-BE NotificationHub) while the chat page is
  * open. A pushed message or read receipt only invalidates the cached lists, so the REST answers stay the single
- * source of truth and a missed push is repaired by the next refetch. Returns false while disconnected; it keeps trying
- * to connect (2, 5, 10, then every 30 seconds) until the page closes.
+ * source of truth and a missed push is repaired by the next refetch. Starts in `'connecting'` so initial page load
+ * never flashes an error state, and retries (2, 5, 10, then every 30 seconds) until the page closes.
  * ponytail: the connection lives with the page; a header-wide unread badge would need it hoisted into the shell.
  */
-export function useDirectorNotesLive(): boolean {
+export function useDirectorNotesLive(): NotesLiveStatus {
   const queryClient = useQueryClient()
-  const [connected, setConnected] = useState(false)
+  const [status, setStatus] = useState<NotesLiveStatus>('connecting')
 
   useEffect(() => {
     const refresh = () => void queryClient.invalidateQueries({ queryKey: notesKey })
@@ -96,28 +98,28 @@ export function useDirectorNotesLive(): boolean {
         .start()
         .then(() => {
           if (stopped) return
-          setConnected(connection.state === HubConnectionState.Connected)
+          setStatus(connection.state === HubConnectionState.Connected ? 'connected' : 'reconnecting')
           // Pushes may have been missed while offline.
           if (attempt > 0) refresh()
         })
         .catch(() => {
           if (stopped) return
-          setConnected(false)
+          setStatus('reconnecting')
           clearTimeout(retryTimer)
           retryTimer = setTimeout(() => start(attempt + 1), retryDelaysMs[Math.min(attempt, retryDelaysMs.length - 1)])
         })
     }
     connection.onreconnecting(() => {
-      if (!stopped) setConnected(false)
+      if (!stopped) setStatus('reconnecting')
     })
     connection.onreconnected(() => {
       if (stopped) return
-      setConnected(true)
+      setStatus('connected')
       refresh()
     })
     connection.onclose(() => {
       if (stopped) return
-      setConnected(false)
+      setStatus('reconnecting')
       clearTimeout(retryTimer)
       retryTimer = setTimeout(() => start(1), retryDelaysMs[0])
     })
@@ -130,5 +132,5 @@ export function useDirectorNotesLive(): boolean {
     }
   }, [queryClient])
 
-  return connected
+  return status
 }

@@ -27,7 +27,7 @@ export function EventTable({ events, onOpen, pagination = false, loading, select
     {
       key: 'when',
       title: 'Ngày giờ',
-      width: 200,
+      width: 172,
       render: (_, event) => <ProgramDateCell date={event.date} label={`${formatProgramDate(event.date)} · ${event.time}`} />,
     },
     {
@@ -46,13 +46,13 @@ export function EventTable({ events, onOpen, pagination = false, loading, select
         </Flex>
       ),
     },
-    { key: 'location', title: 'Nơi cử hành', width: 200, render: (_, event) => event.locationName },
-    { key: 'status', title: 'Trạng thái', width: 130, render: (_, event) => <EventStatusTag status={event.status} /> },
+    { key: 'location', title: 'Nơi cử hành', width: 168, render: (_, event) => event.locationName },
+    { key: 'status', title: 'Trạng thái', width: 116, render: (_, event) => <EventStatusTag status={event.status} /> },
     {
       key: 'actions',
       title: ACTIONS_COLUMN_TITLE,
       align: 'center',
-      width: 120,
+      width: 88,
       render: (_, event) => (
         <Button
           onClick={(click) => {
@@ -83,8 +83,8 @@ export function EventTable({ events, onOpen, pagination = false, loading, select
         }
       }
       pagination={pagination}
-      // A fixed width, not the content's: long event names wrap instead of pushing the table sideways.
-      scroll={{ x: 900 }}
+      // Fits comfortably beside EventPreview at 1366px while letting long names wrap cleanly.
+      scroll={{ x: 760 }}
     />
   )
 }

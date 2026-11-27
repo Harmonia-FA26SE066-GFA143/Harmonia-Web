@@ -1,13 +1,15 @@
-import { Button, Card, Descriptions, Flex, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Button, Descriptions, Flex, Table, Tag, Typography, type TableColumnsType } from 'antd'
 import { useState } from 'react'
 import { generatePath, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { participationResponseLabels, useParticipation, type ParticipationRequest } from '@/features/participation'
 import { formatDateTime } from '@/lib/api/dates'
-import { CardTitle, EmptyCell, EmptyState, ErrorState, SectionSkeleton, StatusTag, ViewDrawer, voicePartName, type StatusTagColor } from '@/shared/ui'
+import { EmptyCell, EmptyState, ErrorState, SectionSkeleton, StatusTag, ViewDrawer, voicePartName, type StatusTagColor } from '@/shared/ui'
 import { colors, component, spacing } from '@/styles/tokens'
 import { usePreparationStatus } from '../hooks/useEvents'
+import { preparationItems } from '../preparationOverview'
 import type { PreparationStatus } from '../types'
+import { PreparationOverview } from './PreparationOverview'
 import { SongListStatusTag } from './SongListStatusTag'
 
 const muted = { color: colors.textMuted }
@@ -123,83 +125,113 @@ function songListActionLabel(songListStatus: PreparationStatus['songListStatus']
 
 /**
  * Parish Priest: how ready the choir is for a published event (FE-21, `GET /api/liturgical-events/{id}/preparation-status`).
- * The backend gives raw counts; each line shows them as they are.
+ * Combines the five-item overview and the raw backend counts inside one reading sheet.
  */
-export function PreparationStatusCard({ eventId }: Readonly<{ eventId: string }>) {
+export function PreparationStatusCard({ eventId, eventDate }: Readonly<{ eventId: string; eventDate?: string }>) {
   const navigate = useNavigate()
   const status = usePreparationStatus(eventId)
   const songListStatus = status.data?.songListStatus
   const songListAction = songListActionLabel(songListStatus)
   const [showReplies, setShowReplies] = useState(false)
+  const overviewItems =
+    eventDate && status.data
+      ? preparationItems({
+          date: eventDate,
+          songListStatus: status.data.songListStatus,
+          status: status.data,
+          failed: false,
+          viewer: 'priest',
+        })
+      : undefined
 
   return (
-    <Card title={<CardTitle>Tình hình chuẩn bị</CardTitle>}>
-      {status.isPending && <SectionSkeleton rows={4} label="Đang tải tình hình chuẩn bị" />}
-      {status.isError && (
-        <ErrorState headingLevel={3} title="Không thể tải tình hình chuẩn bị" error={status.error} hasData={status.data !== undefined} onRetry={() => status.refetch()} retrying={status.isFetching} />
-      )}
-      {status.data !== undefined && (
-        <Descriptions
-          className="hm-key-value"
-          column={1}
-          items={[
-            {
-              key: 'songList',
-              label: 'Danh sách bài hát',
-              children: (
-                <Flex wrap align="center" gap={spacing.sm}>
-                  <SongListStatusTag status={songListStatus} />
-                  {songListAction && (
-                    <Button
-                      size="small"
-                      type={songListStatus === 'submitted' ? 'primary' : 'default'}
-                      onClick={() => navigate(generatePath(paths.priest.songListReview, { programId: eventId }))}
-                    >
-                      {songListAction}
-                    </Button>
-                  )}
-                </Flex>
-              ),
-            },
-            { key: 'participation', label: 'Xác nhận tham gia', children: participation(status.data.participation, () => setShowReplies(true)) },
-            { key: 'roster', label: 'Phân công phục vụ', children: roster(status.data) },
-            {
-              key: 'rehearsals',
-              label: 'Buổi tập',
-              children:
-                status.data.rehearsalsTotal === 0 ? (
-                  <Typography.Text style={muted}>Chưa có buổi tập</Typography.Text>
-                ) : (
-                  <Flex vertical>
-                    <span>
+    <section className="hm-sheet-section priest-queue hm-paper" aria-labelledby="prep-heading">
+      <header className="hm-sheet-section__head">
+        <h2 id="prep-heading" className="hm-rubric">
+          Tình hình chuẩn bị
+        </h2>
+      </header>
+      <div className="priest-sheet__body">
+        {status.isPending && <SectionSkeleton rows={4} label="Đang tải tình hình chuẩn bị" />}
+        {status.isError && (
+          <ErrorState headingLevel={3} title="Không thể tải tình hình chuẩn bị" error={status.error} hasData={status.data !== undefined} onRetry={() => status.refetch()} retrying={status.isFetching} />
+        )}
+        {overviewItems && (
+          <div style={{ marginBottom: spacing.md, paddingBottom: spacing.md, borderBottom: `1px solid ${colors.border}` }}>
+            {/* One column: the aside is a third of the page wide (G3-07). */}
+            <PreparationOverview items={overviewItems} columns={1} />
+          </div>
+        )}
+        {status.data !== undefined && (
+          <>
+            {overviewItems && (
+              <p className="hm-rubric" style={{ marginBottom: spacing.xs }}>
+                Chi tiết tiến độ
+              </p>
+            )}
+            <Descriptions
+              className="hm-key-value"
+              column={1}
+              items={[
+                {
+                  key: 'songList',
+                  label: 'Danh sách bài hát',
+                  children: (
+                    <Flex wrap align="center" gap={spacing.sm}>
+                      <SongListStatusTag status={songListStatus} />
+                      {songListAction && (
+                        <Button
+                          size="small"
+                          type={songListStatus === 'submitted' ? 'primary' : 'default'}
+                          onClick={() => navigate(generatePath(paths.priest.songListReview, { programId: eventId }))}
+                        >
+                          {songListAction}
+                        </Button>
+                      )}
+                    </Flex>
+                  ),
+                },
+                { key: 'participation', label: 'Xác nhận tham gia', children: participation(status.data.participation, () => setShowReplies(true)) },
+                { key: 'roster', label: 'Phân công phục vụ', children: roster(status.data) },
+                {
+                  key: 'rehearsals',
+                  label: 'Buổi tập',
+                  children:
+                    status.data.rehearsalsTotal === 0 ? (
+                      <Typography.Text style={muted}>Chưa có buổi tập</Typography.Text>
+                    ) : (
+                      <Flex vertical>
+                        <span>
+                          <span>
+                            {status.data.rehearsalsHeld}/{status.data.rehearsalsTotal}
+                          </span>{' '}
+                          buổi đã diễn ra
+                        </span>
+                        {status.data.rehearsalsHeld > 0 && (
+                          <span>Lượt có mặt: {ratio(status.data.attendancePresent, status.data.attendanceExpected)}</span>
+                        )}
+                      </Flex>
+                    ),
+                },
+                {
+                  key: 'practice',
+                  label: 'Bài tập',
+                  children:
+                    status.data.practiceExpected === 0 ? (
+                      <Typography.Text style={muted}>Chưa giao bài tập</Typography.Text>
+                    ) : (
                       <span>
-                        {status.data.rehearsalsHeld}/{status.data.rehearsalsTotal}
-                      </span>{' '}
-                      buổi đã diễn ra
-                    </span>
-                    {status.data.rehearsalsHeld > 0 && (
-                      <span>Lượt có mặt: {ratio(status.data.attendancePresent, status.data.attendanceExpected)}</span>
-                    )}
-                  </Flex>
-                ),
-            },
-            {
-              key: 'practice',
-              label: 'Bài tập',
-              children:
-                status.data.practiceExpected === 0 ? (
-                  <Typography.Text style={muted}>Chưa giao bài tập</Typography.Text>
-                ) : (
-                  <span>
-                    Đạt {ratio(status.data.practicePassed, status.data.practiceExpected)} · quá hạn{' '}
-                    <span>{status.data.practiceOverdue}</span>
-                  </span>
-                ),
-            },
-          ]}
-        />
-      )}
+                        Đạt {ratio(status.data.practicePassed, status.data.practiceExpected)} · quá hạn{' '}
+                        <span>{status.data.practiceOverdue}</span>
+                      </span>
+                    ),
+                },
+              ]}
+            />
+          </>
+        )}
+      </div>
       {showReplies && <ParticipationRepliesDrawer eventId={eventId} onClose={() => setShowReplies(false)} />}
-    </Card>
+    </section>
   )
 }

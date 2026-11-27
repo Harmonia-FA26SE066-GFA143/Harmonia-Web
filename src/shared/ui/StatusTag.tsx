@@ -1,4 +1,4 @@
-import { Tag, theme, type TagProps } from 'antd'
+import { Tag, type TagProps } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { colors, semantic } from '@/styles/tokens'
 
@@ -21,19 +21,21 @@ export interface StatusTagProps extends Omit<TagProps, 'color' | 'children'> {
  * cancelled state. The label, not the color, still carries the meaning.
  */
 export function StatusTag({ color = 'default', mark, style, className, children, ...props }: Readonly<StatusTagProps>) {
-  const { token } = theme.useToken()
   // A state that changes while the tag is on screen pops once (DESIGN "Motion": StatusTag); the first render does not.
   const state = `${color}|${mark ?? ''}|${typeof children === 'string' ? children : ''}`
-  const [firstState] = useState(state)
-  const changed = state !== firstState
+  const [tracked, setTracked] = useState({ prev: state, generation: 0 })
+  if (tracked.prev !== state) {
+    setTracked({ prev: state, generation: tracked.generation + 1 })
+  }
+  const changed = tracked.generation > 0
   // [text, background, border]: the Design System StatusTag, a tint ground with its ink as text and edge.
-  const { status } = semantic
+  const { status, area } = semantic
   const tones = {
     default: [colors.textBody, colors.softSurface, colors.border],
     green: [status.success, status.successTint, status.success],
     gold: [status.warning, status.warningTint, status.warning],
     red: [status.error, status.errorTint, status.error],
-    orange: [token.orange8, token.orange1, token.orange8],
+    orange: [area.roster.ink, area.roster.tint, area.roster.cloth],
     blue: [status.info, status.infoTint, status.info],
   } as const
   const [toneText, toneBackground, toneBorder] = tones[color === 'processing' ? 'blue' : color]
@@ -44,7 +46,7 @@ export function StatusTag({ color = 'default', mark, style, className, children,
 
   return (
     <Tag
-      key={changed ? state : undefined}
+      key={changed ? tracked.generation : undefined}
       className={[className, changed && 'hm-pop'].filter(Boolean).join(' ') || undefined}
       style={{
         borderRadius: 9999,

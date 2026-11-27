@@ -1,8 +1,8 @@
-import { Card, Table, Typography } from 'antd'
+import { Button, Card, Table, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { formatDateTime, parseUtc } from '@/lib/api/dates'
-import { CardTitle, EmptyCell, ErrorState, SectionSkeleton } from '@/shared/ui'
+import { CardTitle, EmptyCell, ErrorState, Icon, SectionSkeleton } from '@/shared/ui'
 import { colors } from '@/styles/tokens'
 import { useReportExports } from '../hooks/useReports'
 import { reportDefinitions } from '../reportDefinitions'
@@ -29,7 +29,15 @@ export function ExportHistory({ seasons }: Readonly<{ seasons: FilterOption[] }>
   }
 
   return (
-    <Card title={<CardTitle>Lịch sử xuất báo cáo</CardTitle>} styles={{ body: { padding: total > 0 ? 0 : undefined } }}>
+    <Card
+      title={<CardTitle>Lịch sử xuất báo cáo</CardTitle>}
+      extra={
+        <Button size="small" icon={<Icon name="refresh" />} loading={exports.isFetching} onClick={() => exports.refetch()}>
+          Làm mới
+        </Button>
+      }
+      styles={{ body: { padding: total > 0 ? 0 : undefined } }}
+    >
       {exports.isPending && <SectionSkeleton rows={3} label="Đang tải lịch sử xuất báo cáo" />}
       {exports.isError && (
         <ErrorState headingLevel={3} title="Không thể tải lịch sử xuất báo cáo" error={exports.error} hasData={exports.data !== undefined} onRetry={() => exports.refetch()} retrying={exports.isFetching} />

@@ -1,9 +1,10 @@
-import { App, Button } from 'antd'
+import { App, Button, Skeleton } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { requestFailureMessage } from '@/lib/api/errors'
-import { ErrorState, Icon, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { ErrorState, Icon, PageHeader } from '@/shared/ui'
+import { colors, radius, spacing } from '@/styles/tokens'
 import { ProfileAvatar } from '../components/ProfileAvatar'
 import { ProfileDetails } from '../components/ProfileDetails'
 import { useMyProfile, useUpdateMyProfile } from '../hooks/useMyProfile'
@@ -39,7 +40,17 @@ export function ProfilePage() {
         }
       />
 
-      {profile.isPending && <SectionSkeleton rows={4} label="Đang tải hồ sơ cá nhân" />}
+      {profile.isPending && (
+        <output aria-busy="true" aria-label="Đang tải hồ sơ cá nhân" className="hm-profile hm-skeleton-in" style={{ display: 'grid' }}>
+          <div className="hm-profile-id">
+            <Skeleton.Avatar active size={96} />
+            <Skeleton active title={{ width: 160 }} paragraph={{ rows: 2 }} style={{ marginTop: spacing.md, width: '100%' }} />
+          </div>
+          <div style={{ padding: spacing.lg, background: colors.surface, border: `1px solid ${colors.border}`, borderRadius: radius.lg }}>
+            <Skeleton active title={{ width: '30%' }} paragraph={{ rows: 6 }} />
+          </div>
+        </output>
+      )}
       {profile.isError && (
         <ErrorState
           title="Không thể tải hồ sơ cá nhân"

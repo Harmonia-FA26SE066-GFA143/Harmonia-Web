@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, App, Button, DatePicker, Flex, Input, Modal, Radio, Select, Steps, Timeline, Typography, Upload } from 'antd'
+import { Alert, App, Button, DatePicker, Flex, Input, Modal, Radio, Select, Steps, Timeline, Typography } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { useChoirs } from '@/features/choirs'
 import { parseUtc } from '@/lib/api/dates'
 import { getSession } from '@/lib/auth/session'
-import { CANCEL_LABEL, CLOSE_LABEL, ErrorState, Form, Icon, SectionSkeleton, SELECT_POPUP_PROPS, StatusTag, ViewDrawer, type StatusTagColor } from '@/shared/ui'
+import { CANCEL_LABEL, CLOSE_LABEL, ErrorState, Form, Icon, SectionSkeleton, SELECT_POPUP_PROPS, StatusTag, ViewDrawer, visuallyHidden, type StatusTagColor } from '@/shared/ui'
 import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 import {
   appointNomination,
@@ -214,6 +214,7 @@ function DecisionDialog({ dialog, item, onClose }: Readonly<{ dialog: Dialog; it
 function TrainingRow({ training, nominationId, canManage, onResult }: Readonly<{ training: Training; nominationId: string; canManage: boolean; onResult: () => void }>) {
   const { message, modal } = App.useApp()
   const queryClient = useQueryClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const refresh = () => queryClient.invalidateQueries({ queryKey: key })
   const upload = useMutation({ mutationFn: (file: File) => uploadCertificate(nominationId, training.id, file), onSettled: refresh })
   const remove = useMutation({ mutationFn: () => deleteTraining(nominationId, training.id), onSettled: refresh })
@@ -227,7 +228,6 @@ function TrainingRow({ training, nominationId, canManage, onResult }: Readonly<{
       onSuccess: () => message.success('Đã lưu chứng chỉ.'),
       onError: (error) => message.error(nominationErrorMessage(error, 'Không thể lưu chứng chỉ. Vui lòng thử lại.')),
     })
-    return false
   }
 
   const confirmDelete = () =>
@@ -254,9 +254,24 @@ function TrainingRow({ training, nominationId, canManage, onResult }: Readonly<{
       <Flex wrap gap={spacing.sm} align="center">
         {training.certificateUrl && <a href={training.certificateUrl} target="_blank" rel="noopener noreferrer">Xem chứng chỉ {training.certificateFileName}</a>}
         {canManage && (
-          <Upload accept={certificateTypes.join(',')} maxCount={1} showUploadList={false} beforeUpload={pick}>
-            <Button size="small" icon={<Icon name="upload" />} loading={upload.isPending}>{training.certificateUrl ? 'Thay chứng chỉ' : 'Tải chứng chỉ'}</Button>
-          </Upload>
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={certificateTypes.join(',')}
+              tabIndex={-1}
+              aria-hidden="true"
+              style={visuallyHidden}
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0]
+                event.currentTarget.value = ''
+                if (file) pick(file)
+              }}
+            />
+            <Button size="small" icon={<Icon name="upload" />} loading={upload.isPending} onClick={() => fileInputRef.current?.click()}>
+              {training.certificateUrl ? 'Thay chứng chỉ' : 'Tải chứng chỉ'}
+            </Button>
+          </>
         )}
         {canManage && inProgress && <Button size="small" onClick={onResult}>Ghi kết quả</Button>}
         {canManage && inProgress && <Button size="small" type="text" danger onClick={confirmDelete}>Xoá khoá học</Button>}
@@ -304,7 +319,7 @@ export function NominationDetailDrawer({ id, onClose }: Readonly<{ id?: string; 
   return (
     <ViewDrawer
       open={Boolean(id)}
-      size={component.drawer.md}
+      size={component.drawer.lg}
       title={item ? `Đề cử ${item.memberFullName}` : 'Đề cử Ca trưởng'}
       onClose={onClose}
       destroyOnHidden

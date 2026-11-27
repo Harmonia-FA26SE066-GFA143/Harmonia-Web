@@ -11,6 +11,10 @@ export interface FilterBarProps {
   error?: boolean
   /** Singular noun appended to count, e.g. "bài hát" -> "12 bài hát". */
   resultNoun?: string
+  /** Optional custom status text (overrides the default "{resultCount} {resultNoun}" wording). */
+  resultText?: string
+  /** Hide the right-pinned result count when the filter bar drives multiple views rather than a single list. */
+  hideResultCount?: boolean
   /** True when any filter or search input is currently active. */
   hasActiveFilters: boolean
   onReset: () => void
@@ -29,16 +33,18 @@ export function FilterBar({
   resultCount,
   error = false,
   resultNoun = 'kết quả',
+  resultText,
+  hideResultCount = false,
   hasActiveFilters,
   onReset,
   extra,
 }: Readonly<FilterBarProps>) {
-  const statusLabel = resultCountLabel(resultCount, resultNoun, error)
+  const statusLabel = resultText ?? resultCountLabel(resultCount, resultNoun, error)
 
   return (
     <Flex
       wrap
-      align="center"
+      align="flex-end"
       gap={spacing.sm}
       className="hm-filter-bar"
       style={{
@@ -53,12 +59,21 @@ export function FilterBar({
       <Button disabled={!hasActiveFilters} onClick={onReset}>
         {FILTER_RESET_LABEL}
       </Button>
-      <Flex align="center" gap={spacing.sm} style={{ marginInlineStart: 'auto' }}>
-        <Typography.Text role="status" aria-atomic style={{ color: colors.textMuted, fontSize: 13 }}>
-          {statusLabel}
-        </Typography.Text>
-        {extra}
-      </Flex>
+      {(!hideResultCount || extra) && (
+        <Flex align="center" gap={spacing.sm} style={{ marginInlineStart: 'auto', minHeight: sizes.controlHeight }}>
+          {!hideResultCount && (
+            <Typography.Text
+              role="status"
+              aria-live="polite"
+              aria-atomic
+              style={{ color: error ? colors.error : colors.textMuted, fontWeight: error ? 500 : 400, fontSize: 13 }}
+            >
+              {statusLabel}
+            </Typography.Text>
+          )}
+          {extra}
+        </Flex>
+      )}
     </Flex>
   )
 }

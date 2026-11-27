@@ -42,9 +42,22 @@ export function PlaybackState({ playing, finished, duration }: Readonly<{ playin
   )
 }
 
-/** Play/pause, position slider and time. React state changes once per second of playback, not per frame. */
-export function PlaybackControls({ clock, title }: Readonly<{ clock: PlaybackClock; title: string }>) {
-  const { playing, duration, error, play, pause, seek, getTime, subscribe } = clock
+const SPEED_STEPS = [0.75, 0.85, 1, 1.15] as const
+
+function nextSpeed(current: number) {
+  const index = SPEED_STEPS.findIndex((rate) => Math.abs(rate - current) < 0.01)
+  return SPEED_STEPS[(index + 1) % SPEED_STEPS.length]
+}
+
+const formatSpeed = (rate: number) => `${String(rate).replace('.', ',')}×`
+
+/** Play/pause, position slider, speed control and time. React state changes once per second of playback, not per frame. */
+export function PlaybackControls({
+  clock,
+  title,
+  errorMessage = 'Không thể phát âm thanh. Vui lòng thử lại hoặc chọn tệp khác.',
+}: Readonly<{ clock: PlaybackClock; title: string; errorMessage?: string }>) {
+  const { playing, duration, error, sourceFailed, playbackRate = 1, setPlaybackRate, play, pause, seek, getTime, subscribe } = clock
   // The state only asks for a render (once per second of playback, or on a seek); what is shown is always read from the
   // clock, so pausing, resuming or the end of the song never shows an older tick.
   const [, setRenderedAt] = useState(0)
@@ -68,7 +81,7 @@ export function PlaybackControls({ clock, title }: Readonly<{ clock: PlaybackClo
     <div style={{ marginTop: spacing.md }}>
       {error && (
         <Typography.Paragraph role="alert" style={{ color: `var(--hm-focus-danger, ${colors.primaryHover})`, margin: `0 0 ${spacing.sm}px` }}>
-          Không thể phát âm thanh. Vui lòng thử lại hoặc chọn tệp khác.
+          {errorMessage}
         </Typography.Paragraph>
       )}
       <Flex align="center" gap={spacing.md} style={{ minHeight: sizes.controlHeight }}>
@@ -78,6 +91,7 @@ export function PlaybackControls({ clock, title }: Readonly<{ clock: PlaybackClo
             shape="circle"
             className="hm-lift"
             icon={playIcon(playing, finished)}
+            disabled={sourceFailed}
             aria-label={`${label} ${title}`}
             aria-keyshortcuts="Space ArrowLeft ArrowRight Home"
             onClick={() => {
@@ -104,6 +118,18 @@ export function PlaybackControls({ clock, title }: Readonly<{ clock: PlaybackClo
           ariaValueTextFormatterForHandle={(seconds) => `${mmss(seconds)} trên ${mmss(duration)}`}
           style={{ flex: 1, minWidth: 120, marginBlock: 0 }}
         />
+        {setPlaybackRate && (
+          <Tooltip title="Đổi tốc độ phát (0,75× · 0,85× · 1× · 1,15×)">
+            <Button
+              size="small"
+              className="hm-speed-btn"
+              aria-label={`Tốc độ phát ${formatSpeed(playbackRate)}, bấm để đổi`}
+              onClick={() => setPlaybackRate(nextSpeed(playbackRate))}
+            >
+              {formatSpeed(playbackRate)}
+            </Button>
+          </Tooltip>
+        )}
         {/* Be Vietnam Pro has no tabular figures (DESIGN.md, Proportional Figures Rule): a fixed, right-aligned cell
             keeps the slider from moving as the digits change. */}
         <Typography.Text type="secondary" style={{ flexShrink: 0, minWidth: TIME_LABEL_WIDTH, textAlign: 'right' }}>

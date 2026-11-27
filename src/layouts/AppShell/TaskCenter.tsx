@@ -1,9 +1,9 @@
-import { App, Button, Drawer, Flex, Typography } from 'antd'
+import { App, Button, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useBackgroundTasks, type BackgroundTask } from '@/shared/tasks/BackgroundTasks'
-import { Icon, NeumeSpinner } from '@/shared/ui'
+import { Icon, NeumeSpinner, ViewDrawer } from '@/shared/ui'
 import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 
 const statusText: Record<BackgroundTask['status'], string> = { running: 'Đang chạy', succeeded: 'Đã xong', failed: 'Không thành công' }
@@ -65,65 +65,71 @@ export function TaskCenter() {
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [tasks, markNotified, notification, retry])
 
-  if (tasks.length === 0) return null
+  if (tasks.length === 0 && !open) return null
   return (
     <>
-      <Button
-        className="hm-chrome-btn"
-        type="text"
-        aria-label={running ? `${running} tác vụ đang chạy. Mở danh sách tác vụ` : 'Mở danh sách tác vụ'}
-        onClick={() => setOpen(true)}
-        icon={running ? <NeumeSpinner size={16} /> : <Icon name="tasks" />}
-      >
-        {running > 0 && <span aria-hidden>{running}</span>}
-      </Button>
-      <Drawer title="Tác vụ" open={open} onClose={() => setOpen(false)} size={component.drawer.sm}>
+      {tasks.length > 0 && (
+        <Button
+          className="hm-chrome-btn"
+          type="text"
+          aria-label={running ? `${running} tác vụ đang chạy. Mở danh sách tác vụ` : 'Mở danh sách tác vụ'}
+          onClick={() => setOpen(true)}
+          icon={running ? <NeumeSpinner size={16} /> : <Icon name="tasks" />}
+        >
+          {running > 0 && <span aria-hidden>{running}</span>}
+        </Button>
+      )}
+      <ViewDrawer title="Tác vụ" open={open} onClose={() => setOpen(false)} size={component.drawer.sm}>
         <Typography.Paragraph type="secondary" style={{ marginTop: 0 }}>
           Tác vụ vẫn chạy khi bạn chuyển trang. Tải lại hoặc đóng tab sẽ dừng tác vụ đang chạy.
         </Typography.Paragraph>
-        <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {tasks.map((task) => (
-            <Flex
-              component="li"
-              key={task.id}
-              vertical
-              gap={spacing.xs}
-              style={{ padding: spacing.md, border: `1px solid ${colors.border}`, borderRadius: radius.lg }}
-            >
-              <Flex align="center" gap={spacing.sm}>
-                <span aria-hidden style={{ display: 'inline-flex', color: colors.primary }}>
-                  <StatusIcon status={task.status} />
-                </span>
-                <Typography.Text strong style={{ flex: 1, minWidth: 0 }}>
-                  {task.title}
-                </Typography.Text>
-              </Flex>
-              <Typography.Text type="secondary" style={{ fontSize: typography.metadata.fontSize }}>
-                {statusText[task.status]} · bắt đầu {dayjs(task.startedAt).format('HH:mm')}
-              </Typography.Text>
-              {task.status === 'succeeded' && task.result && <Typography.Text>{task.result.summary}</Typography.Text>}
-              {task.status === 'failed' && <Typography.Text type="danger">{task.error}</Typography.Text>}
-              {task.status !== 'running' && (
-                <Flex gap={spacing.sm} wrap>
-                  {task.status === 'succeeded' && task.result?.action && (
-                    <Button size="small" type="primary" onClick={() => openResult(task.result!.action!.to)}>
-                      {task.result.action.label}
-                    </Button>
-                  )}
-                  {task.status === 'failed' && (
-                    <Button size="small" onClick={() => retry(task.id)}>
-                      Thử lại
-                    </Button>
-                  )}
-                  <Button size="small" type="text" onClick={() => dismiss(task.id)}>
-                    Bỏ khỏi danh sách
-                  </Button>
+        {tasks.length === 0 ? (
+          <Typography.Text type="secondary">Không còn tác vụ nào trong phiên này.</Typography.Text>
+        ) : (
+          <Flex component="ul" vertical gap={spacing.sm} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            {tasks.map((task) => (
+              <Flex
+                component="li"
+                key={task.id}
+                vertical
+                gap={spacing.xs}
+                style={{ padding: spacing.md, border: `1px solid ${colors.border}`, borderRadius: radius.lg }}
+              >
+                <Flex align="center" gap={spacing.sm}>
+                  <span aria-hidden style={{ display: 'inline-flex', color: colors.primary }}>
+                    <StatusIcon status={task.status} />
+                  </span>
+                  <Typography.Text strong style={{ flex: 1, minWidth: 0 }}>
+                    {task.title}
+                  </Typography.Text>
                 </Flex>
-              )}
-            </Flex>
-          ))}
-        </Flex>
-      </Drawer>
+                <Typography.Text type="secondary" style={{ fontSize: typography.metadata.fontSize }}>
+                  {statusText[task.status]} · bắt đầu {dayjs(task.startedAt).format('HH:mm')}
+                </Typography.Text>
+                {task.status === 'succeeded' && task.result && <Typography.Text>{task.result.summary}</Typography.Text>}
+                {task.status === 'failed' && <Typography.Text type="danger">{task.error}</Typography.Text>}
+                {task.status !== 'running' && (
+                  <Flex gap={spacing.sm} wrap>
+                    {task.status === 'succeeded' && task.result?.action && (
+                      <Button size="small" type="primary" onClick={() => openResult(task.result!.action!.to)}>
+                        {task.result.action.label}
+                      </Button>
+                    )}
+                    {task.status === 'failed' && (
+                      <Button size="small" onClick={() => retry(task.id)}>
+                        Thử lại
+                      </Button>
+                    )}
+                    <Button size="small" type="text" onClick={() => dismiss(task.id)}>
+                      Bỏ khỏi danh sách
+                    </Button>
+                  </Flex>
+                )}
+              </Flex>
+            ))}
+          </Flex>
+        )}
+      </ViewDrawer>
     </>
   )
 }

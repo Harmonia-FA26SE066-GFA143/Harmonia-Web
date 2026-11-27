@@ -162,6 +162,7 @@ export function HeroNave({ aperture, onUnavailable, still = false }: Readonly<He
   const [failed, setFailed] = useState(false)
   const [playing, setPlaying] = useState(true)
   const playingRef = useRef(true)
+  const resumeRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -190,6 +191,16 @@ export function HeroNave({ aperture, onUnavailable, still = false }: Readonly<He
     let scale = 0.62
     let time = 0
     let visible = true
+    let fromRect = canvas.getBoundingClientRect()
+    let toRect = aperture?.current?.getBoundingClientRect()
+    let targetContext: CanvasRenderingContext2D | null = aperture?.current?.getContext('2d') ?? null
+
+    const measure = () => {
+      fromRect = canvas.getBoundingClientRect()
+      const target = aperture?.current
+      toRect = target?.getBoundingClientRect()
+      if (target && !targetContext) targetContext = target.getContext('2d')
+    }
 
     const draw = () => {
       const rise = reduced ? 1 : Math.min(time / 2.2, 1)
@@ -201,25 +212,36 @@ export function HeroNave({ aperture, onUnavailable, still = false }: Readonly<He
 
       // Copied in the same task as the draw, while the drawing buffer is still valid.
       const target = aperture?.current
-      const context = target?.getContext('2d')
-      if (!target || !context) return
-      const from = canvas.getBoundingClientRect()
-      const to = target.getBoundingClientRect()
-      if (!from.width || !to.width) return
-      const ratio = canvas.width / from.width
-      if (target.width !== Math.round(to.width * ratio)) target.width = Math.round(to.width * ratio)
-      if (target.height !== Math.round(to.height * ratio)) target.height = Math.round(to.height * ratio)
-      context.drawImage(canvas, (to.left - from.left) * ratio, (to.top - from.top) * ratio, to.width * ratio, to.height * ratio, 0, 0, target.width, target.height)
+      if (!target || !targetContext || !fromRect.width || !toRect?.width) return
+      const ratio = canvas.width / fromRect.width
+      const nextWidth = Math.round(toRect.width * ratio)
+      const nextHeight = Math.round(toRect.height * ratio)
+      if (target.width !== nextWidth) target.width = nextWidth
+      if (target.height !== nextHeight) target.height = nextHeight
+      targetContext.drawImage(
+        canvas,
+        (toRect.left - fromRect.left) * ratio,
+        (toRect.top - fromRect.top) * ratio,
+        toRect.width * ratio,
+        toRect.height * ratio,
+        0,
+        0,
+        target.width,
+        target.height,
+      )
     }
 
     const fit = () => {
       canvas.width = Math.max(1, Math.round(canvas.clientWidth * scale))
       canvas.height = Math.max(1, Math.round(canvas.clientHeight * scale))
+      measure()
       draw()
     }
     fit()
     const sized = new ResizeObserver(fit)
     sized.observe(canvas)
+    if (aperture?.current) sized.observe(aperture.current)
+    window.addEventListener('resize', measure, { passive: true })
     const seen = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting
     })
@@ -227,10 +249,12 @@ export function HeroNave({ aperture, onUnavailable, still = false }: Readonly<He
     canvas.addEventListener('webglcontextlost', unavailable)
 
     let frame = 0
+    let running = false
     let last = 0
     let slow = 0
     let frames = 0
     const tick = (now: number) => {
+      if (!running) return
       frame = requestAnimationFrame(tick)
       const elapsed = now - last
       if (elapsed < 33) return
@@ -249,6 +273,7 @@ export function HeroNave({ aperture, onUnavailable, still = false }: Readonly<He
         } else {
           time = Math.max(time, 2.2)
           draw()
+          running = false
           cancelAnimationFrame(frame)
           playingRef.current = false
           setPlaying(false)
@@ -257,12 +282,24 @@ export function HeroNave({ aperture, onUnavailable, still = false }: Readonly<He
       frames = 0
       slow = 0
     }
-    if (!reduced) frame = requestAnimationFrame(tick)
+    const startLoop = () => {
+      if (running || reduced) return
+      running = true
+      last = performance.now()
+      frames = 0
+      slow = 0
+      frame = requestAnimationFrame(tick)
+    }
+    resumeRef.current = startLoop
+    if (!reduced) startLoop()
 
     return () => {
+      running = false
+      resumeRef.current = null
       cancelAnimationFrame(frame)
       sized.disconnect()
       seen.disconnect()
+      window.removeEventListener('resize', measure)
       canvas.removeEventListener('webglcontextlost', unavailable)
     }
   }, [aperture, onUnavailable, reduced])
@@ -272,6 +309,7 @@ export function HeroNave({ aperture, onUnavailable, still = false }: Readonly<He
   const toggle = () => {
     playingRef.current = !playingRef.current
     setPlaying(playingRef.current)
+    if (playingRef.current) resumeRef.current?.()
   }
 
   return (

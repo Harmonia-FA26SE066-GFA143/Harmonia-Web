@@ -24,7 +24,7 @@ export function ErrorPage({ inShell = false }: Readonly<{ inShell?: boolean }>) 
       inShell={inShell}
       tabTitle="Đã xảy ra lỗi"
       picture={
-        <span style={{ color: 'var(--hm-action-primary)' }}>
+        <span style={{ color: 'var(--hm-error)' }}>
           <BrokenStaff width={200} />
         </span>
       }

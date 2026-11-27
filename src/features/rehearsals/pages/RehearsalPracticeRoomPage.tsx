@@ -1,4 +1,4 @@
-import { Button, Flex, Segmented, Select, Typography } from 'antd'
+import { App, Button, Flex, Segmented, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { generatePath, Link, useLocation, useNavigate, useParams } from 'react-router'
@@ -42,6 +42,7 @@ export function RehearsalPracticeRoomPage() {
   const { rehearsalId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const { modal } = App.useApp()
   const cached = useCachedRehearsal(rehearsalId)
   const known = (location.state as { rehearsal?: Rehearsal } | null)?.rehearsal ?? cached
   // Always read again by id: the router state survives a reload, so it only shows the session until the answer
@@ -70,7 +71,9 @@ export function RehearsalPracticeRoomPage() {
   const [part, setPart] = useState(ALL_PARTS)
   const [showLyrics, setShowLyrics] = useState(false)
   const [documentsOpen, setDocumentsOpen] = useState(false)
+  const [pickedScoreId, setPickedScoreId] = useState<string>()
   const [recordingOpen, setRecordingOpen] = useState(false)
+  const [recordingState, setRecordingState] = useState({ recording: false, unsaved: false })
   const [player, setPlayer] = useState<PracticePlayer>('loading')
   const [scoreCache] = useState(createPracticeScoreCache)
   useEffect(() => {
@@ -100,16 +103,26 @@ export function RehearsalPracticeRoomPage() {
       ? (midis.find((material) => !material.targetSkillName) ?? midis[0])
       : (midis.find((material) => material.targetSkillName === shownPart) ??
         midis.find((material) => !material.targetSkillName))
-  const partScore =
+  const partScores =
+    shownPart === ALL_PARTS
+      ? scores
+      : scores.filter((material) => material.targetSkillName === shownPart || !material.targetSkillName)
+  const defaultPartScore =
     shownPart === ALL_PARTS
       ? (scores.find((material) => !material.targetSkillName) ?? scores[0])
       : (scores.find((material) => material.targetSkillName === shownPart) ??
         scores.find((material) => !material.targetSkillName))
+  const partScore = partScores.find((item) => item.id === pickedScoreId) ?? defaultPartScore
   const partInteractiveScore =
     shownPart === ALL_PARTS
       ? (interactiveScores.find((material) => !material.targetSkillName) ?? interactiveScores[0])
       : (interactiveScores.find((material) => material.targetSkillName === shownPart) ??
         interactiveScores.find((material) => !material.targetSkillName))
+  const usingGeneralTrack =
+    shownPart !== ALL_PARTS &&
+    ((player === 'score' && partInteractiveScore && partInteractiveScore.targetSkillName !== shownPart) ||
+      (player === 'fallback' && partMidi && partMidi.targetSkillName !== shownPart) ||
+      (player === 'fallback' && !partMidi && partAudio && partAudio.targetSkillName !== shownPart))
   const typedLyrics = materials.data?.find((material) => material.kind === 'lyrics' && material.lyricsText !== null)?.lyricsText
 
   if (fetched.isLoading && !known) return <PageSkeleton sections={2} rows={6} />
@@ -141,6 +154,26 @@ export function RehearsalPracticeRoomPage() {
     setPart(ALL_PARTS)
     setShowLyrics(false)
     setDocumentsOpen(false)
+    setPickedScoreId(undefined)
+    setRecordingOpen(false)
+    setRecordingState({ recording: false, unsaved: false })
+  }
+  const closeRecordingDrawer = () => {
+    if (recordingState.recording) {
+      modal.confirm({
+        title: 'Đang thu âm cho bài hát này',
+        content: 'Hãy bấm “Dừng và lưu” trước khi đóng, hoặc xác nhận đóng (bản thu đang chạy sẽ dừng mà không lưu).',
+        okText: 'Đóng không lưu',
+        okButtonProps: { danger: true },
+        cancelText: 'Tiếp tục thu',
+        focusable: { autoFocusButton: 'cancel' },
+        onOk: () => {
+          setRecordingState({ recording: false, unsaved: false })
+          setRecordingOpen(false)
+        },
+      })
+      return
+    }
     setRecordingOpen(false)
   }
   const chooseSong = (songId: string) => chooseIndex(room.songs.findIndex((item) => item.id === songId))
@@ -210,6 +243,7 @@ export function RehearsalPracticeRoomPage() {
             materialId={partMidi.id}
             title={song.title}
             timedMaterial={supportsTimedLyrics(partMidi) ? partMidi : undefined}
+            untimedLyrics={lyricsContent}
             showLyrics={showLyrics}
             onStale={refreshMaterials}
           />
@@ -334,7 +368,9 @@ export function RehearsalPracticeRoomPage() {
             <div className="practice-room-status-bar">
               {modeLabel && <span className="practice-room-status-item">{modeLabel}</span>}
               <span className="practice-room-status-item">
-                <VoicePartIcon name={shownPart} /> Bè: {voicePartName(shownPart)}
+                <VoicePartIcon name={shownPart} />
+                <span>Bè: {voicePartName(shownPart)}</span>
+                {usingGeneralTrack && <span className="practice-room-fallback-note">(dùng bản chung)</span>}
               </span>
               {song.note && <span className="practice-room-status-item">Cần tập: {song.note}</span>}
             </div>
@@ -352,8 +388,28 @@ export function RehearsalPracticeRoomPage() {
             />
           </section>
 
-          <ViewDrawer title="Tài liệu" open={documentsOpen} onClose={() => setDocumentsOpen(false)} size={component.drawer.lg} destroyOnHidden>
-            <Typography.Text type="secondary" className="practice-room-drawer-context">{song.title}</Typography.Text>
+          <ViewDrawer
+            title="Tài liệu"
+            open={documentsOpen}
+            onClose={() => setDocumentsOpen(false)}
+            size={component.drawer.lg}
+            mask={false}
+            destroyOnHidden
+          >
+            <Flex align="center" justify="space-between" wrap gap={spacing.sm} className="practice-room-drawer-context">
+              <Typography.Text type="secondary">{song.title}</Typography.Text>
+              {partScores.length > 1 && partScore && (
+                <Select
+                  {...SELECT_POPUP_PROPS}
+                  size="small"
+                  aria-label="Chọn tệp bản nhạc"
+                  value={partScore.id}
+                  onChange={setPickedScoreId}
+                  options={partScores.map((item) => ({ value: item.id, label: item.title || item.fileName || 'Bản nhạc' }))}
+                  style={{ minWidth: 200 }}
+                />
+              )}
+            </Flex>
             {partScore && (
               <Suspense fallback={<SectionSkeleton rows={6} label="Đang mở bản nhạc" />}>
                 <PracticeScoreViewer
@@ -367,9 +423,24 @@ export function RehearsalPracticeRoomPage() {
             )}
           </ViewDrawer>
 
-          <ViewDrawer title="Ghi âm" open={recordingOpen} onClose={() => setRecordingOpen(false)} size={component.drawer.md} destroyOnHidden>
+          <ViewDrawer
+            title="Ghi âm"
+            open={recordingOpen}
+            onClose={closeRecordingDrawer}
+            size={component.drawer.md}
+            mask={false}
+          >
             <Typography.Text type="secondary" className="practice-room-drawer-context">{song.title}</Typography.Text>
-            <RecordingPanel rehearsalId={room.rehearsalId} songId={song.id} songTitle={song.title} rehearsal={room} />
+            {(recordingOpen || recordingState.recording || recordingState.unsaved) && (
+              <RecordingPanel
+                key={song.id}
+                rehearsalId={room.rehearsalId}
+                songId={song.id}
+                songTitle={song.title}
+                rehearsal={room}
+                onActiveChange={setRecordingState}
+              />
+            )}
           </ViewDrawer>
         </div>
       )}

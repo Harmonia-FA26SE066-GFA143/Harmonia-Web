@@ -234,6 +234,16 @@ export function DirectorDashboardPage() {
           <div className="dash-pair">
             <Section id="todo-heading" title="Cần bạn xử lý" extra={countsLoaded && waiting > 0 && <span className="hm-tab__count">{waiting}</span>}>
               {programs.isPending && <SectionSkeleton rows={3} label="Đang tải việc cần xử lý" />}
+              {programs.isError && waiting === 0 && (
+                <ErrorState
+                  headingLevel={3}
+                  title="Không thể tải danh sách công việc"
+                  error={programs.error}
+                  hasData={false}
+                  onRetry={() => programs.refetch()}
+                  retrying={programs.isFetching}
+                />
+              )}
               {programs.data !== undefined && countsLoaded && waiting === 0 && (
                 <Flex vertical align="center" gap={spacing.sm} role="status" style={{ padding: spacing.lg }}>
                   <AllDone width={140} />

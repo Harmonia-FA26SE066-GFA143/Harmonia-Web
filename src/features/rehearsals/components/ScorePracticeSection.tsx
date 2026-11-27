@@ -34,7 +34,7 @@ import { TimedLyricsView } from './TimedLyricsView'
 import '../score/focus/focusMode.css'
 
 /** The page decides how tall the sheet is, leaving the play controls on screen; the viewer only fills it and scrolls inside. Focus mode lets the sheet take what the screen leaves. */
-const SHEET_FRAME_HEIGHT = 'clamp(320px, calc(100vh - 470px), 560px)'
+const SHEET_FRAME_HEIGHT = 'clamp(340px, calc(100vh - 385px), 600px)'
 
 const devSource = new DevFixtureScoreSource()
 

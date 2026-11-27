@@ -1,7 +1,7 @@
 import { Alert, App, Button, ConfigProvider, Flex, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState, type ReactNode } from 'react'
-import { generatePath, useNavigate, useParams } from 'react-router'
+import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
 import {
@@ -13,6 +13,7 @@ import {
   useEvent,
   useEventNames,
   usePreparationStatus,
+  useSongCredits,
   type ProgramItem,
 } from '@/features/liturgical-programs'
 import { parseUtc } from '@/lib/api/dates'
@@ -24,10 +25,10 @@ import { useLatestSongList, useReviewSongList, useSongListVersions } from '../ho
 import { reviewErrorMessage } from '../songListReviewErrors'
 import { reviewDecisionLabels, type ReviewDecision, type ReviewValues, type SongList, type SongListItem } from '../types'
 
-const breadcrumb = [
+const reviewBreadcrumb = (programId: string) => [
   { title: 'Cha xứ' },
-  { title: 'Chương trình phụng vụ' },
-  { title: 'Chi tiết chương trình' },
+  { title: <Link to={paths.priest.programs}>Chương trình phụng vụ</Link> },
+  { title: programId ? <Link to={generatePath(paths.priest.programDetail, { programId })}>Chi tiết chương trình</Link> : 'Chi tiết chương trình' },
   { title: 'Duyệt danh sách bài hát' },
 ]
 
@@ -158,6 +159,56 @@ function ReviewHistory({ list }: Readonly<{ list: SongList }>) {
   )
 }
 
+/** Shared-cache button for a song's attachments: disables itself cleanly when the song has 0 files. */
+function SongMaterialButton({ item, onOpen }: Readonly<{ item: ProgramItem; onOpen: () => void }>) {
+  const credits = useSongCredits(item.songId)
+  const empty = credits.data !== undefined && credits.data.materials === 0
+  return (
+    <Button
+      icon={<Icon name="folder-open" />}
+      disabled={empty}
+      onClick={onOpen}
+      aria-label={empty ? `Chưa có bản nhạc và tài liệu của ${item.title}` : `Xem bản nhạc và tài liệu của ${item.title}`}
+    >
+      {empty ? 'Chưa có tài liệu' : 'Bản nhạc'}
+    </Button>
+  )
+}
+
+/** Compact context for resubmitted lists: prior Priest note + added/removed song diff, sharing the versions cache. */
+function RevisionContextBanner({ list }: Readonly<{ list: SongList }>) {
+  const versions = useSongListVersions(list.eventId)
+  const previous = versions.data?.find((version) => version.id === list.previousVersionId)
+    ?? versions.data?.find((version) => version.version === list.version - 1)
+  if (!previous) return null
+
+  const previousNote = previous.reviews[0]?.notes
+  const prevKeys = new Set(previous.items.map((item) => item.songId ?? item.songTitle))
+  const nextKeys = new Set(list.items.map((item) => item.songId ?? item.songTitle))
+  const added = list.items.filter((item) => !prevKeys.has(item.songId ?? item.songTitle)).length
+  const removed = previous.items.filter((item) => !nextKeys.has(item.songId ?? item.songTitle)).length
+  const diffParts = [added > 0 && `thêm ${added} bài`, removed > 0 && `bỏ ${removed} bài`].filter(Boolean)
+  const diffSummary = diffParts.length > 0 ? `So với phiên bản ${previous.version}: ${diffParts.join(', ')}.` : `Giữ nguyên các bài của phiên bản ${previous.version}, cập nhật thứ tự hoặc ghi chú.`
+
+  return (
+    <Alert
+      type="info"
+      showIcon
+      title={`Bản gửi lại (phiên bản ${list.version})`}
+      description={
+        <Flex vertical gap={spacing.xs}>
+          <span>{diffSummary}</span>
+          {previousNote && (
+            <Typography.Text style={{ color: colors.textBody }}>
+              Nhận xét lần trước: “{previousNote}”
+            </Typography.Text>
+          )}
+        </Flex>
+      }
+    />
+  )
+}
+
 /** Independent preparation items; the list's own status updates the review item as soon as a decision lands. */
 function ReviewSteps({ eventId, date, list }: Readonly<{ eventId: string; date: string; list: SongList }>) {
   const status = usePreparationStatus(eventId)
@@ -220,6 +271,7 @@ export function SongListReviewPage() {
     })
   }
 
+  const breadcrumb = reviewBreadcrumb(programId)
   const byId = new Map(list?.items.map((item) => [item.id, item]))
   const items: ProgramItem[] = (list?.items ?? []).map(({ id, songId, slotName, songTitle, note }) => ({ id, songId, slotName, title: songTitle, note }))
 
@@ -269,20 +321,14 @@ export function SongListReviewPage() {
               </div>
               <ProgramItemList
                 items={items}
-                renderAction={(item) => (
-                  <Button
-                    icon={<Icon name="folder-open" />}
-                    onClick={() => setViewing(byId.get(item.id))}
-                    aria-label={`Xem bản nhạc và tài liệu của ${item.title}`}
-                  >
-                    Bản nhạc
-                  </Button>
-                )}
+                showMaterials
+                renderAction={(item) => <SongMaterialButton item={item} onOpen={() => setViewing(byId.get(item.id))} />}
               />
               </div>
             </section>
           </ConfigProvider>
           <aside className="dash-aside dash-main" aria-label="Quyết định và tình hình chuẩn bị">
+            {list.status === 'submitted' && list.version > 1 && Boolean(list.previousVersionId) && <RevisionContextBanner list={list} />}
             {/* No review once the event is cancelled or its Mass has begun (BE 61b3aa6). */}
             {list.status === 'submitted' &&
               (isSongListClosed(event.data) ? (

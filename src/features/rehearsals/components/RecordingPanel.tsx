@@ -21,6 +21,8 @@ export interface RecordingPanelProps {
    * RehearsalRecordingService.cs:42, :89). Every serving choir's director still listens (CanViewAsync, :104-109).
    */
   rehearsal?: Pick<Rehearsal, 'isJoint' | 'eventId'>
+  /** Notifies the host drawer while recording or holding an unsaved take so closing does not silently drop audio. */
+  onActiveChange?: (state: { recording: boolean; unsaved: boolean }) => void
 }
 
 /** A recorded take with the song it belongs to, which may no longer be the one shown. */
@@ -43,7 +45,7 @@ const canRecord = () => typeof MediaRecorder !== 'undefined' && Boolean(navigato
  * `POST /api/rehearsals/{id}/recordings`); members of the rehearsal's choir listen on mobile. Each song lists its takes,
  * newest first, to play back or delete.
  */
-export function RecordingPanel({ rehearsalId, songId, songTitle, rehearsal = {} }: Readonly<RecordingPanelProps>) {
+export function RecordingPanel({ rehearsalId, songId, songTitle, rehearsal = {}, onActiveChange }: Readonly<RecordingPanelProps>) {
   const { message, modal } = App.useApp()
   const recordings = useRecordings(rehearsalId)
   const create = useCreateRecording(rehearsalId ?? '')
@@ -142,6 +144,10 @@ export function RecordingPanel({ rehearsalId, songId, songTitle, rehearsal = {} 
     })
 
   const recording = startedAt !== undefined
+  const hasUnsaved = unsaved !== undefined
+  useEffect(() => {
+    onActiveChange?.({ recording, unsaved: hasUnsaved })
+  }, [onActiveChange, recording, hasUnsaved])
   const takes = (recordings.data ?? []).filter((take) => take.songId === songId).toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))
   const unavailable = !rehearsalId || !canRecord()
   // Without a rehearsal the query is disabled and stays pending: nothing is loading then.

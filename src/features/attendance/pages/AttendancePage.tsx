@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { useUpcomingPrograms } from '@/features/liturgical-programs'
+import { useProgram, useUpcomingPrograms } from '@/features/liturgical-programs'
 import { isRehearsalDay, useRecentRehearsals, type Rehearsal } from '@/features/rehearsals'
 import { usePublicSettings } from '@/features/settings'
 import { ApiError } from '@/lib/api/errors'
@@ -45,7 +45,11 @@ export function AttendancePage() {
     defaultSession(sessions)
 
   const attendance = useAttendance(selected?.id)
-  const program = programs.data?.find((item) => item.id === (selected?.eventId ?? programId))
+  const targetEventId = selected?.eventId ?? programId ?? undefined
+  const upcomingMatch = programs.data?.find((item) => item.id === targetEventId)
+  // Past rehearsals are outside `useUpcomingPrograms`: load the event directly so the header never claims "Không gắn chương trình".
+  const pastProgram = useProgram(targetEventId && programs.isSuccess && !upcomingMatch ? targetEventId : '')
+  const program = upcomingMatch ?? pastProgram.data ?? undefined
   // B49, done in BE 14dabd3: the two settings that open attendance are public to signed-in users. While they are not
   // read (or an older backend leaves them out) the sheet is not locked and the server decides on save
   // (409 REHEARSAL_NOT_STARTED, RehearsalAttendanceService.cs:54-59).
@@ -63,7 +67,6 @@ export function AttendancePage() {
     next.set('rehearsalId', nextId)
     setSearchParams(next)
   }
-  const picker = selected && <SessionPicker session={selected} sessions={sessions} onPick={pick} />
   const showSheet = attendance.data !== undefined && attendance.data.length > 0
 
   const scheduleButton = (
@@ -117,7 +120,10 @@ export function AttendancePage() {
       )}
       {selected && (
         <Flex vertical gap={spacing.lg}>
-          {!showSheet && <div className="ctb-filters">{picker}</div>}
+          {/* Keep the session picker stably mounted above the sheet so switching sessions never drops keyboard focus. */}
+          <div className="ctb-filters">
+            <SessionPicker session={selected} sessions={sessions} onPick={pick} />
+          </div>
           {attendance.isPending && <SectionSkeleton rows={8} label="Đang tải danh sách điểm danh" />}
           {/* The session is listed for every director of a serving choir; its sheet is the lead director's. */}
           {attendance.isError && attendance.error instanceof ApiError && attendance.error.code === 'CHOIR_NOT_LEAD' && (
@@ -155,7 +161,6 @@ export function AttendancePage() {
               key={selected.id}
               rehearsalId={selected.id}
               records={attendance.data}
-              picker={picker}
               readOnly={notOpen}
             />
           )}

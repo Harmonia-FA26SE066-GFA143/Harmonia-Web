@@ -121,6 +121,12 @@ export interface LiturgicalEvent {
   status: EventStatus
   /** UTC timestamp; read with `parseUtc`. */
   publishedAt?: string
+  /** Latest song-list status when returned by list rows (`GET /api/liturgical-events`). */
+  songListStatus?: SongListStatus
+  /** YYYY-MM-DD reminder due date for the song list, when returned by list rows. */
+  songListDueDate?: string
+  /** True when the song-list due date passed without an Approved list. */
+  isSongListOverdue?: boolean
 }
 
 /**

@@ -1,9 +1,9 @@
-import { Typography } from 'antd'
+import { Flex, Typography } from 'antd'
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { Icon, inVoicePart, VoicePartIcon, voicePartName, voiceParts } from '@/shared/ui'
-import { colors, typography } from '@/styles/tokens'
+import { colors, spacing, typography } from '@/styles/tokens'
 import type { ParticipationRequest } from '../types'
 
 interface PartCount {
@@ -42,6 +42,22 @@ export function ResponsesByPart({ requests, skillsOf, programId }: Readonly<{ re
   return (
     <aside className="hm-preview" aria-label="Phản hồi theo bè">
       <p className="hm-rubric">Theo bè</p>
+      {counted.length > 0 && (
+        <Flex wrap gap={spacing.sm} style={{ ...muted, alignItems: 'center' }} aria-hidden>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span className="hm-part-legend__swatch is-confirmed" />
+            Xác nhận
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span className="hm-part-legend__swatch is-declined" />
+            Từ chối
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span className="hm-part-legend__swatch is-open" />
+            Chưa rõ / chưa trả lời
+          </span>
+        </Flex>
+      )}
       {counted.length === 0 ? (
         <Typography.Text style={muted}>Chưa có ca viên nào được mời có kỹ năng bè đã duyệt.</Typography.Text>
       ) : (

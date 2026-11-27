@@ -1,8 +1,9 @@
 import { Flex } from 'antd'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { ActivityDetailDrawer, ActivityTable, useActivityLog, type ActivityRecord } from '@/features/activity-log'
+import { useTrainedNominationCount } from '@/features/director-nominations'
 import { useWaitingRegistrationCount } from '@/features/member-registrations'
 import { useRoleCounts } from '@/features/users'
 import { roleLabels, type SystemRole } from '@/shared/types/account'
@@ -15,28 +16,38 @@ const recentLimit = 10
 const roleOrder: SystemRole[] = ['priest', 'director', 'member', 'admin']
 
 /**
- * Admin dashboard (artifact AdminDashboard): today's season, accounts per role and the join requests waiting, then the
- * latest activity (FE-47–FE-54). Each Admin area is in the running head, so no shortcut cards (#244). No other
- * metrics: the BE defines none. No pending-accounts card: accounts are created by the Admin (D1, 2026-10-07).
+ * Admin dashboard (artifact AdminDashboard): today's season, accounts per role, join requests and trained nominations
+ * waiting, then the latest activity (FE-47–FE-54). Each Admin area is in the running head, so no shortcut cards (#244).
  */
 export function AdminDashboardPage() {
+  const navigate = useNavigate()
   const log = useActivityLog({}, { pageNumber: 1, pageSize: recentLimit })
   const recent = log.data?.items ?? []
   const counts = useRoleCounts()
   const waiting = useWaitingRegistrationCount()
+  const trainedNominations = useTrainedNominationCount()
   const [selected, setSelected] = useState<ActivityRecord>()
 
   return (
     <>
-      <PageHeader title="Tổng quan" description="Hoạt động của hệ thống và việc đang chờ bạn." />
+      <PageHeader
+        title="Tổng quan"
+        breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Tổng quan' }]}
+        description="Hoạt động của hệ thống và việc đang chờ bạn."
+      />
       <Flex vertical gap={spacing.md}>
         {/* The Admin keeps the liturgical calendar in sync; every overview opens on the same season. */}
         <TodaySeason />
         <SummaryStrip
           label="Tài khoản theo vai trò và yêu cầu đang chờ"
           cells={[
-            ...roleOrder.map((role) => ({ label: roleLabels[role], value: counts?.[role] })),
+            ...roleOrder.map((role) => ({
+              label: roleLabels[role],
+              value: counts?.[role],
+              onClick: () => navigate(`${paths.admin.accounts}?role=${role}`),
+            })),
             { label: 'Đăng ký đang chờ', value: waiting, waiting: <Link to={paths.admin.memberRegistrations}>Xem yêu cầu</Link> },
+            { label: 'Chờ bổ nhiệm Ca trưởng', value: trainedNominations, waiting: <Link to={paths.admin.nominations}>Xem đề cử</Link> },
           ]}
         />
         <section aria-labelledby="recent-activity-heading" className="hm-sheet-section">

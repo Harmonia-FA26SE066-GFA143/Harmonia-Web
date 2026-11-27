@@ -1,8 +1,8 @@
 import { Alert, App, Button, Flex, Segmented, Select, Tooltip, Typography } from 'antd'
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { formatDateTime } from '@/lib/api/dates'
-import { CANCEL_LABEL, ErrorState, Icon, SectionSkeleton, SELECT_POPUP_PROPS, StatusTag, UNKNOWN_METRIC_LABEL } from '@/shared/ui'
-import { colors, spacing } from '@/styles/tokens'
+import { CANCEL_LABEL, ErrorState, Icon, SectionSkeleton, SELECT_POPUP_PROPS, StatusTag, UNKNOWN_METRIC_LABEL, voicePartName } from '@/shared/ui'
+import { colors, spacing, typography } from '@/styles/tokens'
 import {
   useFinalizeRoster,
   useFinalizeWholeService,
@@ -29,10 +29,12 @@ export interface RosterPanelProps {
   songListNotice?: ReactNode
   eligible: EligibleMember[]
   skills: { id: string; name: string }[]
-  /** The page head, given the roster status and actions (artifact RosterPage: they sit on the head's right). */
-  head: (actions?: ReactNode) => ReactNode
+  /** The page head, given the roster actions and status tag. */
+  head: (actions?: ReactNode, tags?: ReactNode) => ReactNode
   /** The Mass picker, first in the filter row. */
   picker: ReactNode
+  /** Past program or non-lead director: read-only roster. */
+  readOnly?: boolean
   /** Notices shown between the head and the roster. */
   children?: ReactNode
 }
@@ -82,7 +84,7 @@ function resolveStaffingStatus(params: {
  * list. Suggestion (FE-36), shortages computed by the backend (FE-37), manual lines (FE-38), finalization that locks
  * everything (FE-39) and the assignment notification (FE-40).
  */
-export function RosterPanel({ programId, approved, songs, songListNotice, eligible, skills, head, picker, children }: Readonly<RosterPanelProps>) {
+export function RosterPanel({ programId, approved, songs, songListNotice, eligible, skills, head, picker, readOnly = false, children }: Readonly<RosterPanelProps>) {
   const { message, modal } = App.useApp()
   const roster = useRoster(programId)
   const shortages = useShortages(programId)
@@ -96,6 +98,27 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
   const [notifying, setNotifying] = useState(false)
   // One scope at a time: the whole service, or one song of the approved list.
   const [songId, setSongId] = useState<string>()
+  const [cardDirty, setCardDirty] = useState(false)
+
+  const switchSong = (nextSongId: string | undefined) => {
+    if (nextSongId === songId) return
+    if (!cardDirty) {
+      setSongId(nextSongId)
+      return
+    }
+    modal.confirm({
+      title: 'Bỏ thay đổi yêu cầu nhân sự chưa lưu?',
+      content: 'Yêu cầu nhân sự bạn vừa chỉnh sửa sẽ mất nếu chuyển sang phần khác.',
+      okText: 'Bỏ thay đổi',
+      okButtonProps: { danger: true },
+      cancelText: 'Ở lại',
+      focusable: { autoFocusButton: 'cancel' },
+      onOk: () => {
+        setCardDirty(false)
+        setSongId(nextSongId)
+      },
+    })
+  }
 
   if (roster.isPending || shortages.isPending || roster.isError || shortages.isError) {
     return (
@@ -118,6 +141,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
   const pickedSong = approved ? songs.find((song) => song.id === songId) : undefined
   const scope = pickedSong ? 'song' : 'service'
   const locked = current?.status === 'finalized'
+  const effectiveLocked = locked || readOnly
   const wholeServiceLocked = Boolean(current?.wholeServiceFinalizedAt)
   const lines = current?.assignments ?? []
   const wholeServiceLines = lines.filter((line) => line.songListItemId === null)
@@ -211,23 +235,25 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
   })
 
   const hasSuggestion = lines.some((line) => line.source === 'suggested')
+  const statusTag = current ? (
+    <StatusTag color={statusColors[current.status]} style={{ marginInlineEnd: 0 }}>
+      {rosterStatusLabels[current.status]}
+    </StatusTag>
+  ) : (
+    <StatusTag mark="draft" style={{ marginInlineEnd: 0 }}>
+      Chưa có phân công
+    </StatusTag>
+  )
   const actions = (
     <>
-      {current ? (
-        <StatusTag color={statusColors[current.status]} style={{ marginInlineEnd: 0 }}>
-          {rosterStatusLabels[current.status]}
-        </StatusTag>
-      ) : (
-        <Typography.Text style={{ color: colors.textMuted }}>Chưa có phân công</Typography.Text>
-      )}
-      <Button icon={<Icon name="liturgy-tip" />} onClick={handleSuggest} disabled={locked} loading={suggest.isPending}>
+      <Button icon={<Icon name="liturgy-tip" />} onClick={handleSuggest} disabled={effectiveLocked} loading={suggest.isPending}>
         {hasSuggestion ? 'Gợi ý lại' : 'Gợi ý phân công'}
       </Button>
       {(wholeService.data?.length ?? 0) > 0 && (
         <Button
           icon={<Icon name="practice" />}
           onClick={handleFinalizeWholeService}
-          disabled={!current || locked || wholeServiceLocked || wholeServiceLines.length === 0}
+          disabled={!current || effectiveLocked || wholeServiceLocked || wholeServiceLines.length === 0}
         >
           Chốt nhạc công
         </Button>
@@ -236,13 +262,13 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
         <Button
           icon={<Icon name="notification" />}
           onClick={() => setNotifying(true)}
-          disabled={!(locked || wholeServiceLocked) || announceable.length === 0}
+          disabled={readOnly || !(locked || wholeServiceLocked) || announceable.length === 0}
         >
           Gửi thông báo phân công
         </Button>
       </Tooltip>
       <Tooltip title={approved ? undefined : 'Chốt phân công được sau khi danh sách bài hát được duyệt.'}>
-        <Button type="primary" icon={<Icon name="lock" />} onClick={handleFinalize} disabled={!current || locked || !approved}>
+        <Button type="primary" icon={<Icon name="lock" />} onClick={handleFinalize} disabled={!current || effectiveLocked || !approved}>
           Chốt phân công
         </Button>
       </Tooltip>
@@ -251,14 +277,14 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
 
   return (
     <>
-    {head(actions)}
+    {head(actions, statusTag)}
     <Flex vertical gap={spacing.lg}>
       <div className="ctb-filters">
         {picker}
         <Segmented
           aria-label="Phạm vi phân công"
           value={scope}
-          onChange={(value) => setSongId(value === 'service' ? undefined : (songId ?? songs[0]?.id))}
+          onChange={(value) => switchSong(value === 'service' ? undefined : (songId ?? songs[0]?.id))}
           options={[
             { label: 'Cả Thánh lễ', value: 'service' },
             { label: 'Theo bài hát', value: 'song', disabled: !approved || songs.length === 0 },
@@ -269,7 +295,7 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
             {...SELECT_POPUP_PROPS}
             aria-label="Bài hát"
             value={songId}
-            onChange={setSongId}
+            onChange={switchSong}
             options={songs.map((song) => {
               const short = shortages.data.filter((item) => item.songListItemId === song.id).length
               return { value: song.id, label: [song.liturgicalPart, song.title, short && `thiếu ${short}`].filter(Boolean).join(' · ') }
@@ -281,6 +307,31 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
           {staffingStatus}
         </span>
       </div>
+      {shortages.data.length > 0 && (
+        <Flex wrap align="center" gap={spacing.xs} role="region" aria-label="Các vị trí còn thiếu">
+          <Typography.Text style={{ color: 'var(--hm-area-attention-ink)', fontSize: typography.metadata.fontSize, fontWeight: 600 }}>
+            Đi nhanh tới vị trí thiếu:
+          </Typography.Text>
+          {shortages.data.map((shortage) => {
+            const targetSong = shortage.songListItemId ? songs.find((s) => s.id === shortage.songListItemId) : undefined
+            const canJump = shortage.songListItemId === null || Boolean(targetSong)
+            const missing = shortage.requiredCount - shortage.assignedCount
+            const active = shortage.songListItemId === null ? scope === 'service' : pickedSong?.id === shortage.songListItemId
+            return (
+              <Button
+                key={`${shortage.songListItemId ?? 'service'}:${shortage.skillId}`}
+                size="small"
+                type={active ? 'primary' : 'default'}
+                ghost={active}
+                disabled={!canJump}
+                onClick={() => switchSong(shortage.songListItemId ?? undefined)}
+              >
+                {shortage.songListItemId === null ? 'Cả buổi lễ' : (shortage.songTitle ?? targetSong?.title ?? 'Bài hát')} · {voicePartName(shortage.skillName)} (-{missing})
+              </Button>
+            )
+          })}
+        </Flex>
+      )}
       {children}
       {locked && <Alert type="success" showIcon title="Phân công đã chốt. Yêu cầu nhân sự và phân công chỉ còn xem." />}
       {!locked && wholeServiceLocked && current?.wholeServiceFinalizedAt && (
@@ -299,8 +350,9 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
           shortages={shortages.data.filter((item) => item.songListItemId === null)}
           eligible={eligible}
           skills={skills}
-          locked={locked}
+          locked={effectiveLocked}
           linesLocked={wholeServiceLocked}
+          onDirtyChange={setCardDirty}
         />
       ) : (
         pickedSong && (
@@ -314,7 +366,8 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
             wholeServiceCounts={wholeServiceCounts}
             eligible={eligible}
             skills={skills}
-            locked={locked}
+            locked={effectiveLocked}
+            onDirtyChange={setCardDirty}
           />
         )
       )}

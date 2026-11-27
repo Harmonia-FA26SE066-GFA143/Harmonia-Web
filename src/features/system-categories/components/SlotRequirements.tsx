@@ -88,7 +88,7 @@ function SlotRequirementsDrawer({
                   rules={[{ required: true, message: 'Nhập số người.' }]}
                   style={{ margin: 0 }}
                 >
-                  <InputNumber min={1} max={50} precision={0} addonAfter="người" aria-label={`Số người ${index + 1}`} style={{ width: 130 }} />
+                  <InputNumber min={1} max={50} precision={0} suffix="người" aria-label={`Số người ${index + 1}`} style={{ width: 130 }} />
                 </Form.Item>
                 <Button type="text" icon={<Icon name="delete" />} aria-label={`Gỡ kỹ năng ${index + 1}`} onClick={() => remove(field.name)} />
               </Flex>
@@ -132,7 +132,7 @@ export function SlotRequirementsCell({ slot }: Readonly<{ slot: LiturgicalSlot }
         onClick={() => setEditing(true)}
         aria-label={`Sửa người cần cho ${slot.name}`}
       >
-        Sửa
+        Nhân sự
       </Button>
       {editing && requirements.data && (
         <SlotRequirementsDrawer slot={slot} requirements={requirements.data} onClose={() => setEditing(false)} />

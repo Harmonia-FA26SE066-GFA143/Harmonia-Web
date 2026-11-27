@@ -1,4 +1,4 @@
-import { ATTENDANCE_LATE_LABEL, ErrorState, SectionSkeleton } from '@/shared/ui'
+import { ATTENDANCE_LATE_LABEL, ErrorState, SectionSkeleton, UNKNOWN_METRIC_LABEL } from '@/shared/ui'
 import { memberScope, participationTotals, percent } from '../directorReport'
 import { useActivityTrend, useReport } from '../hooks/useReports'
 import type { ActivityTrendPoint, ActivityTrendQuery, DirectorReportKind } from '../types'
@@ -44,7 +44,7 @@ function Figures({ figures, busy }: Readonly<{ figures: Figure[]; busy: boolean 
       {figures.map((figure) => (
         <div key={figure.label} className="ctb-figure">
           <span>{figure.label}</span>
-          <b>{figure.value}</b>
+          <b className={figure.value === UNKNOWN_METRIC_LABEL ? 'is-unknown' : undefined}>{figure.value}</b>
           <small>{figure.note}</small>
         </div>
       ))}

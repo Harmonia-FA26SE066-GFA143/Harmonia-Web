@@ -18,7 +18,7 @@ export const attendanceLabels: Record<AttendanceValue, string> = {
 /** Button labels of the attendance sheet, short enough to keep the four choices on one line. */
 export const attendanceShortLabels: Record<AttendanceValue, string> = {
   present: 'Có mặt',
-  late: 'Muộn',
+  late: ATTENDANCE_LATE_LABEL,
   excused: 'Có phép',
   absent: 'Vắng',
 }

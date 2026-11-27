@@ -53,7 +53,17 @@ export function RejectSkillModal({ skill, revoke = false, saving = false, onSubm
           { max: 500, message: 'Lý do tối đa 500 ký tự.' },
         ]}
       >
-        <Input.TextArea rows={4} showCount maxLength={500} autoFocus />
+        <Input.TextArea
+          rows={4}
+          showCount
+          maxLength={500}
+          autoFocus
+          placeholder={
+            revoke
+              ? 'Ví dụ: Ca viên tạm chuyển bè, cần đánh giá lại trước khi phân công.'
+              : 'Ví dụ: Cần luyện thêm cao độ và nhịp trước khi duyệt bè này.'
+          }
+        />
       </Form.Item>
     </Modal>
   )

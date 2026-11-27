@@ -100,6 +100,12 @@ export function SubmissionTable({
       pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: onPageChange }}
       scroll={{ x: 'max-content' }}
       rowClassName={(submission) => (submission.id === selectedId ? 'is-picked' : '')}
+      onRow={(submission) => ({
+        onClick: (event) => {
+          if ((event.target as Element | null)?.closest('button, a, audio, input, [role="slider"]')) return
+          onOpen(submission)
+        },
+      })}
       className="hm-table-pick hm-review-queue"
     />
   )

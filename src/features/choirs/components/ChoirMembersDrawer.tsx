@@ -1,9 +1,10 @@
-import { App, Button, Flex, Select, Table, Typography } from 'antd'
+import { App, Button, Flex, Input, Select, Table, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { useState } from 'react'
-import { useChoirMembers } from '@/features/members'
+import { useMemo, useState } from 'react'
+import { useAllChoirMembers } from '@/features/members'
 import { getSession } from '@/lib/auth/session'
-import { ACTIONS_COLUMN_TITLE, CANCEL_LABEL, EmptyState, ErrorState, Icon, SectionSkeleton, SELECT_POPUP_PROPS, ViewDrawer } from '@/shared/ui'
+import { ACTIONS_COLUMN_TITLE, CANCEL_LABEL, EmptyState, ErrorState, Icon, NoFilterResults, SectionSkeleton, SELECT_POPUP_PROPS, ViewDrawer } from '@/shared/ui'
+import { matchesSearch } from '@/shared/utils/search'
 import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 import { choirErrorMessage } from '../choirErrors'
 import { useAddChoirMembers, useMembersOfChoir, useRemoveChoirMember } from '../hooks/useChoirs'
@@ -30,7 +31,15 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
   const remove = useRemoveChoirMember(choirId)
   const [adding, setAdding] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
-  const profiles = useChoirMembers(adding)
+  const [search, setSearch] = useState('')
+  const [seenChoirId, setSeenChoirId] = useState(choir?.id)
+  if (choir?.id !== seenChoirId) {
+    setSeenChoirId(choir?.id)
+    setAdding(false)
+    setPicked([])
+    setSearch('')
+  }
+  const profiles = useAllChoirMembers(adding)
 
   // A Choir Director only invites; the member joins on accepting. The Admin places members directly (ChoirService.cs:210-219).
   const invites = getSession()?.user.roleName === 'ChoirDirector'
@@ -38,10 +47,20 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
   // One active choir per member: someone in another choir moves by their own request, and the backend refuses the whole
   // batch for them (MEMBER_ALREADY_IN_CHOIR), so they are not offered.
   const candidates = (profiles.data ?? []).filter((profile) => !current.has(profile.id) && !profile.choirs?.some((other) => other.id !== choirId))
+  const visibleMembers = useMemo(
+    () => (members.data ?? []).filter((member) => matchesSearch(search, member.fullName, member.email)),
+    [members.data, search],
+  )
 
   const closeAdding = () => {
     setAdding(false)
     setPicked([])
+  }
+
+  const handleClose = () => {
+    closeAdding()
+    setSearch('')
+    onClose()
   }
 
   const handleAdd = () =>
@@ -60,7 +79,7 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
   const handleRemove = (member: ChoirMembership) =>
     modal.confirm({
       title: `Rút ${member.fullName} khỏi ${choirName}?`,
-      content: 'Ca viên vẫn thuộc các ca đoàn khác và có thể được thêm lại sau.',
+      content: 'Ca viên sẽ rời khỏi ca đoàn này; các phân công chưa chốt có thể cần điều chỉnh lại và bạn vẫn có thể mời lại sau.',
       okText: 'Rút khỏi ca đoàn',
       okButtonProps: { danger: true },
       cancelText: CANCEL_LABEL,
@@ -77,7 +96,7 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
     <ViewDrawer
       open={Boolean(choir)}
       title={`Ca viên của ${choirName}`}
-      onClose={onClose}
+      onClose={handleClose}
       size={component.drawer.lg}
       extra={
         <Button type="primary" icon={<Icon name="add" />} disabled={!choir?.isActive || adding} onClick={() => setAdding(true)}>
@@ -144,46 +163,66 @@ export function ChoirMembersDrawer({ choir, onClose }: Readonly<ChoirMembersDraw
         />
       )}
       {members.data !== undefined && members.data.length > 0 && (
-        <Table<ChoirMembership>
-          rowKey="memberId"
-          size="small"
-          pagination={false}
-          dataSource={members.data}
-          columns={[
-            {
-              key: 'name',
-              title: 'Ca viên',
-              render: (_, member) => (
-                <Flex vertical>
-                  <Typography.Text strong>{member.fullName}</Typography.Text>
-                  <Typography.Text style={{ ...muted, fontSize: typography.metadata.fontSize }}>{member.email}</Typography.Text>
-                </Flex>
-              ),
-            },
-            {
-              key: 'joined',
-              title: 'Vào ca đoàn',
-              render: (_, member) => (
-                <span>{dayjs(member.joinedDate).format('DD/MM/YYYY')}</span>
-              ),
-            },
-            {
-              key: 'actions',
-              title: ACTIONS_COLUMN_TITLE,
-              align: 'center',
-              width: 80,
-              render: (_, member) => (
-                <Button
-                  type="text"
-                  danger
-                  icon={<Icon name="delete" />}
-                  onClick={() => handleRemove(member)}
-                  aria-label={`Rút ${member.fullName} khỏi ca đoàn`}
-                />
-              ),
-            },
-          ]}
-        />
+        <Flex vertical gap={spacing.sm}>
+          <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
+            <Input
+              allowClear
+              aria-label="Tìm ca viên trong ca đoàn"
+              prefix={<Icon name="search" />}
+              placeholder="Tìm theo họ tên hoặc email…"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              style={{ width: 260, maxWidth: '100%' }}
+            />
+            <Typography.Text style={{ ...muted, fontSize: typography.metadata.fontSize }}>
+              {search.trim() ? `${visibleMembers.length} / ${members.data.length} ca viên` : `${members.data.length} ca viên`}
+            </Typography.Text>
+          </Flex>
+          {visibleMembers.length === 0 ? (
+            <NoFilterResults onClearFilters={() => setSearch('')} />
+          ) : (
+            <Table<ChoirMembership>
+              rowKey="memberId"
+              size="small"
+              pagination={false}
+              dataSource={visibleMembers}
+              columns={[
+                {
+                  key: 'name',
+                  title: 'Ca viên',
+                  render: (_, member) => (
+                    <Flex vertical>
+                      <Typography.Text strong>{member.fullName}</Typography.Text>
+                      <Typography.Text style={{ ...muted, fontSize: typography.metadata.fontSize }}>{member.email}</Typography.Text>
+                    </Flex>
+                  ),
+                },
+                {
+                  key: 'joined',
+                  title: 'Vào ca đoàn',
+                  render: (_, member) => (
+                    <span>{dayjs(member.joinedDate).format('DD/MM/YYYY')}</span>
+                  ),
+                },
+                {
+                  key: 'actions',
+                  title: ACTIONS_COLUMN_TITLE,
+                  align: 'center',
+                  width: 80,
+                  render: (_, member) => (
+                    <Button
+                      type="text"
+                      danger
+                      icon={<Icon name="delete" />}
+                      onClick={() => handleRemove(member)}
+                      aria-label={`Rút ${member.fullName} khỏi ca đoàn`}
+                    />
+                  ),
+                },
+              ]}
+            />
+          )}
+        </Flex>
       )}
     </ViewDrawer>
   )

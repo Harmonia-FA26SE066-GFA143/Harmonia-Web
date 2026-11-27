@@ -1,7 +1,9 @@
 import { Button, Table, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
-import { ACTIONS_COLUMN_TITLE, EmptyCell, UNKNOWN_METRIC_LABEL } from '@/shared/ui'
+import { ACTIONS_COLUMN_TITLE, EmptyCell, MISSING_FIELD_LABEL, UNKNOWN_METRIC_LABEL } from '@/shared/ui'
 import { dateColumnKeys } from '../reportDefinitions'
 import type { ReportColumn, ReportRow } from '../types'
+
+const descriptiveFieldKeys = new Set(['composer', 'lyricist', 'locationName', 'liturgicalSeasonName', 'notes'])
 
 export interface ReportTableProps {
   /** From the backend, in its order. */
@@ -25,7 +27,9 @@ export function ReportTable({ columns, rows, pagination, loading, onOpenProgram 
         align: numeric ? ('right' as const) : undefined,
         render: (_: unknown, row: ReportRow) => {
           const value = row.cells[column.key]
-          if (value === undefined || value === '') return <EmptyCell text={UNKNOWN_METRIC_LABEL} />
+          if (value === undefined || value === '') {
+            return <EmptyCell text={descriptiveFieldKeys.has(column.key) ? MISSING_FIELD_LABEL : UNKNOWN_METRIC_LABEL} />
+          }
           return numeric ? (
             <Typography.Text style={{ whiteSpace: 'nowrap' }}>{value}</Typography.Text>
           ) : (

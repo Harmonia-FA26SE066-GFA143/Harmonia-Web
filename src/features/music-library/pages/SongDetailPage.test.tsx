@@ -157,7 +157,7 @@ describe('SongDetailPage', () => {
     expect(screen.getAllByText('Chưa phân loại')).toHaveLength(4)
 
     for (const kind of ['Bản nhạc', 'Lời bài hát', 'Audio mẫu', 'Tài liệu tập luyện']) {
-      expect(await screen.findByRole('heading', { level: 2, name: kind })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { level: 3, name: kind })).toBeInTheDocument()
     }
     expect(screen.getByText('Bản nhạc SATB')).toBeInTheDocument()
     expect(screen.getByText('con-buoc_SATB.pdf · 2.4 MB · tải lên 12/08/2026')).toBeInTheDocument()
@@ -275,7 +275,7 @@ describe('SongDetailPage', () => {
       .mockResolvedValue(material({ id: 'm3', kind: 'lyrics', title: 'Lời 2 bè', fileName: 'loi.docx' }))
     renderDetail('materials')
 
-    const lyrics = (await screen.findByRole('heading', { level: 2, name: 'Lời bài hát' })).closest('section')!
+    const lyrics = (await screen.findByRole('heading', { level: 3, name: 'Lời bài hát' })).closest('section')!
     const input = lyrics.querySelector('input[type="file"]') as HTMLInputElement
     expect(input.accept).toBe('.docx')
     const file = new File(['lời'], 'loi.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
@@ -372,7 +372,7 @@ describe('SongDetailPage', () => {
     const upload = vi.spyOn(songsApi, 'uploadMaterial')
     renderDetail('materials')
 
-    const audio = (await screen.findByRole('heading', { level: 2, name: 'Audio mẫu' })).closest('section')!
+    const audio = (await screen.findByRole('heading', { level: 3, name: 'Audio mẫu' })).closest('section')!
     const input = audio.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['x'], 'ban-nhac.pdf', { type: 'application/pdf' })] } })
 
@@ -386,7 +386,7 @@ describe('SongDetailPage', () => {
     vi.spyOn(songsApi, 'uploadMaterial').mockRejectedValue(new ApiError(413, { code: 'MATERIAL_FILE_TOO_LARGE' }))
     renderDetail('materials')
 
-    const sheet = (await screen.findByRole('heading', { level: 2, name: 'Bản nhạc' })).closest('section')!
+    const sheet = (await screen.findByRole('heading', { level: 3, name: 'Bản nhạc' })).closest('section')!
     const input = sheet.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['x'], 'ban-nhac.pdf', { type: 'application/pdf' })] } })
     const dialog = await screen.findByRole('dialog')
@@ -403,7 +403,7 @@ describe('SongDetailPage', () => {
       .mockResolvedValue(material({ id: 'm4', kind: 'interactiveScore', title: 'Bản tương tác', fileName: 'satb.mxl' }))
     renderDetail('materials')
 
-    const score = (await screen.findByRole('heading', { level: 2, name: 'Bản nhạc tương tác' })).closest('section')!
+    const score = (await screen.findByRole('heading', { level: 3, name: 'Bản nhạc tương tác' })).closest('section')!
     const input = score.querySelector('input[type="file"]') as HTMLInputElement
     expect(input.accept).toBe('.musicxml,.mxl')
     const file = new File(['<score-partwise/>'], 'satb.mxl', { type: 'application/vnd.recordare.musicxml' })
@@ -423,7 +423,7 @@ describe('SongDetailPage', () => {
     vi.spyOn(songsApi, 'uploadMaterial').mockRejectedValue(new ApiError(422, { code: 'MATERIAL_SCORE_UNSUPPORTED' }))
     renderDetail('materials')
 
-    const score = (await screen.findByRole('heading', { level: 2, name: 'Bản nhạc tương tác' })).closest('section')!
+    const score = (await screen.findByRole('heading', { level: 3, name: 'Bản nhạc tương tác' })).closest('section')!
     const input = score.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['<x/>'], 'satb.musicxml', { type: 'application/xml' })] } })
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Tải lên' }))
@@ -436,7 +436,7 @@ describe('SongDetailPage', () => {
     vi.spyOn(songsApi, 'uploadMaterial').mockRejectedValue(new ApiError(422, { code: 'MATERIAL_SCORE_INVALID' }))
     renderDetail('materials')
 
-    const score = (await screen.findByRole('heading', { level: 2, name: 'Bản nhạc tương tác' })).closest('section')!
+    const score = (await screen.findByRole('heading', { level: 3, name: 'Bản nhạc tương tác' })).closest('section')!
     const input = score.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['<x/>'], 'satb.mxl')] } })
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Tải lên' }))

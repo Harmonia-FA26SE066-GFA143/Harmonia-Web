@@ -60,12 +60,14 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
 
   const columns: TableColumnsType<Nomination> = [
     { key: 'member', title: 'Ca viên', render: (_, item) => <Typography.Text strong>{item.memberFullName}</Typography.Text> },
-    { key: 'by', title: 'Người đề cử', render: (_, item) => item.nominatedByFullName },
+    ...(role === 'ChoirDirector' ? [] : [{ key: 'by', title: 'Người đề cử', render: (_: unknown, item: Nomination) => item.nominatedByFullName }]),
     { key: 'choir', title: 'Ca đoàn đề xuất', render: (_, item) => item.proposedChoirName ?? <EmptyCell text="Chưa đề xuất" /> },
     { key: 'status', title: 'Trạng thái', render: (_, item) => <StatusTag color={statusColors[item.status]} mark={item.status === 'Cancelled' ? 'struck' : undefined}>{statusLabels[item.status]}</StatusTag> },
     { key: 'at', title: 'Ngày đề cử', render: (_, item) => dayjs(parseUtc(item.createdAt)).format('DD/MM/YYYY') },
     { key: 'open', title: ACTIONS_COLUMN_TITLE, align: 'center', width: 112, render: (_, item) => <Button type="link" onClick={() => setOpenId(item.id)} aria-label={`Xem đề cử ${item.memberFullName}`}>Xem</Button> },
   ]
+
+  const showEmpty = nominations.data !== undefined && total === 0 && !status
 
   return (
     <>
@@ -73,11 +75,11 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
         title="Đề cử Ca trưởng"
         description={role && role !== 'ChoirMember' ? intro[role] : undefined}
         breadcrumb={[{ title: area }, { title: 'Đề cử Ca trưởng' }]}
-        extra={createButton || undefined}
+        extra={showEmpty ? undefined : (createButton || undefined)}
       />
       {nominations.isPending && <SectionSkeleton rows={6} label="Đang tải danh sách đề cử" />}
       {nominations.isError && <ErrorState title="Không thể tải danh sách đề cử" error={nominations.error} hasData={nominations.data !== undefined} onRetry={() => nominations.refetch()} retrying={nominations.isFetching} />}
-      {nominations.data !== undefined && total === 0 && !status && (
+      {showEmpty && (
         <EmptyState icon={<EmptyChoir />} title="Chưa có đề cử nào" description="Đề cử Ca trưởng sẽ xuất hiện tại đây." action={createButton || undefined} />
       )}
       {nominations.data !== undefined && (total > 0 || status) && (
@@ -108,6 +110,7 @@ export function NominationsPage({ area }: Readonly<{ area: string }>) {
               dataSource={nominations.data.items}
               loading={nominations.isPlaceholderData}
               pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
+              scroll={{ x: 760 }}
             />
           )}
           </Card>

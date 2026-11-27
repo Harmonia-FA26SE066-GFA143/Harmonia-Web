@@ -1340,7 +1340,7 @@ describe('ScorePracticeSection, the Verovio credit', () => {
     expect(frame).not.toBeNull()
     expect(frame.contains(credit)).toBe(false)
     // The page leaves the play controls on screen; jsdom rewrites the calc(), so only its bounds are read.
-    expect(frame.style.height).toMatch(/^clamp\(320px, .+, 560px\)$/)
+    expect(frame.style.height).toMatch(/^clamp\(340px, .+, 600px\)$/)
     expect(credit.closest('dialog')).toBe(frame.closest('dialog'))
     expect(screen.getByRole('button', LICENCE)).toHaveTextContent('Giấy phép')
   })

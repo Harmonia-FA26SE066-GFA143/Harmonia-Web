@@ -1,6 +1,7 @@
 import { App, Button, Flex, Input, Typography, theme } from 'antd'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
+import { generatePath, Link } from 'react-router'
 import { formatDateTime, parseUtc } from '@/lib/api/dates'
 import { colors } from '@/styles/tokens'
 import { ChatDateDivider, ChatHeader, ErrorState, Icon, PROGRAM_NOUN, SectionSkeleton, visuallyHidden } from '@/shared/ui'
@@ -10,11 +11,13 @@ import type { DirectorNote } from '../types'
 
 const maxLength = 2000 // SendDirectorNoteMessageRequestValidator
 
-function Bubble({ note, mine }: Readonly<{ note: DirectorNote; mine: boolean }>) {
+function Bubble({ note, mine, eventPathTemplate }: Readonly<{ note: DirectorNote; mine: boolean; eventPathTemplate?: string }>) {
   const { token } = theme.useToken()
-  const about = [note.noteDate && dayjs(note.noteDate).format('DD/MM/YYYY'), note.eventId && (note.eventTitle || PROGRAM_NOUN)]
-    .filter(Boolean)
-    .join(' · ')
+  const noteDate = note.noteDate ? dayjs(note.noteDate).format('DD/MM/YYYY') : undefined
+  const eventLabel = note.eventId ? (note.eventTitle || PROGRAM_NOUN) : undefined
+  const eventHref = note.eventId && eventPathTemplate ? generatePath(eventPathTemplate, { programId: note.eventId }) : undefined
+  const sentTime = dayjs(parseUtc(note.sentAt)).format('HH:mm')
+  const fullSentAt = formatDateTime(note.sentAt)
   return (
     <Flex vertical align={mine ? 'flex-end' : 'flex-start'}>
       <div
@@ -28,24 +31,32 @@ function Bubble({ note, mine }: Readonly<{ note: DirectorNote; mine: boolean }>)
           overflowWrap: 'anywhere',
         }}
       >
-        {about && (
+        {(noteDate || eventLabel) && (
           <div
             style={{
               fontSize: token.fontSizeSM,
               fontWeight: 600,
-              opacity: 0.85,
+              opacity: 0.9,
               borderBottom: '1px solid currentColor',
               paddingBottom: 4,
               marginBottom: 6,
             }}
           >
-            Ghi chú về {about}
+            Ghi chú về {noteDate}
+            {noteDate && eventLabel ? ' · ' : ''}
+            {eventLabel && eventHref ? (
+              <Link to={eventHref} style={{ color: 'inherit', textDecoration: 'underline' }}>
+                {eventLabel}
+              </Link>
+            ) : (
+              eventLabel
+            )}
           </div>
         )}
         {note.content}
       </div>
-      <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-        {formatDateTime(note.sentAt)}
+      <Typography.Text type="secondary" title={fullSentAt} style={{ fontSize: token.fontSizeSM }}>
+        {sentTime}
         {mine && ` · ${note.readAt ? 'Đã xem' : 'Đã gửi'}`}
       </Typography.Text>
     </Flex>
@@ -59,16 +70,23 @@ export interface ChatThreadProps {
   partnerName: string
   partnerSubtitle?: string
   selfId: string
+  /** Preserves an unsent draft across partner switches when managed by the parent. */
+  draft?: string
+  onDraftChange?: (value: string) => void
+  /** Route template with `:programId` so event notes link straight to the program detail page. */
+  eventPathTemplate?: string
   /** Connection indicator, shown in the opaque header (G4-03). */
   liveStatus?: ReactNode
 }
 
 /** Messages with one person (oldest at the top, newest at the bottom, a divider per day) and the composer. */
-export function ChatThread({ partnerId, partnerName, partnerSubtitle, selfId, liveStatus }: Readonly<ChatThreadProps>) {
+export function ChatThread({ partnerId, partnerName, partnerSubtitle, selfId, draft: controlledDraft, onDraftChange, eventPathTemplate, liveStatus }: Readonly<ChatThreadProps>) {
   const { message } = App.useApp()
   const thread = useThread(partnerId)
   const send = useSendMessage()
-  const [draft, setDraft] = useState('')
+  const [localDraft, setLocalDraft] = useState('')
+  const draft = controlledDraft ?? localDraft
+  const setDraft = onDraftChange ?? setLocalDraft
   const bottom = useRef<HTMLDivElement>(null)
   // Pages arrive newest first; the view reads top to bottom, oldest first.
   const notes = (thread.data?.pages.flatMap((page) => page.items) ?? []).toReversed()
@@ -112,7 +130,7 @@ export function ChatThread({ partnerId, partnerName, partnerSubtitle, selfId, li
         {notes.map((note, index) => (
           <Fragment key={note.id}>
             {(index === 0 || localDay(notes[index - 1].sentAt) !== localDay(note.sentAt)) && <ChatDateDivider date={note.sentAt} />}
-            <Bubble note={note} mine={note.fromUserId === selfId} />
+            <Bubble note={note} mine={note.fromUserId === selfId} eventPathTemplate={eventPathTemplate} />
           </Fragment>
         ))}
         <div ref={bottom} />

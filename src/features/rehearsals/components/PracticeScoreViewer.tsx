@@ -25,11 +25,13 @@ export function PracticeScoreViewer({
   songTitle,
   refreshing,
   onRefresh,
+  collapsible = false,
 }: Readonly<{
   material: SongMaterial
   songTitle: string
   refreshing: boolean
   onRefresh: () => Promise<void>
+  collapsible?: boolean
 }>) {
   const container = useRef<HTMLDivElement>(null)
   const [collapsed, setCollapsed] = useState(false)
@@ -41,7 +43,7 @@ export function PracticeScoreViewer({
   const [retryKey, setRetryKey] = useState(0)
   const materialExtension = material.fileName ? fileExtension(material.fileName) : undefined
   const isPdf = materialExtension === '.pdf'
-  const isImage = materialExtension === '.png' || materialExtension === '.jpg'
+  const isImage = materialExtension === '.png' || materialExtension === '.jpg' || materialExtension === '.jpeg'
   const pageWidth = Math.max(1, containerWidth - spacing.lg * 2)
 
   useEffect(() => {
@@ -91,14 +93,16 @@ export function PracticeScoreViewer({
           <Button icon={<Icon name="download" />} href={material.url ?? undefined} target="_blank" rel="noreferrer">
             Mở/Tải xuống
           </Button>
-          <Button
-            icon={collapsed ? <Icon name="chevron-down" /> : <Icon name="chevron-up" />}
-            aria-expanded={!collapsed}
-            aria-controls="practice-score-content"
-            onClick={() => setCollapsed((value) => !value)}
-          >
-            {collapsed ? 'Mở bản nhạc' : 'Thu gọn'}
-          </Button>
+          {collapsible && (
+            <Button
+              icon={collapsed ? <Icon name="chevron-down" /> : <Icon name="chevron-up" />}
+              aria-expanded={!collapsed}
+              aria-controls="practice-score-content"
+              onClick={() => setCollapsed((value) => !value)}
+            >
+              {collapsed ? 'Mở bản nhạc' : 'Thu gọn'}
+            </Button>
+          )}
         </Flex>
       </Flex>
 

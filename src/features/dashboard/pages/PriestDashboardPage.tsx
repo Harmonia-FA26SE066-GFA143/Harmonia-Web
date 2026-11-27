@@ -3,10 +3,12 @@ import dayjs from 'dayjs'
 import type { CSSProperties, ReactNode } from 'react'
 import { generatePath, Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { EventStatusTag, formatProgramDate, useEvent, useEventNames, useEvents } from '@/features/liturgical-programs'
+import { usePendingNominationCount } from '@/features/director-nominations'
+import { EventStatusTag, formatProgramDate, SongListStatusTag, useEvent, useEventNames, useEvents } from '@/features/liturgical-programs'
 import { usePendingSongLists } from '@/features/song-list-review'
 import { parseUtc, vietnamToday } from '@/lib/api/dates'
 import { AllDone, EmptyState, EmptyWeek, ErrorState, Icon, PageHeader, SectionSkeleton } from '@/shared/ui'
+import { colors, sections, spacing } from '@/styles/tokens'
 import { TodaySeason } from '../components/TodaySeason'
 
 const upcomingLimit = 5
@@ -14,7 +16,12 @@ const order = (index: number) => ({ '--i': index }) as CSSProperties
 const capitalize = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`
 
 /** A submitted list, named after its event (the pending lists carry only the event id). */
-function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: string; version: number; submittedAt?: string }>) {
+function PendingSongList({
+  eventId,
+  version,
+  submittedAt,
+  primary,
+}: Readonly<{ eventId: string; version: number; submittedAt?: string; primary?: boolean }>) {
   const navigate = useNavigate()
   const event = useEvent(eventId)
   const { eventName } = useEventNames()
@@ -34,9 +41,9 @@ function PendingSongList({ eventId, version, submittedAt }: Readonly<{ eventId: 
         Ca trưởng gửi phiên bản {version}
         {submittedAt && ` lúc ${dayjs(parseUtc(submittedAt)).format('HH:mm DD/MM/YYYY')}`}
       </span>
-      {/* Every row has this button, so the event is part of its name. */}
+      {/* Every row has this button, so the event is part of its name; only the first takes the filled primary weight. */}
       <Button
-        type="primary"
+        type={primary ? 'primary' : 'default'}
         aria-label={`Xem danh sách bài hát: ${label}`}
         onClick={() => navigate(generatePath(paths.priest.songListReview, { programId: eventId }))}
       >
@@ -77,6 +84,7 @@ export function PriestDashboardPage() {
   const navigate = useNavigate()
   const upcoming = useEvents({ fromDate: vietnamToday() }, { pageNumber: 1, pageSize: upcomingLimit })
   const pending = usePendingSongLists()
+  const pendingNominations = usePendingNominationCount()
   const { name, eventName } = useEventNames()
   const lists = pending.data ?? []
 
@@ -132,9 +140,19 @@ export function PriestDashboardPage() {
                       </span>
                       <span style={{ minWidth: 0 }}>
                         <span className="week-list__time">{title}</span>
-                        <span className="week-list__meta">{[event.time, event.locationName, name('season', event.seasonId)].filter(Boolean).join(' · ')}</span>
+                        <span className="week-list__meta">
+                          {[event.time, event.locationName, name('season', event.seasonId)].filter(Boolean).join(' · ')}
+                        </span>
+                        {event.isSongListOverdue && (
+                          <span className="week-list__meta" style={{ color: sections.attention.ink, fontWeight: 500 }}>
+                            Quá hạn duyệt danh sách bài hát
+                          </span>
+                        )}
                       </span>
-                      <EventStatusTag status={event.status} />
+                      <Flex align="center" gap={6} wrap justify="flex-end">
+                        <EventStatusTag status={event.status} />
+                        {event.status === 'published' && event.songListStatus && <SongListStatusTag status={event.songListStatus} />}
+                      </Flex>
                       <Button
                         onClick={() => navigate(generatePath(paths.priest.programDetail, { programId: event.id }))}
                         aria-label={`Xem chi tiết ${title} ngày ${formatProgramDate(event.date)}`}
@@ -149,7 +167,7 @@ export function PriestDashboardPage() {
           </Section>
         </div>
 
-        <aside className="dash-aside" aria-label="Việc chờ Cha xứ">
+        <aside className="dash-aside dash-main" aria-label="Việc chờ Cha xứ">
           <Section
             id="to-review-heading"
             title="Cần Cha xứ xem xét"
@@ -183,7 +201,12 @@ export function PriestDashboardPage() {
               <ul className="priest-queue__list hm-stagger">
                 {lists.map((list, index) => (
                   <li key={list.id} style={order(index)}>
-                    <PendingSongList eventId={list.eventId} version={list.version} submittedAt={list.submittedAt} />
+                    <PendingSongList
+                      eventId={list.eventId}
+                      version={list.version}
+                      submittedAt={list.submittedAt}
+                      primary={index === 0}
+                    />
                   </li>
                 ))}
               </ul>
@@ -192,6 +215,25 @@ export function PriestDashboardPage() {
               <p className="priest-queue__note">Duyệt, yêu cầu sửa hoặc từ chối ở trang danh sách. Ca trưởng nhận thông báo.</p>
             )}
           </Section>
+          {pendingNominations !== undefined && pendingNominations > 0 && (
+            <Section
+              id="pending-nominations-heading"
+              title="Đề cử Ca trưởng chờ duyệt"
+              className="hm-sheet-section priest-queue hm-paper"
+              extra={
+                <span className="hm-tab__count" aria-label={`${pendingNominations} đề cử chờ duyệt`}>
+                  {pendingNominations}
+                </span>
+              }
+            >
+              <div className="priest-sheet__body">
+                <Typography.Paragraph style={{ margin: `0 0 ${spacing.sm}px`, color: colors.textBody }}>
+                  Có {pendingNominations} đề cử Ca trưởng đang chờ Cha xứ xem xét và quyết định.
+                </Typography.Paragraph>
+                <Button onClick={() => navigate(paths.priest.nominations)}>Xem đề cử Ca trưởng</Button>
+              </div>
+            </Section>
+          )}
         </aside>
       </div>
     </div>

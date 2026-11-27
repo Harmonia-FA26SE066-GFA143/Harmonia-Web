@@ -43,7 +43,7 @@ export function MusicLibraryPage() {
     setStoredViewMode(next)
   }
   const total = songs.data?.totalCount ?? 0
-  const [selectedId, setSelectedId] = useState<string>()
+  const selectedId = searchParams.get('song') ?? undefined
   const items = songs.data?.items ?? []
   // The picked card, else the first one of the page.
   const selectedIndex = Math.max(0, items.findIndex((song) => song.id === selectedId))
@@ -59,6 +59,17 @@ export function MusicLibraryPage() {
   // `replace`: typing in the search box must not fill the history; Back leaves the list instead.
   const changeFilters = (next: SongFilters) => setSearchParams(writeSongListState(next, 1), { replace: true })
   const setPage = (next: number) => setSearchParams(writeSongListState(filters, next), { replace: true })
+  const selectSong = (song: Song) => {
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        next.set('song', song.id)
+        return next
+      },
+      { replace: true },
+    )
+  }
+  const animationKey = writeSongListState(filters, page).toString()
   const resetFilters = () => changeFilters(emptySongFilters)
   const openSong = (songId: string) =>
     navigate(generatePath(paths.director.songDetail, { songId }), { state: songListState(location.search) })
@@ -115,7 +126,7 @@ export function MusicLibraryPage() {
       />
       <div className={`song-layout${showPeek ? ' has-peek' : ''}`}>
         <div className="song-layout__main">
-          {nextProgram && <NextMassSongs program={nextProgram} list={nextList.data} />}
+          {nextProgram && !filtered && <NextMassSongs program={nextProgram} list={nextList.data} />}
           {/* The loading shape of the chosen view (G3-02). */}
           {songs.isPending &&
             (viewMode === 'grid' ? <CardGridSkeleton cards={6} label="Đang tải kho bài hát" /> : <SectionSkeleton rows={8} label="Đang tải kho bài hát" />)}
@@ -135,8 +146,9 @@ export function MusicLibraryPage() {
               loading={songs.isPlaceholderData}
               selectedId={selected?.id}
               partOf={partOf}
-              animationKey={searchParams.toString()}
-              onSelect={(song) => setSelectedId(song.id)}
+              animationKey={animationKey}
+              onSelect={selectSong}
+              onOpen={(song) => openSong(song.id)}
               onPageChange={setPage}
             />
           )}

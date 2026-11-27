@@ -162,25 +162,31 @@ export function SongClassificationDrawer({ open, classification, saving = false,
         </Form>
       )}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', columnGap: spacing.md }}>
-        {multiSelects.map((select) => (
-          <Form.Item key={select.name} label={select.label} name={select.name}>
-            <Select
-              {...SELECT_POPUP_PROPS}
-              placeholder={placeholderOf(select.label)}
-              mode="multiple"
-              allowClear
-              optionFilterProp="label"
-              options={select.options}
-            />
-          </Form.Item>
-        ))}
+      <div className="hm-form-section">
+        <p className="hm-rubric">Phân loại phụng vụ</p>
+        <div className="hm-form-row-2">
+          {multiSelects.map((select) => (
+            <Form.Item key={select.name} label={select.label} name={select.name}>
+              <Select
+                {...SELECT_POPUP_PROPS}
+                placeholder={placeholderOf(select.label)}
+                mode="multiple"
+                allowClear
+                optionFilterProp="label"
+                options={select.options}
+              />
+            </Form.Item>
+          ))}
+        </div>
         <Form.Item label="Chủ đề" name="songThemeIds" extra="Lọc theo một chủ đề cũng ra bài của các chủ đề con.">
           <TreeSelect {...SELECT_POPUP_PROPS} placeholder="Chọn chủ đề" multiple allowClear showSearch treeNodeFilterProp="title" treeDefaultExpandAll treeData={themes} />
         </Form.Item>
       </div>
-      <RequirementList name="vocalRequirements" label="Yêu cầu bè giọng" addLabel="Thêm bè giọng" options={vocal} />
-      <RequirementList name="instrumentRequirements" label="Yêu cầu nhạc cụ" addLabel="Thêm nhạc cụ" options={instrument} />
+      <div className="hm-form-section">
+        <p className="hm-rubric">Yêu cầu nhân sự và nhạc cụ</p>
+        <RequirementList name="vocalRequirements" label="Yêu cầu bè giọng" addLabel="Thêm bè giọng" options={vocal} />
+        <RequirementList name="instrumentRequirements" label="Yêu cầu nhạc cụ" addLabel="Thêm nhạc cụ" options={instrument} />
+      </div>
     </FormDrawer>
   )
 }

@@ -26,7 +26,7 @@ export function OfflineNotice() {
       showIcon
       icon={<Icon name="offline" />}
       role="status"
-      message="Bạn đang ngoại tuyến"
+      title="Bạn đang ngoại tuyến"
       description="Một số dữ liệu có thể chưa tải được. Ứng dụng sẽ thử lại khi kết nối mạng trở lại."
       style={{ marginBottom: 16 }}
     />

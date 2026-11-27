@@ -1,7 +1,7 @@
 import { Typography } from 'antd'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { StatusTag } from '@/shared/ui'
-import { seasonColors } from '@/styles/tokens'
+import { gold } from '@/styles/tokens'
 
 const chapters = [
   { numeral: 'I', title: 'Chương trình hình thành', who: 'Ca trưởng', text: 'Ca trưởng chọn bài cho từng phần của Thánh lễ, ngay trên lịch phụng vụ của giáo xứ.' },
@@ -90,7 +90,7 @@ export function LandingStory() {
       </div>
 
       <aside aria-label="Tờ chương trình minh hoạ" className="landing-sheet">
-        <span aria-hidden className={`landing-sheet__ribbon${shown(3)}`} style={{ background: seasonColors.purple.cloth }} />
+        <span aria-hidden className={`landing-sheet__ribbon${shown(3)}`} style={{ background: gold.line }} />
         <div className="landing-sheet__head">
           <div>
             <p className="landing-sheet__title">Lễ Đêm Giáng Sinh</p>

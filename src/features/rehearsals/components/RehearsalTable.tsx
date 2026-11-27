@@ -2,11 +2,12 @@ import { Button, Flex, Table, Tooltip, Typography, type TableColumnsType, type T
 import { generatePath, Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
-import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon } from '@/shared/ui'
+import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon, PRACTICE_ROOM_ACTION } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
 import { canTakeAttendance, isUpcoming, type Rehearsal } from '../types'
 import { JointChip, PlannerOnly, RehearsalChoirs } from './JointRehearsal'
+import { SessionState } from './RehearsalWeek'
 
 export interface RehearsalTableProps {
   rehearsals: Rehearsal[]
@@ -14,6 +15,7 @@ export interface RehearsalTableProps {
   programs: Map<string, LiturgicalProgram>
   pagination: TablePaginationConfig
   loading?: boolean
+  onOpenRoom: (rehearsal: Rehearsal) => void
   onTakeAttendance: (rehearsal: Rehearsal) => void
   onEdit: (rehearsal: Rehearsal) => void
   onDelete: (rehearsal: Rehearsal) => void
@@ -27,6 +29,7 @@ export function RehearsalTable({
   programs,
   pagination,
   loading,
+  onOpenRoom,
   onTakeAttendance,
   onEdit,
   onDelete,
@@ -37,7 +40,10 @@ export function RehearsalTable({
       title: 'Thời gian & địa điểm',
       render: (_, rehearsal) => (
         <Flex vertical gap={2}>
-          <Typography.Text strong>{formatRehearsalTime(rehearsal)}</Typography.Text>
+          <Flex align="center" gap={6} wrap>
+            <Typography.Text strong>{formatRehearsalTime(rehearsal)}</Typography.Text>
+            <SessionState rehearsal={rehearsal} />
+          </Flex>
           <div>
             <JointChip rehearsal={rehearsal} />
           </div>
@@ -84,7 +90,7 @@ export function RehearsalTable({
               <li key={song.songId}>
                 <span className="ctb-songs__index" aria-hidden>{index + 1}.</span>
                 <span>
-                  {song.songTitle}
+                  <Link to={generatePath(paths.director.songDetail, { songId: song.songId })}>{song.songTitle}</Link>
                   {song.note && <Typography.Text style={{ color: colors.textMuted }}> · {song.note}</Typography.Text>}
                 </span>
               </li>
@@ -96,9 +102,17 @@ export function RehearsalTable({
       key: 'actions',
       title: ACTIONS_COLUMN_TITLE,
       align: 'center',
-      width: 260,
+      width: 300,
       render: (_, rehearsal) => (
-        <Flex justify="center" gap={4}>
+        <Flex justify="center" align="center" wrap gap={4}>
+          <Button
+            type="link"
+            icon={<Icon name="play" />}
+            onClick={() => onOpenRoom(rehearsal)}
+            aria-label={`${PRACTICE_ROOM_ACTION} buổi tập ${rehearsalLabel(rehearsal)}`}
+          >
+            {PRACTICE_ROOM_ACTION}
+          </Button>
           <PlannerOnly rehearsal={rehearsal}>
           <Button
             type="link"

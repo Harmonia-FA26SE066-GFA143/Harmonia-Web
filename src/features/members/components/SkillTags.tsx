@@ -1,10 +1,9 @@
-import { Flex, Tag, Typography } from 'antd'
-import { hasVoicePart, UnassignedVoiceCell, VoicePartIcon, voicePartName } from '@/shared/ui'
-import { colors } from '@/styles/tokens'
+import { Flex, Tag } from 'antd'
+import { EmptyCell, hasVoicePart, UnassignedVoiceCell, VoicePartIcon, voicePartName } from '@/shared/ui'
 
-/** A member's approved skills as neutral tags; "—" when none are recorded. */
+/** A member's approved skills as neutral tags; muted placeholder when none are recorded. */
 export function SkillTags({ skills }: Readonly<{ skills: string[] }>) {
-  if (skills.length === 0) return <Typography.Text style={{ color: colors.textMuted }}>—</Typography.Text>
+  if (skills.length === 0) return <EmptyCell text="Chưa có kỹ năng" />
   return (
     <Flex wrap gap={4}>
       {skills.map((skill) => (

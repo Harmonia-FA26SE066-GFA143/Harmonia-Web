@@ -1,15 +1,18 @@
 import { Alert, App, Button, Card, Flex, Input, Select, Switch, Table, TimePicker, Typography, type RefSelectProps } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ApiError } from '@/lib/api/errors'
 import {
   ACTIONS_COLUMN_TITLE,
   EmptyCell,
   EmptyState,
   ErrorState,
+  FilterBar,
+  filterAllPlaceholder,
   Form,
   FormDrawer,
   Icon,
+  NoFilterResults,
   SectionSkeleton,
   SELECT_POPUP_PROPS,
   StatusTag,
@@ -65,9 +68,26 @@ export function MassSchedulesPanel() {
   const locations = useLocations()
   const save = useSaveMassSchedule()
   const [drawer, setDrawer] = useState<DrawerState>({ open: false })
+  const [dayFilter, setDayFilter] = useState<DayOfWeek>()
+  const [activeFilter, setActiveFilter] = useState<boolean>()
   const editing = drawer.open ? drawer.schedule : undefined
   const dayOfWeekRef = useRef<RefSelectProps>(null)
   const lookupFailed = massTypes.isError || locations.isError
+
+  const visible = useMemo(
+    () =>
+      (schedules.data ?? []).filter(
+        (schedule) =>
+          (!dayFilter || schedule.dayOfWeek === dayFilter) &&
+          (activeFilter === undefined || schedule.isActive === activeFilter),
+      ),
+    [schedules.data, dayFilter, activeFilter],
+  )
+  const hasFilters = Boolean(dayFilter || activeFilter !== undefined)
+  const resetFilters = () => {
+    setDayFilter(undefined)
+    setActiveFilter(undefined)
+  }
 
   const submit = (values: FormValues) => {
     if (save.isPending) return
@@ -115,53 +135,89 @@ export function MassSchedulesPanel() {
     )
   else
     content = (
-      <Card styles={{ body: { padding: 0 } }}>
-        <Flex justify="space-between" align="center" wrap gap={spacing.sm} style={{ padding: spacing.md }}>
-          <Typography.Text style={{ color: colors.textMuted }}>
-            Cha xứ tạo sự kiện nháp từ các giờ lễ đang dùng. Sửa giờ lễ không đổi các sự kiện đã tạo trước đó.
-          </Typography.Text>
-          {addButton}
-        </Flex>
-        <Table<MassSchedule>
-          rowKey="id"
-          dataSource={schedules.data}
-          pagination={false}
-          scroll={{ x: 'max-content' }}
-          columns={[
-            { key: 'day', title: 'Thứ', render: (_, schedule) => <Typography.Text strong>{dayOfWeekLabels[schedule.dayOfWeek]}</Typography.Text> },
-            { key: 'time', title: 'Giờ', dataIndex: 'time' },
-            { key: 'title', title: 'Tiêu đề', render: (_, schedule) => schedule.title ?? <EmptyCell text="Không có" /> },
-            { key: 'massType', title: 'Loại Thánh lễ', render: (_, schedule) => lookupCell(massTypes, schedule.massTypeId) },
-            { key: 'location', title: 'Nơi cử hành', render: (_, schedule) => lookupCell(locations, schedule.locationId) },
-            {
-              key: 'status',
-              title: 'Trạng thái',
-              fixed: 'right',
-              render: (_, schedule) => (
-                <StatusTag color={schedule.isActive ? 'green' : 'default'} style={{ marginInlineEnd: 0 }}>
-                  {schedule.isActive ? 'Đang dùng' : 'Ngừng dùng'}
-                </StatusTag>
-              ),
-            },
-            {
-              key: 'actions',
-              title: ACTIONS_COLUMN_TITLE,
-              align: 'center',
-              width: 128,
-              fixed: 'right',
-              render: (_, schedule) => (
-                <Button
-                  icon={<Icon name="edit" />}
-                  onClick={() => setDrawer({ open: true, schedule })}
-                  aria-label={`Chỉnh sửa giờ lễ ${dayOfWeekLabels[schedule.dayOfWeek]} ${schedule.time}`}
-                >
-                  Chỉnh sửa
-                </Button>
-              ),
-            },
-          ]}
-        />
-      </Card>
+      <Flex vertical gap={spacing.md}>
+        <FilterBar
+          resultCount={visible.length}
+          resultNoun="giờ lễ"
+          hasActiveFilters={hasFilters}
+          onReset={resetFilters}
+          extra={addButton}
+        >
+          <Select
+            {...SELECT_POPUP_PROPS}
+            allowClear
+            aria-label="Lọc theo thứ"
+            placeholder={filterAllPlaceholder('thứ')}
+            value={dayFilter}
+            onChange={(value?: DayOfWeek) => setDayFilter(value)}
+            options={dayOptions}
+            style={{ minWidth: 156 }}
+          />
+          <Select
+            {...SELECT_POPUP_PROPS}
+            allowClear
+            aria-label="Lọc theo trạng thái"
+            placeholder={filterAllPlaceholder('trạng thái')}
+            value={activeFilter}
+            onChange={(value?: boolean) => setActiveFilter(value)}
+            options={[
+              { value: true, label: 'Đang dùng' },
+              { value: false, label: 'Ngừng dùng' },
+            ]}
+            style={{ minWidth: 164 }}
+          />
+        </FilterBar>
+        <Typography.Text style={{ color: colors.textMuted }}>
+          Cha xứ tạo sự kiện nháp từ các giờ lễ đang dùng. Sửa giờ lễ không đổi các sự kiện đã tạo trước đó.
+        </Typography.Text>
+        <Card styles={{ body: { padding: 0 } }}>
+          {visible.length === 0 ? (
+            <div style={{ padding: spacing.md }}>
+              <NoFilterResults onClearFilters={resetFilters} />
+            </div>
+          ) : (
+            <Table<MassSchedule>
+              rowKey="id"
+              dataSource={visible}
+              pagination={{ pageSize: 20, hideOnSinglePage: true }}
+              scroll={{ x: 'max-content' }}
+              columns={[
+                { key: 'day', title: 'Thứ', render: (_, schedule) => <Typography.Text strong>{dayOfWeekLabels[schedule.dayOfWeek]}</Typography.Text> },
+                { key: 'time', title: 'Giờ', dataIndex: 'time' },
+                { key: 'title', title: 'Tiêu đề', render: (_, schedule) => schedule.title ?? <EmptyCell text="Không có" /> },
+                { key: 'massType', title: 'Loại Thánh lễ', render: (_, schedule) => lookupCell(massTypes, schedule.massTypeId) },
+                { key: 'location', title: 'Nơi cử hành', render: (_, schedule) => lookupCell(locations, schedule.locationId) },
+                {
+                  key: 'status',
+                  title: 'Trạng thái',
+                  fixed: 'right',
+                  render: (_, schedule) => (
+                    <StatusTag color={schedule.isActive ? 'green' : 'default'} style={{ marginInlineEnd: 0 }}>
+                      {schedule.isActive ? 'Đang dùng' : 'Ngừng dùng'}
+                    </StatusTag>
+                  ),
+                },
+                {
+                  key: 'actions',
+                  title: ACTIONS_COLUMN_TITLE,
+                  align: 'center',
+                  width: 128,
+                  fixed: 'right',
+                  render: (_, schedule) => (
+                    <Button
+                      icon={<Icon name="edit" />}
+                      onClick={() => setDrawer({ open: true, schedule })}
+                      aria-label={`Chỉnh sửa giờ lễ ${dayOfWeekLabels[schedule.dayOfWeek]} ${schedule.time}`}
+                    >
+                      Chỉnh sửa
+                    </Button>
+                  ),
+                },
+              ]}
+            />
+          )}
+        </Card>
+      </Flex>
     )
 
   return (

@@ -379,7 +379,7 @@ describe('ChoirsPage', () => {
   it('lets the Admin add members to a choir', async () => {
     vi.spyOn(choirsApi, 'listChoirs').mockResolvedValue([cecilia])
     vi.spyOn(choirsApi, 'listMembersOfChoir').mockResolvedValue([])
-    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([{ id: 'm2', fullName: 'Simon Phan Văn Đức', skills: [] }])
+    vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([{ id: 'm2', fullName: 'Simon Phan Văn Đức', skills: [] }])
     const add = vi.spyOn(choirsApi, 'addChoirMembers').mockResolvedValue()
     renderPage(<AdminChoirsPage />, '/admin/choirs')
 
@@ -398,7 +398,7 @@ describe('ChoirsPage', () => {
     vi.spyOn(choirsApi, 'listMembersOfChoir').mockResolvedValue([
       { memberId: 'm1', fullName: 'Maria Nguyễn Thu Hướng', email: 'maria@giaoxu.org', joinedDate: '2026-10-17' },
     ])
-    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([
+    vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([
       { id: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: [] },
       { id: 'm2', fullName: 'Simon Phan Văn Đức', skills: [] },
     ])

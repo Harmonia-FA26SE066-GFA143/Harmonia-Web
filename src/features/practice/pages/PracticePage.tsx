@@ -87,6 +87,7 @@ export function PracticePage() {
           <Typography.Text>
             Đang chuẩn bị luyện tập cho chương trình:{' '}
             <strong>{activeEvent.title || PROGRAM_NOUN}</strong> · {formatProgramDate(activeEvent.eventDate)} ({activeEvent.locationName})
+            {tab === 'review' && ' — Hàng chờ chấm hiển thị bản thu của mọi bài tập.'}
           </Typography.Text>
           <Button type="link" size="small" onClick={clearEventContext} style={{ padding: 0 }} aria-label="Xem tất cả chương trình (bỏ lọc ngữ cảnh)">
             Xem tất cả chương trình

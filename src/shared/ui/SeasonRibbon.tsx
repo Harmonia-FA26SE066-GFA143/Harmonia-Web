@@ -31,14 +31,13 @@ export function SeasonRibbon({ seasonKey, color, seasonName, celebrationName }: 
   return (
     <section
       aria-label="Mùa phụng vụ hôm nay"
-      className="hm-paper"
+      className="hm-paper hm-season-ribbon"
       style={{
         position: 'relative',
         overflow: 'hidden',
         background: colors.ivory,
         border: `1px solid ${tone.border}`,
         borderRadius: radius.lg,
-        padding: `${spacing.lg}px ${spacing.lg}px ${spacing.lg}px 72px`,
       }}
     >
       <span
@@ -71,16 +70,16 @@ export function SeasonRibbon({ seasonKey, color, seasonName, celebrationName }: 
           position: 'relative',
           margin: 0,
           fontFamily: typography.displayFontFamily,
-          fontSize: 32,
-          fontWeight: 600,
-          lineHeight: 1.25,
+          ...typography.displaySeason,
           color: tone.name,
         }}
       >
         {seasonName}
       </p>
       {celebrationName && (
-        <Typography.Text style={{ position: 'relative', color: colors.textBody }}>{celebrationName}</Typography.Text>
+        <Typography.Text style={{ position: 'relative', display: 'block', marginTop: 2, color: colors.textBody }}>
+          {celebrationName}
+        </Typography.Text>
       )}
     </section>
   )

@@ -1,6 +1,6 @@
 import { App, Button, Flex, Modal } from 'antd'
 import { useRef, useState } from 'react'
-import { generatePath, useBeforeUnload, useBlocker, useNavigate, useSearchParams } from 'react-router'
+import { generatePath, Link, useBeforeUnload, useBlocker, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useCatalogOptions } from '@/features/system-categories'
 import { CANCEL_LABEL, PageHeader } from '@/shared/ui'
@@ -24,6 +24,7 @@ export function CreateProgramPage() {
   const create = useCreateEvent()
   const seasons = useCatalogOptions('seasons')
   const [dirty, setDirty] = useState(false)
+  const [submitMode, setSubmitMode] = useState<'draft' | 'publish' | null>(null)
   // Set once the event is saved; read at navigation time so the redirect to the new event is not blocked.
   const saved = useRef(false)
   // Set by the clicked submit button in the summary; the form resets it after each submit attempt.
@@ -36,7 +37,8 @@ export function CreateProgramPage() {
 
   const initialDate = searchParams.get('date') ?? undefined
 
-  const handleSubmit = (values: EventFormValues) =>
+  const handleSubmit = (values: EventFormValues) => {
+    setSubmitMode(values.isPublished ? 'publish' : 'draft')
     create.mutate(values, {
       onSuccess: ({ event, invited }) => {
         // Left empty, the season is filled by the backend with the one covering the date (BE d1ca63e).
@@ -51,13 +53,19 @@ export function CreateProgramPage() {
       },
       // The form keeps its values so nothing is lost.
       onError: (error) => message.error(eventErrorMessage(error, 'Không thể lưu chương trình. Vui lòng thử lại.')),
+      onSettled: () => setSubmitMode(null),
     })
+  }
 
   return (
     <>
       <PageHeader
         title="Tạo chương trình"
-        breadcrumb={[{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }, { title: 'Tạo chương trình' }]}
+        breadcrumb={[
+          { title: 'Cha xứ' },
+          { title: <Link to={paths.priest.programs}>Chương trình phụng vụ</Link> },
+          { title: 'Tạo chương trình' },
+        ]}
         description="Lưu bản nháp để công bố sau, hoặc tạo và công bố ngay."
       />
       {/* A long form on its own page with a short summary on the right third (artifact PriestCreateProgram). */}
@@ -90,7 +98,8 @@ export function CreateProgramPage() {
               block
               htmlType="submit"
               form={formId}
-              loading={create.isPending}
+              loading={create.isPending && submitMode === 'draft'}
+              disabled={create.isPending && submitMode === 'publish'}
               onClick={() => {
                 publishRef.current = false
               }}
@@ -102,7 +111,8 @@ export function CreateProgramPage() {
               type="primary"
               htmlType="submit"
               form={formId}
-              loading={create.isPending}
+              loading={create.isPending && submitMode === 'publish'}
+              disabled={create.isPending && submitMode === 'draft'}
               onClick={() => {
                 publishRef.current = true
               }}
