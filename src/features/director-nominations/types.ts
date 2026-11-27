@@ -105,6 +105,6 @@ export const nominationSteps: { status: NominationStatus; title: string }[] = [
   { status: 'Pending', title: 'Đề cử' },
   { status: 'Approved', title: 'Cha xứ duyệt' },
   { status: 'InTraining', title: 'Đào tạo' },
-  { status: 'Trained', title: 'Đào tạo xong hoặc được miễn' },
+  { status: 'Trained', title: 'Hoàn tất đào tạo' },
   { status: 'Appointed', title: 'Bổ nhiệm' },
 ]

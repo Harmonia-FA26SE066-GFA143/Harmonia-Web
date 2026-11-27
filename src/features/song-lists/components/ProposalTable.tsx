@@ -1,5 +1,7 @@
 import { App, Button, Divider, Flex, Input, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useState, type ReactNode } from 'react'
+import { generatePath, Link } from 'react-router'
+import { paths } from '@/app/router/paths'
 import { nameConflictMessage, useLookup, useSaveSlot } from '@/features/system-categories'
 import { ACTIONS_COLUMN_TITLE, EmptyCell, Icon, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
@@ -129,7 +131,20 @@ export function ProposalTable({ items, editable, onChange }: Readonly<ProposalTa
         </Flex>
       ),
     },
-    { key: 'title', title: 'Bài hát', render: (_, item) => <Typography.Text strong>{item.songTitle}</Typography.Text> },
+    {
+      key: 'title',
+      title: 'Bài hát',
+      render: (_, item) => (
+        <Link
+          to={generatePath(paths.director.songDetail, { songId: item.songId })}
+          target={editable ? '_blank' : undefined}
+          rel={editable ? 'noopener noreferrer' : undefined}
+          style={{ fontWeight: 600, color: colors.textPrimary }}
+        >
+          {item.songTitle}
+        </Link>
+      ),
+    },
     {
       key: 'slot',
       title: 'Phần phụng vụ',

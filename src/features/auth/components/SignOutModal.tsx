@@ -18,6 +18,9 @@ export function SignOutModal({ open, onClose }: Readonly<{ open: boolean; onClos
       okText="Đăng xuất"
       cancelText="Ở lại"
       confirmLoading={signOut.isPending}
+      cancelButtonProps={{ disabled: signOut.isPending }}
+      closable={!signOut.isPending}
+      mask={{ closable: !signOut.isPending }}
       onOk={handleSignOut}
       onCancel={onClose}
       afterClose={() => setEverywhere(false)}

@@ -35,6 +35,9 @@ interface LiturgicalEventDto {
   specialRequirements: string | null
   status: ApiEventStatus
   publishedAt: string | null
+  latestSongListStatus?: ApiSongListStatus | null
+  songListDueDate?: string | null
+  isSongListOverdue?: boolean
 }
 
 const toEvent = (dto: LiturgicalEventDto): LiturgicalEvent => ({
@@ -51,6 +54,9 @@ const toEvent = (dto: LiturgicalEventDto): LiturgicalEvent => ({
   specialRequirements: dto.specialRequirements ?? undefined,
   status: statusByApi[dto.status],
   publishedAt: dto.publishedAt ?? undefined,
+  songListStatus: dto.latestSongListStatus ? songListStatusByApi[dto.latestSongListStatus] : undefined,
+  songListDueDate: dto.songListDueDate ?? undefined,
+  isSongListOverdue: dto.isSongListOverdue ?? undefined,
 })
 
 const toBody = (values: EventFormValues) =>

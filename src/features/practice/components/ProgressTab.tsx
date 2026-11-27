@@ -1,7 +1,20 @@
-import { Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
-import { useState } from 'react'
+import { Card, Checkbox, Flex, Input, Select, Table, Typography, type TableColumnsType } from 'antd'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { EmptyCell, EmptyState, ErrorState, PROGRAM_NOUN, SectionSkeleton, SELECT_POPUP_PROPS, StatusTag, UNKNOWN_METRIC_LABEL, type StatusTagColor } from '@/shared/ui'
+import {
+  EmptyCell,
+  EmptyState,
+  ErrorState,
+  FilterBar,
+  Icon,
+  NoFilterResults,
+  PROGRAM_NOUN,
+  SectionSkeleton,
+  SELECT_POPUP_PROPS,
+  StatusTag,
+  type StatusTagColor,
+} from '@/shared/ui'
+import { matchesSearch } from '@/shared/utils/search'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { usePreparationProgress, useUpcomingEvents } from '../hooks/usePractice'
 import { formatEventOption } from '../practiceFormat'
@@ -17,14 +30,15 @@ const participationColors: Record<ParticipationStatus, StatusTagColor> = {
   unsure: 'gold',
 }
 
-const count = (part: number, whole: number) =>
-  whole === 0 ? <EmptyCell text={UNKNOWN_METRIC_LABEL} /> :<span>{part}/{whole}</span>
+const count = (part: number, whole: number, emptyLabel: string) =>
+  whole === 0 ? <EmptyCell text={emptyLabel} /> : <span>{part}/{whole}</span>
 
 const columns: TableColumnsType<MemberProgress> = [
   {
     key: 'member',
     title: 'Ca viên',
     dataIndex: 'fullName',
+    sorter: (a, b) => a.fullName.localeCompare(b.fullName, 'vi'),
     render: (fullName: string) => <Typography.Text strong>{fullName || 'Chưa có họ tên'}</Typography.Text>,
   },
   {
@@ -40,15 +54,16 @@ const columns: TableColumnsType<MemberProgress> = [
         <Typography.Text style={muted}>Chưa gửi</Typography.Text>
       ),
   },
-  { key: 'rehearsals', title: 'Buổi tập đã dự', render: (_, row) => count(row.rehearsalsAttended, row.rehearsalsHeld) },
-  { key: 'passed', title: 'Bài tập đạt', render: (_, row) => count(row.assignmentsPassed, row.assignmentsTotal) },
+  { key: 'rehearsals', title: 'Buổi tập đã dự', render: (_, row) => count(row.rehearsalsAttended, row.rehearsalsHeld, 'Chưa có buổi tập') },
+  { key: 'passed', title: 'Bài tập đạt', render: (_, row) => count(row.assignmentsPassed, row.assignmentsTotal, 'Chưa giao') },
   {
     key: 'overdue',
     title: 'Quá hạn',
     dataIndex: 'assignmentsOverdue',
+    sorter: (a, b) => a.assignmentsOverdue - b.assignmentsOverdue,
     render: (overdue: number) =>
       overdue > 0 ? (
-        <Typography.Text type="danger">
+        <Typography.Text type="danger" strong>
           {overdue}
         </Typography.Text>
       ) : (
@@ -80,14 +95,16 @@ function ProgressChips({ rows }: Readonly<{ rows: MemberProgress[] }>) {
  * Choir Director: each active member's readiness for an upcoming event (FE-46,
  * `GET /api/liturgical-events/{id}/preparation-progress`): participation answer, rehearsals attended out of those
  * held, assignments passed and overdue. Events are the upcoming published ones of the director's choirs.
- * Preselects event from `?programId=` or `?eventId=` when provided.
+ * Preselects event from `?programId=` or `?eventId=`, or the nearest upcoming event when unset.
  */
 export function ProgressTab() {
   const [params, setParams] = useSearchParams()
   const urlEventId = params.get('programId') ?? params.get('eventId') ?? undefined
   const events = useUpcomingEvents()
   const [userSelectedId, setUserSelectedId] = useState<string | null>(null)
-  const eventId = userSelectedId ?? urlEventId
+  const [search, setSearch] = useState('')
+  const [onlyOverdue, setOnlyOverdue] = useState(false)
+  const eventId = userSelectedId !== null ? (userSelectedId || undefined) : (urlEventId ?? events.data?.[0]?.id)
   const progress = usePreparationProgress(eventId)
 
   const handleSelectEvent = (id?: string) => {
@@ -103,26 +120,33 @@ export function ProgressTab() {
     setParams(next, { replace: true })
   }
 
+  const rows = progress.data ?? []
+  const filteredRows = useMemo(
+    () => (progress.data ?? []).filter((row) => (!onlyOverdue || row.assignmentsOverdue > 0) && matchesSearch(search, row.fullName)),
+    [progress.data, onlyOverdue, search],
+  )
+  const hasFilters = Boolean(search.trim()) || onlyOverdue
+
   return (
     <Flex vertical gap={spacing.md}>
       <Flex wrap align="end" justify="space-between" gap={spacing.md}>
-      <Flex vertical gap={4} style={{ flex: '1 1 320px', maxWidth: 480 }}>
-      <label htmlFor="progress-event" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
-        {PROGRAM_NOUN}
-      </label>
-      <Select
-        {...SELECT_POPUP_PROPS}
-        id="progress-event"
-        showSearch
-        optionFilterProp="label"
-        placeholder="Chọn chương trình sắp tới"
-        loading={events.isPending}
-        value={eventId}
-        onChange={handleSelectEvent}
-        options={(events.data ?? []).map((event) => ({ value: event.id, label: formatEventOption(event) }))}
-      />
-      </Flex>
-      {eventId && progress.data !== undefined && progress.data.length > 0 && <ProgressChips rows={progress.data} />}
+        <Flex vertical gap={4} style={{ flex: '1 1 320px', maxWidth: 480 }}>
+          <label htmlFor="progress-event" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+            {PROGRAM_NOUN}
+          </label>
+          <Select
+            {...SELECT_POPUP_PROPS}
+            id="progress-event"
+            showSearch
+            optionFilterProp="label"
+            placeholder="Chọn chương trình sắp tới"
+            loading={events.isPending}
+            value={eventId}
+            onChange={handleSelectEvent}
+            options={(events.data ?? []).map((event) => ({ value: event.id, label: formatEventOption(event) }))}
+          />
+        </Flex>
+        {eventId && progress.data !== undefined && rows.length > 0 && <ProgressChips rows={rows} />}
       </Flex>
       {events.isError && (
         <ErrorState title="Không thể tải chương trình" error={events.error} hasData={events.data !== undefined} onRetry={() => events.refetch()} retrying={events.isFetching} />
@@ -137,19 +161,58 @@ export function ProgressTab() {
       {progress.isError && (
         <ErrorState title="Không thể tải tiến độ" error={progress.error} hasData={progress.data !== undefined} onRetry={() => progress.refetch()} retrying={progress.isFetching} />
       )}
-      {progress.data !== undefined && progress.data.length === 0 && (
+      {progress.data !== undefined && rows.length === 0 && (
         <EmptyState title="Chưa có ca viên đang sinh hoạt" description="Tiến độ hiện theo từng ca viên đang sinh hoạt." />
       )}
-      {progress.data !== undefined && progress.data.length > 0 && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <Table<MemberProgress>
-            rowKey="memberId"
-            columns={columns}
-            dataSource={progress.data}
-            pagination={false}
-            scroll={{ x: 'max-content' }}
-          />
-        </Card>
+      {progress.data !== undefined && rows.length > 0 && (
+        <>
+          <FilterBar
+            resultCount={filteredRows.length}
+            resultNoun="ca viên"
+            hasActiveFilters={hasFilters}
+            onReset={() => {
+              setSearch('')
+              setOnlyOverdue(false)
+            }}
+          >
+            <Flex vertical gap={4} style={{ flex: '1 1 220px', maxWidth: 320 }}>
+              <label htmlFor="progress-search" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
+                Tìm ca viên
+              </label>
+              <Input
+                id="progress-search"
+                allowClear
+                prefix={<Icon name="search" />}
+                placeholder="Nhập họ tên ca viên…"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </Flex>
+            <Checkbox checked={onlyOverdue} onChange={(event) => setOnlyOverdue(event.target.checked)} style={{ paddingBottom: 8 }}>
+              Có bài quá hạn
+            </Checkbox>
+          </FilterBar>
+          <Card styles={{ body: { padding: 0 } }}>
+            {filteredRows.length === 0 ? (
+              <div style={{ padding: spacing.md }}>
+                <NoFilterResults
+                  onClearFilters={() => {
+                    setSearch('')
+                    setOnlyOverdue(false)
+                  }}
+                />
+              </div>
+            ) : (
+              <Table<MemberProgress>
+                rowKey="memberId"
+                columns={columns}
+                dataSource={filteredRows}
+                pagination={false}
+                scroll={{ x: 'max-content' }}
+              />
+            )}
+          </Card>
+        </>
       )}
     </Flex>
   )

@@ -1,6 +1,8 @@
 import { Alert, App, Button, Card, Flex, Select, Table, Typography, type TableColumnsType } from 'antd'
 import { useMemo, useState } from 'react'
-import { useLocation } from 'react-router'
+import { useLocation, useSearchParams } from 'react-router'
+import { useAllChoirMembers } from '@/features/members'
+import { useLookup } from '@/features/system-categories'
 import {
   EmptyCell,
   EmptyState,
@@ -12,6 +14,7 @@ import {
   SectionSkeleton,
   SELECT_POPUP_PROPS,
   ViewDrawer,
+  voicePartName,
 } from '@/shared/ui'
 import { colors, component, spacing, typography } from '@/styles/tokens'
 import { useAssignments, useDeleteAssignment, useUpcomingEvents } from '../hooks/usePractice'
@@ -28,15 +31,42 @@ const muted = { color: colors.textMuted, fontSize: typography.metadata.fontSize 
 const targetText = ({ scope, skillIds, memberIds }: PracticeAssignment) =>
   ({ all: 'Cả ca đoàn', skillGroup: `${skillIds.length} kỹ năng`, individual: `${memberIds.length} ca viên` })[scope]
 
-/** The submissions of one assignment, reviewed like the queue. */
+/** The submissions of one assignment, reviewed stacked inside the detail drawer so the table is never crushed. */
 function AssignmentSubmissions({ assignment }: Readonly<{ assignment: PracticeAssignment }>) {
+  const skills = useLookup('skills')
+  const members = useAllChoirMembers(assignment.scope === 'individual')
+  const skillNames = useMemo(() => {
+    if (assignment.scope !== 'skillGroup') return []
+    const byId = new Map((skills.data ?? []).map((item) => [item.id, voicePartName(item.name)]))
+    return assignment.skillIds.map((id) => byId.get(id)).filter((name): name is string => Boolean(name))
+  }, [assignment.scope, assignment.skillIds, skills.data])
+  const memberNames = useMemo(() => {
+    if (assignment.scope !== 'individual') return []
+    const byId = new Map((members.data ?? []).map((item) => [item.id, item.fullName]))
+    return assignment.memberIds.map((id) => byId.get(id)).filter((name): name is string => Boolean(name))
+  }, [assignment.scope, assignment.memberIds, members.data])
+
+  const detailTarget =
+    skillNames.length > 0
+      ? skillNames.join(', ')
+      : memberNames.length > 0
+        ? memberNames.join(', ')
+        : targetText(assignment)
+
   return (
     <Flex vertical gap={spacing.md}>
-      <Flex vertical>
-        <Typography.Text strong>{assignment.title}</Typography.Text>
-        <Typography.Text style={muted}>Hạn nộp {formatDateTime(assignment.dueDate)} · {targetText(assignment)}</Typography.Text>
-      </Flex>
-      <SubmissionList assignmentId={assignment.id} defaultStatus="all" />
+      <div className="hm-form-context" style={{ marginBottom: 0 }}>
+        <Flex vertical gap={spacing.xs}>
+          <Typography.Text strong>{assignment.title}</Typography.Text>
+          <Typography.Text style={muted}>Hạn nộp {formatDateTime(assignment.dueDate)} · Giao cho: {detailTarget}</Typography.Text>
+          {assignment.instruction && (
+            <Typography.Paragraph style={{ margin: `${spacing.xs}px 0 0`, whiteSpace: 'pre-line' }}>
+              {assignment.instruction}
+            </Typography.Paragraph>
+          )}
+        </Flex>
+      </div>
+      <SubmissionList stacked assignmentId={assignment.id} defaultStatus="all" />
     </Flex>
   )
 }
@@ -44,13 +74,34 @@ function AssignmentSubmissions({ assignment }: Readonly<{ assignment: PracticeAs
 /** Assignments the Choir Director gave (FE-41, B21), latest due date first, with their submissions. */
 export function AssignmentsTab() {
   const location = useLocation()
+  const [params, setParams] = useSearchParams()
   const createdTitle = (location.state as { createdTitle?: string } | null)?.createdTitle
-  const [eventId, setEventId] = useState<string>()
+  const urlEventId = params.get('programId') ?? params.get('eventId') ?? undefined
+  const [eventId, setEventId] = useState<string | undefined>(urlEventId)
+  const [seenUrlEventId, setSeenUrlEventId] = useState(urlEventId)
+  if (urlEventId !== seenUrlEventId) {
+    setSeenUrlEventId(urlEventId)
+    setEventId(urlEventId)
+  }
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState<PracticeAssignment>()
   const [editing, setEditing] = useState<PracticeAssignment>()
   const { message, modal } = App.useApp()
   const remove = useDeleteAssignment()
+
+  const changeEventId = (value?: string) => {
+    setEventId(value)
+    setPage(1)
+    const next = new URLSearchParams(params)
+    if (value) {
+      next.set('programId', value)
+      next.delete('eventId')
+    } else {
+      next.delete('programId')
+      next.delete('eventId')
+    }
+    setParams(next, { replace: true })
+  }
 
   // Withdrawn only while nobody has submitted (PRACTICE_ASSIGNMENT_HAS_SUBMISSIONS): a recording is never lost.
   const confirmDelete = (assignment: PracticeAssignment) =>
@@ -146,10 +197,7 @@ export function AssignmentsTab() {
         optionFilterProp="label"
         placeholder={filterAllPlaceholder('chương trình')}
         value={eventId}
-        onChange={(value?: string) => {
-          setEventId(value)
-          setPage(1)
-        }}
+        onChange={changeEventId}
         loading={events.isPending}
         options={(events.data ?? []).map((event) => ({ value: event.id, label: formatEventOption(event) }))}
       />
@@ -160,7 +208,7 @@ export function AssignmentsTab() {
       )}
       {assignments.data !== undefined && total === 0 &&
         (eventId ? (
-          <NoFilterResults onClearFilters={() => setEventId(undefined)} />
+          <NoFilterResults onClearFilters={() => changeEventId(undefined)} />
         ) : (
           <EmptyState title="Chưa giao bài tập nào" description="Dùng nút “Giao bài tập”; bài đã giao sẽ xuất hiện tại đây." />
         ))}

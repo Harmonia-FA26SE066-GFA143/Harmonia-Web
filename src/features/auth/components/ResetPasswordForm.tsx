@@ -1,4 +1,5 @@
 import { Alert, Button, Flex, Input } from 'antd'
+import { useEffect, useRef, useState } from 'react'
 import { spacing } from '@/styles/tokens'
 import type { NewPasswordFormValues } from '../types'
 import { Form } from '@/shared/ui'
@@ -38,29 +39,55 @@ export function ResetPasswordForm({
   submitText = 'Đặt lại mật khẩu',
 }: Readonly<ResetPasswordFormProps>) {
   const [form] = Form.useForm<NewPasswordFormValues>()
+  const alertRef = useRef<HTMLDivElement>(null)
+  const [dismissedCurrent, setDismissedCurrent] = useState<string>()
+  const [dismissedPassword, setDismissedPassword] = useState<string>()
+
+  useEffect(() => {
+    if (failed) alertRef.current?.focus()
+  }, [failed])
+
+  const shownCurrentError = currentPasswordError && currentPasswordError !== dismissedCurrent ? currentPasswordError : undefined
+  const shownPasswordError = passwordError && passwordError !== dismissedPassword ? passwordError : undefined
 
   return (
     <Flex vertical gap={spacing.md}>
       {failed && (
-        <Alert
-          type="error"
-          showIcon
-          title={askCurrentPassword ? 'Không thể đổi mật khẩu' : 'Không thể đặt lại mật khẩu'}
-          description={rateLimited ? 'Bạn đã thử quá nhiều lần trong một phút. Vui lòng đợi một phút rồi thử lại.' : 'Đã xảy ra lỗi khi kết nối máy chủ. Vui lòng thử lại sau giây lát.'}
-          action={
-            <Button size="small" onClick={() => form.submit()}>
-              Thử lại
-            </Button>
-          }
-        />
+        <div ref={alertRef} tabIndex={-1} style={{ outline: 'none' }}>
+          <Alert
+            type="error"
+            showIcon
+            title={askCurrentPassword ? 'Không thể đổi mật khẩu' : 'Không thể đặt lại mật khẩu'}
+            description={rateLimited ? 'Bạn đã thử quá nhiều lần trong một phút. Vui lòng đợi một phút rồi thử lại.' : 'Đã xảy ra lỗi khi kết nối máy chủ. Vui lòng thử lại sau giây lát.'}
+            action={
+              <Button size="small" onClick={() => form.submit()}>
+                Thử lại
+              </Button>
+            }
+          />
+        </div>
       )}
-      <Form<NewPasswordFormValues> form={form} layout="vertical" requiredMark={false} onFinish={(values) => !submitting && onSubmit(values)}>
+      <Form<NewPasswordFormValues>
+        form={form}
+        layout="vertical"
+        requiredMark={false}
+        onValuesChange={(changed) => {
+          if ('currentPassword' in changed && currentPasswordError) setDismissedCurrent(currentPasswordError)
+          if ('newPassword' in changed && passwordError) setDismissedPassword(passwordError)
+        }}
+        onFinish={(values) => {
+          if (submitting) return
+          setDismissedCurrent(undefined)
+          setDismissedPassword(undefined)
+          onSubmit(values)
+        }}
+      >
         {askCurrentPassword && (
           <Form.Item
             label="Mật khẩu hiện tại"
             name="currentPassword"
-            validateStatus={currentPasswordError ? 'error' : undefined}
-            help={currentPasswordError}
+            validateStatus={shownCurrentError ? 'error' : undefined}
+            help={shownCurrentError}
             rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại.' }]}
           >
             <Input.Password autoComplete="current-password" autoFocus />
@@ -69,8 +96,9 @@ export function ResetPasswordForm({
         <Form.Item
           label="Mật khẩu mới"
           name="newPassword"
-          validateStatus={passwordError ? 'error' : undefined}
-          help={passwordError}
+          extra="Ít nhất 8 ký tự, gồm cả chữ và số."
+          validateStatus={shownPasswordError ? 'error' : undefined}
+          help={shownPasswordError}
           rules={[
             { required: true, message: 'Vui lòng nhập mật khẩu mới.' },
             {
@@ -79,7 +107,7 @@ export function ResetPasswordForm({
             },
           ]}
         >
-          <Input.Password autoComplete="new-password" placeholder="Ít nhất 8 ký tự, gồm chữ và số" />
+          <Input.Password autoComplete="new-password" autoFocus={!askCurrentPassword} placeholder="Nhập mật khẩu mới" />
         </Form.Item>
         <Form.Item
           label="Xác nhận mật khẩu"

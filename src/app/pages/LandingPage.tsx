@@ -66,7 +66,7 @@ export function LandingPage() {
   const large = { paddingInline: spacing.xl, height: 52, fontSize: 16, fontWeight: 600 }
 
   return (
-    <div style={{ background: colors.background }}>
+    <main style={{ background: colors.background }}>
       {/*
         Hero: the name set very large behind a window of light, which covers the foot of its middle letters. The drawn
         nave and its scrim lie under both. The name is decoration here: the header and the heading say it to readers.
@@ -110,7 +110,7 @@ export function LandingPage() {
           </div>
           <div className="landing-hero__contact">
             {/* A request to join, not an account: an Admin decides and the server then emails the sign-in. */}
-            <Button ghost href={paths.join} onClick={goTo(paths.join)} style={{ height: 44, fontWeight: 500, marginInlineEnd: spacing.sm }}>
+            <Button ghost href={paths.join} onClick={goTo(paths.join)} style={{ height: 44, fontWeight: 500 }}>
               Đăng ký tham gia ca đoàn
             </Button>
             <Button ghost icon={<Icon name="mail" />} href={`mailto:${contactEmail}`} style={{ height: 44, fontWeight: 500 }}>
@@ -122,14 +122,14 @@ export function LandingPage() {
 
       {/* The season band: the one place on this page where season colour and the ribbon appear. */}
       <section aria-labelledby="season-heading" style={{ background: colors.ivory, borderBottom: `1px solid ${colors.border}` }}>
-        <div style={{ ...measure, minHeight: bandHeight - 1, display: 'grid', gridTemplateColumns: '240px repeat(4, minmax(0, 1fr))' }}>
+        <div className="landing-season-grid" style={{ ...measure, minHeight: bandHeight - 1 }}>
           <div style={{ position: 'relative', padding: `${spacing.xxl + spacing.lg}px ${spacing.lg}px ${spacing.lg}px 0` }}>
             <span
               aria-hidden
               className="hm-unroll"
               style={{ position: 'absolute', top: 0, left: 0, width: 18, height: 60, background: seasonColors.purple.cloth, clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)' }}
             />
-            <h2 id="season-heading" style={{ ...serif, fontSize: 36, lineHeight: 1.1, color: seasonColors.purple.ink }}>
+            <h2 id="season-heading" style={{ ...serif, fontSize: 36, lineHeight: 1.24, color: seasonColors.purple.ink }}>
               Mùa Vọng
             </h2>
             <Typography.Text style={{ display: 'block', marginTop: spacing.xs, fontSize: 13, color: colors.textMuted }}>
@@ -141,12 +141,12 @@ export function LandingPage() {
           </div>
           <ol className="hm-stagger" style={{ display: 'contents', listStyle: 'none' }}>
             {advent.map((sunday) => (
-              <li key={sunday.day} style={{ padding: `${spacing.lg + spacing.xs}px ${spacing.lg}px ${spacing.lg + spacing.xs}px`, borderLeft: `1px solid ${colors.border}` }}>
+              <li key={sunday.day} className="landing-season-grid__day">
                 <p style={{ margin: 0, display: 'flex', alignItems: 'baseline', gap: spacing.sm, color: colors.primary }}>
                   <span style={{ fontSize: 42, fontWeight: 600, lineHeight: 1, letterSpacing: '-0.03em' }}>{sunday.day}</span>
                   <span style={{ fontSize: 13, fontWeight: 500 }}>{sunday.month}</span>
                 </p>
-                <p style={{ ...serif, margin: `${spacing.sm + 2}px 0 ${spacing.md}px`, fontSize: 25, lineHeight: 1.15, color: colors.textPrimary, textWrap: 'balance' }}>{/* Keep "Chúa Nhật I" together so the title breaks before the season. */}
+                <p style={{ ...serif, margin: `${spacing.sm + 2}px 0 ${spacing.md}px`, fontSize: 25, lineHeight: 1.26, color: colors.textPrimary, textWrap: 'balance' }}>{/* Keep "Chúa Nhật I" together so the title breaks before the season. */}
                   {sunday.celebration.replace(/(Nhật) /, '$1 ')}
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs + 2 }}>
@@ -184,8 +184,8 @@ export function LandingPage() {
             </figure>
           </div>
           <div className="landing-roles-grid" style={{ marginTop: spacing.xxl, borderTop: goldRule }}>
-            {roles.map((role, index) => (
-              <article key={role.title} style={{ padding: `${spacing.lg + spacing.xs}px ${spacing.lg}px 0`, paddingInlineStart: index ? spacing.lg : 0, borderLeft: index ? goldRule : undefined }}>
+            {roles.map((role) => (
+              <article key={role.title} className="landing-role-card">
                 <Typography.Title level={3} style={{ ...serif, fontSize: 26, lineHeight: 1.24, letterSpacing: '-0.015em', color: media.text }}>
                   {role.title}
                 </Typography.Title>
@@ -231,6 +231,6 @@ export function LandingPage() {
           <span>Không gian phụng vụ: Giáo xứ Tân Định</span>
         </footer>
       </section>
-    </div>
+    </main>
   )
 }

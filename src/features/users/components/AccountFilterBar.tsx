@@ -37,7 +37,7 @@ export function AccountFilterBar({ value, onChange, onReset, resultCount, error 
           // SearchUsersRequestValidator: search ≤ 100.
           maxLength={100}
           prefix={<Icon name="search" />}
-          placeholder="ten@giaoxu.org"
+          placeholder="Nhập họ tên hoặc email (vd: ten@giaoxu.org)"
           value={value.search}
           onChange={(event) => onChange({ ...value, search: event.target.value })}
         />

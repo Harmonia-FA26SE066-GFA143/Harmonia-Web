@@ -41,6 +41,7 @@ export function ViewDrawer({
       placement={placement}
       size={size}
       onClose={onClose}
+      closable={{ 'aria-label': 'Đóng bảng' }}
       styles={withBodyClearance(styles)}
       footer={resolvedFooter}
       {...props}

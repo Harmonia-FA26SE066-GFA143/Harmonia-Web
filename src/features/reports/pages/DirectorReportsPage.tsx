@@ -37,8 +37,10 @@ export function DirectorReportsPage() {
   const exportReport = useExportReport()
   const granularity = granularities.find((item) => item === params.get('by')) ?? 'month'
   const dateParam = params.get('date')
-  const anchor = dateParam && dayjs(dateParam).isValid() ? dayjs(dateParam) : dayjs(vietnamToday())
+  const today = dayjs(vietnamToday())
+  const anchor = dateParam && dayjs(dateParam).isValid() ? dayjs(dateParam) : today
   const period = periodOf(granularity, anchor)
+  const isCurrentPeriod = periodOf(granularity, today).from === period.from
   // The page's own choir picker, kept in the URL so a shared link opens the same report.
   const choirId = params.get('choirId') ?? undefined
   const filters: ReportFilters = { fromDate: period.from, toDate: period.to, choirId }
@@ -104,15 +106,23 @@ export function DirectorReportsPage() {
           </Dropdown>
         }
       />
-      {/* Artifact ReportsPage: the report kind, the period and the cycle in one row; figures first, then the detail. */}
+      {/* Report kind sits above the period & choir filter bar so controls stay scannable at 1366px. */}
       <Flex vertical gap={spacing.lg}>
-        <div className="ctb-filters">
+        <Flex wrap align="center" justify="space-between" gap={spacing.sm}>
           <Segmented<typeof tab>
             aria-label="Loại báo cáo"
             value={tab}
             onChange={setTab}
             options={directorReportKinds.map((kind) => ({ value: kind, label: reportDefinitions[kind].label }))}
           />
+          <Segmented<Granularity>
+            aria-label="Chu kỳ"
+            value={granularity}
+            onChange={(by) => show({ by })}
+            options={granularities.map((value) => ({ value, label: granularityLabels[value] }))}
+          />
+        </Flex>
+        <div className="ctb-filters">
           <Flex align="center" gap={spacing.xs}>
             <Button icon={<Icon name="chevron-left" />} aria-label={`${granularityLabels[granularity]} trước`} onClick={() => step(-1)} />
             <DatePicker
@@ -126,6 +136,9 @@ export function DirectorReportsPage() {
               onChange={(date) => date && show({ date })}
             />
             <Button icon={<Icon name="chevron-right" />} aria-label={`${granularityLabels[granularity]} sau`} onClick={() => step(1)} />
+            {!isCurrentPeriod && (
+              <Button onClick={() => show({ date: today })}>Kỳ hiện tại</Button>
+            )}
           </Flex>
           <Select
             {...SELECT_POPUP_PROPS}
@@ -142,12 +155,6 @@ export function DirectorReportsPage() {
               label: choir.isActive ? choir.name : `${choir.name} (ngừng hoạt động)`,
             }))}
             style={{ minWidth: 200 }}
-          />
-          <Segmented<Granularity>
-            aria-label="Chu kỳ"
-            value={granularity}
-            onChange={(by) => show({ by })}
-            options={granularities.map((value) => ({ value, label: granularityLabels[value] }))}
           />
           <span className="ctb-filters__end">
             {dayjs(period.from).format('DD/MM')} – {dayjs(period.to).format('DD/MM/YYYY')}

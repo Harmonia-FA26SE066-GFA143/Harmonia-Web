@@ -1,14 +1,30 @@
-import { App, Avatar, Button, Card, Flex, Input, Modal, Radio, Table, Typography, type TableColumnsType } from 'antd'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { App, Avatar, Button, Card, Flex, Input, Modal, Radio, Select, Table, Typography, type TableColumnsType } from 'antd'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBeforeUnload, useBlocker } from 'react-router'
-import { useChoirMembers } from '@/features/members'
-import { Icon, inVoicePart, NoFilterResults, SaveButton, SummaryStrip, UnassignedVoiceCell, useJustSaved, VoicePartIcon, voicePartName, voiceParts } from '@/shared/ui'
+import { useAllChoirMembers } from '@/features/members'
+import {
+  FILTER_ALL_PREFIX,
+  Icon,
+  inVoicePart,
+  NoFilterResults,
+  SaveButton,
+  SELECT_POPUP_PROPS,
+  SummaryStrip,
+  UNASSIGNED_VOICE_LABEL,
+  UnassignedVoiceCell,
+  useJustSaved,
+  VoicePartIcon,
+  voicePartName,
+  voiceParts,
+} from '@/shared/ui'
 import { nameInitial } from '@/shared/utils/personName'
 import { matchesSearch } from '@/shared/utils/search'
 import { colors, media, outcomeColors, radius, shadows, spacing, spine, typography } from '@/styles/tokens'
 import { attendanceErrorMessage } from '../attendanceErrors'
 import { useSaveAttendance } from '../hooks/useAttendance'
 import { attendanceLabels, attendanceShortLabels, attendanceValues, type AttendanceRecord, type AttendanceValue } from '../types'
+
+type StatusFilter = 'all' | AttendanceValue | 'unmarked'
 
 const options = attendanceValues.map((value) => ({
   value,
@@ -32,23 +48,23 @@ const initial = nameInitial
 export interface AttendanceSheetProps {
   rehearsalId: string
   records: AttendanceRecord[]
-  /** The session picker, first in the filter row. */
-  picker: ReactNode
   /** Attendance has not opened yet (B49): the sheet is read, not marked. */
   readOnly?: boolean
 }
 
-export function AttendanceSheet({ rehearsalId, records, picker, readOnly = false }: Readonly<AttendanceSheetProps>) {
+export function AttendanceSheet({ rehearsalId, records, readOnly = false }: Readonly<AttendanceSheetProps>) {
   const { message } = App.useApp()
   const save = useSaveAttendance(rehearsalId)
-  // Voice parts come from approved skills: the attendance rows carry none (artifact AttendancePage asks for the part).
-  const members = useChoirMembers()
+  // Voice parts come from approved skills across every page of members.
+  const members = useAllChoirMembers()
   const skillsOf = useMemo(() => new Map((members.data ?? []).map((member) => [member.id, member.skills])), [members.data])
   const [justSaved, markSaved] = useJustSaved()
   // Only what the user changed; the rest reads from `records`. The sheet is not remounted when the records reload
   // (window refocus, after a save), so these edits, the search and the focus survive.
   const [edits, setEdits] = useState<Record<string, AttendanceValue>>({})
   const [search, setSearch] = useState('')
+  const [voiceFilter, setVoiceFilter] = useState<string>()
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const saveBar = useRef<HTMLDivElement>(null)
 
   // Reloaded records: edits they now contain are saved, whoever saved them.
@@ -58,11 +74,14 @@ export function AttendanceSheet({ rehearsalId, records, picker, readOnly = false
     setEdits(withoutSaved(edits, records))
   }
 
-  // The save bar sticks to the bottom of the window; it must not cover the control that has the keyboard focus
-  // (WCAG 2.4.11), so the page scrolls focused controls clear of it.
+  const valueOf = (record: AttendanceRecord) => edits[record.memberId] ?? record.value
+  const changed = records.filter((record) => record.memberId in edits)
+  const dirty = changed.length > 0
+
+  // The save bar sticks to the bottom only while dirty; keep focused controls clear of it (WCAG 2.4.11).
   useEffect(() => {
     const bar = saveBar.current
-    if (!bar) return
+    if (!bar || !dirty) return
     const root = document.documentElement
     const update = () => root.style.setProperty('scroll-padding-bottom', `${bar.offsetHeight + spacing.xl}px`)
     update()
@@ -72,11 +91,7 @@ export function AttendanceSheet({ rehearsalId, records, picker, readOnly = false
       observer.disconnect()
       root.style.removeProperty('scroll-padding-bottom')
     }
-  }, [])
-
-  const valueOf = (record: AttendanceRecord) => edits[record.memberId] ?? record.value
-  const changed = records.filter((record) => record.memberId in edits)
-  const dirty = changed.length > 0
+  }, [dirty])
 
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
@@ -91,13 +106,37 @@ export function AttendanceSheet({ rehearsalId, records, picker, readOnly = false
     return Object.fromEntries(attendanceValues.map((value) => [value, values.filter((item) => item === value).length])) as Record<AttendanceValue, number>
   }, [edits, records])
   const marked = attendanceValues.reduce((sum, value) => sum + counts[value], 0)
-  const visible = records.filter((record) => matchesSearch(search, record.fullName))
+  const activeRecords = records.filter((record) => record.isActive)
+  const unmarkedActive = activeRecords.filter((record) => !valueOf(record))
+  const hasSomeMarkedActive = unmarkedActive.length < activeRecords.length
+
+  const visible = records.filter((record) => {
+    if (!matchesSearch(search, record.fullName)) return false
+    const value = valueOf(record)
+    if (statusFilter === 'unmarked' && value !== undefined) return false
+    if (statusFilter !== 'all' && statusFilter !== 'unmarked' && value !== statusFilter) return false
+    if (voiceFilter) {
+      const parts = partsOf(skillsOf.get(record.memberId) ?? [])
+      if (voiceFilter === 'unassigned') return parts.length === 0
+      return parts.some((part) => part === voiceFilter)
+    }
+    return true
+  })
 
   const mark = (memberId: string, value: AttendanceValue) =>
     setEdits((current) => withoutSaved({ ...current, [memberId]: value }, records))
   const markAllPresent = () =>
-    setEdits((current) => withoutSaved({ ...current, ...Object.fromEntries(records.filter((record) => record.isActive).map((record) => [record.memberId, 'present'])) }, records))
+    setEdits((current) => withoutSaved({ ...current, ...Object.fromEntries(activeRecords.map((record) => [record.memberId, 'present'])) }, records))
+  const markUnmarkedPresent = () =>
+    setEdits((current) => withoutSaved({ ...current, ...Object.fromEntries(unmarkedActive.map((record) => [record.memberId, 'present'])) }, records))
   const discard = () => setEdits({})
+  const toggleStatusFilter = (next: Exclude<StatusFilter, 'all'>) =>
+    setStatusFilter((current) => (current === next ? 'all' : next))
+  const clearFilters = () => {
+    setSearch('')
+    setVoiceFilter(undefined)
+    setStatusFilter('all')
+  }
   const handleSave = () => {
     if (save.isPending) return
     save.mutate(edits, {
@@ -119,15 +158,15 @@ export function AttendanceSheet({ rehearsalId, records, picker, readOnly = false
             {initial(record.fullName)}
           </Avatar>
           <Flex vertical>
-            <Typography.Text strong>
-              {record.fullName}
+            <Flex align="center" gap={spacing.xs} wrap>
+              <Typography.Text strong>{record.fullName}</Typography.Text>
               {record.memberId in edits && (
-                <span
-                  title="Chưa lưu"
-                  style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: outcomeColors.late, marginInlineStart: spacing.sm, verticalAlign: 2 }}
-                />
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: typography.metadata.fontSize, color: 'var(--hm-area-attention-ink)', fontWeight: 600 }}>
+                  <span aria-hidden style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: outcomeColors.late }} />
+                  Chưa lưu
+                </span>
               )}
-            </Typography.Text>
+            </Flex>
             {!record.isActive ? (
               <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>Không còn sinh hoạt · chỉ xem</Typography.Text>
             ) : (
@@ -176,12 +215,25 @@ export function AttendanceSheet({ rehearsalId, records, picker, readOnly = false
 
   return (
     <Flex vertical gap={spacing.lg}>
-      {/* Artifact AttendancePage: the session and the bulk start in one filter row, the counts, then the sheet. */}
+      <SummaryStrip
+        label={`Điểm danh: ${marked} trên ${records.length} ca viên`}
+        cells={[
+          ...attendanceValues.map((value) => ({
+            label: attendanceLabels[value],
+            value: counts[value],
+            active: statusFilter === value,
+            onClick: () => toggleStatusFilter(value),
+          })),
+          {
+            label: 'Chưa điểm danh',
+            value: records.length - marked,
+            waiting: 'Còn chờ',
+            active: statusFilter === 'unmarked',
+            onClick: () => toggleStatusFilter('unmarked'),
+          },
+        ]}
+      />
       <Flex wrap gap={spacing.sm} align="center" className="ctb-filters">
-        {picker}
-        <Button icon={<Icon name="check" />} onClick={markAllPresent} disabled={readOnly || save.isPending}>
-          Đánh dấu tất cả có mặt
-        </Button>
         <Input
           aria-label="Tìm ca viên"
           allowClear
@@ -191,36 +243,50 @@ export function AttendanceSheet({ rehearsalId, records, picker, readOnly = false
           onChange={(event) => setSearch(event.target.value)}
           style={{ width: 240 }}
         />
+        <Select
+          {...SELECT_POPUP_PROPS}
+          aria-label="Lọc theo bè"
+          allowClear
+          placeholder={`${FILTER_ALL_PREFIX} bè`}
+          value={voiceFilter}
+          onChange={setVoiceFilter}
+          style={{ width: 180 }}
+          options={[
+            ...voiceParts.map(({ label, name }) => ({ value: label, label: name })),
+            { value: 'unassigned', label: UNASSIGNED_VOICE_LABEL },
+          ]}
+        />
+        {!readOnly && hasSomeMarkedActive && unmarkedActive.length > 0 && (
+          <Button icon={<Icon name="check" />} onClick={markUnmarkedPresent} disabled={save.isPending}>
+            Điền có mặt còn lại ({unmarkedActive.length})
+          </Button>
+        )}
+        <Button icon={<Icon name="check" />} onClick={markAllPresent} disabled={readOnly || save.isPending}>
+          Đánh dấu tất cả có mặt
+        </Button>
         <span className="ctb-filters__end">
           {marked} / {records.length} đã điểm danh
         </span>
       </Flex>
-      <SummaryStrip
-        label={`Điểm danh: ${marked} trên ${records.length} ca viên`}
-        cells={[
-          ...attendanceValues.map((value) => ({ label: attendanceLabels[value], value: counts[value] })),
-          { label: 'Chưa điểm danh', value: records.length - marked, waiting: 'Còn chờ' },
-        ]}
-      />
       <Card styles={{ body: { padding: 0 } }}>
         {visible.length === 0 ? (
           <div style={{ padding: spacing.md }}>
-            <NoFilterResults onClearFilters={() => setSearch('')} />
+            <NoFilterResults onClearFilters={clearFilters} />
           </div>
         ) : (
           <Table<AttendanceRecord> rowKey="memberId" columns={columns} dataSource={visible} pagination={false} scroll={{ x: 720 }} />
         )}
       </Card>
-      {/* Sticky at the bottom of the window, so Save stays in reach on a long list. */}
+      {/* Sticks to the viewport only while unsaved changes exist so clean sheets keep full scroll height. */}
       <Flex
         ref={saveBar}
         align="center"
         justify="space-between"
         gap={spacing.md}
         style={{
-          position: 'sticky',
-          bottom: spacing.md,
-          zIndex: 3,
+          position: dirty ? 'sticky' : 'static',
+          bottom: dirty ? spacing.md : undefined,
+          zIndex: dirty ? 3 : undefined,
           padding: `${spacing.sm + 4}px ${spacing.md}px ${spacing.sm + 4}px ${spacing.lg}px`,
           borderRadius: radius.lg,
           background: dirty ? spine.background : colors.surface,

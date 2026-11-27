@@ -1,4 +1,5 @@
 import { paths } from '@/app/router/paths'
+import { usePendingNominationCount, useTrainedNominationCount } from '@/features/director-nominations'
 import { useWaitingRegistrationCount } from '@/features/member-registrations'
 import { usePendingSkills } from '@/features/skill-approval'
 import type { IconName } from '@/shared/ui'
@@ -53,7 +54,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
           { path: paths.priest.programs, label: 'Chương trình phụng vụ', icon: 'program' },
         ],
       },
-      { label: 'Ca trưởng', items: [{ path: paths.priest.nominations, label: 'Đề cử Ca trưởng', icon: 'nomination' }] },
+      { label: 'Ca trưởng', items: [{ path: paths.priest.nominations, label: 'Đề cử Ca trưởng', icon: 'nomination', useCount: usePendingNominationCount }] },
       { label: 'Trao đổi', items: [{ path: paths.priest.notes, label: 'Trao đổi với Ca trưởng', icon: 'notes' }] },
       { label: 'Báo cáo', items: [{ path: paths.priest.reports, label: 'Báo cáo', icon: 'report' }] },
     ],
@@ -107,7 +108,7 @@ export const surfaces: Record<Surface, SurfaceConfig> = {
           { path: paths.admin.accounts, label: 'Tài khoản', icon: 'account' },
           { path: paths.admin.memberRegistrations, label: 'Đăng ký gia nhập', icon: 'member-add', useCount: useWaitingRegistrationCount },
           { path: paths.admin.roles, label: 'Vai trò & Phân quyền', icon: 'roles' },
-          { path: paths.admin.nominations, label: 'Đề cử Ca trưởng', icon: 'nomination' },
+          { path: paths.admin.nominations, label: 'Đề cử Ca trưởng', icon: 'nomination', useCount: useTrainedNominationCount },
         ],
       },
       {

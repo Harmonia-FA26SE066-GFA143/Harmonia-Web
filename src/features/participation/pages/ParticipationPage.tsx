@@ -1,10 +1,10 @@
-import { Alert, App, Avatar, Button, Card, Flex, Input, Popconfirm, Segmented, Table, Tag, Typography, type TableColumnsType } from 'antd'
+import { Alert, App, Avatar, Button, Card, Flex, Input, Popconfirm, Segmented, Table, Typography, type TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { PickedProgramFeedback, usePickedProgram } from '@/features/liturgical-programs'
-import { NoChoirNotice } from '@/features/choirs'
-import { useChoirMembers } from '@/features/members'
+import { isPlanningDirector, LeadChoirNotice, NoChoirNotice, useEventChoirs } from '@/features/choirs'
+import { useAllChoirMembers } from '@/features/members'
 import { formatDateTime, vietnamToday } from '@/lib/api/dates'
 import {
   CANCEL_LABEL,
@@ -84,7 +84,9 @@ const columnsFor = (skillsOf: Map<string, string[]>): TableColumnsType<Participa
           {participationResponseLabels[request.response]}
         </StatusTag>
       ) : (
-        <Tag style={{ marginInlineEnd: 0 }}>Chưa phản hồi</Tag>
+        <StatusTag mark="draft" style={{ marginInlineEnd: 0 }}>
+          Chưa phản hồi
+        </StatusTag>
       ),
   },
   {
@@ -114,8 +116,11 @@ export function ParticipationPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { programs, lookup, program, options: allPrograms, looking, missing } = usePickedProgram(searchParams.get('programId'))
   const today = vietnamToday()
-  // No request for a program that is already past (decision 2026-09-30, 6a.3).
+  // No request for a program that is already past (decision 2026-09-30, 6a.3) or served by a non-lead director (D8).
   const isPast = program !== undefined && program.date < today
+  const eventChoirs = useEventChoirs(program?.id)
+  const isLead = eventChoirs.data ? isPlanningDirector(eventChoirs.data) : true
+  const canWrite = !isPast && isLead
   const participation = useParticipation(program?.id)
   const send = useSendParticipationRequests(program?.id ?? '')
   const confirmAll = useConfirmAllParticipation(program?.id ?? '')
@@ -123,7 +128,7 @@ export function ParticipationPage() {
   const [picking, setPicking] = useState(false)
   const [filter, setFilter] = useState<ResponseFilter>('all')
   const [search, setSearch] = useState('')
-  const members = useChoirMembers()
+  const members = useAllChoirMembers()
   const skillsOf = useMemo(() => new Map((members.data ?? []).map((member) => [member.id, member.skills])), [members.data])
   const columns = useMemo(() => columnsFor(skillsOf), [skillsOf])
 
@@ -181,9 +186,7 @@ export function ParticipationPage() {
       <PageHeader
         title="Xác nhận tham gia"
         breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Xác nhận tham gia' }]}
-        // The first send is offered by the empty state below (one button, owner 2026-11-24); later ones reach members
-        // not asked yet, from the list toolbar.
-        extra={program && participation.data !== undefined && requests.length > 0 && <ResponseSummary counts={counts} />}
+        description="Gửi lời mời xác nhận phục vụ, theo dõi phản hồi theo bè và nhắc ca viên chưa trả lời."
       />
       <PickedProgramFeedback
         programs={programs}
@@ -224,6 +227,14 @@ export function ParticipationPage() {
               </span>
             )}
           </div>
+          <LeadChoirNotice eventId={program.id} />
+          {participation.data !== undefined && requests.length > 0 && (
+            <ResponseSummary
+              counts={counts}
+              activeFilter={filter}
+              onSelectFilter={(next) => setFilter((current) => (current === next ? 'all' : next))}
+            />
+          )}
           {isPast && requests.length > 0 && (
             <Alert type="info" showIcon title="Chương trình đã qua: không gửi thêm yêu cầu xác nhận được." />
           )}
@@ -244,7 +255,7 @@ export function ParticipationPage() {
                   ? 'Chương trình đã qua nên không gửi được yêu cầu xác nhận.'
                   : 'Chọn thành viên để gửi yêu cầu xác nhận tham gia phục vụ chương trình này.'
               }
-              action={isPast ? undefined : sendButton}
+              action={canWrite ? sendButton : undefined}
             />
           )}
           {participation.data !== undefined && requests.length > 0 && (
@@ -252,7 +263,7 @@ export function ParticipationPage() {
               <Card styles={{ body: { padding: 0 } }}>
                 <Flex vertical gap={spacing.sm} style={{ padding: spacing.lg, borderBottom: `1px solid ${colors.border}` }}>
                   <Flex wrap gap={spacing.sm} align="end" justify="space-between">
-                    <Flex vertical gap={4} style={{ flex: '1 1 240px', maxWidth: 380 }}>
+                    <Flex vertical gap={4} style={{ flex: '1 1 240px', maxWidth: 360 }}>
                       <label htmlFor="participation-search" style={{ fontSize: typography.metadata.fontSize, color: colors.textMuted }}>
                         Tìm thành viên
                       </label>
@@ -267,7 +278,7 @@ export function ParticipationPage() {
                     </Flex>
                     <Flex wrap gap={spacing.sm} align="center">
                       {/* The list reloads when the window is focused again or on request, so say how old it is. */}
-                      <Typography.Text style={{ color: colors.textMuted }}>
+                      <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
                         Cập nhật lúc {dayjs(participation.dataUpdatedAt).format('HH:mm')}
                       </Typography.Text>
                       <Button
@@ -277,28 +288,30 @@ export function ParticipationPage() {
                       >
                         Làm mới
                       </Button>
-                      <Button icon={<Icon name="send" />} onClick={() => setPicking(true)} disabled={isPast || send.isPending}>
-                        Gửi thêm cho thành viên chưa được mời
-                      </Button>
-                      {counts.none > 0 && !isPast && (
-                        <Button icon={<Icon name="notification" />} onClick={handleRemind} loading={remind.isPending}>
-                          Nhắc người chưa phản hồi
-                        </Button>
-                      )}
-                      {counts.none > 0 && (
-                        <Popconfirm
-                          title={`Xác nhận hộ ${counts.none} thành viên chưa phản hồi?`}
-                          description="Phản hồi Không tham gia và Chưa chắc được giữ nguyên. Thành viên không nhận thông báo."
-                          okText="Xác nhận hộ"
-                          cancelText={CANCEL_LABEL}
-                          onConfirm={handleConfirmAll}
-                        >
-                          <Button icon={<Icon name="check" />} loading={confirmAll.isPending}>
-                            Xác nhận hộ người chưa phản hồi
-                          </Button>
-                        </Popconfirm>
-                      )}
                     </Flex>
+                  </Flex>
+                  <Flex wrap gap={spacing.sm} align="center">
+                    <Button icon={<Icon name="send" />} onClick={() => setPicking(true)} disabled={!canWrite || send.isPending}>
+                      Gửi thêm cho thành viên chưa được mời
+                    </Button>
+                    {counts.none > 0 && canWrite && (
+                      <Button icon={<Icon name="notification" />} onClick={handleRemind} loading={remind.isPending}>
+                        Nhắc người chưa phản hồi
+                      </Button>
+                    )}
+                    {counts.none > 0 && canWrite && (
+                      <Popconfirm
+                        title={`Xác nhận hộ ${counts.none} thành viên chưa phản hồi?`}
+                        description="Phản hồi Không tham gia và Chưa chắc chắn được giữ nguyên. Thành viên không nhận thông báo."
+                        okText="Xác nhận hộ"
+                        cancelText={CANCEL_LABEL}
+                        onConfirm={handleConfirmAll}
+                      >
+                        <Button icon={<Icon name="check" />} loading={confirmAll.isPending}>
+                          Xác nhận hộ người chưa phản hồi
+                        </Button>
+                      </Popconfirm>
+                    )}
                   </Flex>
                 </Flex>
                 {visible.length === 0 ? (

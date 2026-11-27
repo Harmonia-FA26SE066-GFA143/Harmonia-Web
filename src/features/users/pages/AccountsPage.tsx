@@ -1,13 +1,13 @@
 import { App, Button, Card, Flex, Typography } from 'antd'
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { CANCEL_LABEL, EmptyChoir, EmptyState, ErrorState, Icon, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { accountErrorMessage, duplicateEmailMessage, isDuplicateEmail } from '../accountErrors'
-import { emptyAccountFilters, hasActiveFilters } from '../accountFilters'
+import { emptyAccountFilters, hasActiveFilters, readAccountListState, writeAccountListState } from '../accountFilters'
 import { AccountFilterBar } from '../components/AccountFilterBar'
 import { AccountFormDrawer } from '../components/AccountFormDrawer'
 import { AccountTable } from '../components/AccountTable'
@@ -24,8 +24,8 @@ const pageSize = 20
 export function AccountsPage() {
   const { message, modal } = App.useApp()
   const navigate = useNavigate()
-  const [filters, setFilters] = useState<AccountFilters>(emptyAccountFilters)
-  const [page, setPage] = useState(1)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { filters, page } = useMemo(() => readAccountListState(searchParams), [searchParams])
   const search = useDebouncedValue(filters.search)
   const query = useMemo(() => ({ ...filters, search }), [filters, search])
   const accounts = useAccounts(query, { pageNumber: page, pageSize })
@@ -40,10 +40,8 @@ export function AccountsPage() {
 
   const total = accounts.data?.totalCount ?? 0
   const filtered = hasActiveFilters(query)
-  const changeFilters = (next: AccountFilters) => {
-    setFilters(next)
-    setPage(1)
-  }
+  const changeFilters = (next: AccountFilters) => setSearchParams(writeAccountListState(next, 1), { replace: true })
+  const setPage = (next: number) => setSearchParams(writeAccountListState(filters, next), { replace: true })
   const resetFilters = () => changeFilters(emptyAccountFilters)
   const closeForm = () => {
     setForm({ open: false })

@@ -19,7 +19,7 @@ interface FormValues {
   lines: TimedLineRow[]
 }
 
-const rowColumns = '28px minmax(0, 1fr) 112px 32px 112px 32px 32px 32px'
+const rowColumns = '28px minmax(0, 1fr) 104px 32px 104px 32px 32px 32px'
 const check = (problem: string | undefined) => (problem ? Promise.reject(new Error(problem)) : Promise.resolve())
 
 /** Says which line the audio is on, from the form as it stands: the check before saving. */
@@ -205,19 +205,19 @@ function TimedLyricsEditor({ material, lyricsMaterials, form, initialValues, has
                     <InputNumber aria-label={`Giây bắt đầu dòng ${index + 1}`} min={0} step={0.1} precision={2} style={{ width: '100%' }} />
                   </Form.Item>
                   <Tooltip title="Lấy thời điểm đang nghe" trigger={['hover', 'focus']}>
-                    <Button type="text" icon={<Icon name="history" />} aria-label={`Đặt giây bắt đầu dòng ${index + 1} theo thời điểm đang nghe`} onClick={() => markNow(name, 'startSeconds')} />
+                    <Button size="small" type="text" style={{ marginTop: 4 }} icon={<Icon name="history" />} aria-label={`Đặt giây bắt đầu dòng ${index + 1} theo thời điểm đang nghe`} onClick={() => markNow(name, 'startSeconds')} />
                   </Tooltip>
                   <Form.Item name={[name, 'endSeconds']} style={{ margin: 0 }} rules={[{ validator: () => check(lineEndProblem(rows(), name, audioSeconds)) }]}>
                     <InputNumber aria-label={`Giây kết thúc dòng ${index + 1}`} min={0} step={0.1} precision={2} style={{ width: '100%' }} />
                   </Form.Item>
                   <Tooltip title="Lấy thời điểm đang nghe" trigger={['hover', 'focus']}>
-                    <Button type="text" icon={<Icon name="history" />} aria-label={`Đặt giây kết thúc dòng ${index + 1} theo thời điểm đang nghe`} onClick={() => markNow(name, 'endSeconds')} />
+                    <Button size="small" type="text" style={{ marginTop: 4 }} icon={<Icon name="history" />} aria-label={`Đặt giây kết thúc dòng ${index + 1} theo thời điểm đang nghe`} onClick={() => markNow(name, 'endSeconds')} />
                   </Tooltip>
                   <Tooltip title="Nghe dòng này" trigger={['hover', 'focus']}>
-                    <Button type="text" icon={<Icon name="play-solid" />} aria-label={`Nghe dòng ${index + 1}`} onClick={() => playLine(name)} />
+                    <Button size="small" type="text" style={{ marginTop: 4 }} icon={<Icon name="play-solid" />} aria-label={`Nghe dòng ${index + 1}`} onClick={() => playLine(name)} />
                   </Tooltip>
                   <Tooltip title="Bỏ dòng" trigger={['hover', 'focus']}>
-                    <Button type="text" danger icon={<Icon name="delete" />} aria-label={`Bỏ dòng ${index + 1}`} onClick={() => remove(name)} />
+                    <Button size="small" type="text" danger style={{ marginTop: 4 }} icon={<Icon name="delete" />} aria-label={`Bỏ dòng ${index + 1}`} onClick={() => remove(name)} />
                   </Tooltip>
                 </div>
               )

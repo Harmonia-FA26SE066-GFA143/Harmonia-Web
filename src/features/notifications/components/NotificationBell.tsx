@@ -1,11 +1,11 @@
-import { App, Badge, Button, Dropdown, Flex, theme, Typography } from 'antd'
-import { useRef, useState } from 'react'
+import { App, Badge, Button, Dropdown, Flex, Typography } from 'antd'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { formatDateTime } from '@/lib/api/dates'
 import { requestFailureMessage } from '@/lib/api/errors'
 import { getSession } from '@/lib/auth/session'
-import { ErrorState, Icon, SectionSkeleton, StatusTag } from '@/shared/ui'
-import { colors, radius, sizes, spacing, typography } from '@/styles/tokens'
+import { ErrorState, Icon, NeumeSpinner, SectionSkeleton, StatusTag } from '@/shared/ui'
+import { colors, sizes, spacing } from '@/styles/tokens'
 import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
@@ -15,79 +15,126 @@ import {
 import { notificationPath, resolveNotificationPath } from '../notificationRoutes'
 import type { AppNotification } from '../types'
 
-function NotificationContent({ notification }: Readonly<{ notification: AppNotification }>) {
+function NotificationContent({
+  notification,
+  navigable,
+  opening,
+}: Readonly<{ notification: AppNotification; navigable: boolean; opening: boolean }>) {
   const { isRead } = notification
   return (
-    <Flex vertical style={{ minWidth: 0 }}>
-      <Flex gap={spacing.xs} align="center" wrap>
-        <Typography.Text strong={!isRead}>{notification.title}</Typography.Text>
-        {!isRead && (
-          <StatusTag color="processing" style={{ marginInlineEnd: 0 }}>
-            Mới
-          </StatusTag>
-        )}
+    <>
+      <Flex vertical gap={2} style={{ minWidth: 0, flex: 1 }}>
+        <Flex gap={spacing.xs} align="center" wrap>
+          <Typography.Text strong={!isRead} style={{ color: colors.textPrimary }}>
+            {notification.title}
+          </Typography.Text>
+          {!isRead && (
+            <StatusTag color="gold" style={{ marginInlineEnd: 0 }}>
+              Mới
+            </StatusTag>
+          )}
+        </Flex>
+        <Typography.Text className="hm-notif-content">{notification.content}</Typography.Text>
+        <Typography.Text className="hm-notif-time">{formatDateTime(notification.createdAt)}</Typography.Text>
       </Flex>
-      <Typography.Text style={{ color: colors.textMuted }}>{notification.content}</Typography.Text>
-      <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>
-        {formatDateTime(notification.createdAt)}
-      </Typography.Text>
-    </Flex>
+      {(opening || navigable) && (
+        <span className="hm-notif-chevron" aria-hidden>
+          {opening ? <NeumeSpinner size={14} /> : <Icon name="chevron-right" size="xs" />}
+        </span>
+      )}
+    </>
   )
 }
-
-const itemStyle = {
-  display: 'flex',
-  gap: spacing.sm,
-  width: '100%',
-  padding: spacing.sm,
-  textAlign: 'start',
-  border: 0,
-  borderRadius: radius.md,
-  font: 'inherit',
-} as const
 
 /**
  * A notification is a button when there is something to do: open the page of its subject, mark it read, or both. A
  * read one about nothing the web shows is not a control.
  */
-function NotificationItem({ notification, onOpen }: Readonly<{ notification: AppNotification; onOpen: (notification: AppNotification, path?: string) => void }>) {
+function NotificationItem({
+  notification,
+  opening,
+  onOpen,
+}: Readonly<{
+  notification: AppNotification
+  opening: boolean
+  onOpen: (notification: AppNotification, path?: string) => void
+}>) {
   const path = notificationPath(notification, getSession()?.user.roleName)
+  const itemClass = `hm-notif-item${notification.isRead ? '' : ' is-unread'}`
   return (
     <li>
       {notification.isRead && !path ? (
-        <div style={{ ...itemStyle, background: 'transparent' }}>
-          <NotificationContent notification={notification} />
+        <div className={itemClass}>
+          <NotificationContent notification={notification} navigable={false} opening={false} />
         </div>
       ) : (
         <button
           type="button"
+          className={`${itemClass} is-actionable`}
+          disabled={opening}
           title={path ? 'Bấm để mở' : 'Bấm để đánh dấu đã đọc'}
           onClick={() => onOpen(notification, path)}
-          style={{ ...itemStyle, background: notification.isRead ? 'transparent' : colors.background, cursor: 'pointer' }}
         >
-          <NotificationContent notification={notification} />
+          <NotificationContent notification={notification} navigable={Boolean(path)} opening={opening} />
         </button>
       )}
     </li>
   )
 }
 
-function NotificationList({ open, onOpen }: Readonly<{ open: boolean; onOpen: (notification: AppNotification, path?: string) => void }>) {
+function NotificationList({
+  open,
+  openingId,
+  onOpen,
+}: Readonly<{
+  open: boolean
+  openingId?: string
+  onOpen: (notification: AppNotification, path?: string) => void
+}>) {
   const list = useNotificationList(open)
   const items = list.data?.pages.flatMap((page) => page.items) ?? []
 
-  if (list.isPending) return <SectionSkeleton rows={3} label="Đang tải thông báo" />
-  if (list.isError) return <ErrorState title="Không thể tải thông báo" error={list.error} hasData={list.data !== undefined} onRetry={() => list.refetch()} retrying={list.isFetching} />
+  if (list.isPending) {
+    return (
+      <div className="hm-notif-state">
+        <SectionSkeleton rows={3} label="Đang tải thông báo" />
+      </div>
+    )
+  }
+  if (list.isError) {
+    return (
+      <div className="hm-notif-state">
+        <ErrorState
+          headingLevel={3}
+          title="Không thể tải thông báo"
+          error={list.error}
+          hasData={list.data !== undefined}
+          onRetry={() => list.refetch()}
+          retrying={list.isFetching}
+        />
+      </div>
+    )
+  }
   if (items.length === 0) {
-    return <Typography.Text style={{ color: colors.textMuted }}>Chưa có thông báo nào.</Typography.Text>
+    return (
+      <div className="hm-notif-empty">
+        <Icon name="notification" size="lg" />
+        <Typography.Text style={{ color: colors.textMuted }}>Chưa có thông báo nào.</Typography.Text>
+      </div>
+    )
   }
   return (
     <Flex vertical gap={spacing.xs}>
-      <Flex component="ul" vertical gap={spacing.xs} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+      <ul className="hm-notif-list">
         {items.map((notification) => (
-          <NotificationItem key={notification.id} notification={notification} onOpen={onOpen} />
+          <NotificationItem
+            key={notification.id}
+            notification={notification}
+            opening={openingId === notification.id}
+            onOpen={onOpen}
+          />
         ))}
-      </Flex>
+      </ul>
       {list.hasNextPage && (
         <Button type="link" onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>
           Xem thêm
@@ -108,23 +155,48 @@ function NotificationList({ open, onOpen }: Readonly<{ open: boolean; onOpen: (n
 export function NotificationBell() {
   const { message } = App.useApp()
   const navigate = useNavigate()
-  const { token } = theme.useToken()
   const [open, setOpen] = useState(false)
+  const [openingId, setOpeningId] = useState<string>()
+  const openToken = useRef(0)
   const wrapper = useRef<HTMLDivElement>(null)
   const bell = useRef<HTMLButtonElement>(null)
   const unread = useUnreadNotificationCount().data ?? 0
   const markRead = useMarkNotificationRead()
   const markAll = useMarkAllNotificationsRead()
 
+  useEffect(() => {
+    const token = openToken
+    return () => {
+      token.current += 1
+    }
+  }, [])
+
+  const closePanel = () => {
+    openToken.current += 1
+    setOpeningId(undefined)
+    setOpen(false)
+  }
+
   // Opening the subject does not wait for the mark: the page matters more than the badge.
   const handleOpen = (notification: AppNotification, path?: string) => {
     if (!notification.isRead) {
       markRead.mutate(notification.id, { onError: (error) => message.error(requestFailureMessage(error, 'Không thể đánh dấu đã đọc. Vui lòng thử lại.')) })
     }
-    if (path) {
-      setOpen(false)
-      void resolveNotificationPath(notification, getSession()?.user.roleName).then((resolved) => navigate(resolved ?? path))
+    if (!path) return
+    const needsLookup = notification.referenceType === 'SongList' && Boolean(notification.referenceId)
+    if (!needsLookup) {
+      closePanel()
+      navigate(path)
+      return
     }
+    const token = ++openToken.current
+    setOpeningId(notification.id)
+    void resolveNotificationPath(notification, getSession()?.user.roleName).then((resolved) => {
+      if (openToken.current !== token) return
+      setOpeningId(undefined)
+      setOpen(false)
+      navigate(resolved ?? path)
+    })
   }
   const handleMarkAll = () =>
     markAll.mutate(undefined, { onError: (error) => message.error(requestFailureMessage(error, 'Không thể đánh dấu tất cả đã đọc. Vui lòng thử lại.')) })
@@ -133,7 +205,10 @@ export function NotificationBell() {
     <div ref={wrapper} style={{ position: 'relative', display: 'inline-flex' }}>
       <Dropdown
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={(next) => {
+          if (next) setOpen(true)
+          else closePanel()
+        }}
         trigger={['click']}
         placement="bottomRight"
         getPopupContainer={() => wrapper.current ?? document.body}
@@ -141,40 +216,26 @@ export function NotificationBell() {
           <dialog
             open
             aria-label="Thông báo"
+            className="hm-notif-dialog"
             onKeyDown={(event) => {
               if (event.key === 'Escape') {
-                setOpen(false)
+                closePanel()
                 bell.current?.focus()
               }
             }}
-            style={{
-              // Undo the browser's own dialog box (absolute, centred, bordered, padded); the Dropdown places it.
-              position: 'static',
-              margin: 0,
-              padding: 0,
-              border: 'none',
-              color: 'inherit',
-              width: 'min(360px, calc(100vw - 32px))',
-              background: token.colorBgElevated,
-              borderRadius: token.borderRadiusLG,
-              boxShadow: token.boxShadowSecondary,
-            }}
           >
-            <Flex
-              align="center"
-              justify="space-between"
-              gap={spacing.sm}
-              style={{ padding: `${spacing.sm}px ${spacing.md}px`, borderBottom: `1px solid ${colors.border}` }}
-            >
-              <Typography.Text strong>Thông báo</Typography.Text>
+            <Flex align="center" justify="space-between" gap={spacing.sm} className="hm-notif-head">
+              <Typography.Text strong>
+                Thông báo{unread > 0 ? ` (${unread})` : ''}
+              </Typography.Text>
               {unread > 0 && (
                 <Button type="link" size="small" loading={markAll.isPending} onClick={handleMarkAll}>
                   Đánh dấu tất cả đã đọc
                 </Button>
               )}
             </Flex>
-            <div style={{ padding: spacing.sm, maxHeight: 420, overflowY: 'auto' }}>
-              <NotificationList open={open} onOpen={handleOpen} />
+            <div className="hm-notif-body">
+              <NotificationList open={open} openingId={openingId} onOpen={handleOpen} />
             </div>
           </dialog>
         )}
@@ -188,7 +249,7 @@ export function NotificationBell() {
           aria-expanded={open}
           style={{ width: sizes.touchTarget, height: sizes.touchTarget }}
           icon={
-            <Badge count={unread} overflowCount={99} size="small">
+            <Badge className="hm-notif-badge" count={unread} overflowCount={99} size="small">
               <Icon name="notification" size={20} />
             </Badge>
           }

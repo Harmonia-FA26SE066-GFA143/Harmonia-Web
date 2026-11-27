@@ -22,7 +22,14 @@ function PreviewSongs({ eventId, onReview }: Readonly<{ eventId: string; onRevie
         {program.data?.songListStatus && <SongListStatusTag status={program.data.songListStatus} />}
       </Flex>
       {program.isPending && <SectionSkeleton rows={3} label="Đang tải danh sách bài hát" />}
-      {program.isError && <Typography.Text style={muted}>Không tải được danh sách bài hát.</Typography.Text>}
+      {program.isError && (
+        <Flex align="center" gap={spacing.xs} wrap>
+          <Typography.Text style={muted}>Không tải được danh sách bài hát.</Typography.Text>
+          <Button size="small" type="link" style={{ paddingInline: 0 }} onClick={() => program.refetch()} loading={program.isFetching}>
+            Thử lại
+          </Button>
+        </Flex>
+      )}
       {program.isSuccess && songs.length === 0 && <Typography.Text style={muted}>Ca trưởng chưa gửi danh sách bài hát.</Typography.Text>}
       {songs.length > 0 && (
         <ol className="hm-preview__songs">
@@ -34,9 +41,13 @@ function PreviewSongs({ eventId, onReview }: Readonly<{ eventId: string; onRevie
           ))}
         </ol>
       )}
-      {program.data?.songListStatus === 'submitted' && (
-        <Button type="primary" onClick={onReview} style={{ marginTop: spacing.sm }}>
-          Duyệt danh sách bài hát
+      {program.data?.songListStatus && program.data.songListStatus !== 'draft' && (
+        <Button
+          type={program.data.songListStatus === 'submitted' ? 'primary' : 'default'}
+          onClick={onReview}
+          style={{ marginTop: spacing.sm }}
+        >
+          {program.data.songListStatus === 'submitted' ? 'Duyệt danh sách bài hát' : 'Xem danh sách bài hát'}
         </Button>
       )}
     </div>

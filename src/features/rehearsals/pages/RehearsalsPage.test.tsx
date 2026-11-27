@@ -469,7 +469,7 @@ describe('RehearsalPracticeRoomPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Emmanuel', level: 1 })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Bản nốt đồng bộ' })).toBeInTheDocument()
-    expect(screen.getByText('3 nốt · 1 track')).toBeInTheDocument()
+    expect(screen.getByText('3 nốt · 1 kênh')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Phát Emmanuel' })).toBeInTheDocument()
     expect(screen.queryByText('Bài hát chưa có lời dạng văn bản')).toBeNull()
     expect(getPlayback).toHaveBeenCalledWith('emmanuel-midi')

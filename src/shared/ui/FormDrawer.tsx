@@ -59,7 +59,7 @@ export function FormDrawer({
       placement={placement}
       size={size}
       onClose={onCancel}
-      closable={!busy}
+      closable={busy ? false : { 'aria-label': 'Đóng bảng' }}
       keyboard={!busy}
       mask={{ closable: false }}
       styles={withBodyClearance(styles)}

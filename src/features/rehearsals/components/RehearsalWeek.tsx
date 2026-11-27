@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { generatePath, Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, type LiturgicalProgram } from '@/features/liturgical-programs'
+import { vietnamToday } from '@/lib/api/dates'
 import { Icon, PRACTICE_ROOM_ACTION, StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { formatRehearsalTime, rehearsalLabel } from '../rehearsalFormat'
@@ -42,7 +43,7 @@ export function SessionState({ rehearsal }: Readonly<{ rehearsal: Rehearsal }>) 
 export function RehearsalWeek({ weekStart, direction, rehearsals, programs, selectedId, onSelect }: Readonly<RehearsalWeekProps>) {
   const start = dayjs(weekStart)
   const days = Array.from({ length: 7 }, (_, index) => start.add(index, 'day'))
-  const today = dayjs().format('YYYY-MM-DD')
+  const today = vietnamToday()
 
   return (
     // Keyed by the week, so each new week mounts and slides in from the side it came.

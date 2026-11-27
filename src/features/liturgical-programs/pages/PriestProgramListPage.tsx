@@ -4,7 +4,7 @@ import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { vietnamToday } from '@/lib/api/dates'
 import { CANCEL_LABEL, EmptyState, EmptyWeek, ErrorState, Icon, NoFilterResults, PageHeader, SectionSkeleton } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import { EventFilterBar } from '../components/EventFilterBar'
 import { GenerateEventsButton } from '../components/GenerateEventsButton'
 import { EventPreview } from '../components/EventPreview'
@@ -141,9 +141,22 @@ export function PriestProgramListPage() {
           ) : (
             <>
               {selected.length > 0 && (
-                <Flex style={{ padding: `0 ${spacing.md}px ${spacing.sm}px` }}>
+                <Flex
+                  align="center"
+                  justify="space-between"
+                  wrap
+                  gap={spacing.sm}
+                  style={{
+                    padding: `${spacing.sm}px ${spacing.md}px`,
+                    background: colors.ivory,
+                    borderBottom: `1px solid ${colors.border}`,
+                  }}
+                >
                   <Button type="primary" onClick={confirmPublish}>
                     Công bố {selected.length} sự kiện đã chọn
+                  </Button>
+                  <Button size="small" type="text" onClick={() => setSelectedIds([])}>
+                    Bỏ chọn
                   </Button>
                 </Flex>
               )}

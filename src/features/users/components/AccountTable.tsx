@@ -64,7 +64,7 @@ export function AccountTable({ accounts, page, pageSize, total, loading, onPageC
       key: 'actions',
       title: ACTIONS_COLUMN_TITLE,
       align: 'center',
-      width: 184,
+      width: 248,
       render: (_, account) => <Flex justify="center">{renderActions(account)}</Flex>,
     },
   ]

@@ -275,7 +275,7 @@ export function SongFilterBar({
       )}
 
       <Flex justify="space-between" align="center" wrap gap={spacing.sm}>
-        <Typography.Text role="status" aria-atomic style={{ color: colors.textMuted }}>
+        <Typography.Text role="status" aria-atomic style={{ color: error ? colors.error : colors.textMuted }}>
           {resultCountLabel(resultCount, 'bài hát', error)}
         </Typography.Text>
         {extra}

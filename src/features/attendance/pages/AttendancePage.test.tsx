@@ -134,7 +134,7 @@ describe('AttendancePage', () => {
     renderAttendance('/director/attendance?rehearsalId=r0')
 
     const maria = await screen.findByRole('radiogroup', { name: 'Điểm danh Maria Nguyễn Thu Hướng' })
-    fireEvent.click(within(maria).getByText('Muộn'))
+    fireEvent.click(within(maria).getByText('Đi trễ'))
     expect(screen.getByText('1 thay đổi chưa lưu')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Lưu điểm danh' }))
 

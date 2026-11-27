@@ -1,4 +1,5 @@
 import { Alert, Button, Flex, Input } from 'antd'
+import { useEffect, useRef } from 'react'
 import { spacing } from '@/styles/tokens'
 import type { PasswordResetRequestValues } from '../types'
 import { Form } from '@/shared/ui'
@@ -13,21 +14,28 @@ export interface ForgotPasswordFormProps {
 
 export function ForgotPasswordForm({ onSubmit, submitting = false, failed = false, rateLimited = false }: Readonly<ForgotPasswordFormProps>) {
   const [form] = Form.useForm<PasswordResetRequestValues>()
+  const alertRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (failed) alertRef.current?.focus()
+  }, [failed])
 
   return (
     <Flex vertical gap={spacing.md}>
       {failed && (
-        <Alert
-          type="error"
-          showIcon
-          title="Không thể gửi yêu cầu"
-          description={rateLimited ? 'Bạn đã thử quá nhiều lần trong một phút. Vui lòng đợi một phút rồi thử lại.' : 'Đã xảy ra lỗi kết nối với máy chủ. Vui lòng thử lại sau giây lát.'}
-          action={
-            <Button size="small" onClick={() => form.submit()}>
-              Thử lại
-            </Button>
-          }
-        />
+        <div ref={alertRef} tabIndex={-1} style={{ outline: 'none' }}>
+          <Alert
+            type="error"
+            showIcon
+            title="Không thể gửi yêu cầu"
+            description={rateLimited ? 'Bạn đã thử quá nhiều lần trong một phút. Vui lòng đợi một phút rồi thử lại.' : 'Đã xảy ra lỗi kết nối với máy chủ. Vui lòng thử lại sau giây lát.'}
+            action={
+              <Button size="small" onClick={() => form.submit()}>
+                Thử lại
+              </Button>
+            }
+          />
+        </div>
       )}
       <Form<PasswordResetRequestValues> form={form} layout="vertical" requiredMark={false} onFinish={(values) => !submitting && onSubmit(values)}>
         <Form.Item

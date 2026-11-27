@@ -2,7 +2,7 @@ import { Button, ConfigProvider, Flex, Typography } from 'antd'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import { readingTheme } from '@/app/theme'
 import { paths } from '@/app/router/paths'
-import { EventChoirsCard, LeadChoirNotice } from '@/features/choirs'
+import { EventChoirsCard, isPlanningDirector, LeadChoirNotice, useEventChoirs } from '@/features/choirs'
 import { vietnamToday } from '@/lib/api/dates'
 import { EmptyState, ErrorState, Icon, LostLeaf, PageHeader, PageSkeleton, SectionSkeleton, StatusTag, voicePartName } from '@/shared/ui'
 import { colors, spacing } from '@/styles/tokens'
@@ -18,10 +18,14 @@ import { useProgram } from '../hooks/usePrograms'
 import { preparationItems } from '../preparationOverview'
 import { canEditSongList, isSongListClosed, type LiturgicalProgramDetail, type SongListStatus } from '../types'
 
-const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Chương trình phụng vụ' }, { title: 'Chi tiết chương trình' }]
+const breadcrumb = [
+  { title: 'Ca trưởng' },
+  { title: <Link to={paths.director.programs}>Chương trình phụng vụ</Link> },
+  { title: 'Chi tiết chương trình' },
+]
 
-function songListAction(status: SongListStatus | undefined, closed: boolean): string {
-  if (closed) return 'Xem danh sách đề xuất'
+function songListAction(status: SongListStatus | undefined, readOnly: boolean): string {
+  if (readOnly) return 'Xem danh sách đề xuất'
   if (!status) return 'Đề xuất danh sách bài hát'
   return canEditSongList(status) ? 'Chỉnh sửa danh sách bài hát' : 'Xem danh sách đề xuất'
 }
@@ -141,6 +145,10 @@ function ProgramDetail({
 }: Readonly<{ data: LiturgicalProgramDetail; program: ReturnType<typeof useProgram> }>) {
   const navigate = useNavigate()
   const tone = useDayTone(data.date)
+  const choirs = useEventChoirs(data.id)
+  const planner = choirs.data ? isPlanningDirector(choirs.data) : true
+  const readOnly = isSongListClosed(data) || !planner
+  const canActOnList = !readOnly && (!data.songListStatus || canEditSongList(data.songListStatus))
   const openProposal = () => navigate(generatePath(paths.director.songListProposal, { programId: data.id }))
   const details = [
     data.massTypeName !== data.eventName && data.massTypeName,
@@ -181,8 +189,8 @@ function ProgramDetail({
                   <h2 id="program-songs" className="hm-rubric">Thứ tự phụng vụ</h2>
                   <SongListStatusTag status={data.songListStatus} />
                 </Flex>
-                <Button type="primary" onClick={openProposal}>
-                  {songListAction(data.songListStatus, isSongListClosed(data))}
+                <Button type={canActOnList ? 'primary' : 'default'} onClick={openProposal}>
+                  {songListAction(data.songListStatus, readOnly)}
                 </Button>
               </div>
               <div className="ct-reading__body">

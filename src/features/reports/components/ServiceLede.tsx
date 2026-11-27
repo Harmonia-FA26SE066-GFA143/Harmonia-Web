@@ -36,7 +36,7 @@ export function ServiceLede({ filters, scope }: Readonly<{ filters: ReportFilter
       <section className="hm-sheet-section priest-queue hm-paper" aria-label="Tổng quan phục vụ">
         <div className="priest-sheet__body" style={{ paddingTop: spacing.lg }}>
         <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{scope}</Typography.Text>
-        <div style={{ fontFamily: typography.displayFontFamily, fontWeight: 600, fontSize: 64, lineHeight: 1, color: colors.textPrimary, fontVariantNumeric: 'lining-nums', marginTop: spacing.xs }}>
+        <div style={{ fontFamily: typography.displayFontFamily, fontWeight: typography.displayNumeral.fontWeight, fontSize: typography.displayNumeral.fontSize, lineHeight: typography.displayNumeral.lineHeight, letterSpacing: typography.displayNumeral.letterSpacing, color: colors.textPrimary, fontVariantNumeric: 'lining-nums', marginTop: spacing.xs }}>
           {services.data.totalCount}
         </div>
         <Typography.Text style={{ display: 'block', fontWeight: 500, color: colors.textPrimary }}>Thánh lễ và sự kiện đã phục vụ</Typography.Text>
@@ -45,6 +45,9 @@ export function ServiceLede({ filters, scope }: Readonly<{ filters: ReportFilter
             {held.length ? (
               <>
                 Trung bình <b>{average} ca viên</b> phục vụ mỗi lễ.
+                {services.data.totalCount > held.length && (
+                  <span style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>{` (tính trên ${held.length} lễ đầu trong kỳ)`}</span>
+                )}
               </>
             ) : (
               'Chưa có lễ nào trong khoảng này.'
@@ -68,7 +71,7 @@ export function ServiceLede({ filters, scope }: Readonly<{ filters: ReportFilter
         ) : (
           <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: spacing.sm }}>
             {top.map((song, index) => (
-              <li key={song.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 220px) minmax(0, 1fr) 48px', gap: spacing.md, alignItems: 'center' }}>
+              <li key={`${song.id || song.title}-${index}`} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 220px) minmax(0, 1fr) 48px', gap: spacing.md, alignItems: 'center' }}>
                 <Typography.Text ellipsis={{ tooltip: song.composer ? `${song.title} · ${song.composer}` : song.title }} style={{ color: colors.textPrimary, fontWeight: 500 }}>
                   {song.title}
                 </Typography.Text>

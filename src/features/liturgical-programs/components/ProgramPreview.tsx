@@ -47,7 +47,14 @@ export function ProgramPreview({
           {program.songListStatus && <SongListStatusTag status={program.songListStatus} />}
         </Flex>
         {detail.isPending && <SectionSkeleton rows={3} label="Đang tải danh sách bài hát" />}
-        {detail.isError && <Typography.Text style={muted}>Không tải được danh sách bài hát.</Typography.Text>}
+        {detail.isError && (
+          <Flex align="center" gap={spacing.xs} wrap>
+            <Typography.Text style={muted}>Không tải được danh sách bài hát.</Typography.Text>
+            <Button type="link" size="small" style={{ paddingInline: 0 }} loading={detail.isFetching} onClick={() => detail.refetch()}>
+              Thử lại
+            </Button>
+          </Flex>
+        )}
         {detail.data && songs.length === 0 && <Typography.Text style={muted}>Chưa chọn bài hát nào.</Typography.Text>}
         {songs.length > 0 && (
           <ol className="hm-preview__songs">
@@ -64,7 +71,7 @@ export function ProgramPreview({
       <Flex gap={spacing.sm} wrap>
         {propose && (
           <Button type="primary" onClick={onPropose}>
-            Tiếp tục đề xuất
+            {program.songListStatus ? 'Tiếp tục đề xuất' : 'Đề xuất bài hát'}
           </Button>
         )}
         {program.status !== 'cancelled' && <Button onClick={onOpen}>Mở chương trình</Button>}

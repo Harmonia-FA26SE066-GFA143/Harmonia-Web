@@ -9,6 +9,12 @@ export interface SummaryCell {
   unknownLabel?: string
   /** A count of things waiting on the viewer: above zero the cell turns ochre and offers this action. */
   waiting?: ReactNode
+  /** Quiet link or action shown even when the cell is not in waiting state (e.g. jump to filtered table). */
+  action?: ReactNode
+  /** Optional click handler to use this cell as a quick filter. */
+  onClick?: () => void
+  /** Active filter state when `onClick` is provided. */
+  active?: boolean
 }
 
 /**
@@ -36,12 +42,37 @@ export function SummaryStrip({
         const hasValue = cell.value !== undefined && Number.isFinite(cell.value)
         const waiting = cell.waiting !== undefined && hasValue && (cell.value as number) > 0
         const figure = hasValue ? cell.value : (cell.unknownLabel ?? unknownLabel)
+        const cellClass = [
+          'hm-summary__cell',
+          waiting && 'is-waiting',
+          cell.onClick && 'is-interactive',
+          cell.active && 'is-active',
+        ]
+          .filter(Boolean)
+          .join(' ')
         return (
-          <div key={cell.label} className={`hm-summary__cell${waiting ? ' is-waiting' : ''}`}>
-            <dt>{cell.label}</dt>
+          <div key={cell.label} className={cellClass}>
+            <dt>
+              {cell.onClick ? (
+                <button
+                  type="button"
+                  className="hm-summary__trigger"
+                  aria-pressed={cell.active}
+                  onClick={cell.onClick}
+                >
+                  {cell.label}
+                </button>
+              ) : (
+                cell.label
+              )}
+            </dt>
             <dd>
-              <span className="hm-summary__figure">{figure}</span>
-              {waiting && <span className="hm-summary__action">{cell.waiting}</span>}
+              <span className={hasValue ? 'hm-summary__figure' : 'hm-summary__figure is-unknown'}>{figure}</span>
+              {waiting ? (
+                <span className="hm-summary__action">{cell.waiting}</span>
+              ) : (
+                cell.action && <span className="hm-summary__action">{cell.action}</span>
+              )}
             </dd>
           </div>
         )

@@ -3,6 +3,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { useId, useMemo, useState, type KeyboardEvent } from 'react'
 import { generatePath, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { vietnamToday } from '@/lib/api/dates'
 import { ErrorState, Icon, PageHeader, SeasonChip, SectionSkeleton, SELECT_POPUP_PROPS, visuallyHidden } from '@/shared/ui'
 import { colors, gold, spacing, typography } from '@/styles/tokens'
 import { EventStatusTag } from '../components/EventStatusTag'
@@ -52,11 +53,13 @@ export function ProgramCalendarPage() {
   const navigate = useNavigate()
   const screens = Grid.useBreakpoint()
   const { eventName } = useEventNames()
+  const todayKey = vietnamToday()
+  const today = useMemo(() => dayjs(todayKey), [todayKey])
   // The selected day is kept in `?date=`, so reload and the back button return to it; today needs no parameter.
   const [searchParams, setSearchParams] = useSearchParams()
   const dateParam = searchParams.get('date')
-  const selected = useMemo(() => (dateParam && isoDate.test(dateParam) && dayjs(dateParam).isValid() ? dayjs(dateParam) : dayjs()), [dateParam])
-  const setSelected = (date: Dayjs) => setSearchParams(date.isSame(dayjs(), 'day') ? {} : { date: date.format('YYYY-MM-DD') }, { replace: true })
+  const selected = useMemo(() => (dateParam && isoDate.test(dateParam) && dayjs(dateParam).isValid() ? dayjs(dateParam) : today), [dateParam, today])
+  const setSelected = (date: Dayjs) => setSearchParams(date.isSame(today, 'day') ? {} : { date: date.format('YYYY-MM-DD') }, { replace: true })
   // Filters only the loaded month on screen; the backend query stays the whole month.
   const [statusFilter, setStatusFilter] = useState<EventStatus | 'all'>('all')
   const hintId = useId()
@@ -110,23 +113,31 @@ export function ProgramCalendarPage() {
           </Typography.Text>
         )}
         {items.slice(0, cellLimit).map((event) => (
-          // Two lines, so the name is read in the cell; the tooltip still gives the whole of a longer one.
-          <Typography.Paragraph
+          // Directly opens the event on click while keeping the status icon named for assistive technology.
+          <button
             key={event.id}
-            ellipsis={{ rows: 2, tooltip: true }}
-            delete={event.status === 'cancelled'}
-            className={eventChip(event.status)}
-            style={{ margin: 0, fontSize: typography.metadata.fontSize, lineHeight: 1.35 }}
+            type="button"
+            className={`priest-event-btn ${eventChip(event.status)}`}
+            onClick={(click) => {
+              click.stopPropagation()
+              openEvent(event)
+            }}
           >
-            {/* Published is the usual state; the others carry a named icon, so the status does not rest on color alone
-                and the event's name keeps the cell's two lines. */}
-            {event.status !== 'published' && (
-              <span title={eventStatusLabels[event.status]} style={{ marginInlineEnd: 4 }}>
-                {event.status === 'draft' ? <Icon name="edit" label={eventStatusLabels.draft} /> : <Icon name="close-circle" label={eventStatusLabels.cancelled} />}
-              </span>
-            )}
-            {event.time} {eventName(event)}
-          </Typography.Paragraph>
+            <Typography.Paragraph
+              ellipsis={{ rows: 2, tooltip: true }}
+              delete={event.status === 'cancelled'}
+              style={{ margin: 0, fontSize: typography.metadata.fontSize, lineHeight: 1.35, color: 'inherit' }}
+            >
+              {/* Published is the usual state; the others carry a named icon, so the status does not rest on color alone
+                  and the event's name keeps the cell's two lines. */}
+              {event.status !== 'published' && (
+                <span title={eventStatusLabels[event.status]} style={{ marginInlineEnd: 4 }}>
+                  {event.status === 'draft' ? <Icon name="edit" label={eventStatusLabels.draft} /> : <Icon name="close-circle" label={eventStatusLabels.cancelled} />}
+                </span>
+              )}
+              {event.time} {eventName(event)}
+            </Typography.Paragraph>
+          </button>
         ))}
         {items.length > cellLimit && (
           <Typography.Text style={{ fontSize: typography.metadata.fontSize, color: colors.textBody }}>+{items.length - cellLimit} khác</Typography.Text>
@@ -171,27 +182,15 @@ export function ProgramCalendarPage() {
             <Typography.Title level={2} className="priest-calendar__month">
               {selected.format('[Tháng] M, YYYY')}
             </Typography.Title>
-            <Popover
-              trigger="click"
-              placement="bottom"
-              getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer}
-              content={
-                <Flex vertical gap={spacing.sm}>
-                  <Typography.Text strong>Trạng thái chương trình</Typography.Text>
-                  <Segmented<EventStatus | 'all'>
-                    aria-label="Lọc theo trạng thái"
-                    value={statusFilter}
-                    onChange={setStatusFilter}
-                    options={statusFilters.map((status) => ({
-                      value: status,
-                      label: `${status === 'all' ? 'Tất cả' : eventStatusLabels[status]} (${countOf(status)})`,
-                    }))}
-                  />
-                </Flex>
-              }
-            >
-              <Button icon={<Icon name="filter" />}>Bộ lọc</Button>
-            </Popover>
+            <Segmented<EventStatus | 'all'>
+              aria-label="Lọc theo trạng thái"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={statusFilters.map((status) => ({
+                value: status,
+                label: `${status === 'all' ? 'Tất cả' : eventStatusLabels[status]} (${countOf(status)})`,
+              }))}
+            />
             <Flex wrap align="center" gap={spacing.sm} style={{ marginInlineStart: 'auto' }}>
               <Select
                 {...SELECT_POPUP_PROPS}
@@ -211,7 +210,7 @@ export function ProgramCalendarPage() {
               />
               <Flex gap={4} align="center">
                 <Button icon={<Icon name="chevron-left" />} aria-label="Tháng trước" onClick={() => changeMonth(selected.subtract(1, 'month'))} />
-                <Button onClick={() => changeMonth(dayjs())}>Hôm nay</Button>
+                <Button onClick={() => changeMonth(today)}>Hôm nay</Button>
                 <Button icon={<Icon name="chevron-right" />} aria-label="Tháng sau" onClick={() => changeMonth(selected.add(1, 'month'))} />
               </Flex>
             </Flex>
@@ -270,7 +269,18 @@ export function ProgramCalendarPage() {
               <p className="hm-rubric">Chương trình trong ngày</p>
               {events.isPlaceholderData && <Typography.Text style={{ color: colors.textMuted }}>Đang tải chương trình…</Typography.Text>}
               {!events.isPlaceholderData && selectedEvents.length === 0 && (
-                <Typography.Text style={{ color: colors.textMuted }}>Chưa có chương trình nào.</Typography.Text>
+                <Flex vertical align="start" gap={spacing.xs}>
+                  <Typography.Text style={{ color: colors.textMuted }}>
+                    {statusFilter === 'all'
+                      ? 'Chưa có chương trình nào.'
+                      : `Không có chương trình ở trạng thái “${eventStatusLabels[statusFilter]}” trong ngày này.`}
+                  </Typography.Text>
+                  {statusFilter !== 'all' && (
+                    <Button size="small" type="link" style={{ paddingInline: 0 }} onClick={() => setStatusFilter('all')}>
+                      Hiện tất cả trạng thái
+                    </Button>
+                  )}
+                </Flex>
               )}
               {!events.isPlaceholderData && selectedEvents.length > 0 && (
                 <ul className="priest-day-events">
@@ -293,7 +303,7 @@ export function ProgramCalendarPage() {
               )}
             </div>
             {/* A day already gone takes no new program: BE refuses it (LITURGICAL_EVENT_ALREADY_PASSED). */}
-            {selected.isBefore(dayjs(), 'day') ? (
+            {selected.isBefore(today, 'day') ? (
               <Typography.Text style={{ color: colors.textMuted, fontSize: typography.metadata.fontSize }}>Ngày đã qua, không tạo thêm chương trình.</Typography.Text>
             ) : (
               <Button icon={<Icon name="add" />} onClick={createForDate}>

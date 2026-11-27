@@ -1,5 +1,7 @@
 import { App, Button, Card, Flex, Table, Typography, type TableColumnsType } from 'antd'
 import { useState, type CSSProperties } from 'react'
+import { Link } from 'react-router'
+import { paths } from '@/app/router/paths'
 import { accountName, useActiveDirectors } from '@/features/users'
 import { ApiError } from '@/lib/api/errors'
 import {
@@ -107,9 +109,14 @@ function DirectorChoirCard({ choir, index, onOpenMembers }: Readonly<{ choir: Ch
       <Typography.Paragraph style={{ ...(choir.description ? {} : muted), margin: 0, flex: 1 }}>
         {choir.description ?? 'Chưa có mô tả'}
       </Typography.Paragraph>
-      <Button icon={<Icon name="choir" />} onClick={() => onOpenMembers(choir)} aria-label={`Ca viên của ${choir.name}`} style={{ alignSelf: 'flex-start' }}>
-        Ca viên
-      </Button>
+      <Flex wrap align="center" gap={spacing.sm}>
+        <Button icon={<Icon name="choir" />} onClick={() => onOpenMembers(choir)} aria-label={`Ca viên của ${choir.name}`}>
+          Ca viên
+        </Button>
+        <Link to={`${paths.director.reports}?choirId=${choir.id}`} style={{ fontSize: 13 }}>
+          Xem báo cáo
+        </Link>
+      </Flex>
     </li>
   )
 }
@@ -160,7 +167,7 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
       key: 'status',
       title: 'Trạng thái',
       render: (_, choir) => (
-        <StatusTag color={choir.isActive ? 'green' : 'default'} style={{ marginInlineEnd: 0 }}>
+        <StatusTag color={choir.isActive ? 'green' : 'default'} mark={choir.isActive ? undefined : 'draft'} style={{ marginInlineEnd: 0 }}>
           {choir.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
         </StatusTag>
       ),
@@ -196,8 +203,8 @@ export function ChoirsPage({ role }: Readonly<{ role: 'admin' | 'director' }>) {
         breadcrumb={admin ? [{ title: 'Quản trị hệ thống' }, { title: 'Ca đoàn' }] : [{ title: 'Ca trưởng' }, { title: CHOIR_NAV_LABEL }]}
         description={
           admin
-            ? 'Ca đoàn của giáo xứ và ca trưởng phụ trách. Một ca viên có thể thuộc nhiều ca đoàn.'
-            : 'Ca đoàn bạn phụ trách. Một ca viên có thể thuộc nhiều ca đoàn.'
+            ? 'Ca đoàn của giáo xứ và ca trưởng phụ trách. Mỗi ca viên sinh hoạt trong một ca đoàn tại một thời điểm.'
+            : 'Ca đoàn bạn phụ trách. Mỗi ca viên sinh hoạt trong một ca đoàn tại một thời điểm.'
         }
         // The Admin's empty state carries the only "Thêm ca đoàn" (SYS-06).
         extra={admin && choirs.isSuccess && choirs.data.length === 0 ? undefined : addButton}

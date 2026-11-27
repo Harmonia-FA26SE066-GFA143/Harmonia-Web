@@ -11,6 +11,7 @@ import { component, spacing } from '@/styles/tokens'
 export interface SendNoteDrawerProps {
   open: boolean
   saving?: boolean
+  defaultRecipientId?: string
   onSubmit: (values: DirectorNoteValues) => void
   onCancel: () => void
 }
@@ -90,7 +91,7 @@ function NoteFields() {
  * Parish Priest: a note or request to Choir Directors (FE-23; Harmonia-BE CreateDirectorNoteRequestValidator). Each
  * chosen Choir Director gets their own copy and a notification.
  */
-export function SendNoteDrawer({ open, saving = false, onSubmit, onCancel }: Readonly<SendNoteDrawerProps>) {
+export function SendNoteDrawer({ open, saving = false, defaultRecipientId, onSubmit, onCancel }: Readonly<SendNoteDrawerProps>) {
   return (
     <FormDrawer
       open={open}
@@ -105,6 +106,7 @@ export function SendNoteDrawer({ open, saving = false, onSubmit, onCancel }: Rea
       drawerRender={(dom) => (
         <Form<DirectorNoteValues>
           layout="vertical"
+          initialValues={defaultRecipientId ? { toUserIds: [defaultRecipientId] } : undefined}
           onFinish={(values) => onSubmit({ ...values, content: values.content.trim() })}
         >
           {dom}

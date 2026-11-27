@@ -1,7 +1,8 @@
 import { Alert, App, Button, Flex, Modal, Typography } from 'antd'
-import { useState } from 'react'
-import { generatePath, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router'
+import { useRef, useState } from 'react'
+import { generatePath, Link, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { isPlanningDirector, LeadChoirNotice, useEventChoirs } from '@/features/choirs'
 import { canEditSongList, formatProgramDate, isSongListClosed, ProgramInfo, useProgram, type LiturgicalProgram } from '@/features/liturgical-programs'
 import type { SongFilters } from '@/features/music-library'
 import { useCatalogOptions, type CatalogOption } from '@/features/system-categories'
@@ -15,10 +16,10 @@ import { useSaveSongList, useSongList } from '../hooks/useSongList'
 import { songListErrorMessage } from '../songListErrors'
 import type { SongList } from '../types'
 
-const breadcrumb = [
+const breadcrumbFor = (programId: string) => [
   { title: 'Ca trưởng' },
-  { title: 'Chương trình phụng vụ' },
-  { title: 'Chi tiết chương trình' },
+  { title: <Link to={paths.director.programs}>Chương trình phụng vụ</Link> },
+  { title: <Link to={generatePath(paths.director.programDetail, { programId })}>Chi tiết chương trình</Link> },
   { title: 'Đề xuất danh sách bài hát' },
 ]
 
@@ -45,18 +46,23 @@ function useEventSongFilters(program: LiturgicalProgram): SongFilters {
 
 /** Composes, saves and submits the list; editable while there is none, as a draft, and after rejection or a revision request. */
 function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram; list: SongList | null }>) {
+  const navigate = useNavigate()
   const { message } = App.useApp()
   const save = useSaveSongList(program.id, list)
-  // Closed once the event is cancelled or its Mass has begun (BE 61b3aa6); the list stays readable.
+  const choirs = useEventChoirs(program.id)
+  const isLead = choirs.data ? isPlanningDirector(choirs.data) : true
+  // Closed once the event is cancelled or its Mass has begun (BE 61b3aa6); non-lead directors read only (D8).
   const closed = isSongListClosed(program)
-  const editable = canEditSongList(list?.status) && !closed
+  const editable = canEditSongList(list?.status) && !closed && isLead
   const [items, setItems] = useState<DraftItem[]>(() => toDraft(list))
+  const nextRowKey = useRef(0)
   const [dirty, setDirty] = useState(false)
   const [picking, setPicking] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
   const suggestedFilters = useEventSongFilters(program)
   const [confirming, setConfirming] = useState(false)
   const [justSaved, markSaved] = useJustSaved()
+  const missingSlotCount = items.filter((item) => !item.slotId).length
 
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname,
@@ -68,6 +74,14 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
   const change = (next: DraftItem[]) => {
     setItems(next)
     setDirty(true)
+  }
+
+  const handleRequestSubmit = () => {
+    if (missingSlotCount > 0) {
+      message.warning('Chọn phần phụng vụ cho mọi bài hát trước khi lưu.')
+      return
+    }
+    setConfirming(true)
   }
 
   const handleSave = (submit: boolean) => {
@@ -107,7 +121,8 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
   for (const { slotId, songId } of items) if (slotId) takenBySlot.set(slotId, (takenBySlot.get(slotId) ?? new Set()).add(songId))
 
   return (
-    <>
+    <Flex vertical gap={spacing.md}>
+      <LeadChoirNotice eventId={program.id} />
       {/* The list on the left, where it is composed; where it stands, the Mass and the send action on the right (artifact SongListProposalPage). */}
       <div className="hm-split">
         <section className="hm-sheet-section" aria-labelledby="proposal-songs">
@@ -158,8 +173,23 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
             />
           )}
           <ProgramInfo program={program} />
+          {list?.status === 'approved' && (
+            <Flex wrap gap={spacing.sm}>
+              <Button icon={<Icon name="arrow-right" />} onClick={() => navigate(`${paths.director.roster}?programId=${program.id}`)}>
+                Phân công phục vụ
+              </Button>
+              <Button icon={<Icon name="calendar" />} onClick={() => navigate(`${paths.director.rehearsals}?programId=${program.id}`)}>
+                Lịch tập
+              </Button>
+            </Flex>
+          )}
           {editable && (
             <>
+              {missingSlotCount > 0 && (
+                <Typography.Text style={{ color: 'var(--hm-area-attention-ink)', fontSize: typography.metadata.fontSize }}>
+                  Thiếu phần phụng vụ ở {missingSlotCount} bài hát.
+                </Typography.Text>
+              )}
               <Flex wrap gap={spacing.sm}>
                 <SaveButton
                   saved={justSaved}
@@ -170,7 +200,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
                 >
                   Lưu nháp
                 </SaveButton>
-                <Button type="primary" icon={<Icon name="send" />} disabled={items.length === 0} onClick={() => setConfirming(true)}>
+                <Button type="primary" icon={<Icon name="send" />} disabled={items.length === 0} onClick={handleRequestSubmit}>
                   Gửi duyệt
                 </Button>
               </Flex>
@@ -189,8 +219,8 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
           suggestedFilters={suggestedFilters}
           onCancel={() => setPicking(false)}
           onAdd={(songs) => {
-            // The same song may be added again for another part, so the row key cannot be the song alone.
-            change([...items, ...songs.map((song, index) => ({ key: `new-${song.id}-${items.length + index}`, songId: song.id, songTitle: song.title }))])
+            // Monotonic key so adding, removing and re-adding the same song never collides.
+            change([...items, ...songs.map((song) => ({ key: `new-${++nextRowKey.current}`, songId: song.id, songTitle: song.title }))])
             setPicking(false)
           }}
         />
@@ -204,7 +234,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
             change([
               ...items,
               ...songs.map((song) => ({
-                key: `new-${slot.id}-${song.songId}`,
+                key: `new-${++nextRowKey.current}`,
                 songId: song.songId,
                 songTitle: song.title,
                 slotId: slot.id,
@@ -241,7 +271,7 @@ function ProposalEditor({ program, list }: Readonly<{ program: LiturgicalProgram
       >
         Các thay đổi chưa lưu sẽ mất.
       </Modal>
-    </>
+    </Flex>
   )
 }
 
@@ -263,7 +293,7 @@ export function SongListProposalPage() {
     <>
       <PageHeader
         title="Đề xuất danh sách bài hát"
-        breadcrumb={breadcrumb}
+        breadcrumb={breadcrumbFor(programId)}
         description={program.data ? program.data.eventName : undefined}
         extra={backButton}
       />

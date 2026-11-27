@@ -9,6 +9,9 @@ export interface PlaybackClock {
   error: PlaybackClockError | null
   /** The audio element itself failed (bad or unreachable file), unlike a `play()` the browser refused. Stand-ins may omit it. */
   sourceFailed?: boolean
+  /** Current playback speed multiplier (default 1). Stand-ins may omit it. */
+  playbackRate?: number
+  setPlaybackRate?(rate: number): void
   play(): Promise<void>
   pause(): void
   /** Clamped to [0, duration]; subscribers are called once right away, even while paused. */
@@ -43,6 +46,8 @@ export function usePlaybackClock(src: string | undefined, fallbackDuration = 0):
   const [duration, setDuration] = useState(0)
   const [error, setError] = useState<PlaybackClockError | null>(null)
   const [sourceFailed, setSourceFailed] = useState(false)
+  const [playbackRate, setPlaybackRateState] = useState(1)
+  const rateRef = useRef(1)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const listenersRef = useRef(new Set<TimeListener>())
 
@@ -62,6 +67,7 @@ export function usePlaybackClock(src: string | undefined, fallbackDuration = 0):
     // Created here, not in render: StrictMode runs this effect twice and the first audio is disposed by the cleanup.
     const audio = new Audio()
     audio.preload = 'metadata'
+    audio.playbackRate = rateRef.current
     audio.src = src
     audioRef.current = audio
     const listeners = listenersRef.current
@@ -133,6 +139,12 @@ export function usePlaybackClock(src: string | undefined, fallbackDuration = 0):
 
   const api = useMemo(
     () => ({
+      setPlaybackRate(rate: number) {
+        const clamped = Math.min(1.5, Math.max(0.5, rate))
+        rateRef.current = clamped
+        setPlaybackRateState(clamped)
+        if (audioRef.current) audioRef.current.playbackRate = clamped
+      },
       async play() {
         const audio = audioRef.current
         if (!audio) return
@@ -171,7 +183,7 @@ export function usePlaybackClock(src: string | undefined, fallbackDuration = 0):
 
   const effectiveDuration = Math.max(duration, safeFallbackDuration)
   return useMemo(
-    () => ({ playing, duration: effectiveDuration, error, sourceFailed, ...api }),
-    [playing, effectiveDuration, error, sourceFailed, api],
+    () => ({ playing, duration: effectiveDuration, error, sourceFailed, playbackRate, ...api }),
+    [playing, effectiveDuration, error, sourceFailed, playbackRate, api],
   )
 }

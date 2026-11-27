@@ -132,7 +132,9 @@ export function ProgramTable({ programs, selectedId, onSelect, onOpen, onPropose
       dataSource={programs}
       loading={loading}
       pagination={pagination}
-      rowClassName={(program) => (program.id === selectedId ? 'is-picked' : '')}
+      rowClassName={(program) =>
+        [program.id === selectedId && 'is-picked', program.status === 'cancelled' && 'is-cancelled'].filter(Boolean).join(' ')
+      }
       onRow={(program) => ({ onClick: () => program.status !== 'cancelled' && onSelect(program) })}
       // The sum of the column widths; below it (never on the desktop widths in scope) the table scrolls inside its card.
       tableLayout="fixed"

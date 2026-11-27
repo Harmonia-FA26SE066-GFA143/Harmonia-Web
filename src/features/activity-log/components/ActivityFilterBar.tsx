@@ -1,4 +1,5 @@
-import { Flex, Select, Tag } from 'antd'
+import { DatePicker, Flex, Select, Tag } from 'antd'
+import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
 import { FilterBar, SELECT_POPUP_PROPS, filterAllPlaceholder } from '@/shared/ui'
 import { colors, sizes, typography } from '@/styles/tokens'
@@ -69,8 +70,31 @@ export function ActivityFilterBar({ value, onChange, onReset, resultCount, error
           allowClear
           placeholder={filterAllPlaceholder('thời gian')}
           value={value.period}
-          onChange={(period?: ActivityPeriod) => onChange({ ...value, period })}
+          onChange={(period?: ActivityPeriod) => onChange({ ...value, period, fromDate: undefined, toDate: undefined })}
           options={options(periodLabels)}
+        />
+      </Field>
+      <Field id="activity-filter-range" label="Khoảng ngày" width={250}>
+        <DatePicker.RangePicker
+          getPopupContainer={SELECT_POPUP_PROPS.getPopupContainer}
+          placement="bottomLeft"
+          id="activity-filter-range"
+          format="DD/MM/YYYY"
+          placeholder={['Từ ngày', 'Đến ngày']}
+          value={
+            value.fromDate || value.toDate
+              ? [value.fromDate ? dayjs(value.fromDate) : null, value.toDate ? dayjs(value.toDate) : null]
+              : null
+          }
+          onChange={(dates) =>
+            onChange({
+              ...value,
+              period: undefined,
+              fromDate: dates?.[0]?.format('YYYY-MM-DD'),
+              toDate: dates?.[1]?.format('YYYY-MM-DD'),
+            })
+          }
+          style={{ width: '100%' }}
         />
       </Field>
       {value.user && (

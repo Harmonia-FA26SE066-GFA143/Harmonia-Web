@@ -55,7 +55,7 @@ describe('ChoirsPage', () => {
   it('opens ChoirMembersDrawer as ViewDrawer with ACTIONS_COLUMN_TITLE and preserves adding members', async () => {
     vi.spyOn(api, 'listChoirs').mockResolvedValue([choir()])
     vi.spyOn(api, 'listMembersOfChoir').mockResolvedValue([membership('m1', 'Maria Lan')])
-    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([
+    vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([
       { id: 'm1', fullName: 'Maria Lan', skills: [] },
       { id: 'm2', fullName: 'Phêrô Dũng', skills: [] },
     ])
@@ -84,7 +84,7 @@ describe('ChoirsPage', () => {
     })
     vi.spyOn(api, 'listChoirs').mockResolvedValue([choir()])
     vi.spyOn(api, 'listMembersOfChoir').mockResolvedValue([membership('m1', 'Maria Lan')])
-    vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([
+    vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([
       { id: 'm2', fullName: 'Phêrô Dũng', skills: [], choirs: [] },
       { id: 'm3', fullName: 'Anna Hoa', skills: [], choirs: [{ id: 'c9', name: 'Ca đoàn Thiếu nhi' }] },
     ])

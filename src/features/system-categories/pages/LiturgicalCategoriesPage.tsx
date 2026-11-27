@@ -1,6 +1,6 @@
-import { ColorPicker, DatePicker, Flex, Input, InputNumber, Select, Tabs, Typography } from 'antd'
+import { ColorPicker, DatePicker, Flex, Input, InputNumber, Select, Typography } from 'antd'
 import dayjs from 'dayjs'
-import type { ReactNode } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import { useUrlTab } from '@/shared/hooks/useUrlTab'
 import { EmptyCell, Form, PageHeader, SELECT_POPUP_PROPS } from '@/shared/ui'
 import { dateOnlyFieldProps } from '@/shared/utils/dateField'
@@ -140,8 +140,6 @@ function SeasonsPanel() {
   )
 }
 
-const muted = (text: string) => <Typography.Text style={{ color: colors.textMuted }}>{text}</Typography.Text>
-
 function SlotsPanel() {
   return (
     <CatalogManager
@@ -179,7 +177,7 @@ function LocationsPanel() {
           key: 'address',
           title: 'Địa chỉ',
           dataIndex: 'address',
-          render: (address: string | null) => address || muted('Chưa có địa chỉ'),
+          render: (address: string | null) => address || <EmptyCell text="Chưa có địa chỉ" />,
         },
       ]}
       fields={
@@ -203,30 +201,55 @@ function BasicCatalogPanel({ catalog, noun }: Readonly<{ catalog: BasicCatalog; 
   )
 }
 
+type CatalogTabKey = LiturgicalCatalog | 'massSchedules' | 'liturgicalNames'
+
+interface CatalogTabItem {
+  key: CatalogTabKey
+  label: string
+  children: ReactNode
+}
+
 /**
- * The four catalogs Report 1 FE-50 lists, in its order, then the three the backend added (LookupsController) and the
+ * The four catalogs Report 1 FE-50 lists, in its order, then the three the backend added (LookupsController), the
  * fixed Mass times (MassSchedulesController) and the Vietnamese names of the liturgical calendar
- * (LiturgicalNameTranslationsController).
+ * (LiturgicalNameTranslationsController), grouped cleanly in a vertical navigation rail.
  */
-const tabs: { key: LiturgicalCatalog | 'massSchedules' | 'liturgicalNames'; label: string; children: ReactNode }[] = [
-  { key: 'seasons', label: 'Mùa phụng vụ', children: <SeasonsPanel /> },
-  { key: 'massTypes', label: 'Loại Thánh lễ', children: <BasicCatalogPanel catalog="massTypes" noun="loại Thánh lễ" /> },
+const catalogGroups: { title: string; items: CatalogTabItem[] }[] = [
   {
-    key: 'ceremonyTypes',
-    label: 'Loại nghi thức',
-    children: <BasicCatalogPanel catalog="ceremonyTypes" noun="loại nghi thức" />,
+    title: 'Lịch & Phụng vụ',
+    items: [
+      { key: 'seasons', label: 'Mùa phụng vụ', children: <SeasonsPanel /> },
+      { key: 'liturgicalSlots', label: 'Phần phụng vụ', children: <SlotsPanel /> },
+      { key: 'massSchedules', label: 'Giờ lễ cố định', children: <MassSchedulesPanel /> },
+      { key: 'liturgicalNames', label: 'Tên phụng vụ', children: <LiturgicalNamesPanel /> },
+    ],
   },
   {
-    key: 'eventCategories',
-    label: 'Danh mục sự kiện',
-    children: <BasicCatalogPanel catalog="eventCategories" noun="danh mục sự kiện" />,
+    title: 'Loại lễ & Địa điểm',
+    items: [
+      { key: 'massTypes', label: 'Loại Thánh lễ', children: <BasicCatalogPanel catalog="massTypes" noun="loại Thánh lễ" /> },
+      {
+        key: 'ceremonyTypes',
+        label: 'Loại nghi thức',
+        children: <BasicCatalogPanel catalog="ceremonyTypes" noun="loại nghi thức" />,
+      },
+      { key: 'worshipLocations', label: 'Nơi cử hành', children: <LocationsPanel /> },
+    ],
   },
-  { key: 'songThemes', label: 'Chủ đề bài hát', children: <SongThemesPanel /> },
-  { key: 'liturgicalSlots', label: 'Phần phụng vụ', children: <SlotsPanel /> },
-  { key: 'worshipLocations', label: 'Nơi cử hành', children: <LocationsPanel /> },
-  { key: 'massSchedules', label: 'Giờ lễ cố định', children: <MassSchedulesPanel /> },
-  { key: 'liturgicalNames', label: 'Tên phụng vụ', children: <LiturgicalNamesPanel /> },
+  {
+    title: 'Phân loại & Chủ đề',
+    items: [
+      {
+        key: 'eventCategories',
+        label: 'Danh mục sự kiện',
+        children: <BasicCatalogPanel catalog="eventCategories" noun="danh mục sự kiện" />,
+      },
+      { key: 'songThemes', label: 'Chủ đề bài hát', children: <SongThemesPanel /> },
+    ],
+  },
 ]
+
+const tabs: CatalogTabItem[] = catalogGroups.flatMap((group) => group.items)
 
 /**
  * Admin: liturgical seasons, Mass types, ceremony types, event categories, song themes, liturgical slots, worship
@@ -237,6 +260,23 @@ export function LiturgicalCategoriesPage() {
     tabs.map(({ key }) => key),
     'seasons',
   )
+  const active = tabs.find((item) => item.key === tab) ?? tabs[0]
+
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentKey: CatalogTabKey) => {
+    const index = tabs.findIndex((item) => item.key === currentKey)
+    if (index === -1) return
+    let nextIndex = -1
+    if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length
+    else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length
+    else if (event.key === 'Home') nextIndex = 0
+    else if (event.key === 'End') nextIndex = tabs.length - 1
+    if (nextIndex < 0) return
+    event.preventDefault()
+    const nextKey = tabs[nextIndex].key
+    setTab(nextKey)
+    document.getElementById(`catalog-tab-${nextKey}`)?.focus()
+  }
+
   return (
     <>
       <PageHeader
@@ -244,7 +284,48 @@ export function LiturgicalCategoriesPage() {
         breadcrumb={[{ title: 'Quản trị hệ thống' }, { title: 'Danh mục phụng vụ' }]}
         description="Danh mục dùng khi lập chương trình phụng vụ và lịch lễ."
       />
-      <Tabs className="khop-seg-tabs" destroyOnHidden activeKey={tab} onChange={setTab} items={tabs} />
+      <div className="admin-catalogs">
+        <div
+          role="tablist"
+          aria-orientation="vertical"
+          aria-label="Các danh mục phụng vụ"
+          className="admin-catalogs__nav hm-paper"
+        >
+          {catalogGroups.map((group) => (
+            <div key={group.title} className="admin-catalogs__group">
+              <p className="hm-rubric admin-catalogs__heading">{group.title}</p>
+              {group.items.map((item) => {
+                const selected = item.key === active.key
+                return (
+                  <button
+                    key={item.key}
+                    id={`catalog-tab-${item.key}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    aria-controls={`catalog-panel-${item.key}`}
+                    tabIndex={selected ? 0 : -1}
+                    className={selected ? 'admin-catalogs__tab is-active' : 'admin-catalogs__tab'}
+                    onClick={() => setTab(item.key)}
+                    onKeyDown={(event) => onTabKeyDown(event, item.key)}
+                  >
+                    {item.label}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+        <div
+          key={active.key}
+          role="tabpanel"
+          id={`catalog-panel-${active.key}`}
+          aria-labelledby={`catalog-tab-${active.key}`}
+          className="admin-catalogs__panel"
+        >
+          {active.children}
+        </div>
+      </div>
     </>
   )
 }

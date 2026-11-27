@@ -86,10 +86,10 @@ export function JoinChoirPage() {
       >
         <div className="hm-auth__pair">
           <Form.Item name="saintName" label="Tên thánh" rules={saintNameRules}>
-            <Input autoComplete="off" placeholder="Ví dụ: Giuse" />
+            <Input autoComplete="off" placeholder="Ví dụ: Giuse" autoFocus />
           </Form.Item>
           <Form.Item name="fullName" label="Họ tên" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập họ tên.' }, { max: 100, message: 'Vui lòng nhập tối đa 100 ký tự.' }]}>
-            <Input autoComplete="name" />
+            <Input autoComplete="name" placeholder="Ví dụ: Trần Minh Tâm" />
           </Form.Item>
         </div>
         <div className="hm-auth__pair">
@@ -108,7 +108,7 @@ export function JoinChoirPage() {
               extra="Nhận mật khẩu đầu khi được duyệt."
               rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập email.' }, { type: 'email', message: 'Vui lòng nhập email dạng ten@giaoxu.org.' }, { max: 256, message: 'Vui lòng nhập tối đa 256 ký tự.' }]}
             >
-              <Input type="email" autoComplete="email" />
+              <Input type="email" autoComplete="email" placeholder="ten@giaoxu.org" />
             </Form.Item>
             <Form.Item name="preferredChoirId" label="Ca đoàn mong muốn" extra="Để Quản trị viên xếp ca đoàn.">
               <Select
@@ -126,11 +126,11 @@ export function JoinChoirPage() {
             extra="Mật khẩu đầu tiên sẽ gửi tới email này nếu yêu cầu được chấp nhận."
             rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập email.' }, { type: 'email', message: 'Vui lòng nhập email dạng ten@giaoxu.org.' }, { max: 256, message: 'Vui lòng nhập tối đa 256 ký tự.' }]}
           >
-            <Input type="email" autoComplete="email" />
+            <Input type="email" autoComplete="email" placeholder="ten@giaoxu.org" />
           </Form.Item>
         )}
         <Form.Item name="note" label="Lời nhắn" rules={[{ max: 500, message: 'Vui lòng nhập tối đa 500 ký tự.' }]}>
-          <Input.TextArea rows={2} showCount maxLength={500} placeholder="Ví dụ: Em hát giọng Alto, sinh hoạt được tối thứ Năm." />
+          <Input.TextArea rows={2} showCount maxLength={500} placeholder="Ví dụ: Em hát giọng Nữ trầm, sinh hoạt được tối thứ Năm." />
         </Form.Item>
         {submit.isError && (
           <Alert

@@ -3,7 +3,7 @@ import { useMemo, type ReactNode } from 'react'
 import { generatePath, Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { formatProgramDate, PickedProgramFeedback, SongListStatusTag, usePickedProgram } from '@/features/liturgical-programs'
-import { NoChoirNotice } from '@/features/choirs'
+import { isPlanningDirector, LeadChoirNotice, NoChoirNotice, useEventChoirs } from '@/features/choirs'
 import { useAllChoirMembers } from '@/features/members'
 import { useParticipation } from '@/features/participation'
 import { useSongList } from '@/features/song-lists'
@@ -26,6 +26,11 @@ export function RosterPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { programs, lookup, program, options: allPrograms, looking, missing } = usePickedProgram(searchParams.get('programId'))
   const programId = program?.id ?? ''
+  const today = vietnamToday()
+  const isPast = Boolean(program && program.date < today)
+  const eventChoirs = useEventChoirs(programId || undefined)
+  const isLead = eventChoirs.data ? isPlanningDirector(eventChoirs.data) : true
+  const readOnly = isPast || !isLead
   const songList = useSongList(programId, { enabled: Boolean(programId) })
   const approved = songList.data?.status === 'approved'
   // Whole-service roles are staffed before the song list is approved, so the answers are read for every program.
@@ -53,7 +58,10 @@ export function RosterPage() {
         optionFilterProp="label"
         value={current.id}
         onChange={(id: string) => setSearchParams({ programId: id })}
-        options={allPrograms.map((item) => ({ value: item.id, label: `${item.eventName} · ${formatProgramDate(item.date)}` }))}
+        options={allPrograms.map((item) => ({
+          value: item.id,
+          label: `${item.eventName} · ${formatProgramDate(item.date)}${item.date < today ? ' (đã qua)' : ''}`,
+        }))}
         style={{ width: 360, maxWidth: '100%' }}
       />
       <SongListStatusTag status={current.songListStatus} />
@@ -62,11 +70,12 @@ export function RosterPage() {
   )
   const revise = songList.data?.status === 'needsRevision' || songList.data?.status === 'rejected'
 
-  const head = (actions?: ReactNode) => (
+  const head = (actions?: ReactNode, tags?: ReactNode) => (
     <PageHeader
       title="Phân công"
       breadcrumb={[{ title: 'Ca trưởng' }, { title: 'Phân công' }]}
       description="Bè đồng ca không cần phân công, chỉ cần xác nhận tham gia."
+      tags={tags}
       extra={actions}
     />
   )
@@ -91,8 +100,9 @@ export function RosterPage() {
       {program && !panelShown && (
         <Flex vertical gap={spacing.lg}>
           <div className="ctb-filters">{picker(program)}</div>
+          <LeadChoirNotice eventId={program.id} />
           {/* The backend refuses every roster change once the day has passed (LITURGICAL_EVENT_ALREADY_PASSED). */}
-          {program.date < vietnamToday() && <Alert type="info" showIcon title="Chương trình đã qua: không thay đổi phân công được nữa." />}
+          {isPast && <Alert type="info" showIcon title="Chương trình đã qua: không thay đổi phân công được nữa." />}
           {failed && (
             <ErrorState
               title="Không thể tải dữ liệu phân công"
@@ -110,6 +120,7 @@ export function RosterPage() {
               key={program.id}
               programId={program.id}
               approved={approved}
+              readOnly={readOnly}
               songs={approved ? (songList.data?.items ?? []).map(({ id, songTitle, slotName }) => ({ id, title: songTitle, liturgicalPart: slotName })) : []}
               eligible={eligible}
               skills={(skills.data ?? []).map(({ id, name }) => ({ id, name }))}
@@ -136,8 +147,9 @@ export function RosterPage() {
                 />
               }
             >
+              <LeadChoirNotice eventId={program.id} />
               {/* The backend refuses every roster change once the day has passed (LITURGICAL_EVENT_ALREADY_PASSED). */}
-              {program.date < vietnamToday() && <Alert type="info" showIcon title="Chương trình đã qua: không thay đổi phân công được nữa." />}
+              {isPast && <Alert type="info" showIcon title="Chương trình đã qua: không thay đổi phân công được nữa." />}
               {participation.data?.length === 0 && (
                 <Alert
                   type="info"

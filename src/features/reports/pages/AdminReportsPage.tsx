@@ -19,6 +19,8 @@ import { hasActiveReportFilters, readReportFilters, writeReportParams } from '..
 import { saveFile } from '@/shared/utils/saveFile'
 import type { AdminReportKind, ReportExportRequest, ReportFilters } from '../types'
 
+const nonChoirReports = new Set<AdminReportKind>(['userActivity', 'serviceHistory', 'songUsage'])
+
 /**
  * Admin: the four FE-52 reports and the Priest's two (`/api/reports`), with export to a file (FE-53) and the list of
  * exports. The choir filter narrows the three per-member reports, the chart and their export to the members of one
@@ -72,9 +74,19 @@ export function AdminReportsPage() {
           </Button>
         }
       />
-      {/* Filters first: they narrow the chart and the reports below (artifact AdminReportsPage). */}
-      <ReportFilterBar value={filters} onChange={(next) => show(kind, next)} onReset={() => show(kind, {})} seasons={seasons} choirs={choirOptions} />
-      <ActivityTrendCard query={trendQuery} title={`Điểm danh và bài tập 12 tháng đến ${trendEnd.format('MM/YYYY')}`} />
+      {/* Filters first: they narrow the reports and trend chart below. */}
+      <ReportFilterBar
+        value={filters}
+        onChange={(next) => show(kind, next)}
+        onReset={() => show(kind, {})}
+        seasons={seasons}
+        choirs={choirOptions}
+        choirScopeNote={
+          nonChoirReports.has(kind)
+            ? 'Bảng này thống kê toàn giáo xứ; lọc ca đoàn áp dụng cho biểu đồ xu hướng và 3 báo cáo theo ca viên.'
+            : undefined
+        }
+      />
       <Flex vertical gap={spacing.lg}>
         <Tabs
           className="khop-seg-tabs"
@@ -95,6 +107,7 @@ export function AdminReportsPage() {
             ),
           }))}
         />
+        <ActivityTrendCard query={trendQuery} title={`Điểm danh và bài tập 12 tháng đến ${trendEnd.format('MM/YYYY')}`} />
         <ExportHistory seasons={seasons} />
       </Flex>
       <ExportReportDrawer

@@ -1,9 +1,11 @@
 import { App, Button, Card, Dropdown, Flex, Input, InputNumber, Select, Tag, Typography, type InputRef, type TableColumnsType } from 'antd'
-import { useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   ACTIONS_COLUMN_TITLE,
   CANCEL_LABEL,
   CardTitle,
+  ErrorState,
+  Form,
   FormDrawer,
   Icon,
   SaveButton,
@@ -59,6 +61,8 @@ export interface StaffingCardProps {
   locked: boolean
   /** Whole-service lines finalized early: their members can still be replaced, nothing else changes. */
   linesLocked?: boolean
+  /** Reports whether requirement edits have unsaved changes. */
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 const muted = { color: colors.textMuted }
@@ -80,6 +84,7 @@ export function StaffingCard({
   skills,
   locked,
   linesLocked = false,
+  onDirtyChange,
 }: Readonly<StaffingCardProps>) {
   const { message, modal } = App.useApp()
   const requirements = usePersonnelRequirements(programId, song?.id)
@@ -103,6 +108,10 @@ export function StaffingCard({
   const saved = requirements.data ?? []
   const rows = draft ?? saved
   const dirty = draft !== undefined && JSON.stringify(draft) !== JSON.stringify(saved)
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+    return () => onDirtyChange?.(false)
+  }, [dirty, onDirtyChange])
   const freeSkills = skills.filter((skill) => !rows.some((row) => row.skillId === skill.id))
   const change = (next: PersonnelRequirement[]) => setDraft(next)
   const failed = (fallback: string) => (error: Error) => message.error(rosterErrorMessage(error, fallback))
@@ -215,19 +224,22 @@ export function StaffingCard({
       width: 110,
       render: (_, row) =>
         editable ? (
-          <InputNumber
-            min={1}
-            max={maxRequiredCount}
-            precision={0}
-            value={row.requiredCount}
-            aria-label={`Số người ${row.skillName}`}
-            onChange={(value) =>
-              value && change(rows.map((item) => (item.skillId === row.skillId ? { ...item, requiredCount: value } : item)))
-            }
-            style={{ width: 80 }}
-          />
+          <Flex align="center" gap={spacing.xs}>
+            <Typography.Text style={{ ...muted, fontSize: typography.metadata.fontSize }}>Số người</Typography.Text>
+            <InputNumber
+              min={1}
+              max={maxRequiredCount}
+              precision={0}
+              value={row.requiredCount}
+              aria-label={`Số người ${row.skillName}`}
+              onChange={(value) =>
+                value && change(rows.map((item) => (item.skillId === row.skillId ? { ...item, requiredCount: value } : item)))
+              }
+              style={{ width: 80 }}
+            />
+          </Flex>
         ) : (
-          row.requiredCount
+          <Typography.Text style={{ ...muted, fontSize: typography.metadata.fontSize }}>Cần {row.requiredCount} người</Typography.Text>
         ),
     },
     {
@@ -291,11 +303,21 @@ export function StaffingCard({
                       }}
                       aria-label={`${label}${rehearsing}, ${row.skillName}: thay, ghi chú hoặc gỡ`}
                       // No transition: antd's `transition: all` would keep it hidden in the frame where Escape focuses it.
-                      style={{ gridArea: '1 / 1', visibility: inReplace ? 'hidden' : undefined, transition: 'none' }}
+                      style={{
+                        gridArea: '1 / 1',
+                        visibility: inReplace ? 'hidden' : undefined,
+                        transition: 'none',
+                        maxWidth: '100%',
+                        justifyContent: 'space-between',
+                      }}
                     >
-                      {label}
-                      {line.source === 'suggested' && <Typography.Text style={muted}>· gợi ý</Typography.Text>}
-                      {line.hasRehearsalConflict && <Typography.Text style={muted}>· trùng buổi tập</Typography.Text>}
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {label}
+                        {line.source === 'suggested' && <Typography.Text style={muted}> · gợi ý</Typography.Text>}
+                        {line.hasRehearsalConflict && (
+                          <Typography.Text style={{ color: 'var(--hm-area-attention-ink)', fontWeight: 600 }}> · trùng buổi tập</Typography.Text>
+                        )}
+                      </span>
                       <Icon name="chevron-down" />
                     </Button>
                   </Dropdown>
@@ -429,12 +451,13 @@ export function StaffingCard({
     >
       {requirements.isPending && <SectionSkeleton rows={2} label={`Đang tải yêu cầu nhân sự của ${place}`} />}
       {requirements.isError && (
-        <Typography.Text type="danger">
-          Không thể tải yêu cầu nhân sự.{' '}
-          <Button type="link" onClick={() => requirements.refetch()}>
-            Thử lại
-          </Button>
-        </Typography.Text>
+        <ErrorState
+          headingLevel={3}
+          title="Không thể tải yêu cầu nhân sự"
+          error={requirements.error}
+          onRetry={() => requirements.refetch()}
+          retrying={requirements.isFetching}
+        />
       )}
       {requirements.isSuccess && (
         <Flex vertical gap={spacing.sm}>
@@ -495,21 +518,24 @@ export function StaffingCard({
         destroyOnHidden
       >
         {noting && (
-          <Flex vertical gap={spacing.sm}>
-            <Typography.Text>
-              {noting.memberName} · {voicePartName(noting.skillName)} · {place}
-            </Typography.Text>
-            <Input
-              ref={noteInputRef}
-              value={note}
-              maxLength={200}
-              showCount
-              aria-label="Ghi chú vai"
-              placeholder="Ví dụ: Người dẫn truyện, Bè 1"
-              onChange={(event) => setNote(event.target.value)}
-            />
-            <Typography.Text style={muted}>Để trống để xoá ghi chú. Ca viên thấy ghi chú này trong thông báo phân công.</Typography.Text>
-          </Flex>
+          <Form layout="vertical" onFinish={handleNote}>
+            <div className="hm-form-context">
+              <Typography.Text>
+                {noting.memberName} · {voicePartName(noting.skillName)} · {place}
+              </Typography.Text>
+            </div>
+            <Form.Item label="Ghi chú vai" extra="Để trống để xoá ghi chú. Ca viên thấy ghi chú này trong thông báo phân công." style={{ marginBottom: 0 }}>
+              <Input
+                ref={noteInputRef}
+                value={note}
+                maxLength={200}
+                showCount
+                aria-label="Ghi chú vai"
+                placeholder="Ví dụ: Người dẫn truyện, Bè 1"
+                onChange={(event) => setNote(event.target.value)}
+              />
+            </Form.Item>
+          </Form>
         )}
       </FormDrawer>
     </Card>

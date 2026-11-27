@@ -13,10 +13,12 @@ export interface SubmissionListProps {
   /** Submissions of this assignment; absent for the review queue across every assignment. */
   assignmentId?: string
   defaultStatus: PracticeStatus | 'all'
+  /** Stacks the queue over the review panel (e.g. inside a 720px detail drawer). */
+  stacked?: boolean
 }
 
-/** Each member's newest attempt, filtered by status and paged on the server, reviewed in the review drawer (FE-42). */
-export function SubmissionList({ assignmentId, defaultStatus }: Readonly<SubmissionListProps>) {
+/** Each member's newest attempt, filtered by status and paged on the server, reviewed in the review panel (FE-42). */
+export function SubmissionList({ assignmentId, defaultStatus, stacked = false }: Readonly<SubmissionListProps>) {
   const [status, setStatus] = useState(defaultStatus)
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState<{ id: string }>()
@@ -64,7 +66,7 @@ export function SubmissionList({ assignmentId, defaultStatus }: Readonly<Submiss
         />
       )}
       {submissions.data !== undefined && total > 0 && (
-        <div className="hm-split hm-split--review">
+        <div className={stacked ? 'hm-split hm-split--review is-stacked' : 'hm-split hm-split--review'}>
           <Card styles={{ body: { padding: 0 } }}>
             <SubmissionTable
               selectedId={shown?.id}

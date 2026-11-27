@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, App, Input, Select, Skeleton, Typography, type RefSelectProps } from 'antd'
-import { useRef, useState } from 'react'
-import { useChoirs } from '@/features/choirs'
+import { useMemo, useRef, useState } from 'react'
+import { useChoirs, useMembersOfChoirs } from '@/features/choirs'
 import { searchMembers } from '@/features/members'
 import { getSession } from '@/lib/auth/session'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { CANCEL_LABEL, Form, FormDrawer, SELECT_POPUP_PROPS } from '@/shared/ui'
+import { matchesSearch } from '@/shared/utils/search'
 import { component, spacing, typography } from '@/styles/tokens'
 import { createNomination, getEligibility } from '../api/nominationsApi'
 import { nominationErrorMessage } from '../nominationErrors'
@@ -18,9 +19,8 @@ interface Values {
 }
 
 /**
- * Choir Director (members of their choirs) or Parish Priest (any member of the parish, BE e18e49b) nominates a member.
- * Members are searched on the server, so a parish larger than one page still finds everyone. The record is shown
- * before sending, as a warning only.
+ * Choir Director (every member of their own choirs) or Parish Priest (server search across the whole parish, BE e18e49b)
+ * nominates a member. The record is shown before sending, as a warning only.
  */
 export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean; onClose: () => void }>) {
   const { message } = App.useApp()
@@ -33,21 +33,27 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
   const search = useDebouncedValue(keyword)
   // The chosen member keeps its name in the field while the next search shows other people.
   const [chosen, setChosen] = useState<{ value: string; label: string }>()
-  const members = useQuery({
+  const choirs = useChoirs(open)
+  const ownChoirIds = useMemo(() => (choirs.data ?? []).map((choir) => choir.id), [choirs.data])
+  // Parish Priest searches across the whole parish on the server; Choir Director loads every member of their own choirs
+  // so no member is hidden past the parish's first 20 rows.
+  const parishMembers = useQuery({
     queryKey: ['director-nominations', 'members', search],
     queryFn: () => searchMembers({ search, status: 'active' }, { pageNumber: 1, pageSize: 20 }),
-    enabled: open,
+    enabled: open && isPriest,
   })
-  const choirs = useChoirs(open)
-  // The search covers the whole parish, but a Choir Director may nominate only members of the choirs they lead
-  // (DirectorNominationService.GetNominatableMemberAsync, MEMBER_NOT_FOUND otherwise): others are not offered.
-  // ponytail: filters one page of 20 results, so a broad keyword may show fewer; a choirId filter on the search would fix it.
-  const ownChoirs = new Set((choirs.data ?? []).map((choir) => choir.id))
-  const memberOptions =
-    members.data?.items
-      .filter((member) => isPriest || member.choirs?.some((choir) => ownChoirs.has(choir.id)))
-      .map((member) => ({ value: member.id, label: member.fullName })) ?? []
-  if (chosen && !memberOptions.some((option) => option.value === chosen.value)) memberOptions.unshift(chosen)
+  const ownChoirMembers = useMembersOfChoirs(open && !isPriest ? ownChoirIds : [])
+  const membersLoading = isPriest ? parishMembers.isFetching && open : (choirs.isFetching || ownChoirMembers.isFetching) && open
+  const membersError = isPriest ? parishMembers.isError : choirs.isError || ownChoirMembers.isError
+  const memberOptions = useMemo(() => {
+    const list = isPriest
+      ? (parishMembers.data?.items ?? []).map((member) => ({ value: member.id, label: member.fullName }))
+      : [...new Map((ownChoirMembers.data ?? []).map((member) => [member.memberId, member])).values()]
+          .filter((member) => matchesSearch(keyword, member.fullName, member.email))
+          .map((member) => ({ value: member.memberId, label: member.fullName }))
+    if (chosen && !list.some((option) => option.value === chosen.value)) return [chosen, ...list]
+    return list
+  }, [isPriest, parishMembers.data?.items, ownChoirMembers.data, keyword, chosen])
   const memberId = Form.useWatch('memberId', form)
   const eligibility = useQuery({
     queryKey: ['director-nominations', 'eligibility', memberId],
@@ -99,10 +105,10 @@ export function NominationFormDrawer({ open, onClose }: Readonly<{ open: boolean
             ref={memberField}
             showSearch={{ filterOption: false, onSearch: setKeyword }}
             placeholder={isPriest ? 'Tìm ca viên trong giáo xứ theo họ tên hoặc email' : 'Tìm ca viên trong ca đoàn của bạn'}
-            loading={members.isFetching && open}
+            loading={membersLoading}
             options={memberOptions}
             onChange={(value: string, option) => setChosen(option && !Array.isArray(option) ? { value, label: String(option.label) } : undefined)}
-            notFoundContent={members.isError ? 'Không tải được danh sách ca viên' : 'Không có ca viên phù hợp'}
+            notFoundContent={membersError ? 'Không tải được danh sách ca viên' : 'Không có ca viên phù hợp'}
           />
         </Form.Item>
         {memberId && (

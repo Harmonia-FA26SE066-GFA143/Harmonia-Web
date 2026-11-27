@@ -1,6 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import dayjs from 'dayjs'
 import * as eventsApi from '@/features/liturgical-programs/api/eventsApi'
 import * as liturgicalDaysApi from '@/features/liturgical-programs/api/liturgicalDaysApi'
 import * as programsApi from '@/features/liturgical-programs/api/programsApi'
@@ -246,7 +245,7 @@ describe('DirectorDashboardPage', () => {
 
   it('confirms when nothing waits, and shows the season of today', async () => {
     counts(0, 0)
-    const today = dayjs().format('YYYY-MM-DD')
+    const today = vietnamToday()
     vi.spyOn(liturgicalDaysApi, 'listLiturgicalDays').mockResolvedValue([
       { date: today, celebrationName: 'Chúa Nhật Thứ Ba Mùa Vọng', seasonKey: 'Advent', seasonName: 'Mùa Vọng' },
     ])

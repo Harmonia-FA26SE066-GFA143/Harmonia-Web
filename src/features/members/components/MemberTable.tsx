@@ -73,6 +73,16 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
       // Only a current Choir Member has a voice part to miss; a retained profile says nothing when empty (B46).
       render: (_, member) => <VoicePartTags skills={member.skills} showUnassigned={member.role === 'member'} />,
     },
+    {
+      title: 'Ca đoàn',
+      key: 'choirs',
+      render: (_, member) =>
+        member.choirs && member.choirs.length > 0 ? (
+          member.choirs.map((choir) => choir.name).join(', ')
+        ) : (
+          <EmptyCell text="Chưa có ca đoàn" />
+        ),
+    },
     { title: 'Tham gia từ', dataIndex: 'joinedDate', render: (date: string) => dayjs(date).format('MM/YYYY') },
     {
       title: 'Trạng thái',
@@ -109,6 +119,7 @@ export function MemberTable({ members, page, pageSize, total, loading, onPageCha
       dataSource={members}
       loading={loading}
       pagination={total > pageSize && { current: page, pageSize, total, showSizeChanger: false, onChange: onPageChange }}
+      scroll={{ x: 960 }}
     />
   )
 }

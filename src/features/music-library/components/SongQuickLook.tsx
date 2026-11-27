@@ -1,4 +1,4 @@
-import { Button, Flex } from 'antd'
+import { Button, Flex, Tooltip } from 'antd'
 import { useState } from 'react'
 import type { MouseEvent } from 'react'
 import { generatePath, Link, useLocation, useNavigate } from 'react-router'
@@ -82,7 +82,11 @@ export function SongQuickLook({ song, number, part }: Readonly<{ song: Song; num
                     {MATERIAL_LABELS[kind]}
                     <small>{count ? `${count} tệp` : 'Chưa có'}</small>
                   </span>
-                  <Link to={detail} state={songListState(search)} aria-label={`${materialAction(kind, count)} ${MATERIAL_LABELS[kind].toLowerCase()} của ${song.title}`}>
+                  <Link
+                    to={`${detail}#materials-${kind}`}
+                    state={songListState(search)}
+                    aria-label={`${materialAction(kind, count)} ${MATERIAL_LABELS[kind].toLowerCase()} của ${song.title}`}
+                  >
                     {materialAction(kind, count)}
                   </Link>
                 </li>
@@ -97,9 +101,14 @@ export function SongQuickLook({ song, number, part }: Readonly<{ song: Song; num
             <Button href={assign} icon={<Icon name="assignment" />} onClick={go(assign)}>
               {CREATE_ASSIGNMENT_LABEL}
             </Button>
-            <Button type="link" disabled={!learnable} onClick={() => setProgressOf(learnable)}>
-              Tiến độ học
-            </Button>
+            <Tooltip
+              title={learnable ? `Xem tiến độ học của “${learnable.title}”` : 'Bài hát chưa có tài liệu để theo dõi tiến độ'}
+              trigger={['hover', 'focus']}
+            >
+              <Button type="link" disabled={!learnable} onClick={() => setProgressOf(learnable)}>
+                Tiến độ học
+              </Button>
+            </Tooltip>
           </Flex>
         </div>
       </div>

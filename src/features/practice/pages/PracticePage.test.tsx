@@ -432,16 +432,14 @@ describe('PracticePage', () => {
     renderPractice()
 
     fireEvent.click(screen.getByRole('tab', { name: 'Tiến độ chuẩn bị' }))
-    expect(await screen.findByText('Chọn một chương trình')).toBeInTheDocument()
-    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Chương trình phụng vụ' }))
-    fireEvent.click(await screen.findByTitle('Lễ Chúa Nhật · 18/10/2026 08:00 · Nhà thờ chính'))
 
+    // Auto-selects the nearest upcoming program instead of showing an empty prompt.
     expect(await screen.findByText('Maria Trần Thị Lan')).toBeInTheDocument()
     expect(progress).toHaveBeenCalledWith('ev-1')
     expect(screen.getByText('Xác nhận')).toBeInTheDocument()
     expect(screen.getByText('2/3')).toBeInTheDocument()
-    // No assignment given: a muted label instead of a bare dash, and 0/0 is not counted as "all passed".
-    expect(screen.getByText('Chưa có dữ liệu')).toBeInTheDocument()
+    // No assignment given: an explicit muted label instead of a bare dash, and 0/0 is not counted as "all passed".
+    expect(screen.getByText('Chưa giao')).toBeInTheDocument()
     const chips = screen.getByRole('status', { name: 'Tóm tắt tiến độ chuẩn bị' })
     expect(chips).toHaveTextContent('Đã xác nhận: 1/1 đã mời')
     expect(chips).toHaveTextContent('Chưa giao bài tập')

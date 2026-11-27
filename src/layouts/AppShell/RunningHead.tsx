@@ -130,7 +130,7 @@ export function RunningHead({ sections, selectedPath, brand, controls, day, scro
   }, [tabsBox, selectedPath, areaIndex])
 
   return (
-    <div className={`hm-head${scrolled ? ' is-scrolled' : ''}`}>
+    <header className={`hm-head${scrolled ? ' is-scrolled' : ''}`}>
       <div className="hm-top">
         {brand}
         <nav aria-label="Điều hướng chính" style={{ minWidth: 0 }}>
@@ -146,7 +146,7 @@ export function RunningHead({ sections, selectedPath, brand, controls, day, scro
                 aria-current={found === index ? 'true' : undefined}
               >
                 {section.label}
-                {section.items.map((item) => item.useCount && <AreaDot key={item.path} useCount={item.useCount} />)}
+                <AreaWaitingDot items={section.items} />
               </Link>
             ))}
           </div>
@@ -173,7 +173,7 @@ export function RunningHead({ sections, selectedPath, brand, controls, day, scro
         </div>
         {day}
       </nav>
-    </div>
+    </header>
   )
 }
 
@@ -193,9 +193,14 @@ function TabCount({ useCount }: Readonly<{ useCount: () => number | undefined }>
   )
 }
 
-/** An ochre dot on an area whose page has something waiting (artifact Spine); read aloud with the area name. */
-function AreaDot({ useCount }: Readonly<{ useCount: () => number | undefined }>) {
-  if (!useCount()) return null
+/** One aggregated ochre dot per area when any of its pages has items waiting; never duplicates dots or SR text. */
+function AreaWaitingDot({ items }: Readonly<{ items: NavSection['items'] }>) {
+  // Hooks are called in fixed order matching the static navigation config of each section.
+  let waiting = false
+  for (const item of items) {
+    if (item.useCount && item.useCount()) waiting = true
+  }
+  if (!waiting) return null
   return (
     <>
       {' '}

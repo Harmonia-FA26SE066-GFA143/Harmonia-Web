@@ -12,14 +12,21 @@ export const periodLabels: Record<ActivityPeriod, string> = {
 }
 
 const periodDays: Record<ActivityPeriod, number> = { today: 0, last7Days: 6, last30Days: 29 }
+const isoDate = /^\d{4}-\d{2}-\d{2}$/
 
 export const hasActiveActivityFilters = (filters: ActivityFilters) =>
-  Boolean(filters.entityType || filters.action || filters.period || filters.user)
+  Boolean(filters.entityType || filters.action || filters.period || filters.fromDate || filters.toDate || filters.user)
 
 /** The query string of GET /api/audit-logs; periods count whole days in Vietnam, today included. */
-export function toActivityQuery({ entityType, action, period, user }: ActivityFilters): ActivityQuery {
-  const fromDate = period && dayjs(vietnamToday()).subtract(periodDays[period], 'day').format('YYYY-MM-DD')
-  return { entityType, action, fromDate, userId: user?.id }
+export function toActivityQuery({ entityType, action, period, fromDate: customFrom, toDate, user }: ActivityFilters): ActivityQuery {
+  const fromDate = period ? dayjs(vietnamToday()).subtract(periodDays[period], 'day').format('YYYY-MM-DD') : customFrom
+  return {
+    entityType,
+    action,
+    fromDate,
+    ...(toDate ? { toDate } : {}),
+    userId: user?.id,
+  }
 }
 
 
@@ -30,28 +37,37 @@ export const entityLabel = (entityType: string) => entityTypeLabels[entityType] 
 export const actorName = ({ user }: ActivityRecord) =>
   user ? user.fullName || user.email || 'Người dùng' : 'Không đăng nhập'
 
-/** The list state kept in the URL: `?entityType=&action=&period=&userId=&userName=&page=`; unknown values are ignored. */
+/** The list state kept in the URL: `?entityType=&action=&period=&fromDate=&toDate=&userId=&userName=&page=`; unknown values are ignored. */
 export function readActivityState(params: URLSearchParams): { filters: ActivityFilters; page: number } {
   const entityType = params.get('entityType') ?? undefined
   const action = params.get('action') ?? undefined
   const period = params.get('period') ?? undefined
+  const fromDate = params.get('fromDate') ?? undefined
+  const toDate = params.get('toDate') ?? undefined
   const userId = params.get('userId')
+  const validPeriod = period && period in periodLabels ? (period as ActivityPeriod) : undefined
   return {
     filters: {
       entityType: entityType && entityType in entityTypeLabels ? entityType : undefined,
       action: action && action in actionLabels ? action : undefined,
-      period: period && period in periodLabels ? (period as ActivityPeriod) : undefined,
+      period: validPeriod,
+      fromDate: !validPeriod && fromDate && isoDate.test(fromDate) ? fromDate : undefined,
+      toDate: !validPeriod && toDate && isoDate.test(toDate) ? toDate : undefined,
       user: userId ? { id: userId, name: params.get('userName') || 'Người dùng' } : undefined,
     },
     page: Math.max(1, Number.parseInt(params.get('page') ?? '', 10) || 1),
   }
 }
 
-export function writeActivityState({ entityType, action, period, user }: ActivityFilters, page: number): URLSearchParams {
+export function writeActivityState({ entityType, action, period, fromDate, toDate, user }: ActivityFilters, page: number): URLSearchParams {
   const params = new URLSearchParams()
   if (entityType) params.set('entityType', entityType)
   if (action) params.set('action', action)
   if (period) params.set('period', period)
+  else {
+    if (fromDate) params.set('fromDate', fromDate)
+    if (toDate) params.set('toDate', toDate)
+  }
   if (user) {
     params.set('userId', user.id)
     params.set('userName', user.name)

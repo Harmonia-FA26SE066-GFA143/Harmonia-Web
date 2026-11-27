@@ -10,51 +10,24 @@ import { colors, component, spacing } from '@/styles/tokens'
 import { EventForm } from '../components/EventForm'
 import { EventStatusTag } from '../components/EventStatusTag'
 import { PreparationStatusCard } from '../components/PreparationStatusCard'
-import { PreparationOverview } from '../components/PreparationOverview'
 import { PriestAdjacentNav } from '../components/AdjacentProgramNav'
 import { ProgramHeader } from '../components/ProgramHeader'
 import { ProgramItemList } from '../components/ProgramItemList'
 import { SongListStatusTag } from '../components/SongListStatusTag'
 import { eventErrorMessage } from '../eventErrors'
-import { inviteServingMembers, type InviteOutcome, useCancelEvent, useEvent, usePreparationStatus, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
+import { inviteServingMembers, type InviteOutcome, useCancelEvent, useEvent, usePublishEvent, useUpdateEvent } from '../hooks/useEvents'
 import { useEventNames } from '../hooks/useEventNames'
 import { useProgram } from '../hooks/usePrograms'
 import { formatDateTime, vietnamNow } from '@/lib/api/dates'
 import { formatProgramDate } from '../programFilters'
-import { preparationItems } from '../preparationOverview'
 import type { EventFormValues, LiturgicalEvent } from '../types'
 
 const editFormId = 'priest-edit-event-form'
-const breadcrumb = [{ title: 'Cha xứ' }, { title: 'Chương trình phụng vụ' }, { title: 'Chi tiết chương trình' }]
-
-/** Independent preparation items from FE-21 (`preparation-status`). */
-function PriestSteps({ event }: Readonly<{ event: LiturgicalEvent }>) {
-  const status = usePreparationStatus(event.id)
-  const items = preparationItems({
-    date: event.date,
-    songListStatus: status.data?.songListStatus,
-    status: status.data,
-    failed: status.isError,
-    viewer: 'priest',
-  })
-  return (
-    <section className="hm-sheet-section priest-queue hm-paper" aria-labelledby="prep-heading">
-      <header className="hm-sheet-section__head">
-        <h2 id="prep-heading" className="hm-rubric">
-          Tình hình chuẩn bị
-        </h2>
-      </header>
-      <div className="priest-sheet__body">
-        {status.isPending && <SectionSkeleton rows={2} label="Đang tải tình hình chuẩn bị" />}
-        {status.isError && (
-          <ErrorState headingLevel={3} title="Không thể tải tiến trình chuẩn bị" error={status.error} hasData={false} onRetry={() => status.refetch()} retrying={status.isFetching} />
-        )}
-        {/* One column: the aside is a third of the page wide (G3-07). */}
-        {status.isSuccess && <PreparationOverview items={items} columns={1} />}
-      </div>
-    </section>
-  )
-}
+const breadcrumb = [
+  { title: 'Cha xứ' },
+  { title: <Link to={paths.priest.programs}>Chương trình phụng vụ</Link> },
+  { title: 'Chi tiết chương trình' },
+]
 
 /**
  * The songs of the newest list in order (`/api/song-lists/event/{id}/latest` through useProgram), read on ivory;
@@ -310,7 +283,12 @@ export function PriestProgramDetailPage() {
             type="warning"
             showIcon
             title="Chưa chọn mùa phụng vụ"
-            description="Sự kiện cần có mùa phụng vụ trước khi công bố. Bấm “Sửa sự kiện” để chọn mùa."
+            description="Sự kiện cần có mùa phụng vụ trước khi công bố. Bạn có thể chọn mùa ngay tại đây."
+            action={
+              <Button size="small" onClick={() => setEditing(true)}>
+                Chọn mùa phụng vụ
+              </Button>
+            }
           />
         )}
         {/* Preparation starts once the event is published; a draft or a cancelled event shows only its choirs. */}
@@ -321,8 +299,7 @@ export function PriestProgramDetailPage() {
               <EventChoirsCard eventId={data.id} canEdit locked={cancelled || !upcoming} published />
             </div>
             <aside className="dash-aside dash-main" aria-label="Tình hình chuẩn bị">
-              <PriestSteps event={data} />
-              <PreparationStatusCard eventId={data.id} />
+              <PreparationStatusCard eventId={data.id} eventDate={data.date} />
             </aside>
           </div>
         ) : (

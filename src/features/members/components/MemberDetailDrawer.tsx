@@ -38,7 +38,16 @@ export function MemberDetailDrawer({ member, onClose, onEdit }: Readonly<MemberD
   const [revoking, setRevoking] = useState<{ id: string; name: string }>()
   // The drawer shows the row it was opened with; a revoked skill leaves it at once, the list reloads behind it.
   const [revoked, setRevoked] = useState<string[]>([])
+  const [seenMemberId, setSeenMemberId] = useState(member?.id)
+  if (member?.id !== seenMemberId) {
+    setSeenMemberId(member?.id)
+    setRevoked([])
+    setRevoking(undefined)
+  }
   const approved = (member?.approvedSkills ?? []).filter((skill) => !revoked.includes(skill.id))
+  const remainingSkillNames = member
+    ? member.skills.filter((name) => approved.some((skill) => skill.name === name) || !member.approvedSkills)
+    : []
 
   const submitRevoke = (reason: string) => {
     if (!revoking || revoke.isPending) return
@@ -126,8 +135,8 @@ export function MemberDetailDrawer({ member, onClose, onEdit }: Readonly<MemberD
               </>
             ) : (
               <Flex vertical gap={spacing.xs} align="flex-start">
-                <VoicePartTags skills={member.skills.filter((name) => approved.some((skill) => skill.name === name) || !member.approvedSkills)} showUnassigned={editable} />
-                {member.skills.length === 0 && <EmptyCell text="Chưa có kỹ năng được duyệt" />}
+                <VoicePartTags skills={remainingSkillNames} showUnassigned={editable} />
+                {remainingSkillNames.length === 0 && <EmptyCell text="Chưa có kỹ năng được duyệt" />}
               </Flex>
             )}
           </section>

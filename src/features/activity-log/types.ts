@@ -62,6 +62,9 @@ export interface ActivityFilters {
   entityType?: string
   action?: string
   period?: ActivityPeriod
+  /** Custom YYYY-MM-DD range (Vietnam wall clock, inclusive); mutually exclusive with `period`. */
+  fromDate?: string
+  toDate?: string
   /** Set by picking a person in the table; the name is kept to show the active filter. */
   user?: { id: string; name: string }
 }

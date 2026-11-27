@@ -1,7 +1,7 @@
 import { App, Button, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { parseUtc } from '@/lib/api/dates'
 import { ApiError, requestFailureMessage } from '@/lib/api/errors'
@@ -52,7 +52,11 @@ import {
 } from '../types'
 
 
-const breadcrumb = [{ title: 'Ca trưởng' }, { title: 'Kho bài hát' }, { title: 'Chi tiết bài hát' }]
+const breadcrumbFor = (listSearch: string) => [
+  { title: 'Ca trưởng' },
+  { title: <Link to={`${paths.director.library}${listSearch}`}>Kho bài hát</Link> },
+  { title: 'Chi tiết bài hát' },
+]
 
 /**
  * Choir Director: one song with its fields, FE-29 classification and FE-08/FE-28 materials, their learning progress
@@ -134,9 +138,21 @@ export function SongDetailPage() {
     )
   }, [draftParam, songTitle, songId, message, setParams])
 
+  const listSearch = listSearchOf(location.state)
+  const breadcrumb = breadcrumbFor(listSearch)
+
+  // Quick-look material links land on #materials-<kind>: scroll the target group into view once loaded.
+  useEffect(() => {
+    if (!location.hash.startsWith('#materials-') || !materials.data) return
+    const target = document.getElementById(location.hash.slice(1))
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [location.hash, materials.data])
+
   const backButton = (
     // The list's filters and page travel with the song (router state), so coming back shows the list as it was.
-    <Button icon={<Icon name="arrow-left" />} onClick={() => navigate(`${paths.director.library}${listSearchOf(location.state)}`)}>
+    <Button icon={<Icon name="arrow-left" />} onClick={() => navigate(`${paths.director.library}${listSearch}`)}>
       Về kho bài hát
     </Button>
   )
@@ -317,12 +333,12 @@ export function SongDetailPage() {
         extra={
           <>
             {backButton}
+            <Button type="text" danger icon={<Icon name="delete" />} onClick={handleDeleteSong}>
+              Xoá bài hát
+            </Button>
             {/* Straight to the assignment form with the song picked; PracticePage's ?tab=assign only redirects there. */}
             <Button icon={<Icon name="assignment" />} onClick={() => navigate(`${paths.director.practiceNew}?songId=${data.id}`)}>
               {CREATE_ASSIGNMENT_LABEL}
-            </Button>
-            <Button danger icon={<Icon name="delete" />} onClick={handleDeleteSong}>
-              Xoá bài hát
             </Button>
             <Button type="primary" icon={<Icon name="edit" />} onClick={() => setEditing(true)}>
               Chỉnh sửa

@@ -1,6 +1,6 @@
 import { Alert, Button } from 'antd'
 import type { ReactNode } from 'react'
-import { sections } from '@/styles/tokens'
+import { colors, sections } from '@/styles/tokens'
 import { BrokenStaff } from './ChantStaff'
 import { Icon } from './icons'
 import { StatePanel } from './StatePanel'
@@ -68,7 +68,7 @@ export function ErrorState({
         description={descriptionText}
         action={onRetry ? <Button size="small" loading={retrying} onClick={onRetry}>Thử lại</Button> : undefined}
         style={{ marginBlock: 12, background: attention.tint, borderColor: attention.border }}
-        styles={{ title: { color: attention.ink, fontWeight: 600 }, description: { color: sections.roster.ink } }}
+        styles={{ title: { color: attention.ink, fontWeight: 600 }, description: { color: colors.textBody } }}
       />
     )
   }

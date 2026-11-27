@@ -182,7 +182,7 @@ describe('MidiPracticePlayer synchronized playback', () => {
     renderPlayer()
 
     expect(screen.getByRole('heading', { level: 3, name: 'Bản nốt đồng bộ' })).toBeInTheDocument()
-    expect(screen.getByText('2 nốt · 1 track')).toBeInTheDocument()
+    expect(screen.getByText('2 nốt · 1 kênh')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Phát Kyrie' })).toBeInTheDocument()
   })
 
@@ -212,7 +212,7 @@ describe('MidiPracticePlayer synchronized playback', () => {
     }
 
     expect(audio().currentTime).toBeCloseTo(1)
-    expect(screen.getByText('0:01 / 0:12')).toBeInTheDocument()
+    expect(screen.getByText('00:01 / 00:12')).toBeInTheDocument()
   })
 
   it('replay after ended starts from 0', async () => {
@@ -312,7 +312,7 @@ describe('MidiPracticePlayer synchronized playback', () => {
       fireEvent.keyDown(slider, { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39, which: 39 })
     }
     const previousAudio = audio()
-    expect(screen.getByText('0:01 / 0:12')).toBeInTheDocument()
+    expect(screen.getByText('00:01 / 00:12')).toBeInTheDocument()
 
     mocks.useMaterialPlayback.mockReturnValue(playbackResult('https://files.example/agnus-dei.wav'))
     view.rerender(<MidiPracticePlayer materialId="material-1" title="Kyrie" />)
@@ -325,7 +325,7 @@ describe('MidiPracticePlayer synchronized playback', () => {
     expect(previousAudio.src).toBe('')
     expect(audio().currentTime).toBe(0)
     expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0')
-    expect(screen.getByText('0:00 / 0:12')).toBeInTheDocument()
+    expect(screen.getByText('00:00 / 00:12')).toBeInTheDocument()
   })
 
   it('unmount stops audio, removes listeners and cancels the frame loop', async () => {

@@ -1,6 +1,6 @@
 import { Flex, Typography } from 'antd'
 import { Icon } from '@/shared/ui'
-import { spacing } from '@/styles/tokens'
+import { colors, spacing } from '@/styles/tokens'
 import type { NominationStats } from '../types'
 
 /** The member's record against the thresholds. A threshold not met is a warning only: the Parish Priest still decides. */
@@ -20,15 +20,35 @@ export function NominationStatsList({ stats }: Readonly<{ stats: NominationStats
     },
   ]
   return (
-    <Flex component="ul" vertical gap={spacing.xs} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-      {rows.map(({ label, value, met }) => (
-        <Flex component="li" key={label} gap={spacing.sm} align="baseline">
-          <span aria-hidden style={{ color: met ? "var(--hm-success)" : "var(--hm-warning)" }}>{met ? <Icon name="check-circle" /> : <Icon name="warning" />}</span>
-          <Typography.Text>
-            <strong>{label}:</strong> {value}. {met ? 'Đạt.' : 'Chưa đạt.'}
-          </Typography.Text>
-        </Flex>
-      ))}
-    </Flex>
+    <div className="hm-form-context" style={{ marginBottom: 0 }}>
+      <Flex component="ul" vertical gap={spacing.xs} style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {rows.map(({ label, value, met }, index) => (
+          <Flex
+            component="li"
+            key={label}
+            gap={spacing.sm}
+            align="baseline"
+            justify="space-between"
+            wrap
+            style={{
+              paddingTop: index > 0 ? spacing.xs : 0,
+              borderTop: index > 0 ? `1px solid ${colors.border}` : undefined,
+            }}
+          >
+            <Flex gap={spacing.xs} align="baseline" style={{ minWidth: 0 }}>
+              <span aria-hidden style={{ color: met ? 'var(--hm-success)' : 'var(--hm-warning)', flexShrink: 0 }}>
+                {met ? <Icon name="check-circle" /> : <Icon name="warning" />}
+              </span>
+              <Typography.Text>
+                <strong>{label}:</strong> {value}.{' '}
+                <span style={{ color: met ? 'var(--hm-success)' : 'var(--hm-area-attention-ink)', fontWeight: 600 }}>
+                  {met ? 'Đạt.' : 'Chưa đạt.'}
+                </span>
+              </Typography.Text>
+            </Flex>
+          </Flex>
+        ))}
+      </Flex>
+    </div>
   )
 }

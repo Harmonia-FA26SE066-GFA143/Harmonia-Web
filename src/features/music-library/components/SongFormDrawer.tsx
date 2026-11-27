@@ -1,6 +1,6 @@
-import { Flex, Input, type InputRef } from 'antd'
+import { Input, type InputRef } from 'antd'
 import { useRef } from 'react'
-import { component, spacing } from '@/styles/tokens'
+import { component } from '@/styles/tokens'
 import type { Song, SongValues } from '../types'
 import { Form, FormDrawer } from '@/shared/ui'
 
@@ -74,22 +74,22 @@ export function SongFormDrawer({ open, song, saving = false, titleError, onSubmi
       >
         <Input ref={titleRef} placeholder="Ví dụ: Con Bước Lên Bàn Thờ" />
       </Form.Item>
-      <Flex wrap gap={spacing.md}>
-        <Form.Item label="Nhạc sĩ" name="composer" rules={[{ max: 150, message: 'Tối đa 150 ký tự.' }]} style={{ flex: '1 1 260px' }}>
+      <div className="hm-form-row-2">
+        <Form.Item label="Nhạc sĩ" name="composer" rules={[{ max: 150, message: 'Tối đa 150 ký tự.' }]}>
           <Input placeholder="Ví dụ: Lm. Kim Long" />
         </Form.Item>
-        <Form.Item label="Người viết lời" name="lyricist" rules={[{ max: 150, message: 'Tối đa 150 ký tự.' }]} style={{ flex: '1 1 260px' }}>
+        <Form.Item label="Người viết lời" name="lyricist" rules={[{ max: 150, message: 'Tối đa 150 ký tự.' }]}>
           <Input placeholder="Ví dụ: Xuân Tường" />
         </Form.Item>
-      </Flex>
-      <Flex wrap gap={spacing.md}>
-        <Form.Item label="Giọng (tone)" name="musicalKey" rules={[{ max: 10, message: 'Tối đa 10 ký tự.' }]} style={{ flex: '1 1 180px' }}>
+      </div>
+      <div className="hm-form-row-2">
+        <Form.Item label="Giọng (tone)" name="musicalKey" rules={[{ max: 10, message: 'Tối đa 10 ký tự.' }]}>
           <Input placeholder="Ví dụ: Rê trưởng" />
         </Form.Item>
-        <Form.Item label="Nhịp độ" name="tempo" rules={[{ max: 50, message: 'Tối đa 50 ký tự.' }]} style={{ flex: '1 1 180px' }}>
+        <Form.Item label="Nhịp độ" name="tempo" rules={[{ max: 50, message: 'Tối đa 50 ký tự.' }]}>
           <Input placeholder="Ví dụ: Andante" />
         </Form.Item>
-      </Flex>
+      </div>
       <Form.Item label="Ghi chú" name="notes" rules={[{ max: 1000, message: 'Tối đa 1000 ký tự.' }]}>
         <Input.TextArea rows={3} showCount maxLength={1000} placeholder="Ví dụ: Hát nhẹ nhàng phần điệp khúc, có thể phân bè S/A" />
       </Form.Item>

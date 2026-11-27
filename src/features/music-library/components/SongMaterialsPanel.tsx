@@ -1,8 +1,8 @@
-import { Button, Divider, Flex, Image, Tag, Tooltip, Typography, Upload } from 'antd'
+import { Button, Divider, Flex, Image, Tag, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
-import { Fragment } from 'react'
+import { Fragment, useRef } from 'react'
 import { parseUtc } from '@/lib/api/dates'
-import { Icon, type IconName } from '@/shared/ui'
+import { Icon, visuallyHidden, type IconName } from '@/shared/ui'
 import { colors, radius, spacing, typography } from '@/styles/tokens'
 import {
   fileExtension,
@@ -81,24 +81,32 @@ function UploadButton({ kind, loading, label, hintId, onPick }: Readonly<{
   hintId: string
   onPick: (kind: MaterialKind, file: File) => void
 }>) {
+  const inputRef = useRef<HTMLInputElement>(null)
   return (
-    <Upload
-      showUploadList={false}
-      accept={materialExtensions[kind].join(',')}
-      beforeUpload={(file) => {
-        onPick(kind, file)
-        return false
-      }}
-    >
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={materialExtensions[kind].join(',')}
+        tabIndex={-1}
+        aria-hidden="true"
+        style={visuallyHidden}
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0]
+          event.currentTarget.value = ''
+          if (file) onPick(kind, file)
+        }}
+      />
       <Button
         icon={<Icon name="upload" />}
         loading={loading}
         aria-label={`${label}: ${materialKindLabels[kind]}`}
         aria-describedby={hintId}
+        onClick={() => inputRef.current?.click()}
       >
         {label}
       </Button>
-    </Upload>
+    </>
   )
 }
 
@@ -132,7 +140,7 @@ function MaterialRow({
             <Icon name={kindIcons[material.kind]} />
           </span>
         )}
-        <Flex vertical style={{ flex: readingLayout ? '1 1 calc(100% - 80px)' : '1 1 200px', minWidth: 0 }}>
+        <Flex vertical style={{ flex: readingLayout ? '1 1 260px' : '1 1 200px', minWidth: 0 }}>
           <Flex wrap align="center" gap={spacing.xs}>
             <Typography.Text strong ellipsis={readingLayout ? false : { tooltip: material.title }} style={{ overflowWrap: 'anywhere' }}>
               {material.title}
@@ -146,68 +154,70 @@ function MaterialRow({
             {details(material)}
           </Typography.Text>
         </Flex>
-        {/* Signed URLs expire; the list is refetched when the window regains focus, which renews them. */}
-        {/* MIDI and MusicXML do not open in a browser tab; they are downloaded. */}
-        {material.url &&
-          (rendersPlayback(material.fileName) ? (
-            <Button type="link" icon={<Icon name="download" />} href={material.url} aria-label={`Tải xuống ${material.title}`}>
-              Tải xuống
-            </Button>
-          ) : (
+        <Flex wrap align="center" gap={spacing.xs}>
+          {/* Signed URLs expire; the list is refetched when the window regains focus, which renews them. */}
+          {/* MIDI and MusicXML do not open in a browser tab; they are downloaded. */}
+          {material.url &&
+            (rendersPlayback(material.fileName) ? (
+              <Button type="link" icon={<Icon name="download" />} href={material.url} aria-label={`Tải xuống ${material.title}`}>
+                Tải xuống
+              </Button>
+            ) : (
+              <Button
+                type="link"
+                icon={<Icon name="export" />}
+                href={material.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Xem/Tải xuống ${material.title} (mở tab mới)`}
+              >
+                Xem/Tải xuống
+              </Button>
+            ))}
+          {onExtractLyrics && material.kind === 'sheetMusic' && material.url && (
             <Button
-              type="link"
-              icon={<Icon name="export" />}
-              href={material.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Xem/Tải xuống ${material.title} (mở tab mới)`}
+              icon={<Icon name="liturgy-tip" />}
+              loading={extractingIds?.has(material.id)}
+              onClick={() => onExtractLyrics(material)}
+              aria-label={`Trích lời từ ${material.title}`}
             >
-              Xem/Tải xuống
+              Trích lời
             </Button>
-          ))}
-        {onExtractLyrics && material.kind === 'sheetMusic' && material.url && (
-          <Button
-            icon={<Icon name="liturgy-tip" />}
-            loading={extractingIds?.has(material.id)}
-            onClick={() => onExtractLyrics(material)}
-            aria-label={`Trích lời từ ${material.title}`}
-          >
-            Trích lời
-          </Button>
-        )}
-        {onTimedLyrics && supportsTimedLyrics(material) && (
-          <Button icon={<Icon name="history" />} onClick={() => onTimedLyrics(material)} aria-label={`Soạn lời theo thời gian cho ${material.title}`}>
-            Lời theo thời gian
-          </Button>
-        )}
-        {onProgress && (
-          <Button icon={<Icon name="report" />} onClick={() => onProgress(material)} aria-label={`Xem tiến độ học ${material.title}`}>
-            Tiến độ học
-          </Button>
-        )}
-        {/* Icon-only actions: the tooltip shows on hover and keyboard focus what the aria-label says. */}
-        {/* Typed lyrics have no file to replace; they are edited as text. */}
-        {onReplace && material.lyricsText === null && (
-          <Tooltip title="Thay file" trigger={['hover', 'focus']}>
-            <Button type="text" icon={<Icon name="swap" />} onClick={() => onReplace(material)} aria-label={`Thay file ${material.title}`} />
-          </Tooltip>
-        )}
-        {onEdit && (
-          <Tooltip title="Sửa tài liệu" trigger={['hover', 'focus']}>
-            <Button type="text" icon={<Icon name="edit" />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
-          </Tooltip>
-        )}
-        {onDelete && (
-          <Tooltip title="Xoá tài liệu" trigger={['hover', 'focus']}>
-            <Button
-              type="text"
-              danger
-              icon={<Icon name="delete" />}
-              onClick={() => onDelete(material)}
-              aria-label={`Xoá ${material.title}`}
-            />
-          </Tooltip>
-        )}
+          )}
+          {onTimedLyrics && supportsTimedLyrics(material) && (
+            <Button icon={<Icon name="history" />} onClick={() => onTimedLyrics(material)} aria-label={`Soạn lời theo thời gian cho ${material.title}`}>
+              Lời theo thời gian
+            </Button>
+          )}
+          {onProgress && (
+            <Button icon={<Icon name="report" />} onClick={() => onProgress(material)} aria-label={`Xem tiến độ học ${material.title}`}>
+              Tiến độ học
+            </Button>
+          )}
+          {/* Icon-only actions: the tooltip shows on hover and keyboard focus what the aria-label says. */}
+          {/* Typed lyrics have no file to replace; they are edited as text. */}
+          {onReplace && material.lyricsText === null && (
+            <Tooltip title="Thay file" trigger={['hover', 'focus']}>
+              <Button type="text" icon={<Icon name="swap" />} onClick={() => onReplace(material)} aria-label={`Thay file ${material.title}`} />
+            </Tooltip>
+          )}
+          {onEdit && (
+            <Tooltip title="Sửa tài liệu" trigger={['hover', 'focus']}>
+              <Button type="text" icon={<Icon name="edit" />} onClick={() => onEdit(material)} aria-label={`Sửa ${material.title}`} />
+            </Tooltip>
+          )}
+          {onDelete && (
+            <Tooltip title="Xoá tài liệu" trigger={['hover', 'focus']}>
+              <Button
+                type="text"
+                danger
+                icon={<Icon name="delete" />}
+                onClick={() => onDelete(material)}
+                aria-label={`Xoá ${material.title}`}
+              />
+            </Tooltip>
+          )}
+        </Flex>
       </Flex>
       {material.url && isPlayableAudio(material) && <AudioWaveform url={material.url} title={material.title} />}
       {material.lyricsText !== null && (
@@ -237,14 +247,22 @@ export function SongMaterialsPanel({ materials, readingLayout = false, uploading
           <Fragment key={kind}>
             {index > 0 && !readingLayout && <Divider />}
             <section aria-labelledby={headingId} style={readingLayout ? {
-              padding: spacing.lg,
-              marginBottom: spacing.lg,
+              padding: items.length > 0 ? spacing.lg : `${spacing.md}px ${spacing.lg}px`,
+              marginBottom: spacing.md,
               background: colors.ivory,
               border: `1px solid ${colors.border}`,
               borderRadius: radius.lg,
             } : undefined}>
               <Flex align="center" justify="space-between" gap={spacing.sm} style={{ marginBottom: spacing.xs }}>
-                <Typography.Title id={headingId} level={2} style={{ margin: 0, fontSize: typography.cardHeading.fontSize }}>
+                <Typography.Title
+                  id={headingId}
+                  level={readingLayout ? 3 : 2}
+                  style={{
+                    margin: 0,
+                    fontSize: typography.cardHeading.fontSize,
+                    scrollMarginTop: 'calc(var(--hm-header-height) + var(--hm-subnav-height) + 20px)',
+                  }}
+                >
                   {materialKindLabels[kind]}
                 </Typography.Title>
                 <Flex gap={spacing.xs}>
@@ -274,20 +292,18 @@ export function SongMaterialsPanel({ materials, readingLayout = false, uploading
                   ))}
                 </Flex>
               ) : (
-                <Flex
-                  align="center"
-                  justify="center"
-                  gap={spacing.sm}
-                  wrap
+                <Typography.Text
                   style={{
-                    padding: spacing.lg,
-                    border: `1px dashed ${colors.mutedBorder}`,
+                    display: 'block',
+                    padding: `${spacing.sm}px ${spacing.md}px`,
+                    border: `1px dashed ${colors.border}`,
                     borderRadius: radius.md,
                     color: colors.textMuted,
+                    fontSize: typography.metadata.fontSize,
                   }}
                 >
                   Chưa có tài liệu
-                </Flex>
+                </Typography.Text>
               )}
             </section>
           </Fragment>

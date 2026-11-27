@@ -7,6 +7,7 @@ const messages: Record<string, string> = {
   CHOIR_LEAD_INVALID: 'Chọn ca đoàn phụ trách trong số các ca đoàn phục vụ.',
   CHOIR_NAME_ALREADY_EXISTS: 'Đã có ca đoàn trùng tên.',
   CHOIR_MEMBER_INVALID: 'Có ca viên không còn sinh hoạt. Danh sách đã được tải lại.',
+  MEMBER_ALREADY_IN_CHOIR: 'Có ca viên đã thuộc ca đoàn khác. Mỗi ca viên chỉ sinh hoạt trong một ca đoàn tại một thời điểm.',
   CHOIR_INACTIVE: 'Ca đoàn đã ngừng hoạt động nên không nhận thêm ca viên hay sự kiện.',
   CHOIR_MEMBERSHIP_NOT_FOUND: 'Ca viên đã không còn trong ca đoàn. Danh sách đã được tải lại.',
   LITURGICAL_EVENT_NOT_FOUND: 'Chương trình không còn tồn tại.',

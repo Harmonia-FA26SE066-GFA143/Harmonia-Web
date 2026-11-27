@@ -32,7 +32,7 @@ export function StackedBars<K extends string>({
 
   return (
     <Flex vertical gap={spacing.md}>
-      <Flex align="flex-end" gap={spacing.xs} style={{ height: chartHeight + 72, overflowX: 'auto', overflowY: 'hidden', paddingTop: spacing.sm }}>
+      <Flex align="flex-end" gap={spacing.xs} style={{ height: chartHeight + 76, overflowX: 'auto', overflowY: 'hidden', paddingTop: spacing.sm }}>
         {buckets.map((bucket, index) => {
           const counts = values[index]
           const total = totals[index]
@@ -44,28 +44,31 @@ export function StackedBars<K extends string>({
               <Typography.Text style={{ fontSize: 12, fontWeight: 600, color: colors.textPrimary }}>
                 {total || ''}
               </Typography.Text>
-              <Tooltip title={`${bucket.title}: ${description}`}>
-                <div
-                  role="img"
-                  aria-label={`${bucket.title}: ${description}`}
-                  className="mg-rise"
-                  style={{
-                    '--i': index,
-                    width: '100%',
-                    maxWidth: 44,
-                    height: Math.max(total ? 4 : 2, (total / max) * chartHeight),
-                    display: 'flex',
-                    flexDirection: 'column-reverse',
-                    borderRadius: `${radius.sm}px ${radius.sm}px 0 0`,
-                    overflow: 'hidden',
-                    background: total ? undefined : colors.border,
-                  } as CSSProperties}
-                >
-                  {series.map(({ key, color }) =>
-                    counts[key] ? <div key={key} style={{ flex: counts[key], background: color }} /> : null,
-                  )}
-                </div>
-              </Tooltip>
+              <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', borderBottom: `1px solid ${colors.border}` }}>
+                <Tooltip title={`${bucket.title}: ${description}`} trigger={['hover', 'focus']}>
+                  <div
+                    role="img"
+                    tabIndex={0}
+                    aria-label={`${bucket.title}: ${description}`}
+                    className="mg-rise"
+                    style={{
+                      '--i': index,
+                      width: '100%',
+                      maxWidth: 44,
+                      height: Math.max(total ? 4 : 2, (total / max) * chartHeight),
+                      display: 'flex',
+                      flexDirection: 'column-reverse',
+                      borderRadius: `${radius.sm}px ${radius.sm}px 0 0`,
+                      overflow: 'hidden',
+                      background: total ? undefined : colors.border,
+                    } as CSSProperties}
+                  >
+                    {series.map(({ key, color }) =>
+                      counts[key] ? <div key={key} style={{ flex: counts[key], background: color }} /> : null,
+                    )}
+                  </div>
+                </Tooltip>
+              </div>
               <Typography.Text aria-hidden style={{ fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, whiteSpace: 'nowrap' }}>
                 {bucket.label}
               </Typography.Text>

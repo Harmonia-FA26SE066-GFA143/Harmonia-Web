@@ -93,7 +93,7 @@ function SongListReviewAlert({
               <Typography.Text>Cha xứ đã yêu cầu chỉnh sửa lại các bài hát đề xuất.</Typography.Text>
             )}
             <Typography.Text style={{ color: colors.textMuted }}>
-              Vui lòng cập nhật danh sách bài hát theo yêu cầu và gửi duyệt lại để mở khóa phân công phục vụ.
+              Vui lòng cập nhật danh sách bài hát theo yêu cầu và gửi duyệt lại để mở khoá phân công phục vụ.
             </Typography.Text>
           </Flex>
         }
@@ -162,7 +162,27 @@ function SongListReviewAlert({
         }
         description={
           <Typography.Text style={{ color: colors.textMuted }}>
-            Danh sách bài hát đã khóa. Hệ thống đã mở phân công phục vụ và giao bài luyện tập tương ứng.
+            Danh sách bài hát đã khoá. Hệ thống đã mở phân công phục vụ và giao bài luyện tập tương ứng.
+          </Typography.Text>
+        }
+        style={{ borderRadius: radius.md }}
+      />
+    )
+  }
+  if (status === 'draft') {
+    return (
+      <Alert
+        type="info"
+        showIcon
+        icon={<Icon name="edit" />}
+        title={
+          <Typography.Text strong style={{ fontSize: typography.cardHeading.fontSize }}>
+            Danh sách bài hát đang ở bản nháp
+          </Typography.Text>
+        }
+        description={
+          <Typography.Text style={{ color: colors.textMuted }}>
+            Hoàn thiện bài hát cho từng phần phụng vụ rồi gửi Cha xứ phê duyệt để mở khoá phân công phục vụ.
           </Typography.Text>
         }
         style={{ borderRadius: radius.md }}

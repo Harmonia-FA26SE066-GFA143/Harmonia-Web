@@ -1,9 +1,16 @@
-import { Button, Flex, Table, Tag, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
-import { ACTIONS_COLUMN_TITLE } from '@/shared/ui'
+import { Button, Flex, Table, Typography, type TableColumnsType, type TablePaginationConfig } from 'antd'
+import { ACTIONS_COLUMN_TITLE, StatusTag, type StatusTagColor } from '@/shared/ui'
 import { colors, typography } from '@/styles/tokens'
 import { actionLabel, actorName, entityLabel } from '../activityFilters'
 import { formatDateTime } from '@/lib/api/dates'
 import type { ActivityRecord } from '../types'
+
+const actionColors: Record<string, StatusTagColor> = {
+  Created: 'green',
+  Updated: 'blue',
+  Deleted: 'red',
+  PasswordChanged: 'gold',
+}
 
 export interface ActivityTableProps {
   records: ActivityRecord[]
@@ -61,7 +68,11 @@ export function ActivityTable({ records, onShowDetail, onPickUser, pagination, l
     {
       key: 'action',
       title: 'Loại thay đổi',
-      render: (_, record) => <Tag style={{ marginInlineEnd: 0 }}>{actionLabel(record.action)}</Tag>,
+      render: (_, record) => (
+        <StatusTag color={actionColors[record.action] ?? 'default'} style={{ marginInlineEnd: 0 }}>
+          {actionLabel(record.action)}
+        </StatusTag>
+      ),
     },
     { key: 'entity', title: 'Dữ liệu', render: (_, record) => entityLabel(record.entityType) },
     ...(onShowDetail

@@ -48,7 +48,7 @@ export function ReviewForm({ saving = false, onSubmit }: Readonly<ReviewFormProp
           extra="Bắt buộc khi yêu cầu sửa hoặc từ chối."
           rules={[{ max: 1000, message: 'Nhận xét tối đa 1000 ký tự.' }]}
         >
-          <Input.TextArea rows={3} showCount maxLength={1000} />
+          <Input.TextArea rows={3} showCount maxLength={1000} placeholder="Ví dụ: Đổi bài Ca dâng lễ cho hợp chủ đề Mùa Chay…" />
         </Form.Item>
         {/* The narrow side column: the three actions on their own line, the primary last. */}
         <Flex vertical align="flex-end" gap={spacing.sm}>

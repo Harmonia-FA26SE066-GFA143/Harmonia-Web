@@ -34,7 +34,7 @@ beforeEach(() => {
       { id: 'p1', eventName: 'Lễ Chúa Nhật', date: dayjs().subtract(3, 'day').format('YYYY-MM-DD') },
     ),
   )
-  vi.spyOn(membersApi, 'listChoirMembers').mockResolvedValue([
+  vi.spyOn(membersApi, 'listAllChoirMembers').mockResolvedValue([
     { id: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: ['Organ'] },
     { id: 'm2', fullName: 'Simon Phan Văn Đức', skills: ['Bass'] },
     { id: 'm3', fullName: 'Anna Đặng Thị Mai', skills: ['Soprano'] },
@@ -85,7 +85,7 @@ describe('ParticipationPage', () => {
       { choirId: 'c2', name: 'Ca đoàn Têrêsa', isActive: true, isLead: false },
     ])
     // The parish list also holds a member of no serving choir; the backend would refuse the whole request for it.
-    vi.mocked(membersApi.listChoirMembers).mockResolvedValue([
+    vi.mocked(membersApi.listAllChoirMembers).mockResolvedValue([
       { id: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: ['Organ'] },
       { id: 'm9', fullName: 'Phêrô Trần Văn Ngoài', skills: [] },
     ])
@@ -131,7 +131,7 @@ describe('ParticipationPage', () => {
   })
 
   it('counts the answers per voice part from approved skills and names the part with the fewest confirmations', async () => {
-    vi.mocked(membersApi.listChoirMembers).mockResolvedValue([
+    vi.mocked(membersApi.listAllChoirMembers).mockResolvedValue([
       { id: 'm1', fullName: 'Maria Nguyễn Thu Hướng', skills: ['Organ'] },
       { id: 'm2', fullName: 'Simon Phan Văn Đức', skills: ['Bass'] },
       { id: 'm3', fullName: 'Anna Đặng Thị Mai', skills: ['Soprano'] },

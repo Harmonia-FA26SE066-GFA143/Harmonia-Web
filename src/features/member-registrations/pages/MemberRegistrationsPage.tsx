@@ -149,20 +149,34 @@ export function MemberRegistrationsPage() {
       ),
     },
     { key: 'phone', title: 'Điện thoại', render: (_, item) => item.phone ?? <EmptyCell text="Chưa có" /> },
+    {
+      key: 'preferredChoir',
+      title: 'Ca đoàn mong muốn',
+      render: (_, item) => item.preferredChoirName ?? <EmptyCell text="Chưa chọn" />,
+    },
     { key: 'note', title: 'Lời nhắn', ellipsis: true, render: (_, item) => item.note ?? <EmptyCell text="Không có" /> },
     { key: 'createdAt', title: 'Gửi lúc', render: (_, item) => when(item.createdAt) },
     {
       key: 'actions',
       title: ACTIONS_COLUMN_TITLE,
       align: 'center',
-      width: 300,
-      render: (_, item) => (
-        <Flex justify="center" gap={spacing.xs}>
-          <Button onClick={() => setViewing(item)} aria-label={`Xem yêu cầu của ${item.fullName}`}>Xem</Button>
-          <Button type="primary" onClick={() => handleAccept(item)} aria-label={`Chấp nhận yêu cầu của ${item.fullName}`}>Chấp nhận</Button>
-          <Button type="text" danger onClick={() => handleDelete(item)} aria-label={`Từ chối yêu cầu của ${item.fullName}`}>Từ chối</Button>
-        </Flex>
-      ),
+      width: 280,
+      render: (_, item) => {
+        const hasDuplicates = Boolean(item.possibleDuplicates?.length)
+        return (
+          <Flex justify="center" gap={spacing.xs}>
+            <Button onClick={() => setViewing(item)} aria-label={`Xem yêu cầu của ${item.fullName}`}>Xem</Button>
+            <Button
+              type={hasDuplicates ? 'default' : 'primary'}
+              onClick={() => handleAccept(item)}
+              aria-label={`Chấp nhận yêu cầu của ${item.fullName}`}
+            >
+              Chấp nhận
+            </Button>
+            <Button type="text" danger onClick={() => handleDelete(item)} aria-label={`Từ chối yêu cầu của ${item.fullName}`}>Từ chối</Button>
+          </Flex>
+        )
+      },
     },
   ]
 
@@ -221,6 +235,7 @@ export function MemberRegistrationsPage() {
               dataSource={registrations.data.items}
               loading={registrations.isPlaceholderData}
               pagination={{ current: page, pageSize, total, hideOnSinglePage: true, showSizeChanger: false, onChange: setPage }}
+              scroll={{ x: 'max-content' }}
             />
           )}
           </Card>
@@ -248,7 +263,7 @@ export function MemberRegistrationsPage() {
             className="hm-key-value"
             column={1}
             items={[
-              { key: 'status', label: 'Trạng thái', children: 'Đang chờ xử lý' },
+              { key: 'status', label: 'Trạng thái', children: <StatusTag color="gold">Đang chờ xử lý</StatusTag> },
               { key: 'saint', label: 'Tên thánh', children: viewing.saintName ?? <EmptyCell text="Chưa có" /> },
               { key: 'name', label: 'Họ tên', children: viewing.fullName },
               { key: 'gender', label: 'Giới tính', children: genderLabel(viewing.gender) ?? <EmptyCell text="Chưa có" /> },
@@ -265,7 +280,7 @@ export function MemberRegistrationsPage() {
             type="warning"
             showIcon
             style={{ marginTop: spacing.lg }}
-            message="Có thể trùng người đã đăng ký"
+            title="Có thể trùng người đã đăng ký"
             description={
               <ul style={{ margin: 0, paddingInlineStart: spacing.lg }}>
                 {viewing.possibleDuplicates.map((d) => (

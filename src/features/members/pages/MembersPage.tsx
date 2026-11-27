@@ -86,10 +86,13 @@ export function MembersPage() {
   const left = useMemberProfiles(leftFilter, onePage).data?.totalCount
   const pendingSkills = usePendingSkills(onePage).data?.totalCount
   const voices = allActive.isSuccess ? countVoiceParts(allActive.data, (member) => member.skills) : undefined
+  const changeFilters = (next: MemberFilters) => setParams(writeState(next, 1), { replace: true })
+  const toggleStatus = (status: MemberStatus) =>
+    changeFilters({ ...filters, status: filters.status === status ? undefined : status })
   const statusCells: SummaryCell[] = [
-    { label: 'Đang sinh hoạt', value: activeTotal },
-    { label: 'Tạm nghỉ', value: onLeave },
-    { label: 'Đã nghỉ', value: left },
+    { label: 'Đang sinh hoạt', value: activeTotal, active: filters.status === 'active', onClick: () => toggleStatus('active') },
+    { label: 'Tạm nghỉ', value: onLeave, active: filters.status === 'inactive', onClick: () => toggleStatus('inactive') },
+    { label: 'Đã rời ca đoàn', value: left, active: filters.status === 'left', onClick: () => toggleStatus('left') },
     { label: 'Chờ duyệt kỹ năng', value: pendingSkills, waiting: <Link to={paths.director.skillApproval}>Duyệt kỹ năng</Link> },
   ]
   const voiceCells: SummaryCell[] = [
@@ -102,7 +105,6 @@ export function MembersPage() {
 
   const total = members.data?.totalCount ?? 0
   const filtered = hasActiveMemberFilters(query)
-  const changeFilters = (next: MemberFilters) => setParams(writeState(next, 1), { replace: true })
   const resetFilters = () => changeFilters(emptyMemberFilters)
 
   const handleSubmit = (values: MemberProfileValues) => {
