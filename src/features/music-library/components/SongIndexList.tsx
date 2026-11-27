@@ -2,7 +2,7 @@ import { Flex, Pagination, Spin } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { generatePath, Link, useLocation } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Icon, StatusTag } from '@/shared/ui'
+import { Icon, paginationTotal, StatusTag } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { songListState } from '../songFilters'
 import { materialKindLabels, type MaterialKind, type Song } from '../types'
@@ -118,7 +118,15 @@ export function SongIndexList({
         </ul>
 
         <Flex justify="end" style={{ padding: spacing.md }}>
-          <Pagination current={page} pageSize={pageSize} total={total} showSizeChanger={false} onChange={onPageChange} />
+          <Pagination
+            current={page}
+            pageSize={pageSize}
+            total={total}
+            hideOnSinglePage
+            showSizeChanger={false}
+            showTotal={paginationTotal('bài hát')}
+            onChange={onPageChange}
+          />
         </Flex>
       </Spin>
     </div>

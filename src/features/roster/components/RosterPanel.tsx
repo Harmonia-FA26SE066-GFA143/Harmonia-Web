@@ -258,7 +258,10 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
           Chốt nhạc công
         </Button>
       )}
-      <Tooltip title={locked || wholeServiceLocked ? undefined : 'Chốt phân công (hoặc chốt nhạc công) trước khi gửi thông báo.'}>
+      <Tooltip
+        title={locked || wholeServiceLocked ? undefined : 'Chốt phân công (hoặc chốt nhạc công) trước khi gửi thông báo.'}
+        trigger={['hover', 'focus']}
+      >
         <Button
           icon={<Icon name="notification" />}
           onClick={() => setNotifying(true)}
@@ -267,7 +270,10 @@ export function RosterPanel({ programId, approved, songs, songListNotice, eligib
           Gửi thông báo phân công
         </Button>
       </Tooltip>
-      <Tooltip title={approved ? undefined : 'Chốt phân công được sau khi danh sách bài hát được duyệt.'}>
+      <Tooltip
+        title={approved ? undefined : 'Chốt phân công được sau khi danh sách bài hát được duyệt.'}
+        trigger={['hover', 'focus']}
+      >
         <Button type="primary" icon={<Icon name="lock" />} onClick={handleFinalize} disabled={!current || effectiveLocked || !approved}>
           Chốt phân công
         </Button>

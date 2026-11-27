@@ -49,7 +49,7 @@ Ngoài ra có trang giới thiệu công khai (`/`), trang đăng ký gia nhập
 
 Giao diện theo **Harmonia Design System** (*Illuminated Missal*): đỏ rượu giáo xứ `#8E3B4B`, nền giấy ấm `#F5F0E8`, bảng màu trạng thái dịu mắt tương phản cao (`≥ 6.5:1`), vàng chỉ để trang trí và màu mùa phụng vụ trên dải mùa. Dùng một phông chữ tự phục vụ duy nhất là **Be Vietnam Pro** (tối ưu đầy đủ dấu tiếng Việt) và bộ **85 icon SVG nội bộ** (`src/shared/ui/icons/`). Ảnh thực tế không gian Nhà thờ Giáo xứ Tân Định (`src/assets/images/brand/`, ghi nguồn tại [`public/media/ATTRIBUTION.md`](public/media/ATTRIBUTION.md)) chỉ xuất hiện ở trang công khai và xác thực; các không gian làm việc giữ nền giấy tĩnh để tập trung điều phối. Bản sắc Công giáo ở mức tiết chế: khuông nhạc thánh ca và hình vòm, không thập giá trên nút, không gradient vàng.
 
-Trạng thái không bao giờ chỉ dựa vào màu; mọi trạng thái đều có chữ. Chuyển động tôn trọng thiết lập *giảm chuyển động* của hệ điều hành. Bố cục desktop được kiểm tra ở `1366×768`, `1440×900` và `1920×1080`.
+Trạng thái không bao giờ chỉ dựa vào màu; mọi trạng thái đều có chữ. Hệ thống thành phần tương tác (Buttons, Links/`ExternalLink`, Form Controls đạt tương phản WCAG 1.4.11, Dropdown/Menu, Dialogs/Tooltip nền mực ấm, Tabs/Collapse/Pagination/Carousel) được chuẩn hoá tập trung trong `src/app/theme.ts`, `src/styles/global.css` và `src/shared/ui/`. Chuyển động tôn trọng thiết lập *giảm chuyển động* của hệ điều hành. Bố cục desktop được kiểm tra ở `1366×768`, `1440×900` và `1920×1080`.
 
 ## Công nghệ
 

@@ -17,6 +17,8 @@
   --hm-choice-hover-bg: color-mix(in srgb, var(--hm-surface-reading) 70%, var(--hm-surface-base));
   --hm-auth-overlay-bg: color-mix(in srgb, var(--hm-surface-media) 74%, transparent);
   --hm-route-wait-bg: color-mix(in srgb, var(--hm-surface-page) 72%, transparent);
+  --hm-seg-tab-hover-bg: color-mix(in srgb, var(--hm-surface-base) 55%, transparent);
+  --hm-dark-bar-ghost-hover-bg: color-mix(in srgb, var(--hm-text-on-brand) 12%, transparent);
   --hm-auth-hairline: rgb(255 255 255 / 0.18);
   --hm-auth-control-edge: rgb(255 255 255 / 0.4);
   --hm-auth-error: #ffb3bd;
@@ -3160,6 +3162,12 @@ textarea {
   background: var(--hm-choice-hover-bg);
 }
 
+.ant-checkbox-wrapper.hm-choice-card:focus-within,
+.ant-radio-wrapper.hm-choice-card:focus-within {
+  border-color: var(--hm-action-focus);
+  box-shadow: 0 0 0 3px var(--hm-action-focus-halo);
+}
+
 .ant-checkbox-wrapper.hm-choice-card:has(.ant-checkbox-checked),
 .ant-radio-wrapper.hm-choice-card:has(.ant-radio-checked) {
   border-color: var(--hm-action-primary);
@@ -5875,23 +5883,34 @@ h2.ant-typography.landing-close__title {
 .khop-seg-tabs > .ant-tabs-nav .ant-tabs-nav-list {
   gap: 2px;
   padding: 3px;
-  background: var(--hm-surface-soft);
-  border: 1px solid var(--hm-border-control);
+  background: var(--hm-surface-band);
+  border: 1px solid var(--hm-border-strong);
   border-radius: var(--hm-radius-md);
 }
 
 .khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab {
   margin: 0;
-  padding: 0 12px;
-  height: 30px;
+  padding: 0 14px;
+  height: 34px;
   border-radius: var(--hm-radius-sm);
   font-size: 13px;
   font-weight: 500;
-  transition: background-color var(--hm-dur-base) var(--hm-ease);
+  transition:
+    background-color var(--hm-dur-fast) var(--hm-ease),
+    color var(--hm-dur-fast) var(--hm-ease),
+    box-shadow var(--hm-dur-fast) var(--hm-ease);
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab:hover:not(.ant-tabs-tab-active) {
+  background: var(--hm-seg-tab-hover-bg);
 }
 
 .khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
   color: var(--hm-text-body);
+}
+
+.khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab:hover .ant-tabs-tab-btn {
+  color: var(--hm-text-primary);
 }
 
 .khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab-active {
@@ -5902,6 +5921,457 @@ h2.ant-typography.landing-close__title {
 .khop-seg-tabs > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
   color: var(--hm-text-primary);
   font-weight: 600;
+}
+
+/* ============================================================================
+ * Harmonia UI Component System Contracts (Buttons, Links, Form Controls,
+ * Dropdown & Menu, Dialogs, Interactive Components)
+ * ============================================================================ */
+
+/* 1. Buttons: Primary, Secondary/Default, Outline/Dashed, Ghost, Text, Danger, Icon, FloatButton */
+.ant-btn:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
+}
+
+.ant-btn-primary:not(:disabled):not(.ant-btn-background-ghost):hover {
+  box-shadow: var(--hm-shadow-sm);
+}
+
+.ant-btn-default:not(:disabled):not(.ant-btn-background-ghost):not(.ant-btn-dangerous):hover {
+  box-shadow: var(--hm-shadow-sm);
+}
+
+.ant-btn-dashed:not(:disabled):not(.ant-btn-dangerous) {
+  border-color: var(--hm-border-control);
+  background: var(--hm-surface-base);
+  color: var(--hm-text-body);
+}
+
+.ant-btn-dashed:not(:disabled):not(.ant-btn-dangerous):hover {
+  border-color: var(--hm-action-primary);
+  background: var(--hm-surface-reading);
+  color: var(--hm-action-primary-hover);
+}
+
+.ant-btn-primary.ant-btn-background-ghost:not(:disabled):hover {
+  background: var(--hm-action-selected-wash);
+}
+
+.ant-btn-dangerous.ant-btn-default:not(:disabled):hover,
+.ant-btn-dangerous.ant-btn-dashed:not(:disabled):hover {
+  border-color: var(--hm-error);
+  background: var(--hm-error-tint);
+  color: var(--hm-error);
+}
+
+.ant-btn-dangerous.ant-btn-text:not(:disabled):hover {
+  background: var(--hm-error-tint);
+  color: var(--hm-error);
+}
+
+.ant-btn-icon-only:not(.ant-btn-sm):not(.ant-btn-lg) {
+  min-width: 40px;
+}
+
+.ant-btn-icon-only.ant-btn-sm {
+  min-width: 32px;
+}
+
+/* Dark surface action bars (e.g. AttendanceSheet sticky dirty bar): pale focus ring & translucent ghost hover. */
+.hm-dark-bar .ant-btn:focus-visible {
+  outline: 2px solid var(--hm-text-on-chrome);
+  outline-offset: 2px;
+}
+
+.hm-dark-bar .ant-btn.ant-btn-background-ghost:not(:disabled):hover {
+  border-color: var(--hm-text-on-brand);
+  color: var(--hm-text-on-brand);
+  background: var(--hm-dark-bar-ghost-hover-bg);
+}
+
+.ant-float-btn .ant-float-btn-body {
+  border: 1px solid var(--hm-border-strong);
+  box-shadow: var(--hm-shadow-md);
+  transition:
+    transform var(--hm-dur-fast) var(--hm-ease),
+    border-color var(--hm-dur-fast) var(--hm-ease),
+    background-color var(--hm-dur-fast) var(--hm-ease),
+    box-shadow var(--hm-dur-fast) var(--hm-ease);
+}
+
+.ant-float-btn:hover .ant-float-btn-body {
+  border-color: var(--hm-action-primary);
+  box-shadow: var(--hm-shadow-lg);
+  transform: translateY(-2px);
+}
+
+.ant-float-btn:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
+}
+
+/* 2. Links: Navigation links, Action links, External links */
+#main-content a:not(.ant-btn):focus-visible,
+.ant-drawer a:not(.ant-btn):focus-visible,
+.ant-modal a:not(.ant-btn):focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
+  border-radius: var(--hm-radius-sm);
+}
+
+.ant-btn-link:not(:disabled) {
+  text-underline-offset: 3px;
+}
+
+.ant-btn-link:not(:disabled):hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+}
+
+.ant-btn-link.hm-action-link {
+  height: auto;
+  padding: 0;
+  line-height: 1.5;
+}
+
+.hm-external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--hm-action-link);
+  text-decoration: underline;
+  text-decoration-color: var(--hm-area-liturgy-border);
+  text-underline-offset: 3px;
+  transition:
+    color var(--hm-dur-fast) var(--hm-ease),
+    text-decoration-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.hm-external-link:hover {
+  color: var(--hm-action-link-hover);
+  text-decoration-color: currentColor;
+}
+
+.hm-external-link--inherit,
+.hm-external-link--inherit:hover {
+  color: inherit;
+  text-decoration-color: currentColor;
+}
+
+.hm-external-link__icon {
+  flex-shrink: 0;
+  transition: transform var(--hm-dur-fast) var(--hm-ease);
+}
+
+.hm-external-link:hover .hm-external-link__icon {
+  transform: translate(1px, -1px);
+}
+
+/* 3. Form Controls: Input, InputNumber, Checkbox, Radio, Switch, Select, DatePicker, Segmented */
+.ant-input-clear-icon:hover,
+.ant-select-clear:hover,
+.ant-picker-clear:hover {
+  color: var(--hm-text-primary);
+}
+
+.ant-checkbox-inner,
+.ant-radio-inner {
+  border-color: var(--hm-border-control);
+}
+
+.ant-checkbox-wrapper:not(.ant-checkbox-wrapper-disabled):hover .ant-checkbox-inner,
+.ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-inner {
+  border-color: var(--hm-action-primary);
+}
+
+.ant-checkbox-input:focus-visible + .ant-checkbox-inner,
+.ant-radio-input:focus-visible + .ant-radio-inner {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
+}
+
+.ant-switch:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
+}
+
+.ant-segmented .ant-segmented-item-input:focus-visible + .ant-segmented-item-label {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: -2px;
+  border-radius: var(--hm-radius-sm);
+}
+
+.ant-select-dropdown,
+.ant-picker-dropdown .ant-picker-panel-container {
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-lg);
+}
+
+.ant-picker-dropdown .ant-picker-cell-today .ant-picker-cell-inner::before {
+  border-color: var(--hm-action-primary);
+}
+
+/* 4. Dropdown & Menu: Dropdown, Context Menu, Navigation Menu */
+.ant-dropdown .ant-dropdown-menu {
+  padding: 6px;
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-lg);
+}
+
+.ant-dropdown .ant-dropdown-menu-item,
+.ant-dropdown .ant-dropdown-menu-submenu-title {
+  min-height: 36px;
+  border-radius: var(--hm-radius-md);
+  gap: 8px;
+}
+
+.ant-dropdown .ant-dropdown-menu-item:focus-visible,
+.ant-dropdown .ant-dropdown-menu-submenu-title:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: -2px;
+}
+
+.ant-dropdown .ant-dropdown-menu-item-danger:not(.ant-dropdown-menu-item-disabled):hover {
+  background: var(--hm-error-tint);
+  color: var(--hm-error);
+}
+
+.hm-dropdown-chevron {
+  transition: transform var(--hm-dur-fast) var(--hm-ease);
+}
+
+.ant-dropdown-open .hm-dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.ant-drawer .ant-menu-inline .ant-menu-item-selected {
+  box-shadow: inset 3px 0 0 var(--hm-action-primary);
+}
+
+.ant-drawer .ant-menu-inline .ant-menu-item:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: -2px;
+}
+
+/* 5. Dialogs: Modal, Confirmation Dialog, Popover, Popconfirm, Tooltip */
+.ant-modal .ant-modal-content {
+  border: 1px solid var(--hm-border-default);
+}
+
+.ant-modal .ant-modal-header {
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--hm-border-hairline);
+}
+
+.ant-modal .ant-modal-footer {
+  padding-top: 12px;
+  margin-top: 20px;
+  border-top: 1px solid var(--hm-border-hairline);
+}
+
+.ant-modal .ant-modal-close:hover,
+.ant-drawer-close:hover {
+  background: var(--hm-surface-soft);
+  color: var(--hm-text-primary);
+}
+
+.ant-modal .ant-modal-close:focus-visible,
+.ant-drawer-close:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
+}
+
+.ant-modal-confirm .ant-modal-confirm-title {
+  color: var(--hm-text-primary);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.ant-modal-confirm .ant-modal-confirm-content {
+  color: var(--hm-text-body);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ant-modal-confirm .ant-modal-confirm-btns {
+  margin-top: 20px;
+}
+
+.ant-popover .ant-popover-inner,
+.ant-popconfirm .ant-popover-inner {
+  border: 1px solid var(--hm-border-default);
+}
+
+.ant-popover .ant-popover-title {
+  color: var(--hm-text-primary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--hm-border-hairline);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.ant-popconfirm .ant-popconfirm-title {
+  color: var(--hm-text-primary);
+  font-weight: 600;
+}
+
+.ant-popconfirm .ant-popconfirm-description {
+  color: var(--hm-text-body);
+  line-height: 1.55;
+}
+
+.ant-popconfirm .ant-popconfirm-buttons {
+  margin-top: 12px;
+}
+
+.ant-tooltip .ant-tooltip-inner {
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 280px;
+}
+
+/* 6. Interactive Components: Tabs, Accordion (Collapse), Pagination, Carousel */
+.ant-tabs > .ant-tabs-nav::before {
+  border-bottom-color: var(--hm-border-default);
+}
+
+.ant-tabs .ant-tabs-tab-btn:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 3px;
+  border-radius: var(--hm-radius-sm);
+}
+
+.ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  font-weight: 600;
+}
+
+.ant-collapse {
+  border-color: var(--hm-border-default);
+  background: var(--hm-surface-base);
+  overflow: hidden;
+}
+
+.ant-collapse > .ant-collapse-item {
+  border-bottom-color: var(--hm-border-default);
+}
+
+.ant-collapse > .ant-collapse-item > .ant-collapse-header {
+  font-weight: 600;
+  color: var(--hm-text-primary);
+  transition: background-color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.ant-collapse > .ant-collapse-item > .ant-collapse-header:hover {
+  background: var(--hm-surface-soft);
+}
+
+.ant-collapse > .ant-collapse-item > .ant-collapse-header:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: -2px;
+}
+
+.ant-collapse .ant-collapse-content {
+  border-top-color: var(--hm-border-default);
+}
+
+.ant-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.ant-pagination .ant-pagination-total-text {
+  margin-inline-end: 8px;
+  font-size: 13px;
+  color: var(--hm-text-muted);
+}
+
+.ant-pagination .ant-pagination-item {
+  border: 1px solid var(--hm-border-default);
+  font-weight: 500;
+  transition:
+    border-color var(--hm-dur-fast) var(--hm-ease),
+    background-color var(--hm-dur-fast) var(--hm-ease),
+    color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.ant-pagination .ant-pagination-item:hover:not(.ant-pagination-item-active) {
+  border-color: var(--hm-border-control);
+  background: var(--hm-surface-reading);
+}
+
+.ant-pagination .ant-pagination-item-active {
+  border-color: var(--hm-action-primary);
+  font-weight: 600;
+}
+
+.ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+.ant-pagination .ant-pagination-next .ant-pagination-item-link {
+  border: 1px solid var(--hm-border-default);
+  border-radius: var(--hm-radius-md);
+  color: var(--hm-text-body);
+  transition:
+    border-color var(--hm-dur-fast) var(--hm-ease),
+    background-color var(--hm-dur-fast) var(--hm-ease),
+    color var(--hm-dur-fast) var(--hm-ease);
+}
+
+.ant-pagination .ant-pagination-prev:not(.ant-pagination-disabled):hover .ant-pagination-item-link,
+.ant-pagination .ant-pagination-next:not(.ant-pagination-disabled):hover .ant-pagination-item-link {
+  border-color: var(--hm-action-primary);
+  background: var(--hm-surface-reading);
+  color: var(--hm-action-primary-hover);
+}
+
+.ant-pagination .ant-pagination-item a:focus-visible,
+.ant-pagination .ant-pagination-item-link:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
+}
+
+.ant-carousel .slick-dots li button {
+  border-radius: 9999px;
+  background: var(--hm-border-strong);
+  opacity: 0.85;
+}
+
+.ant-carousel .slick-dots li.slick-active button {
+  background: var(--hm-action-primary);
+  opacity: 1;
+}
+
+.ant-carousel .slick-prev,
+.ant-carousel .slick-next {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: var(--hm-surface-base);
+  border: 1px solid var(--hm-border-default);
+  color: var(--hm-text-primary);
+  box-shadow: var(--hm-shadow-md);
+  opacity: 0.92;
+  transition:
+    border-color var(--hm-dur-fast) var(--hm-ease),
+    color var(--hm-dur-fast) var(--hm-ease),
+    opacity var(--hm-dur-fast) var(--hm-ease);
+}
+
+.ant-carousel .slick-prev:hover,
+.ant-carousel .slick-next:hover {
+  border-color: var(--hm-action-primary);
+  color: var(--hm-action-primary);
+  opacity: 1;
+}
+
+.ant-carousel .slick-prev:focus-visible,
+.ant-carousel .slick-next:focus-visible {
+  outline: 2px solid var(--hm-action-focus);
+  outline-offset: 2px;
 }
 
 /*

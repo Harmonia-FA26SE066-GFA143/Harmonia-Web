@@ -111,6 +111,8 @@ export function AssignmentsTab() {
       okText: 'Thu hồi bài tập',
       okButtonProps: { danger: true },
       cancelText: 'Giữ lại',
+      // Enter on a destructive dialog must not run it.
+      focusable: { autoFocusButton: 'cancel' },
       onOk: () =>
         remove.mutateAsync(assignment.id).then(
           () => {

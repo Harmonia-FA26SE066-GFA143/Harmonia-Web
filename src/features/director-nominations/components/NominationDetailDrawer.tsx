@@ -5,7 +5,7 @@ import { useRef, useState, type ReactNode } from 'react'
 import { useChoirs } from '@/features/choirs'
 import { parseUtc } from '@/lib/api/dates'
 import { getSession } from '@/lib/auth/session'
-import { CANCEL_LABEL, CLOSE_LABEL, ErrorState, Form, Icon, SectionSkeleton, SELECT_POPUP_PROPS, StatusTag, ViewDrawer, visuallyHidden, type StatusTagColor } from '@/shared/ui'
+import { CANCEL_LABEL, CLOSE_LABEL, ErrorState, ExternalLink, Form, Icon, SectionSkeleton, SELECT_POPUP_PROPS, StatusTag, ViewDrawer, visuallyHidden, type StatusTagColor } from '@/shared/ui'
 import { colors, component, radius, spacing, typography } from '@/styles/tokens'
 import {
   appointNomination,
@@ -252,7 +252,9 @@ function TrainingRow({ training, nominationId, canManage, onResult }: Readonly<{
       </Typography.Text>
       {training.resultNote && <Typography.Text>Ghi chú: {training.resultNote}</Typography.Text>}
       <Flex wrap gap={spacing.sm} align="center">
-        {training.certificateUrl && <a href={training.certificateUrl} target="_blank" rel="noopener noreferrer">Xem chứng chỉ {training.certificateFileName}</a>}
+        {training.certificateUrl && (
+          <ExternalLink href={training.certificateUrl}>Xem chứng chỉ {training.certificateFileName}</ExternalLink>
+        )}
         {canManage && (
           <>
             <input

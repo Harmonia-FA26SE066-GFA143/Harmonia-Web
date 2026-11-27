@@ -280,6 +280,7 @@ export function AttendanceSheet({ rehearsalId, records, readOnly = false }: Read
       {/* Sticks to the viewport only while unsaved changes exist so clean sheets keep full scroll height. */}
       <Flex
         ref={saveBar}
+        className={dirty ? 'hm-dark-bar' : undefined}
         align="center"
         justify="space-between"
         gap={spacing.md}

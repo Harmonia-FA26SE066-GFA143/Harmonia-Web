@@ -101,7 +101,7 @@ export function DirectorReportsPage() {
             }}
           >
             <Button icon={<Icon name="download" />} loading={exportReport.isPending}>
-              Xuất báo cáo
+              Xuất báo cáo <Icon name="chevron-down" size="xxs" className="hm-dropdown-chevron" />
             </Button>
           </Dropdown>
         }

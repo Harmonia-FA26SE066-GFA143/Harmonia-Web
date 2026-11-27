@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ExternalLink } from '@/shared/ui'
 import type { Song } from '../types'
 
 const none = <span className="ct-facts__none">Chưa ghi</span>
@@ -33,9 +34,9 @@ function withLinks(text: string): ReactNode[] {
     const link = linkOf(match[0])
     if (!link) continue
     parts.push(text.slice(last, match.index), (
-      <a key={match.index} href={link.href} title={link.href} target="_blank" rel="noopener noreferrer">
+      <ExternalLink key={match.index} href={link.href} title={link.href}>
         {link.label}
-      </a>
+      </ExternalLink>
     ), link.rest)
     last = match.index + match[0].length
   }

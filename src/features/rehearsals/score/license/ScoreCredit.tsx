@@ -1,5 +1,6 @@
 import { Button, Flex, Modal, Typography } from 'antd'
 import { useState, type CSSProperties, type ReactNode } from 'react'
+import { ExternalLink } from '@/shared/ui'
 import { colors, spacing, typography } from '@/styles/tokens'
 import { LICENSES_URL, VEROVIO_LICENSE_ID, VEROVIO_SOURCE_URL, VEROVIO_VERSION } from './verovioNotice'
 
@@ -24,14 +25,11 @@ const TEXT: CSSProperties = {
   whiteSpace: 'pre-wrap',
   overflowWrap: 'anywhere',
 }
-/** Inherits the colour of the surface it sits on, so it reads on the light page and on the dark ground of focus mode. */
-const LINK: CSSProperties = { color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2 }
-
 function Source({ href, children }: Readonly<{ href: string; children: string }>) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" style={LINK}>
+    <ExternalLink href={href} inheritColor>
       {children}
-    </a>
+    </ExternalLink>
   )
 }
 

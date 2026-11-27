@@ -84,7 +84,7 @@ export function UserMenu({
                 </Typography.Text>
               </Flex>
             )}
-            <Icon name="chevron-down" size="xxs" style={{ color: spine.text }} />
+            <Icon name="chevron-down" size="xxs" className="hm-dropdown-chevron" style={{ color: spine.text }} />
           </Flex>
         </Button>
       </Dropdown>

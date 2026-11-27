@@ -1,6 +1,6 @@
 import { Pagination, Spin } from 'antd'
 import { useState } from 'react'
-import { Icon, MATERIAL_LABELS, visuallyHidden } from '@/shared/ui'
+import { Icon, MATERIAL_LABELS, paginationTotal, visuallyHidden } from '@/shared/ui'
 import { materialKinds, songMeta, usageText } from '../songCard'
 import type { Song } from '../types'
 
@@ -130,7 +130,15 @@ export function SongCardGrid({ songs, page, pageSize, total, loading, selectedId
         })}
       </ul>
       <div className="song-cards__pager">
-        <Pagination current={page} pageSize={pageSize} total={total} showSizeChanger={false} onChange={onPageChange} />
+        <Pagination
+          current={page}
+          pageSize={pageSize}
+          total={total}
+          hideOnSinglePage
+          showSizeChanger={false}
+          showTotal={paginationTotal('bài hát')}
+          onChange={onPageChange}
+        />
       </div>
     </Spin>
   )
