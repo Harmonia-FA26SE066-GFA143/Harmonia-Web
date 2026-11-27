@@ -1,7 +1,7 @@
 # Harmonia Web – Stitch Screen Map
 
 Nguồn lịch sử: danh sách screen Stitch (115 screen DESKTOP + `DESIGN(2).md`), project `5445464059092912576`.
-Lập ở Phase 0 (2026-09-26), làm sạch 2026-10-20, re-check route/BE 2026-11-10. Stitch đã nghỉ làm nguồn thiết kế từ 2026-10-27; file này chỉ là inventory nối **màn Stitch cũ ↔ route ↔ feature folder**, không quyết định UI mới. Hành vi, trường, trạng thái và quyền do BE quyết định; route thật ở `src/app/router/paths.ts`.
+Lập ở Phase 0 (2026-09-26), làm sạch 2026-10-20, re-check route/BE 2026-11-27. Stitch đã nghỉ làm nguồn thiết kế từ 2026-10-27; file này chỉ là inventory nối **màn Stitch cũ ↔ route ↔ feature folder**, không quyết định UI mới. Hành vi, trường, trạng thái và quyền do BE quyết định; route thật ở `src/app/router/paths.ts`.
 
 ## Quy ước
 
@@ -37,7 +37,7 @@ Lập ở Phase 0 (2026-09-26), làm sạch 2026-10-20, re-check route/BE 2026-1
 | 22 | Danh sách Chương trình phụng vụ (Ca trưởng) | Ca trưởng | `/director/programs` | `liturgical-programs` | `61ac899417d9405983c241e9d6bc279a` Mặc định<br>`a62a419b9c1c4081bfca6a7cb67c9c06` Đang tải Skeleton<br>`244dbce9737948329f0e5150baebe87a` Trạng thái Trống<br>`de0394c959854a98a8e892a6cd44e019` Không có kết quả lọc<br>`07ef41b16b3f4b81a378f6126f0454a5` Lỗi tải dữ liệu | Đã dựng, nối BE |
 | 23 | Chi tiết Chương trình phụng vụ (Ca trưởng) | Ca trưởng | `/director/programs/:programId` | `liturgical-programs` | `fc321cc65c464259b838ecfb6920fbea` Mặc định<br>`06f5914348e842668380ea7ca4c0d332` Chưa có bài hát<br>`a15b2cabd5cc43e3be72274cd87914a5` Đang tải Skeleton<br>`4c52caddec51436fb8c19dc879f7641c` Đã phê duyệt<br>`46dc04eaa2944b229e4273ff58b2c9bc` Yêu cầu chỉnh sửa | Đã dựng, nối BE |
 | 24 | Đề xuất danh sách bài hát | Ca trưởng | `/director/programs/:programId/song-list` | `song-lists` | `5974acf510274601bf03d592dd4a95e8` Mặc định<br>`be30ce763ed4447981cef5bed602b226` Đã gửi duyệt<br>`2427048a4a8244419c116dc796226dc2` Yêu cầu chỉnh sửa<br>`c057e67337284a69b59c9c08618e8d63` Đang tải Skeleton<br>`23ee45dee4424576b025c579c491d043` Trạng thái Trống<br>`df730dd692224b8bbc6f68d26073cf8a` Lỗi kết nối | Đã dựng, nối BE |
-| 25 | Lịch tập | Ca trưởng | `/director/rehearsals` | `rehearsals` | `0fdbe0e5a4554fe78418b8bd4ed4f622` Mặc định | Đã dựng, nối BE. Phòng luyện tập: `/director/rehearsals/:rehearsalId`; BE đã có timed lyrics ở `d74096c`, Web chưa nối nên hiện vẫn rơi về lời tĩnh |
+| 25 | Lịch tập | Ca trưởng | `/director/rehearsals` | `rehearsals` | `0fdbe0e5a4554fe78418b8bd4ed4f622` Mặc định | Đã dựng, nối BE. Phòng luyện tập: `/director/rehearsals/:rehearsalId` (đã nối Verovio score, MIDI, audio mẫu với lời chạy theo mốc thời gian `TimedAudioPlayer` và thanh điều khiển tốc độ `0,75×–1,15×`; rơi về lời tĩnh khi chưa căn mốc) |
 | 26 | Điểm danh | Ca trưởng | `/director/attendance` | `attendance` | `1b499f8f5c1c4879af09ce8720f42a09` Mặc định | Đã dựng, nối BE |
 | 27 | Xác nhận tham gia | Ca trưởng | `/director/participation` | `participation` | `cb679c6b86a24f0d9cdd3f5d33c334e0` Mặc định | Đã dựng, nối BE |
 | 28 | Yêu cầu nhân sự & Phân công | Ca trưởng | `/director/roster` | `roster` | `49b75e16525a41468110349f798c6902` Mặc định | Đã dựng, nối BE |
@@ -52,16 +52,23 @@ Screen **Đăng ký** `04312fd5c7f945ba8f83dcf0f84c2051` nay ứng với `/join`
 
 | Page | Actor | Route | Feature folder |
 |---|---|---|---|
+| Đăng ký gia nhập ca đoàn | Công khai | `/join` | `member-registrations` |
 | Đặt lại mật khẩu (từ link email) | Công khai | `/reset-password` | `auth` |
 | Đổi mật khẩu | Mọi role web | `/change-password` | `auth` |
+| Đơn đăng ký gia nhập | Admin | `/admin/member-registrations` | `member-registrations` |
+| Đề cử & bổ nhiệm Ca trưởng | Admin | `/admin/director-nominations` | `director-nominations` |
+| Đề cử Ca trưởng | Cha xứ / HĐ Phụng vụ | `/priest/director-nominations` | `director-nominations` |
+| Đề cử & đào tạo Ca trưởng | Ca trưởng | `/director/director-nominations` | `director-nominations` |
 | Danh sách ca viên | Ca trưởng | `/director/members` | `members` |
 | Ca đoàn | Admin | `/admin/choirs` | `choirs` |
 | Ca đoàn của tôi | Ca trưởng | `/director/choirs` | `choirs` |
 | Duyệt kỹ năng | Ca trưởng | `/director/skill-approval` | `skill-approval` |
+| Phòng luyện tập (chi tiết buổi tập) | Ca trưởng | `/director/rehearsals/:rehearsalId` | `rehearsals` |
+| Giao bài luyện tập mới | Ca trưởng | `/director/practice/new` | `practice` |
 | Ghi chú từ Cha xứ | Ca trưởng | `/director/notes` | `notes` |
-| Ghi chú cho Ca trưởng | Cha xứ | `/priest/notes` | `notes` |
+| Ghi chú cho Ca trưởng | Cha xứ / HĐ Phụng vụ | `/priest/notes` | `notes` |
 
-BE `d74096c` còn có các luồng Web chưa dựng route: Admin xử lý đăng ký gia nhập; Cha xứ/Ca trưởng đề cử và theo dõi đào tạo Ca trưởng; Admin bổ nhiệm. Khi triển khai, route lấy từ router hiện hành và UI theo hệ thống thiết kế hiện tại của Web, không hồi sinh màn Stitch như nguồn thiết kế.
+Mọi route hoạt động hiện được khai báo tại `src/app/router/paths.ts`; khi có luồng BE mới, UI dựng theo hệ thống thiết kế hiện hành của Web (`DESIGN.md` và `.ux-profile.md`), không hồi sinh màn Stitch làm nguồn thiết kế.
 
 ## Các screen ID trùng tên – quyết định chọn bản
 
@@ -79,7 +86,7 @@ Quy tắc 3 của `stitch-implementation-plan.md` giả định các cặp trùn
 ## Ghi chú còn hiệu lực
 
 - **Trang chủ (SHARED-04):** trang giới thiệu công khai (shell `web_standard`, 2560px), không nằm trong AppShell. Đoạn "quy trình 7 bước", mockup chương trình và các con số minh hoạ do Stitch tự tạo không phải business rule.
-- **Đăng nhập:** nút "Đăng nhập với Google" chỉ hiện khi có `VITE_GOOGLE_CLIENT_ID` (`src/config/env.ts`); BE chỉ nhận tài khoản Admin đã tạo sẵn. Không có đăng ký công khai, không có màn "Chờ xác nhận".
+- **Đăng nhập:** nút "Đăng nhập với Google" chỉ hiện khi có `VITE_GOOGLE_CLIENT_ID` (`src/config/env.ts`); đăng nhập chỉ nhận tài khoản đã được Admin tạo hoặc duyệt. Người mới gửi yêu cầu gia nhập qua `/join` (không tự tạo tài khoản); không có màn "Chờ xác nhận".
 - **Hồ sơ cá nhân:** FE-01–FE-02 là chức năng của Ca viên trên mobile; hồ sơ trên web dành cho Cha xứ, Ca trưởng và Admin (xem `role-surfaces.md`).
 - **Chi tiết CTPV (Cha xứ / Ca trưởng):** hai screen Stitch cùng tên là hai shell khác nhau, không phải bản cũ/mới (bảng trên). Thanh 5 bước không dựng; trạng thái chuẩn bị lấy từ `GET …/preparation-status`.
 - **Chi tiết Stitch tự thêm** (mã tài khoản, thanh "Sandbox", "Căn cứ thẩm định", cột/nút không có trường BE tương ứng, thanh "Mô phỏng trạng thái") **không** được dựng. Khi một màn Stitch cần trường mà BE không có, ghi `TBD: Backend API missing` vào `tbd-backlog.md`.

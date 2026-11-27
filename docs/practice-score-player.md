@@ -8,13 +8,13 @@ One audio element is the only clock. Everything else is derived from it, and tim
 
 | Module | Job |
 |---|---|
-| `clock/` | `usePlaybackClock`: owns one `HTMLAudioElement` per source. `currentTime` is the only time; subscribers are notified outside React, state changes about once per second (`playing`, `duration`, `error`). |
+| `clock/` | `usePlaybackClock`: owns one `HTMLAudioElement` per source. `currentTime` is the only time; subscribers are notified outside React, React state tracks only `playing`, `duration`, `error`, `sourceFailed`, and `playbackRate` (`0.5×–1.5×`, persisted across source swaps). |
 | `engine/` | Wraps Verovio (`createVerovioEngine`, WASM, its own lazy chunk): `load` (parse, MEI, timemap, SVG pages, ids of repeated notes), `relayout(pageWidth)`, `dispose`. Refuses a score above `MAX_SCORE_NOTES` (6 400 `<note>` elements, rests included) with `too-complex`. `countStaves` reads the staves from the MEI. |
 | `timeline/` | `parseTimemap` turns Verovio's timemap into sorted on/off events keyed by the note ids the SVG draws; `tieMap` chains tied notes; `cursor` tells which notes sound at a time; `occurrence` picks which pass of a repeated note a click means. |
 | `viewer/` | `ScoreViewer`: sanitises each SVG page (`sanitizeSvg`, size limits) and mounts it in one scroll region. `toEnginePageWidth` maps the sheet's CSS width to Verovio's page width (see limits). |
 | `sync/` | `useScoreSync` lights the sounding notes by class on the SVG; `useLyricSync` lights the sung syllable; `useFollowScroll` scrolls the sheet to the sounding note until the user scrolls away; `useNoteSeek` / `findNoteAt`: click a note to jump there. |
 | `lyrics/` | `parseLyrics` reads `<verse><syl>` from the MEI; `selectLyrics` maps each staff to a part (one staff = one part, label from the `staffDef`). |
-| `controls/` | Play/pause, position slider, time; part and verse selectors (`useLyricSelection`); the "Theo dõi" button; keyboard (Space, ←/→ 5 s, Home) scoped to the practice section. |
+| `controls/` | `PlaybackControls`: play/pause (disabled on `sourceFailed`), live status label, position slider, speed cycler (`0,75× · 0,85× · 1× · 1,15×`), fixed-width time label (`mm:ss / mm:ss`); shared across `ScorePracticeSection`, `TimedAudioPlayer`, and `MidiPracticePlayer`. Part and verse selectors (`useLyricSelection`); the "Theo dõi" button; keyboard (Space, ←/→ 5 s, Home) scoped to the practice section. |
 | `focus/` | Focus mode: the section becomes a full-screen dark `<dialog open>` (never `showModal`), the rest of the page is `inert`; `F` toggles, `Esc` leaves. |
 | `source/` | Where the files come from (next section) and `checkAlignment` (audio length against timeline length, 0.5 s or 1 %). |
 | `license/` | The credit line under a score on screen and its licence dialog (Verovio, LGPL-3.0-only). The facts live in `verovioNotice.ts` and the two licence texts are kept verbatim next to it; a test checks the facts against `package.json` and the installed package. |
@@ -52,7 +52,7 @@ Open a rehearsal's practice room: the sample loads by itself. Without the variab
 | Area | Limit |
 |---|---|
 | Audio | A score has one WAV. Changing the part only changes which lyrics are lit, not what is heard. |
-| Audio | A recording made in the room can play over the score. |
+| Audio | A recording made in the room can play over the score. (`RecordingPanel` notifies `RehearsalPracticeRoomPage` via `onActiveChange` so closing the drawer or leaving warns while a recording is active or unsaved.) |
 | Labels | The sheet's group label "Bản nhạc" is the same for the PDF/image viewer and for the new score. |
 | Speed | The engine runs on the main thread: parse and timemap are 85–90 % of the load. Above 6 400 notes the score is refused; an `.mxl` is counted only after Verovio has read it (about 5.7 s for 800 bars); a score at the limit on a narrow sheet takes about 5.1 s. A Web Worker and page-by-page rendering are not done (inserting the SVG of a 27-page SATB score takes about 614 ms). |
 | Page width | One staff keeps a 300 px step (a phone-width sheet gets a fixed 750 page and scrolls sideways). Two staves or more get a floor of 900 and scroll sideways on a narrower sheet. A piano part counts as two staves. |
