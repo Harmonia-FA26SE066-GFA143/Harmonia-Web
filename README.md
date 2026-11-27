@@ -39,11 +39,11 @@ Ngoài ra có trang giới thiệu công khai (`/`), trang đăng ký gia nhập
 
 ## Điểm nổi bật
 
-- **Kho bài hát**: tìm theo mùa phụng vụ, phần lễ, chủ đề; xem dạng thẻ bản nhạc hoặc mục lục; quản lý bản nhạc, lời, audio mẫu theo bè và bản nhạc tương tác.
-- **Phòng luyện tập**: bản nhạc vẽ bằng Verovio, nốt đang hát sáng lên và trang tự cuộn theo, chế độ tập trung và cỡ nốt lớn cho máy chiếu.
-- **Lịch phụng vụ** theo mùa và màu phụng vụ trong ngày, đồng bộ từ lịch trực tuyến.
-- **Tình hình chuẩn bị** cho từng Thánh lễ: danh sách bài hát, buổi tập, phân công, xác nhận tham gia.
-- **Thông báo thời gian thực** qua SignalR.
+- **Kho bài hát**: tìm theo mùa phụng vụ, phần lễ, chủ đề và lọc bài thiếu tài liệu hoặc chưa phân loại; xem dạng thẻ bản nhạc hoặc mục lục có panel xem nhanh giữ trạng thái qua URL (`?song=`); quản lý bản nhạc, lời, lời theo mốc thời gian, audio mẫu theo bè, MIDI và bản nhạc tương tác.
+- **Phòng luyện tập**: bản nhạc vẽ bằng Verovio, nốt đang hát sáng lên và trang tự cuộn theo; thanh điều khiển chung cho bản nhạc tương tác, audio mẫu có lời chạy theo nhạc và MIDI với nút đổi tốc độ (`0,75×–1,15×`), thu âm buổi tập, chế độ tập trung và cỡ nốt lớn cho máy chiếu.
+- **Lịch phụng vụ & Chương trình**: lịch theo mùa và màu phụng vụ trong ngày đồng bộ từ lịch trực tuyến, lọc trạng thái trực tiếp trên thanh công cụ, bấm mở sự kiện ngay trên ô lịch, và tờ tình hình chuẩn bị thống nhất cho từng Thánh lễ (danh sách bài hát, buổi tập, phân công, xác nhận tham gia).
+- **Điều phối & Quản trị**: đăng ký gia nhập công khai (`/join`), đề cử – đào tạo – bổ nhiệm Ca trưởng, duyệt kỹ năng có minh chứng audio/video, danh mục phụng vụ điều hướng 3 nhóm, cấu hình chung có xem trước thông báo, và nhật ký hoạt động lọc khoảng ngày kèm đối chiếu thay đổi.
+- **Thông báo & Việc cần làm thời gian thực**: thông báo qua SignalR cùng ngăn kéo Việc cần làm và chỉ báo số lượng chờ duyệt trực tiếp trên thanh điều hướng.
 
 ## Thiết kế
 
